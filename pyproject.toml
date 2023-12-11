@@ -1,0 +1,13 @@
+[build-system]
+requires = [
+    "setuptools >= 65",
+    "wheel >= 0.38"
+]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "ring"
+version = "0.1.0"
+description = "A clone of LetterLoop"
+requires-python = ">=3.12"
+dependencies = ["pynamodb ~= 5.0"]
