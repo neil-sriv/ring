@@ -10,4 +10,8 @@ name = "ring"
 version = "0.1.0"
 description = "A clone of LetterLoop"
 requires-python = ">=3.12"
-dependencies = ["pynamodb ~= 5.0"]
+dependencies = [
+    "pynamodb ~= 5.0",
+    "pydantic ~= 2.5",
+    "fastapi[all] ~= 0.104",
+]
