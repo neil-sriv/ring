@@ -14,4 +14,6 @@ dependencies = [
     "pynamodb ~= 5.0",
     "pydantic ~= 2.5",
     "fastapi[all] ~= 0.104",
+    "shortuuid ~= 1.0",
+    "pip-tools ~= 7.3",
 ]
