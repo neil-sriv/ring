@@ -4,7 +4,7 @@ from dotenv import load_dotenv
 
 class RingConfig:
     def __init__(self) -> None:
-        self.dynamo_db_host = f"http://db:{os.getenv("DB_PORT")}"
+        self.dynamo_db_host = f"http://{os.getenv("DB_HOST")}:{os.getenv("DB_PORT")}"
         self.envrionment = os.getenv("ENVIRONMENT")
 
 

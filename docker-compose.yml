@@ -10,10 +10,11 @@ services:
     env_file:
       - ./.env
     environment:
-      - AWS_ACCESS_KEY_ID='DUMMYIDEXAMPLE'
-      - AWS_SECRET_ACCESS_KEY='DUMMYEXAMPLEKEY'
+      - AWS_ACCESS_KEY_ID='keyid'
+      - AWS_SECRET_ACCESS_KEY='secretkey'
       - REGION='us-east-1'
       - PYTHONPATH=.
+      - DB_HOST="db"
     depends_on:
       - db
     links:
@@ -21,11 +22,11 @@ services:
   redis:
     image: redis:alpine
   db:
-    command: "-jar DynamoDBLocal.jar -sharedDb -dbPath ./data -port ${DB_PORT}"
+    # command: "-jar DynamoDBLocal.jar -sharedDb -dbPath ./data -port ${DB_PORT}"
     image: "amazon/dynamodb-local:latest"
     container_name: ring-db 
     ports:
-      - ${DB_PORT}:${DB_PORT}
+      - ${DB_PORT}:8000
     volumes:
       - dynamodb:/home/dynamodblocal/data
     working_dir: /home/dynamodblocal
