@@ -21,6 +21,8 @@ services:
       - db
   redis:
     image: redis:alpine
+  flower:
+    image: mher/flower
   db:
     # command: "-jar DynamoDBLocal.jar -sharedDb -dbPath ./data -port ${DB_PORT}"
     image: "amazon/dynamodb-local:latest"
