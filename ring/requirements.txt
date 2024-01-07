@@ -16,8 +16,13 @@ anyio==3.7.1
     #   watchfiles
 billiard==4.2.0
     # via celery
-botocore==1.33.11
-    # via pynamodb
+boto3==1.34.14
+    # via ring (pyproject.toml)
+botocore==1.34.14
+    # via
+    #   boto3
+    #   pynamodb
+    #   s3transfer
 build==1.0.3
     # via pip-tools
 celery==5.3.6
@@ -72,7 +77,9 @@ itsdangerous==2.1.2
 jinja2==3.1.2
     # via fastapi
 jmespath==1.0.1
-    # via botocore
+    # via
+    #   boto3
+    #   botocore
 kombu==5.3.4
     # via celery
 markupsafe==2.1.3
@@ -121,6 +128,8 @@ pyyaml==6.0.1
     #   uvicorn
 redis==5.0.1
     # via ring (pyproject.toml)
+s3transfer==0.10.0
+    # via boto3
 shortuuid==1.0.11
     # via ring (pyproject.toml)
 six==1.16.0

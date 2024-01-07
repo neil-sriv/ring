@@ -5,6 +5,7 @@ import datetime
 from celery.schedules import crontab
 
 from ring.models.email_model import ScheduleModel
+from ring.email import email_group
 
 celery = Celery(
     "celery",
