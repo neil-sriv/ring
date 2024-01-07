@@ -45,7 +45,9 @@ dnspython==2.4.2
 email-validator==2.1.0.post1
     # via fastapi
 fastapi[all]==0.104.1
-    # via ring (pyproject.toml)
+    # via
+    #   fastapi
+    #   ring (pyproject.toml)
 flower==2.0.1
     # via ring (pyproject.toml)
 h11==0.14.0
@@ -117,6 +119,8 @@ pyyaml==6.0.1
     # via
     #   fastapi
     #   uvicorn
+redis==5.0.1
+    # via ring (pyproject.toml)
 shortuuid==1.0.11
     # via ring (pyproject.toml)
 six==1.16.0
@@ -141,7 +145,9 @@ ujson==5.9.0
 urllib3==2.0.7
     # via botocore
 uvicorn[standard]==0.24.0.post1
-    # via fastapi
+    # via
+    #   fastapi
+    #   uvicorn
 uvloop==0.19.0
     # via uvicorn
 vine==5.1.0

@@ -22,4 +22,5 @@ dependencies = [
     "shortuuid ~= 1.0",
     "pip-tools ~= 7.3",
     "flower ~= 2.0",
+    "Redis ~= 5.0",
 ]

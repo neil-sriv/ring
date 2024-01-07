@@ -1,7 +1,9 @@
 services:
   api:
     container_name: ring-api
-    build: ./ring
+    build: 
+      context: ./ring
+      dockerfile: ring.Dockerfile
     command: "uvicorn ring.fast:app --log-level debug --host 0.0.0.0 --port ${API_PORT} --reload"
     ports:
       - "${API_PORT}:${API_PORT}"
@@ -10,19 +12,53 @@ services:
     env_file:
       - ./.env
     environment:
-      - AWS_ACCESS_KEY_ID='keyid'
-      - AWS_SECRET_ACCESS_KEY='secretkey'
-      - REGION='us-east-1'
       - PYTHONPATH=.
-      - DB_HOST="db"
+      - DB_HOST=db
     depends_on:
       - db
     links:
       - db
+  worker:
+    build:
+      context: ./ring
+      dockerfile: celery.Dockerfile
+    volumes:
+      - ./ring:/src/ring
+    command: "celery --app=ring.worker worker --loglevel=debug"
+    env_file:
+      - ./.env
+    depends_on:
+      - redis
+  beat:
+    build:
+      context: ./ring
+      dockerfile: celery.Dockerfile
+    volumes:
+      - ./ring:/src/ring
+    command: "celery --app=ring.worker beat --loglevel=debug"
+    env_file:
+      - ./.env
+    depends_on:
+      - redis 
   redis:
     image: redis:alpine
+    ports:
+      - "6379:6379"
   flower:
-    image: mher/flower
+    build:
+      context: ./ring
+      dockerfile: celery.Dockerfile
+    volumes:
+      - ./ring:/src/ring
+    command: "celery --app=ring.worker flower"
+    # image: mher/flower
+    env_file:
+      - ./.env
+    ports:
+      - "8003:5555"
+    depends_on:
+      - redis
+      - worker
   db:
     # command: "-jar DynamoDBLocal.jar -sharedDb -dbPath ./data -port ${DB_PORT}"
     image: "amazon/dynamodb-local:latest"
