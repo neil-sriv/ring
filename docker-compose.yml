@@ -31,6 +31,8 @@ services:
     command: "celery --app=ring.worker worker --loglevel=debug"
     env_file:
       - ./.env
+    environment:
+      - DB_PORT=8000
     depends_on:
       - redis
   beat:

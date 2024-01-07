@@ -1,7 +1,5 @@
 from pynamodb.models import Model
-from pynamodb.attributes import (
-    UnicodeAttribute,
-)
+from pynamodb.attributes import UnicodeAttribute, UTCDateTimeAttribute, BooleanAttribute
 from ring.fast import ring_config
 
 
@@ -12,4 +10,5 @@ class ScheduleModel(Model):
         region = "us-west-2"
 
     group_id = UnicodeAttribute(hash_key=True)
-    scheduled_datetime = UnicodeAttribute()
+    scheduled_datetime = UTCDateTimeAttribute()
+    sent = BooleanAttribute(default=False)
