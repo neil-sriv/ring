@@ -1,14 +1,10 @@
-from pynamodb.models import Model
+from ring.pynamo_models.base_model import BaseModel
 from pynamodb.attributes import UnicodeAttribute, UTCDateTimeAttribute, BooleanAttribute
-from ring.fast import ring_config
 
 
-class ScheduleModel(Model):
-    class Meta:  # type: ignore
-        host = ring_config.dynamo_db_host
+class ScheduleModel(BaseModel):
+    class Meta:
         table_name = "schedule"
-        region = "us-west-2"
-
     group_id = UnicodeAttribute(hash_key=True)
     scheduled_datetime = UTCDateTimeAttribute()
     sent = BooleanAttribute(default=False)

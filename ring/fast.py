@@ -1,9 +1,9 @@
 from fastapi import FastAPI
 
-from ring.config import get_config
+# from ring.config import get_config
 # from ring.worker import hello_task
 
-ring_config = get_config()
+# ring_config = get_config()
 app = FastAPI()
 
 

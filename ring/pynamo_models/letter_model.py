@@ -1,11 +1,10 @@
-from pynamodb.models import Model
+from ring.pynamo_models.base_model import BaseModel
 from pynamodb.attributes import (
     UnicodeAttribute,
     NumberAttribute,
     ListAttribute,
     MapAttribute,
 )
-from ring.fast import ring_config
 
 
 class Member(MapAttribute[str, UnicodeAttribute]):
@@ -38,12 +37,9 @@ class Letter(MapAttribute[str, UnicodeAttribute | ListAttribute[Question]]):
     questions = ListAttribute(of=Question)
 
 
-class GroupModel(Model):
-    class Meta:  # type: ignore
-        host = ring_config.dynamo_db_host
+class GroupModel(BaseModel):
+    class Meta:
         table_name = "group"
-        region = "us-west-2"
-
     group_id = UnicodeAttribute(hash_key=True)
     group_name = UnicodeAttribute()
     members = ListAttribute(of=Member)

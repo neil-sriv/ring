@@ -1,4 +1,4 @@
-from ring.models.letter_model import GroupModel
+from ring.pynamo_models.letter_model import GroupModel
 import boto3
 
 

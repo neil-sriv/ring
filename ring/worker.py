@@ -4,8 +4,8 @@ from celery import Celery
 import datetime
 from celery.schedules import crontab
 
-from ring.models.email_model import ScheduleModel
-from ring.email import email_group
+from ring.pynamo_models.email_model import ScheduleModel
+from ring.email_util import email_group
 
 celery = Celery(
     "celery",
@@ -40,7 +40,8 @@ def poll_schedule_task():
         ) <= datetime.timedelta(hours=1):
             possible_groups.add(schedule_item.group_id)
     for group_id in possible_groups:
-        email_group(group_id)
+        # email_group(group_id)
+        pass
     return {
         "status": "success",
         "message": f"Group ids emailed: {possible_groups}",
