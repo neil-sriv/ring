@@ -25,5 +25,5 @@ def migrate():
 
 
 if __name__ == "__main__":
-    # init_db()
-    migrate()
+    init_db()
+    # migrate()

@@ -5,6 +5,7 @@ from pynamodb.attributes import UnicodeAttribute, UTCDateTimeAttribute, BooleanA
 class ScheduleModel(BaseModel):
     class Meta:
         table_name = "schedule"
+
     group_id = UnicodeAttribute(hash_key=True)
     scheduled_datetime = UTCDateTimeAttribute()
     sent = BooleanAttribute(default=False)

@@ -1,13 +1,14 @@
 import os
+from pydantic_settings import BaseSettings
 from dotenv import load_dotenv
 
 
-class RingConfig:
-    def __init__(self) -> None:
-        self.environment = os.getenv("ENVIRONMENT")
-        self.dynamo_db_host = f"http://{os.getenv("DB_HOST")}:{os.getenv("DB_PORT")}"
+class RingConfig(BaseSettings):
+    dynamo_db_host: str = f"http://{os.getenv("DB_HOST")}:{os.getenv("DB_PORT")}"
+    environment: str
+    sqlalchemy_database_uri: str
 
 
 def get_config() -> RingConfig:
     load_dotenv()
-    return RingConfig()
+    return RingConfig()  # type: ignore

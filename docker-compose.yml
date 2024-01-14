@@ -18,10 +18,10 @@ services:
       - db
     links:
       - db
-  client:
-    build:
-      context: ./client
-      dockerfile: client.Dockerfile
+  # client:
+  #   build:
+  #     context: ./client
+  #     dockerfile: client.Dockerfile
   worker:
     build:
       context: ./ring

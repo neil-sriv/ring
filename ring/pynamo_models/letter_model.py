@@ -22,7 +22,7 @@ class Response(MapAttribute[str, UnicodeAttribute | MediaContent]):
     response_id = UnicodeAttribute()
     response_text = UnicodeAttribute()
     member_name = UnicodeAttribute()
-    media_content = MediaContent()
+    media_content = MediaContent(null=True)
 
 
 class Question(MapAttribute[str, UnicodeAttribute | ListAttribute[Response]]):
@@ -40,6 +40,7 @@ class Letter(MapAttribute[str, UnicodeAttribute | ListAttribute[Question]]):
 class GroupModel(BaseModel):
     class Meta:
         table_name = "group"
+
     group_id = UnicodeAttribute(hash_key=True)
     group_name = UnicodeAttribute()
     members = ListAttribute(of=Member)

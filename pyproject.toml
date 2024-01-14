@@ -24,4 +24,6 @@ dependencies = [
     "flower ~= 2.0",
     "Redis ~= 5.0",
     "boto3 ~= 1.34",
+    "SQLAlchemy ~= 2.0",
+    "pgcli ~= 4.0",
 ]
