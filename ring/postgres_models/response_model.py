@@ -1,12 +1,15 @@
 from __future__ import annotations
 from sqlalchemy import ForeignKey, Text
 from sqlalchemy.orm import relationship, Mapped, mapped_column
+from ring.postgres_models.api_identified import APIIdentified
 
 from ring.sqlalchemy_base import Base
 
 
-class Response(Base):
+class Response(Base, APIIdentified):
     __tablename__ = "response"
+
+    API_ID_PREFIX = "rspn"
 
     id: Mapped[int] = mapped_column(primary_key=True, index=True)
     api_identifier: Mapped[str] = mapped_column(unique=True, index=True)

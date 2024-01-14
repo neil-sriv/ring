@@ -1,6 +1,7 @@
 from __future__ import annotations
 from sqlalchemy import Column, ForeignKey, Integer, Table
 from sqlalchemy.orm import relationship, Mapped, mapped_column
+from ring.postgres_models.api_identified import APIIdentified
 
 from ring.sqlalchemy_base import Base
 
@@ -12,8 +13,10 @@ letter_to_user_assocation = Table(
 )
 
 
-class Letter(Base):
+class Letter(Base, APIIdentified):
     __tablename__ = "letter"
+
+    API_ID_PREFIX = "lttr"
 
     id: Mapped[int] = mapped_column(primary_key=True, index=True)
     number: Mapped[int] = mapped_column(unique=True, index=True)
