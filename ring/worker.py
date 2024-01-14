@@ -4,8 +4,6 @@ from celery import Celery
 import datetime
 from celery.schedules import crontab
 
-from ring.pynamo_models.email_model import ScheduleModel
-from ring.email_util import email_group
 
 celery = Celery(
     "celery",
@@ -21,7 +19,7 @@ celery = Celery(
 def setup_periodic_tasks(sender, **kwargs):
     # sender.add_periodic_task(10.0, hello_task.s(), name="add every 10")
     sender.add_periodic_task(
-        crontab(hour="*/1"), poll_schedule_task.s(), name="poll_schedule"
+        crontab(minute="*/1"), poll_schedule_task.s(), name="poll_schedule"
     )
 
 
