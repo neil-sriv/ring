@@ -31,12 +31,16 @@ certifi==2023.11.17
     # via
     #   httpcore
     #   httpx
+cli-helpers[styles]==2.3.0
+    # via pgcli
 click==8.1.7
     # via
     #   celery
     #   click-didyoumean
     #   click-plugins
     #   click-repl
+    #   pgcli
+    #   pgspecial
     #   pip-tools
     #   uvicorn
 click-didyoumean==0.3.0
@@ -45,18 +49,18 @@ click-plugins==1.1.1
     # via celery
 click-repl==0.3.0
     # via celery
+configobj==5.0.8
+    # via
+    #   cli-helpers
+    #   pgcli
 dnspython==2.4.2
     # via email-validator
 email-validator==2.1.0.post1
     # via fastapi
 fastapi[all]==0.104.1
-    # via
-    #   fastapi
-    #   ring (pyproject.toml)
+    # via ring (pyproject.toml)
 flower==2.0.1
     # via ring (pyproject.toml)
-greenlet==3.0.3
-    # via sqlalchemy
 h11==0.14.0
     # via
     #   httpcore
@@ -90,12 +94,24 @@ orjson==3.9.10
     # via fastapi
 packaging==23.2
     # via build
+pendulum==3.0.0
+    # via pgcli
+pgcli==4.0.1
+    # via ring (pyproject.toml)
+pgspecial==2.1.1
+    # via pgcli
 pip-tools==7.3.0
     # via ring (pyproject.toml)
 prometheus-client==0.19.0
     # via flower
 prompt-toolkit==3.0.43
-    # via click-repl
+    # via
+    #   click-repl
+    #   pgcli
+psycopg==3.1.17
+    # via
+    #   pgcli
+    #   pgspecial
 pydantic==2.5.2
     # via
     #   fastapi
@@ -108,6 +124,10 @@ pydantic-extra-types==2.1.0
     # via fastapi
 pydantic-settings==2.1.0
     # via fastapi
+pygments==2.17.2
+    # via
+    #   cli-helpers
+    #   pgcli
 pynamodb==5.5.1
     # via ring (pyproject.toml)
 pyproject-hooks==1.0.0
@@ -116,6 +136,8 @@ python-dateutil==2.8.2
     # via
     #   botocore
     #   celery
+    #   pendulum
+    #   time-machine
 python-dotenv==1.0.0
     # via
     #   pydantic-settings
@@ -132,36 +154,49 @@ redis==5.0.1
     # via ring (pyproject.toml)
 s3transfer==0.10.0
     # via boto3
+setproctitle==1.3.3
+    # via pgcli
 shortuuid==1.0.11
     # via ring (pyproject.toml)
 six==1.16.0
-    # via python-dateutil
+    # via
+    #   configobj
+    #   python-dateutil
 sniffio==1.3.0
     # via
     #   anyio
     #   httpx
 sqlalchemy==2.0.25
     # via ring (pyproject.toml)
+sqlparse==0.4.4
+    # via
+    #   pgcli
+    #   pgspecial
 starlette==0.27.0
     # via fastapi
+tabulate[widechars]==0.9.0
+    # via cli-helpers
+time-machine==2.13.0
+    # via pendulum
 tornado==6.4
     # via flower
 typing-extensions==4.9.0
     # via
     #   fastapi
+    #   psycopg
     #   pydantic
     #   pydantic-core
     #   sqlalchemy
 tzdata==2023.3
-    # via celery
+    # via
+    #   celery
+    #   pendulum
 ujson==5.9.0
     # via fastapi
 urllib3==2.0.7
     # via botocore
 uvicorn[standard]==0.24.0.post1
-    # via
-    #   fastapi
-    #   uvicorn
+    # via fastapi
 uvloop==0.19.0
     # via uvicorn
 vine==5.1.0
@@ -172,7 +207,9 @@ vine==5.1.0
 watchfiles==0.21.0
     # via uvicorn
 wcwidth==0.2.12
-    # via prompt-toolkit
+    # via
+    #   prompt-toolkit
+    #   tabulate
 websockets==12.0
     # via uvicorn
 wheel==0.42.0
