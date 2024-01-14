@@ -1,13 +1,16 @@
 from __future__ import annotations
+from typing import TYPE_CHECKING
 from sqlalchemy import ForeignKey
 from sqlalchemy.orm import relationship, Mapped, mapped_column
 from sqlalchemy.ext.hybrid import hybrid_property
 from ring.postgres_models.api_identified import APIIdentified
-from ring.postgres_models.letter_model import Letter
-from ring.postgres_models.user_model import User
 
 from ring.sqlalchemy_base import Base
 from ring.postgres_models.user_group_assocation import user_group_association
+
+if TYPE_CHECKING:
+    from ring.postgres_models.letter_model import Letter
+    from ring.postgres_models.user_model import User
 
 
 class Group(Base, APIIdentified):

@@ -1,9 +1,14 @@
 from __future__ import annotations
+from typing import TYPE_CHECKING
 from sqlalchemy.orm import relationship, Mapped, mapped_column
 from ring.postgres_models.api_identified import APIIdentified
 
 from ring.sqlalchemy_base import Base
 from ring.postgres_models.user_group_assocation import user_group_association
+
+if TYPE_CHECKING:
+    from ring.postgres_models.group_model import Group
+    from ring.postgres_models.response_model import Response
 
 
 class User(Base, APIIdentified):

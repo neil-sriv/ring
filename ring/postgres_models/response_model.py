@@ -1,9 +1,15 @@
 from __future__ import annotations
+from typing import TYPE_CHECKING
 from sqlalchemy import ForeignKey, Text
 from sqlalchemy.orm import relationship, Mapped, mapped_column
 from ring.postgres_models.api_identified import APIIdentified
 
 from ring.sqlalchemy_base import Base
+
+if TYPE_CHECKING:
+    from ring.postgres_models.letter_model import Letter
+    from ring.postgres_models.user_model import User
+    from ring.postgres_models.question_model import Question
 
 
 class Response(Base, APIIdentified):

@@ -1,9 +1,16 @@
 from __future__ import annotations
+from typing import TYPE_CHECKING
 from sqlalchemy import Column, ForeignKey, Integer, Table
 from sqlalchemy.orm import relationship, Mapped, mapped_column
 from ring.postgres_models.api_identified import APIIdentified
 
 from ring.sqlalchemy_base import Base
+
+if TYPE_CHECKING:
+    from ring.postgres_models.group_model import Group
+    from ring.postgres_models.question_model import Question
+    from ring.postgres_models.response_model import Response
+    from ring.postgres_models.user_model import User
 
 letter_to_user_assocation = Table(
     "letter_to_user_assocation",
