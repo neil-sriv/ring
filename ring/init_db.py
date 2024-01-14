@@ -1,18 +1,11 @@
 import os
-from ring.pynamo_models.email_model import ScheduleModel
-from ring.pynamo_models.letter_model import GroupModel
+from ring.postgres_models import User
+from ring.sqlalchemy_base import SessionLocal
 
 
 def init_db():
-    if not GroupModel.exists():
-        GroupModel.create_table(
-            read_capacity_units=1, write_capacity_units=1, wait=True
-        )
-        migrate()
-    if not ScheduleModel.exists():
-        ScheduleModel.create_table(
-            read_capacity_units=1, write_capacity_units=1, wait=True
-        )
+    db = SessionLocal()
+    db.query(User).exists()
     pass
 
 
