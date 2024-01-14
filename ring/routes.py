@@ -1,13 +1,16 @@
-from ring.fast import app, engine
+from fastapi import APIRouter
 from ring.postgres_models.group_model import Group
+from ring.sqlalchemy_base import engine
+
+router = APIRouter()
 
 
-@app.get("/")
+@router.get("/")
 async def root():
     return {"message": "Hello World!"}
 
 
-@app.get("/hello")
+@router.get("/hello")
 async def hello():
     # task = hello_task.delay()
     # return {"task_id": task.id}
