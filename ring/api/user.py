@@ -1,6 +1,7 @@
 from __future__ import annotations
 from typing import TYPE_CHECKING
-from fastapi import APIRouter, Depends
+from fastapi import Depends
+from ring.routes import internal
 from ring.dependencies import get_db
 from fastapi import HTTPException
 from ring.crud import user as user_crud, api_identifier as api_identifier_crud
@@ -9,12 +10,6 @@ from ring.postgres_models.user_model import User
 
 if TYPE_CHECKING:
     from sqlalchemy.orm import Session
-
-
-internal = APIRouter(
-    prefix="/internal",
-    tags=["internal"],
-)
 
 
 @internal.post("/user/", response_model=UserSchema)

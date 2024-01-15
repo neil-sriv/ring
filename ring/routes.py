@@ -2,6 +2,13 @@ from fastapi import APIRouter
 
 router = APIRouter()
 
+internal = APIRouter(
+    prefix="/internal",
+    tags=["internal"],
+)
+
+from ring.api import *
+
 
 @router.get("/")
 async def root():
