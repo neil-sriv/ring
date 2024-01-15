@@ -1,8 +1,7 @@
 from fastapi import FastAPI
 
 from ring.config import get_config
-from ring.routes import router
-from ring.api.user import internal
+from ring.routes import router, internal
 
 app = FastAPI()
 ring_config = get_config()
