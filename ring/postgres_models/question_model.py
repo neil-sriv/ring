@@ -8,7 +8,8 @@ from ring.sqlalchemy_base import Base
 
 if TYPE_CHECKING:
     from ring.postgres_models.letter_model import Letter
-    from ring.postgres_models.user_model import User
+
+    # from ring.postgres_models.user_model import User
     from ring.postgres_models.response_model import Response
 
 question_to_user_association = Table(

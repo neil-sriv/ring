@@ -7,7 +7,7 @@ from ring.postgres_models.api_identified import APIIdentified
 from ring.sqlalchemy_base import Base
 
 if TYPE_CHECKING:
-    from ring.postgres_models.letter_model import Letter
+    # from ring.postgres_models.letter_model import Letter
     from ring.postgres_models.user_model import User
     from ring.postgres_models.question_model import Question
 

@@ -9,7 +9,8 @@ from ring.sqlalchemy_base import Base
 if TYPE_CHECKING:
     from ring.postgres_models.group_model import Group
     from ring.postgres_models.question_model import Question
-    from ring.postgres_models.response_model import Response
+
+    # from ring.postgres_models.response_model import Response
     from ring.postgres_models.user_model import User
 
 letter_to_user_assocation = Table(

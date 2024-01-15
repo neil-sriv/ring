@@ -5,16 +5,17 @@ from pydantic import BaseModel
 
 class ResponseBase(BaseModel):
     response_text: str
-    question: Question
-    participant: User
 
 
 class ResponseCreate(ResponseBase):
-    pass
+    question_api_id: str
+    participant_api_id: str
 
 
 class Response(ResponseBase):
-    api_identifier: str
+    api_id: str
+    question: "Question"
+    participant: "User"
 
     class Config:
         orm_mode = True
@@ -25,30 +26,31 @@ class QuestionBase(BaseModel):
 
 
 class QuestionCreate(QuestionBase):
-    letter: Letter
+    letter_api_id: str
 
 
 class Question(QuestionBase):
-    api_identifier: str
-    letter: Letter
-    responses: list[Response]
+    api_id: str
+    letter: "Letter"
+    responses: list["Response"]
 
     class Config:
         orm_mode = True
 
 
 class LetterBase(BaseModel):
-    group: Group
-
-
-class LetterCreate(LetterBase):
     pass
 
 
+class LetterCreate(LetterBase):
+    group_api_id: str
+
+
 class Letter(LetterBase):
-    api_identifier: str
+    api_id: str
     number: int
-    participants: list[User]
+    participants: list["User"]
+    group: "Group"
 
     class Config:
         orm_mode = True
@@ -64,8 +66,8 @@ class UserCreate(UserBase):
 
 
 class User(UserBase):
-    api_identifier: str
-    groups: list[Group]
+    api_id: str
+    groups: list["Group"]
     # letters: list[Letter]
 
     class Config:
@@ -74,7 +76,7 @@ class User(UserBase):
 
 class GroupBase(BaseModel):
     name: str
-    admin: User
+    admin_api_id: str
 
 
 class GroupCreate(GroupBase):
@@ -82,9 +84,10 @@ class GroupCreate(GroupBase):
 
 
 class Group(GroupBase):
-    api_identifier: str
-    members: list[User]
-    letters: list[Letter]
+    api_id: str
+    admin: "User"
+    members: list["User"]
+    letters: list["Letter"]
 
     class Config:
         orm_mode = True
@@ -92,6 +95,6 @@ class Group(GroupBase):
 
 Response.model_rebuild()
 Question.model_rebuild()
-Letter.model_rebuild()
 User.model_rebuild()
 Group.model_rebuild()
+Letter.model_rebuild()
