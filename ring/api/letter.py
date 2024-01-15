@@ -1,5 +1,5 @@
 from __future__ import annotations
-from fastapi import Depends, HTTPException
+from fastapi import Depends
 from ring.dependencies import get_db
 from typing import TYPE_CHECKING, Sequence
 from ring.crud import letter as letter_crud, api_identifier as api_identifier_crud
@@ -29,6 +29,4 @@ def list_letters(
 @internal.get("/letter/{letter_api_id}", response_model=LetterSchema)
 def read_letter(letter_api_id: str, db: Session = Depends(get_db)) -> Letter:
     db_letter = api_identifier_crud.get_model(db, Letter, api_id=letter_api_id)
-    if db_letter is None:
-        raise HTTPException(status_code=404, detail="User not found")
     return db_letter

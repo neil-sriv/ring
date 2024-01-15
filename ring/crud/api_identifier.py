@@ -1,4 +1,5 @@
 from __future__ import annotations
+from fastapi import HTTPException
 from sqlalchemy.exc import NoResultFound
 from typing import TYPE_CHECKING, Optional, TypeVar
 
@@ -11,9 +12,9 @@ if TYPE_CHECKING:
 APIIdentifiedType = TypeVar("APIIdentifiedType")
 
 
-class APIIdentifierException(Exception):
+class APIIdentifierException(HTTPException):
     def __init__(self, model_cls: type[Base], message: Optional[str] = None):
-        super().__init__(message)
+        super().__init__(404, detail=message)
         self.model_cls = model_cls
 
 

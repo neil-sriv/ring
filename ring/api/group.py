@@ -1,5 +1,5 @@
 from __future__ import annotations
-from fastapi import Depends, HTTPException
+from fastapi import Depends
 from ring.dependencies import get_db
 from typing import TYPE_CHECKING, Sequence
 from ring.crud import group as group_crud, api_identifier as api_identifier_crud
@@ -27,6 +27,4 @@ def list_groups(
 @internal.get("/group/{group_api_id}", response_model=GroupSchema)
 def read_group(group_api_id: str, db: Session = Depends(get_db)) -> Group:
     db_group = api_identifier_crud.get_model(db, Group, api_id=group_api_id)
-    if db_group is None:
-        raise HTTPException(status_code=404, detail="User not found")
     return db_group

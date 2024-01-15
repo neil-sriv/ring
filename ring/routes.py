@@ -7,7 +7,7 @@ internal = APIRouter(
     tags=["internal"],
 )
 
-from ring.api import *
+from ring.api import *  # noqa: E402, F403, F401
 
 
 @router.get("/")
