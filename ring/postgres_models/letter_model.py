@@ -1,7 +1,15 @@
 from __future__ import annotations
 from typing import TYPE_CHECKING
-from sqlalchemy import Column, ForeignKey, Integer, Table
+from sqlalchemy import (
+    Column,
+    Constraint,
+    ForeignKey,
+    Integer,
+    Table,
+    UniqueConstraint,
+)
 from sqlalchemy.orm import relationship, Mapped, mapped_column
+from sqlalchemy.ext.declarative import declared_attr
 from ring.postgres_models.api_identified import APIIdentified
 
 from ring.sqlalchemy_base import Base
@@ -27,7 +35,7 @@ class Letter(Base, APIIdentified):
     API_ID_PREFIX = "lttr"
 
     id: Mapped[int] = mapped_column(primary_key=True, index=True)
-    number: Mapped[int] = mapped_column(unique=True, index=True)
+    number: Mapped[int] = mapped_column()
     api_identifier: Mapped[str] = mapped_column(unique=True, index=True)
 
     participants: Mapped[list["User"]] = relationship(
@@ -39,10 +47,16 @@ class Letter(Base, APIIdentified):
     questions: Mapped[list["Question"]] = relationship(back_populates="letter")
     # responses: Mapped[list["Response"]] = relationship(back_populates="letter")
 
+    @declared_attr  # type: ignore
+    def __table_args__(cls) -> tuple[Constraint]:
+        return (
+            UniqueConstraint("group_id", "number", name="unique_group_letter_number"),
+        )
+
     def __init__(self, group: Group) -> None:
         APIIdentified.__init__(self)
-        self.group = group
         self.number = len(group.letters) + 1
+        self.group = group
         self.participants = group.members
 
     @classmethod
