@@ -1,11 +1,13 @@
-import os
-from ring.postgres_models import User
-from ring.sqlalchemy_base import SessionLocal
+from ring.postgres_models import User, Group, Letter, Question, Response
+from ring.sqlalchemy_base import Base, engine
 
 
 def init_db():
-    db = SessionLocal()
-    db.query(User).exists()
+    # for table in [User, Group, Letter, Question, Response]:
+    # if table.__table__.exists():
+    # table.__table__.drop(bind=engine)
+    # Base.metadata.drop_all(bind=engine)
+    Base.metadata.create_all(bind=engine)
     pass
 
 

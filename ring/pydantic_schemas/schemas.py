@@ -1,4 +1,5 @@
 from __future__ import annotations
+from typing import Optional
 from pydantic import BaseModel
 
 
@@ -20,11 +21,12 @@ class Letter(LetterBase):
 
 
 class UserBase(BaseModel):
-    user_email: str
+    email: str
+    name: Optional[str] = None
 
 
 class UserCreate(UserBase):
-    user_password: str
+    hashed_password: str
 
 
 class User(UserBase):
