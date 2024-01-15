@@ -1,5 +1,5 @@
 from __future__ import annotations
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Sequence
 from fastapi import Depends
 from ring.routes import internal
 from ring.dependencies import get_db
@@ -20,10 +20,10 @@ def create_user(user: UserCreate, db: Session = Depends(get_db)) -> User:
     return user_crud.create_user(db=db, user=user)
 
 
-@internal.get("/users/", response_model=list[UserSchema])
+@internal.get("/users/", response_model=Sequence[UserSchema])
 def list_users(
     skip: int = 0, limit: int = 100, db: Session = Depends(get_db)
-) -> list[User]:
+) -> Sequence[User]:
     users = user_crud.get_users(db, skip=skip, limit=limit)
     return users
 

@@ -35,6 +35,10 @@ class Group(Base, APIIdentified):
         self.members = [admin]
         self.admin = admin
 
+    @classmethod
+    def create(cls, name: str, admin: User) -> Group:
+        return cls(name, admin)
+
     @hybrid_property
     def admin(self) -> User:  # type: ignore
         return self._admin
@@ -45,8 +49,3 @@ class Group(Base, APIIdentified):
             self._admin = admin
         else:
             raise ValueError("Admin must be a member of the group")
-
-    def add_letter(self) -> Letter:
-        letter = Letter.create(self)
-        self.letters.append(letter)
-        return letter
