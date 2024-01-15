@@ -45,3 +45,8 @@ class Group(Base, APIIdentified):
             self._admin = admin
         else:
             raise ValueError("Admin must be a member of the group")
+
+    def add_letter(self) -> Letter:
+        letter = Letter.create(self)
+        self.letters.append(letter)
+        return letter

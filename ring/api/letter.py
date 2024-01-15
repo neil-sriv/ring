@@ -3,8 +3,8 @@ from fastapi import Depends
 from ring.dependencies import get_db
 from typing import TYPE_CHECKING
 from ring.crud import letter as letter_crud
-from ring.pydantic_schemas.schemas import Letter as LetterSchema, LetterCreate, Group
-from ring.api.user import internal
+from ring.pydantic_schemas.schemas import Letter as LetterSchema, LetterCreate
+from ring.routes import internal
 
 if TYPE_CHECKING:
     from sqlalchemy.orm import Session

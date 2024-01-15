@@ -1,20 +1,20 @@
 from __future__ import annotations
 from typing import TYPE_CHECKING, Sequence
-
-from sqlalchemy import select
 from ring.postgres_models import Letter
 from ring.pydantic_schemas.schemas import LetterCreate
+from ring.postgres_models.group_model import Group
+from sqlalchemy import select
 
 if TYPE_CHECKING:
     from sqlalchemy.orm import Session
-    from ring.postgres_models.group_model import Group
+    from ring.postgres_models.user_model import User
 
 
-def get_letters(
-    db: Session, group: Group, skip: int = 0, limit: int = 100
-) -> Sequence[Letter]:
+def get_groups(
+    db: Session, user: User, skip: int = 0, limit: int = 100
+) -> Sequence[Group]:
     return db.scalars(
-        select(Letter).filter(Letter.group == group).offset(skip).limit(limit)
+        select(Group).filter(Group.admin == user).offset(skip).limit(limit)
     ).all()
 
 
