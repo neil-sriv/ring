@@ -44,3 +44,8 @@ class Question(Base, APIIdentified):
         self.letter = letter
         self.question_text = question_text
         # self.participants = []
+
+    @classmethod
+    def create(cls, letter: Letter, question_text: str) -> Question:
+        question = cls(letter, question_text)
+        return question

@@ -43,3 +43,8 @@ class Letter(Base, APIIdentified):
         self.group = group
         self.number = len(group.letters) + 1
         self.participants = group.members
+
+    @classmethod
+    def create(cls, group: Group) -> Letter:
+        letter = cls(group)
+        return letter

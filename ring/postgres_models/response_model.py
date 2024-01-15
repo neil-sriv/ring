@@ -41,3 +41,13 @@ class Response(Base, APIIdentified):
         self.question = question
         self.response_text = response_text
         # self.letter = question.letter
+
+    @classmethod
+    def create(
+        cls,
+        participant: User,
+        question: Question,
+        response_text: str,
+    ) -> Response:
+        response = cls(participant, question, response_text)
+        return response
