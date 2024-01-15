@@ -29,10 +29,11 @@ class Group(Base, APIIdentified):
     )
     letters: Mapped[list["Letter"]] = relationship(back_populates="group")
 
-    def __init__(self, name: str, admin_ids: list[int]) -> None:
+    def __init__(self, name: str, admin: User) -> None:
         APIIdentified.__init__(self)
         self.name = name
-        self.admin_ids = admin_ids
+        self.members = [admin]
+        self.admin = admin
 
     @hybrid_property
     def admin(self) -> User:  # type: ignore
