@@ -13,7 +13,7 @@ class ResponseCreate(ResponseBase):
 
 
 class Response(ResponseBase):
-    api_id: str
+    api_identifier: str
     question: "Question"
     participant: "User"
 
@@ -30,7 +30,7 @@ class QuestionCreate(QuestionBase):
 
 
 class Question(QuestionBase):
-    api_id: str
+    api_identifier: str
     letter: "Letter"
     responses: list["Response"]
 
@@ -47,7 +47,7 @@ class LetterCreate(LetterBase):
 
 
 class Letter(LetterBase):
-    api_id: str
+    api_identifier: str
     number: int
     participants: list["User"]
     group: "Group"
@@ -66,7 +66,7 @@ class UserCreate(UserBase):
 
 
 class User(UserBase):
-    api_id: str
+    api_identifier: str
     groups: list["Group"]
     # letters: list[Letter]
 
@@ -84,7 +84,7 @@ class GroupCreate(GroupBase):
 
 
 class Group(GroupBase):
-    api_id: str
+    api_identifier: str
     admin: "User"
     members: list["User"]
     letters: list["Letter"]
