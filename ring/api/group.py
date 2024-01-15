@@ -12,7 +12,7 @@ if TYPE_CHECKING:
 
 
 @internal.post("/group", response_model=GroupSchema)
-def add_next_letter(group: GroupCreate, db: Session = Depends(get_db)) -> Group:
+def create_group(group: GroupCreate, db: Session = Depends(get_db)) -> Group:
     return group_crud.create_group(db=db, group=group)
 
 
