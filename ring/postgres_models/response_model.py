@@ -27,5 +27,17 @@ class Response(Base, APIIdentified):
 
     response_text: Mapped[str] = mapped_column(Text)
 
-    letter_id: Mapped[int] = mapped_column(ForeignKey("letter.id"))
-    letter: Mapped["Letter"] = relationship(back_populates="responses")
+    # letter_id: Mapped[int] = mapped_column(ForeignKey("letter.id"))
+    # letter: Mapped["Letter"] = relationship(back_populates="responses")
+
+    def __init__(
+        self,
+        participant: User,
+        question: Question,
+        response_text: str,
+    ) -> None:
+        APIIdentified.__init__(self)
+        self.participant = participant
+        self.question = question
+        self.response_text = response_text
+        # self.letter = question.letter

@@ -36,4 +36,10 @@ class Letter(Base, APIIdentified):
     group: Mapped["Group"] = relationship(back_populates="letters")
 
     questions: Mapped[list["Question"]] = relationship(back_populates="letter")
-    responses: Mapped[list["Response"]] = relationship(back_populates="letter")
+    # responses: Mapped[list["Response"]] = relationship(back_populates="letter")
+
+    def __init__(self, group: Group) -> None:
+        APIIdentified.__init__(self)
+        self.group = group
+        self.number = len(group.letters) + 1
+        self.participants = group.members

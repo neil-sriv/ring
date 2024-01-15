@@ -27,9 +27,9 @@ class Question(Base, APIIdentified):
     id: Mapped[int] = mapped_column(primary_key=True, index=True)
     api_identifier: Mapped[str] = mapped_column(unique=True, index=True)
 
-    participants: Mapped[list["User"]] = relationship(
-        secondary=question_to_user_association
-    )
+    # participants: Mapped[list["User"]] = relationship(
+    #     secondary=question_to_user_association
+    # )
     responses: Mapped[list["Response"]] = relationship(
         back_populates="question",
     )
@@ -38,3 +38,9 @@ class Question(Base, APIIdentified):
 
     letter_id: Mapped[int] = mapped_column(ForeignKey("letter.id"))
     letter: Mapped["Letter"] = relationship(back_populates="questions")
+
+    def __init__(self, letter: Letter, question_text: str) -> None:
+        APIIdentified.__init__(self)
+        self.letter = letter
+        self.question_text = question_text
+        # self.participants = []

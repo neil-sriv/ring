@@ -3,12 +3,46 @@ from typing import Optional
 from pydantic import BaseModel
 
 
-class LetterBase(BaseModel):
+class ResponseBase(BaseModel):
+    response_text: str
+    question: Question
+    participant: User
+
+
+class ResponseCreate(ResponseBase):
     pass
 
 
-class LetterCreate(LetterBase):
+class Response(ResponseBase):
+    api_identifier: str
+
+    class Config:
+        orm_mode = True
+
+
+class QuestionBase(BaseModel):
+    question_text: str
+
+
+class QuestionCreate(QuestionBase):
+    letter: Letter
+
+
+class Question(QuestionBase):
+    api_identifier: str
+    letter: Letter
+    responses: list[Response]
+
+    class Config:
+        orm_mode = True
+
+
+class LetterBase(BaseModel):
     group: Group
+
+
+class LetterCreate(LetterBase):
+    pass
 
 
 class Letter(LetterBase):
@@ -39,22 +73,25 @@ class User(UserBase):
 
 
 class GroupBase(BaseModel):
-    pass
+    name: str
+    admin: User
 
 
 class GroupCreate(GroupBase):
-    members: list[User]
+    pass
 
 
 class Group(GroupBase):
     api_identifier: str
-    name: str
+    members: list[User]
     letters: list[Letter]
 
     class Config:
         orm_mode = True
 
 
+Response.model_rebuild()
+Question.model_rebuild()
 Letter.model_rebuild()
 User.model_rebuild()
 Group.model_rebuild()
