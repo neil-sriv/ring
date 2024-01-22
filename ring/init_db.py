@@ -2,6 +2,8 @@ from ring.sqlalchemy_base import Base, engine
 
 
 def init_db():
+    import ring.postgres_models
+
     Base.metadata.create_all(bind=engine)
     pass
 

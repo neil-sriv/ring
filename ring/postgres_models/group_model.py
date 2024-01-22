@@ -11,6 +11,7 @@ from ring.postgres_models.user_group_assocation import user_group_association
 if TYPE_CHECKING:
     from ring.postgres_models.letter_model import Letter
     from ring.postgres_models.user_model import User
+    from ring.postgres_models.schedule_model import Schedule
 
 
 class Group(Base, APIIdentified):
@@ -28,6 +29,9 @@ class Group(Base, APIIdentified):
         secondary=user_group_association, back_populates="groups"
     )
     letters: Mapped[list["Letter"]] = relationship(back_populates="group")
+    schedule: Mapped["Schedule"] = relationship(
+        back_populates="group", cascade="all, delete-orphan"
+    )
 
     def __init__(self, name: str, admin: User) -> None:
         APIIdentified.__init__(self)

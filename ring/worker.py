@@ -4,6 +4,8 @@ from celery import Celery
 import datetime
 from celery.schedules import crontab
 
+from ring.postgres_models.schedule_model import Schedule
+
 
 celery = Celery(
     "celery",
@@ -30,19 +32,20 @@ def hello_task():
 
 @celery.task(name="poll_schedule")
 def poll_schedule_task():
-    table_scan = ScheduleModel.scan()
-    possible_groups = set()
-    for schedule_item in table_scan:
-        if (not schedule_item.sent) and (
-            datetime.datetime.now(datetime.UTC) - schedule_item.scheduled_datetime
-        ) <= datetime.timedelta(hours=1):
-            possible_groups.add(schedule_item.group_id)
-    for group_id in possible_groups:
-        # email_group(group_id)
-        pass
+    print("polling schedule")
+    # table_scan = ScheduleModel.scan()
+    # possible_groups = set()
+    # for schedule_item in table_scan:
+    #     if (not schedule_item.sent) and (
+    #         datetime.datetime.now(datetime.UTC) - schedule_item.scheduled_datetime
+    #     ) <= datetime.timedelta(hours=1):
+    #         possible_groups.add(schedule_item.group_id)
+    # for group_id in possible_groups:
+    # email_group(group_id)
+    # pass
     return {
         "status": "success",
-        "message": f"Group ids emailed: {possible_groups}",
+        "message": f"Group ids emailed:",
         "task_name": "poll_schedule",
     }
 
