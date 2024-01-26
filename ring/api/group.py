@@ -5,10 +5,10 @@ from typing import TYPE_CHECKING, Sequence
 from ring.crud import group as group_crud, api_identifier as api_identifier_crud
 from ring.pydantic_schemas import GroupLinked as GroupSchema, GroupCreate
 from ring.routes import internal
+from ring.postgres_models.group_model import Group
 
 if TYPE_CHECKING:
     from sqlalchemy.orm import Session
-    from ring.postgres_models.group_model import Group
 
 
 @internal.post("/group", response_model=GroupSchema)

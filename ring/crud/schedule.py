@@ -15,14 +15,3 @@ def get_schedule_for_group(db: Session, group_api_id: str) -> Schedule:
     if not group:
         raise Exception("User not found")
     return group.schedule
-
-
-# def create_schedule(db: Session, group: GroupCreate) -> Group:
-#     admin_user = api_identifier_crud.get_model(db, User, api_id=group.admin_api_id)
-#     if not admin_user:
-#         raise Exception("Admin user not found")
-#     db_letter = Group.create(group.name, admin_user)
-#     db.add(db_letter)
-#     db.commit()
-#     db.refresh(db_letter)
-#     return db_letter

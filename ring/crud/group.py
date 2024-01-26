@@ -30,7 +30,7 @@ def create_group(db: Session, group: GroupCreate) -> Group:
     admin_user = api_identifier_crud.get_model(
         db,
         User,
-        api_id=group.admin.api_identifier,
+        api_id=group.admin_api_identifier,
     )
     if not admin_user:
         raise Exception("Admin user not found")

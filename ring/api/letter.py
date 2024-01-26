@@ -4,11 +4,11 @@ from ring.dependencies import get_db
 from typing import TYPE_CHECKING, Sequence
 from ring.crud import letter as letter_crud, api_identifier as api_identifier_crud
 from ring.pydantic_schemas import LetterLinked as LetterSchema, LetterCreate
+from ring.postgres_models.letter_model import Letter
 from ring.routes import internal
 
 if TYPE_CHECKING:
     from sqlalchemy.orm import Session
-    from ring.postgres_models.letter_model import Letter
 
 
 @internal.post("/letter", response_model=LetterSchema)

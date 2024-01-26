@@ -25,7 +25,7 @@ def create_letter(db: Session, letter: LetterCreate) -> Letter:
     group = api_identifier_crud.get_model(
         db,
         Group,
-        api_id=letter.group.api_identifier,
+        api_id=letter.group_api_identifier,
     )
     if not group:
         raise Exception("Group not found")

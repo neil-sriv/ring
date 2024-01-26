@@ -28,11 +28,10 @@ class UserUnlinked(User):
 
 class GroupBase(BaseModel):
     name: str
-    admin: "UserUnlinked"
 
 
 class GroupCreate(GroupBase):
-    pass
+    admin_api_identifier: str
 
 
 class Group(GroupBase):
@@ -56,7 +55,7 @@ class ScheduleBase(BaseModel):
 
 
 class ScheduleCreate(ScheduleBase):
-    group: "GroupUnlinked"
+    group_api_identifier: str
 
 
 class Schedule(ScheduleBase):
@@ -78,7 +77,7 @@ class LetterBase(BaseModel):
 
 
 class LetterCreate(LetterBase):
-    group: "GroupUnlinked"
+    group_api_identifier: str
 
 
 class Letter(LetterBase):
@@ -103,7 +102,7 @@ class QuestionBase(BaseModel):
 
 
 class QuestionCreate(QuestionBase):
-    letter: "LetterUnlinked"
+    letter_api_identifier: str
 
 
 class Question(QuestionBase):
@@ -126,8 +125,8 @@ class ResponseBase(BaseModel):
 
 
 class ResponseCreate(ResponseBase):
-    question: "QuestionUnlinked"
-    participant: "UserUnlinked"
+    question_api_identifier: str
+    participant_api_identifier: str
 
 
 class Response(ResponseBase):

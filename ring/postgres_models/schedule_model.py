@@ -31,20 +31,31 @@ class Task(Base):
         index=True,
     )
     schedule: Mapped["Schedule"] = relationship(back_populates="task")
-    type: Mapped[str] = mapped_column(index=True)
-    status: Mapped[str] = mapped_column(index=True)
+    type: Mapped[str] = mapped_column(index=True, nullable=False)
+    status: Mapped[str] = mapped_column(index=True, nullable=False)
 
     __mapper_args__ = {
         "polymorphic_on": type,
         "polymorphic_identity": TaskType.GENERIC,
     }
 
+    @classmethod
+    def create(cls, schedule: Schedule) -> Task:
+        return cls(schedule=schedule)
+
 
 class Schedule(Base):
     __tablename__ = "schedule"
 
     id: Mapped[int] = mapped_column(primary_key=True, index=True)
-    group_id: Mapped[int] = mapped_column(ForeignKey("group.id"))
+    group_id: Mapped[int] = mapped_column(
+        ForeignKey("group.id"),
+        nullable=False,
+    )
     group: Mapped["Group"] = relationship(back_populates="schedule")
     task: Mapped["Task"] = relationship(back_populates="schedule")
     execute_at: Mapped[datetime] = mapped_column(index=True)
+
+    @classmethod
+    def create(cls, group: Group) -> Schedule:
+        return cls(group=group)
