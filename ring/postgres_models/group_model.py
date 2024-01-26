@@ -36,7 +36,7 @@ class Group(Base, APIIdentified):
 
     def __init__(self, name: str, admin: User) -> None:
         APIIdentified.__init__(self)
-        self.schedule = Schedule()
+        self.schedule = Schedule.create(self)
         self.name = name
         self.members = [admin]
         self.admin = admin
