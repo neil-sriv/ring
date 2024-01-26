@@ -14,8 +14,6 @@ def get_groups(
     db: Session, user_api_id: str, skip: int = 0, limit: int = 100
 ) -> Sequence[Group]:
     user = api_identifier_crud.get_model(db, User, api_id=user_api_id)
-    if not user:
-        raise Exception("User not found")
     return db.scalars(
         select(Group)
         .filter(
@@ -32,8 +30,6 @@ def create_group(db: Session, group: GroupCreate) -> Group:
         User,
         api_id=group.admin_api_identifier,
     )
-    if not admin_user:
-        raise Exception("Admin user not found")
     db_letter = Group.create(group.name, admin_user)
     db.add(db_letter)
     db.commit()
