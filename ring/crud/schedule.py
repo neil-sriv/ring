@@ -2,7 +2,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, Sequence
 from ring.crud import api_identifier as api_identifier_crud
 from ring.postgres_models.schedule_model import Schedule
-from ring.pydantic_schemas.schemas import GroupCreate
+from ring.pydantic_schemas import GroupCreate
 from ring.postgres_models.group_model import Group
 from sqlalchemy import select
 

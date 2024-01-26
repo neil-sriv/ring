@@ -1,7 +1,7 @@
 from __future__ import annotations
 from typing import TYPE_CHECKING, Sequence
 from ring.crud import api_identifier as api_identifier_crud
-from ring.pydantic_schemas.schemas import GroupCreate
+from ring.pydantic_schemas import GroupCreate
 from ring.postgres_models.group_model import Group
 from ring.postgres_models.user_model import User
 from sqlalchemy import select
@@ -30,7 +30,7 @@ def create_group(db: Session, group: GroupCreate) -> Group:
     admin_user = api_identifier_crud.get_model(
         db,
         User,
-        api_id=group.admin_api_id,
+        api_id=group.admin.api_identifier,
     )
     if not admin_user:
         raise Exception("Admin user not found")

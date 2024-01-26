@@ -5,7 +5,7 @@ from ring.routes import internal
 from ring.dependencies import get_db
 from fastapi import HTTPException
 from ring.crud import user as user_crud, api_identifier as api_identifier_crud
-from ring.pydantic_schemas.schemas import User as UserSchema, UserCreate
+from ring.pydantic_schemas import UserLinked as UserSchema, UserCreate
 from ring.postgres_models.user_model import User
 
 if TYPE_CHECKING:

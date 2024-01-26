@@ -2,13 +2,12 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, Sequence
 
 from sqlalchemy import select
-from ring.postgres_models import Letter
-from ring.pydantic_schemas.schemas import LetterCreate
+from ring.postgres_models import Letter, Group
 from ring.crud import api_identifier as api_identifier_crud
 
 if TYPE_CHECKING:
     from sqlalchemy.orm import Session
-    from ring.postgres_models.group_model import Group
+    from ring.pydantic_schemas import LetterCreate
 
 
 def get_letters(
@@ -23,7 +22,11 @@ def get_letters(
 
 
 def create_letter(db: Session, letter: LetterCreate) -> Letter:
-    group = api_identifier_crud.get_model(db, Group, api_id=letter.group_api_id)
+    group = api_identifier_crud.get_model(
+        db,
+        Group,
+        api_id=letter.group.api_identifier,
+    )
     if not group:
         raise Exception("Group not found")
     db_letter = Letter.create(group)

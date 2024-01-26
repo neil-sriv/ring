@@ -3,7 +3,7 @@ from fastapi import Depends
 from ring.dependencies import get_db
 from typing import TYPE_CHECKING, Sequence
 from ring.crud import group as group_crud, api_identifier as api_identifier_crud
-from ring.pydantic_schemas.schemas import Group as GroupSchema, GroupCreate
+from ring.pydantic_schemas import GroupLinked as GroupSchema, GroupCreate
 from ring.routes import internal
 
 if TYPE_CHECKING:

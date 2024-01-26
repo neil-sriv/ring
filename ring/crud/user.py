@@ -3,7 +3,7 @@ from typing import TYPE_CHECKING, Optional, Sequence
 
 from sqlalchemy import select
 from ring.postgres_models import User
-from ring.pydantic_schemas.schemas import UserCreate
+from ring.pydantic_schemas import UserCreate
 
 if TYPE_CHECKING:
     from sqlalchemy.orm import Session

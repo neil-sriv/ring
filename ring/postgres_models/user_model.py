@@ -29,12 +29,22 @@ class User(Base, APIIdentified):
         back_populates="participant",
     )
 
-    def __init__(self, email: str, name: Optional[str], hashed_password: str) -> None:
+    def __init__(
+        self,
+        email: str,
+        name: Optional[str],
+        hashed_password: str,
+    ) -> None:
         APIIdentified.__init__(self)
         self.email = email
         self.name = name
         self.hashed_password = hashed_password
 
     @classmethod
-    def create(cls, email: str, name: Optional[str], hashed_password: str) -> User:
+    def create(
+        cls,
+        email: str,
+        name: Optional[str],
+        hashed_password: str,
+    ) -> User:
         return cls(email, name, hashed_password)
