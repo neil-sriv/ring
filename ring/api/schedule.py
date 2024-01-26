@@ -6,7 +6,6 @@ from ring.crud import (
     schedule as schedule_crud,
 )
 from ring.pydantic_schemas import ScheduleLinked as ScheduleSchema
-from ring.pydantic_schemas.schedule import ScheduleCreate
 from ring.routes import internal
 
 if TYPE_CHECKING:
@@ -14,12 +13,12 @@ if TYPE_CHECKING:
     from ring.postgres_models import Schedule
 
 
-@internal.post(
+@internal.get(
     "/schedule/{group_api_id}",
     response_model=ScheduleSchema,
 )
-def add_schedule_to_group(
-    schedule: ScheduleCreate,
+def get_schedule_for_group(
+    group_api_id: str,
     db: Session = Depends(get_db),
 ) -> Schedule:
-    return schedule_crud.create_schedule_for_group(db, schedule)
+    return schedule_crud.get_schedule_for_group(db, group_api_id)
