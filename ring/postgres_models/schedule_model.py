@@ -1,7 +1,7 @@
 from __future__ import annotations
 from enum import StrEnum
 from typing import TYPE_CHECKING
-from sqlalchemy import ForeignKey
+from sqlalchemy import ForeignKey, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from datetime import datetime
 
@@ -55,6 +55,8 @@ class Schedule(Base):
     )
     group: Mapped["Group"] = relationship(back_populates="schedule")
     tasks: Mapped[list["Task"]] = relationship(back_populates="schedule")
+
+    __table_args__ = (UniqueConstraint("group_id", name="unique_group_schedule"),)
 
     @classmethod
     def create(cls, group: Group) -> Schedule:

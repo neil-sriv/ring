@@ -7,11 +7,12 @@ from ring.postgres_models.api_identified import APIIdentified
 
 from ring.sqlalchemy_base import Base
 from ring.postgres_models.user_group_assocation import user_group_association
+from ring.postgres_models.schedule_model import Schedule
+
 
 if TYPE_CHECKING:
     from ring.postgres_models.letter_model import Letter
     from ring.postgres_models.user_model import User
-    from ring.postgres_models.schedule_model import Schedule
 
 
 class Group(Base, APIIdentified):
@@ -35,6 +36,7 @@ class Group(Base, APIIdentified):
 
     def __init__(self, name: str, admin: User) -> None:
         APIIdentified.__init__(self)
+        self.schedule = Schedule()
         self.name = name
         self.members = [admin]
         self.admin = admin
