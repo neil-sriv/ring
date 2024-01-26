@@ -30,9 +30,10 @@ class Task(Base):
         ForeignKey("schedule.id"),
         index=True,
     )
-    schedule: Mapped["Schedule"] = relationship(back_populates="task")
+    schedule: Mapped["Schedule"] = relationship(back_populates="tasks")
     type: Mapped[str] = mapped_column(index=True, nullable=False)
     status: Mapped[str] = mapped_column(index=True, nullable=False)
+    execute_at: Mapped[datetime] = mapped_column(index=True)
 
     __mapper_args__ = {
         "polymorphic_on": type,
@@ -53,9 +54,10 @@ class Schedule(Base):
         nullable=False,
     )
     group: Mapped["Group"] = relationship(back_populates="schedule")
-    task: Mapped["Task"] = relationship(back_populates="schedule")
-    execute_at: Mapped[datetime] = mapped_column(index=True)
+    tasks: Mapped[list["Task"]] = relationship(back_populates="schedule")
 
     @classmethod
     def create(cls, group: Group) -> Schedule:
+        if group.schedule:
+            raise ValueError("Group already has a schedule")
         return cls(group=group)
