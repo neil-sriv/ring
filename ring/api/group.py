@@ -6,7 +6,8 @@ from ring.crud import (
     group as group_crud,
     api_identifier as api_identifier_crud,
 )
-from ring.pydantic_schemas import GroupLinked as GroupSchema, GroupCreate
+from ring.pydantic_schemas import GroupLinked as GroupSchema
+from ring.pydantic_schemas.group import GroupCreate
 from ring.routes import internal
 from ring.postgres_models.group_model import Group
 

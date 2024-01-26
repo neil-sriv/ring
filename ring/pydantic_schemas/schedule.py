@@ -1,9 +1,5 @@
 from __future__ import annotations
-from typing import TYPE_CHECKING
 from pydantic import BaseModel, ConfigDict
-
-if TYPE_CHECKING:
-    from ring.pydantic_schemas.group import GroupUnlinked
 
 
 class ScheduleBase(BaseModel):
@@ -11,17 +7,11 @@ class ScheduleBase(BaseModel):
 
 
 class ScheduleCreate(ScheduleBase):
-    group: "GroupUnlinked"
+    group_api_identifier: str
 
 
 class Schedule(ScheduleBase):
     model_config = ConfigDict(from_attributes=True)
-
-    api_identifier: str
-
-
-class ScheduleLinked(Schedule):
-    group: "GroupUnlinked"
 
 
 class ScheduleUnlinked(Schedule):

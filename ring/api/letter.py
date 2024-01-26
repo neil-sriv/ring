@@ -3,7 +3,8 @@ from fastapi import Depends
 from ring.dependencies import get_db
 from typing import TYPE_CHECKING, Sequence
 from ring.crud import letter as letter_crud, api_identifier as api_identifier_crud
-from ring.pydantic_schemas import LetterLinked as LetterSchema, LetterCreate
+from ring.pydantic_schemas import LetterLinked as LetterSchema
+from ring.pydantic_schemas.letter import LetterCreate
 from ring.postgres_models.letter_model import Letter
 from ring.routes import internal
 

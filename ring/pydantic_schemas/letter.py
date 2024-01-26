@@ -1,12 +1,5 @@
 from __future__ import annotations
-from typing import TYPE_CHECKING
 from pydantic import BaseModel, ConfigDict
-
-
-if TYPE_CHECKING:
-    from ring.pydantic_schemas.user import UserUnlinked
-    from ring.pydantic_schemas.group import GroupUnlinked
-    from ring.pydantic_schemas.question import QuestionUnlinked
 
 
 class LetterBase(BaseModel):
@@ -14,7 +7,7 @@ class LetterBase(BaseModel):
 
 
 class LetterCreate(LetterBase):
-    group: "GroupUnlinked"
+    group_api_identifier: str
 
 
 class Letter(LetterBase):
@@ -22,12 +15,6 @@ class Letter(LetterBase):
 
     api_identifier: str
     number: int
-
-
-class LetterLinked(Letter):
-    participants: list["UserUnlinked"]
-    group: "GroupUnlinked"
-    questions: list["QuestionUnlinked"]
 
 
 class LetterUnlinked(Letter):

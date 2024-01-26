@@ -4,10 +4,10 @@ from typing import TYPE_CHECKING, Sequence
 from sqlalchemy import select
 from ring.postgres_models import Letter, Group
 from ring.crud import api_identifier as api_identifier_crud
+from ring.pydantic_schemas.letter import LetterCreate
 
 if TYPE_CHECKING:
     from sqlalchemy.orm import Session
-    from ring.pydantic_schemas import LetterCreate
 
 
 def get_letters(
