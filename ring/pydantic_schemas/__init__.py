@@ -1,5 +1,5 @@
 from __future__ import annotations
-from .schemas import *
+from .linked_schemas import *
 
 GroupLinked.model_rebuild()
 LetterLinked.model_rebuild()

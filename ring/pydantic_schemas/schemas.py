@@ -1,4 +1,3 @@
-from typing import Optional
 from pydantic import BaseModel, ConfigDict
 from datetime import datetime
 
@@ -16,11 +15,6 @@ class User(UserBase):
     model_config = ConfigDict(from_attributes=True)
 
     api_identifier: str
-
-
-class UserLinked(User):
-    groups: list["GroupUnlinked"]
-    responses: list["ResponseUnlinked"]
 
 
 class UserUnlinked(User):
@@ -41,12 +35,6 @@ class Group(GroupBase):
     api_identifier: str
 
 
-class GroupLinked(Group):
-    members: list["UserUnlinked"]
-    letters: list["LetterUnlinked"]
-    schedule: Optional["ScheduleUnlinked"]
-
-
 class GroupUnlinked(Group):
     pass
 
@@ -61,11 +49,6 @@ class ScheduleCreate(ScheduleBase):
 
 class Schedule(ScheduleBase):
     model_config = ConfigDict(from_attributes=True)
-
-
-class ScheduleLinked(Schedule):
-    group: "GroupUnlinked"
-    tasks: list["TaskUnlinked"]
 
 
 class ScheduleUnlinked(Schedule):
@@ -88,10 +71,6 @@ class Task(TaskBase):
     execute_at: datetime
 
 
-class TaskLinked(Task):
-    schedule: "ScheduleUnlinked"
-
-
 class TaskUnlinked(Task):
     pass
 
@@ -109,12 +88,6 @@ class Letter(LetterBase):
 
     api_identifier: str
     number: int
-
-
-class LetterLinked(Letter):
-    participants: list["UserUnlinked"]
-    group: "GroupUnlinked"
-    questions: list["QuestionUnlinked"]
 
 
 class LetterUnlinked(Letter):
@@ -135,11 +108,6 @@ class Question(QuestionBase):
     api_identifier: str
 
 
-class QuestionLinked(Question):
-    letter: "LetterUnlinked"
-    responses: list["ResponseUnlinked"]
-
-
 class QuestionUnlinked(Question):
     pass
 
@@ -157,11 +125,6 @@ class Response(ResponseBase):
     model_config = ConfigDict(from_attributes=True)
 
     api_identifier: str
-
-
-class ResponseLinked(Response):
-    question: "QuestionUnlinked"
-    participant: "UserUnlinked"
 
 
 class ResponseUnlinked(Response):
