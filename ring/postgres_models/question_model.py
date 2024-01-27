@@ -1,6 +1,6 @@
 from __future__ import annotations
 from typing import TYPE_CHECKING
-from sqlalchemy import Column, ForeignKey, String, Table, Text
+from sqlalchemy import Column, ForeignKey, Integer, Table, Text
 from sqlalchemy.orm import relationship, Mapped, mapped_column
 from ring.postgres_models.api_identified import APIIdentified
 
@@ -15,8 +15,8 @@ if TYPE_CHECKING:
 question_to_user_association = Table(
     "question_to_user_association",
     Base.metadata,
-    Column("question_id", String, ForeignKey("question.id")),
-    Column("user_id", String, ForeignKey("user.id")),
+    Column("question_id", Integer, ForeignKey("question.id")),
+    Column("user_id", Integer, ForeignKey("user.id")),
 )
 
 

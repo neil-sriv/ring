@@ -27,4 +27,6 @@ dependencies = [
     "SQLAlchemy ~= 2.0",
     "pgcli ~= 4.0",
     "ipython ~= 8.20",
+    "alembic ~= 1.13",
+    "psycopg2-binary ~= 2.9",
 ]

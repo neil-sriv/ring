@@ -4,6 +4,8 @@
 #
 #    pip-compile --output-file=ring/requirements.txt pyproject.toml
 #
+alembic==1.13.1
+    # via ring (pyproject.toml)
 amqp==5.2.0
     # via kombu
 annotated-types==0.6.0
@@ -34,7 +36,9 @@ certifi==2023.11.17
     #   httpcore
     #   httpx
 cli-helpers[styles]==2.3.0
-    # via pgcli
+    # via
+    #   cli-helpers
+    #   pgcli
 click==8.1.7
     # via
     #   celery
@@ -64,9 +68,13 @@ email-validator==2.1.0.post1
 executing==2.0.1
     # via stack-data
 fastapi[all]==0.104.1
-    # via ring (pyproject.toml)
+    # via
+    #   fastapi
+    #   ring (pyproject.toml)
 flower==2.0.1
     # via ring (pyproject.toml)
+greenlet==3.0.3
+    # via sqlalchemy
 h11==0.14.0
     # via
     #   httpcore
@@ -98,8 +106,12 @@ jmespath==1.0.1
     #   botocore
 kombu==5.3.4
     # via celery
+mako==1.3.0
+    # via alembic
 markupsafe==2.1.3
-    # via jinja2
+    # via
+    #   jinja2
+    #   mako
 matplotlib-inline==0.1.6
     # via ipython
 orjson==3.9.10
@@ -129,6 +141,8 @@ psycopg==3.1.17
     # via
     #   pgcli
     #   pgspecial
+psycopg2-binary==2.9.9
+    # via ring (pyproject.toml)
 ptyprocess==0.7.0
     # via pexpect
 pure-eval==0.2.2
@@ -190,7 +204,9 @@ sniffio==1.3.0
     #   anyio
     #   httpx
 sqlalchemy==2.0.25
-    # via ring (pyproject.toml)
+    # via
+    #   alembic
+    #   ring (pyproject.toml)
 sqlparse==0.4.4
     # via
     #   pgcli
@@ -200,7 +216,9 @@ stack-data==0.6.3
 starlette==0.27.0
     # via fastapi
 tabulate[widechars]==0.9.0
-    # via cli-helpers
+    # via
+    #   cli-helpers
+    #   tabulate
 time-machine==2.13.0
     # via pendulum
 tornado==6.4
@@ -211,6 +229,7 @@ traitlets==5.14.1
     #   matplotlib-inline
 typing-extensions==4.9.0
     # via
+    #   alembic
     #   fastapi
     #   psycopg
     #   pydantic
@@ -225,7 +244,9 @@ ujson==5.9.0
 urllib3==2.0.7
     # via botocore
 uvicorn[standard]==0.24.0.post1
-    # via fastapi
+    # via
+    #   fastapi
+    #   uvicorn
 uvloop==0.19.0
     # via uvicorn
 vine==5.1.0
