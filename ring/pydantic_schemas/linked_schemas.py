@@ -5,7 +5,7 @@ from ring.pydantic_schemas.user import User, UserUnlinked
 from ring.pydantic_schemas.group import Group, GroupUnlinked
 from ring.pydantic_schemas.letter import Letter, LetterUnlinked
 from ring.pydantic_schemas.question import Question, QuestionUnlinked
-from ring.pydantic_schemas.response import Response, ResponseUnlinked
+from ring.pydantic_schemas.response import ResponseUnlinked
 
 
 class UserLinked(User):

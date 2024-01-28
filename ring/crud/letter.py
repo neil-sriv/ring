@@ -5,7 +5,6 @@ from sqlalchemy import select
 from ring.postgres_models import Letter, Group
 from ring.crud import api_identifier as api_identifier_crud
 from ring.postgres_models.question_model import Question
-from ring.pydantic_schemas.letter import LetterCreate
 
 if TYPE_CHECKING:
     from sqlalchemy.orm import Session
@@ -20,11 +19,11 @@ def get_letters(
     ).all()
 
 
-def create_letter(db: Session, letter: LetterCreate) -> Letter:
+def create_letter(db: Session, group_api_id: str) -> Letter:
     group = api_identifier_crud.get_model(
         db,
         Group,
-        api_id=letter.group_api_identifier,
+        api_id=group_api_id,
     )
     db_letter = Letter.create(group)
     db.add(db_letter)

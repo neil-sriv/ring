@@ -4,7 +4,6 @@ from typing import TYPE_CHECKING, Sequence
 from ring.crud import api_identifier as api_identifier_crud, schedule as schedule_crud
 from ring.postgres_models.letter_model import Letter
 from ring.postgres_models.task_model import TaskType
-from ring.pydantic_schemas.group import GroupCreate
 from ring.postgres_models.group_model import Group
 from ring.postgres_models.user_model import User
 from sqlalchemy import select
@@ -27,13 +26,13 @@ def get_groups(
     ).all()
 
 
-def create_group(db: Session, group: GroupCreate) -> Group:
+def create_group(db: Session, admin_api_id: str, name: str) -> Group:
     admin_user = api_identifier_crud.get_model(
         db,
         User,
-        api_id=group.admin_api_identifier,
+        api_id=admin_api_id,
     )
-    db_letter = Group.create(group.name, admin_user)
+    db_letter = Group.create(name, admin_user)
     db.add(db_letter)
     return db_letter
 

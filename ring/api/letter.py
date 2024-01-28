@@ -18,9 +18,12 @@ def add_next_letter(
     letter: LetterCreate,
     db: Session = Depends(get_db),
 ) -> Letter:
-    letter = letter_crud.create_letter(db=db, letter=letter)
+    db_letter = letter_crud.create_letter(
+        db=db,
+        group_api_id=letter.group_api_identifier,
+    )
     db.commit()
-    return letter
+    return db_letter
 
 
 @internal.get("/letters/", response_model=Sequence[LetterSchema])

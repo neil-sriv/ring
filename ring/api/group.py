@@ -21,9 +21,11 @@ def create_group(
     group: GroupCreate,
     db: Session = Depends(get_db),
 ) -> Group:
-    group = group_crud.create_group(db=db, group=group)
+    db_group = group_crud.create_group(
+        db=db, admin_api_id=group.admin_api_identifier, name=group.name
+    )
     db.commit()
-    return group
+    return db_group
 
 
 @internal.get("/groups/", response_model=Sequence[GroupSchema])
