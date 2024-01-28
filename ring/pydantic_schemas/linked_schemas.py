@@ -39,6 +39,6 @@ class QuestionLinked(Question):
     responses: list["ResponseUnlinked"]
 
 
-class ResponseLinked(Response):
-    question: "QuestionUnlinked"
-    participant: "UserUnlinked"
+# class ResponseLinked(Response):
+#     question: "QuestionUnlinked"
+#     participant: "UserUnlinked"
