@@ -29,4 +29,5 @@ dependencies = [
     "ipython ~= 8.20",
     "alembic ~= 1.13",
     "psycopg2-binary ~= 2.9",
+    "celery ~= 5.3",
 ]

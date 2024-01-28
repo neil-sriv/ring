@@ -30,7 +30,9 @@ botocore==1.34.14
 build==1.0.3
     # via pip-tools
 celery==5.3.6
-    # via flower
+    # via
+    #   flower
+    #   ring (pyproject.toml)
 certifi==2023.11.17
     # via
     #   httpcore

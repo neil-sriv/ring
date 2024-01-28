@@ -1,7 +1,8 @@
+# type: ignore
 import os
+from typing import Any
 
 from celery import Celery
-import datetime
 from celery.schedules import crontab
 
 from ring.postgres_models.schedule_model import Schedule
@@ -18,8 +19,8 @@ celery = Celery(
 
 
 @celery.on_after_configure.connect
-def setup_periodic_tasks(sender, **kwargs):
-    # sender.add_periodic_task(10.0, hello_task.s(), name="add every 10")
+def setup_periodic_tasks(sender: Any, **kwargs: Any):
+    sender.add_periodic_task(10.0, hello_task.s(), name="add every 10")
     sender.add_periodic_task(
         crontab(minute="*/1"), poll_schedule_task.s(), name="poll_schedule"
     )
