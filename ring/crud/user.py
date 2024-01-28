@@ -17,9 +17,7 @@ def get_users(db: Session, skip: int = 0, limit: int = 100) -> Sequence[User]:
     return db.scalars(select(User).offset(skip).limit(limit)).all()
 
 
-def create_user(db: Session, user: UserCreate) -> User:
-    db_user = User.create(user.email, user.name, user.hashed_password)
+def create_user(db: Session, email: str, name: str, hashed_password: str) -> User:
+    db_user = User.create(email, name, hashed_password)
     db.add(db_user)
-    db.commit()
-    db.refresh(db_user)
     return db_user

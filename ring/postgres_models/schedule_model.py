@@ -1,9 +1,8 @@
 from __future__ import annotations
-from datetime import datetime
 from typing import TYPE_CHECKING
 from sqlalchemy import ForeignKey, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column, relationship
-from ring.postgres_models.task_model import Task, TaskType
+from ring.postgres_models.task_model import Task
 
 from ring.sqlalchemy_base import Base
 
@@ -34,12 +33,3 @@ class Schedule(Base):
         if group.schedule:
             raise ValueError("Group already has a schedule")
         return cls(group=group)
-
-    def register_task(
-        self,
-        task_type: TaskType,
-        execute_at: datetime,
-        arguments: dict[str, str],
-    ) -> None:
-        task = Task.create(self, task_type, execute_at, arguments)
-        self.tasks.append(task)

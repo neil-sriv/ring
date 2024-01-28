@@ -21,7 +21,9 @@ def create_group(
     group: GroupCreate,
     db: Session = Depends(get_db),
 ) -> Group:
-    return group_crud.create_group(db=db, group=group)
+    group = group_crud.create_group(db=db, group=group)
+    db.commit()
+    return group
 
 
 @internal.get("/groups/", response_model=Sequence[GroupSchema])
@@ -63,6 +65,7 @@ def add_user_to_group(
     group = group_crud.add_member(
         db, group_api_id=group_api_id, user_api_id=user_api_id
     )
+    db.commit()
     return group
 
 
@@ -78,6 +81,7 @@ def remove_user_from_group(
     group = group_crud.remove_member(
         db, group_api_id=group_api_id, user_api_id=user_api_id
     )
+    db.commit()
     return group
 
 
@@ -96,4 +100,5 @@ def schedule_send(
         letter_api_id=schedule_param.letter_api_id,
         send_at=schedule_param.send_at,
     )
+    db.commit()
     return group

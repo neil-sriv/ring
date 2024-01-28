@@ -4,6 +4,7 @@ from typing import TYPE_CHECKING, Sequence
 from sqlalchemy import select
 from ring.postgres_models import Letter, Group
 from ring.crud import api_identifier as api_identifier_crud
+from ring.postgres_models.question_model import Question
 from ring.pydantic_schemas.letter import LetterCreate
 
 if TYPE_CHECKING:
@@ -27,6 +28,11 @@ def create_letter(db: Session, letter: LetterCreate) -> Letter:
     )
     db_letter = Letter.create(group)
     db.add(db_letter)
-    db.commit()
-    db.refresh(db_letter)
     return db_letter
+
+
+def add_question(db: Session, letter: Letter, question_text: str) -> Question:
+    question = Question.create(letter, question_text)
+    db.add(question)
+    letter.questions.append(question)
+    return question

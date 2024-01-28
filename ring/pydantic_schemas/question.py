@@ -7,7 +7,7 @@ class QuestionBase(BaseModel):
 
 
 class QuestionCreate(QuestionBase):
-    letter_api_identifier: str
+    pass
 
 
 class Question(QuestionBase):

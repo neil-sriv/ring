@@ -18,7 +18,14 @@ def create_user(user: UserCreate, db: Session = Depends(get_db)) -> User:
     db_user = user_crud.get_user_by_email(db, email=user.email)
     if db_user:
         raise HTTPException(status_code=400, detail="Email already registered")
-    return user_crud.create_user(db=db, user=user)
+    db_user = user_crud.create_user(
+        db=db,
+        name=user.name,
+        email=user.email,
+        hashed_password=user.hashed_password,
+    )
+    db.commit()
+    return db_user
 
 
 @internal.get("/users/", response_model=Sequence[UserSchema])
