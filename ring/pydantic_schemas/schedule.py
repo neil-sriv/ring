@@ -1,5 +1,8 @@
 from __future__ import annotations
+from datetime import datetime
 from pydantic import BaseModel, ConfigDict
+
+from ring.pydantic_schemas.task import TaskUnlinked
 
 
 class ScheduleBase(BaseModel):
@@ -11,4 +14,9 @@ class Schedule(ScheduleBase):
 
 
 class ScheduleUnlinked(Schedule):
-    pass
+    tasks: list["TaskUnlinked"]
+
+
+class ScheduleSendParam(BaseModel):
+    letter_api_id: str
+    send_at: datetime

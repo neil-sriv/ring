@@ -1,5 +1,5 @@
 from typing import Optional
-from ring.pydantic_schemas.task import Task, TaskUnlinked
+from ring.pydantic_schemas.task import TaskUnlinked
 from ring.pydantic_schemas.schedule import Schedule, ScheduleUnlinked
 from ring.pydantic_schemas.user import User, UserUnlinked
 from ring.pydantic_schemas.group import Group, GroupUnlinked
@@ -24,8 +24,8 @@ class ScheduleLinked(Schedule):
     tasks: list["TaskUnlinked"]
 
 
-class TaskLinked(Task):
-    schedule: "ScheduleUnlinked"
+# class TaskLinked(Task):
+#     schedule: "ScheduleUnlinked"
 
 
 class LetterLinked(Letter):

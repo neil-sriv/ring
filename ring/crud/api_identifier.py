@@ -32,3 +32,12 @@ def get_model(
         return db.query(model_cls).filter(model_cls.api_identifier == api_id).one()
     except NoResultFound:
         raise IDNotFoundException(model_cls, api_id)
+
+
+def get_models(
+    db: Session, model_cls: type[APIIdentifiedType], api_ids: list[str]
+) -> list[APIIdentifiedType]:
+    try:
+        return db.query(model_cls).filter(model_cls.api_identifier.in_(api_ids)).all()
+    except NoResultFound:
+        raise IDNotFoundException(model_cls, api_ids)

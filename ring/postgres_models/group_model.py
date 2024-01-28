@@ -1,9 +1,11 @@
 from __future__ import annotations
+from datetime import datetime
 from typing import TYPE_CHECKING
 from sqlalchemy import ForeignKey
 from sqlalchemy.orm import relationship, Mapped, mapped_column
 from sqlalchemy.ext.hybrid import hybrid_property
 from ring.postgres_models.api_identified import APIIdentified
+from ring.postgres_models.task_model import TaskType
 
 from ring.sqlalchemy_base import Base
 from ring.postgres_models.user_group_assocation import user_group_association
@@ -55,3 +57,23 @@ class Group(Base, APIIdentified):
             self._admin = admin
         else:
             raise ValueError("Admin must be a member of the group")
+
+    def get_letter_by_api_id(self, api_id: str) -> Letter:
+        letter = next(
+            filter(
+                lambda letter: letter.api_identifier == api_id,
+                self.letters,
+            )
+        )
+        if not letter:
+            raise ValueError(f"Could not find letter with api_id {api_id}")
+        return letter
+
+    def schedule_send_email(self, letter: Letter, send_at: datetime) -> None:
+        self.schedule.register_task(
+            TaskType.SEND_EMAIL,
+            send_at,
+            {
+                "letter_api_id": letter.api_identifier,
+            },
+        )

@@ -16,6 +16,7 @@ class Task(TaskBase):
     type: str
     status: str
     execute_at: datetime
+    arguments: dict[str, str]
 
 
 class TaskUnlinked(Task):

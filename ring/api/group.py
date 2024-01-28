@@ -8,6 +8,7 @@ from ring.crud import (
 )
 from ring.pydantic_schemas import GroupLinked as GroupSchema
 from ring.pydantic_schemas.group import GroupCreate
+from ring.pydantic_schemas.schedule import ScheduleSendParam
 from ring.routes import internal
 from ring.postgres_models.group_model import Group
 
@@ -48,3 +49,51 @@ def read_group(
 ) -> Group:
     db_group = api_identifier_crud.get_model(db, Group, api_id=group_api_id)
     return db_group
+
+
+@internal.post(
+    "/group/{group_api_id}:add_member/{user_api_id}",
+    response_model=GroupSchema,
+)
+def add_user_to_group(
+    group_api_id: str,
+    user_api_id: str,
+    db: Session = Depends(get_db),
+) -> Group:
+    group = group_crud.add_member(
+        db, group_api_id=group_api_id, user_api_id=user_api_id
+    )
+    return group
+
+
+@internal.post(
+    "/group/{group_api_id}:remove_member/{user_api_id}",
+    response_model=GroupSchema,
+)
+def remove_user_from_group(
+    group_api_id: str,
+    user_api_id: str,
+    db: Session = Depends(get_db),
+) -> Group:
+    group = group_crud.remove_member(
+        db, group_api_id=group_api_id, user_api_id=user_api_id
+    )
+    return group
+
+
+@internal.post(
+    "/group/{group_api_id}:schedule_send",
+    response_model=GroupSchema,
+)
+def schedule_send(
+    group_api_id: str,
+    schedule_param: ScheduleSendParam,
+    db: Session = Depends(get_db),
+) -> Group:
+    group = group_crud.schedule_send(
+        db,
+        group_api_id=group_api_id,
+        letter_api_id=schedule_param.letter_api_id,
+        send_at=schedule_param.send_at,
+    )
+    return group
