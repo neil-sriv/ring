@@ -17,7 +17,7 @@ if TYPE_CHECKING:
 
 
 @internal.post("/group", response_model=GroupSchema)
-def create_group(
+async def create_group(
     group: GroupCreate,
     db: Session = Depends(get_db),
 ) -> Group:
@@ -29,7 +29,7 @@ def create_group(
 
 
 @internal.get("/groups/", response_model=Sequence[GroupSchema])
-def list_groups(
+async def list_groups(
     user_api_id: str,
     skip: int = 0,
     limit: int = 100,
@@ -47,7 +47,7 @@ def list_groups(
 
 
 @internal.get("/group/{group_api_id}", response_model=GroupSchema)
-def read_group(
+async def read_group(
     group_api_id: str,
     db: Session = Depends(get_db),
 ) -> Group:
@@ -59,7 +59,7 @@ def read_group(
     "/group/{group_api_id}:add_member/{user_api_id}",
     response_model=GroupSchema,
 )
-def add_user_to_group(
+async def add_user_to_group(
     group_api_id: str,
     user_api_id: str,
     db: Session = Depends(get_db),
@@ -75,7 +75,7 @@ def add_user_to_group(
     "/group/{group_api_id}:remove_member/{user_api_id}",
     response_model=GroupSchema,
 )
-def remove_user_from_group(
+async def remove_user_from_group(
     group_api_id: str,
     user_api_id: str,
     db: Session = Depends(get_db),
@@ -91,7 +91,7 @@ def remove_user_from_group(
     "/group/{group_api_id}:schedule_send",
     response_model=GroupSchema,
 )
-def schedule_send(
+async def schedule_send(
     group_api_id: str,
     schedule_param: ScheduleSendParam,
     db: Session = Depends(get_db),

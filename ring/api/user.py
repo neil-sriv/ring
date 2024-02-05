@@ -14,7 +14,7 @@ if TYPE_CHECKING:
 
 
 @internal.post("/user/", response_model=UserSchema)
-def create_user(user: UserCreate, db: Session = Depends(get_db)) -> User:
+async def create_user(user: UserCreate, db: Session = Depends(get_db)) -> User:
     db_user = user_crud.get_user_by_email(db, email=user.email)
     if db_user:
         raise HTTPException(status_code=400, detail="Email already registered")
@@ -29,7 +29,7 @@ def create_user(user: UserCreate, db: Session = Depends(get_db)) -> User:
 
 
 @internal.get("/users/", response_model=Sequence[UserSchema])
-def list_users(
+async def list_users(
     skip: int = 0, limit: int = 100, db: Session = Depends(get_db)
 ) -> Sequence[User]:
     users = user_crud.get_users(db, skip=skip, limit=limit)
@@ -37,6 +37,6 @@ def list_users(
 
 
 @internal.get("/user/{user_api_id}", response_model=UserSchema)
-def read_user(user_api_id: str, db: Session = Depends(get_db)) -> User:
+async def read_user(user_api_id: str, db: Session = Depends(get_db)) -> User:
     db_user = api_identifier_crud.get_model(db, User, api_id=user_api_id)
     return db_user

@@ -17,7 +17,7 @@ if TYPE_CHECKING:
     "/schedule/{group_api_id}",
     response_model=ScheduleSchema,
 )
-def get_schedule_for_group(
+async def get_schedule_for_group(
     group_api_id: str,
     db: Session = Depends(get_db),
 ) -> Schedule:

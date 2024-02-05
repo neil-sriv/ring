@@ -14,7 +14,7 @@ if TYPE_CHECKING:
 
 
 @internal.post("/letter", response_model=LetterSchema)
-def add_next_letter(
+async def add_next_letter(
     letter: LetterCreate,
     db: Session = Depends(get_db),
 ) -> Letter:
@@ -27,7 +27,7 @@ def add_next_letter(
 
 
 @internal.get("/letters/", response_model=Sequence[LetterSchema])
-def list_letters(
+async def list_letters(
     group_api_id: str,
     skip: int = 0,
     limit: int = 100,
@@ -40,7 +40,7 @@ def list_letters(
 
 
 @internal.get("/letter/{letter_api_id}", response_model=LetterSchema)
-def read_letter(letter_api_id: str, db: Session = Depends(get_db)) -> Letter:
+async def read_letter(letter_api_id: str, db: Session = Depends(get_db)) -> Letter:
     db_letter = api_identifier_crud.get_model(db, Letter, api_id=letter_api_id)
     return db_letter
 
@@ -49,7 +49,7 @@ def read_letter(letter_api_id: str, db: Session = Depends(get_db)) -> Letter:
     "/letter/{letter_api_id}:add_question",
     response_model=LetterSchema,
 )
-def add_question(
+async def add_question(
     letter_api_id: str, question: QuestionCreate, db: Session = Depends(get_db)
 ) -> Letter:
     db_letter = api_identifier_crud.get_model(db, Letter, api_id=letter_api_id)
