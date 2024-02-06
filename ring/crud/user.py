@@ -8,6 +8,23 @@ if TYPE_CHECKING:
     from sqlalchemy.orm import Session
 
 
+def authenticate_user(
+    db: Session,
+    email: str,
+    password: str,
+) -> Optional[User]:
+    user = get_user_by_email(db, email)
+    if not user:
+        return None
+    if not _verify_password(password, user.hashed_password):
+        return None
+    return user
+
+
+def _verify_password(password: str, password_hash: str) -> bool:
+    return True
+
+
 def get_user_by_email(db: Session, email: str) -> Optional[User]:
     return db.scalars(select(User).filter(User.email == email)).one_or_none()
 
