@@ -1,26 +1,22 @@
 from __future__ import annotations
-from typing import TYPE_CHECKING
 from fastapi import Depends
 from fastapi.security import OAuth2PasswordRequestForm
 from ring.postgres_models.user_model import User
 from ring.routes import internal
-from ring.dependencies import get_db
+from ring.dependencies import RequestDependencies, get_request_dependencies
 from fastapi import HTTPException
 from ring.crud import user as user_crud
 from ring.pydantic_schemas import UserLinked as UserSchema
 from ring.security import get_current_user
 
-if TYPE_CHECKING:
-    from sqlalchemy.orm import Session
-
 
 @internal.post("/login")
 async def login(
     form_data: OAuth2PasswordRequestForm = Depends(),
-    db: Session = Depends(get_db),
+    req_dep: RequestDependencies = Depends(get_request_dependencies),
 ) -> dict[str, str]:
     user = user_crud.authenticate_user(
-        db,
+        req_dep.db,
         form_data.username,
         form_data.password,
     )

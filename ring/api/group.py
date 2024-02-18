@@ -1,7 +1,7 @@
 from __future__ import annotations
 from fastapi import Depends
-from ring.dependencies import get_db
-from typing import TYPE_CHECKING, Sequence
+from ring.dependencies import RequestDependencies, get_request_dependencies
+from typing import Sequence
 from ring.crud import (
     group as group_crud,
     api_identifier as api_identifier_crud,
@@ -12,19 +12,16 @@ from ring.pydantic_schemas.schedule import ScheduleSendParam
 from ring.routes import internal
 from ring.postgres_models.group_model import Group
 
-if TYPE_CHECKING:
-    from sqlalchemy.orm import Session
-
 
 @internal.post("/group", response_model=GroupSchema)
 async def create_group(
     group: GroupCreate,
-    db: Session = Depends(get_db),
+    req_dep: RequestDependencies = Depends(get_request_dependencies),
 ) -> Group:
     db_group = group_crud.create_group(
-        db=db, admin_api_id=group.admin_api_identifier, name=group.name
+        db=req_dep.db, admin_api_id=group.admin_api_identifier, name=group.name
     )
-    db.commit()
+    req_dep.db.commit()
     return db_group
 
 
@@ -33,12 +30,10 @@ async def list_groups(
     user_api_id: str,
     skip: int = 0,
     limit: int = 100,
-    db: Session = Depends(
-        get_db,
-    ),
+    req_dep: RequestDependencies = Depends(get_request_dependencies),
 ) -> Sequence[Group]:
     groups = group_crud.get_groups(
-        db,
+        req_dep.db,
         user_api_id=user_api_id,
         skip=skip,
         limit=limit,
@@ -49,9 +44,13 @@ async def list_groups(
 @internal.get("/group/{group_api_id}", response_model=GroupSchema)
 async def read_group(
     group_api_id: str,
-    db: Session = Depends(get_db),
+    req_dep: RequestDependencies = Depends(get_request_dependencies),
 ) -> Group:
-    db_group = api_identifier_crud.get_model(db, Group, api_id=group_api_id)
+    db_group = api_identifier_crud.get_model(
+        req_dep.db,
+        Group,
+        api_id=group_api_id,
+    )
     return db_group
 
 
@@ -62,12 +61,12 @@ async def read_group(
 async def add_user_to_group(
     group_api_id: str,
     user_api_id: str,
-    db: Session = Depends(get_db),
+    req_dep: RequestDependencies = Depends(get_request_dependencies),
 ) -> Group:
     group = group_crud.add_member(
-        db, group_api_id=group_api_id, user_api_id=user_api_id
+        req_dep.db, group_api_id=group_api_id, user_api_id=user_api_id
     )
-    db.commit()
+    req_dep.db.commit()
     return group
 
 
@@ -78,12 +77,12 @@ async def add_user_to_group(
 async def remove_user_from_group(
     group_api_id: str,
     user_api_id: str,
-    db: Session = Depends(get_db),
+    req_dep: RequestDependencies = Depends(get_request_dependencies),
 ) -> Group:
     group = group_crud.remove_member(
-        db, group_api_id=group_api_id, user_api_id=user_api_id
+        req_dep.db, group_api_id=group_api_id, user_api_id=user_api_id
     )
-    db.commit()
+    req_dep.db.commit()
     return group
 
 
@@ -94,13 +93,13 @@ async def remove_user_from_group(
 async def schedule_send(
     group_api_id: str,
     schedule_param: ScheduleSendParam,
-    db: Session = Depends(get_db),
+    req_dep: RequestDependencies = Depends(get_request_dependencies),
 ) -> Group:
     group = group_crud.schedule_send(
-        db,
+        req_dep.db,
         group_api_id=group_api_id,
         letter_api_id=schedule_param.letter_api_id,
         send_at=schedule_param.send_at,
     )
-    db.commit()
+    req_dep.db.commit()
     return group
