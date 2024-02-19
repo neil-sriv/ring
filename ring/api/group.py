@@ -1,6 +1,9 @@
 from __future__ import annotations
 from fastapi import Depends
-from ring.dependencies import RequestDependencies, get_request_dependencies
+from ring.dependencies import (
+    AuthenticatedRequestDependencies,
+    get_request_dependencies,
+)
 from typing import Sequence
 from ring.crud import (
     group as group_crud,
@@ -16,7 +19,9 @@ from ring.postgres_models.group_model import Group
 @internal.post("/group", response_model=GroupSchema)
 async def create_group(
     group: GroupCreate,
-    req_dep: RequestDependencies = Depends(get_request_dependencies),
+    req_dep: AuthenticatedRequestDependencies = Depends(
+        get_request_dependencies,
+    ),
 ) -> Group:
     db_group = group_crud.create_group(
         db=req_dep.db, admin_api_id=group.admin_api_identifier, name=group.name
@@ -30,7 +35,9 @@ async def list_groups(
     user_api_id: str,
     skip: int = 0,
     limit: int = 100,
-    req_dep: RequestDependencies = Depends(get_request_dependencies),
+    req_dep: AuthenticatedRequestDependencies = Depends(
+        get_request_dependencies,
+    ),
 ) -> Sequence[Group]:
     groups = group_crud.get_groups(
         req_dep.db,
@@ -44,7 +51,9 @@ async def list_groups(
 @internal.get("/group/{group_api_id}", response_model=GroupSchema)
 async def read_group(
     group_api_id: str,
-    req_dep: RequestDependencies = Depends(get_request_dependencies),
+    req_dep: AuthenticatedRequestDependencies = Depends(
+        get_request_dependencies,
+    ),
 ) -> Group:
     db_group = api_identifier_crud.get_model(
         req_dep.db,
@@ -61,7 +70,9 @@ async def read_group(
 async def add_user_to_group(
     group_api_id: str,
     user_api_id: str,
-    req_dep: RequestDependencies = Depends(get_request_dependencies),
+    req_dep: AuthenticatedRequestDependencies = Depends(
+        get_request_dependencies,
+    ),
 ) -> Group:
     group = group_crud.add_member(
         req_dep.db, group_api_id=group_api_id, user_api_id=user_api_id
@@ -77,7 +88,9 @@ async def add_user_to_group(
 async def remove_user_from_group(
     group_api_id: str,
     user_api_id: str,
-    req_dep: RequestDependencies = Depends(get_request_dependencies),
+    req_dep: AuthenticatedRequestDependencies = Depends(
+        get_request_dependencies,
+    ),
 ) -> Group:
     group = group_crud.remove_member(
         req_dep.db, group_api_id=group_api_id, user_api_id=user_api_id
@@ -93,7 +106,9 @@ async def remove_user_from_group(
 async def schedule_send(
     group_api_id: str,
     schedule_param: ScheduleSendParam,
-    req_dep: RequestDependencies = Depends(get_request_dependencies),
+    req_dep: AuthenticatedRequestDependencies = Depends(
+        get_request_dependencies,
+    ),
 ) -> Group:
     group = group_crud.schedule_send(
         req_dep.db,

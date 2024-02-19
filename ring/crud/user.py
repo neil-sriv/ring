@@ -3,6 +3,7 @@ from typing import TYPE_CHECKING, Optional, Sequence
 
 from sqlalchemy import select
 from ring.postgres_models import User
+from ring.security import get_password_hash, verify_password
 
 if TYPE_CHECKING:
     from sqlalchemy.orm import Session
@@ -22,7 +23,7 @@ def authenticate_user(
 
 
 def _verify_password(password: str, password_hash: str) -> bool:
-    return True
+    return verify_password(password, password_hash)
 
 
 def get_user_by_email(db: Session, email: str) -> Optional[User]:
@@ -37,8 +38,9 @@ def create_user(
     db: Session,
     email: str,
     name: str,
-    hashed_password: str,
+    password: str,
 ) -> User:
+    hashed_password = get_password_hash(password)
     db_user = User.create(email, name, hashed_password)
     db.add(db_user)
     return db_user

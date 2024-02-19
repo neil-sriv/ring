@@ -1,11 +1,15 @@
-from fastapi import Depends, HTTPException, status
+from datetime import datetime, timedelta
+from fastapi import HTTPException, status
 from fastapi.security import OAuth2PasswordBearer
 from passlib.context import CryptContext
+from jose import jwt, JWTError
+from ring.config import get_config
 
-from ring.postgres_models.user_model import User
 
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="internal/token")
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+
+ACCESS_TOKEN_TTL = 60 * 30  # 30 minutes
 
 
 def verify_password(plain_password: str, hashed_password: str) -> bool:
@@ -16,16 +20,39 @@ def get_password_hash(password: str) -> str:
     return pwd_context.hash(password)
 
 
-def decode_token(token: str) -> User:
-    return None
+def create_access_token(
+    data: dict[str, str | datetime], expires_ttl: int = ACCESS_TOKEN_TTL
+) -> str:
+    config = get_config()
+    to_encode = data.copy()
+    expire = datetime.utcnow() + timedelta(minutes=expires_ttl)
+    to_encode.update({"exp": expire})
+    encoded_jwt = jwt.encode(
+        to_encode,
+        config.JWT_SIGNING_KEY,
+        algorithm=config.JWT_SIGNING_ALGORITHM,
+    )
+    return encoded_jwt
 
 
-async def get_current_user(token: str = Depends(oauth2_scheme)) -> User:
-    user = decode_token(token)
-    if not user:
+def decode_token(token: str) -> str:
+    try:
+        payload = jwt.decode(
+            token,
+            get_config().JWT_SIGNING_KEY,
+            algorithms=[get_config().JWT_SIGNING_ALGORITHM],
+        )
+        email = payload.get("sub")
+        if not email:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Could not validate credentials",
+                headers={"WWW-Authenticate": "Bearer"},
+            )
+    except JWTError:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Invalid authentication credentials",
+            detail="Could not validate credentials",
             headers={"WWW-Authenticate": "Bearer"},
         )
-    return user
+    return email

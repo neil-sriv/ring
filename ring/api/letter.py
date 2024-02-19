@@ -1,6 +1,9 @@
 from __future__ import annotations
 from fastapi import Depends
-from ring.dependencies import RequestDependencies, get_request_dependencies
+from ring.dependencies import (
+    AuthenticatedRequestDependencies,
+    get_request_dependencies,
+)
 from typing import Sequence
 from ring.crud import (
     letter as letter_crud,
@@ -16,7 +19,9 @@ from ring.routes import internal
 @internal.post("/letter", response_model=LetterSchema)
 async def add_next_letter(
     letter: LetterCreate,
-    req_dep: RequestDependencies = Depends(get_request_dependencies),
+    req_dep: AuthenticatedRequestDependencies = Depends(
+        get_request_dependencies,
+    ),
 ) -> Letter:
     db_letter = letter_crud.create_letter(
         db=req_dep.db,
@@ -31,7 +36,9 @@ async def list_letters(
     group_api_id: str,
     skip: int = 0,
     limit: int = 100,
-    req_dep: RequestDependencies = Depends(get_request_dependencies),
+    req_dep: AuthenticatedRequestDependencies = Depends(
+        get_request_dependencies,
+    ),
 ) -> Sequence[Letter]:
     letters = letter_crud.get_letters(
         req_dep.db, group_api_id=group_api_id, skip=skip, limit=limit
@@ -42,7 +49,9 @@ async def list_letters(
 @internal.get("/letter/{letter_api_id}", response_model=LetterSchema)
 async def read_letter(
     letter_api_id: str,
-    req_dep: RequestDependencies = Depends(get_request_dependencies),
+    req_dep: AuthenticatedRequestDependencies = Depends(
+        get_request_dependencies,
+    ),
 ) -> Letter:
     db_letter = api_identifier_crud.get_model(
         req_dep.db,
@@ -59,7 +68,9 @@ async def read_letter(
 async def add_question(
     letter_api_id: str,
     question: QuestionCreate,
-    req_dep: RequestDependencies = Depends(get_request_dependencies),
+    req_dep: AuthenticatedRequestDependencies = Depends(
+        get_request_dependencies,
+    ),
 ) -> Letter:
     db_letter = api_identifier_crud.get_model(
         req_dep.db,

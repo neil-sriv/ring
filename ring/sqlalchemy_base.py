@@ -1,5 +1,6 @@
+from typing import Iterator
 from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker, DeclarativeBase
+from sqlalchemy.orm import sessionmaker, DeclarativeBase, Session
 from ring.config import get_config
 
 engine = create_engine(
@@ -13,3 +14,11 @@ class Base(DeclarativeBase):
 
 
 Base()
+
+
+def get_db() -> Iterator[Session]:
+    db = SessionLocal()
+    try:
+        yield db
+    finally:
+        db.close()
