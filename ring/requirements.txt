@@ -281,6 +281,8 @@ vine==5.1.0
     #   amqp
     #   celery
     #   kombu
+watchdog==4.0.0
+    # via ring (pyproject.toml)
 watchfiles==0.21.0
     # via uvicorn
 wcwidth==0.2.12

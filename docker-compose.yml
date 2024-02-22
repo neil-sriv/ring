@@ -30,11 +30,12 @@ services:
       dockerfile: celery.Dockerfile
     volumes:
       - ./ring:/src/ring
-    command: "celery --app=ring.worker worker --loglevel=debug"
+    command: "watchmedo auto-restart --directory=./ --pattern=*.py --recursive -- celery --app=ring.worker worker --loglevel=debug"
     env_file:
       - ./.env
     environment:
       - DB_PORT=8000
+      - SQLALCHEMY_DATABASE_URI=postgresql://ring-postgres:ring-postgres@db:5432/ring 
     depends_on:
       - redis
   beat:
@@ -43,11 +44,12 @@ services:
       dockerfile: celery.Dockerfile
     volumes:
       - ./ring:/src/ring
-    command: "celery --app=ring.worker beat --loglevel=debug"
+    command: "watchmedo auto-restart --directory=./ --pattern=*.py --recursive -- celery --app=ring.worker beat --loglevel=debug"
     env_file:
       - ./.env
     depends_on:
       - redis 
+      - worker
   redis:
     image: redis:alpine
     ports:
@@ -70,6 +72,8 @@ services:
     image: postgres:16.1
     volumes:
       - pgdata:/var/lib/postgresql/data
+    ports:
+      - 8004:5432
     expose:
       - 5432
     environment:
