@@ -30,7 +30,7 @@ services:
       dockerfile: celery.Dockerfile
     volumes:
       - ./ring:/src/ring
-    command: "watchmedo auto-restart --directory=./ --pattern=*.py --recursive -- celery --app=ring.worker worker --loglevel=debug"
+    command: "watchmedo auto-restart --directory=./ --pattern=*.py --recursive -- celery --app=ring.worker.celery_app worker --loglevel=debug"
     env_file:
       - ./.env
     environment:
@@ -44,7 +44,7 @@ services:
       dockerfile: celery.Dockerfile
     volumes:
       - ./ring:/src/ring
-    command: "watchmedo auto-restart --directory=./ --pattern=*.py --recursive -- celery --app=ring.worker beat --loglevel=debug"
+    command: "watchmedo auto-restart --directory=./ --pattern=*.py --recursive -- celery --app=ring.worker.celery_app beat --loglevel=debug"
     env_file:
       - ./.env
     depends_on:
@@ -60,7 +60,7 @@ services:
       dockerfile: celery.Dockerfile
     volumes:
       - ./ring:/src/ring
-    command: "celery --app=ring.worker flower"
+    command: "celery --app=ring.worker.celery_app flower"
     env_file:
       - ./.env
     ports:

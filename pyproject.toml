@@ -32,4 +32,5 @@ dependencies = [
     "celery ~= 5.3",
     "python-jose[cryptography] ~= 3.3",
     "passlib[bcrypt] ~= 1.7",
+    "watchdog ~= 4.0",
 ]
