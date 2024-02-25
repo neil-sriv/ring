@@ -1,13 +1,10 @@
-from typing import TYPE_CHECKING
+from mypy_boto3_ses.client import SESClient
+from mypy_boto3_ses.type_defs import (
+    DestinationTypeDef,
+    MessageTypeDef,
+)
 from dataclasses import dataclass
 import boto3
-
-if TYPE_CHECKING:
-    from mypy_boto3_ses.client import SESClient
-    from mypy_boto3_ses.type_defs import (
-        DestinationTypeDef,
-        MessageTypeDef,
-    )
 
 
 @dataclass

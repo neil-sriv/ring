@@ -33,4 +33,5 @@ dependencies = [
     "python-jose[cryptography] ~= 3.3",
     "passlib[bcrypt] ~= 1.7",
     "watchdog ~= 4.0",
+    "mypy_boto3_ses ~= 1.34",
 ]

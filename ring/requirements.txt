@@ -124,6 +124,8 @@ markupsafe==2.1.3
     #   mako
 matplotlib-inline==0.1.6
     # via ipython
+mypy-boto3-ses==1.34.0
+    # via ring (pyproject.toml)
 orjson==3.9.10
     # via fastapi
 packaging==23.2
