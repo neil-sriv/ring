@@ -1,5 +1,6 @@
 from __future__ import annotations
 from fastapi import Depends
+from datetime import timezone
 from ring.dependencies import (
     AuthenticatedRequestDependencies,
     get_request_dependencies,
@@ -110,11 +111,12 @@ async def schedule_send(
         get_request_dependencies,
     ),
 ) -> Group:
+    utc_send_at = schedule_param.send_at.astimezone(tz=timezone.utc)
     group = group_crud.schedule_send(
         req_dep.db,
         group_api_id=group_api_id,
         letter_api_id=schedule_param.letter_api_id,
-        send_at=schedule_param.send_at,
+        send_at=utc_send_at,
     )
     req_dep.db.commit()
     return group

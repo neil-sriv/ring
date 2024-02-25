@@ -2,14 +2,18 @@ from __future__ import annotations
 
 from typing import Callable, Sequence
 from sqlalchemy.orm import Session
+from ring.email_util import construct_email, send_email
 from ring.postgres_models import Task
-from ring.postgres_models.task_model import SendEmailTask, TaskType
+from ring.postgres_models.task_model import SendEmailTask, TaskStatus, TaskType
 from ring.sqlalchemy_base import get_db
 from ring.worker.celery_app import register_task_factory  # type: ignore
 
 
 def execute_send_email_task(db: Session, task: SendEmailTask) -> None:
-    pass
+    send_email(construct_email())
+    task.status = TaskStatus.COMPLETED
+    db.add(task)
+    db.commit()
 
 
 TASK_TO_EXECUTE_MAPPING: dict[TaskType, Callable[..., None]] = {
@@ -29,6 +33,6 @@ def execute_tasks(
     if execute_async:
         execute_tasks_async.delay(tasks)  # type: ignore
     for task in tasks:
-        task_type = task.type
+        task_type = TaskType(task.type)
         task_to_execute = TASK_TO_EXECUTE_MAPPING[task_type]
         task_to_execute(db, task)

@@ -1,12 +1,41 @@
-# import boto3
+from typing import TYPE_CHECKING
+from dataclasses import dataclass
+import boto3
+
+if TYPE_CHECKING:
+    from mypy_boto3_ses.client import SESClient
+    from mypy_boto3_ses.type_defs import (
+        DestinationTypeDef,
+        MessageTypeDef,
+    )
 
 
-# def email_group(group_id: str) -> None:
-#     group = GroupModel.get(group_id)
-#     email = construct_email(group)
-#     ses_client = boto3.client("ses")
-#     pass
+@dataclass
+class EmailDraft:
+    source: str
+    destination: DestinationTypeDef
+    message: MessageTypeDef
 
 
-# def construct_email(group: GroupModel) -> str:
-#     pass
+def send_email(draft: EmailDraft) -> None:
+    ses_client: SESClient = boto3.Session().client("ses")  # type: ignore
+    ses_client.send_email(
+        Source=draft.source,
+        Destination=draft.destination,
+        Message=draft.message,
+    )
+
+
+def construct_email() -> EmailDraft:
+    return EmailDraft(
+        source="",
+        destination={"ToAddresses": []},
+        message={
+            "Subject": {"Data": "Your daily schedule"},
+            "Body": {
+                "Text": {
+                    "Data": "You have a new schedule for today. Please check your account."
+                }
+            },
+        },
+    )

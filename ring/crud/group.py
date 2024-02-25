@@ -1,7 +1,10 @@
 from __future__ import annotations
 from datetime import datetime
 from typing import TYPE_CHECKING, Sequence
-from ring.crud import api_identifier as api_identifier_crud, schedule as schedule_crud
+from ring.crud import (
+    api_identifier as api_identifier_crud,
+    schedule as schedule_crud,
+)
 from ring.postgres_models.letter_model import Letter
 from ring.postgres_models.task_model import TaskType
 from ring.postgres_models.group_model import Group
@@ -68,7 +71,7 @@ def schedule_send(
 ) -> Group:
     db_group = api_identifier_crud.get_model(db, Group, api_id=group_api_id)
     db_letter = get_letter_by_api_id(db_group, letter_api_id)
-    task = schedule_crud.register_task(
+    schedule_crud.register_task(
         db,
         db_group.schedule,
         TaskType.SEND_EMAIL,
