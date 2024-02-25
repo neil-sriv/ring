@@ -1,10 +1,12 @@
 from __future__ import annotations
 from datetime import datetime
-from typing import TYPE_CHECKING
-from ring.crud import api_identifier as api_identifier_crud
+from typing import TYPE_CHECKING, Sequence
+
+from sqlalchemy import and_, or_, select
+from ring.crud import api_identifier as api_identifier_crud, task as task_crud
 from ring.postgres_models.schedule_model import Schedule
 from ring.postgres_models.group_model import Group
-from ring.postgres_models.task_model import Task, TaskType
+from ring.postgres_models.task_model import Task, TaskStatus, TaskType
 
 if TYPE_CHECKING:
     from sqlalchemy.orm import Session
@@ -26,3 +28,29 @@ def register_task(
     schedule.tasks.append(task)
     db.add(task)
     return task
+
+
+def collect_pending_tasks(
+    db: Session,
+    recent_hour: datetime,
+) -> Sequence[Task]:
+    missed_tasks_filter = and_(
+        Task.status == TaskStatus.PENDING,
+        Task.execute_at < recent_hour,
+    )
+    scheduled_tasks_filter = and_(
+        Task.status == TaskStatus.PENDING, Task.execute_at == recent_hour
+    )
+    tasks = db.scalars(
+        select(Task)
+        .filter(or_(missed_tasks_filter, scheduled_tasks_filter))
+        .order_by(Task.schedule_id, Task.type, Task.execute_at)
+    ).all()
+
+    return tasks
+
+
+def execute_tasks(
+    db: Session, tasks: Sequence[Task], execute_async: bool = False
+) -> None:
+    task_crud.execute_tasks(db, tasks, execute_async)
