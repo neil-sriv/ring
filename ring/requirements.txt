@@ -42,9 +42,7 @@ certifi==2023.11.17
 cffi==1.16.0
     # via cryptography
 cli-helpers[styles]==2.3.0
-    # via
-    #   cli-helpers
-    #   pgcli
+    # via pgcli
 click==8.1.7
     # via
     #   celery
@@ -78,13 +76,9 @@ email-validator==2.1.0.post1
 executing==2.0.1
     # via stack-data
 fastapi[all]==0.104.1
-    # via
-    #   fastapi
-    #   ring (pyproject.toml)
+    # via ring (pyproject.toml)
 flower==2.0.1
     # via ring (pyproject.toml)
-greenlet==3.0.3
-    # via sqlalchemy
 h11==0.14.0
     # via
     #   httpcore
@@ -133,9 +127,7 @@ packaging==23.2
 parso==0.8.3
     # via jedi
 passlib[bcrypt]==1.7.4
-    # via
-    #   passlib
-    #   ring (pyproject.toml)
+    # via ring (pyproject.toml)
 pendulum==3.0.0
     # via pgcli
 pexpect==4.9.0
@@ -201,9 +193,7 @@ python-dotenv==1.0.0
     #   pydantic-settings
     #   uvicorn
 python-jose[cryptography]==3.3.0
-    # via
-    #   python-jose
-    #   ring (pyproject.toml)
+    # via ring (pyproject.toml)
 python-multipart==0.0.6
     # via fastapi
 pytz==2023.3.post1
@@ -245,9 +235,7 @@ stack-data==0.6.3
 starlette==0.27.0
     # via fastapi
 tabulate[widechars]==0.9.0
-    # via
-    #   cli-helpers
-    #   tabulate
+    # via cli-helpers
 time-machine==2.13.0
     # via pendulum
 tornado==6.4
@@ -273,9 +261,7 @@ ujson==5.9.0
 urllib3==2.0.7
     # via botocore
 uvicorn[standard]==0.24.0.post1
-    # via
-    #   fastapi
-    #   uvicorn
+    # via fastapi
 uvloop==0.19.0
     # via uvicorn
 vine==5.1.0

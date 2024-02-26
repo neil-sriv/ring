@@ -1,6 +1,9 @@
-FROM python:3.12.1-alpine3.18
+FROM python:3.12.1-bullseye
 
-# RUN apk add libpq-dev python3-dev postgresql-server-dev-all
+# RUN apk add libpq-dev python3-dev gcc
+# RUN apk add build-base
+# RUN apk add libffi-dev python3-dev
+# RUN apt-get install
 
 WORKDIR /src
 
