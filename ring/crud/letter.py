@@ -35,3 +35,10 @@ def add_question(db: Session, letter: Letter, question_text: str) -> Question:
     db.add(question)
     letter.questions.append(question)
     return question
+
+
+def compile_letter_dict(letter: Letter) -> dict[str, list[str]]:
+    return {
+        q.question_text: [resp.response_text for resp in q.responses]
+        for q in letter.questions
+    }

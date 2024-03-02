@@ -7,10 +7,20 @@ from ring.postgres_models import Task
 from ring.postgres_models.task_model import SendEmailTask, TaskStatus, TaskType
 from ring.sqlalchemy_base import get_db
 from ring.worker.celery_app import register_task_factory  # type: ignore
+from ring.crud import letter as letter_crud
 
 
 def execute_send_email_task(db: Session, task: SendEmailTask) -> None:
-    send_email(construct_email())
+    group = task.schedule.group
+    letter_to_send = group.letters[-1]
+    send_email(
+        construct_email(
+            [u.email for u in letter_to_send.participants],
+            letter_to_send.number,
+            group.name,
+            letter_crud.compile_letter_dict(letter_to_send),
+        )
+    )
     task.status = TaskStatus.COMPLETED
     db.add(task)
     db.commit()

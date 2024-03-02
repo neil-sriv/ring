@@ -23,16 +23,29 @@ def send_email(draft: EmailDraft) -> None:
     )
 
 
-def construct_email() -> EmailDraft:
+def construct_email(
+    recipients: list[str],
+    letter_number: int,
+    group_name: str,
+    letter_dict: dict[str, list[str]],
+) -> EmailDraft:
+    def construct_question_text(question: str, responses: list[str]) -> str:
+        return f"{question}:\n" + "\n".join(responses) + "\n\n"
+
+    question_text = "".join(
+        construct_question_text(q, r) for q, r in letter_dict.items()
+    )
+
     return EmailDraft(
         source="",
-        destination={"ToAddresses": []},
+        destination={"ToAddresses": recipients},
         message={
-            "Subject": {"Data": "Your daily schedule"},
-            "Body": {
-                "Text": {
-                    "Data": "You have a new schedule for today. Please check your account."
-                }
+            "Subject": {
+                "Data": "Ring: Newsletter #{} for {}".format(
+                    letter_number,
+                    group_name,
+                )
             },
+            "Body": {"Text": {"Data": question_text}},
         },
     )

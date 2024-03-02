@@ -1,13 +1,9 @@
 # type: ignore
 import os
-from typing import Any
-from datetime import datetime
-import time
 
 from celery import Celery
 from celery.schedules import crontab
 
-from ring.sqlalchemy_base import get_db
 from ring.worker.celery_imports import CELERY_IMPORTS
 
 
@@ -35,14 +31,6 @@ def register_task_factory(*dec_args, **dec_kwargs):
         def wrapper(*args, **kwargs):
             return f(*args, **kwargs)
 
-        # celery.register_task(f)
         return wrapper
 
     return decorator
-
-
-# @celery.on_after_configure.connect
-# def setup_periodic_tasks(sender: Any, **kwargs: Any):
-#     sender.add_periodic_task(
-#         crontab(minute="*/1"), poll_schedule_task.s(), name="poll_schedule"
-#     )
