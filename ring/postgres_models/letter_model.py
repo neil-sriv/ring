@@ -18,7 +18,6 @@ if TYPE_CHECKING:
     from ring.postgres_models.group_model import Group
     from ring.postgres_models.question_model import Question
 
-    # from ring.postgres_models.response_model import Response
     from ring.postgres_models.user_model import User
 
 letter_to_user_assocation = Table(
@@ -45,12 +44,15 @@ class Letter(Base, APIIdentified):
     group: Mapped["Group"] = relationship(back_populates="letters")
 
     questions: Mapped[list["Question"]] = relationship(back_populates="letter")
-    # responses: Mapped[list["Response"]] = relationship(back_populates="letter")
 
     @declared_attr  # type: ignore
     def __table_args__(cls) -> tuple[Constraint]:
         return (
-            UniqueConstraint("group_id", "number", name="unique_group_letter_number"),
+            UniqueConstraint(
+                "group_id",
+                "number",
+                name="unique_group_letter_number",
+            ),
         )
 
     def __init__(self, group: Group) -> None:
