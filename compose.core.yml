@@ -1,0 +1,65 @@
+services:
+  api:
+    container_name: ring-api
+    build: 
+      context: ./ring
+      dockerfile: ring.Dockerfile
+    command: "uvicorn ring.fast:app"
+    volumes:
+      - ./ring:/src/ring
+    environment:
+      - PYTHONPATH=.
+    depends_on:
+      - db
+    links:
+      - db
+
+  worker:
+    container_name: ring-worker
+    build:
+      context: ./ring
+      dockerfile: celery.Dockerfile
+    volumes:
+      - ./ring:/src/ring
+    command: "celery --app=ring.worker.celery_app worker"
+    depends_on:
+      - redis
+  beat:
+    container_name: ring-beat
+    build:
+      context: ./ring
+      dockerfile: celery.Dockerfile
+    volumes:
+      - ./ring:/src/ring
+    command: "celery --app=ring.worker.celery_app beat"
+    depends_on:
+      - redis 
+      - worker
+  redis:
+    image: redis:alpine
+    expose:
+      - 6379
+  flower:
+    container_name: ring-flower
+    build:
+      context: ./ring
+      dockerfile: celery.Dockerfile
+    volumes:
+      - ./ring:/src/ring
+    command: "celery --app=ring.worker.celery_app flower"
+    depends_on:
+      - redis
+      - worker
+    profiles: ["debug"]
+
+  db:
+    container_name: ring-db
+    image: postgres:16.1
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    expose:
+      - 5432
+      
+
+volumes:
+  pgdata:

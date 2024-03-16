@@ -1,0 +1,26 @@
+services:
+  api:
+    command: "uvicorn ring.fast:app --port ${API_PORT} --reload"
+    ports:
+      - "${API_PORT}:${API_PORT}"
+    env_file:
+      - ./.env
+
+  worker:
+    command: "watchmedo auto-restart --directory=./ --pattern=*.py --recursive -- celery --app=ring.worker.celery_app worker --loglevel=debug"
+    env_file:
+      - ./.env
+  beat:
+    command: "watchmedo auto-restart --directory=./ --pattern=*.py --recursive -- celery --app=ring.worker.celery_app beat --loglevel=debug"
+    env_file:
+      - ./.env
+  flower:
+    command: "celery --app=ring.worker.celery_app flower"
+    env_file:
+      - ./.env
+    ports:
+      - "8003:5555"
+      
+
+volumes:
+  pgdata:
