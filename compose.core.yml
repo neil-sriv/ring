@@ -4,6 +4,7 @@ services:
     build: 
       context: ./ring
       dockerfile: ring.Dockerfile
+      target: ring
     command: "uvicorn ring.fast:app"
     volumes:
       - ./ring:/src/ring
@@ -18,7 +19,8 @@ services:
     container_name: ring-worker
     build:
       context: ./ring
-      dockerfile: celery.Dockerfile
+      dockerfile: ring.Dockerfile
+      target: ring
     volumes:
       - ./ring:/src/ring
     command: "celery --app=ring.worker.celery_app worker"
@@ -28,7 +30,8 @@ services:
     container_name: ring-beat
     build:
       context: ./ring
-      dockerfile: celery.Dockerfile
+      dockerfile: ring.Dockerfile
+      target: ring
     volumes:
       - ./ring:/src/ring
     command: "celery --app=ring.worker.celery_app beat"
@@ -43,7 +46,8 @@ services:
     container_name: ring-flower
     build:
       context: ./ring
-      dockerfile: celery.Dockerfile
+      dockerfile: ring.Dockerfile
+      target: ring
     volumes:
       - ./ring:/src/ring
     command: "celery --app=ring.worker.celery_app flower"
