@@ -10,10 +10,6 @@ services:
       - ./ring:/src/ring
     environment:
       - PYTHONPATH=.
-    depends_on:
-      - db
-    links:
-      - db
 
   worker:
     container_name: ring-worker
