@@ -11,10 +11,11 @@
   "dependencies": {
     "@heroicons/react": "^2.1.1",
     "clsx": "^2.1.0",
+    "dotenv": "^16.4.5",
     "next": "14.1.2",
-    "next-auth": "^5.0.0-beta.15",
     "react": "^18",
-    "react-dom": "^18"
+    "react-dom": "^18",
+    "zod": "^3.22.4"
   },
   "devDependencies": {
     "@types/node": "^20",
