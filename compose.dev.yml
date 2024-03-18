@@ -21,6 +21,7 @@ services:
     ports:
       - "8003:5555"
   db:
+    container_name: ring-db
     image: postgres:16.1
     volumes:
       - pgdata:/var/lib/postgresql/data

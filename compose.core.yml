@@ -55,15 +55,3 @@ services:
       - redis
       - worker
     profiles: ["debug"]
-
-  db:
-    container_name: ring-db
-    image: postgres:16.1
-    volumes:
-      - pgdata:/var/lib/postgresql/data
-    expose:
-      - 5432
-      
-
-volumes:
-  pgdata:
