@@ -7,15 +7,12 @@ services:
       - ./.env
 
   worker:
-    command: "watchmedo auto-restart --directory=./ --pattern=*.py --recursive -- celery --app=ring.worker.celery_app worker --loglevel=debug"
     env_file:
       - ./.env
   beat:
-    command: "watchmedo auto-restart --directory=./ --pattern=*.py --recursive -- celery --app=ring.worker.celery_app beat --loglevel=debug"
     env_file:
       - ./.env
   flower:
-    command: "celery --app=ring.worker.celery_app flower"
     env_file:
       - ./.env
     ports:
