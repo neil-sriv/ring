@@ -1,5 +1,5 @@
 from __future__ import annotations
-from datetime import datetime
+import datetime
 import time
 from typing import TYPE_CHECKING, Sequence
 
@@ -24,7 +24,7 @@ def register_task(
     db: Session,
     schedule: Schedule,
     task_type: TaskType,
-    execute_at: datetime,
+    execute_at: datetime.datetime,
     arguments: dict[str, str],
 ) -> Task:
     task = Task.create(schedule, task_type, execute_at, arguments)
@@ -35,7 +35,7 @@ def register_task(
 
 def collect_pending_tasks(
     db: Session,
-    recent_hour: datetime,
+    recent_hour: datetime.datetime,
 ) -> Sequence[Task]:
     missed_tasks_filter = and_(
         Task.status == TaskStatus.PENDING,
@@ -65,8 +65,11 @@ def poll_schedule_task():
 
     time.sleep(5)
     db = next(get_db())
-    hour_floor = datetime.utcnow().replace(minute=0, second=0, microsecond=0)
+    hour_floor = datetime.datetime.now(datetime.UTC).replace(
+        minute=0, second=0, microsecond=0
+    )
     tasks = schedule_crud.collect_pending_tasks(db, hour_floor)
+    schedule_crud.execute_tasks(db, tasks, execute_async=True)
     print([task.__dict__ for task in tasks])
 
     return {
