@@ -7,7 +7,7 @@ build-backend = "setuptools.build_meta"
 
 [tool.setuptools.packages.find]
 where = ["."]
-include = ["ring"]
+include = ["ring", "dev"]
 namespaces = false
 
 [project]
@@ -34,4 +34,8 @@ dependencies = [
     "passlib[bcrypt] ~= 1.7",
     "watchdog ~= 4.0",
     "mypy_boto3_ses ~= 1.34",
+    "click ~= 8.1.7",
 ]
+
+[project.scripts]
+dev = "dev:dev"
