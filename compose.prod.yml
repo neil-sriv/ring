@@ -1,6 +1,6 @@
 services:
   api:
-    command: "uvicorn ring.fast:app --host 0.0.0.0 --port ${API_PORT} --reload"
+    command: "uvicorn ring.fast:app --proxy-headers --host 0.0.0.0 --port ${API_PORT} --reload"
     ports:
       - "${API_PORT}:${API_PORT}"
     env_file:

@@ -3,8 +3,8 @@ from fastapi import FastAPI
 from ring.config import get_config
 from ring.routes import router, internal
 
-app = FastAPI()
 ring_config = get_config()
+app = FastAPI(root_path=ring_config.root_path)
 
 app.include_router(router)
 app.include_router(internal)

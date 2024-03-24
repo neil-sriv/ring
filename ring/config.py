@@ -8,6 +8,7 @@ class RingConfig(BaseSettings):
     sqlalchemy_database_uri: str
     JWT_SIGNING_KEY: str
     JWT_SIGNING_ALGORITHM: str
+    root_path: str = "/api/v1"
 
 
 @lru_cache
