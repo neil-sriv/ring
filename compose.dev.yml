@@ -9,6 +9,10 @@ services:
       - db
     links:
       - db
+    
+  nginx:
+    volumes:
+      - ./dev.nginx.conf:/etc/nginx/conf.d/default.conf:ro
 
   worker:
     command: "watchmedo auto-restart --directory=./ --pattern=*.py --recursive -- celery --app=ring.worker.celery_app worker --loglevel=debug"
