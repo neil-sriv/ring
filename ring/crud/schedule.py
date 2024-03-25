@@ -54,9 +54,9 @@ def collect_pending_tasks(
 
 
 def execute_tasks(
-    db: Session, tasks: Sequence[Task], execute_async: bool = False
+    db: Session, task_ids: list[int], execute_async: bool = False
 ) -> None:
-    task_crud.execute_tasks(db, tasks, execute_async)
+    task_crud.execute_tasks(db, task_ids, execute_async)
 
 
 @register_task_factory(name="poll_schedule")
@@ -69,7 +69,11 @@ def poll_schedule_task():
         minute=0, second=0, microsecond=0
     )
     tasks = schedule_crud.collect_pending_tasks(db, hour_floor)
-    schedule_crud.execute_tasks(db, tasks, execute_async=True)
+    schedule_crud.execute_tasks(
+        db,
+        [task.id for task in tasks],
+        execute_async=True,
+    )
     print([task.__dict__ for task in tasks])
 
     return {

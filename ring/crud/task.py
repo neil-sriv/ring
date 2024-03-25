@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import Callable, Sequence
+from typing import Callable
 from sqlalchemy.orm import Session
 from ring.email_util import construct_email, send_email
 from ring.postgres_models import Task
@@ -32,16 +32,17 @@ TASK_TO_EXECUTE_MAPPING: dict[TaskType, Callable[..., None]] = {
 
 
 @register_task_factory(name="execute_tasks")
-def execute_tasks_async(tasks: Sequence[Task]) -> None:
+def execute_tasks_async(task_ids: list[int]) -> None:
     db = next(get_db())
-    execute_tasks(db, tasks)
+    execute_tasks(db, task_ids)
 
 
 def execute_tasks(
-    db: Session, tasks: Sequence[Task], execute_async: bool = False
+    db: Session, task_ids: list[int], execute_async: bool = False
 ) -> None:
     if execute_async:
-        execute_tasks_async.delay(tasks)  # type: ignore
+        execute_tasks_async.delay(task_ids)  # type: ignore
+    tasks = db.query(Task).filter(Task.id.in_(task_ids)).all()
     for task in tasks:
         task_type = TaskType(task.type)
         task_to_execute = TASK_TO_EXECUTE_MAPPING[task_type]
