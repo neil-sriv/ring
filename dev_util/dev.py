@@ -52,9 +52,11 @@ def dev_group(
     return decorator
 
 
-def dev_command(name: str) -> Callable[[Callable[P, None]], click.Command]:
+def dev_command(
+    name: str, group: click.Group
+) -> Callable[[Callable[P, None]], click.Command]:
     def decorator(f: Callable[P, None]) -> click.Command:
-        @dev.command(name=name, context_settings=UNLIMITED_ARGS_SETTINGS)
+        @group.command(name=name, context_settings=UNLIMITED_ARGS_SETTINGS)
         @functools.wraps(f)
         def inner(*args: P.args, **kwargs: P.kwargs) -> None:
             return f(*args, **kwargs)
@@ -89,6 +91,7 @@ def cmd_run(
 
 from .compose import compose, compose_any, compose_ps, compose_up  # noqa: E402, F401
 from .database import db, db_pgcli  # noqa: E402, F401
+from .docker import docker, tag, push, push_and_tag  # noqa: E402, F401
 
 if __name__ == "__main__":
     dev()

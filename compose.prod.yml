@@ -27,6 +27,7 @@ services:
     build:
       context: ./client
       dockerfile: client.Dockerfile
+      image: "email_circle-next"
       
 
 volumes:
