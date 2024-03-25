@@ -21,6 +21,12 @@ services:
       - ./.env
     ports:
       - "8003:5555"
+
+  next:
+    container_name: next
+    build:
+      context: ./client
+      dockerfile: client.Dockerfile
       
 
 volumes:
