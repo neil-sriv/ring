@@ -8,7 +8,7 @@ import functools
 from typing import Any, TypeVar, ParamSpec, Callable
 
 ROOT_DIR = Path(
-    os.environ.get("ROOT_DIR", Path(__file__)).resolve().parents[0],  # type: ignore
+    os.environ.get("ROOT_DIR", Path(__file__)).resolve().parents[1],  # type: ignore
 )
 UNLIMITED_ARGS_SETTINGS = {
     "ignore_unknown_options": True,
@@ -65,7 +65,8 @@ def dev_command(name: str) -> Callable[[Callable[P, None]], click.Command]:
 
 
 def cmd_run(
-    name: str, group: click.Group
+    name: str,
+    group: click.Group,
 ) -> Callable[[Callable[P, list[str]]], click.Command]:
     def decorator(f: Callable[P, list[str]]) -> click.Command:
         @group.command(name=name, context_settings=UNLIMITED_ARGS_SETTINGS)
@@ -77,7 +78,7 @@ def cmd_run(
             cmd_string = f(*args, **kwargs)
             additional_args = ctx.args
             return subprocess_run(
-                COMPOSE_CMD_STARTER + cmd_string + additional_args,
+                cmd_string + additional_args,
                 cwd=ROOT_DIR,
             )
 
@@ -86,44 +87,8 @@ def cmd_run(
     return decorator
 
 
-COMPOSE_CMD_STARTER = [
-    "docker",
-    "compose",
-    "-f",
-    "compose.core.yml",
-    "-f",
-    "compose.dev.yml",
-    "--profile",
-    "dev",
-]
-
-
-@dev_group("compose")
-@click.pass_context
-def compose(ctx: click.Context) -> None:
-    pass
-
-
-@cmd_run("ps", compose)
-def compose_ps() -> list[str]:
-    return [
-        "ps",
-    ]
-
-
-@cmd_run("any", compose)
-def compose_any() -> list[str]:
-    return []
-
-
-@cmd_run("up", compose)
-def compose_up() -> list[str]:
-    return [
-        "up",
-        "--build",
-        "--detach",
-    ]
-
+from .compose import compose, compose_any, compose_ps, compose_up  # noqa: E402, F401
+from .database import db, db_pgcli  # noqa: E402, F401
 
 if __name__ == "__main__":
     dev()

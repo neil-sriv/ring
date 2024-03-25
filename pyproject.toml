@@ -7,7 +7,7 @@ build-backend = "setuptools.build_meta"
 
 [tool.setuptools.packages.find]
 where = ["."]
-include = ["ring", "dev"]
+include = ["ring", "dev_util"]
 namespaces = false
 
 [project]
@@ -38,4 +38,4 @@ dependencies = [
 ]
 
 [project.scripts]
-dev = "dev:dev"
+dev = "dev_util.dev:dev"
