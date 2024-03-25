@@ -1,7 +1,7 @@
 import functools
-from typing import Callable
+from typing import Any, Callable
 import click
-from dev_util.dev import P, cmd_run, dev_group
+from dev_util.dev import cmd_run, dev_group
 
 
 COMPOSE_CMD_STARTER = [
@@ -18,11 +18,12 @@ COMPOSE_CMD_STARTER = [
 
 def compose_run(
     name: str,
-) -> Callable[[Callable[P, list[str]]], click.Command]:
-    def decorator(f: Callable[P, list[str]]) -> click.Command:
-        @cmd_run(name, compose)
+    group: click.Group | None = None,
+) -> Callable[[Callable[..., list[str]]], click.Command]:
+    def decorator(f: Callable[..., list[str]]) -> click.Command:
+        @cmd_run(name, group if group else compose)
         @functools.wraps(f)
-        def inner(*args: P.args, **kwargs: P.kwargs) -> list[str]:
+        def inner(*args: Any, **kwargs: Any) -> list[str]:
             cmd_string = f(*args, **kwargs)
             return COMPOSE_CMD_STARTER + cmd_string
 

@@ -1,4 +1,5 @@
 import click
+from dev_util.compose import compose_run
 from dev_util.dev import cmd_run, dev_group
 import os
 
@@ -16,3 +17,8 @@ def db(ctx: click.Context) -> None:
 def db_pgcli() -> list[str]:
     os.getenv("")
     return ["pgcli", LOCAL_POSTGRES_URI]
+
+
+@compose_run("upgrade", db)
+def db_upgrade() -> list[str]:
+    return ["exec", "-w", "/src/ring", "api", "alembic", "upgrade", "head"]

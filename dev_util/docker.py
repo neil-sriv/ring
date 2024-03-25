@@ -1,5 +1,5 @@
 import click
-from dev_util.dev import cmd_run, dev_command, dev_group, subprocess_run
+from dev_util.dev import dev_command, dev_group, subprocess_run
 
 
 ECR_URI_BASE = "public.ecr.aws/z2k1e8p1/"

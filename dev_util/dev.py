@@ -1,11 +1,11 @@
 #!/usr/bin/env python
-
+from __future__ import annotations
 import os
 from pathlib import Path
 import click
 import subprocess
 import functools
-from typing import Any, TypeVar, ParamSpec, Callable
+from typing import Any, Callable
 
 ROOT_DIR = Path(
     os.environ.get("ROOT_DIR", Path(__file__)).resolve().parents[1],  # type: ignore
@@ -14,8 +14,6 @@ UNLIMITED_ARGS_SETTINGS = {
     "ignore_unknown_options": True,
     "allow_extra_args": True,
 }
-T = TypeVar("T")
-P = ParamSpec("P")
 
 
 def subprocess_run(
@@ -36,15 +34,15 @@ def dev(ctx: click.Context):
 
 def dev_group(
     name: str, invoke_without_command: bool = False
-) -> Callable[[Callable[P, None]], click.Group]:
-    def decorator(f: Callable[P, None]) -> click.Group:
+) -> Callable[[Callable[..., None]], click.Group]:
+    def decorator(f: Callable[..., None]) -> click.Group:
         @dev.group(
             name=name,
             context_settings=UNLIMITED_ARGS_SETTINGS,
             invoke_without_command=invoke_without_command,
         )
         @functools.wraps(f)
-        def inner(*args: P.args, **kwargs: P.kwargs) -> None:
+        def inner(*args: Any, **kwargs: Any) -> None:
             return f(*args, **kwargs)
 
         return inner
@@ -54,11 +52,11 @@ def dev_group(
 
 def dev_command(
     name: str, group: click.Group
-) -> Callable[[Callable[P, None]], click.Command]:
-    def decorator(f: Callable[P, None]) -> click.Command:
+) -> Callable[[Callable[..., None]], click.Command]:
+    def decorator(f: Callable[..., None]) -> click.Command:
         @group.command(name=name, context_settings=UNLIMITED_ARGS_SETTINGS)
         @functools.wraps(f)
-        def inner(*args: P.args, **kwargs: P.kwargs) -> None:
+        def inner(*args: Any, **kwargs: Any) -> None:
             return f(*args, **kwargs)
 
         return inner
@@ -69,13 +67,13 @@ def dev_command(
 def cmd_run(
     name: str,
     group: click.Group,
-) -> Callable[[Callable[P, list[str]]], click.Command]:
-    def decorator(f: Callable[P, list[str]]) -> click.Command:
+) -> Callable[[Callable[..., list[str]]], click.Command]:
+    def decorator(f: Callable[..., list[str]]) -> click.Command:
         @group.command(name=name, context_settings=UNLIMITED_ARGS_SETTINGS)
         @click.pass_context
         @functools.wraps(f)
         def inner(
-            ctx: click.Context, *args: P.args, **kwargs: P.kwargs
+            ctx: click.Context, *args: Any, **kwargs: Any
         ) -> subprocess.CompletedProcess[str]:
             cmd_string = f(*args, **kwargs)
             additional_args = ctx.args
@@ -89,9 +87,9 @@ def cmd_run(
     return decorator
 
 
-from .compose import compose, compose_any, compose_ps, compose_up  # noqa: E402, F401
-from .database import db, db_pgcli  # noqa: E402, F401
-from .docker import docker, tag, push, push_and_tag  # noqa: E402, F401
+from .compose import *  # noqa
+from .database import *  # noqa
+from .docker import *  # noqa
 
 if __name__ == "__main__":
     dev()

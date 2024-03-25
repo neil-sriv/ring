@@ -39,6 +39,10 @@ services:
       - 8004:5432
     expose:
       - 5432
+    environment:
+      - POSTGRES_USER=ring-postgres
+      - POSTGRES_PASSWORD=ring-postgres
+      - POSTGRES_DB=ring
     profiles: ["dev"]
       
 
