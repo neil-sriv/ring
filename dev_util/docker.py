@@ -5,10 +5,10 @@ from dev_util.dev import dev_command, dev_group, subprocess_run
 ECR_URI_BASE = "public.ecr.aws/z2k1e8p1/"
 
 IMAGE_TAG_NAMES = [
-    "email_circle-worker",
-    "email_circle-next",
-    "email_circle-api",
-    "email_circle-beat",
+    "ring-worker",
+    "ring-next",
+    "ring-api",
+    "ring-beat",
 ]
 
 
@@ -52,6 +52,6 @@ def push(image: list[str]) -> None:
 @click.pass_context
 def push_and_tag(ctx: click.Context) -> None:
     ctx.forward(tag)
-    ctx.invoke(tag)
+    # ctx.invoke(tag)
     ctx.forward(push)
-    ctx.invoke(push)
+    # ctx.invoke(push)

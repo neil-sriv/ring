@@ -4,16 +4,15 @@ import click
 from dev_util.dev import cmd_run, dev_group
 
 
-COMPOSE_CMD_STARTER = [
-    "docker",
-    "compose",
-    "-f",
-    "compose.core.yml",
-    "-f",
-    "compose.dev.yml",
-    "--profile",
-    "dev",
-]
+def compose_starter(prod: bool = False) -> list[str]:
+    return [
+        "docker",
+        "compose",
+        "-f",
+        "compose.core.yml",
+        "-f",
+        "compose.prod.yml" if prod else "compose.dev.yml",
+    ] + ([] if prod else ["--profile", "ring"])
 
 
 def compose_run(
@@ -22,10 +21,15 @@ def compose_run(
 ) -> Callable[[Callable[..., list[str]]], click.Command]:
     def decorator(f: Callable[..., list[str]]) -> click.Command:
         @cmd_run(name, group if group else compose)
+        @click.option(
+            "--prod",
+            is_flag=True,
+            default=False,
+        )
         @functools.wraps(f)
-        def inner(*args: Any, **kwargs: Any) -> list[str]:
+        def inner(prod: bool, *args: Any, **kwargs: Any) -> list[str]:
             cmd_string = f(*args, **kwargs)
-            return COMPOSE_CMD_STARTER + cmd_string
+            return compose_starter(prod) + cmd_string
 
         return inner
 
