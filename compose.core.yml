@@ -5,7 +5,7 @@ services:
       context: ./ring
       dockerfile: ring.Dockerfile
       target: ring
-      image: email_circle-api
+      # image: email_circle-api
     command: "uvicorn ring.fast:app --proxy-headers"
     volumes:
       - ./ring:/src/ring
@@ -27,7 +27,7 @@ services:
       context: ./ring
       dockerfile: ring.Dockerfile
       target: ring
-      image: email_circle-worker
+      # image: email_circle-worker
     volumes:
       - ./ring:/src/ring
     command: "celery --app=ring.worker.celery_app worker"
@@ -39,7 +39,7 @@ services:
       context: ./ring
       dockerfile: ring.Dockerfile
       target: ring
-      image: email_circle-beat
+      # image: email_circle-beat
     volumes:
       - ./ring:/src/ring
     command: "celery --app=ring.worker.celery_app beat"
