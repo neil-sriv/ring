@@ -12,7 +12,7 @@ def compose_starter(prod: bool = False) -> list[str]:
         "compose.core.yml",
         "-f",
         "compose.prod.yml" if prod else "compose.dev.yml",
-    ] + ([] if prod else ["--profile", "ring"])
+    ] + ([] if prod else ["--profile", "dev"])
 
 
 def compose_run(
