@@ -6,11 +6,11 @@ const nextConfig = {
   rewrites: async () => {
     return [
       {
-        source: "/:path*",
+        source: "/api/:path*",
         destination:
-          process.env.ENVIRONMENT === "LOCAL"
-            ? "http://127.0.0.1:8001/internal/:path*"
-            : "http://34.203.31.64:8001/internal/:path*", // Proxy to Backend
+          process.env.ENVIRONMENT === "local"
+            ? "http://localhost/api/v1/internal:path*"
+            : "http://34.203.31.64/api/v1/:path*", // Proxy to Backend
       },
     ];
   },

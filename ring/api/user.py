@@ -15,7 +15,7 @@ from ring.pydantic_schemas.user import UserCreate
 from ring.postgres_models.user_model import User
 
 
-@internal.post("/user/", response_model=UserSchema)
+@internal.post("/user", response_model=UserSchema)
 async def create_user(
     user: UserCreate,
     req_dep: RequestDependenciesBase = Depends(
@@ -35,7 +35,7 @@ async def create_user(
     return db_user
 
 
-@internal.get("/users/", response_model=Sequence[UserSchema])
+@internal.get("/users", response_model=Sequence[UserSchema])
 async def list_users(
     skip: int = 0,
     limit: int = 100,

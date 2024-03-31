@@ -3,8 +3,8 @@ export async function authenticate(
   formData: FormData
 ) {
   try {
-    console.log(process.env);
-    await fetch("/users/");
+    const res = await fetch("/internal/");
+    console.log(res);
   } catch (error) {
     // if (error instanceof AuthError) {
     //   switch (error.type) {
