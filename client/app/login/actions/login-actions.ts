@@ -3,8 +3,23 @@ export async function authenticate(
   formData: FormData
 ) {
   try {
-    const res = await fetch("/internal/");
-    console.log(res);
+    const data = {
+      username: formData.get("email"),
+      password: formData.get("password"),
+    };
+    console.log(data);
+    const res = await fetch("/api/token", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/x-www-form-urlencoded",
+        accept: "application/json",
+      },
+      body: new URLSearchParams(data),
+    }).catch((error) => {
+      console.error("Error:", error);
+      throw new Error("Something went wrong.");
+    });
+    console.log(await res.json());
   } catch (error) {
     // if (error instanceof AuthError) {
     //   switch (error.type) {
