@@ -1,23 +1,24 @@
 from datetime import datetime, timedelta
 from fastapi import HTTPException, status
 from fastapi.security import OAuth2PasswordBearer
-from passlib.context import CryptContext
+from pwdlib import PasswordHash
+from pwdlib.hashers.bcrypt import BcryptHasher
 from jose import jwt, JWTError
 from ring.config import get_config
 
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="internal/token")
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+password_hash = PasswordHash([BcryptHasher()])
 
 ACCESS_TOKEN_TTL = 60 * 30  # 30 minutes
 
 
 def verify_password(plain_password: str, hashed_password: str) -> bool:
-    return pwd_context.verify(plain_password, hashed_password)
+    return password_hash.verify(plain_password, hashed_password)
 
 
 def get_password_hash(password: str) -> str:
-    return pwd_context.hash(password)
+    return password_hash.hash(password)
 
 
 def create_access_token(
