@@ -13,6 +13,7 @@ services:
   worker:
     env_file:
       - ./.env
+    mem_limit: 300m
   beat:
     env_file:
       - ./.env
