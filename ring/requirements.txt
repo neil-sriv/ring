@@ -187,6 +187,8 @@ pygments==2.17.2
     #   cli-helpers
     #   ipython
     #   pgcli
+pyjwt==2.8.0
+    # via ring (pyproject.toml)
 pynamodb==5.5.1
     # via ring (pyproject.toml)
 pyproject-hooks==1.0.0
