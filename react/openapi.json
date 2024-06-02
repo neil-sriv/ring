@@ -1865,7 +1865,7 @@
         "flows": {
           "password": {
             "scopes": {},
-            "tokenUrl": "internal/token"
+            "tokenUrl": "login/access-token"
           }
         }
       }

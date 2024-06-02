@@ -1,4 +1,4 @@
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, UTC
 from fastapi import HTTPException, status
 from fastapi.security import OAuth2PasswordBearer
 from pwdlib import PasswordHash
@@ -7,7 +7,7 @@ from jose import jwt, JWTError
 from ring.config import get_config
 
 
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="internal/token")
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="login/access-token")
 password_hash = PasswordHash([BcryptHasher()])
 
 ACCESS_TOKEN_TTL = 60 * 30  # 30 minutes
@@ -26,7 +26,7 @@ def create_access_token(
 ) -> str:
     config = get_config()
     to_encode = data.copy()
-    expire = datetime.utcnow() + timedelta(minutes=expires_ttl)
+    expire = datetime.now(tz=UTC) + timedelta(minutes=expires_ttl)
     to_encode.update({"exp": expire})
     encoded_jwt = jwt.encode(
         to_encode,
