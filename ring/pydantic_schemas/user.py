@@ -17,6 +17,11 @@ class UserUpdate(BaseModel):
     password: str | None = None
 
 
+class UserUpdatePassword(BaseModel):
+    current_password: str
+    new_password: str
+
+
 class User(UserBase):
     model_config = ConfigDict(from_attributes=True)
 
@@ -25,3 +30,8 @@ class User(UserBase):
 
 class UserUnlinked(User):
     pass
+
+
+class NewPassword(BaseModel):
+    new_password: str
+    token: str

@@ -14,13 +14,13 @@ import { type SubmitHandler, useForm } from "react-hook-form";
 
 import {
   type ApiError,
-  type UpdatePassword,
+  type UserUpdatePassword,
   PartiesService,
 } from "../../client";
 import useCustomToast from "../../hooks/useCustomToast";
 import { confirmPasswordRules, passwordRules } from "../../utils";
 
-interface UpdatePasswordForm extends UpdatePassword {
+interface UpdatePasswordForm extends UserUpdatePassword {
   confirm_password: string;
 }
 
@@ -39,9 +39,12 @@ const ChangePassword = () => {
   });
 
   const mutation = useMutation({
-    mutationFn: (data: UpdatePassword) =>
+    mutationFn: (data: UpdatePasswordForm) =>
       PartiesService.updatePasswordMePartiesMePasswordPatch({
-        requestBody: data,
+        requestBody: {
+          current_password: data.current_password,
+          new_password: data.new_password,
+        },
       }),
     onSuccess: () => {
       showToast("Success!", "Password updated.", "success");

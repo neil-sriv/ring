@@ -2,7 +2,7 @@ import type { CancelablePromise } from './core/CancelablePromise';
 import { OpenAPI } from './core/OpenAPI';
 import { request as __request } from './core/request';
 
-import type { Body_login_access_token_login_access_token_post,Token,GroupCreate,GroupLinked,ScheduleSendParam,UserCreate,UserLinked,UserUpdate,LetterCreate,LetterLinked,QuestionCreate,ScheduleLinked } from './models';
+import type { Body_login_access_token_login_access_token_post,NewPassword,Token,GroupCreate,GroupLinked,ScheduleSendParam,UserCreate,UserLinked,UserUpdate,UserUpdatePassword,LetterCreate,LetterLinked,QuestionCreate,ScheduleLinked } from './models';
 
 export type LoginData = {
         LoginAccessTokenLoginAccessTokenPost: {
@@ -11,6 +11,10 @@ export type LoginData = {
                 };
 RecoverPasswordPasswordRecoveryEmailPost: {
                     email: string
+                    
+                };
+ResetPasswordResetPasswordPost: {
+                    requestBody: NewPassword
                     
                 };
 RecoverPasswordHtmlContentPasswordRecoveryHtmlContentEmailPost: {
@@ -35,6 +39,10 @@ skip?: number
                 };
 ReadUserByIdPartiesUserUserApiIdGet: {
                     userApiId: string
+                    
+                };
+UpdatePasswordMePartiesMePasswordPatch: {
+                    requestBody: UserUpdatePassword
                     
                 };
 CreateGroupPartiesGroupPost: {
@@ -167,10 +175,18 @@ email,
 	 * @returns null Successful Response
 	 * @throws ApiError
 	 */
-	public static resetPasswordResetPasswordPost(): CancelablePromise<null> {
-				return __request(OpenAPI, {
+	public static resetPasswordResetPasswordPost(data: LoginData['ResetPasswordResetPasswordPost']): CancelablePromise<null> {
+		const {
+requestBody,
+} = data;
+		return __request(OpenAPI, {
 			method: 'POST',
 			url: '/reset-password/',
+			body: requestBody,
+			mediaType: 'application/json',
+			errors: {
+				422: `Validation Error`,
+			},
 		});
 	}
 
@@ -319,10 +335,18 @@ userApiId,
 	 * @returns null Successful Response
 	 * @throws ApiError
 	 */
-	public static updatePasswordMePartiesMePasswordPatch(): CancelablePromise<null> {
-				return __request(OpenAPI, {
+	public static updatePasswordMePartiesMePasswordPatch(data: PartiesData['UpdatePasswordMePartiesMePasswordPatch']): CancelablePromise<null> {
+		const {
+requestBody,
+} = data;
+		return __request(OpenAPI, {
 			method: 'PATCH',
 			url: '/parties/me/password',
+			body: requestBody,
+			mediaType: 'application/json',
+			errors: {
+				422: `Validation Error`,
+			},
 		});
 	}
 

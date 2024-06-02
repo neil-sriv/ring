@@ -9,14 +9,14 @@ import {
 import { BsThreeDotsVertical } from "react-icons/bs";
 import { FiEdit, FiTrash } from "react-icons/fi";
 
-import type { ItemPublic, UserLinked } from "../../client";
+import type { LetterLinked, UserLinked } from "../../client";
 import EditUser from "../Admin/EditUser";
 import EditItem from "../Items/EditItem";
 import Delete from "./DeleteAlert";
 
 interface ActionsMenuProps {
   type: string;
-  value: ItemPublic | UserLinked;
+  value: LetterLinked | UserLinked;
   disabled?: boolean;
 }
 
@@ -56,14 +56,14 @@ const ActionsMenu = ({ type, value, disabled }: ActionsMenuProps) => {
           />
         ) : (
           <EditItem
-            item={value as ItemPublic}
+            item={value as LetterLinked}
             isOpen={editUserModal.isOpen}
             onClose={editUserModal.onClose}
           />
         )}
         <Delete
           type={type}
-          id={value.id}
+          id={value.api_identifier}
           isOpen={deleteModal.isOpen}
           onClose={deleteModal.onClose}
         />

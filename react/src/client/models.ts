@@ -62,6 +62,13 @@ export type LetterUnlinked = {
 
 
 
+export type NewPassword = {
+	new_password: string;
+	token: string;
+};
+
+
+
 export type QuestionCreate = {
 	question_text: string;
 };
@@ -149,6 +156,13 @@ export type UserUpdate = {
 	email?: string | null;
 	name?: string | null;
 	password?: string | null;
+};
+
+
+
+export type UserUpdatePassword = {
+	current_password: string;
+	new_password: string;
 };
 
 

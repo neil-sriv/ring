@@ -8,6 +8,7 @@ from ring.dependencies import (
 )
 from fastapi import HTTPException
 from ring.crud import user as user_crud
+from ring.pydantic_schemas.user import NewPassword
 from ring.security import create_access_token
 
 router = APIRouter()
@@ -53,7 +54,12 @@ def recover_password(email: str) -> None:
 
 
 @router.post("/reset-password/", deprecated=True)
-def reset_password() -> None:
+def reset_password(
+    new_password_data: NewPassword,
+    req_dep: RequestDependenciesBase = Depends(
+        get_unauthenticated_request_dependencies
+    ),
+) -> None:
     """
     Reset password
     """

@@ -166,6 +166,19 @@ export const $LetterUnlinked = {
 	},
 } as const;
 
+export const $NewPassword = {
+	properties: {
+		new_password: {
+	type: 'string',
+	isRequired: true,
+},
+		token: {
+	type: 'string',
+	isRequired: true,
+},
+	},
+} as const;
+
 export const $QuestionCreate = {
 	properties: {
 		question_text: {
@@ -378,6 +391,19 @@ export const $UserUpdate = {
 }, {
 	type: 'null',
 }],
+},
+	},
+} as const;
+
+export const $UserUpdatePassword = {
+	properties: {
+		current_password: {
+	type: 'string',
+	isRequired: true,
+},
+		new_password: {
+	type: 'string',
+	isRequired: true,
 },
 	},
 } as const;

@@ -32,8 +32,7 @@ const DeleteConfirmation = ({ isOpen, onClose }: DeleteProps) => {
   const { logout } = useAuth();
 
   const mutation = useMutation({
-    mutationFn: (id: number) =>
-      PartiesService.deleteUserPartiesUserIdDelete({ userId: id }),
+    mutationFn: (id: string) => PartiesService.deleteUserPartiesUserIdDelete(),
     onSuccess: () => {
       showToast(
         "Success",
@@ -53,7 +52,7 @@ const DeleteConfirmation = ({ isOpen, onClose }: DeleteProps) => {
   });
 
   const onSubmit = async () => {
-    mutation.mutate(currentUser!.id);
+    mutation.mutate(currentUser!.api_identifier);
   };
 
   return (

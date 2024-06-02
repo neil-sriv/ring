@@ -16,7 +16,7 @@ import useCustomToast from "../../hooks/useCustomToast";
 
 interface DeleteProps {
   type: string;
-  id: number;
+  id: string;
   isOpen: boolean;
   onClose: () => void;
 }
@@ -30,14 +30,17 @@ const Delete = ({ type, id, isOpen, onClose }: DeleteProps) => {
     formState: { isSubmitting },
   } = useForm();
 
-  const deleteEntity = async (id: number) => {
-    if (type === "Item") {
-      await LettersService.readLetterLettersLetterLetterApiIdGet({ id: id });
-    } else if (type === "User") {
-      await PartiesService.deleteUserPartiesUserIdDelete({ userId: id });
-    } else {
-      throw new Error(`Unexpected type: ${type}`);
-    }
+  const deleteEntity = async (id: string) => {
+    throw new Error("Not implemented");
+    // if (type === "Item") {
+    //   await LettersService.readLetterLettersLetterLetterApiIdGet({
+    //     letterApiId: id,
+    //   });
+    // } else if (type === "User") {
+    //   await PartiesService.deleteUserPartiesUserIdDelete({ userId: id });
+    // } else {
+    //   throw new Error(`Unexpected type: ${type}`);
+    // }
   };
 
   const mutation = useMutation({
