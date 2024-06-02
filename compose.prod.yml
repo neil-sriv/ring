@@ -28,8 +28,8 @@ services:
     build:
       context: ./react
       dockerfile: client.Dockerfile
-    environment:
-      - VITE_API_URL=http://localhost
+      args:
+        - VITE_API_URL=http://localhost 
       
 
 volumes:

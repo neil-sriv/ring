@@ -9,6 +9,7 @@ RUN yarn
 
 COPY ./ /app/
 
+ARG VITE_API_URL=${VITE_API_URL}
 
 RUN yarn build
 
