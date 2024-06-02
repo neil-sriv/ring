@@ -9,14 +9,14 @@ import {
 import { BsThreeDotsVertical } from "react-icons/bs";
 import { FiEdit, FiTrash } from "react-icons/fi";
 
-import type { ItemPublic, UserPublic } from "../../client";
+import type { ItemPublic, UserLinked } from "../../client";
 import EditUser from "../Admin/EditUser";
 import EditItem from "../Items/EditItem";
 import Delete from "./DeleteAlert";
 
 interface ActionsMenuProps {
   type: string;
-  value: ItemPublic | UserPublic;
+  value: ItemPublic | UserLinked;
   disabled?: boolean;
 }
 
@@ -50,7 +50,7 @@ const ActionsMenu = ({ type, value, disabled }: ActionsMenuProps) => {
         </MenuList>
         {type === "User" ? (
           <EditUser
-            user={value as UserPublic}
+            user={value as UserLinked}
             isOpen={editUserModal.isOpen}
             onClose={editUserModal.onClose}
           />

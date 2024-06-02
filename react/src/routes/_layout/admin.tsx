@@ -12,27 +12,27 @@ import {
   Th,
   Thead,
   Tr,
-} from "@chakra-ui/react"
-import { useQueryClient, useSuspenseQuery } from "@tanstack/react-query"
-import { createFileRoute } from "@tanstack/react-router"
+} from "@chakra-ui/react";
+import { useQueryClient, useSuspenseQuery } from "@tanstack/react-query";
+import { createFileRoute } from "@tanstack/react-router";
 
-import { Suspense } from "react"
-import { type UserPublic, UsersService } from "../../client"
-import ActionsMenu from "../../components/Common/ActionsMenu"
-import Navbar from "../../components/Common/Navbar"
+import { Suspense } from "react";
+import { type UserLinked, PartiesService } from "../../client";
+import ActionsMenu from "../../components/Common/ActionsMenu";
+import Navbar from "../../components/Common/Navbar";
 
 export const Route = createFileRoute("/_layout/admin")({
   component: Admin,
-})
+});
 
 const MembersTableBody = () => {
-  const queryClient = useQueryClient()
-  const currentUser = queryClient.getQueryData<UserPublic>(["currentUser"])
+  const queryClient = useQueryClient();
+  const currentUser = queryClient.getQueryData<UserLinked>(["currentUser"]);
 
   const { data: users } = useSuspenseQuery({
     queryKey: ["users"],
-    queryFn: () => UsersService.readUsers({}),
-  })
+    queryFn: () => PartiesService.readUsersPartiesUsersGet({}),
+  });
 
   return (
     <Tbody>
@@ -70,8 +70,8 @@ const MembersTableBody = () => {
         </Tr>
       ))}
     </Tbody>
-  )
-}
+  );
+};
 
 const MembersBodySkeleton = () => {
   return (
@@ -84,8 +84,8 @@ const MembersBodySkeleton = () => {
         ))}
       </Tr>
     </Tbody>
-  )
-}
+  );
+};
 
 function Admin() {
   return (
@@ -111,5 +111,5 @@ function Admin() {
         </Table>
       </TableContainer>
     </Container>
-  )
+  );
 }

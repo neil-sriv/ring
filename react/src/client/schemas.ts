@@ -1,405 +1,379 @@
-export const $Body_login_login_access_token = {
-  properties: {
-    grant_type: {
-      type: "any-of",
-      contains: [
-        {
-          type: "string",
-          pattern: "password",
-        },
-        {
-          type: "null",
-        },
-      ],
-    },
-    username: {
-      type: "string",
-      isRequired: true,
-    },
-    password: {
-      type: "string",
-      isRequired: true,
-    },
-    scope: {
-      type: "string",
-      default: "",
-    },
-    client_id: {
-      type: "any-of",
-      contains: [
-        {
-          type: "string",
-        },
-        {
-          type: "null",
-        },
-      ],
-    },
-    client_secret: {
-      type: "any-of",
-      contains: [
-        {
-          type: "string",
-        },
-        {
-          type: "null",
-        },
-      ],
-    },
-  },
+export const $Body_login_access_token_login_access_token_post = {
+	properties: {
+		grant_type: {
+	type: 'any-of',
+	contains: [{
+	type: 'string',
+	pattern: 'password',
+}, {
+	type: 'null',
+}],
+},
+		username: {
+	type: 'string',
+	isRequired: true,
+},
+		password: {
+	type: 'string',
+	isRequired: true,
+},
+		scope: {
+	type: 'string',
+	default: '',
+},
+		client_id: {
+	type: 'any-of',
+	contains: [{
+	type: 'string',
+}, {
+	type: 'null',
+}],
+},
+		client_secret: {
+	type: 'any-of',
+	contains: [{
+	type: 'string',
+}, {
+	type: 'null',
+}],
+},
+	},
+} as const;
+
+export const $GroupCreate = {
+	properties: {
+		name: {
+	type: 'string',
+	isRequired: true,
+},
+		admin_api_identifier: {
+	type: 'string',
+	isRequired: true,
+},
+	},
+} as const;
+
+export const $GroupLinked = {
+	properties: {
+		name: {
+	type: 'string',
+	isRequired: true,
+},
+		api_identifier: {
+	type: 'string',
+	isRequired: true,
+},
+		members: {
+	type: 'array',
+	contains: {
+		type: 'UserUnlinked',
+	},
+	isRequired: true,
+},
+		letters: {
+	type: 'array',
+	contains: {
+		type: 'LetterUnlinked',
+	},
+	isRequired: true,
+},
+		schedule: {
+	type: 'any-of',
+	contains: [{
+	type: 'ScheduleUnlinked',
+}, {
+	type: 'null',
+}],
+	isRequired: true,
+},
+	},
+} as const;
+
+export const $GroupUnlinked = {
+	properties: {
+		name: {
+	type: 'string',
+	isRequired: true,
+},
+		api_identifier: {
+	type: 'string',
+	isRequired: true,
+},
+	},
 } as const;
 
 export const $HTTPValidationError = {
-  properties: {
-    detail: {
-      type: "array",
-      contains: {
-        type: "ValidationError",
-      },
-    },
-  },
+	properties: {
+		detail: {
+	type: 'array',
+	contains: {
+		type: 'ValidationError',
+	},
+},
+	},
 } as const;
 
-export const $ItemCreate = {
-  properties: {
-    title: {
-      type: "string",
-      isRequired: true,
-    },
-    description: {
-      type: "any-of",
-      contains: [
-        {
-          type: "string",
-        },
-        {
-          type: "null",
-        },
-      ],
-    },
-  },
+export const $LetterCreate = {
+	properties: {
+		group_api_identifier: {
+	type: 'string',
+	isRequired: true,
+},
+	},
 } as const;
 
-export const $ItemPublic = {
-  properties: {
-    title: {
-      type: "string",
-      isRequired: true,
-    },
-    description: {
-      type: "any-of",
-      contains: [
-        {
-          type: "string",
-        },
-        {
-          type: "null",
-        },
-      ],
-    },
-    id: {
-      type: "number",
-      isRequired: true,
-    },
-    owner_id: {
-      type: "number",
-      isRequired: true,
-    },
-  },
+export const $LetterLinked = {
+	properties: {
+		api_identifier: {
+	type: 'string',
+	isRequired: true,
+},
+		number: {
+	type: 'number',
+	isRequired: true,
+},
+		participants: {
+	type: 'array',
+	contains: {
+		type: 'UserUnlinked',
+	},
+	isRequired: true,
+},
+		group: {
+	type: 'GroupUnlinked',
+	isRequired: true,
+},
+		questions: {
+	type: 'array',
+	contains: {
+		type: 'QuestionUnlinked',
+	},
+	isRequired: true,
+},
+	},
 } as const;
 
-export const $ItemUpdate = {
-  properties: {
-    title: {
-      type: "any-of",
-      contains: [
-        {
-          type: "string",
-        },
-        {
-          type: "null",
-        },
-      ],
-    },
-    description: {
-      type: "any-of",
-      contains: [
-        {
-          type: "string",
-        },
-        {
-          type: "null",
-        },
-      ],
-    },
-  },
+export const $LetterUnlinked = {
+	properties: {
+		api_identifier: {
+	type: 'string',
+	isRequired: true,
+},
+		number: {
+	type: 'number',
+	isRequired: true,
+},
+	},
 } as const;
 
-export const $ItemsPublic = {
-  properties: {
-    data: {
-      type: "array",
-      contains: {
-        type: "ItemPublic",
-      },
-      isRequired: true,
-    },
-    count: {
-      type: "number",
-      isRequired: true,
-    },
-  },
+export const $QuestionCreate = {
+	properties: {
+		question_text: {
+	type: 'string',
+	isRequired: true,
+},
+	},
 } as const;
 
-export const $Message = {
-  properties: {
-    message: {
-      type: "string",
-      isRequired: true,
-    },
-  },
+export const $QuestionUnlinked = {
+	properties: {
+		question_text: {
+	type: 'string',
+	isRequired: true,
+},
+		api_identifier: {
+	type: 'string',
+	isRequired: true,
+},
+		responses: {
+	type: 'array',
+	contains: {
+		type: 'ResponseUnlinked',
+	},
+	isRequired: true,
+},
+	},
 } as const;
 
-export const $NewPassword = {
-  properties: {
-    token: {
-      type: "string",
-      isRequired: true,
-    },
-    new_password: {
-      type: "string",
-      isRequired: true,
-    },
-  },
+export const $ResponseUnlinked = {
+	properties: {
+		response_text: {
+	type: 'string',
+	isRequired: true,
+},
+		api_identifier: {
+	type: 'string',
+	isRequired: true,
+},
+	},
+} as const;
+
+export const $ScheduleLinked = {
+	properties: {
+		group: {
+	type: 'GroupUnlinked',
+	isRequired: true,
+},
+		tasks: {
+	type: 'array',
+	contains: {
+		type: 'TaskUnlinked',
+	},
+	isRequired: true,
+},
+	},
+} as const;
+
+export const $ScheduleSendParam = {
+	properties: {
+		letter_api_id: {
+	type: 'string',
+	isRequired: true,
+},
+		send_at: {
+	type: 'string',
+	isRequired: true,
+	format: 'date-time',
+},
+	},
+} as const;
+
+export const $ScheduleUnlinked = {
+	properties: {
+		tasks: {
+	type: 'array',
+	contains: {
+		type: 'TaskUnlinked',
+	},
+	isRequired: true,
+},
+	},
+} as const;
+
+export const $TaskUnlinked = {
+	properties: {
+		type: {
+	type: 'string',
+	isRequired: true,
+},
+		status: {
+	type: 'string',
+	isRequired: true,
+},
+		execute_at: {
+	type: 'string',
+	isRequired: true,
+	format: 'date-time',
+},
+		arguments: {
+	type: 'dictionary',
+	contains: {
+	type: 'string',
+},
+	isRequired: true,
+},
+	},
 } as const;
 
 export const $Token = {
-  properties: {
-    access_token: {
-      type: "string",
-      isRequired: true,
-    },
-    token_type: {
-      type: "string",
-      default: "bearer",
-    },
-  },
-} as const;
-
-export const $UpdatePassword = {
-  properties: {
-    current_password: {
-      type: "string",
-      isRequired: true,
-    },
-    new_password: {
-      type: "string",
-      isRequired: true,
-    },
-  },
+	properties: {
+		access_token: {
+	type: 'string',
+	isRequired: true,
+},
+		token_type: {
+	type: 'string',
+	isRequired: true,
+},
+	},
 } as const;
 
 export const $UserCreate = {
-  properties: {
-    email: {
-      type: "string",
-      isRequired: true,
-    },
-    is_active: {
-      type: "boolean",
-      default: true,
-    },
-    is_superuser: {
-      type: "boolean",
-      default: false,
-    },
-    full_name: {
-      type: "any-of",
-      contains: [
-        {
-          type: "string",
-        },
-        {
-          type: "null",
-        },
-      ],
-    },
-    password: {
-      type: "string",
-      isRequired: true,
-    },
-  },
+	properties: {
+		email: {
+	type: 'string',
+	isRequired: true,
+},
+		name: {
+	type: 'string',
+	isRequired: true,
+},
+		password: {
+	type: 'string',
+	isRequired: true,
+},
+	},
 } as const;
 
-export const $UserPublic = {
-  properties: {
-    email: {
-      type: "string",
-      isRequired: true,
-    },
-    is_active: {
-      type: "boolean",
-      default: true,
-    },
-    is_superuser: {
-      type: "boolean",
-      default: false,
-    },
-    full_name: {
-      type: "any-of",
-      contains: [
-        {
-          type: "string",
-        },
-        {
-          type: "null",
-        },
-      ],
-    },
-    id: {
-      type: "number",
-      isRequired: true,
-    },
-  },
+export const $UserLinked = {
+	properties: {
+		email: {
+	type: 'string',
+	isRequired: true,
+},
+		name: {
+	type: 'string',
+	isRequired: true,
+},
+		api_identifier: {
+	type: 'string',
+	isRequired: true,
+},
+		groups: {
+	type: 'array',
+	contains: {
+		type: 'GroupUnlinked',
+	},
+	isRequired: true,
+},
+		responses: {
+	type: 'array',
+	contains: {
+		type: 'ResponseUnlinked',
+	},
+	isRequired: true,
+},
+	},
 } as const;
 
-export const $UserRegister = {
-  properties: {
-    email: {
-      type: "string",
-      isRequired: true,
-    },
-    password: {
-      type: "string",
-      isRequired: true,
-    },
-    full_name: {
-      type: "any-of",
-      contains: [
-        {
-          type: "string",
-        },
-        {
-          type: "null",
-        },
-      ],
-    },
-  },
-} as const;
-
-export const $UserUpdate = {
-  properties: {
-    email: {
-      type: "any-of",
-      contains: [
-        {
-          type: "string",
-        },
-        {
-          type: "null",
-        },
-      ],
-    },
-    is_active: {
-      type: "boolean",
-      default: true,
-    },
-    is_superuser: {
-      type: "boolean",
-      default: false,
-    },
-    full_name: {
-      type: "any-of",
-      contains: [
-        {
-          type: "string",
-        },
-        {
-          type: "null",
-        },
-      ],
-    },
-    password: {
-      type: "any-of",
-      contains: [
-        {
-          type: "string",
-        },
-        {
-          type: "null",
-        },
-      ],
-    },
-  },
-} as const;
-
-export const $UserUpdateMe = {
-  properties: {
-    full_name: {
-      type: "any-of",
-      contains: [
-        {
-          type: "string",
-        },
-        {
-          type: "null",
-        },
-      ],
-    },
-    email: {
-      type: "any-of",
-      contains: [
-        {
-          type: "string",
-        },
-        {
-          type: "null",
-        },
-      ],
-    },
-  },
-} as const;
-
-export const $UsersPublic = {
-  properties: {
-    data: {
-      type: "array",
-      contains: {
-        type: "UserPublic",
-      },
-      isRequired: true,
-    },
-    count: {
-      type: "number",
-      isRequired: true,
-    },
-  },
+export const $UserUnlinked = {
+	properties: {
+		email: {
+	type: 'string',
+	isRequired: true,
+},
+		name: {
+	type: 'string',
+	isRequired: true,
+},
+		api_identifier: {
+	type: 'string',
+	isRequired: true,
+},
+	},
 } as const;
 
 export const $ValidationError = {
-  properties: {
-    loc: {
-      type: "array",
-      contains: {
-        type: "any-of",
-        contains: [
-          {
-            type: "string",
-          },
-          {
-            type: "number",
-          },
-        ],
-      },
-      isRequired: true,
-    },
-    msg: {
-      type: "string",
-      isRequired: true,
-    },
-    type: {
-      type: "string",
-      isRequired: true,
-    },
-  },
+	properties: {
+		loc: {
+	type: 'array',
+	contains: {
+	type: 'any-of',
+	contains: [{
+	type: 'string',
+}, {
+	type: 'number',
+}],
+},
+	isRequired: true,
+},
+		msg: {
+	type: 'string',
+	isRequired: true,
+},
+		type: {
+	type: 'string',
+	isRequired: true,
+},
+	},
 } as const;

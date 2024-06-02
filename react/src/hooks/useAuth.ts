@@ -1,60 +1,60 @@
-import { useMutation, useQuery } from "@tanstack/react-query"
-import { useNavigate } from "@tanstack/react-router"
-import { useState } from "react"
+import { useMutation, useQuery } from "@tanstack/react-query";
+import { useNavigate } from "@tanstack/react-router";
+import { useState } from "react";
 
-import { AxiosError } from "axios"
+import { AxiosError } from "axios";
 import {
-  type Body_login_login_access_token as AccessToken,
+  type Body_login_access_token_login_access_token_post as AccessToken,
   type ApiError,
   LoginService,
-  type UserPublic,
-  UsersService,
-} from "../client"
+  type UserLinked,
+  PartiesService,
+} from "../client";
 
 const isLoggedIn = () => {
-  return localStorage.getItem("access_token") !== null
-}
+  return localStorage.getItem("access_token") !== null;
+};
 
 const useAuth = () => {
-  const [error, setError] = useState<string | null>(null)
-  const navigate = useNavigate()
-  const { data: user, isLoading } = useQuery<UserPublic | null, Error>({
+  const [error, setError] = useState<string | null>(null);
+  const navigate = useNavigate();
+  const { data: user, isLoading } = useQuery<UserLinked | null, Error>({
     queryKey: ["currentUser"],
-    queryFn: UsersService.readUserMe,
+    queryFn: PartiesService.readUserMePartiesMeGet,
     enabled: isLoggedIn(),
-  })
+  });
 
   const login = async (data: AccessToken) => {
-    const response = await LoginService.loginAccessToken({
+    const response = await LoginService.loginAccessTokenLoginAccessTokenPost({
       formData: data,
-    })
-    localStorage.setItem("access_token", response.access_token)
-  }
+    });
+    localStorage.setItem("access_token", response.access_token);
+  };
 
   const loginMutation = useMutation({
     mutationFn: login,
     onSuccess: () => {
-      navigate({ to: "/" })
+      navigate({ to: "/" });
     },
     onError: (err: ApiError) => {
-      let errDetail = (err.body as any)?.detail
+      let errDetail = (err.body as any)?.detail;
 
       if (err instanceof AxiosError) {
-        errDetail = err.message
+        errDetail = err.message;
       }
 
       if (Array.isArray(errDetail)) {
-        errDetail = "Something went wrong"
+        errDetail = "Something went wrong";
       }
 
-      setError(errDetail)
+      setError(errDetail);
     },
-  })
+  });
 
   const logout = () => {
-    localStorage.removeItem("access_token")
-    navigate({ to: "/login" })
-  }
+    localStorage.removeItem("access_token");
+    navigate({ to: "/login" });
+  };
 
   return {
     loginMutation,
@@ -63,8 +63,8 @@ const useAuth = () => {
     isLoading,
     error,
     resetError: () => setError(null),
-  }
-}
+  };
+};
 
-export { isLoggedIn }
-export default useAuth
+export { isLoggedIn };
+export default useAuth;

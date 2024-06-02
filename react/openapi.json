@@ -1,0 +1,1655 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "FastAPI",
+    "version": "0.1.0"
+  },
+  "servers": [
+    {
+      "url": "/api/v1"
+    }
+  ],
+  "paths": {
+    "/login/access-token": {
+      "post": {
+        "tags": [
+          "login"
+        ],
+        "summary": "Login Access Token",
+        "operationId": "login_access_token_login_access_token_post",
+        "requestBody": {
+          "content": {
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "$ref": "#/components/schemas/Body_login_access_token_login_access_token_post"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Token"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/login/test-token": {
+      "post": {
+        "tags": [
+          "login"
+        ],
+        "summary": "Test Token",
+        "description": "Test access token",
+        "operationId": "test_token_login_test_token_post",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "null",
+                  "title": "Response Test Token Login Test Token Post"
+                }
+              }
+            }
+          }
+        },
+        "deprecated": true
+      }
+    },
+    "/password-recovery/{email}": {
+      "post": {
+        "tags": [
+          "login"
+        ],
+        "summary": "Recover Password",
+        "description": "Password Recovery",
+        "operationId": "recover_password_password_recovery__email__post",
+        "deprecated": true,
+        "parameters": [
+          {
+            "name": "email",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Email"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "null",
+                  "title": "Response Recover Password Password Recovery  Email  Post"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/reset-password/": {
+      "post": {
+        "tags": [
+          "login"
+        ],
+        "summary": "Reset Password",
+        "description": "Reset password",
+        "operationId": "reset_password_reset_password__post",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "null",
+                  "title": "Response Reset Password Reset Password  Post"
+                }
+              }
+            }
+          }
+        },
+        "deprecated": true
+      }
+    },
+    "/password-recovery-html-content/{email}": {
+      "post": {
+        "tags": [
+          "login"
+        ],
+        "summary": "Recover Password Html Content",
+        "description": "HTML Content for Password Recovery",
+        "operationId": "recover_password_html_content_password_recovery_html_content__email__post",
+        "deprecated": true,
+        "parameters": [
+          {
+            "name": "email",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Email"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "null",
+                  "title": "Response Recover Password Html Content Password Recovery Html Content  Email  Post"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/parties/me": {
+      "get": {
+        "tags": [
+          "parties"
+        ],
+        "summary": "Read User Me",
+        "operationId": "read_user_me_parties_me_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserLinked"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ]
+      },
+      "delete": {
+        "tags": [
+          "parties"
+        ],
+        "summary": "Delete User Me",
+        "description": "Delete own user.",
+        "operationId": "delete_user_me_parties_me_delete",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "null",
+                  "title": "Response Delete User Me Parties Me Delete"
+                }
+              }
+            }
+          }
+        },
+        "deprecated": true
+      },
+      "patch": {
+        "tags": [
+          "parties"
+        ],
+        "summary": "Update User Me",
+        "description": "Update own user.",
+        "operationId": "update_user_me_parties_me_patch",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "null",
+                  "title": "Response Update User Me Parties Me Patch"
+                }
+              }
+            }
+          }
+        },
+        "deprecated": true
+      }
+    },
+    "/parties/user": {
+      "post": {
+        "tags": [
+          "parties"
+        ],
+        "summary": "Create User",
+        "operationId": "create_user_parties_user_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UserCreate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserLinked"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/parties/users": {
+      "get": {
+        "tags": [
+          "parties"
+        ],
+        "summary": "Read Users",
+        "operationId": "read_users_parties_users_get",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "skip",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "default": 0,
+              "title": "Skip"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "default": 100,
+              "title": "Limit"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/UserLinked"
+                  },
+                  "title": "Response Read Users Parties Users Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/parties/user/{user_api_id}": {
+      "get": {
+        "tags": [
+          "parties"
+        ],
+        "summary": "Read User By Id",
+        "operationId": "read_user_by_id_parties_user__user_api_id__get",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "user_api_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "User Api Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserLinked"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/parties/me/password": {
+      "patch": {
+        "tags": [
+          "parties"
+        ],
+        "summary": "Update Password Me",
+        "description": "Update own password.",
+        "operationId": "update_password_me_parties_me_password_patch",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "null",
+                  "title": "Response Update Password Me Parties Me Password Patch"
+                }
+              }
+            }
+          }
+        },
+        "deprecated": true
+      }
+    },
+    "/parties/signup": {
+      "post": {
+        "tags": [
+          "parties"
+        ],
+        "summary": "Register User",
+        "description": "Create new user without the need to be logged in.",
+        "operationId": "register_user_parties_signup_post",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "null",
+                  "title": "Response Register User Parties Signup Post"
+                }
+              }
+            }
+          }
+        },
+        "deprecated": true
+      }
+    },
+    "/parties/{user_id}": {
+      "delete": {
+        "tags": [
+          "parties"
+        ],
+        "summary": "Delete User",
+        "description": "Delete a user.",
+        "operationId": "delete_user_parties__user_id__delete",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "null",
+                  "title": "Response Delete User Parties  User Id  Delete"
+                }
+              }
+            }
+          }
+        },
+        "deprecated": true
+      },
+      "patch": {
+        "tags": [
+          "parties"
+        ],
+        "summary": "Update User",
+        "description": "Update a user.",
+        "operationId": "update_user_parties__user_id__patch",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "null",
+                  "title": "Response Update User Parties  User Id  Patch"
+                }
+              }
+            }
+          }
+        },
+        "deprecated": true
+      }
+    },
+    "/parties/group": {
+      "post": {
+        "tags": [
+          "parties"
+        ],
+        "summary": "Create Group",
+        "operationId": "create_group_parties_group_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GroupCreate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GroupLinked"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ]
+      }
+    },
+    "/parties/groups/": {
+      "get": {
+        "tags": [
+          "parties"
+        ],
+        "summary": "List Groups",
+        "operationId": "list_groups_parties_groups__get",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "user_api_id",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "User Api Id"
+            }
+          },
+          {
+            "name": "skip",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "default": 0,
+              "title": "Skip"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "default": 100,
+              "title": "Limit"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/GroupLinked"
+                  },
+                  "title": "Response List Groups Parties Groups  Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/parties/group/{group_api_id}": {
+      "get": {
+        "tags": [
+          "parties"
+        ],
+        "summary": "Read Group",
+        "operationId": "read_group_parties_group__group_api_id__get",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "group_api_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Group Api Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GroupLinked"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/parties/group/{group_api_id}:add_member/{user_api_id}": {
+      "post": {
+        "tags": [
+          "parties"
+        ],
+        "summary": "Add User To Group",
+        "operationId": "add_user_to_group_parties_group__group_api_id__add_member__user_api_id__post",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "group_api_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Group Api Id"
+            }
+          },
+          {
+            "name": "user_api_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "User Api Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GroupLinked"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/parties/group/{group_api_id}:remove_member/{user_api_id}": {
+      "post": {
+        "tags": [
+          "parties"
+        ],
+        "summary": "Remove User From Group",
+        "operationId": "remove_user_from_group_parties_group__group_api_id__remove_member__user_api_id__post",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "group_api_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Group Api Id"
+            }
+          },
+          {
+            "name": "user_api_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "User Api Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GroupLinked"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/parties/group/{group_api_id}:schedule_send": {
+      "post": {
+        "tags": [
+          "parties"
+        ],
+        "summary": "Schedule Send",
+        "operationId": "schedule_send_parties_group__group_api_id__schedule_send_post",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "group_api_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Group Api Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ScheduleSendParam"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GroupLinked"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/letters/letter": {
+      "post": {
+        "tags": [
+          "letters"
+        ],
+        "summary": "Add Next Letter",
+        "operationId": "add_next_letter_letters_letter_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LetterCreate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LetterLinked"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ]
+      }
+    },
+    "/letters/letters/": {
+      "get": {
+        "tags": [
+          "letters"
+        ],
+        "summary": "List Letters",
+        "operationId": "list_letters_letters_letters__get",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "group_api_id",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Group Api Id"
+            }
+          },
+          {
+            "name": "skip",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "default": 0,
+              "title": "Skip"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "default": 100,
+              "title": "Limit"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/LetterLinked"
+                  },
+                  "title": "Response List Letters Letters Letters  Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/letters/letter/{letter_api_id}": {
+      "get": {
+        "tags": [
+          "letters"
+        ],
+        "summary": "Read Letter",
+        "operationId": "read_letter_letters_letter__letter_api_id__get",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "letter_api_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Letter Api Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LetterLinked"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/letters/letter/{letter_api_id}:add_question": {
+      "post": {
+        "tags": [
+          "letters"
+        ],
+        "summary": "Add Question",
+        "operationId": "add_question_letters_letter__letter_api_id__add_question_post",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "letter_api_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Letter Api Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/QuestionCreate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LetterLinked"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/schedule/schedule/{group_api_id}": {
+      "get": {
+        "tags": [
+          "schedule"
+        ],
+        "summary": "Get Schedule For Group",
+        "operationId": "get_schedule_for_group_schedule_schedule__group_api_id__get",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "group_api_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Group Api Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ScheduleLinked"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/": {
+      "get": {
+        "summary": "Root",
+        "operationId": "root__get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        }
+      }
+    },
+    "/hello": {
+      "get": {
+        "summary": "Hello",
+        "operationId": "hello_hello_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "Body_login_access_token_login_access_token_post": {
+        "properties": {
+          "grant_type": {
+            "anyOf": [
+              {
+                "type": "string",
+                "pattern": "password"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Grant Type"
+          },
+          "username": {
+            "type": "string",
+            "title": "Username"
+          },
+          "password": {
+            "type": "string",
+            "title": "Password"
+          },
+          "scope": {
+            "type": "string",
+            "title": "Scope",
+            "default": ""
+          },
+          "client_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Client Id"
+          },
+          "client_secret": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Client Secret"
+          }
+        },
+        "type": "object",
+        "required": [
+          "username",
+          "password"
+        ],
+        "title": "Body_login_access_token_login_access_token_post"
+      },
+      "GroupCreate": {
+        "properties": {
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "admin_api_identifier": {
+            "type": "string",
+            "title": "Admin Api Identifier"
+          }
+        },
+        "type": "object",
+        "required": [
+          "name",
+          "admin_api_identifier"
+        ],
+        "title": "GroupCreate"
+      },
+      "GroupLinked": {
+        "properties": {
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "api_identifier": {
+            "type": "string",
+            "title": "Api Identifier"
+          },
+          "members": {
+            "items": {
+              "$ref": "#/components/schemas/UserUnlinked"
+            },
+            "type": "array",
+            "title": "Members"
+          },
+          "letters": {
+            "items": {
+              "$ref": "#/components/schemas/LetterUnlinked"
+            },
+            "type": "array",
+            "title": "Letters"
+          },
+          "schedule": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ScheduleUnlinked"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "type": "object",
+        "required": [
+          "name",
+          "api_identifier",
+          "members",
+          "letters",
+          "schedule"
+        ],
+        "title": "GroupLinked"
+      },
+      "GroupUnlinked": {
+        "properties": {
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "api_identifier": {
+            "type": "string",
+            "title": "Api Identifier"
+          }
+        },
+        "type": "object",
+        "required": [
+          "name",
+          "api_identifier"
+        ],
+        "title": "GroupUnlinked"
+      },
+      "HTTPValidationError": {
+        "properties": {
+          "detail": {
+            "items": {
+              "$ref": "#/components/schemas/ValidationError"
+            },
+            "type": "array",
+            "title": "Detail"
+          }
+        },
+        "type": "object",
+        "title": "HTTPValidationError"
+      },
+      "LetterCreate": {
+        "properties": {
+          "group_api_identifier": {
+            "type": "string",
+            "title": "Group Api Identifier"
+          }
+        },
+        "type": "object",
+        "required": [
+          "group_api_identifier"
+        ],
+        "title": "LetterCreate"
+      },
+      "LetterLinked": {
+        "properties": {
+          "api_identifier": {
+            "type": "string",
+            "title": "Api Identifier"
+          },
+          "number": {
+            "type": "integer",
+            "title": "Number"
+          },
+          "participants": {
+            "items": {
+              "$ref": "#/components/schemas/UserUnlinked"
+            },
+            "type": "array",
+            "title": "Participants"
+          },
+          "group": {
+            "$ref": "#/components/schemas/GroupUnlinked"
+          },
+          "questions": {
+            "items": {
+              "$ref": "#/components/schemas/QuestionUnlinked"
+            },
+            "type": "array",
+            "title": "Questions"
+          }
+        },
+        "type": "object",
+        "required": [
+          "api_identifier",
+          "number",
+          "participants",
+          "group",
+          "questions"
+        ],
+        "title": "LetterLinked"
+      },
+      "LetterUnlinked": {
+        "properties": {
+          "api_identifier": {
+            "type": "string",
+            "title": "Api Identifier"
+          },
+          "number": {
+            "type": "integer",
+            "title": "Number"
+          }
+        },
+        "type": "object",
+        "required": [
+          "api_identifier",
+          "number"
+        ],
+        "title": "LetterUnlinked"
+      },
+      "QuestionCreate": {
+        "properties": {
+          "question_text": {
+            "type": "string",
+            "title": "Question Text"
+          }
+        },
+        "type": "object",
+        "required": [
+          "question_text"
+        ],
+        "title": "QuestionCreate"
+      },
+      "QuestionUnlinked": {
+        "properties": {
+          "question_text": {
+            "type": "string",
+            "title": "Question Text"
+          },
+          "api_identifier": {
+            "type": "string",
+            "title": "Api Identifier"
+          },
+          "responses": {
+            "items": {
+              "$ref": "#/components/schemas/ResponseUnlinked"
+            },
+            "type": "array",
+            "title": "Responses"
+          }
+        },
+        "type": "object",
+        "required": [
+          "question_text",
+          "api_identifier",
+          "responses"
+        ],
+        "title": "QuestionUnlinked"
+      },
+      "ResponseUnlinked": {
+        "properties": {
+          "response_text": {
+            "type": "string",
+            "title": "Response Text"
+          },
+          "api_identifier": {
+            "type": "string",
+            "title": "Api Identifier"
+          }
+        },
+        "type": "object",
+        "required": [
+          "response_text",
+          "api_identifier"
+        ],
+        "title": "ResponseUnlinked"
+      },
+      "ScheduleLinked": {
+        "properties": {
+          "group": {
+            "$ref": "#/components/schemas/GroupUnlinked"
+          },
+          "tasks": {
+            "items": {
+              "$ref": "#/components/schemas/TaskUnlinked"
+            },
+            "type": "array",
+            "title": "Tasks"
+          }
+        },
+        "type": "object",
+        "required": [
+          "group",
+          "tasks"
+        ],
+        "title": "ScheduleLinked"
+      },
+      "ScheduleSendParam": {
+        "properties": {
+          "letter_api_id": {
+            "type": "string",
+            "title": "Letter Api Id"
+          },
+          "send_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Send At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "letter_api_id",
+          "send_at"
+        ],
+        "title": "ScheduleSendParam"
+      },
+      "ScheduleUnlinked": {
+        "properties": {
+          "tasks": {
+            "items": {
+              "$ref": "#/components/schemas/TaskUnlinked"
+            },
+            "type": "array",
+            "title": "Tasks"
+          }
+        },
+        "type": "object",
+        "required": [
+          "tasks"
+        ],
+        "title": "ScheduleUnlinked"
+      },
+      "TaskUnlinked": {
+        "properties": {
+          "type": {
+            "type": "string",
+            "title": "Type"
+          },
+          "status": {
+            "type": "string",
+            "title": "Status"
+          },
+          "execute_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Execute At"
+          },
+          "arguments": {
+            "additionalProperties": {
+              "type": "string"
+            },
+            "type": "object",
+            "title": "Arguments"
+          }
+        },
+        "type": "object",
+        "required": [
+          "type",
+          "status",
+          "execute_at",
+          "arguments"
+        ],
+        "title": "TaskUnlinked"
+      },
+      "Token": {
+        "properties": {
+          "access_token": {
+            "type": "string",
+            "title": "Access Token"
+          },
+          "token_type": {
+            "type": "string",
+            "title": "Token Type"
+          }
+        },
+        "type": "object",
+        "required": [
+          "access_token",
+          "token_type"
+        ],
+        "title": "Token"
+      },
+      "UserCreate": {
+        "properties": {
+          "email": {
+            "type": "string",
+            "title": "Email"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "password": {
+            "type": "string",
+            "title": "Password"
+          }
+        },
+        "type": "object",
+        "required": [
+          "email",
+          "name",
+          "password"
+        ],
+        "title": "UserCreate"
+      },
+      "UserLinked": {
+        "properties": {
+          "email": {
+            "type": "string",
+            "title": "Email"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "api_identifier": {
+            "type": "string",
+            "title": "Api Identifier"
+          },
+          "groups": {
+            "items": {
+              "$ref": "#/components/schemas/GroupUnlinked"
+            },
+            "type": "array",
+            "title": "Groups"
+          },
+          "responses": {
+            "items": {
+              "$ref": "#/components/schemas/ResponseUnlinked"
+            },
+            "type": "array",
+            "title": "Responses"
+          }
+        },
+        "type": "object",
+        "required": [
+          "email",
+          "name",
+          "api_identifier",
+          "groups",
+          "responses"
+        ],
+        "title": "UserLinked"
+      },
+      "UserUnlinked": {
+        "properties": {
+          "email": {
+            "type": "string",
+            "title": "Email"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "api_identifier": {
+            "type": "string",
+            "title": "Api Identifier"
+          }
+        },
+        "type": "object",
+        "required": [
+          "email",
+          "name",
+          "api_identifier"
+        ],
+        "title": "UserUnlinked"
+      },
+      "ValidationError": {
+        "properties": {
+          "loc": {
+            "items": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "integer"
+                }
+              ]
+            },
+            "type": "array",
+            "title": "Location"
+          },
+          "msg": {
+            "type": "string",
+            "title": "Message"
+          },
+          "type": {
+            "type": "string",
+            "title": "Error Type"
+          }
+        },
+        "type": "object",
+        "required": [
+          "loc",
+          "msg",
+          "type"
+        ],
+        "title": "ValidationError"
+      }
+    },
+    "securitySchemes": {
+      "OAuth2PasswordBearer": {
+        "type": "oauth2",
+        "flows": {
+          "password": {
+            "scopes": {},
+            "tokenUrl": "internal/token"
+          }
+        }
+      }
+    }
+  }
+}
