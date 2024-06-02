@@ -29,7 +29,7 @@ services:
       context: ./react
       dockerfile: client.Dockerfile
       args:
-        - VITE_API_URL=http://localhost 
+        - VITE_API_URL=http://ec2-54-221-74-168.compute-1.amazonaws.com
       
 
 volumes:
