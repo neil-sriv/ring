@@ -33,8 +33,6 @@ export type TDataRecoverPasswordHtmlContent = {
   email: string;
 };
 
-const API_PREFIX = "/api/v1/internal";
-
 export class LoginService {
   /**
    * Login Access Token
