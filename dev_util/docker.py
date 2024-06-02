@@ -28,7 +28,8 @@ def docker(ctx: click.Context) -> None:
 )
 def tag(image: list[str]) -> None:
     run_cmds = [
-        ["docker", "tag", f"{i}:latest", f"{ECR_URI_BASE}{i}:latest"] for i in image
+        ["docker", "tag", f"prod-{i}:latest", f"{ECR_URI_BASE}{i}:latest"]
+        for i in image
     ]
     for cmd in run_cmds:
         subprocess_run(cmd)
