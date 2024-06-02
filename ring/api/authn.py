@@ -1,32 +1,20 @@
 from __future__ import annotations
-from fastapi import Depends
+from fastapi import APIRouter, Depends
 from fastapi.security import OAuth2PasswordRequestForm
-from ring.postgres_models.user_model import User
 from ring.pydantic_schemas.token import Token
-from ring.routes import internal
 from ring.dependencies import (
-    AuthenticatedRequestDependencies,
     RequestDependenciesBase,
-    get_request_dependencies,
     get_unauthenticated_request_dependencies,
 )
 from fastapi import HTTPException
 from ring.crud import user as user_crud
-from ring.pydantic_schemas import UserLinked as UserSchema
 from ring.security import create_access_token
 
-
-@internal.get("/me", response_model=UserSchema)
-async def read_users_me(
-    req_dep: AuthenticatedRequestDependencies = Depends(
-        get_request_dependencies,
-    ),
-) -> User:
-    return req_dep.user
+router = APIRouter()
 
 
-@internal.post("/token")
-async def login_for_access_token(
+@router.post("/login/access-token")
+async def login_access_token(
     form_data: OAuth2PasswordRequestForm = Depends(),
     req_dep: RequestDependenciesBase = Depends(
         get_unauthenticated_request_dependencies
@@ -46,3 +34,35 @@ async def login_for_access_token(
         access_token=create_access_token(data={"sub": user.email}),
         token_type="bearer",
     )
+
+
+@router.post("/login/test-token", deprecated=True)
+def test_token() -> None:
+    """
+    Test access token
+    """
+    raise NotImplementedError()
+
+
+@router.post("/password-recovery/{email}", deprecated=True)
+def recover_password(email: str) -> None:
+    """
+    Password Recovery
+    """
+    raise NotImplementedError()
+
+
+@router.post("/reset-password/", deprecated=True)
+def reset_password() -> None:
+    """
+    Reset password
+    """
+    raise NotImplementedError()
+
+
+@router.post("/password-recovery-html-content/{email}", deprecated=True)
+def recover_password_html_content(email: str) -> None:
+    """
+    HTML Content for Password Recovery
+    """
+    raise NotImplementedError()

@@ -1,5 +1,5 @@
 from __future__ import annotations
-from fastapi import Depends
+from fastapi import APIRouter, Depends
 from datetime import timezone
 from ring.dependencies import (
     AuthenticatedRequestDependencies,
@@ -13,11 +13,12 @@ from ring.crud import (
 from ring.pydantic_schemas import GroupLinked as GroupSchema
 from ring.pydantic_schemas.group import GroupCreate
 from ring.pydantic_schemas.schedule import ScheduleSendParam
-from ring.routes import internal
 from ring.postgres_models.group_model import Group
 
+router = APIRouter()
 
-@internal.post("/group", response_model=GroupSchema)
+
+@router.post("/group", response_model=GroupSchema)
 async def create_group(
     group: GroupCreate,
     req_dep: AuthenticatedRequestDependencies = Depends(
@@ -31,7 +32,7 @@ async def create_group(
     return db_group
 
 
-@internal.get("/groups/", response_model=Sequence[GroupSchema])
+@router.get("/groups/", response_model=Sequence[GroupSchema])
 async def list_groups(
     user_api_id: str,
     skip: int = 0,
@@ -49,7 +50,7 @@ async def list_groups(
     return groups
 
 
-@internal.get("/group/{group_api_id}", response_model=GroupSchema)
+@router.get("/group/{group_api_id}", response_model=GroupSchema)
 async def read_group(
     group_api_id: str,
     req_dep: AuthenticatedRequestDependencies = Depends(
@@ -64,7 +65,7 @@ async def read_group(
     return db_group
 
 
-@internal.post(
+@router.post(
     "/group/{group_api_id}:add_member/{user_api_id}",
     response_model=GroupSchema,
 )
@@ -82,7 +83,7 @@ async def add_user_to_group(
     return group
 
 
-@internal.post(
+@router.post(
     "/group/{group_api_id}:remove_member/{user_api_id}",
     response_model=GroupSchema,
 )
@@ -100,7 +101,7 @@ async def remove_user_from_group(
     return group
 
 
-@internal.post(
+@router.post(
     "/group/{group_api_id}:schedule_send",
     response_model=GroupSchema,
 )

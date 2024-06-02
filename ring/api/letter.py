@@ -1,5 +1,5 @@
 from __future__ import annotations
-from fastapi import Depends
+from fastapi import APIRouter, Depends
 from ring.dependencies import (
     AuthenticatedRequestDependencies,
     get_request_dependencies,
@@ -13,10 +13,11 @@ from ring.pydantic_schemas import LetterLinked as LetterSchema
 from ring.pydantic_schemas.letter import LetterCreate
 from ring.postgres_models.letter_model import Letter
 from ring.pydantic_schemas.question import QuestionCreate
-from ring.routes import internal
+
+router = APIRouter()
 
 
-@internal.post("/letter", response_model=LetterSchema)
+@router.post("/letter", response_model=LetterSchema)
 async def add_next_letter(
     letter: LetterCreate,
     req_dep: AuthenticatedRequestDependencies = Depends(
@@ -31,7 +32,7 @@ async def add_next_letter(
     return db_letter
 
 
-@internal.get("/letters/", response_model=Sequence[LetterSchema])
+@router.get("/letters/", response_model=Sequence[LetterSchema])
 async def list_letters(
     group_api_id: str,
     skip: int = 0,
@@ -46,7 +47,7 @@ async def list_letters(
     return letters
 
 
-@internal.get("/letter/{letter_api_id}", response_model=LetterSchema)
+@router.get("/letter/{letter_api_id}", response_model=LetterSchema)
 async def read_letter(
     letter_api_id: str,
     req_dep: AuthenticatedRequestDependencies = Depends(
@@ -61,7 +62,7 @@ async def read_letter(
     return db_letter
 
 
-@internal.post(
+@router.post(
     "/letter/{letter_api_id}:add_question",
     response_model=LetterSchema,
 )

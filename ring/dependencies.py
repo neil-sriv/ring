@@ -19,7 +19,7 @@ class RequestDependenciesBase:
 
 @dataclass
 class AuthenticatedRequestDependencies(RequestDependenciesBase):
-    user: User
+    current_user: User
 
 
 async def get_current_user(
@@ -38,9 +38,9 @@ async def get_current_user(
 
 async def get_request_dependencies(
     db: Session = Depends(get_db),
-    user: User = Depends(get_current_user),
+    current_user: User = Depends(get_current_user),
 ) -> AuthenticatedRequestDependencies:
-    return AuthenticatedRequestDependencies(db=db, user=user)
+    return AuthenticatedRequestDependencies(db=db, current_user=current_user)
 
 
 async def get_unauthenticated_request_dependencies(

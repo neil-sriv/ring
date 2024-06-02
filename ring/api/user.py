@@ -1,7 +1,6 @@
 from __future__ import annotations
 from typing import Sequence
-from fastapi import Depends
-from ring.routes import internal
+from fastapi import APIRouter, Depends
 from ring.dependencies import (
     AuthenticatedRequestDependencies,
     RequestDependenciesBase,
@@ -14,8 +13,19 @@ from ring.pydantic_schemas import UserLinked as UserSchema
 from ring.pydantic_schemas.user import UserCreate
 from ring.postgres_models.user_model import User
 
+router = APIRouter()
 
-@internal.post("/user", response_model=UserSchema)
+
+@router.get("/me", response_model=UserSchema)
+async def read_user_me(
+    req_dep: AuthenticatedRequestDependencies = Depends(
+        get_request_dependencies,
+    ),
+) -> User:
+    return req_dep.current_user
+
+
+@router.post("/user", response_model=UserSchema)
 async def create_user(
     user: UserCreate,
     req_dep: RequestDependenciesBase = Depends(
@@ -35,8 +45,8 @@ async def create_user(
     return db_user
 
 
-@internal.get("/users", response_model=Sequence[UserSchema])
-async def list_users(
+@router.get("/users", response_model=Sequence[UserSchema])
+async def read_users(
     skip: int = 0,
     limit: int = 100,
     req_dep: AuthenticatedRequestDependencies = Depends(
@@ -47,8 +57,8 @@ async def list_users(
     return users
 
 
-@internal.get("/user/{user_api_id}", response_model=UserSchema)
-async def read_user(
+@router.get("/user/{user_api_id}", response_model=UserSchema)
+async def read_user_by_id(
     user_api_id: str,
     req_dep: AuthenticatedRequestDependencies = Depends(
         get_request_dependencies,
@@ -60,3 +70,51 @@ async def read_user(
         api_id=user_api_id,
     )
     return db_user
+
+
+@router.patch("/me", deprecated=True)
+def update_user_me() -> None:
+    """
+    Update own user.
+    """
+    raise NotImplementedError()
+
+
+@router.patch("/me/password", deprecated=True)
+def update_password_me() -> None:
+    """
+    Update own password.
+    """
+    raise NotImplementedError()
+
+
+@router.delete("/me", deprecated=True)
+def delete_user_me() -> None:
+    """
+    Delete own user.
+    """
+    raise NotImplementedError()
+
+
+@router.post("/signup", deprecated=True)
+def register_user() -> None:
+    """
+    Create new user without the need to be logged in.
+    """
+    raise NotImplementedError()
+
+
+@router.patch("/{user_id}", deprecated=True)
+def update_user() -> None:
+    """
+    Update a user.
+    """
+    raise NotImplementedError()
+
+
+@router.delete("/{user_id}", deprecated=True)
+def delete_user() -> None:
+    """
+    Delete a user.
+    """
+    raise NotImplementedError()

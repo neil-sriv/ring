@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 
 from ring.config import get_config
-from ring.routes import router, internal
+from ring.routes import router
 from starlette.middleware.cors import CORSMiddleware
 
 ring_config = get_config()
@@ -19,7 +19,7 @@ if ring_config.BACKEND_CORS_ORIGINS:
     )
 
 app.include_router(router)
-app.include_router(internal)
+# app.include_router(internal)
 
 
 if __name__ == "__main__":
