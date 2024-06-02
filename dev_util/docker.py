@@ -6,7 +6,7 @@ ECR_URI_BASE = "public.ecr.aws/z2k1e8p1/"
 
 IMAGE_TAG_NAMES = [
     "ring-worker",
-    "ring-next",
+    "ring-frontend",
     "ring-api",
     "ring-beat",
 ]

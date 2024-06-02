@@ -23,12 +23,13 @@ services:
     ports:
       - "8003:5555"
 
-  next:
-    container_name: next
+  frontend:
+    container_name: ring-frontend
     build:
-      context: ./client
+      context: ./react
       dockerfile: client.Dockerfile
-      # image: "email_circle-next"
+    environment:
+      - VITE_API_URL=http://localhost
       
 
 volumes:
