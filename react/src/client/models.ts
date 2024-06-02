@@ -145,6 +145,14 @@ export type UserUnlinked = {
 
 
 
+export type UserUpdate = {
+	email?: string | null;
+	name?: string | null;
+	password?: string | null;
+};
+
+
+
 export type ValidationError = {
 	loc: Array<string | number>;
 	msg: string;

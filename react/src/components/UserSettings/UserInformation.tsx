@@ -18,7 +18,7 @@ import { type SubmitHandler, useForm } from "react-hook-form";
 import {
   type ApiError,
   type UserLinked,
-  type UserUpdateMe,
+  type UserUpdate,
   PartiesService,
 } from "../../client";
 import useAuth from "../../hooks/useAuth";
@@ -41,7 +41,7 @@ const UserInformation = () => {
     mode: "onBlur",
     criteriaMode: "all",
     defaultValues: {
-      full_name: currentUser?.full_name,
+      name: currentUser?.name,
       email: currentUser?.email,
     },
   });
@@ -51,7 +51,7 @@ const UserInformation = () => {
   };
 
   const mutation = useMutation({
-    mutationFn: (data: UserUpdateMe) =>
+    mutationFn: (data: UserUpdate) =>
       PartiesService.updateUserMePartiesMePatch({ requestBody: data }),
     onSuccess: () => {
       showToast("Success!", "User updated successfully.", "success");
@@ -67,7 +67,7 @@ const UserInformation = () => {
     },
   });
 
-  const onSubmit: SubmitHandler<UserUpdateMe> = async (data) => {
+  const onSubmit: SubmitHandler<UserUpdate> = async (data) => {
     mutation.mutate(data);
   };
 
@@ -94,7 +94,7 @@ const UserInformation = () => {
             {editMode ? (
               <Input
                 id="name"
-                {...register("full_name", { maxLength: 30 })}
+                {...register("name", { maxLength: 30 })}
                 type="text"
                 size="md"
               />
@@ -102,9 +102,9 @@ const UserInformation = () => {
               <Text
                 size="md"
                 py={2}
-                color={!currentUser?.full_name ? "ui.dim" : "inherit"}
+                color={!currentUser?.name ? "ui.dim" : "inherit"}
               >
-                {currentUser?.full_name || "N/A"}
+                {currentUser?.name || "N/A"}
               </Text>
             )}
           </FormControl>

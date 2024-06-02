@@ -36,35 +36,42 @@ const MembersTableBody = () => {
 
   return (
     <Tbody>
-      {users.data.map((user) => (
-        <Tr key={user.id}>
-          <Td color={!user.full_name ? "ui.dim" : "inherit"}>
-            {user.full_name || "N/A"}
-            {currentUser?.id === user.id && (
+      {users.map((user) => (
+        <Tr key={user.api_identifier}>
+          <Td color={!user.name ? "ui.dim" : "inherit"}>
+            {user.name || "N/A"}
+            {currentUser?.api_identifier === user.api_identifier && (
               <Badge ml="1" colorScheme="teal">
                 You
               </Badge>
             )}
           </Td>
           <Td>{user.email}</Td>
-          <Td>{user.is_superuser ? "Superuser" : "User"}</Td>
+          {/* <Td>{user.is_superuser ? "Superuser" : "User"}</Td> */}
+          <Td>{false ? "Superuser" : "User"}</Td>
           <Td>
             <Flex gap={2}>
               <Box
                 w="2"
                 h="2"
                 borderRadius="50%"
-                bg={user.is_active ? "ui.success" : "ui.danger"}
+                // bg={user.is_active ? "ui.success" : "ui.danger"}
+                bg={true ? "ui.success" : "ui.danger"}
                 alignSelf="center"
               />
-              {user.is_active ? "Active" : "Inactive"}
+              {/* {user.is_active ? "Active" : "Inactive"} */}
+              {true ? "Active" : "Inactive"}
             </Flex>
           </Td>
           <Td>
             <ActionsMenu
               type="User"
               value={user}
-              disabled={currentUser?.id === user.id ? true : false}
+              disabled={
+                currentUser?.api_identifier === user.api_identifier
+                  ? true
+                  : false
+              }
             />
           </Td>
         </Tr>

@@ -45,11 +45,11 @@ const AddUser = ({ isOpen, onClose }: AddUserProps) => {
     criteriaMode: "all",
     defaultValues: {
       email: "",
-      full_name: "",
+      name: "",
       password: "",
       confirm_password: "",
-      is_superuser: false,
-      is_active: false,
+      // is_superuser: false,
+      // is_active: false,
     },
   });
 
@@ -102,16 +102,16 @@ const AddUser = ({ isOpen, onClose }: AddUserProps) => {
                 <FormErrorMessage>{errors.email.message}</FormErrorMessage>
               )}
             </FormControl>
-            <FormControl mt={4} isInvalid={!!errors.full_name}>
+            <FormControl mt={4} isInvalid={!!errors.name}>
               <FormLabel htmlFor="name">Full name</FormLabel>
               <Input
                 id="name"
-                {...register("full_name")}
+                {...register("name")}
                 placeholder="Full name"
                 type="text"
               />
-              {errors.full_name && (
-                <FormErrorMessage>{errors.full_name.message}</FormErrorMessage>
+              {errors.name && (
+                <FormErrorMessage>{errors.name.message}</FormErrorMessage>
               )}
             </FormControl>
             <FormControl mt={4} isRequired isInvalid={!!errors.password}>
@@ -157,14 +157,14 @@ const AddUser = ({ isOpen, onClose }: AddUserProps) => {
             </FormControl>
             <Flex mt={4}>
               <FormControl>
-                <Checkbox {...register("is_superuser")} colorScheme="teal">
+                {/* <Checkbox {...register("is_superuser")} colorScheme="teal">
                   Is superuser?
-                </Checkbox>
+                </Checkbox> */}
               </FormControl>
               <FormControl>
-                <Checkbox {...register("is_active")} colorScheme="teal">
+                {/* <Checkbox {...register("is_active")} colorScheme="teal">
                   Is active?
-                </Checkbox>
+                </Checkbox> */}
               </FormControl>
             </Flex>
           </ModalBody>

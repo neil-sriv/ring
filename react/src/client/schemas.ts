@@ -353,6 +353,35 @@ export const $UserUnlinked = {
 	},
 } as const;
 
+export const $UserUpdate = {
+	properties: {
+		email: {
+	type: 'any-of',
+	contains: [{
+	type: 'string',
+}, {
+	type: 'null',
+}],
+},
+		name: {
+	type: 'any-of',
+	contains: [{
+	type: 'string',
+}, {
+	type: 'null',
+}],
+},
+		password: {
+	type: 'any-of',
+	contains: [{
+	type: 'string',
+}, {
+	type: 'null',
+}],
+},
+	},
+} as const;
+
 export const $ValidationError = {
 	properties: {
 		loc: {

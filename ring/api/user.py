@@ -10,7 +10,7 @@ from ring.dependencies import (
 from fastapi import HTTPException
 from ring.crud import user as user_crud, api_identifier as api_identifier_crud
 from ring.pydantic_schemas import UserLinked as UserSchema
-from ring.pydantic_schemas.user import UserCreate
+from ring.pydantic_schemas.user import UserCreate, UserUpdate
 from ring.postgres_models.user_model import User
 
 router = APIRouter()
@@ -73,7 +73,12 @@ async def read_user_by_id(
 
 
 @router.patch("/me", deprecated=True)
-def update_user_me() -> None:
+def update_user_me(
+    current_user_update_data: UserUpdate,
+    req_dep: AuthenticatedRequestDependencies = Depends(
+        get_request_dependencies,
+    ),
+) -> None:
     """
     Update own user.
     """

@@ -2,7 +2,7 @@ import type { CancelablePromise } from './core/CancelablePromise';
 import { OpenAPI } from './core/OpenAPI';
 import { request as __request } from './core/request';
 
-import type { Body_login_access_token_login_access_token_post,Token,GroupCreate,GroupLinked,ScheduleSendParam,UserCreate,UserLinked,LetterCreate,LetterLinked,QuestionCreate,ScheduleLinked } from './models';
+import type { Body_login_access_token_login_access_token_post,Token,GroupCreate,GroupLinked,ScheduleSendParam,UserCreate,UserLinked,UserUpdate,LetterCreate,LetterLinked,QuestionCreate,ScheduleLinked } from './models';
 
 export type LoginData = {
         LoginAccessTokenLoginAccessTokenPost: {
@@ -20,7 +20,11 @@ RecoverPasswordHtmlContentPasswordRecoveryHtmlContentEmailPost: {
     }
 
 export type PartiesData = {
-        CreateUserPartiesUserPost: {
+        UpdateUserMePartiesMePatch: {
+                    requestBody: UserUpdate
+                    
+                };
+CreateUserPartiesUserPost: {
                     requestBody: UserCreate
                     
                 };
@@ -230,10 +234,18 @@ export class PartiesService {
 	 * @returns null Successful Response
 	 * @throws ApiError
 	 */
-	public static updateUserMePartiesMePatch(): CancelablePromise<null> {
-				return __request(OpenAPI, {
+	public static updateUserMePartiesMePatch(data: PartiesData['UpdateUserMePartiesMePatch']): CancelablePromise<null> {
+		const {
+requestBody,
+} = data;
+		return __request(OpenAPI, {
 			method: 'PATCH',
 			url: '/parties/me',
+			body: requestBody,
+			mediaType: 'application/json',
+			errors: {
+				422: `Validation Error`,
+			},
 		});
 	}
 

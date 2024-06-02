@@ -20,8 +20,8 @@ import { type SubmitHandler, useForm } from "react-hook-form";
 import {
   type ApiError,
   type UserLinked,
-  type UserUpdate,
   PartiesService,
+  UserUpdate,
 } from "../../client";
 import useCustomToast from "../../hooks/useCustomToast";
 import { emailPattern } from "../../utils";
@@ -54,10 +54,7 @@ const EditUser = ({ user, isOpen, onClose }: EditUserProps) => {
 
   const mutation = useMutation({
     mutationFn: (data: UserUpdateForm) =>
-      PartiesService.updateUserPartiesUserIdPatch({
-        userId: user.id,
-        requestBody: data,
-      }),
+      PartiesService.updateUserPartiesUserIdPatch(),
     onSuccess: () => {
       showToast("Success!", "User updated successfully.", "success");
       onClose();
@@ -113,7 +110,7 @@ const EditUser = ({ user, isOpen, onClose }: EditUserProps) => {
             </FormControl>
             <FormControl mt={4}>
               <FormLabel htmlFor="name">Full name</FormLabel>
-              <Input id="name" {...register("full_name")} type="text" />
+              <Input id="name" {...register("name")} type="text" />
             </FormControl>
             <FormControl mt={4} isInvalid={!!errors.password}>
               <FormLabel htmlFor="password">Set Password</FormLabel>
@@ -152,14 +149,14 @@ const EditUser = ({ user, isOpen, onClose }: EditUserProps) => {
             </FormControl>
             <Flex>
               <FormControl mt={4}>
-                <Checkbox {...register("is_superuser")} colorScheme="teal">
+                {/* <Checkbox {...register("is_superuser")} colorScheme="teal">
                   Is superuser?
-                </Checkbox>
+                </Checkbox> */}
               </FormControl>
               <FormControl mt={4}>
-                <Checkbox {...register("is_active")} colorScheme="teal">
+                {/* <Checkbox {...register("is_active")} colorScheme="teal">
                   Is active?
-                </Checkbox>
+                </Checkbox> */}
               </FormControl>
             </Flex>
           </ModalBody>

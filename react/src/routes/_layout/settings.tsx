@@ -30,9 +30,8 @@ export const Route = createFileRoute("/_layout/settings")({
 function UserSettings() {
   const queryClient = useQueryClient();
   const currentUser = queryClient.getQueryData<UserLinked>(["currentUser"]);
-  const finalTabs = currentUser?.is_superuser
-    ? tabsConfig.slice(0, 3)
-    : tabsConfig;
+  // const finalTabs = currentUser?.is_superuser
+  const finalTabs = false ? tabsConfig.slice(0, 3) : tabsConfig;
 
   return (
     <Container maxW="full">
