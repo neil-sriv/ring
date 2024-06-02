@@ -102,6 +102,19 @@ export const $GroupUnlinked = {
 	},
 } as const;
 
+export const $GroupUpdate = {
+	properties: {
+		name: {
+	type: 'any-of',
+	contains: [{
+	type: 'string',
+}, {
+	type: 'null',
+}],
+},
+	},
+} as const;
+
 export const $HTTPValidationError = {
 	properties: {
 		detail: {

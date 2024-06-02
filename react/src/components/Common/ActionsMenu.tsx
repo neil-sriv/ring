@@ -9,14 +9,14 @@ import {
 import { BsThreeDotsVertical } from "react-icons/bs";
 import { FiEdit, FiTrash } from "react-icons/fi";
 
-import type { LetterLinked, UserLinked } from "../../client";
+import type { GroupLinked, UserLinked } from "../../client";
 import EditUser from "../Admin/EditUser";
-import EditItem from "../Items/EditItem";
 import Delete from "./DeleteAlert";
+import EditGroup from "../Groups/EditGroup";
 
 interface ActionsMenuProps {
   type: string;
-  value: LetterLinked | UserLinked;
+  value: GroupLinked | UserLinked;
   disabled?: boolean;
 }
 
@@ -55,8 +55,8 @@ const ActionsMenu = ({ type, value, disabled }: ActionsMenuProps) => {
             onClose={editUserModal.onClose}
           />
         ) : (
-          <EditItem
-            item={value as LetterLinked}
+          <EditGroup
+            group={value as GroupLinked}
             isOpen={editUserModal.isOpen}
             onClose={editUserModal.onClose}
           />

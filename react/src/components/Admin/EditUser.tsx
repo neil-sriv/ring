@@ -1,6 +1,6 @@
 import {
   Button,
-  Checkbox,
+  // Checkbox,
   Flex,
   FormControl,
   FormErrorMessage,
@@ -53,8 +53,7 @@ const EditUser = ({ user, isOpen, onClose }: EditUserProps) => {
   });
 
   const mutation = useMutation({
-    mutationFn: (data: UserUpdateForm) =>
-      PartiesService.updateUserPartiesUserIdPatch(),
+    mutationFn: () => PartiesService.updateUserPartiesUserIdPatch(),
     onSuccess: () => {
       showToast("Success!", "User updated successfully.", "success");
       onClose();
@@ -72,7 +71,7 @@ const EditUser = ({ user, isOpen, onClose }: EditUserProps) => {
     if (data.password === "") {
       data.password = undefined;
     }
-    mutation.mutate(data);
+    mutation.mutate();
   };
 
   const onCancel = () => {

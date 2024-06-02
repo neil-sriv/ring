@@ -11,7 +11,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import React from "react";
 import { useForm } from "react-hook-form";
 
-import { type ApiError, type UserLinked, PartiesService } from "../../client";
+import { type ApiError, PartiesService } from "../../client";
 import useAuth from "../../hooks/useAuth";
 import useCustomToast from "../../hooks/useCustomToast";
 
@@ -28,11 +28,11 @@ const DeleteConfirmation = ({ isOpen, onClose }: DeleteProps) => {
     handleSubmit,
     formState: { isSubmitting },
   } = useForm();
-  const currentUser = queryClient.getQueryData<UserLinked>(["currentUser"]);
+  // const currentUser = queryClient.getQueryData<UserLinked>(["currentUser"]);
   const { logout } = useAuth();
 
   const mutation = useMutation({
-    mutationFn: (id: string) => PartiesService.deleteUserPartiesUserIdDelete(),
+    mutationFn: () => PartiesService.deleteUserPartiesUserIdDelete(),
     onSuccess: () => {
       showToast(
         "Success",
@@ -52,7 +52,8 @@ const DeleteConfirmation = ({ isOpen, onClose }: DeleteProps) => {
   });
 
   const onSubmit = async () => {
-    mutation.mutate(currentUser!.api_identifier);
+    // mutation.mutate(currentUser!.api_identifier);
+    mutation.mutate();
   };
 
   return (

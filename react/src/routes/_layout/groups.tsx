@@ -11,43 +11,49 @@ import {
   Thead,
   Tr,
 } from "@chakra-ui/react";
-import { useSuspenseQuery } from "@tanstack/react-query";
+import { useQueryClient, useSuspenseQuery } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
 
 import { Suspense } from "react";
 import { ErrorBoundary } from "react-error-boundary";
-import { LettersService } from "../../client";
-import ActionsMenu from "../../components/Common/ActionsMenu";
+import { PartiesService, UserLinked } from "../../client";
+// import ActionsMenu from "../../components/Common/ActionsMenu";
 import Navbar from "../../components/Common/Navbar";
+import ActionsMenu from "../../components/Common/ActionsMenu";
 
-export const Route = createFileRoute("/_layout/items")({
-  component: Items,
+export const Route = createFileRoute("/_layout/groups")({
+  component: Groups,
 });
 
-function ItemsTableBody() {
-  const { data: items } = useSuspenseQuery({
-    queryKey: ["items"],
-    queryFn: () => LettersService.listLettersLettersLettersGet({}),
+function GroupTableBody() {
+  const queryClient = useQueryClient();
+  const currentUser = queryClient.getQueryData<UserLinked>(["currentUser"]);
+  const { data: groups } = useSuspenseQuery({
+    queryKey: ["groups"],
+    queryFn: () =>
+      PartiesService.listGroupsPartiesGroupsGet({
+        userApiId: currentUser!.api_identifier,
+      }),
   });
 
   return (
     <Tbody>
-      {items.data.map((item) => (
-        <Tr key={item.id}>
-          <Td>{item.id}</Td>
-          <Td>{item.title}</Td>
-          <Td color={!item.description ? "ui.dim" : "inherit"}>
+      {groups.map((group) => (
+        <Tr key={group.api_identifier}>
+          <Td>{group.name}</Td>
+          {/* <Td>{item.title}</Td> */}
+          {/* <Td color={!item.description ? "ui.dim" : "inherit"}>
             {item.description || "N/A"}
-          </Td>
+          </Td> */}
           <Td>
-            <ActionsMenu type={"Item"} value={item} />
+            <ActionsMenu type={"Group"} value={group} />
           </Td>
         </Tr>
       ))}
     </Tbody>
   );
 }
-function ItemsTable() {
+function GroupTable() {
   return (
     <TableContainer>
       <Table size={{ base: "sm", md: "md" }}>
@@ -85,7 +91,7 @@ function ItemsTable() {
               </Tbody>
             }
           >
-            <ItemsTableBody />
+            <GroupTableBody />
           </Suspense>
         </ErrorBoundary>
       </Table>
@@ -93,15 +99,15 @@ function ItemsTable() {
   );
 }
 
-function Items() {
+function Groups() {
   return (
     <Container maxW="full">
       <Heading size="lg" textAlign={{ base: "center", md: "left" }} pt={12}>
-        Items Management
+        Groups
       </Heading>
 
-      <Navbar type={"Item"} />
-      <ItemsTable />
+      <Navbar type={"Group"} />
+      <GroupTable />
     </Container>
   );
 }

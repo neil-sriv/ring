@@ -11,7 +11,7 @@ from ring.crud import (
     api_identifier as api_identifier_crud,
 )
 from ring.pydantic_schemas import GroupLinked as GroupSchema
-from ring.pydantic_schemas.group import GroupCreate
+from ring.pydantic_schemas.group import GroupCreate, GroupUpdate
 from ring.pydantic_schemas.schedule import ScheduleSendParam
 from ring.postgres_models.group_model import Group
 
@@ -121,3 +121,17 @@ async def schedule_send(
     )
     req_dep.db.commit()
     return group
+
+
+@router.patch(
+    "/group/{group_api_id}",
+    deprecated=True,
+)
+def update_group(
+    group_api_id: str,
+    group: GroupUpdate,
+    req_dep: AuthenticatedRequestDependencies = Depends(
+        get_request_dependencies,
+    ),
+) -> None:
+    raise NotImplementedError()

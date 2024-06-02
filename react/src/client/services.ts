@@ -2,7 +2,7 @@ import type { CancelablePromise } from './core/CancelablePromise';
 import { OpenAPI } from './core/OpenAPI';
 import { request as __request } from './core/request';
 
-import type { Body_login_access_token_login_access_token_post,NewPassword,Token,GroupCreate,GroupLinked,ScheduleSendParam,UserCreate,UserLinked,UserUpdate,UserUpdatePassword,LetterCreate,LetterLinked,QuestionCreate,ScheduleLinked } from './models';
+import type { Body_login_access_token_login_access_token_post,NewPassword,Token,GroupCreate,GroupLinked,GroupUpdate,ScheduleSendParam,UserCreate,UserLinked,UserUpdate,UserUpdatePassword,LetterCreate,LetterLinked,QuestionCreate,ScheduleLinked } from './models';
 
 export type LoginData = {
         LoginAccessTokenLoginAccessTokenPost: {
@@ -57,6 +57,11 @@ userApiId: string
                 };
 ReadGroupPartiesGroupGroupApiIdGet: {
                     groupApiId: string
+                    
+                };
+UpdateGroupPartiesGroupGroupApiIdPatch: {
+                    groupApiId: string
+requestBody: GroupUpdate
                     
                 };
 AddUserToGroupPartiesGroupGroupApiIdAddMemberUserApiIdPost: {
@@ -450,6 +455,31 @@ groupApiId,
 			path: {
 				group_api_id: groupApiId
 			},
+			errors: {
+				422: `Validation Error`,
+			},
+		});
+	}
+
+	/**
+	 * @deprecated
+	 * Update Group
+	 * @returns null Successful Response
+	 * @throws ApiError
+	 */
+	public static updateGroupPartiesGroupGroupApiIdPatch(data: PartiesData['UpdateGroupPartiesGroupGroupApiIdPatch']): CancelablePromise<null> {
+		const {
+groupApiId,
+requestBody,
+} = data;
+		return __request(OpenAPI, {
+			method: 'PATCH',
+			url: '/parties/group/{group_api_id}',
+			path: {
+				group_api_id: groupApiId
+			},
+			body: requestBody,
+			mediaType: 'application/json',
 			errors: {
 				422: `Validation Error`,
 			},

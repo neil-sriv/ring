@@ -17,19 +17,19 @@ import { type SubmitHandler, useForm } from "react-hook-form";
 
 import {
   type ApiError,
-  type ItemPublic,
-  type ItemUpdate,
-  LettersService,
+  type GroupLinked,
+  type GroupUpdate,
+  PartiesService,
 } from "../../client";
 import useCustomToast from "../../hooks/useCustomToast";
 
-interface EditItemProps {
-  item: ItemPublic;
+interface EditGroupProps {
+  group: GroupLinked;
   isOpen: boolean;
   onClose: () => void;
 }
 
-const EditItem = ({ item, isOpen, onClose }: EditItemProps) => {
+const EditGroup = ({ group, isOpen, onClose }: EditGroupProps) => {
   const queryClient = useQueryClient();
   const showToast = useCustomToast();
   const {
@@ -37,20 +37,20 @@ const EditItem = ({ item, isOpen, onClose }: EditItemProps) => {
     handleSubmit,
     reset,
     formState: { isSubmitting, errors, isDirty },
-  } = useForm<ItemUpdate>({
+  } = useForm<GroupUpdate>({
     mode: "onBlur",
     criteriaMode: "all",
-    defaultValues: item,
+    defaultValues: group,
   });
 
   const mutation = useMutation({
-    mutationFn: (data: ItemUpdate) =>
-      LettersService.readLetterLettersLetterLetterApiIdGet({
-        id: item.id,
+    mutationFn: (data: GroupUpdate) =>
+      PartiesService.updateGroupPartiesGroupGroupApiIdPatch({
+        groupApiId: group.api_identifier,
         requestBody: data,
       }),
     onSuccess: () => {
-      showToast("Success!", "Item updated successfully.", "success");
+      showToast("Success!", "Group updated successfully.", "success");
       onClose();
     },
     onError: (err: ApiError) => {
@@ -58,11 +58,11 @@ const EditItem = ({ item, isOpen, onClose }: EditItemProps) => {
       showToast("Something went wrong.", `${errDetail}`, "error");
     },
     onSettled: () => {
-      queryClient.invalidateQueries({ queryKey: ["items"] });
+      queryClient.invalidateQueries({ queryKey: ["groups"] });
     },
   });
 
-  const onSubmit: SubmitHandler<ItemUpdate> = async (data) => {
+  const onSubmit: SubmitHandler<GroupUpdate> = async (data) => {
     mutation.mutate(data);
   };
 
@@ -81,23 +81,23 @@ const EditItem = ({ item, isOpen, onClose }: EditItemProps) => {
       >
         <ModalOverlay />
         <ModalContent as="form" onSubmit={handleSubmit(onSubmit)}>
-          <ModalHeader>Edit Item</ModalHeader>
+          <ModalHeader>Edit Group</ModalHeader>
           <ModalCloseButton />
           <ModalBody pb={6}>
-            <FormControl isInvalid={!!errors.title}>
-              <FormLabel htmlFor="title">Title</FormLabel>
+            <FormControl isInvalid={!!errors.name}>
+              <FormLabel htmlFor="name">Name</FormLabel>
               <Input
-                id="title"
-                {...register("title", {
-                  required: "Title is required",
+                id="name"
+                {...register("name", {
+                  required: "Name is required",
                 })}
                 type="text"
               />
-              {errors.title && (
-                <FormErrorMessage>{errors.title.message}</FormErrorMessage>
+              {errors.name && (
+                <FormErrorMessage>{errors.name.message}</FormErrorMessage>
               )}
             </FormControl>
-            <FormControl mt={4}>
+            {/* <FormControl mt={4}>
               <FormLabel htmlFor="description">Description</FormLabel>
               <Input
                 id="description"
@@ -105,7 +105,7 @@ const EditItem = ({ item, isOpen, onClose }: EditItemProps) => {
                 placeholder="Description"
                 type="text"
               />
-            </FormControl>
+            </FormControl> */}
           </ModalBody>
           <ModalFooter gap={3}>
             <Button
@@ -124,4 +124,4 @@ const EditItem = ({ item, isOpen, onClose }: EditItemProps) => {
   );
 };
 
-export default EditItem;
+export default EditGroup;

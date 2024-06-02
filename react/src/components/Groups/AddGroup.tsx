@@ -15,36 +15,46 @@ import {
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { type SubmitHandler, useForm } from "react-hook-form";
 
-import { type ApiError, type ItemCreate, LettersService } from "../../client";
+import {
+  type ApiError,
+  type GroupCreate,
+  PartiesService,
+  UserLinked,
+} from "../../client";
 import useCustomToast from "../../hooks/useCustomToast";
 
-interface AddItemProps {
+interface AddGroupProps {
   isOpen: boolean;
   onClose: () => void;
 }
 
-const AddItem = ({ isOpen, onClose }: AddItemProps) => {
+const AddGroup = ({ isOpen, onClose }: AddGroupProps) => {
   const queryClient = useQueryClient();
+  const currentUser = queryClient.getQueryData<UserLinked>(["currentUser"]);
   const showToast = useCustomToast();
   const {
     register,
     handleSubmit,
     reset,
     formState: { errors, isSubmitting },
-  } = useForm<ItemCreate>({
+  } = useForm<GroupCreate>({
     mode: "onBlur",
     criteriaMode: "all",
     defaultValues: {
-      title: "",
-      description: "",
+      name: "",
     },
   });
 
   const mutation = useMutation({
-    mutationFn: (data: ItemCreate) =>
-      LettersService.addNextLetterLettersLetterPost({ requestBody: data }),
+    mutationFn: (data: GroupCreate) =>
+      PartiesService.createGroupPartiesGroupPost({
+        requestBody: {
+          admin_api_identifier: currentUser!.api_identifier,
+          name: data.name,
+        },
+      }),
     onSuccess: () => {
-      showToast("Success!", "Item created successfully.", "success");
+      showToast("Success!", "Group created successfully.", "success");
       reset();
       onClose();
     },
@@ -53,11 +63,11 @@ const AddItem = ({ isOpen, onClose }: AddItemProps) => {
       showToast("Something went wrong.", `${errDetail}`, "error");
     },
     onSettled: () => {
-      queryClient.invalidateQueries({ queryKey: ["items"] });
+      queryClient.invalidateQueries({ queryKey: ["groups"] });
     },
   });
 
-  const onSubmit: SubmitHandler<ItemCreate> = (data) => {
+  const onSubmit: SubmitHandler<GroupCreate> = (data) => {
     mutation.mutate(data);
   };
 
@@ -71,24 +81,24 @@ const AddItem = ({ isOpen, onClose }: AddItemProps) => {
       >
         <ModalOverlay />
         <ModalContent as="form" onSubmit={handleSubmit(onSubmit)}>
-          <ModalHeader>Add Item</ModalHeader>
+          <ModalHeader>Add Group</ModalHeader>
           <ModalCloseButton />
           <ModalBody pb={6}>
-            <FormControl isRequired isInvalid={!!errors.title}>
-              <FormLabel htmlFor="title">Title</FormLabel>
+            <FormControl isRequired isInvalid={!!errors.name}>
+              <FormLabel htmlFor="name">Name</FormLabel>
               <Input
-                id="title"
-                {...register("title", {
-                  required: "Title is required.",
+                id="name"
+                {...register("name", {
+                  required: "Name is required.",
                 })}
-                placeholder="Title"
+                placeholder="Name"
                 type="text"
               />
-              {errors.title && (
-                <FormErrorMessage>{errors.title.message}</FormErrorMessage>
+              {errors.name && (
+                <FormErrorMessage>{errors.name.message}</FormErrorMessage>
               )}
             </FormControl>
-            <FormControl mt={4}>
+            {/* <FormControl mt={4}>
               <FormLabel htmlFor="description">Description</FormLabel>
               <Input
                 id="description"
@@ -96,7 +106,7 @@ const AddItem = ({ isOpen, onClose }: AddItemProps) => {
                 placeholder="Description"
                 type="text"
               />
-            </FormControl>
+            </FormControl> */}
           </ModalBody>
 
           <ModalFooter gap={3}>
@@ -111,4 +121,4 @@ const AddItem = ({ isOpen, onClose }: AddItemProps) => {
   );
 };
 
-export default AddItem;
+export default AddGroup;

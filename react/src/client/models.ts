@@ -33,6 +33,12 @@ export type GroupUnlinked = {
 
 
 
+export type GroupUpdate = {
+	name?: string | null;
+};
+
+
+
 export type HTTPValidationError = {
 	detail?: Array<ValidationError>;
 };

@@ -11,7 +11,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import React from "react";
 import { useForm } from "react-hook-form";
 
-import { LettersService, PartiesService } from "../../client";
+// import { LettersService, PartiesService } from "../../client";
 import useCustomToast from "../../hooks/useCustomToast";
 
 interface DeleteProps {
@@ -21,7 +21,7 @@ interface DeleteProps {
   onClose: () => void;
 }
 
-const Delete = ({ type, id, isOpen, onClose }: DeleteProps) => {
+const Delete = ({ type, isOpen, onClose }: DeleteProps) => {
   const queryClient = useQueryClient();
   const showToast = useCustomToast();
   const cancelRef = React.useRef<HTMLButtonElement | null>(null);
@@ -30,7 +30,7 @@ const Delete = ({ type, id, isOpen, onClose }: DeleteProps) => {
     formState: { isSubmitting },
   } = useForm();
 
-  const deleteEntity = async (id: string) => {
+  const deleteEntity = async () => {
     throw new Error("Not implemented");
     // if (type === "Item") {
     //   await LettersService.readLetterLettersLetterLetterApiIdGet({
@@ -62,13 +62,13 @@ const Delete = ({ type, id, isOpen, onClose }: DeleteProps) => {
     },
     onSettled: () => {
       queryClient.invalidateQueries({
-        queryKey: [type === "Item" ? "items" : "users"],
+        queryKey: [type === "Group" ? "groups" : "users"],
       });
     },
   });
 
   const onSubmit = async () => {
-    mutation.mutate(id);
+    mutation.mutate();
   };
 
   return (

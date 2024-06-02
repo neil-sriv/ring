@@ -7,10 +7,10 @@ import {
   TabPanels,
   Tabs,
 } from "@chakra-ui/react";
-import { useQueryClient } from "@tanstack/react-query";
+// import { useQueryClient } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
 
-import type { UserLinked } from "../../client";
+// import type { UserLinked } from "../../client";
 import Appearance from "../../components/UserSettings/Appearance";
 import ChangePassword from "../../components/UserSettings/ChangePassword";
 import DeleteAccount from "../../components/UserSettings/DeleteAccount";
@@ -28,8 +28,8 @@ export const Route = createFileRoute("/_layout/settings")({
 });
 
 function UserSettings() {
-  const queryClient = useQueryClient();
-  const currentUser = queryClient.getQueryData<UserLinked>(["currentUser"]);
+  // const queryClient = useQueryClient();
+  // const currentUser = queryClient.getQueryData<UserLinked>(["currentUser"]);
   // const finalTabs = currentUser?.is_superuser
   const finalTabs = false ? tabsConfig.slice(0, 3) : tabsConfig;
 

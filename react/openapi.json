@@ -735,6 +735,63 @@
             }
           }
         }
+      },
+      "patch": {
+        "tags": [
+          "parties"
+        ],
+        "summary": "Update Group",
+        "operationId": "update_group_parties_group__group_api_id__patch",
+        "deprecated": true,
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "group_api_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Group Api Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GroupUpdate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "null",
+                  "title": "Response Update Group Parties Group  Group Api Id  Patch"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
       }
     },
     "/parties/group/{group_api_id}:add_member/{user_api_id}": {
@@ -1346,6 +1403,23 @@
           "api_identifier"
         ],
         "title": "GroupUnlinked"
+      },
+      "GroupUpdate": {
+        "properties": {
+          "name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Name"
+          }
+        },
+        "type": "object",
+        "title": "GroupUpdate"
       },
       "HTTPValidationError": {
         "properties": {
