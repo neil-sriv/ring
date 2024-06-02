@@ -16,7 +16,7 @@ from ring.pydantic_schemas import UserLinked as UserSchema
 from ring.security import create_access_token
 
 
-@internal.post("/me", response_model=UserSchema)
+@internal.get("/me", response_model=UserSchema)
 async def read_users_me(
     req_dep: AuthenticatedRequestDependencies = Depends(
         get_request_dependencies,

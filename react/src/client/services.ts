@@ -215,7 +215,7 @@ export class UsersService {
   public static readUserMe(): CancelablePromise<UserPublic> {
     return __request(OpenAPI, {
       method: "GET",
-      url: "/api/v1/internal/users/me",
+      url: "/api/v1/internal/me",
     });
   }
 
