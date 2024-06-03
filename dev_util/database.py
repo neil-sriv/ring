@@ -1,5 +1,5 @@
 import click
-from dev_util.compose import compose_run
+from dev_util.compose import compose_exec
 from dev_util.dev import cmd_run, dev_group
 import os
 
@@ -19,6 +19,6 @@ def db_pgcli() -> list[str]:
     return ["pgcli", LOCAL_POSTGRES_URI]
 
 
-@compose_run("upgrade", db)
+@compose_exec("upgrade", db, "api", "ring")
 def db_upgrade() -> list[str]:
-    return ["exec", "-w", "/src/ring", "api", "alembic", "upgrade", "head"]
+    return ["alembic", "upgrade", "head"]

@@ -90,6 +90,7 @@ def cmd_run(
 from .compose import *  # noqa
 from .database import *  # noqa
 from .docker import *  # noqa
+from .run import *  # noqa
 
 if __name__ == "__main__":
     dev()

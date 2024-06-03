@@ -15,12 +15,18 @@ def compose_starter(prod: bool = False) -> list[str]:
     ] + ([] if prod else ["--profile", "dev"])
 
 
+@dev_group("compose")
+@click.pass_context
+def compose(ctx: click.Context) -> None:
+    pass
+
+
 def compose_run(
     name: str,
-    group: click.Group | None = None,
+    group: click.Group = compose,
 ) -> Callable[[Callable[..., list[str]]], click.Command]:
     def decorator(f: Callable[..., list[str]]) -> click.Command:
-        @cmd_run(name, group if group else compose)
+        @cmd_run(name, group)
         @click.option(
             "--prod",
             is_flag=True,
@@ -36,10 +42,39 @@ def compose_run(
     return decorator
 
 
-@dev_group("compose")
-@click.pass_context
-def compose(ctx: click.Context) -> None:
-    pass
+def compose_exec(
+    name: str,
+    group: click.Group = compose,
+    service: str | None = None,
+    directory: str | None = None,
+) -> Callable[[Callable[..., list[str]]], click.Command]:
+    def decorator(f: Callable[..., list[str]]) -> click.Command:
+        @compose_run(name, group)
+        @click.argument(
+            "service",
+            type=str,
+            default=service,
+        )
+        @click.option(
+            "--directory",
+            "-d",
+            type=str,
+            default=directory,
+        )
+        @functools.wraps(f)
+        def inner(
+            service: str,
+            directory: str,
+            *args: Any,
+            **kwargs: Any,
+        ) -> list[str]:
+            cmd_string = f(*args, **kwargs)
+            working_dir = f"/src/{directory}" if directory else "/src"
+            return ["exec", "-w", working_dir] + [service] + cmd_string
+
+        return inner
+
+    return decorator
 
 
 @compose_run("ps")
