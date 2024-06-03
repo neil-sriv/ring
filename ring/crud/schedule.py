@@ -9,7 +9,7 @@ from ring.postgres_models.schedule_model import Schedule
 from ring.postgres_models.group_model import Group
 from ring.postgres_models.task_model import Task, TaskStatus, TaskType
 from ring.sqlalchemy_base import get_db
-from ring.worker.celery_app import register_task_factory  # type: ignore
+from ring.worker.celery_app import CeleryTask, register_task_factory  # type: ignore
 
 if TYPE_CHECKING:
     from sqlalchemy.orm import Session
@@ -60,7 +60,7 @@ def execute_tasks(
 
 
 @register_task_factory(name="poll_schedule")
-def poll_schedule_task():
+def poll_schedule_task(self: CeleryTask) -> None:
     from ring.crud import schedule as schedule_crud
 
     time.sleep(5)

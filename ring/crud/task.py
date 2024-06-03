@@ -6,7 +6,7 @@ from ring.email_util import construct_email, send_email
 from ring.postgres_models import Task
 from ring.postgres_models.task_model import SendEmailTask, TaskStatus, TaskType
 from ring.sqlalchemy_base import get_db
-from ring.worker.celery_app import register_task_factory  # type: ignore
+from ring.worker.celery_app import CeleryTask, register_task_factory  # type: ignore
 from ring.crud import letter as letter_crud
 
 
@@ -32,7 +32,7 @@ TASK_TO_EXECUTE_MAPPING: dict[TaskType, Callable[..., None]] = {
 
 
 @register_task_factory(name="execute_tasks")
-def execute_tasks_async(task_ids: list[int]) -> None:
+def execute_tasks_async(self: CeleryTask, task_ids: list[int]) -> None:
     db = next(get_db())
     execute_tasks(db, task_ids)
 

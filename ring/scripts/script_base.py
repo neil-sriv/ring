@@ -6,7 +6,10 @@ from ring.sqlalchemy_base import Session, get_db
 def script(func: Callable[..., None]) -> Callable[..., None]:
     def wrapper(*args: Any, **kwargs: Any) -> None:
         db = next(get_db())
-        func(db, *args, **kwargs)
+        try:
+            func(db, *args, **kwargs)
+        finally:
+            db.close()
 
     return wrapper
 

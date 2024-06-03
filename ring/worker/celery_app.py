@@ -4,6 +4,7 @@ import os
 from celery import Celery
 from celery.schedules import crontab
 
+from ring.sqlalchemy_base import SessionLocal
 from ring.worker.celery_imports import CELERY_IMPORTS
 
 
@@ -25,9 +26,33 @@ celery = Celery(
 )
 
 
+class CeleryTask(celery.Task):
+    def __init__(self):
+        super().__init__()
+        self.sessions = {}
+
+    def before_start(self, task_id, args, kwargs):
+        self.sessions[task_id] = SessionLocal()
+        super().before_start(task_id, args, kwargs)
+
+    def after_return(self, status, retval, task_id, args, kwargs, einfo):
+        session = self.sessions.pop(task_id)
+        session.close()
+        super().after_return(status, retval, task_id, args, kwargs, einfo)
+
+    @property
+    def session(self):
+        return self.sessions[self.request.id]
+
+
 def register_task_factory(*dec_args, **dec_kwargs):
     def decorator(f):
-        @celery.task(*dec_args, **dec_kwargs)
+        @celery.task(
+            *dec_args,
+            **dec_kwargs,
+            bind=True,
+            base=CeleryTask,
+        )
         def wrapper(*args, **kwargs):
             return f(*args, **kwargs)
 
