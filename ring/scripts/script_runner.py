@@ -24,8 +24,6 @@ def run_script(script: pathlib.Path):
     loader.exec_module(module)
     click.echo(f"Running script: {module}")
     module.run_script()
-    # asyncio.run(module.run_script())
-    # subprocess.run(["python", str(script)])
 
 
 if __name__ == "__main__":

@@ -1,19 +1,20 @@
+import functools
 from typing import Any, Callable
-from ring.sqlalchemy_base import Session, get_db
+from ring.sqlalchemy_base import Session, db_session, T
 
 
-# decorator for scripts that injects a database session
-def script(func: Callable[..., None]) -> Callable[..., None]:
-    def wrapper(*args: Any, **kwargs: Any) -> None:
-        db = next(get_db())
-        try:
-            func(db, *args, **kwargs)
-        finally:
-            db.close()
+def script_di() -> Callable[[Callable[..., T]], Callable[..., T]]:
+    def decorator(f: Callable[..., T]) -> Callable[..., T]:
+        @db_session
+        @functools.wraps(f)
+        def inner(db: Session, *args: Any, **kwargs: Any) -> T:
+            return f(db, *args, **kwargs)
 
-    return wrapper
+        return inner
+
+    return decorator
 
 
-@script
+@script_di()
 def run_script(db: Session) -> None:
     raise NotImplementedError()

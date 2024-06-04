@@ -1,4 +1,4 @@
-from typing import Iterator
+from typing import Any, Callable, Iterator, TypeVar
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker, DeclarativeBase, Session
 from ring.config import get_config
@@ -22,3 +22,18 @@ def get_db() -> Iterator[Session]:
         yield db
     finally:
         db.close()
+
+
+T = TypeVar("T")
+
+
+# decorator injects a database session
+def db_session(func: Callable[..., T]) -> Callable[..., T]:
+    def wrapper(*args: Any, **kwargs: Any) -> T:
+        db = next(get_db())
+        try:
+            return func(db, *args, **kwargs)
+        finally:
+            db.close()
+
+    return wrapper
