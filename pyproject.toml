@@ -37,6 +37,9 @@ dependencies = [
     "mypy_boto3_ses ~= 1.34",
     "click ~= 8.1.7",
     "pyjwt ~= 2.8",
+    "ipython-autoimport",
+    "ipython-autotime",
+    "pprintpp",
 ]
 
 [project.scripts]
