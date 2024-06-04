@@ -21,6 +21,16 @@ def run_script(script: str) -> list[str]:
     return script_cmd
 
 
+@compose_exec("shell", run, "api")
+def run_shell() -> list[str]:
+    return [
+        "python",
+        "ring/scripts/script_runner.py",
+        "run-script",
+        "ring/shell/shell.py",
+    ]
+
+
 # @run_script("sql", run)
 # @click.argument("query", type=str)
 # def sql(query: str) -> list[str]:
