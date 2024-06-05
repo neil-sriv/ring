@@ -5,6 +5,7 @@ from sqlalchemy import select
 from ring.postgres_models import Letter, Group
 from ring.crud import api_identifier as api_identifier_crud
 from ring.postgres_models.question_model import Question
+from ring.postgres_models.user_model import User
 
 if TYPE_CHECKING:
     from sqlalchemy.orm import Session
@@ -30,8 +31,10 @@ def create_letter(db: Session, group_api_id: str) -> Letter:
     return db_letter
 
 
-def add_question(db: Session, letter: Letter, question_text: str) -> Question:
-    question = Question.create(letter, question_text)
+def add_question(
+    db: Session, letter: Letter, question_text: str, author: User | None = None
+) -> Question:
+    question = Question.create(letter, question_text, author)
     db.add(question)
     letter.questions.append(question)
     return question

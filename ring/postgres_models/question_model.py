@@ -33,17 +33,20 @@ class Question(Base, APIIdentified, PydanticModel):
     author_id: Mapped[int] = mapped_column(
         ForeignKey("user.id"), nullable=True, default=None
     )
-    author: Mapped["User"] = relationship()
+    author: Mapped["User | None"] = relationship()
 
     letter_id: Mapped[int] = mapped_column(ForeignKey("letter.id"))
     letter: Mapped["Letter"] = relationship(back_populates="questions")
 
-    def __init__(self, letter: Letter, question_text: str) -> None:
+    def __init__(self, letter: Letter, question_text: str, author: User | None) -> None:
         APIIdentified.__init__(self)
         self.letter = letter
         self.question_text = question_text
+        self.author = author
 
     @classmethod
-    def create(cls, letter: Letter, question_text: str) -> Question:
-        question = cls(letter, question_text)
+    def create(
+        cls, letter: Letter, question_text: str, author: User | None = None
+    ) -> Question:
+        question = cls(letter, question_text, author)
         return question
