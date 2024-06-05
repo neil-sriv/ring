@@ -36,6 +36,7 @@ class Letter(Base, APIIdentified):
     id: Mapped[int] = mapped_column(primary_key=True, index=True)
     number: Mapped[int] = mapped_column()
     api_identifier: Mapped[str] = mapped_column(unique=True, index=True)
+    # TODO: Add columns for status and issue_sent datetime
 
     participants: Mapped[list["User"]] = relationship(
         secondary=letter_to_user_assocation
