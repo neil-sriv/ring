@@ -72,15 +72,16 @@ def cmd_run(
         @group.command(name=name, context_settings=UNLIMITED_ARGS_SETTINGS)
         @click.pass_context
         @functools.wraps(f)
-        def inner(
-            ctx: click.Context, *args: Any, **kwargs: Any
-        ) -> subprocess.CompletedProcess[str]:
+        def inner(ctx: click.Context, *args: Any, **kwargs: Any) -> None:
             cmd_string = f(*args, **kwargs)
             additional_args = ctx.args
-            return subprocess_run(
-                cmd_string + additional_args,
-                cwd=ROOT_DIR,
-            )
+            try:
+                subprocess_run(
+                    cmd_string + additional_args,
+                    cwd=ROOT_DIR,
+                )
+            except subprocess.CalledProcessError:
+                pass
 
         return inner
 
