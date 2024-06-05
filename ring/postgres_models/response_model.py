@@ -4,6 +4,8 @@ from sqlalchemy import ForeignKey, Text
 from sqlalchemy.orm import relationship, Mapped, mapped_column
 from ring.postgres_models.api_identified import APIIdentified
 
+from ring.postgres_models.pydantic_model import PydanticModel
+from ring.pydantic_schemas.response import ResponseUnlinked
 from ring.sqlalchemy_base import Base
 
 if TYPE_CHECKING:
@@ -12,10 +14,11 @@ if TYPE_CHECKING:
     from ring.postgres_models.question_model import Question
 
 
-class Response(Base, APIIdentified):
+class Response(Base, APIIdentified, PydanticModel):
     __tablename__ = "response"
 
     API_ID_PREFIX = "rspn"
+    PYDANTIC_MODEL = ResponseUnlinked
 
     id: Mapped[int] = mapped_column(primary_key=True, index=True)
     api_identifier: Mapped[str] = mapped_column(unique=True, index=True)

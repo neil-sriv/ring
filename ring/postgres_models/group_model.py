@@ -5,6 +5,8 @@ from sqlalchemy.orm import relationship, Mapped, mapped_column
 from sqlalchemy.ext.hybrid import hybrid_property
 from ring.postgres_models.api_identified import APIIdentified
 
+from ring.postgres_models.pydantic_model import PydanticModel
+from ring.pydantic_schemas.linked_schemas import GroupLinked
 from ring.sqlalchemy_base import Base
 from ring.postgres_models.user_group_assocation import user_group_association
 from ring.postgres_models.schedule_model import Schedule
@@ -15,10 +17,11 @@ if TYPE_CHECKING:
     from ring.postgres_models.user_model import User
 
 
-class Group(Base, APIIdentified):
+class Group(Base, PydanticModel, APIIdentified):
     __tablename__ = "group"
 
     API_ID_PREFIX = "grp"
+    PYDANTIC_MODEL = GroupLinked
 
     id: Mapped[int] = mapped_column(primary_key=True, index=True)
     name: Mapped[str] = mapped_column(unique=True, index=True)

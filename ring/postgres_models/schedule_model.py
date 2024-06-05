@@ -2,16 +2,20 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 from sqlalchemy import ForeignKey, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column, relationship
+from ring.postgres_models.pydantic_model import PydanticModel
 from ring.postgres_models.task_model import Task
 
+from ring.pydantic_schemas.linked_schemas import ScheduleLinked
 from ring.sqlalchemy_base import Base
 
 if TYPE_CHECKING:
     from ring.postgres_models.group_model import Group
 
 
-class Schedule(Base):
+class Schedule(Base, PydanticModel):
     __tablename__ = "schedule"
+
+    PYDANTIC_MODEL = ScheduleLinked
 
     id: Mapped[int] = mapped_column(primary_key=True, index=True)
     group_id: Mapped[int] = mapped_column(

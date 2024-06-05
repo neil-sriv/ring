@@ -3,6 +3,8 @@ from typing import TYPE_CHECKING, Optional
 from sqlalchemy.orm import relationship, Mapped, mapped_column
 from ring.postgres_models.api_identified import APIIdentified
 
+from ring.postgres_models.pydantic_model import PydanticModel
+from ring.pydantic_schemas.linked_schemas import UserLinked
 from ring.sqlalchemy_base import Base
 from ring.postgres_models.user_group_assocation import user_group_association
 
@@ -11,10 +13,11 @@ if TYPE_CHECKING:
     from ring.postgres_models.response_model import Response
 
 
-class User(Base, APIIdentified):
+class User(Base, APIIdentified, PydanticModel):
     __tablename__ = "user"
 
     API_ID_PREFIX = "usr"
+    PYDANTIC_MODEL = UserLinked
 
     id: Mapped[int] = mapped_column(primary_key=True, index=True)
     name: Mapped[Optional[str]] = mapped_column(nullable=True)

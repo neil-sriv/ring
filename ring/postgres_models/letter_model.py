@@ -12,6 +12,8 @@ from sqlalchemy.orm import relationship, Mapped, mapped_column
 from sqlalchemy.ext.declarative import declared_attr
 from ring.postgres_models.api_identified import APIIdentified
 
+from ring.postgres_models.pydantic_model import PydanticModel
+from ring.pydantic_schemas.linked_schemas import LetterLinked
 from ring.sqlalchemy_base import Base
 
 if TYPE_CHECKING:
@@ -28,10 +30,11 @@ letter_to_user_assocation = Table(
 )
 
 
-class Letter(Base, APIIdentified):
+class Letter(Base, APIIdentified, PydanticModel):
     __tablename__ = "letter"
 
     API_ID_PREFIX = "lttr"
+    PYDANTIC_MODEL = LetterLinked
 
     id: Mapped[int] = mapped_column(primary_key=True, index=True)
     number: Mapped[int] = mapped_column()

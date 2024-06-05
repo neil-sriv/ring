@@ -4,7 +4,9 @@ from sqlalchemy import ForeignKey, Text
 from sqlalchemy.orm import relationship, Mapped, mapped_column
 from ring.postgres_models.api_identified import APIIdentified
 
+from ring.postgres_models.pydantic_model import PydanticModel
 from ring.postgres_models.user_model import User
+from ring.pydantic_schemas.linked_schemas import QuestionLinked
 from ring.sqlalchemy_base import Base
 
 if TYPE_CHECKING:
@@ -14,10 +16,11 @@ if TYPE_CHECKING:
     from ring.postgres_models.response_model import Response
 
 
-class Question(Base, APIIdentified):
+class Question(Base, APIIdentified, PydanticModel):
     __tablename__ = "question"
 
     API_ID_PREFIX = "qstn"
+    PYDANTIC_MODEL = QuestionLinked
 
     id: Mapped[int] = mapped_column(primary_key=True, index=True)
     api_identifier: Mapped[str] = mapped_column(unique=True, index=True)
@@ -30,7 +33,7 @@ class Question(Base, APIIdentified):
     author_id: Mapped[int] = mapped_column(
         ForeignKey("user.id"), nullable=True, default=None
     )
-    author: Mapped["User"] = relationship(back_populates="authored_questions")
+    author: Mapped["User"] = relationship()
 
     letter_id: Mapped[int] = mapped_column(ForeignKey("letter.id"))
     letter: Mapped["Letter"] = relationship(back_populates="questions")
