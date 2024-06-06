@@ -5,7 +5,7 @@ from ring.pydantic_schemas.user import User, UserUnlinked
 from ring.pydantic_schemas.group import Group, GroupUnlinked
 from ring.pydantic_schemas.letter import Letter, LetterUnlinked
 from ring.pydantic_schemas.question import Question, QuestionUnlinked
-from ring.pydantic_schemas.response import ResponseUnlinked
+from ring.pydantic_schemas.response import Response, ResponseUnlinked
 
 
 class UserLinked(User):
@@ -39,6 +39,6 @@ class QuestionLinked(Question):
     responses: list["ResponseUnlinked"]
 
 
-# class ResponseLinked(Response):
-#     question: "QuestionUnlinked"
-#     participant: "UserUnlinked"
+class ResponseLinked(Response):
+    question: "QuestionUnlinked"
+    participant: "UserUnlinked"

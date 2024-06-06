@@ -1,0 +1,80 @@
+{
+  "groups": [
+    {
+      "name": "Adults",
+      "admin": "usr_d1d66806-dc06-44da-814f-d3ab6e8e6d7a",
+      "members": [
+        {
+          "name": "Sharika Menon",
+          "email": "sharika0719@gmail.com"
+        },
+        {
+          "name": "Sanika Pragji",
+          "email": "saanikap22@gmail.com"
+        },
+        {
+          "name": "Kanishk",
+          "email": "kadarkar4@gmail.com"
+        },
+        {
+          "name": "Ajay panda",
+          "email": "ajpanda12@gmail.com"
+        },
+        {
+          "name": "Sapna",
+          "email": "sapnab92299@gmail.com"
+        },
+        {
+          "name": "Megs",
+          "email": "meghanaaarao@gmail.com"
+        },
+        {
+          "name": "Rishika",
+          "email": "rishika.prakash@vanderbilt.edu"
+        },
+        {
+          "name": "Sonia",
+          "email": "sonia.m.patel@gmail.com"
+        },
+        {
+          "name": "Chetana",
+          "email": "chetana.murali30@gmail.com"
+        },
+        {
+          "name": "Corey Li",
+          "email": "corey.li.237@gmail.com"
+        },
+        {
+          "name": "pranali",
+          "email": "pranali.shah.101@gmail.com"
+        },
+        {
+          "name": "Arjun",
+          "email": "mukherjee.arjun88@gmail.com"
+        },
+        {
+          "name": "Poorna",
+          "email": "poorna.sreenivas@gmail.com"
+        }
+      ]
+    },
+    {
+      "name": "seva soups",
+      "admin": "usr_d1d66806-dc06-44da-814f-d3ab6e8e6d7a",
+      "members": [
+        { "name": "Anjali Asarpota", "email": "anjaliasarpota@gmail.com" },
+        { "name": "Neil", "email": "neil.srivastava1@gmail.com" },
+        { "name": "Riya", "email": "riyahsolanki@gmail.com" },
+        { "name": "Divya", "email": "malanidivya1999@gmail.com" },
+        { "name": "Ria", "email": "riasood20@gmail.com" },
+        { "name": "Hemali", "email": "hnpatel41200@gmail.com" },
+        { "name": "Tanmay", "email": "tstanmay13@gmail.com" },
+        { "name": "Irika", "email": "irika.nalla@gmail.com" },
+        { "name": "Kishan", "email": "kishanasokan@gmail.com" },
+        { "name": "Devika", "email": "devikapatel2000@gmail.com" },
+        { "name": "Ranjan", "email": "ranjanv2000@gmail.com" },
+        { "name": "Parth", "email": "parthdargan@yahoo.com" }
+      ]
+    }
+  ]
+}

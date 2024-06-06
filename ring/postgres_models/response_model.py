@@ -5,7 +5,7 @@ from sqlalchemy.orm import relationship, Mapped, mapped_column
 from ring.postgres_models.api_identified import APIIdentified
 
 from ring.postgres_models.pydantic_model import PydanticModel
-from ring.pydantic_schemas.response import ResponseUnlinked
+from ring.pydantic_schemas.linked_schemas import ResponseLinked
 from ring.sqlalchemy_base import Base
 
 if TYPE_CHECKING:
@@ -18,7 +18,7 @@ class Response(Base, APIIdentified, PydanticModel):
     __tablename__ = "response"
 
     API_ID_PREFIX = "rspn"
-    PYDANTIC_MODEL = ResponseUnlinked
+    PYDANTIC_MODEL = ResponseLinked
 
     id: Mapped[int] = mapped_column(primary_key=True, index=True)
     api_identifier: Mapped[str] = mapped_column(unique=True, index=True)
