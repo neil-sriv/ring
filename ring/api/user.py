@@ -10,6 +10,7 @@ from ring.dependencies import (
 from fastapi import HTTPException
 from ring.crud import user as user_crud, api_identifier as api_identifier_crud
 from ring.pydantic_schemas import UserLinked as UserSchema
+from ring.pydantic_schemas.core import ResponseMessage
 from ring.pydantic_schemas.user import (
     UserCreate,
     UserUpdate,
@@ -89,17 +90,31 @@ def update_user_me(
     raise NotImplementedError()
 
 
-@router.patch("/me/password", deprecated=True)
+@router.patch("/me/password", response_model=ResponseMessage)
 def update_password_me(
     update_password_data: UserUpdatePassword,
     req_dep: AuthenticatedRequestDependencies = Depends(
         get_request_dependencies,
     ),
-) -> None:
+) -> ResponseMessage:
     """
     Update own password.
     """
-    raise NotImplementedError()
+    if not user_crud._verify_password(
+        update_password_data.current_password,
+        req_dep.current_user.hashed_password,
+    ):
+        raise HTTPException(status_code=400, detail="Incorrect password")
+    if update_password_data.current_password == update_password_data.new_password:
+        raise HTTPException(
+            status_code=400,
+            detail="New password must be different from the current password",
+        )
+
+    hashed_password = user_crud.get_password_hash(update_password_data.new_password)
+    req_dep.current_user.hashed_password = hashed_password
+    req_dep.db.commit()
+    return ResponseMessage(message="Password updated successfully")
 
 
 @router.delete("/me", deprecated=True)

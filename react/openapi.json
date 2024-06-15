@@ -478,8 +478,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "null",
-                  "title": "Response Update Password Me Parties Me Password Patch"
+                  "$ref": "#/components/schemas/ResponseMessage"
                 }
               }
             }
@@ -495,7 +494,6 @@
             }
           }
         },
-        "deprecated": true,
         "security": [
           {
             "OAuth2PasswordBearer": []
@@ -1559,6 +1557,19 @@
           "responses"
         ],
         "title": "QuestionUnlinked"
+      },
+      "ResponseMessage": {
+        "properties": {
+          "message": {
+            "type": "string",
+            "title": "Message"
+          }
+        },
+        "type": "object",
+        "required": [
+          "message"
+        ],
+        "title": "ResponseMessage"
       },
       "ResponseUnlinked": {
         "properties": {
