@@ -19,6 +19,15 @@ def run_script(db: Session) -> None:
     import ring
     from ring.lib.util import get_all_subclasses
     from ring.sqlalchemy_base import Base
+    from ring.crud import (
+        user as user_crud,
+        group as group_crud,
+        api_identifier as api_identifier_crud,
+        letter as letter_crud,
+        question as question_crud,
+        schedule as schedule_crud,
+        task as task_crud,
+    )
 
     click.echo("Configuring IPython...")
     c = Config()
