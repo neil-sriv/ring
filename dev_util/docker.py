@@ -50,8 +50,15 @@ def push(image: list[str]) -> None:
 
 
 @dev_command("tp", docker)
+@click.option(
+    "--image",
+    "-i",
+    type=click.Choice(IMAGE_TAG_NAMES),
+    multiple=True,
+    default=IMAGE_TAG_NAMES,
+)
 @click.pass_context
-def push_and_tag(ctx: click.Context) -> None:
+def push_and_tag(ctx: click.Context, image: list[str]) -> None:
     ctx.forward(tag)
     # ctx.invoke(tag)
     ctx.forward(push)
