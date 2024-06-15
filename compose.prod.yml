@@ -2,12 +2,14 @@ services:
   api:
     image: prod-ring-api
     command: "uvicorn ring.fast:app --proxy-headers --host 0.0.0.0 --port ${API_PORT} --reload"
+    mem_limit: 300m
     expose:
       - "${API_PORT}"
     env_file:
       - ./.env
 
   nginx:
+    mem_limit: 300m
     volumes:
       - ./prod.nginx.conf:/etc/nginx/conf.d/default.conf:ro
 
@@ -17,10 +19,12 @@ services:
       - ./.env
     mem_limit: 300m
   beat:
+    mem_limit: 300m
     image: prod-ring-beat
     env_file:
       - ./.env
   flower:
+    mem_limit: 100m
     image: prod-ring-flower
     env_file:
       - ./.env
@@ -28,6 +32,7 @@ services:
       - "8003:5555"
 
   frontend:
+    mem_limit: 300m
     container_name: ring-frontend
     image: prod-ring-frontend
     build:
