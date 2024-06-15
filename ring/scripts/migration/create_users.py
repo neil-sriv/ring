@@ -15,7 +15,10 @@ def run_script(db: Session, dry_run: bool = True) -> None:
     groups: list[Group] = []
     for group in groups_dict:
         # pp(group)
-        g = group_crud.create_group(db, group["admin"], group["name"])
+        admin_email = group["admin"]
+        admin = user_crud.get_user_by_email(db, admin_email)
+        assert admin is not None, "Admin user not found"
+        g = group_crud.create_group(db, admin.api_identifier, group["name"])
         db.add(g)
 
         for user in group["members"]:
