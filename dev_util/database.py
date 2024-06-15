@@ -5,7 +5,8 @@ import os
 
 
 LOCAL_POSTGRES_URI = "postgresql://ring-postgres:ring-postgres@localhost:8004/ring"
-PROD_POSTGRES_URI = "postgresql://ringpostgres:ringpostgres@ring-postgres.c9gw8w2m4ayu.us-east-1.rds.amazonaws.com:5432/ring
+PROD_POSTGRES_URI = "postgresql://ringpostgres:ringpostgres@ring-postgres.c9gw8w2m4ayu.us-east-1.rds.amazonaws.com:5432/ring"
+
 
 @dev_group("db")
 @click.pass_context
