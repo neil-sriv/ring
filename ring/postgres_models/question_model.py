@@ -26,14 +26,14 @@ class Question(Base, APIIdentified, PydanticModel):
     api_identifier: Mapped[str] = mapped_column(unique=True, index=True)
 
     responses: Mapped[list["Response"]] = relationship(
-        back_populates="question",
+        back_populates="question", cascade="all"
     )
 
     question_text: Mapped[str] = mapped_column(Text)
     author_id: Mapped[int] = mapped_column(
         ForeignKey("user.id"), nullable=True, default=None
     )
-    author: Mapped["User | None"] = relationship()
+    author: Mapped["User | None"] = relationship(cascade="all")
 
     letter_id: Mapped[int] = mapped_column(ForeignKey("letter.id"))
     letter: Mapped["Letter"] = relationship(back_populates="questions")

@@ -32,7 +32,9 @@ class Group(Base, PydanticModel, APIIdentified):
     members: Mapped[list["User"]] = relationship(
         secondary=user_group_association, back_populates="groups"
     )
-    letters: Mapped[list["Letter"]] = relationship(back_populates="group")
+    letters: Mapped[list["Letter"]] = relationship(
+        back_populates="group", cascade="all"
+    )
     schedule: Mapped["Schedule"] = relationship(
         back_populates="group", cascade="all, delete-orphan"
     )

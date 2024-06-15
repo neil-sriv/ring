@@ -47,7 +47,9 @@ class Letter(Base, APIIdentified, PydanticModel):
     group_id = Column(Integer, ForeignKey("group.id"))
     group: Mapped["Group"] = relationship(back_populates="letters")
 
-    questions: Mapped[list["Question"]] = relationship(back_populates="letter")
+    questions: Mapped[list["Question"]] = relationship(
+        back_populates="letter", cascade="all"
+    )
 
     @declared_attr  # type: ignore
     def __table_args__(cls) -> tuple[Constraint]:
