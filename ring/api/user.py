@@ -77,17 +77,34 @@ async def read_user_by_id(
     return db_user
 
 
-@router.patch("/me", deprecated=True)
+@router.patch(
+    "/me",
+    response_model=UserSchema,
+)
 def update_user_me(
     current_user_update_data: UserUpdate,
     req_dep: AuthenticatedRequestDependencies = Depends(
         get_request_dependencies,
     ),
-) -> None:
+) -> User:
     """
     Update own user.
     """
-    raise NotImplementedError()
+    if current_user_update_data.email:
+        db_user = user_crud.get_user_by_email(
+            req_dep.db,
+            email=current_user_update_data.email,
+        )
+        if db_user and db_user.id != req_dep.current_user.id:
+            raise HTTPException(
+                status_code=400,
+                detail="Email already registered",
+            )
+        req_dep.current_user.email = current_user_update_data.email
+    if current_user_update_data.name:
+        req_dep.current_user.name = current_user_update_data.name
+    req_dep.db.commit()
+    return req_dep.current_user
 
 
 @router.patch("/me/password", response_model=ResponseMessage)

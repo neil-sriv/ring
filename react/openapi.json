@@ -279,8 +279,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "null",
-                  "title": "Response Update User Me Parties Me Patch"
+                  "$ref": "#/components/schemas/UserLinked"
                 }
               }
             }
@@ -296,7 +295,6 @@
             }
           }
         },
-        "deprecated": true,
         "security": [
           {
             "OAuth2PasswordBearer": []
@@ -1802,17 +1800,6 @@
               }
             ],
             "title": "Name"
-          },
-          "password": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Password"
           }
         },
         "type": "object",
