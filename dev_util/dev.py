@@ -8,7 +8,9 @@ import functools
 from typing import Any, Callable
 
 ROOT_DIR = Path(
-    os.environ.get("ROOT_DIR", Path(__file__)).resolve().parents[1],  # type: ignore
+    Path(os.environ.get("ROOT_DIR")).resolve()
+    if os.environ.get("ROOT_DIR")
+    else Path(__file__).resolve().parents[1],  # type: ignore
 )
 UNLIMITED_ARGS_SETTINGS = {
     "ignore_unknown_options": True,
