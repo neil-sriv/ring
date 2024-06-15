@@ -2,7 +2,7 @@ import type { CancelablePromise } from './core/CancelablePromise';
 import { OpenAPI } from './core/OpenAPI';
 import { request as __request } from './core/request';
 
-import type { Body_login_access_token_login_access_token_post,NewPassword,Token,GroupCreate,GroupLinked,GroupUpdate,ScheduleSendParam,UserCreate,UserLinked,UserUpdate,UserUpdatePassword,LetterCreate,LetterLinked,QuestionCreate,ScheduleLinked } from './models';
+import type { Body_login_access_token_login_access_token_post,NewPassword,Token,GroupCreate,GroupLinked,GroupUpdate,ResponseMessage,ScheduleSendParam,UserCreate,UserLinked,UserUpdate,UserUpdatePassword,LetterCreate,LetterLinked,QuestionCreate,ScheduleLinked } from './models';
 
 export type LoginData = {
         LoginAccessTokenLoginAccessTokenPost: {
@@ -249,13 +249,12 @@ export class PartiesService {
 	}
 
 	/**
-	 * @deprecated
 	 * Update User Me
 	 * Update own user.
-	 * @returns null Successful Response
+	 * @returns UserLinked Successful Response
 	 * @throws ApiError
 	 */
-	public static updateUserMePartiesMePatch(data: PartiesData['UpdateUserMePartiesMePatch']): CancelablePromise<null> {
+	public static updateUserMePartiesMePatch(data: PartiesData['UpdateUserMePartiesMePatch']): CancelablePromise<UserLinked> {
 		const {
 requestBody,
 } = data;
@@ -334,13 +333,12 @@ userApiId,
 	}
 
 	/**
-	 * @deprecated
 	 * Update Password Me
 	 * Update own password.
-	 * @returns null Successful Response
+	 * @returns ResponseMessage Successful Response
 	 * @throws ApiError
 	 */
-	public static updatePasswordMePartiesMePasswordPatch(data: PartiesData['UpdatePasswordMePartiesMePasswordPatch']): CancelablePromise<null> {
+	public static updatePasswordMePartiesMePasswordPatch(data: PartiesData['UpdatePasswordMePartiesMePasswordPatch']): CancelablePromise<ResponseMessage> {
 		const {
 requestBody,
 } = data;

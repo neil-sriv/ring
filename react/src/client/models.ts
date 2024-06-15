@@ -89,6 +89,12 @@ export type QuestionUnlinked = {
 
 
 
+export type ResponseMessage = {
+	message: string;
+};
+
+
+
 export type ResponseUnlinked = {
 	response_text: string;
 	api_identifier: string;
@@ -161,7 +167,6 @@ export type UserUnlinked = {
 export type UserUpdate = {
 	email?: string | null;
 	name?: string | null;
-	password?: string | null;
 };
 
 

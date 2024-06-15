@@ -221,6 +221,15 @@ export const $QuestionUnlinked = {
 	},
 } as const;
 
+export const $ResponseMessage = {
+	properties: {
+		message: {
+	type: 'string',
+	isRequired: true,
+},
+	},
+} as const;
+
 export const $ResponseUnlinked = {
 	properties: {
 		response_text: {
@@ -390,14 +399,6 @@ export const $UserUpdate = {
 }],
 },
 		name: {
-	type: 'any-of',
-	contains: [{
-	type: 'string',
-}, {
-	type: 'null',
-}],
-},
-		password: {
 	type: 'any-of',
 	contains: [{
 	type: 'string',
