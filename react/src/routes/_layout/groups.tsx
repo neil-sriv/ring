@@ -13,6 +13,7 @@ import {
 } from "@chakra-ui/react";
 import { useQueryClient, useSuspenseQuery } from "@tanstack/react-query";
 import { Link, createFileRoute } from "@tanstack/react-router";
+import { Link as ChakraLink } from "@chakra-ui/react";
 
 import { Suspense } from "react";
 import { ErrorBoundary } from "react-error-boundary";
@@ -42,12 +43,14 @@ function GroupTableBody() {
         <Tr key={group.api_identifier}>
           {/* <Td>{group.name}</Td> */}
           <Td>
-            <Link
+            <ChakraLink
+              as={Link}
               to="/groups/$groupId/loops"
               params={{ groupId: group.api_identifier }}
+              textDecoration={"underline"}
             >
               {group.name}
-            </Link>
+            </ChakraLink>
           </Td>
           <Td>
             {group.members

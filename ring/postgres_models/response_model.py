@@ -24,7 +24,7 @@ class Response(Base, APIIdentified, PydanticModel):
     api_identifier: Mapped[str] = mapped_column(unique=True, index=True)
 
     participant_id: Mapped[int] = mapped_column(ForeignKey("user.id"))
-    participant: Mapped["User"] = relationship()
+    participant: Mapped["User"] = relationship(lazy=False)
     question_id: Mapped[int] = mapped_column(ForeignKey("question.id"))
     question: Mapped["Question"] = relationship(back_populates="responses")
 

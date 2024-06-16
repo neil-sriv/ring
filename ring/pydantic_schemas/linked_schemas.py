@@ -1,3 +1,4 @@
+from __future__ import annotations
 from typing import Optional
 from ring.pydantic_schemas.task import TaskUnlinked
 from ring.pydantic_schemas.schedule import Schedule, ScheduleUnlinked
@@ -31,7 +32,12 @@ class ScheduleLinked(Schedule):
 class LetterLinked(Letter):
     participants: list["UserUnlinked"]
     group: "GroupUnlinked"
-    questions: list["QuestionUnlinked"]
+    questions: list["QuestionLinked"]
+
+
+class PublicLetter(Letter):
+    group: "GroupUnlinked"
+    questions: list["PublicQuestion"]
 
 
 class QuestionLinked(Question):
@@ -39,6 +45,14 @@ class QuestionLinked(Question):
     responses: list["ResponseUnlinked"]
 
 
+class PublicQuestion(Question):
+    responses: list["ResponseWithParticipant"]
+
+
 class ResponseLinked(Response):
     question: "QuestionUnlinked"
+    participant: "UserUnlinked"
+
+
+class ResponseWithParticipant(Response):
     participant: "UserUnlinked"

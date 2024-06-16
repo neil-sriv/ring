@@ -1,33 +1,35 @@
-import { Container, Heading } from "@chakra-ui/react";
-import Navbar from "../../components/Common/Navbar";
+import { Container, Heading, Text } from "@chakra-ui/react";
+// import Navbar from "../../components/Common/Navbar";
 import { createFileRoute } from "@tanstack/react-router";
-import { LettersService, LetterLinked } from "../../client";
+import { LettersService, PublicLetter } from "../../client";
 
 export const Route = createFileRoute("/_layout/groups/$groupId/loops")({
   loaderDeps: ({ search: { offset, limit } }) => ({ offset, limit }),
-  loader: async ({ params, deps: { offset, limit } }) => {
+  loader: async ({
+    params,
+    deps: { offset, limit },
+  }): Promise<PublicLetter[]> => {
     const loops = await LettersService.listLettersLettersLettersGet({
       groupApiId: params.groupId,
       skip: offset,
       limit,
     });
-    return Loops({ loops });
+    return loops;
   },
+  component: Loops,
 });
 
-interface LoopsProps {
-  loops: LetterLinked[];
-}
-
-function Loops(props: LoopsProps) {
+function Loops() {
+  const props = Route.useLoaderData();
   console.log("props", props);
   return (
     <Container maxW="full">
       <Heading size="lg" textAlign={{ base: "center", md: "left" }} pt={12}>
-        Loops
+        {props[0].group.name}
       </Heading>
+      <Text>Some text</Text>
 
-      <Navbar type={"Loop"} />
+      {/* <Navbar type={"Loop"} /> */}
     </Container>
   );
 }

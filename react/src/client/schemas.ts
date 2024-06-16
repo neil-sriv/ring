@@ -135,37 +135,6 @@ export const $LetterCreate = {
 	},
 } as const;
 
-export const $LetterLinked = {
-	properties: {
-		api_identifier: {
-	type: 'string',
-	isRequired: true,
-},
-		number: {
-	type: 'number',
-	isRequired: true,
-},
-		participants: {
-	type: 'array',
-	contains: {
-		type: 'UserUnlinked',
-	},
-	isRequired: true,
-},
-		group: {
-	type: 'GroupUnlinked',
-	isRequired: true,
-},
-		questions: {
-	type: 'array',
-	contains: {
-		type: 'QuestionUnlinked',
-	},
-	isRequired: true,
-},
-	},
-} as const;
-
 export const $LetterUnlinked = {
 	properties: {
 		api_identifier: {
@@ -192,16 +161,31 @@ export const $NewPassword = {
 	},
 } as const;
 
-export const $QuestionCreate = {
+export const $PublicLetter = {
 	properties: {
-		question_text: {
+		api_identifier: {
 	type: 'string',
+	isRequired: true,
+},
+		number: {
+	type: 'number',
+	isRequired: true,
+},
+		group: {
+	type: 'GroupUnlinked',
+	isRequired: true,
+},
+		questions: {
+	type: 'array',
+	contains: {
+		type: 'PublicQuestion',
+	},
 	isRequired: true,
 },
 	},
 } as const;
 
-export const $QuestionUnlinked = {
+export const $PublicQuestion = {
 	properties: {
 		question_text: {
 	type: 'string',
@@ -214,8 +198,17 @@ export const $QuestionUnlinked = {
 		responses: {
 	type: 'array',
 	contains: {
-		type: 'ResponseUnlinked',
+		type: 'ResponseWithParticipant',
 	},
+	isRequired: true,
+},
+	},
+} as const;
+
+export const $QuestionCreate = {
+	properties: {
+		question_text: {
+	type: 'string',
 	isRequired: true,
 },
 	},
@@ -238,6 +231,23 @@ export const $ResponseUnlinked = {
 },
 		api_identifier: {
 	type: 'string',
+	isRequired: true,
+},
+	},
+} as const;
+
+export const $ResponseWithParticipant = {
+	properties: {
+		response_text: {
+	type: 'string',
+	isRequired: true,
+},
+		api_identifier: {
+	type: 'string',
+	isRequired: true,
+},
+		participant: {
+	type: 'UserUnlinked',
 	isRequired: true,
 },
 	},

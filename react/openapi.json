@@ -982,7 +982,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/LetterLinked"
+                  "$ref": "#/components/schemas/PublicLetter"
                 }
               }
             }
@@ -1056,7 +1056,7 @@
                 "schema": {
                   "type": "array",
                   "items": {
-                    "$ref": "#/components/schemas/LetterLinked"
+                    "$ref": "#/components/schemas/PublicLetter"
                   },
                   "title": "Response List Letters Letters Letters  Get"
                 }
@@ -1105,7 +1105,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/LetterLinked"
+                  "$ref": "#/components/schemas/PublicLetter"
                 }
               }
             }
@@ -1162,7 +1162,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/LetterLinked"
+                  "$ref": "#/components/schemas/PublicLetter"
                 }
               }
             }
@@ -1443,44 +1443,6 @@
         ],
         "title": "LetterCreate"
       },
-      "LetterLinked": {
-        "properties": {
-          "api_identifier": {
-            "type": "string",
-            "title": "Api Identifier"
-          },
-          "number": {
-            "type": "integer",
-            "title": "Number"
-          },
-          "participants": {
-            "items": {
-              "$ref": "#/components/schemas/UserUnlinked"
-            },
-            "type": "array",
-            "title": "Participants"
-          },
-          "group": {
-            "$ref": "#/components/schemas/GroupUnlinked"
-          },
-          "questions": {
-            "items": {
-              "$ref": "#/components/schemas/QuestionUnlinked"
-            },
-            "type": "array",
-            "title": "Questions"
-          }
-        },
-        "type": "object",
-        "required": [
-          "api_identifier",
-          "number",
-          "participants",
-          "group",
-          "questions"
-        ],
-        "title": "LetterLinked"
-      },
       "LetterUnlinked": {
         "properties": {
           "api_identifier": {
@@ -1517,6 +1479,62 @@
         ],
         "title": "NewPassword"
       },
+      "PublicLetter": {
+        "properties": {
+          "api_identifier": {
+            "type": "string",
+            "title": "Api Identifier"
+          },
+          "number": {
+            "type": "integer",
+            "title": "Number"
+          },
+          "group": {
+            "$ref": "#/components/schemas/GroupUnlinked"
+          },
+          "questions": {
+            "items": {
+              "$ref": "#/components/schemas/PublicQuestion"
+            },
+            "type": "array",
+            "title": "Questions"
+          }
+        },
+        "type": "object",
+        "required": [
+          "api_identifier",
+          "number",
+          "group",
+          "questions"
+        ],
+        "title": "PublicLetter"
+      },
+      "PublicQuestion": {
+        "properties": {
+          "question_text": {
+            "type": "string",
+            "title": "Question Text"
+          },
+          "api_identifier": {
+            "type": "string",
+            "title": "Api Identifier"
+          },
+          "responses": {
+            "items": {
+              "$ref": "#/components/schemas/ResponseWithParticipant"
+            },
+            "type": "array",
+            "title": "Responses"
+          }
+        },
+        "type": "object",
+        "required": [
+          "question_text",
+          "api_identifier",
+          "responses"
+        ],
+        "title": "PublicQuestion"
+      },
       "QuestionCreate": {
         "properties": {
           "question_text": {
@@ -1529,32 +1547,6 @@
           "question_text"
         ],
         "title": "QuestionCreate"
-      },
-      "QuestionUnlinked": {
-        "properties": {
-          "question_text": {
-            "type": "string",
-            "title": "Question Text"
-          },
-          "api_identifier": {
-            "type": "string",
-            "title": "Api Identifier"
-          },
-          "responses": {
-            "items": {
-              "$ref": "#/components/schemas/ResponseUnlinked"
-            },
-            "type": "array",
-            "title": "Responses"
-          }
-        },
-        "type": "object",
-        "required": [
-          "question_text",
-          "api_identifier",
-          "responses"
-        ],
-        "title": "QuestionUnlinked"
       },
       "ResponseMessage": {
         "properties": {
@@ -1586,6 +1578,28 @@
           "api_identifier"
         ],
         "title": "ResponseUnlinked"
+      },
+      "ResponseWithParticipant": {
+        "properties": {
+          "response_text": {
+            "type": "string",
+            "title": "Response Text"
+          },
+          "api_identifier": {
+            "type": "string",
+            "title": "Api Identifier"
+          },
+          "participant": {
+            "$ref": "#/components/schemas/UserUnlinked"
+          }
+        },
+        "type": "object",
+        "required": [
+          "response_text",
+          "api_identifier",
+          "participant"
+        ],
+        "title": "ResponseWithParticipant"
       },
       "ScheduleLinked": {
         "properties": {

@@ -2,7 +2,7 @@ import type { CancelablePromise } from './core/CancelablePromise';
 import { OpenAPI } from './core/OpenAPI';
 import { request as __request } from './core/request';
 
-import type { Body_login_access_token_login_access_token_post,NewPassword,Token,GroupCreate,GroupLinked,GroupUpdate,ResponseMessage,ScheduleSendParam,UserCreate,UserLinked,UserUpdate,UserUpdatePassword,LetterCreate,LetterLinked,QuestionCreate,ScheduleLinked } from './models';
+import type { Body_login_access_token_login_access_token_post,NewPassword,Token,GroupCreate,GroupLinked,GroupUpdate,ResponseMessage,ScheduleSendParam,UserCreate,UserLinked,UserUpdate,UserUpdatePassword,LetterCreate,PublicLetter,QuestionCreate,ScheduleLinked } from './models';
 
 export type LoginData = {
         LoginAccessTokenLoginAccessTokenPost: {
@@ -558,10 +558,10 @@ export class LettersService {
 
 	/**
 	 * Add Next Letter
-	 * @returns LetterLinked Successful Response
+	 * @returns PublicLetter Successful Response
 	 * @throws ApiError
 	 */
-	public static addNextLetterLettersLetterPost(data: LettersData['AddNextLetterLettersLetterPost']): CancelablePromise<LetterLinked> {
+	public static addNextLetterLettersLetterPost(data: LettersData['AddNextLetterLettersLetterPost']): CancelablePromise<PublicLetter> {
 		const {
 requestBody,
 } = data;
@@ -578,10 +578,10 @@ requestBody,
 
 	/**
 	 * List Letters
-	 * @returns LetterLinked Successful Response
+	 * @returns PublicLetter Successful Response
 	 * @throws ApiError
 	 */
-	public static listLettersLettersLettersGet(data: LettersData['ListLettersLettersLettersGet']): CancelablePromise<Array<LetterLinked>> {
+	public static listLettersLettersLettersGet(data: LettersData['ListLettersLettersLettersGet']): CancelablePromise<Array<PublicLetter>> {
 		const {
 groupApiId,
 skip = 0,
@@ -601,10 +601,10 @@ limit = 100,
 
 	/**
 	 * Read Letter
-	 * @returns LetterLinked Successful Response
+	 * @returns PublicLetter Successful Response
 	 * @throws ApiError
 	 */
-	public static readLetterLettersLetterLetterApiIdGet(data: LettersData['ReadLetterLettersLetterLetterApiIdGet']): CancelablePromise<LetterLinked> {
+	public static readLetterLettersLetterLetterApiIdGet(data: LettersData['ReadLetterLettersLetterLetterApiIdGet']): CancelablePromise<PublicLetter> {
 		const {
 letterApiId,
 } = data;
@@ -622,10 +622,10 @@ letterApiId,
 
 	/**
 	 * Add Question
-	 * @returns LetterLinked Successful Response
+	 * @returns PublicLetter Successful Response
 	 * @throws ApiError
 	 */
-	public static addQuestionLettersLetterLetterApiIdAddQuestionPost(data: LettersData['AddQuestionLettersLetterLetterApiIdAddQuestionPost']): CancelablePromise<LetterLinked> {
+	public static addQuestionLettersLetterLetterApiIdAddQuestionPost(data: LettersData['AddQuestionLettersLetterLetterApiIdAddQuestionPost']): CancelablePromise<PublicLetter> {
 		const {
 letterApiId,
 requestBody,

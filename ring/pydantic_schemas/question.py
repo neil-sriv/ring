@@ -16,7 +16,7 @@ class Question(QuestionBase):
     model_config = ConfigDict(from_attributes=True)
 
     api_identifier: str
-    responses: list["ResponseUnlinked"]
+    # responses: list["ResponseUnlinked"]
 
 
 class QuestionUnlinked(Question):
