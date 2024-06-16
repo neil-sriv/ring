@@ -12,7 +12,7 @@ import {
   Tr,
 } from "@chakra-ui/react";
 import { useQueryClient, useSuspenseQuery } from "@tanstack/react-query";
-import { createFileRoute } from "@tanstack/react-router";
+import { Link, createFileRoute } from "@tanstack/react-router";
 
 import { Suspense } from "react";
 import { ErrorBoundary } from "react-error-boundary";
@@ -40,11 +40,30 @@ function GroupTableBody() {
     <Tbody>
       {groups.map((group) => (
         <Tr key={group.api_identifier}>
-          <Td>{group.name}</Td>
-          {/* <Td>{item.title}</Td> */}
-          {/* <Td color={!item.description ? "ui.dim" : "inherit"}>
-            {item.description || "N/A"}
-          </Td> */}
+          {/* <Td>{group.name}</Td> */}
+          <Td>
+            <Link
+              to="/groups/$groupId/loops"
+              params={{ groupId: group.api_identifier }}
+            >
+              {group.name}
+            </Link>
+          </Td>
+          <Td>
+            {group.members
+              .map((member) => {
+                return member.name;
+              })
+              .sort()
+              .join(", ")}
+          </Td>
+          <Td>
+            {group.letters
+              .map((letter) => {
+                return letter.number;
+              })
+              .join(", ")}
+          </Td>
           <Td>
             <ActionsMenu type={"Group"} value={group} />
           </Td>
@@ -59,9 +78,9 @@ function GroupTable() {
       <Table size={{ base: "sm", md: "md" }}>
         <Thead>
           <Tr>
-            <Th>ID</Th>
-            <Th>Title</Th>
-            <Th>Description</Th>
+            <Th>Name</Th>
+            <Th>Members</Th>
+            <Th>Letters</Th>
             <Th>Actions</Th>
           </Tr>
         </Thead>

@@ -1,12 +1,13 @@
-import { Outlet, createRootRoute } from "@tanstack/react-router"
-import React, { Suspense } from "react"
+import { Outlet, createRootRouteWithContext } from "@tanstack/react-router";
+import React, { Suspense } from "react";
 
-import NotFound from "../components/Common/NotFound"
+import NotFound from "../components/Common/NotFound";
+import { QueryClient } from "@tanstack/react-query";
 
 const loadDevtools = () =>
   Promise.all([
     import("@tanstack/router-devtools"),
-    import("@tanstack/react-query-devtools")
+    import("@tanstack/react-query-devtools"),
   ]).then(([routerDevtools, reactQueryDevtools]) => {
     return {
       default: () => (
@@ -14,16 +15,16 @@ const loadDevtools = () =>
           <routerDevtools.TanStackRouterDevtools />
           <reactQueryDevtools.ReactQueryDevtools />
         </>
-      )
+      ),
     };
   });
 
 const TanStackDevtools =
-  process.env.NODE_ENV === "production"
-    ? () => null
-    : React.lazy(loadDevtools);
+  process.env.NODE_ENV === "production" ? () => null : React.lazy(loadDevtools);
 
-export const Route = createRootRoute({
+export const Route = createRootRouteWithContext<{
+  queryClient: QueryClient;
+}>()({
   component: () => (
     <>
       <Outlet />
@@ -33,4 +34,4 @@ export const Route = createRootRoute({
     </>
   ),
   notFoundComponent: () => <NotFound />,
-})
+});

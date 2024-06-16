@@ -19,6 +19,7 @@ import { Route as LayoutIndexImport } from './routes/_layout/index'
 import { Route as LayoutSettingsImport } from './routes/_layout/settings'
 import { Route as LayoutGroupsImport } from './routes/_layout/groups'
 import { Route as LayoutAdminImport } from './routes/_layout/admin'
+import { Route as LayoutGroupsGroupIdLoopsImport } from './routes/_layout/groups_.$groupId.loops'
 
 // Create/Update Routes
 
@@ -62,6 +63,11 @@ const LayoutAdminRoute = LayoutAdminImport.update({
   getParentRoute: () => LayoutRoute,
 } as any)
 
+const LayoutGroupsGroupIdLoopsRoute = LayoutGroupsGroupIdLoopsImport.update({
+  path: '/groups/$groupId/loops',
+  getParentRoute: () => LayoutRoute,
+} as any)
+
 // Populate the FileRoutesByPath interface
 
 declare module '@tanstack/react-router' {
@@ -98,6 +104,10 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LayoutIndexImport
       parentRoute: typeof LayoutImport
     }
+    '/_layout/groups/$groupId/loops': {
+      preLoaderRoute: typeof LayoutGroupsGroupIdLoopsImport
+      parentRoute: typeof LayoutImport
+    }
   }
 }
 
@@ -109,6 +119,7 @@ export const routeTree = rootRoute.addChildren([
     LayoutGroupsRoute,
     LayoutSettingsRoute,
     LayoutIndexRoute,
+    LayoutGroupsGroupIdLoopsRoute,
   ]),
   LoginRoute,
   RecoverPasswordRoute,
