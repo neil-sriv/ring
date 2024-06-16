@@ -18,11 +18,20 @@ const isLoggedIn = () => {
 const useAuth = () => {
   const [error, setError] = useState<string | null>(null);
   const navigate = useNavigate();
-  const { data: user, isLoading } = useQuery<UserLinked | null, Error>({
+  const {
+    data: user,
+    isLoading,
+    status,
+  } = useQuery<UserLinked | null, Error>({
     queryKey: ["currentUser"],
     queryFn: PartiesService.readUserMePartiesMeGet,
     enabled: isLoggedIn(),
   });
+
+  if (status === "error") {
+    localStorage.removeItem("access_token");
+    navigate({ to: "/login" });
+  }
 
   const login = async (data: AccessToken) => {
     const response = await LoginService.loginAccessTokenLoginAccessTokenPost({
