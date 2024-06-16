@@ -44,7 +44,6 @@ const EditUser = ({ user, isOpen, onClose }: EditUserProps) => {
     register,
     handleSubmit,
     reset,
-    getValues,
     formState: { errors, isSubmitting, isDirty },
   } = useForm<UserUpdateForm>({
     mode: "onBlur",
@@ -67,10 +66,7 @@ const EditUser = ({ user, isOpen, onClose }: EditUserProps) => {
     },
   });
 
-  const onSubmit: SubmitHandler<UserUpdateForm> = async (data) => {
-    if (data.password === "") {
-      data.password = undefined;
-    }
+  const onSubmit: SubmitHandler<UserUpdateForm> = async () => {
     mutation.mutate();
   };
 
@@ -111,7 +107,7 @@ const EditUser = ({ user, isOpen, onClose }: EditUserProps) => {
               <FormLabel htmlFor="name">Full name</FormLabel>
               <Input id="name" {...register("name")} type="text" />
             </FormControl>
-            <FormControl mt={4} isInvalid={!!errors.password}>
+            {/* <FormControl mt={4} isInvalid={!!errors.password}>
               <FormLabel htmlFor="password">Set Password</FormLabel>
               <Input
                 id="password"
@@ -127,8 +123,8 @@ const EditUser = ({ user, isOpen, onClose }: EditUserProps) => {
               {errors.password && (
                 <FormErrorMessage>{errors.password.message}</FormErrorMessage>
               )}
-            </FormControl>
-            <FormControl mt={4} isInvalid={!!errors.confirm_password}>
+            </FormControl> */}
+            {/* <FormControl mt={4} isInvalid={!!errors.confirm_password}>
               <FormLabel htmlFor="confirm_password">Confirm Password</FormLabel>
               <Input
                 id="confirm_password"
@@ -145,7 +141,7 @@ const EditUser = ({ user, isOpen, onClose }: EditUserProps) => {
                   {errors.confirm_password.message}
                 </FormErrorMessage>
               )}
-            </FormControl>
+            </FormControl> */}
             <Flex>
               <FormControl mt={4}>
                 {/* <Checkbox {...register("is_superuser")} colorScheme="teal">
