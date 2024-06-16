@@ -9,7 +9,6 @@ import {
   SimpleGrid,
   Text,
 } from "@chakra-ui/react";
-// import Navbar from "../../components/Common/Navbar";
 import { Link, createFileRoute } from "@tanstack/react-router";
 import {
   LettersService,
@@ -20,11 +19,22 @@ import { useSuspenseQuery } from "@tanstack/react-query";
 import { Suspense } from "react";
 import { ErrorBoundary } from "react-error-boundary";
 
+type LoopsSearchParams = {
+  offset: number;
+  limit: number;
+};
+
 type LoopsLoaderProps = {
   loops: PublicLetter[];
 };
 
 export const Route = createFileRoute("/_layout/groups/$groupId/loops")({
+  validateSearch: (search: Record<string, string>): LoopsSearchParams => {
+    return {
+      offset: parseInt(search.offset) || 0,
+      limit: parseInt(search.limit) || 10,
+    };
+  },
   loaderDeps: ({ search: { offset, limit } }) => ({ offset, limit }),
   loader: async ({
     params,
@@ -33,7 +43,7 @@ export const Route = createFileRoute("/_layout/groups/$groupId/loops")({
     const loops = await LettersService.listLettersLettersLettersGet({
       groupApiId: params.groupId,
       skip: offset,
-      limit,
+      limit: limit,
     });
 
     return {
