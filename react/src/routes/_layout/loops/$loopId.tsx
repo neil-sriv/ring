@@ -1,7 +1,12 @@
 import { Box, Container, Heading, Text } from "@chakra-ui/react";
 // import Navbar from "../../components/Common/Navbar";
 import { createFileRoute } from "@tanstack/react-router";
-import { LettersService, PublicLetter } from "../../../client";
+import {
+  LettersService,
+  PublicLetter,
+  PublicQuestion,
+  ResponseWithParticipant,
+} from "../../../client";
 import { Suspense } from "react";
 import { ErrorBoundary } from "react-error-boundary";
 
@@ -10,10 +15,21 @@ type IssueLoaderProps = {
 };
 
 export const Route = createFileRoute("/_layout/loops/$loopId")({
-  loader: async ({ params }): Promise<IssueLoaderProps> => {
-    const loop = await LettersService.readLetterLettersLetterLetterApiIdGet({
-      letterApiId: params.loopId,
-    });
+  loader: async ({ params, context }): Promise<IssueLoaderProps> => {
+    console.log(context.queryClient.getQueryData(["loops", params.loopId]));
+    const loop =
+      (context.queryClient.getQueryData([
+        "loops",
+        params.loopId,
+      ]) as PublicLetter) ||
+      (await context.queryClient.fetchQuery({
+        queryKey: ["loops", params.loopId],
+        queryFn: async () => {
+          return await LettersService.readLetterLettersLetterLetterApiIdGet({
+            letterApiId: params.loopId,
+          });
+        },
+      }));
 
     return {
       loop,
@@ -22,15 +38,28 @@ export const Route = createFileRoute("/_layout/loops/$loopId")({
   component: Issue,
 });
 
+function ResponseBlock({ response }: { response: ResponseWithParticipant }) {
+  return (
+    <Box>
+      <Heading>{response.participant.name}</Heading>
+      <Text>{response.response_text}</Text>
+    </Box>
+  );
+}
+
+function QuestionBlock({ question }: { question: PublicQuestion }) {
+  return (
+    <Box>
+      <Heading>{question.question_text}</Heading>
+      {question.responses.map((response) => {
+        return <ResponseBlock response={response} />;
+      })}
+    </Box>
+  );
+}
+
 function IssueContent() {
   const loop = Route.useLoaderData().loop;
-  //   const { data: group } = useSuspenseQuery({
-  //     queryKey: ["groups", loop.group.],
-  //     queryFn: () =>
-  //       PartiesService.readGroupPartiesGroupGroupApiIdGet({
-  //         groupApiId: groupId,
-  //       }),
-  //   });
   return (
     <Container maxW="container.lg" py={4}>
       <Heading size="lg" textAlign={{ base: "center", md: "left" }} pt={12}>
@@ -43,6 +72,11 @@ function IssueContent() {
           ))}
         </SimpleGrid>
       </Container> */}
+      <Container>
+        {loop.questions.map((question) => {
+          return <QuestionBlock question={question} />;
+        })}
+      </Container>
     </Container>
   );
 }
