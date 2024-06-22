@@ -1,4 +1,6 @@
 from __future__ import annotations
+from datetime import datetime
+from enum import StrEnum
 from typing import TYPE_CHECKING
 from sqlalchemy import (
     Column,
@@ -30,6 +32,11 @@ letter_to_user_assocation = Table(
 )
 
 
+class LetterStatus(StrEnum):
+    IN_PROGRESS = "IN_PROGRESS"
+    SENT = "SENT"
+
+
 class Letter(Base, APIIdentified, PydanticModel):
     __tablename__ = "letter"
 
@@ -39,7 +46,8 @@ class Letter(Base, APIIdentified, PydanticModel):
     id: Mapped[int] = mapped_column(primary_key=True, index=True)
     number: Mapped[int] = mapped_column()
     api_identifier: Mapped[str] = mapped_column(unique=True, index=True)
-    # TODO: Add columns for status and issue_sent datetime
+    status: Mapped[str] = mapped_column()
+    issue_sent: Mapped[datetime] = mapped_column(nullable=True)
 
     participants: Mapped[list["User"]] = relationship(
         secondary=letter_to_user_assocation
@@ -66,6 +74,7 @@ class Letter(Base, APIIdentified, PydanticModel):
         self.number = len(group.letters) + 1
         self.group = group
         self.participants = group.members
+        self.status = LetterStatus.IN_PROGRESS
 
     @classmethod
     def create(cls, group: Group) -> Letter:
