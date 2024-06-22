@@ -5,7 +5,7 @@ from sqlalchemy import select
 import ring.crud.question as question_crud
 import ring.crud.letter as letter_crud
 from ring.postgres_models.group_model import Group
-from ring.postgres_models.letter_model import Letter
+from ring.postgres_models.letter_model import Letter, LetterStatus
 from ring.postgres_models.user_model import User
 from ring.sqlalchemy_base import Session
 from ring.scripts.script_base import script_di
@@ -44,7 +44,11 @@ def _get_group(db: Session, name: str) -> Group:
 
 
 def _create_letter(db: Session, group: Group) -> Letter:
-    letter = letter_crud.create_letter(db, group.api_identifier)
+    letter = letter_crud.create_letter(
+        db,
+        group.api_identifier,
+        LetterStatus.SENT,
+    )
     db.add(letter)
     db.flush()
     return letter
@@ -52,9 +56,7 @@ def _create_letter(db: Session, group: Group) -> Letter:
 
 def _parse_issue(db: Session, issue_lines: list[str], user: User) -> Letter:
     group = _get_group(db, issue_lines[0].strip())
-    # pp(f"Group: {group}")
     letter = _create_letter(db, group)
-    # pp(f"Letter created: {letter}")
     member_names = {m.name for m in group.members}
 
     current_question = None

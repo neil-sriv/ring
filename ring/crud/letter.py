@@ -4,6 +4,7 @@ from typing import TYPE_CHECKING, Sequence
 from sqlalchemy import select
 from ring.postgres_models import Letter, Group
 from ring.crud import api_identifier as api_identifier_crud
+from ring.postgres_models.letter_model import LetterStatus
 from ring.postgres_models.question_model import Question
 from ring.postgres_models.user_model import User
 
@@ -20,13 +21,17 @@ def get_letters(
     ).all()
 
 
-def create_letter(db: Session, group_api_id: str) -> Letter:
+def create_letter(
+    db: Session,
+    group_api_id: str,
+    letter_status: LetterStatus = LetterStatus.IN_PROGRESS,
+) -> Letter:
     group = api_identifier_crud.get_model(
         db,
         Group,
         api_id=group_api_id,
     )
-    db_letter = Letter.create(group)
+    db_letter = Letter.create(group, letter_status)
     db.add(db_letter)
     return db_letter
 

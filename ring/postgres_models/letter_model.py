@@ -69,14 +69,14 @@ class Letter(Base, APIIdentified, PydanticModel):
             ),
         )
 
-    def __init__(self, group: Group) -> None:
+    def __init__(self, group: Group, status: LetterStatus) -> None:
         APIIdentified.__init__(self)
         self.number = len(group.letters) + 1
         self.group = group
         self.participants = group.members
-        self.status = LetterStatus.IN_PROGRESS
+        self.status = status
 
     @classmethod
-    def create(cls, group: Group) -> Letter:
-        letter = cls(group)
+    def create(cls, group: Group, letter_status: LetterStatus) -> Letter:
+        letter = cls(group, letter_status)
         return letter
