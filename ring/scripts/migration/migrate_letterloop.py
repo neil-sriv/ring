@@ -1,11 +1,11 @@
-import os
 from pathlib import Path
 from pprint import pp
 from sqlalchemy import select
 import ring.crud.question as question_crud
 import ring.crud.letter as letter_crud
 from ring.postgres_models.group_model import Group
-from ring.postgres_models.letter_model import Letter, LetterStatus
+from ring.postgres_models.letter_model import Letter
+from ring.letter.enums import LetterStatus
 from ring.postgres_models.user_model import User
 from ring.sqlalchemy_base import Session
 from ring.scripts.script_base import script_di

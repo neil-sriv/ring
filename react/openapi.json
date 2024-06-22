@@ -1443,6 +1443,14 @@
         ],
         "title": "LetterCreate"
       },
+      "LetterStatus": {
+        "type": "string",
+        "enum": [
+          "IN_PROGRESS",
+          "SENT"
+        ],
+        "title": "LetterStatus"
+      },
       "LetterUnlinked": {
         "properties": {
           "api_identifier": {
@@ -1452,12 +1460,16 @@
           "number": {
             "type": "integer",
             "title": "Number"
+          },
+          "status": {
+            "$ref": "#/components/schemas/LetterStatus"
           }
         },
         "type": "object",
         "required": [
           "api_identifier",
-          "number"
+          "number",
+          "status"
         ],
         "title": "LetterUnlinked"
       },
@@ -1489,6 +1501,9 @@
             "type": "integer",
             "title": "Number"
           },
+          "status": {
+            "$ref": "#/components/schemas/LetterStatus"
+          },
           "group": {
             "$ref": "#/components/schemas/GroupUnlinked"
           },
@@ -1504,6 +1519,7 @@
         "required": [
           "api_identifier",
           "number",
+          "status",
           "group",
           "questions"
         ],

@@ -135,6 +135,11 @@ export const $LetterCreate = {
 	},
 } as const;
 
+export const $LetterStatus = {
+	type: 'Enum',
+	enum: ['IN_PROGRESS','SENT',],
+} as const;
+
 export const $LetterUnlinked = {
 	properties: {
 		api_identifier: {
@@ -143,6 +148,10 @@ export const $LetterUnlinked = {
 },
 		number: {
 	type: 'number',
+	isRequired: true,
+},
+		status: {
+	type: 'LetterStatus',
 	isRequired: true,
 },
 	},
@@ -169,6 +178,10 @@ export const $PublicLetter = {
 },
 		number: {
 	type: 'number',
+	isRequired: true,
+},
+		status: {
+	type: 'LetterStatus',
 	isRequired: true,
 },
 		group: {

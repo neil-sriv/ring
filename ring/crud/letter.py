@@ -4,7 +4,7 @@ from typing import TYPE_CHECKING, Sequence
 from sqlalchemy import select
 from ring.postgres_models import Letter, Group
 from ring.crud import api_identifier as api_identifier_crud
-from ring.postgres_models.letter_model import LetterStatus
+from ring.letter.enums import LetterStatus
 from ring.postgres_models.question_model import Question
 from ring.postgres_models.user_model import User
 

@@ -1,6 +1,5 @@
 from __future__ import annotations
 from datetime import datetime
-from enum import StrEnum
 from typing import TYPE_CHECKING
 from sqlalchemy import (
     Column,
@@ -12,6 +11,7 @@ from sqlalchemy import (
 )
 from sqlalchemy.orm import relationship, Mapped, mapped_column
 from sqlalchemy.ext.declarative import declared_attr
+from ring.letter.enums import LetterStatus
 from ring.postgres_models.api_identified import APIIdentified
 
 from ring.postgres_models.pydantic_model import PydanticModel
@@ -30,11 +30,6 @@ letter_to_user_assocation = Table(
     Column("letter_id", Integer, ForeignKey("letter.id")),
     Column("user_id", Integer, ForeignKey("user.id")),
 )
-
-
-class LetterStatus(StrEnum):
-    IN_PROGRESS = "IN_PROGRESS"
-    SENT = "SENT"
 
 
 class Letter(Base, APIIdentified, PydanticModel):

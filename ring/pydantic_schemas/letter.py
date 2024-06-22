@@ -1,6 +1,8 @@
 from __future__ import annotations
 from pydantic import BaseModel, ConfigDict
 
+from ring.letter.enums import LetterStatus
+
 
 class LetterBase(BaseModel):
     pass
@@ -15,6 +17,7 @@ class Letter(LetterBase):
 
     api_identifier: str
     number: int
+    status: LetterStatus
 
 
 class LetterUnlinked(Letter):
