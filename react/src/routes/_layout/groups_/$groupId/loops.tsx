@@ -18,6 +18,7 @@ import {
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { Suspense } from "react";
 import { ErrorBoundary } from "react-error-boundary";
+import Navbar from "../../../../components/Common/Navbar";
 
 type LoopsSearchParams = {
   offset: number;
@@ -90,6 +91,7 @@ function LoopsContent() {
       <Heading size="lg" textAlign={{ base: "center", md: "left" }} pt={12}>
         {group!.name}
       </Heading>
+      <Navbar type={"Loops"} route={Route} />
       <Container maxW="container.lg" py={4}>
         <SimpleGrid columns={4} gap={4}>
           {props.loops.map((loop) => (

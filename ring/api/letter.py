@@ -24,6 +24,11 @@ async def add_next_letter(
         get_request_dependencies,
     ),
 ) -> Letter:
+    group_letters = letter_crud.get_letters(
+        req_dep.db, group_api_id=letter.group_api_identifier
+    )
+    if any(letter.status == "IN_PROGRESS" for letter in group_letters):
+        raise ValueError("There is already a letter in progress for this group")
     db_letter = letter_crud.create_letter(
         db=req_dep.db,
         group_api_id=letter.group_api_identifier,

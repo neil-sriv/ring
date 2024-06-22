@@ -1,5 +1,4 @@
 import { Box, Container, Heading, Text } from "@chakra-ui/react";
-// import Navbar from "../../components/Common/Navbar";
 import { createFileRoute } from "@tanstack/react-router";
 import {
   LettersService,
@@ -16,7 +15,7 @@ type IssueLoaderProps = {
 
 export const Route = createFileRoute("/_layout/loops/$loopId")({
   loader: async ({ params, context }): Promise<IssueLoaderProps> => {
-    console.log(context.queryClient.getQueryData(["loops", params.loopId]));
+    // console.log(context.queryClient.getQueryData(["loops", params.loopId]));
     const loop =
       (context.queryClient.getQueryData([
         "loops",
