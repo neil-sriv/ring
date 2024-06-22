@@ -50,8 +50,9 @@ def compose_exec(
 ) -> Callable[[Callable[..., list[str]]], click.Command]:
     def decorator(f: Callable[..., list[str]]) -> click.Command:
         @compose_run(name, group)
-        @click.argument(
-            "service",
+        @click.option(
+            "--service",
+            "-s",
             type=str,
             default=service,
         )

@@ -23,3 +23,14 @@ def db_pgcli() -> list[str]:
 @compose_exec("upgrade", db, "api", "ring")
 def db_upgrade() -> list[str]:
     return ["alembic", "upgrade", "head"]
+
+
+@compose_exec("generate", db, "api", "ring")
+@click.argument("message")
+def db_generate(message: str) -> list[str]:
+    return ["alembic", "revision", "--autogenerate", "-m", message]
+
+
+@compose_exec("alembic", db, "api", "ring")
+def db_alembic() -> list[str]:
+    return ["alembic"]
