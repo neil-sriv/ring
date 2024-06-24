@@ -18,11 +18,11 @@ import {
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { Suspense } from "react";
 import { ErrorBoundary } from "react-error-boundary";
-import Navbar from "../../../../components/Common/Navbar";
+import LoopNav from "../../../../components/Loops/LoopNav";
 
 type LoopsSearchParams = {
-  offset: number;
-  limit: number;
+  offset?: number;
+  limit?: number;
 };
 
 type LoopsLoaderProps = {
@@ -32,19 +32,25 @@ type LoopsLoaderProps = {
 export const Route = createFileRoute("/_layout/groups/$groupId/loops")({
   validateSearch: (search: Record<string, string>): LoopsSearchParams => {
     return {
-      offset: parseInt(search.offset) || 0,
-      limit: parseInt(search.limit) || 10,
+      offset: parseInt(search.offset) || undefined,
+      limit: parseInt(search.limit) || undefined,
     };
   },
   loaderDeps: ({ search: { offset, limit } }) => ({ offset, limit }),
   loader: async ({
     params,
+    context,
     deps: { offset, limit },
   }): Promise<LoopsLoaderProps> => {
-    const loops = await LettersService.listLettersLettersLettersGet({
-      groupApiId: params.groupId,
-      skip: offset,
-      limit: limit,
+    const loops = await context.queryClient.ensureQueryData({
+      queryKey: ["loops", params.groupId],
+      queryFn: async () => {
+        return await LettersService.listLettersLettersLettersGet({
+          groupApiId: params.groupId,
+          skip: offset,
+          limit: limit,
+        });
+      },
     });
 
     return {
@@ -91,7 +97,7 @@ function LoopsContent() {
       <Heading size="lg" textAlign={{ base: "center", md: "left" }} pt={12}>
         {group!.name}
       </Heading>
-      <Navbar type={"Loops"} route={Route} />
+      <LoopNav loops={props.loops} groupId={groupId} />
       <Container maxW="container.lg" py={4}>
         <SimpleGrid columns={4} gap={4}>
           {props.loops.map((loop) => (

@@ -15,20 +15,14 @@ type IssueLoaderProps = {
 
 export const Route = createFileRoute("/_layout/loops/$loopId")({
   loader: async ({ params, context }): Promise<IssueLoaderProps> => {
-    // console.log(context.queryClient.getQueryData(["loops", params.loopId]));
-    const loop =
-      (context.queryClient.getQueryData([
-        "loops",
-        params.loopId,
-      ]) as PublicLetter) ||
-      (await context.queryClient.fetchQuery({
-        queryKey: ["loops", params.loopId],
-        queryFn: async () => {
-          return await LettersService.readLetterLettersLetterLetterApiIdGet({
-            letterApiId: params.loopId,
-          });
-        },
-      }));
+    const loop = await context.queryClient.ensureQueryData({
+      queryKey: ["loops", params.loopId],
+      queryFn: async () => {
+        return await LettersService.readLetterLettersLetterLetterApiIdGet({
+          letterApiId: params.loopId,
+        });
+      },
+    });
 
     return {
       loop,

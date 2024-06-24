@@ -3,15 +3,12 @@ import { FaPlus } from "react-icons/fa";
 
 import AddUser from "../Admin/AddUser";
 import AddGroup from "../Groups/AddGroup";
-import { Route } from "@tanstack/react-router";
 
 interface NavbarProps {
   type: string;
-  route: Route;
 }
 
-const Navbar = ({ type, route }: NavbarProps) => {
-  const params = route !== undefined ? route.useParams() : null;
+const Navbar = ({ type }: NavbarProps) => {
   const addUserModal = useDisclosure();
   const addGroupModal = useDisclosure();
 
@@ -20,11 +17,6 @@ const Navbar = ({ type, route }: NavbarProps) => {
       addUserModal.onOpen();
     } else if (type === "Group") {
       addGroupModal.onOpen();
-    } else if (type === "Loops") {
-      console.log("Loop");
-      if (params !== null) {
-        console.log(params.groupId);
-      }
     }
   };
   return (
