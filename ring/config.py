@@ -16,7 +16,8 @@ class RingConfig(BaseSettings):
     JWT_SIGNING_ALGORITHM: str
     root_path: str = "/api/v1"
     BACKEND_CORS_ORIGINS: Annotated[
-        list[AnyUrl] | str, BeforeValidator(parse_cors)
+        list[AnyUrl] | str,
+        BeforeValidator(parse_cors),
     ] = []
 
 
