@@ -75,6 +75,7 @@ function LoopCard(props: LoopCardProps): JSX.Element {
             params={{ loopId: props.loop.api_identifier }}
           >
             <Heading size="md">Issue #{props.loop.number}</Heading>
+            <Heading size="sm">{props.loop.status}</Heading>
           </LinkOverlay>
         </CardHeader>
       </Card>

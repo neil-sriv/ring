@@ -1,13 +1,10 @@
 import { Box, Container, Heading, Text } from "@chakra-ui/react";
 import { createFileRoute } from "@tanstack/react-router";
-import {
-  LettersService,
-  PublicLetter,
-  PublicQuestion,
-  ResponseWithParticipant,
-} from "../../../client";
+import { LettersService, PublicLetter } from "../../../client";
 import { Suspense } from "react";
 import { ErrorBoundary } from "react-error-boundary";
+import PublishedLoop from "../../../components/Loops/PublishedLoop";
+import DraftLoop from "../../../components/Loops/DraftLoop";
 
 type IssueLoaderProps = {
   loop: PublicLetter;
@@ -31,28 +28,6 @@ export const Route = createFileRoute("/_layout/loops/$loopId")({
   component: Issue,
 });
 
-function ResponseBlock({ response }: { response: ResponseWithParticipant }) {
-  return (
-    <Box my="10px">
-      <Heading size="md">{response.participant.name}</Heading>
-      <Text>{response.response_text}</Text>
-    </Box>
-  );
-}
-
-function QuestionBlock({ question }: { question: PublicQuestion }) {
-  return (
-    <Box my="20px">
-      <Heading>{question.question_text}</Heading>
-      {question.responses.map((response) => {
-        return (
-          <ResponseBlock response={response} key={response.api_identifier} />
-        );
-      })}
-    </Box>
-  );
-}
-
 function IssueContent() {
   const loop = Route.useLoaderData().loop;
   return (
@@ -67,13 +42,11 @@ function IssueContent() {
           ))}
         </SimpleGrid>
       </Container> */}
-      <Container>
-        {loop.questions.map((question) => {
-          return (
-            <QuestionBlock question={question} key={question.api_identifier} />
-          );
-        })}
-      </Container>
+      {loop.status === "SENT" ? (
+        <PublishedLoop loop={loop} />
+      ) : (
+        <DraftLoop loop={loop} />
+      )}
     </Container>
   );
 }

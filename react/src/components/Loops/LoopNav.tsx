@@ -10,14 +10,15 @@ type LoopNavProps = {
   groupId: string;
 };
 
-const LoopNav = (props: LoopNavProps) => {
+function LoopNav(props: LoopNavProps): JSX.Element {
   const addLetterModal = useDisclosure();
   const enabled =
     props.loops.filter((loop) => loop.status === "IN_PROGRESS").length === 0;
+  const queryClient = useQueryClient();
 
   const onClick = (): void => {
-    useQueryClient().invalidateQueries({ queryKey: ["loops", props.groupId] });
-    // enabled ? addLetterModal.onOpen() : null;
+    queryClient.invalidateQueries({ queryKey: ["loops", props.groupId] });
+    enabled ? addLetterModal.onOpen() : null;
   };
   return (
     <>
@@ -40,6 +41,6 @@ const LoopNav = (props: LoopNavProps) => {
       </Flex>
     </>
   );
-};
+}
 
 export default LoopNav;
