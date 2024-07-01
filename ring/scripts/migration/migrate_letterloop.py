@@ -1,3 +1,4 @@
+from datetime import datetime, date
 from pathlib import Path
 from pprint import pp
 from sqlalchemy import select
@@ -43,12 +44,16 @@ def _get_group(db: Session, name: str) -> Group:
     return group
 
 
-def _create_letter(db: Session, group: Group) -> Letter:
+def _create_letter(
+    db: Session, group: Group, sent_at: datetime | None = None
+) -> Letter:
     letter = letter_crud.create_letter(
         db,
         group.api_identifier,
         LetterStatus.SENT,
     )
+    if sent_at:
+        letter.issue_sent = sent_at
     db.add(letter)
     db.flush()
     return letter
@@ -56,7 +61,10 @@ def _create_letter(db: Session, group: Group) -> Letter:
 
 def _parse_issue(db: Session, issue_lines: list[str], user: User) -> Letter:
     group = _get_group(db, issue_lines[0].strip())
-    letter = _create_letter(db, group)
+    m, d = issue_lines[2].strip().split(" ")[-2:]
+    d = d[:-2]
+    sent_at = datetime.strptime(f"2023 {m} {d}", "%Y %B %d")
+    letter = _create_letter(db, group, sent_at)
     member_names = {m.name for m in group.members}
 
     current_question = None
