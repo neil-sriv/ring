@@ -1,6 +1,6 @@
 from __future__ import annotations
 from typing import TYPE_CHECKING
-from sqlalchemy import ForeignKey, Text
+from sqlalchemy import ForeignKey, Text, UniqueConstraint
 from sqlalchemy.orm import relationship, Mapped, mapped_column
 from ring.postgres_models.api_identified import APIIdentified
 
@@ -30,6 +30,12 @@ class Response(Base, APIIdentified, PydanticModel):
 
     response_text: Mapped[str] = mapped_column(Text)
     _image_file: Mapped[str] = mapped_column(nullable=True, default=None)
+
+    __table_args__ = (
+        UniqueConstraint(
+            "participant_id", "question_id", name="participant_question_unique"
+        ),
+    )
 
     def __init__(
         self,

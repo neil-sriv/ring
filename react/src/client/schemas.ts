@@ -227,6 +227,73 @@ export const $QuestionCreate = {
 	},
 } as const;
 
+export const $QuestionLinked = {
+	properties: {
+		question_text: {
+	type: 'string',
+	isRequired: true,
+},
+		api_identifier: {
+	type: 'string',
+	isRequired: true,
+},
+		letter: {
+	type: 'LetterUnlinked',
+	isRequired: true,
+},
+		responses: {
+	type: 'array',
+	contains: {
+		type: 'ResponseUnlinked',
+	},
+	isRequired: true,
+},
+	},
+} as const;
+
+export const $QuestionUnlinked = {
+	properties: {
+		question_text: {
+	type: 'string',
+	isRequired: true,
+},
+		api_identifier: {
+	type: 'string',
+	isRequired: true,
+},
+	},
+} as const;
+
+export const $ResponseCreateBase = {
+	properties: {
+		response_text: {
+	type: 'string',
+	isRequired: true,
+},
+	},
+} as const;
+
+export const $ResponseLinked = {
+	properties: {
+		response_text: {
+	type: 'string',
+	isRequired: true,
+},
+		api_identifier: {
+	type: 'string',
+	isRequired: true,
+},
+		question: {
+	type: 'QuestionUnlinked',
+	isRequired: true,
+},
+		participant: {
+	type: 'UserUnlinked',
+	isRequired: true,
+},
+	},
+} as const;
+
 export const $ResponseMessage = {
 	properties: {
 		message: {
@@ -245,6 +312,31 @@ export const $ResponseUnlinked = {
 		api_identifier: {
 	type: 'string',
 	isRequired: true,
+},
+	},
+} as const;
+
+export const $ResponseUpsert = {
+	properties: {
+		response_text: {
+	type: 'string',
+	isRequired: true,
+},
+		participant_api_identifier: {
+	type: 'any-of',
+	contains: [{
+	type: 'string',
+}, {
+	type: 'null',
+}],
+},
+		api_identifier: {
+	type: 'any-of',
+	contains: [{
+	type: 'string',
+}, {
+	type: 'null',
+}],
 },
 	},
 } as const;

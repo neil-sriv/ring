@@ -3,3 +3,5 @@ from .group import *
 from .letter import *
 from .schedule import *
 from .authn import *
+from .question import *
+from .response import *

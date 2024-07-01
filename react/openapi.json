@@ -1180,6 +1180,68 @@
         }
       }
     },
+    "/letters/letter/{letter_api_id}:bulk_edit_responses": {
+      "patch": {
+        "tags": [
+          "letters"
+        ],
+        "summary": "Bulk Edit Responses",
+        "operationId": "bulk_edit_responses_letters_letter__letter_api_id__bulk_edit_responses_patch",
+        "deprecated": true,
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "letter_api_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Letter Api Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/ResponseUnlinked"
+                },
+                "title": "Updated Responses"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PublicLetter"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/schedule/schedule/{group_api_id}": {
       "get": {
         "tags": [
@@ -1210,6 +1272,120 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ScheduleLinked"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/questions/question/{question_api_id}:upsert_response": {
+      "post": {
+        "tags": [
+          "questions"
+        ],
+        "summary": "Upsert Response",
+        "operationId": "upsert_response_questions_question__question_api_id__upsert_response_post",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "question_api_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Question Api Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ResponseUpsert"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/QuestionLinked"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/responses/response/{response_api_id}:edit_response": {
+      "post": {
+        "tags": [
+          "responses"
+        ],
+        "summary": "Edit Response",
+        "operationId": "edit_response_responses_response__response_api_id__edit_response_post",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "response_api_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Response Api Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ResponseCreateBase"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResponseLinked"
                 }
               }
             }
@@ -1564,6 +1740,93 @@
         ],
         "title": "QuestionCreate"
       },
+      "QuestionLinked": {
+        "properties": {
+          "question_text": {
+            "type": "string",
+            "title": "Question Text"
+          },
+          "api_identifier": {
+            "type": "string",
+            "title": "Api Identifier"
+          },
+          "letter": {
+            "$ref": "#/components/schemas/LetterUnlinked"
+          },
+          "responses": {
+            "items": {
+              "$ref": "#/components/schemas/ResponseUnlinked"
+            },
+            "type": "array",
+            "title": "Responses"
+          }
+        },
+        "type": "object",
+        "required": [
+          "question_text",
+          "api_identifier",
+          "letter",
+          "responses"
+        ],
+        "title": "QuestionLinked"
+      },
+      "QuestionUnlinked": {
+        "properties": {
+          "question_text": {
+            "type": "string",
+            "title": "Question Text"
+          },
+          "api_identifier": {
+            "type": "string",
+            "title": "Api Identifier"
+          }
+        },
+        "type": "object",
+        "required": [
+          "question_text",
+          "api_identifier"
+        ],
+        "title": "QuestionUnlinked"
+      },
+      "ResponseCreateBase": {
+        "properties": {
+          "response_text": {
+            "type": "string",
+            "title": "Response Text"
+          }
+        },
+        "type": "object",
+        "required": [
+          "response_text"
+        ],
+        "title": "ResponseCreateBase"
+      },
+      "ResponseLinked": {
+        "properties": {
+          "response_text": {
+            "type": "string",
+            "title": "Response Text"
+          },
+          "api_identifier": {
+            "type": "string",
+            "title": "Api Identifier"
+          },
+          "question": {
+            "$ref": "#/components/schemas/QuestionUnlinked"
+          },
+          "participant": {
+            "$ref": "#/components/schemas/UserUnlinked"
+          }
+        },
+        "type": "object",
+        "required": [
+          "response_text",
+          "api_identifier",
+          "question",
+          "participant"
+        ],
+        "title": "ResponseLinked"
+      },
       "ResponseMessage": {
         "properties": {
           "message": {
@@ -1594,6 +1857,41 @@
           "api_identifier"
         ],
         "title": "ResponseUnlinked"
+      },
+      "ResponseUpsert": {
+        "properties": {
+          "response_text": {
+            "type": "string",
+            "title": "Response Text"
+          },
+          "participant_api_identifier": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Participant Api Identifier"
+          },
+          "api_identifier": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Api Identifier"
+          }
+        },
+        "type": "object",
+        "required": [
+          "response_text"
+        ],
+        "title": "ResponseUpsert"
       },
       "ResponseWithParticipant": {
         "properties": {

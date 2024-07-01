@@ -5,6 +5,8 @@ import { Suspense } from "react";
 import { ErrorBoundary } from "react-error-boundary";
 import PublishedLoop from "../../../components/Loops/PublishedLoop";
 import DraftLoop from "../../../components/Loops/DraftLoop";
+import QuestionNav from "../../../components/Question/QuestionNav";
+import { useSuspenseQuery } from "@tanstack/react-query";
 
 type IssueLoaderProps = {
   loop: PublicLetter;
@@ -13,7 +15,7 @@ type IssueLoaderProps = {
 export const Route = createFileRoute("/_layout/loops/$loopId")({
   loader: async ({ params, context }): Promise<IssueLoaderProps> => {
     const loop = await context.queryClient.ensureQueryData({
-      queryKey: ["loops", params.loopId],
+      queryKey: ["loop", params.loopId],
       queryFn: async () => {
         return await LettersService.readLetterLettersLetterLetterApiIdGet({
           letterApiId: params.loopId,
@@ -29,23 +31,29 @@ export const Route = createFileRoute("/_layout/loops/$loopId")({
 });
 
 function IssueContent() {
-  const loop = Route.useLoaderData().loop;
+  // const loop = Route.useLoaderData().loop;
+  const routeParams = Route.useParams();
+  const { data: loop } = useSuspenseQuery({
+    queryKey: ["loop", routeParams.loopId],
+    queryFn: async () => {
+      return await LettersService.readLetterLettersLetterLetterApiIdGet({
+        letterApiId: routeParams.loopId,
+      });
+    },
+  });
+
   return (
     <Container maxW="container.lg" py={4}>
       <Heading size="lg" textAlign={{ base: "center", md: "left" }} pt={12}>
         {loop.group.name} Issue #{loop.number}
       </Heading>
-      {/* <Container maxW="container.lg" py={4}>
-        <SimpleGrid columns={4} gap={4}>
-          {props.loops.map((loop) => (
-            <LoopCard key={loop.api_identifier} loop={loop} />
-          ))}
-        </SimpleGrid>
-      </Container> */}
       {loop.status === "SENT" ? (
         <PublishedLoop loop={loop} />
       ) : (
-        <DraftLoop loop={loop} />
+        <>
+          <QuestionNav loop={loop} />
+          <DraftLoop loop={loop} />
+        </>
       )}
     </Container>
   );

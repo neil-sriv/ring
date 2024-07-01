@@ -94,6 +94,37 @@ export type QuestionCreate = {
 
 
 
+export type QuestionLinked = {
+	question_text: string;
+	api_identifier: string;
+	letter: LetterUnlinked;
+	responses: Array<ResponseUnlinked>;
+};
+
+
+
+export type QuestionUnlinked = {
+	question_text: string;
+	api_identifier: string;
+};
+
+
+
+export type ResponseCreateBase = {
+	response_text: string;
+};
+
+
+
+export type ResponseLinked = {
+	response_text: string;
+	api_identifier: string;
+	question: QuestionUnlinked;
+	participant: UserUnlinked;
+};
+
+
+
 export type ResponseMessage = {
 	message: string;
 };
@@ -103,6 +134,14 @@ export type ResponseMessage = {
 export type ResponseUnlinked = {
 	response_text: string;
 	api_identifier: string;
+};
+
+
+
+export type ResponseUpsert = {
+	response_text: string;
+	participant_api_identifier?: string | null;
+	api_identifier?: string | null;
 };
 
 

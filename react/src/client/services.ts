@@ -2,7 +2,7 @@ import type { CancelablePromise } from './core/CancelablePromise';
 import { OpenAPI } from './core/OpenAPI';
 import { request as __request } from './core/request';
 
-import type { Body_login_access_token_login_access_token_post,NewPassword,Token,GroupCreate,GroupLinked,GroupUpdate,ResponseMessage,ScheduleSendParam,UserCreate,UserLinked,UserUpdate,UserUpdatePassword,LetterCreate,PublicLetter,QuestionCreate,ScheduleLinked } from './models';
+import type { Body_login_access_token_login_access_token_post,NewPassword,Token,GroupCreate,GroupLinked,GroupUpdate,ResponseMessage,ScheduleSendParam,UserCreate,UserLinked,UserUpdate,UserUpdatePassword,LetterCreate,PublicLetter,QuestionCreate,ResponseUnlinked,ScheduleLinked,QuestionLinked,ResponseUpsert,ResponseCreateBase,ResponseLinked } from './models';
 
 export type LoginData = {
         LoginAccessTokenLoginAccessTokenPost: {
@@ -101,11 +101,32 @@ AddQuestionLettersLetterLetterApiIdAddQuestionPost: {
 requestBody: QuestionCreate
                     
                 };
+BulkEditResponsesLettersLetterLetterApiIdBulkEditResponsesPatch: {
+                    letterApiId: string
+requestBody: Array<ResponseUnlinked>
+                    
+                };
     }
 
 export type ScheduleData = {
         GetScheduleForGroupScheduleScheduleGroupApiIdGet: {
                     groupApiId: string
+                    
+                };
+    }
+
+export type QuestionsData = {
+        UpsertResponseQuestionsQuestionQuestionApiIdUpsertResponsePost: {
+                    questionApiId: string
+requestBody: ResponseUpsert
+                    
+                };
+    }
+
+export type ResponsesData = {
+        EditResponseResponsesResponseResponseApiIdEditResponsePost: {
+                    requestBody: ResponseCreateBase
+responseApiId: string
                     
                 };
     }
@@ -644,6 +665,31 @@ requestBody,
 		});
 	}
 
+	/**
+	 * @deprecated
+	 * Bulk Edit Responses
+	 * @returns PublicLetter Successful Response
+	 * @throws ApiError
+	 */
+	public static bulkEditResponsesLettersLetterLetterApiIdBulkEditResponsesPatch(data: LettersData['BulkEditResponsesLettersLetterLetterApiIdBulkEditResponsesPatch']): CancelablePromise<PublicLetter> {
+		const {
+letterApiId,
+requestBody,
+} = data;
+		return __request(OpenAPI, {
+			method: 'PATCH',
+			url: '/letters/letter/{letter_api_id}:bulk_edit_responses',
+			path: {
+				letter_api_id: letterApiId
+			},
+			body: requestBody,
+			mediaType: 'application/json',
+			errors: {
+				422: `Validation Error`,
+			},
+		});
+	}
+
 }
 
 export class ScheduleService {
@@ -663,6 +709,62 @@ groupApiId,
 			path: {
 				group_api_id: groupApiId
 			},
+			errors: {
+				422: `Validation Error`,
+			},
+		});
+	}
+
+}
+
+export class QuestionsService {
+
+	/**
+	 * Upsert Response
+	 * @returns QuestionLinked Successful Response
+	 * @throws ApiError
+	 */
+	public static upsertResponseQuestionsQuestionQuestionApiIdUpsertResponsePost(data: QuestionsData['UpsertResponseQuestionsQuestionQuestionApiIdUpsertResponsePost']): CancelablePromise<QuestionLinked> {
+		const {
+questionApiId,
+requestBody,
+} = data;
+		return __request(OpenAPI, {
+			method: 'POST',
+			url: '/questions/question/{question_api_id}:upsert_response',
+			path: {
+				question_api_id: questionApiId
+			},
+			body: requestBody,
+			mediaType: 'application/json',
+			errors: {
+				422: `Validation Error`,
+			},
+		});
+	}
+
+}
+
+export class ResponsesService {
+
+	/**
+	 * Edit Response
+	 * @returns ResponseLinked Successful Response
+	 * @throws ApiError
+	 */
+	public static editResponseResponsesResponseResponseApiIdEditResponsePost(data: ResponsesData['EditResponseResponsesResponseResponseApiIdEditResponsePost']): CancelablePromise<ResponseLinked> {
+		const {
+responseApiId,
+requestBody,
+} = data;
+		return __request(OpenAPI, {
+			method: 'POST',
+			url: '/responses/response/{response_api_id}:edit_response',
+			path: {
+				response_api_id: responseApiId
+			},
+			body: requestBody,
+			mediaType: 'application/json',
 			errors: {
 				422: `Validation Error`,
 			},

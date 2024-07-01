@@ -1,11 +1,35 @@
-import { Box, Heading, Text } from "@chakra-ui/react";
-import { PublicQuestion, ResponseWithParticipant } from "../../client";
+import { Box, Heading, Textarea } from "@chakra-ui/react";
+import { PublicQuestion, QuestionsService, UserLinked } from "../../client";
+import { useState } from "react";
+import { useQueryClient } from "@tanstack/react-query";
+import useCustomToast from "../../hooks/useCustomToast";
 
-function ResponseBlock({ response }: { response: ResponseWithParticipant }) {
+type ResponseBlockProps = {
+  responseText: string;
+  submitResponse: (responseText: string) => Promise<void>;
+};
+
+function ResponseBlock(props: ResponseBlockProps) {
+  const [responseText, setResponseText] = useState(props.responseText);
+  const showToast = useCustomToast();
+  const handleResponseChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    setResponseText(e.target.value);
+  };
+
   return (
     <Box my="10px">
-      <Heading size="md">{response.participant.name}</Heading>
-      <Text>{response.response_text}</Text>
+      <Textarea
+        size="md"
+        variant="filled"
+        value={responseText}
+        onChange={handleResponseChange}
+        onBlur={async () => {
+          if (props.responseText !== responseText) {
+            await props.submitResponse(responseText);
+            showToast("Success!", "Answer saved.", "success");
+          }
+        }}
+      />
     </Box>
   );
 }
@@ -15,14 +39,46 @@ function DraftQuestion({
 }: {
   question: PublicQuestion;
 }): JSX.Element {
+  const queryClient = useQueryClient();
+  const currentUser = queryClient.getQueryData<UserLinked>(["currentUser"]);
+  if (!currentUser) {
+    return <Box>loading...</Box>;
+  }
+  const response = question.responses.find(
+    (response) =>
+      response.participant.api_identifier === currentUser.api_identifier
+  );
+
+  const handleUpdate = async (responseText: string) => {
+    await QuestionsService.upsertResponseQuestionsQuestionQuestionApiIdUpsertResponsePost(
+      {
+        questionApiId: question.api_identifier,
+        requestBody: {
+          response_text: responseText,
+          api_identifier: response!.api_identifier,
+        },
+      }
+    );
+  };
+
+  const handleInsert = async (responseText: string) => {
+    await QuestionsService.upsertResponseQuestionsQuestionQuestionApiIdUpsertResponsePost(
+      {
+        questionApiId: question.api_identifier,
+        requestBody: {
+          response_text: responseText,
+          participant_api_identifier: currentUser.api_identifier,
+        },
+      }
+    );
+  };
   return (
     <Box my="20px">
       <Heading>{question.question_text}</Heading>
-      {question.responses.map((response) => {
-        return (
-          <ResponseBlock response={response} key={response.api_identifier} />
-        );
-      })}
+      <ResponseBlock
+        responseText={response?.response_text || ""}
+        submitResponse={response === undefined ? handleInsert : handleUpdate}
+      />
     </Box>
   );
 }

@@ -8,11 +8,13 @@ from typing import Sequence
 from ring.crud import (
     letter as letter_crud,
     api_identifier as api_identifier_crud,
+    response as response_crud,
 )
 from ring.pydantic_schemas import PublicLetter as LetterSchema
 from ring.pydantic_schemas.letter import LetterCreate
 from ring.postgres_models.letter_model import Letter
 from ring.pydantic_schemas.question import QuestionCreate
+from ring.pydantic_schemas.response import ResponseUnlinked
 
 router = APIRouter()
 
@@ -86,4 +88,31 @@ async def add_question(
     letter_crud.add_question(req_dep.db, db_letter, question.question_text)
     req_dep.db.refresh(db_letter)
     req_dep.db.commit()
+    return db_letter
+
+
+@router.patch(
+    "/letter/{letter_api_id}:bulk_edit_responses",
+    response_model=LetterSchema,
+    deprecated=True,
+)
+async def bulk_edit_responses(
+    letter_api_id: str,
+    updated_responses: Sequence[ResponseUnlinked],
+    req_dep: AuthenticatedRequestDependencies = Depends(
+        get_request_dependencies,
+    ),
+) -> Letter:
+    db_letter = api_identifier_crud.get_model(
+        req_dep.db,
+        Letter,
+        api_id=letter_api_id,
+    )
+    db_responses = response_crud.get_responses(
+        req_dep.db, db_letter, [resp.api_identifier for resp in updated_responses]
+    )
+    response_map = {resp.api_identifier: resp for resp in db_responses}
+    response_crud.edit_responses(response_map, updated_responses)
+    req_dep.db.commit()
+    req_dep.db.refresh(db_letter)
     return db_letter
