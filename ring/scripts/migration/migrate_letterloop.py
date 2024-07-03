@@ -1,4 +1,4 @@
-from datetime import datetime, date
+from datetime import datetime
 from pathlib import Path
 from pprint import pp
 from sqlalchemy import select
@@ -50,10 +50,12 @@ def _create_letter(
     letter = letter_crud.create_letter(
         db,
         group.api_identifier,
-        LetterStatus.SENT,
+        send_at=sent_at,
+        letter_status=LetterStatus.SENT,
     )
     if sent_at:
         letter.issue_sent = sent_at
+        # letter.send_at = sent_at
     db.add(letter)
     db.flush()
     return letter

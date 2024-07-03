@@ -43,6 +43,7 @@ class Letter(Base, APIIdentified, PydanticModel):
     api_identifier: Mapped[str] = mapped_column(unique=True, index=True)
     status: Mapped[str] = mapped_column()
     issue_sent: Mapped[datetime] = mapped_column(nullable=True)
+    send_at: Mapped[datetime] = mapped_column(nullable=True)
 
     participants: Mapped[list["User"]] = relationship(
         secondary=letter_to_user_assocation
@@ -64,14 +65,17 @@ class Letter(Base, APIIdentified, PydanticModel):
             ),
         )
 
-    def __init__(self, group: Group, status: LetterStatus) -> None:
+    def __init__(self, group: Group, send_at: datetime, status: LetterStatus) -> None:
         APIIdentified.__init__(self)
         self.number = len(group.letters) + 1
         self.group = group
         self.participants = group.members
+        self.send_at = send_at
         self.status = status
 
     @classmethod
-    def create(cls, group: Group, letter_status: LetterStatus) -> Letter:
-        letter = cls(group, letter_status)
+    def create(
+        cls, group: Group, send_at: datetime, letter_status: LetterStatus
+    ) -> Letter:
+        letter = cls(group, send_at, letter_status)
         return letter

@@ -1,4 +1,5 @@
 from __future__ import annotations
+from datetime import datetime
 from pydantic import BaseModel, ConfigDict
 
 from ring.letter.enums import LetterStatus
@@ -10,6 +11,7 @@ class LetterBase(BaseModel):
 
 class LetterCreate(LetterBase):
     group_api_identifier: str
+    send_at: datetime
 
 
 class Letter(LetterBase):
@@ -18,6 +20,7 @@ class Letter(LetterBase):
     api_identifier: str
     number: int
     status: LetterStatus
+    send_at: datetime
 
 
 class LetterUnlinked(Letter):

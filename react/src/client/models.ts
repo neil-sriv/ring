@@ -47,6 +47,7 @@ export type HTTPValidationError = {
 
 export type LetterCreate = {
 	group_api_identifier: string;
+	send_at: string;
 };
 
 
@@ -59,6 +60,7 @@ export type LetterUnlinked = {
 	api_identifier: string;
 	number: number;
 	status: LetterStatus;
+	send_at: string;
 };
 
 
@@ -74,6 +76,7 @@ export type PublicLetter = {
 	api_identifier: string;
 	number: number;
 	status: LetterStatus;
+	send_at: string;
 	group: GroupUnlinked;
 	questions: Array<PublicQuestion>;
 };

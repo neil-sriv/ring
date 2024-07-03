@@ -46,6 +46,7 @@ const AddLetter = ({ isOpen, onClose, groupApiId }: AddLetterProps) => {
       LettersService.addNextLetterLettersLetterPost({
         requestBody: {
           group_api_identifier: data.group_api_identifier,
+          send_at: data.send_at,
         },
       }),
     onSuccess: () => {
@@ -62,8 +63,11 @@ const AddLetter = ({ isOpen, onClose, groupApiId }: AddLetterProps) => {
     },
   });
 
-  const onSubmit: SubmitHandler<LetterFormProps> = () => {
-    mutation.mutate({ group_api_identifier: groupApiId });
+  const onSubmit: SubmitHandler<LetterFormProps> = (data) => {
+    mutation.mutate({
+      group_api_identifier: groupApiId,
+      send_at: data.sendAt.toISOString(),
+    });
   };
 
   return (

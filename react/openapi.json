@@ -1611,11 +1611,17 @@
           "group_api_identifier": {
             "type": "string",
             "title": "Group Api Identifier"
+          },
+          "send_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Send At"
           }
         },
         "type": "object",
         "required": [
-          "group_api_identifier"
+          "group_api_identifier",
+          "send_at"
         ],
         "title": "LetterCreate"
       },
@@ -1639,13 +1645,19 @@
           },
           "status": {
             "$ref": "#/components/schemas/LetterStatus"
+          },
+          "send_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Send At"
           }
         },
         "type": "object",
         "required": [
           "api_identifier",
           "number",
-          "status"
+          "status",
+          "send_at"
         ],
         "title": "LetterUnlinked"
       },
@@ -1680,6 +1692,11 @@
           "status": {
             "$ref": "#/components/schemas/LetterStatus"
           },
+          "send_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Send At"
+          },
           "group": {
             "$ref": "#/components/schemas/GroupUnlinked"
           },
@@ -1696,6 +1713,7 @@
           "api_identifier",
           "number",
           "status",
+          "send_at",
           "group",
           "questions"
         ],

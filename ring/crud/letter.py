@@ -1,4 +1,5 @@
 from __future__ import annotations
+from datetime import datetime
 from typing import TYPE_CHECKING, Sequence
 
 from sqlalchemy import select
@@ -24,6 +25,7 @@ def get_letters(
 def create_letter(
     db: Session,
     group_api_id: str,
+    send_at: datetime,
     letter_status: LetterStatus = LetterStatus.IN_PROGRESS,
 ) -> Letter:
     group = api_identifier_crud.get_model(
@@ -31,7 +33,7 @@ def create_letter(
         Group,
         api_id=group_api_id,
     )
-    db_letter = Letter.create(group, letter_status)
+    db_letter = Letter.create(group, send_at, letter_status)
     db.add(db_letter)
     return db_letter
 

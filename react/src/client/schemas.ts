@@ -132,6 +132,11 @@ export const $LetterCreate = {
 	type: 'string',
 	isRequired: true,
 },
+		send_at: {
+	type: 'string',
+	isRequired: true,
+	format: 'date-time',
+},
 	},
 } as const;
 
@@ -153,6 +158,11 @@ export const $LetterUnlinked = {
 		status: {
 	type: 'LetterStatus',
 	isRequired: true,
+},
+		send_at: {
+	type: 'string',
+	isRequired: true,
+	format: 'date-time',
 },
 	},
 } as const;
@@ -183,6 +193,11 @@ export const $PublicLetter = {
 		status: {
 	type: 'LetterStatus',
 	isRequired: true,
+},
+		send_at: {
+	type: 'string',
+	isRequired: true,
+	format: 'date-time',
 },
 		group: {
 	type: 'GroupUnlinked',

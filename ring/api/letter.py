@@ -34,6 +34,7 @@ async def add_next_letter(
     db_letter = letter_crud.create_letter(
         db=req_dep.db,
         group_api_id=letter.group_api_identifier,
+        send_at=letter.send_at,
     )
     req_dep.db.commit()
     return db_letter
