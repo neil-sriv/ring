@@ -65,6 +65,7 @@ type LoopCardProps = {
 };
 
 function LoopCard(props: LoopCardProps): JSX.Element {
+  const sendDate = new Date(props.loop.send_at);
   return (
     <LinkBox as="div">
       <Card w="150px" h="150px" flexGrow="1" border="1px solid" boxShadow="lg">
@@ -75,7 +76,11 @@ function LoopCard(props: LoopCardProps): JSX.Element {
             params={{ loopId: props.loop.api_identifier }}
           >
             <Heading size="md">Issue #{props.loop.number}</Heading>
-            <Heading size="sm">{props.loop.status}</Heading>
+            {props.loop.status === "SENT" ? (
+              <Text>Published {sendDate.toLocaleDateString()}</Text>
+            ) : (
+              <Text>Due {sendDate.toLocaleString()}</Text>
+            )}
           </LinkOverlay>
         </CardHeader>
       </Card>
