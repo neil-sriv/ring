@@ -17,9 +17,10 @@ import { type SubmitHandler, useForm } from "react-hook-form";
 
 import { type ApiError, type LetterCreate, LettersService } from "../../client";
 import useCustomToast from "../../hooks/useCustomToast";
+import { toISOLocal } from "../../utils";
 
 type LetterFormProps = {
-  sendAt: Date;
+  sendAt: Date | string;
 };
 
 interface AddLetterProps {
@@ -31,6 +32,12 @@ interface AddLetterProps {
 const AddLetter = ({ isOpen, onClose, groupApiId }: AddLetterProps) => {
   const queryClient = useQueryClient();
   const showToast = useCustomToast();
+  let defaultDate = new Date();
+  defaultDate.setUTCDate(defaultDate.getDate() + 14);
+  defaultDate.setUTCHours(21);
+  defaultDate.setUTCMinutes(0);
+  defaultDate.setUTCSeconds(0);
+  defaultDate.setUTCMilliseconds(0);
   const {
     register,
     handleSubmit,
@@ -39,6 +46,9 @@ const AddLetter = ({ isOpen, onClose, groupApiId }: AddLetterProps) => {
   } = useForm<LetterFormProps>({
     mode: "onBlur",
     criteriaMode: "all",
+    defaultValues: {
+      sendAt: defaultDate.toISOString().slice(0, 16),
+    },
   });
 
   const mutation = useMutation({
@@ -66,7 +76,8 @@ const AddLetter = ({ isOpen, onClose, groupApiId }: AddLetterProps) => {
   const onSubmit: SubmitHandler<LetterFormProps> = (data) => {
     mutation.mutate({
       group_api_identifier: groupApiId,
-      send_at: data.sendAt.toISOString(),
+      send_at:
+        data.sendAt instanceof Date ? toISOLocal(data.sendAt) : data.sendAt,
     });
   };
 
@@ -83,7 +94,7 @@ const AddLetter = ({ isOpen, onClose, groupApiId }: AddLetterProps) => {
           <ModalHeader>Start Next Loop</ModalHeader>
           <ModalCloseButton />
           <ModalBody pb={6}>
-            <FormControl>
+            <FormControl isRequired>
               <FormLabel htmlFor="sendAt">Send at</FormLabel>
               <Input
                 id="sendAt"
@@ -92,6 +103,7 @@ const AddLetter = ({ isOpen, onClose, groupApiId }: AddLetterProps) => {
                   valueAsDate: true,
                 })}
                 type="datetime-local"
+                min={toISOLocal(new Date()).slice(0, 16)}
               />
               {errors.sendAt && (
                 <FormErrorMessage>{errors.sendAt.message}</FormErrorMessage>

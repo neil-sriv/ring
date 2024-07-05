@@ -40,3 +40,31 @@ export const confirmPasswordRules = (
 
   return rules;
 };
+
+export function toISOLocal(d: Date): string {
+  var z = (n: number) => ("0" + n).slice(-2);
+  var zz = (n: number) => ("00" + n).slice(-3);
+  var off = d.getTimezoneOffset();
+  var sign = off > 0 ? "-" : "+";
+  off = Math.abs(off);
+
+  return (
+    d.getFullYear() +
+    "-" +
+    z(d.getMonth() + 1) +
+    "-" +
+    z(d.getDate()) +
+    "T" +
+    z(d.getHours()) +
+    ":" +
+    z(d.getMinutes()) +
+    ":" +
+    z(d.getSeconds()) +
+    "." +
+    zz(d.getMilliseconds()) +
+    sign +
+    z((off / 60) | 0) +
+    ":" +
+    z(off % 60)
+  );
+}
