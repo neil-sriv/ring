@@ -58,6 +58,8 @@ def add_question(
 
 def compile_letter_dict(letter: Letter) -> dict[str, list[str]]:
     return {
-        q.question_text: [resp.response_text for resp in q.responses]
+        q.question_text: [
+            f"{resp.participant.name}: {resp.response_text}" for resp in q.responses
+        ]
         for q in letter.questions
     }
