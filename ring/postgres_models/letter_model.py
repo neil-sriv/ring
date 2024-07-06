@@ -4,6 +4,7 @@ from typing import TYPE_CHECKING
 from sqlalchemy import (
     Column,
     Constraint,
+    DateTime,
     ForeignKey,
     Integer,
     Table,
@@ -43,7 +44,10 @@ class Letter(Base, APIIdentified, PydanticModel):
     api_identifier: Mapped[str] = mapped_column(unique=True, index=True)
     status: Mapped[str] = mapped_column()
     issue_sent: Mapped[datetime] = mapped_column(nullable=True)
-    send_at: Mapped[datetime] = mapped_column(nullable=True)
+    send_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        nullable=True,
+    )
 
     participants: Mapped[list["User"]] = relationship(
         secondary=letter_to_user_assocation
