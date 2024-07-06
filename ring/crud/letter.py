@@ -4,9 +4,10 @@ from typing import TYPE_CHECKING, Sequence
 
 from sqlalchemy import select
 from ring.postgres_models import Letter, Group
-from ring.crud import api_identifier as api_identifier_crud
+from ring.crud import api_identifier as api_identifier_crud, schedule as schedule_crud
 from ring.letter.enums import LetterStatus
 from ring.postgres_models.question_model import Question
+from ring.postgres_models.task_model import TaskType
 from ring.postgres_models.user_model import User
 
 if TYPE_CHECKING:
@@ -35,6 +36,14 @@ def create_letter(
     )
     db_letter = Letter.create(group, send_at, letter_status)
     db.add(db_letter)
+
+    schedule_crud.register_task(
+        db,
+        db_letter.group.schedule,
+        TaskType.SEND_EMAIL,
+        send_at,
+        {},
+    )
     return db_letter
 
 

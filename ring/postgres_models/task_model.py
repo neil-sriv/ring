@@ -2,7 +2,7 @@ from __future__ import annotations
 from enum import StrEnum
 from datetime import datetime
 from typing import TYPE_CHECKING
-from sqlalchemy import JSON, ForeignKey
+from sqlalchemy import JSON, DateTime, ForeignKey
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from ring.sqlalchemy_base import Base
 
@@ -32,7 +32,7 @@ class Task(Base):
     schedule: Mapped["Schedule"] = relationship(back_populates="tasks")
     type: Mapped[str] = mapped_column(index=True, nullable=False)
     status: Mapped[str] = mapped_column(index=True, nullable=False)
-    execute_at: Mapped[datetime] = mapped_column(index=True)
+    execute_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), index=True)
     arguments: Mapped[dict[str, str]] = mapped_column(type_=JSON)
 
     __mapper_args__ = {

@@ -25,7 +25,7 @@ def register_task(
     schedule: Schedule,
     task_type: TaskType,
     execute_at: datetime.datetime,
-    arguments: dict[str, str],
+    arguments: dict[str, str] = {},
 ) -> Task:
     task = Task.create(schedule, task_type, execute_at, arguments)
     schedule.tasks.append(task)
@@ -60,7 +60,7 @@ def execute_tasks(
 
 
 @register_task_factory(name="poll_schedule")
-def poll_schedule_task(self: CeleryTask) -> None:
+def poll_schedule_task(self: CeleryTask) -> dict[str, str]:
     from ring.crud import schedule as schedule_crud
 
     time.sleep(5)
