@@ -37,13 +37,14 @@ def create_letter(
     db_letter = Letter.create(group, send_at, letter_status)
     db.add(db_letter)
 
-    schedule_crud.register_task(
-        db,
-        db_letter.group.schedule,
-        TaskType.SEND_EMAIL,
-        send_at,
-        {},
-    )
+    if letter_status == LetterStatus.IN_PROGRESS:
+        schedule_crud.register_task(
+            db,
+            db_letter.group.schedule,
+            TaskType.SEND_EMAIL,
+            send_at,
+            {},
+        )
     return db_letter
 
 

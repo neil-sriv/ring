@@ -1,6 +1,6 @@
 from __future__ import annotations
-from typing import TYPE_CHECKING
-from sqlalchemy import ForeignKey, Text, UniqueConstraint
+from typing import TYPE_CHECKING, List
+from sqlalchemy import ForeignKey, Integer, Text, UniqueConstraint
 from sqlalchemy.orm import relationship, Mapped, mapped_column
 from ring.postgres_models.api_identified import APIIdentified
 
@@ -9,9 +9,27 @@ from ring.pydantic_schemas.linked_schemas import ResponseLinked
 from ring.sqlalchemy_base import Base
 
 if TYPE_CHECKING:
-    # from ring.postgres_models.letter_model import Letter
     from ring.postgres_models.user_model import User
     from ring.postgres_models.question_model import Question
+    from ring.postgres_models.s3_model import Image
+
+
+class ImageResponseAssociation(Base):
+    __tablename__ = "image_response_assocation"
+
+    image_id: Mapped[int] = mapped_column(
+        Integer, ForeignKey("image.id"), primary_key=True
+    )
+    response_id: Mapped[int] = mapped_column(
+        Integer,
+        ForeignKey("response.id"),
+        primary_key=True,
+    )
+
+    image: Mapped["Image"] = relationship(back_populates="parent_associations")
+    response: Mapped["Response"] = relationship(
+        back_populates="image_associations",
+    )
 
 
 class Response(Base, APIIdentified, PydanticModel):
@@ -29,7 +47,12 @@ class Response(Base, APIIdentified, PydanticModel):
     question: Mapped["Question"] = relationship(back_populates="responses")
 
     response_text: Mapped[str] = mapped_column(Text)
-    _image_file: Mapped[str] = mapped_column(nullable=True, default=None)
+    # images: Mapped[List["Image"]] = relationship(
+    #     secondary=ImageResponseAssociation.__table__,
+    # )
+    image_associations: Mapped[List[ImageResponseAssociation]] = relationship(
+        back_populates="response", cascade="all, delete-orphan"
+    )
 
     __table_args__ = (
         UniqueConstraint(

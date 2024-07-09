@@ -3,6 +3,7 @@ import { PublicQuestion, QuestionsService, UserLinked } from "../../client";
 import { useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import useCustomToast from "../../hooks/useCustomToast";
+import SingleUploadImage from "../Common/SingleUploadImage";
 
 type ResponseBlockProps = {
   responseText: string;
@@ -30,6 +31,7 @@ function ResponseBlock(props: ResponseBlockProps) {
           }
         }}
       />
+      <SingleUploadImage />
     </Box>
   );
 }

@@ -1,5 +1,7 @@
 from __future__ import annotations
 from typing import Optional
+
+from ring.pydantic_schemas.image import WithImageMixin
 from ring.pydantic_schemas.task import TaskUnlinked
 from ring.pydantic_schemas.schedule import Schedule, ScheduleUnlinked
 from ring.pydantic_schemas.user import User, UserUnlinked
@@ -49,10 +51,10 @@ class PublicQuestion(Question):
     responses: list["ResponseWithParticipant"]
 
 
-class ResponseLinked(Response):
+class ResponseLinked(Response, WithImageMixin):
     question: "QuestionUnlinked"
     participant: "UserUnlinked"
 
 
-class ResponseWithParticipant(Response):
+class ResponseWithParticipant(Response, WithImageMixin):
     participant: "UserUnlinked"

@@ -40,6 +40,19 @@ export const $Body_login_access_token_login_access_token_post = {
 	},
 } as const;
 
+export const $Body_upload_image_responses_response__response_api_id__upload_image_post = {
+	properties: {
+		response_images: {
+	type: 'array',
+	contains: {
+	type: 'binary',
+	format: 'binary',
+},
+	isRequired: true,
+},
+	},
+} as const;
+
 export const $GroupCreate = {
 	properties: {
 		name: {
@@ -306,6 +319,14 @@ export const $ResponseLinked = {
 	type: 'UserUnlinked',
 	isRequired: true,
 },
+		image_urls: {
+	type: 'array',
+	contains: {
+	type: 'string',
+},
+	isReadOnly: true,
+	isRequired: true,
+},
 	},
 } as const;
 
@@ -368,6 +389,14 @@ export const $ResponseWithParticipant = {
 },
 		participant: {
 	type: 'UserUnlinked',
+	isRequired: true,
+},
+		image_urls: {
+	type: 'array',
+	contains: {
+	type: 'string',
+},
+	isReadOnly: true,
 	isRequired: true,
 },
 	},

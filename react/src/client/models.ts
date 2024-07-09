@@ -9,6 +9,12 @@ export type Body_login_access_token_login_access_token_post = {
 
 
 
+export type Body_upload_image_responses_response__response_api_id__upload_image_post = {
+	response_images: Array<Blob | File>;
+};
+
+
+
 export type GroupCreate = {
 	name: string;
 	admin_api_identifier: string;
@@ -124,6 +130,7 @@ export type ResponseLinked = {
 	api_identifier: string;
 	question: QuestionUnlinked;
 	participant: UserUnlinked;
+	readonly image_urls: Array<string>;
 };
 
 
@@ -153,6 +160,7 @@ export type ResponseWithParticipant = {
 	response_text: string;
 	api_identifier: string;
 	participant: UserUnlinked;
+	readonly image_urls: Array<string>;
 };
 
 

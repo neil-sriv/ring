@@ -2,7 +2,10 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
+import boto3
+
 from fastapi import Depends, HTTPException, status
+from mypy_boto3_s3 import S3Client
 from ring.security import decode_token, oauth2_scheme
 from ring.crud import user as user_crud
 from ring.postgres_models.user_model import User
@@ -47,3 +50,7 @@ async def get_unauthenticated_request_dependencies(
     db: Session = Depends(get_db),
 ) -> RequestDependenciesBase:
     return RequestDependenciesBase(db=db)
+
+
+async def get_s3_client_dependencies() -> S3Client:
+    return boto3.client("s3")  # type: ignore

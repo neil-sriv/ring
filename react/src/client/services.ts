@@ -2,7 +2,7 @@ import type { CancelablePromise } from './core/CancelablePromise';
 import { OpenAPI } from './core/OpenAPI';
 import { request as __request } from './core/request';
 
-import type { Body_login_access_token_login_access_token_post,NewPassword,Token,GroupCreate,GroupLinked,GroupUpdate,ResponseMessage,ScheduleSendParam,UserCreate,UserLinked,UserUpdate,UserUpdatePassword,LetterCreate,PublicLetter,QuestionCreate,ResponseUnlinked,ScheduleLinked,QuestionLinked,ResponseUpsert,ResponseCreateBase,ResponseLinked } from './models';
+import type { Body_login_access_token_login_access_token_post,NewPassword,Token,GroupCreate,GroupLinked,GroupUpdate,ResponseMessage,ScheduleSendParam,UserCreate,UserLinked,UserUpdate,UserUpdatePassword,LetterCreate,PublicLetter,QuestionCreate,ResponseUnlinked,ScheduleLinked,QuestionLinked,ResponseUpsert,Body_upload_image_responses_response__response_api_id__upload_image_post,ResponseCreateBase,ResponseLinked } from './models';
 
 export type LoginData = {
         LoginAccessTokenLoginAccessTokenPost: {
@@ -126,6 +126,11 @@ requestBody: ResponseUpsert
 export type ResponsesData = {
         EditResponseResponsesResponseResponseApiIdEditResponsePost: {
                     requestBody: ResponseCreateBase
+responseApiId: string
+                    
+                };
+UploadImageResponsesResponseResponseApiIdUploadImagePost: {
+                    formData: Body_upload_image_responses_response__response_api_id__upload_image_post
 responseApiId: string
                     
                 };
@@ -765,6 +770,30 @@ requestBody,
 			},
 			body: requestBody,
 			mediaType: 'application/json',
+			errors: {
+				422: `Validation Error`,
+			},
+		});
+	}
+
+	/**
+	 * Upload Image
+	 * @returns ResponseLinked Successful Response
+	 * @throws ApiError
+	 */
+	public static uploadImageResponsesResponseResponseApiIdUploadImagePost(data: ResponsesData['UploadImageResponsesResponseResponseApiIdUploadImagePost']): CancelablePromise<ResponseLinked> {
+		const {
+responseApiId,
+formData,
+} = data;
+		return __request(OpenAPI, {
+			method: 'POST',
+			url: '/responses/response/{response_api_id}:upload_image',
+			path: {
+				response_api_id: responseApiId
+			},
+			formData: formData,
+			mediaType: 'multipart/form-data',
 			errors: {
 				422: `Validation Error`,
 			},

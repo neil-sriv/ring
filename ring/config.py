@@ -15,6 +15,7 @@ class RingConfig(BaseSettings):
     JWT_SIGNING_KEY: str
     JWT_SIGNING_ALGORITHM: str
     root_path: str = "/api/v1"
+    BUCKET_NAME: str = "rings3files"
     BACKEND_CORS_ORIGINS: Annotated[
         list[AnyUrl] | str,
         BeforeValidator(parse_cors),

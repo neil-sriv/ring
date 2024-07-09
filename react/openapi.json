@@ -1403,6 +1403,63 @@
         }
       }
     },
+    "/responses/response/{response_api_id}:upload_image": {
+      "post": {
+        "tags": [
+          "responses"
+        ],
+        "summary": "Upload Image",
+        "operationId": "upload_image_responses_response__response_api_id__upload_image_post",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "response_api_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Response Api Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/Body_upload_image_responses_response__response_api_id__upload_image_post"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResponseLinked"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/": {
       "get": {
         "summary": "Root",
@@ -1494,6 +1551,23 @@
           "password"
         ],
         "title": "Body_login_access_token_login_access_token_post"
+      },
+      "Body_upload_image_responses_response__response_api_id__upload_image_post": {
+        "properties": {
+          "response_images": {
+            "items": {
+              "type": "string",
+              "format": "binary"
+            },
+            "type": "array",
+            "title": "Response Images"
+          }
+        },
+        "type": "object",
+        "required": [
+          "response_images"
+        ],
+        "title": "Body_upload_image_responses_response__response_api_id__upload_image_post"
       },
       "GroupCreate": {
         "properties": {
@@ -1834,6 +1908,14 @@
           },
           "participant": {
             "$ref": "#/components/schemas/UserUnlinked"
+          },
+          "image_urls": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Image Urls",
+            "readOnly": true
           }
         },
         "type": "object",
@@ -1841,7 +1923,8 @@
           "response_text",
           "api_identifier",
           "question",
-          "participant"
+          "participant",
+          "image_urls"
         ],
         "title": "ResponseLinked"
       },
@@ -1923,13 +2006,22 @@
           },
           "participant": {
             "$ref": "#/components/schemas/UserUnlinked"
+          },
+          "image_urls": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Image Urls",
+            "readOnly": true
           }
         },
         "type": "object",
         "required": [
           "response_text",
           "api_identifier",
-          "participant"
+          "participant",
+          "image_urls"
         ],
         "title": "ResponseWithParticipant"
       },
