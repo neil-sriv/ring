@@ -1,4 +1,4 @@
-import { Box, Heading, Text } from "@chakra-ui/react";
+import { Box, Heading, Text, Image } from "@chakra-ui/react";
 import { PublicQuestion, ResponseWithParticipant } from "../../client";
 
 function ResponseBlock({ response }: { response: ResponseWithParticipant }) {
@@ -7,14 +7,8 @@ function ResponseBlock({ response }: { response: ResponseWithParticipant }) {
       <Heading size="md">{response.participant.name}</Heading>
       <Text>{response.response_text}</Text>
       {response.image_urls.map((url) => {
-        return (
-          <img
-            src={"https://du32exnxihxuf.cloudfront.net/" + url}
-            alt="IMAGE HERE"
-          />
-        );
+        return <Image src={"https://du32exnxihxuf.cloudfront.net/" + url} />;
       })}
-      {/* <Image src={response.image_urls[0]} /> */}
     </Box>
   );
 }
