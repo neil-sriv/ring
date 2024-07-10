@@ -49,11 +49,15 @@ import { MdAddPhotoAlternate } from "react-icons/md";
  *   );
  * };
  */
+type SingleUploadImageProps = {
+  size?: string;
+  onUpdateFile(file: File): Promise<void>;
+};
 
-const SingleUploadImage = ({
+export function SingleUploadImage({
   size = "50px",
-  onUpdateFile: onUpdateFile = (file: File) => {},
-}) => {
+  onUpdateFile,
+}: SingleUploadImageProps): JSX.Element {
   const [uploadedFile, setUploadedFile] = useState<File | null>(null);
 
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -109,6 +113,9 @@ const SingleUploadImage = ({
       />
     </Center>
   );
-};
+}
 
-export default SingleUploadImage;
+export function S3Image({ s3Key, alt }: { s3Key: string; alt?: string }) {
+  const url = `https://du32exnxihxuf.cloudfront.net/${s3Key}`;
+  return <Image src={url} alt={alt} boxSize="100px" />;
+}

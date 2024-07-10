@@ -1,5 +1,6 @@
-import { Box, Heading, Text, Image } from "@chakra-ui/react";
+import { Box, Heading, Text } from "@chakra-ui/react";
 import { PublicQuestion, ResponseWithParticipant } from "../../client";
+import { S3Image } from "../Common/SingleUploadImage";
 
 function ResponseBlock({ response }: { response: ResponseWithParticipant }) {
   return (
@@ -7,7 +8,7 @@ function ResponseBlock({ response }: { response: ResponseWithParticipant }) {
       <Heading size="md">{response.participant.name}</Heading>
       <Text>{response.response_text}</Text>
       {response.image_urls.map((url) => {
-        return <Image src={"https://du32exnxihxuf.cloudfront.net/" + url} />;
+        return <S3Image s3Key={url} alt="IMAGE HERE" key={url} />;
       })}
     </Box>
   );

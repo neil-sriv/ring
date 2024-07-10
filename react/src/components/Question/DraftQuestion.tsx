@@ -1,13 +1,21 @@
 import { Box, Heading, Textarea } from "@chakra-ui/react";
-import { PublicQuestion, QuestionsService, UserLinked } from "../../client";
+import {
+  PublicQuestion,
+  QuestionsService,
+  ResponsesService,
+  UserLinked,
+} from "../../client";
 import { useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import useCustomToast from "../../hooks/useCustomToast";
-import SingleUploadImage from "../Common/SingleUploadImage";
+import { S3Image, SingleUploadImage } from "../Common/SingleUploadImage";
 
 type ResponseBlockProps = {
+  uploadFunction?: (file: File) => Promise<void>;
+  questionApiId: string;
   responseText: string;
   submitResponse: (responseText: string) => Promise<void>;
+  imageUrls?: string[];
 };
 
 function ResponseBlock(props: ResponseBlockProps) {
@@ -20,6 +28,7 @@ function ResponseBlock(props: ResponseBlockProps) {
   return (
     <Box my="10px">
       <Textarea
+        // key={props.questionApiId}
         size="md"
         variant="filled"
         value={responseText}
@@ -31,7 +40,15 @@ function ResponseBlock(props: ResponseBlockProps) {
           }
         }}
       />
-      <SingleUploadImage />
+      {props.imageUrls?.map((url, index) => {
+        return <S3Image s3Key={url} alt="response" key={index} />;
+      })}
+      {props.uploadFunction !== undefined && (
+        <SingleUploadImage
+          onUpdateFile={props.uploadFunction}
+          // key={props.questionApiId}
+        />
+      )}
     </Box>
   );
 }
@@ -74,12 +91,30 @@ function DraftQuestion({
       }
     );
   };
+
+  const handleUpload =
+    response === undefined
+      ? undefined
+      : async (file: File) => {
+          const formData = { response_images: [file] };
+          await ResponsesService.uploadImageResponsesResponseResponseApiIdUploadImagePost(
+            {
+              responseApiId: response?.api_identifier,
+              formData,
+            }
+          );
+        };
+
   return (
     <Box my="20px">
       <Heading>{question.question_text}</Heading>
       <ResponseBlock
+        questionApiId={question.api_identifier}
         responseText={response?.response_text || ""}
         submitResponse={response === undefined ? handleInsert : handleUpdate}
+        uploadFunction={handleUpload}
+        imageUrls={response?.image_urls || []}
+        key={question.api_identifier}
       />
     </Box>
   );
