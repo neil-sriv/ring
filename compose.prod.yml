@@ -7,22 +7,26 @@ services:
       - "${API_PORT}"
     env_file:
       - ./.env
+    platform: linux/amd64
 
   nginx:
     mem_limit: 300m
     volumes:
       - ./prod.nginx.conf:/etc/nginx/conf.d/default.conf:ro
+    platform: linux/amd64
 
   worker:
     image: prod-ring-worker
     env_file:
       - ./.env
     mem_limit: 150m
+    platform: linux/amd64
   beat:
     mem_limit: 150m
     image: prod-ring-beat
     env_file:
       - ./.env
+    platform: linux/amd64
   flower:
     mem_limit: 100m
     image: prod-ring-flower
@@ -30,6 +34,7 @@ services:
       - ./.env
     ports:
       - "8003:5555"
+    platform: linux/amd64
 
   frontend:
     mem_limit: 300m
@@ -40,6 +45,7 @@ services:
       dockerfile: client.Dockerfile
       args:
         - VITE_API_URL=${VITE_API_URL}
+    platform: linux/amd64
       
 
 volumes:

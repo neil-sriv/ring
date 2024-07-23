@@ -5,9 +5,11 @@ WORKDIR /app
 
 COPY package*.json /app/
 
-RUN yarn
-
 COPY ./ /app/
+
+RUN rm -rf node_modules
+
+RUN yarn
 
 ARG VITE_API_URL=${VITE_API_URL}
 
