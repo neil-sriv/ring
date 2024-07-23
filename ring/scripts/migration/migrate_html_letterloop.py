@@ -216,7 +216,10 @@ def _parse_asked_question_text(question: PageElement) -> tuple[str | None, str]:
     author_name = None
     parts = question.contents[0].contents
     if len(parts) > 1:
-        author_name = parts[0].string.split(" asked:")[0]
+        if not parts[0].string:
+            author_name = question.contents[0].text.split(" asked:")[0]
+        else:
+            author_name = parts[0].string.split(" asked:")[0]
     return author_name, parts[-1].string
 
 
