@@ -159,6 +159,11 @@ def _parse_question(db: Session, letter: Letter, question_stack: Tag) -> Questio
             response_text = ""
             idx = 2
             while first_content.contents[idx].name != "button":
+                if (
+                    not first_content.contents[idx].string
+                    and not first_content.contents[idx].contents
+                ):
+                    break
                 curr_str = (
                     first_content.contents[idx].string
                     or first_content.contents[idx].contents[0].string
@@ -191,8 +196,9 @@ def _parse_question(db: Session, letter: Letter, question_stack: Tag) -> Questio
                 elif curr_str:
                     response_text += curr_str
                 idx += 1
-        print(author)
-        [current_user] = [m for m in letter.group.members if m.name == author]
+        print([author])
+        # print([m.name for m in letter.group.members])
+        [current_user] = [m for m in letter.group.members if m.name == author.strip()]
         response = question_crud.add_response(
             db, current_question, current_user, response_text
         )
