@@ -14,9 +14,9 @@ from ring.scripts.script_base import script_di
 
 @script_di()
 def run_script(
-    db: Session, issue_number: int, user_admin_email: str, dry_run: bool = True
+    db: Session, group_name: str, issue_number: int, user_admin_email: str, dry_run: bool = True
 ) -> None:
-    issue_file_path = Path(f"/src/ring/scripts/migration/{issue_number}.txt")
+    issue_file_path = Path(f"/src/ring/scripts/migration/{group_name}/{issue_number}.txt")
     if not issue_file_path.exists():
         raise ValueError(f"File not found: {issue_file_path}")
     user = db.scalars(select(User).where(User.email == user_admin_email)).one_or_none()

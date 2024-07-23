@@ -69,9 +69,15 @@ class Letter(Base, APIIdentified, PydanticModel):
             ),
         )
 
-    def __init__(self, group: Group, send_at: datetime, status: LetterStatus) -> None:
+    def __init__(
+        self,
+        group: Group,
+        send_at: datetime,
+        status: LetterStatus,
+        number: int | None = None,
+    ) -> None:
         APIIdentified.__init__(self)
-        self.number = len(group.letters) + 1
+        self.number = number if number else len(group.letters) + 1
         self.group = group
         self.participants = group.members
         self.send_at = send_at
@@ -79,7 +85,11 @@ class Letter(Base, APIIdentified, PydanticModel):
 
     @classmethod
     def create(
-        cls, group: Group, send_at: datetime, letter_status: LetterStatus
+        cls,
+        group: Group,
+        send_at: datetime,
+        letter_status: LetterStatus,
+        number: int | None = None,
     ) -> Letter:
-        letter = cls(group, send_at, letter_status)
+        letter = cls(group, send_at, letter_status, number=number)
         return letter

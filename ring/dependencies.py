@@ -52,5 +52,9 @@ async def get_unauthenticated_request_dependencies(
     return RequestDependenciesBase(db=db)
 
 
-async def get_s3_client_dependencies() -> S3Client:
+async def a_get_s3_client_dependencies() -> S3Client:
+    return boto3.client("s3")  # type: ignore
+
+
+def get_s3_client_dependencies() -> S3Client:
     return boto3.client("s3")  # type: ignore

@@ -1,4 +1,5 @@
 from __future__ import annotations
+from tempfile import SpooledTemporaryFile
 from typing import TYPE_CHECKING, Sequence
 
 import boto3
@@ -6,7 +7,7 @@ from fastapi import HTTPException, UploadFile
 
 from ring.config import get_config
 from ring.crud import api_identifier as api_identifier_crud
-from ring.dependencies import get_s3_client_dependencies
+from ring.dependencies import a_get_s3_client_dependencies, get_s3_client_dependencies
 from ring.postgres_models.letter_model import Letter
 from ring.postgres_models.response_model import ImageResponseAssociation, Response
 from ring.postgres_models.s3_model import Image
@@ -46,21 +47,42 @@ def add_image_to_response(
     assoc = ImageResponseAssociation(image=image, response=response)
     response.image_associations.append(assoc)
     db.add(response)
-    db.commit()
     return response
 
 
-async def upload_image(
+async def a_upload_image(
     db: Session,
     response: Response,
     response_images: list[UploadFile],
 ) -> Response:
     s3_file_path = f"{response.question.letter.group.api_identifier}/{response.question.letter.api_identifier}/{response.api_identifier}.png"
     # upload image to S3
-    client = await get_s3_client_dependencies()
+    client = await a_get_s3_client_dependencies()
     for image_file in response_images:
         client.upload_fileobj(
             image_file.file,
+            get_config().BUCKET_NAME,
+            s3_file_path,
+        )
+
+    # Update response with _image_file S3 path
+    image = Image.create(s3_url=s3_file_path)
+    add_image_to_response(db, response, image)
+
+    return response
+
+
+def upload_image(
+    db: Session,
+    response: Response,
+    response_images: list[SpooledTemporaryFile],
+) -> Response:
+    s3_file_path = f"{response.question.letter.group.api_identifier}/{response.question.letter.api_identifier}/{response.api_identifier}.png"
+    # upload image to S3
+    client = get_s3_client_dependencies()
+    for image_file in response_images:
+        client.upload_fileobj(
+            image_file,
             get_config().BUCKET_NAME,
             s3_file_path,
         )

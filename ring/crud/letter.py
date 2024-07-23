@@ -27,6 +27,7 @@ def create_letter(
     db: Session,
     group_api_id: str,
     send_at: datetime,
+    number: int | None = None,
     letter_status: LetterStatus = LetterStatus.IN_PROGRESS,
 ) -> Letter:
     group = api_identifier_crud.get_model(
@@ -34,7 +35,7 @@ def create_letter(
         Group,
         api_id=group_api_id,
     )
-    db_letter = Letter.create(group, send_at, letter_status)
+    db_letter = Letter.create(group, send_at, letter_status, number=number)
     db.add(db_letter)
 
     if letter_status == LetterStatus.IN_PROGRESS:

@@ -41,7 +41,10 @@ dependencies = [
     "ipython-autoimport",
     "ipython-autotime",
     "pprintpp",
+    "ruff",
+    "bs4",
+    "requests",
 ]
 
 [project.scripts]
-dev = "dev_util.dev:dev"
+ring = "dev_util.dev:dev"

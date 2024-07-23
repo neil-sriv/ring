@@ -53,7 +53,7 @@ async def upload_image(
     update_response = api_identifier_crud.get_model(
         req_dep.db, Response, api_id=response_api_id
     )
-    await response_crud.upload_image(
+    await response_crud.a_upload_image(
         req_dep.db,
         update_response,
         response_images,
