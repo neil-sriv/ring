@@ -6,7 +6,16 @@ from sqlalchemy import pool
 from alembic import context
 from ring.config import get_config
 from ring.sqlalchemy_base import Base
-from ring.postgres_models import *  # noqa: F401, F403
+
+from ring.parties.models.group_model import Group  # type: ignore # noqa: F401
+from ring.parties.models.user_model import User  # type: ignore # noqa: F401
+from ring.letters.models.letter_model import Letter  # type: ignore # noqa: F401
+from ring.letters.models.question_model import Question  # type: ignore # noqa: F401
+from ring.letters.models.response_model import Response  # type: ignore # noqa: F401
+from ring.tasks.models.schedule_model import Schedule  # type: ignore # noqa: F401
+from ring.tasks.models.task_model import Task  # type: ignore # noqa: F401
+from ring.s3.models.s3_model import Image, S3File  # type: ignore # noqa: F401
+
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.
