@@ -107,7 +107,13 @@ function DraftQuestion({
 
   return (
     <Box my="20px">
-      <Heading>{question.question_text}</Heading>
+      {question.author == null ? (
+        <Heading size="md">{question.question_text}</Heading>
+      ) : (
+        <Heading size="md">
+          {question.author.name} asked: {question.question_text}
+        </Heading>
+      )}
       <ResponseBlock
         questionApiId={question.api_identifier}
         responseText={response?.response_text || ""}

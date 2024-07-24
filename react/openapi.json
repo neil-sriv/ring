@@ -1835,11 +1835,23 @@
           "question_text": {
             "type": "string",
             "title": "Question Text"
+          },
+          "author_api_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Author Api Id"
           }
         },
         "type": "object",
         "required": [
-          "question_text"
+          "question_text",
+          "author_api_id"
         ],
         "title": "QuestionCreate"
       },

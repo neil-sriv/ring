@@ -9,6 +9,7 @@ from ring.api_identifier import (
     util as api_identifier_crud,
 )
 from ring.letters.crud import letter as letter_crud, response as response_crud
+from ring.parties.models.user_model import User
 from ring.ring_pydantic import PublicLetter as LetterSchema
 from ring.letters.schemas.letter import LetterCreate
 from ring.letters.models.letter_model import Letter
@@ -85,7 +86,18 @@ async def add_question(
         Letter,
         api_id=letter_api_id,
     )
-    letter_crud.add_question(req_dep.db, db_letter, question.question_text)
+    db_author = (
+        api_identifier_crud.get_model(
+            req_dep.db,
+            User,
+            api_id=question.author_api_id,
+        )
+        if question.author_api_id
+        else None
+    )
+    letter_crud.add_question(
+        req_dep.db, db_letter, question.question_text, author=db_author
+    )
     req_dep.db.refresh(db_letter)
     req_dep.db.commit()
     return db_letter

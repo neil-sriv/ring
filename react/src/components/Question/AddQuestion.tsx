@@ -14,7 +14,12 @@ import {
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { type SubmitHandler, useForm } from "react-hook-form";
 
-import { type ApiError, LettersService, QuestionCreate } from "../../client";
+import {
+  type ApiError,
+  LettersService,
+  QuestionCreate,
+  UserLinked,
+} from "../../client";
 import useCustomToast from "../../hooks/useCustomToast";
 import { useRouter } from "@tanstack/react-router";
 
@@ -30,6 +35,7 @@ interface AddQuestionProps {
 
 const AddQuestion = ({ isOpen, onClose, loopApiId }: AddQuestionProps) => {
   const queryClient = useQueryClient();
+  const currentUser = queryClient.getQueryData<UserLinked>(["currentUser"]);
   const router = useRouter();
   const showToast = useCustomToast();
   const {
@@ -48,6 +54,7 @@ const AddQuestion = ({ isOpen, onClose, loopApiId }: AddQuestionProps) => {
         letterApiId: loopApiId,
         requestBody: {
           question_text: data.question_text,
+          author_api_id: data.author_api_id,
         },
       }),
     onSuccess: () => {
@@ -66,7 +73,10 @@ const AddQuestion = ({ isOpen, onClose, loopApiId }: AddQuestionProps) => {
   });
 
   const onSubmit: SubmitHandler<QuestionFormProps> = (data) => {
-    mutation.mutate({ question_text: data.questionText });
+    mutation.mutate({
+      question_text: data.questionText,
+      author_api_id: currentUser!.api_identifier,
+    });
   };
 
   return (

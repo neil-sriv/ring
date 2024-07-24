@@ -7,7 +7,7 @@ class QuestionBase(BaseModel):
 
 
 class QuestionCreate(QuestionBase):
-    pass
+    author_api_id: str | None
 
 
 class Question(QuestionBase):

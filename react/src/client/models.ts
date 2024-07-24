@@ -100,6 +100,7 @@ export type PublicQuestion = {
 
 export type QuestionCreate = {
 	question_text: string;
+	author_api_id: string | null;
 };
 
 
