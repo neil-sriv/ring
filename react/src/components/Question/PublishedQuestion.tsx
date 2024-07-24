@@ -21,7 +21,13 @@ function PublishedQuestion({
 }): JSX.Element {
   return (
     <Box my="20px">
-      <Heading>{question.question_text}</Heading>
+      {question.author == null ? (
+        <Heading size="lg">{question.question_text}</Heading>
+      ) : (
+        <Heading size="lg">
+          {question.author.name} asked: {question.question_text}
+        </Heading>
+      )}
       {question.responses.map((response) => {
         return (
           <ResponseBlock response={response} key={response.api_identifier} />

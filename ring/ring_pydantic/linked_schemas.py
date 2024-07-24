@@ -49,6 +49,7 @@ class QuestionLinked(Question):
 
 class PublicQuestion(Question):
     responses: list["ResponseWithParticipant"]
+    author: Optional["UserUnlinked"]
 
 
 class ResponseLinked(Response, WithImageMixin):

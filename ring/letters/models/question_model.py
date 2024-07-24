@@ -37,7 +37,12 @@ class Question(Base, APIIdentified, PydanticModel):
     letter_id: Mapped[int] = mapped_column(ForeignKey("letter.id"))
     letter: Mapped["Letter"] = relationship(back_populates="questions")
 
-    def __init__(self, letter: Letter, question_text: str, author: User | None) -> None:
+    def __init__(
+        self,
+        letter: Letter,
+        question_text: str,
+        author: User | None,
+    ) -> None:
         APIIdentified.__init__(self)
         self.letter = letter
         self.question_text = question_text

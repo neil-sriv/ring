@@ -1809,13 +1809,24 @@
             },
             "type": "array",
             "title": "Responses"
+          },
+          "author": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/UserUnlinked"
+              },
+              {
+                "type": "null"
+              }
+            ]
           }
         },
         "type": "object",
         "required": [
           "question_text",
           "api_identifier",
-          "responses"
+          "responses",
+          "author"
         ],
         "title": "PublicQuestion"
       },

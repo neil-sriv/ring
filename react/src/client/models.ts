@@ -93,6 +93,7 @@ export type PublicQuestion = {
 	question_text: string;
 	api_identifier: string;
 	responses: Array<ResponseWithParticipant>;
+	author: UserUnlinked | null;
 };
 
 

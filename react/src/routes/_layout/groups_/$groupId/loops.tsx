@@ -106,9 +106,11 @@ function LoopsContent() {
       <LoopNav loops={props.loops} groupId={groupId} />
       <Container maxW="container.lg" py={4}>
         <SimpleGrid columns={4} gap={4}>
-          {props.loops.map((loop) => (
-            <LoopCard key={loop.api_identifier} loop={loop} />
-          ))}
+          {props.loops
+            .sort((a, b) => a.number - b.number)
+            .map((loop) => (
+              <LoopCard key={loop.api_identifier} loop={loop} />
+            ))}
         </SimpleGrid>
       </Container>
     </Container>

@@ -243,6 +243,15 @@ export const $PublicQuestion = {
 	},
 	isRequired: true,
 },
+		author: {
+	type: 'any-of',
+	contains: [{
+	type: 'UserUnlinked',
+}, {
+	type: 'null',
+}],
+	isRequired: true,
+},
 	},
 } as const;
 
