@@ -2,10 +2,10 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 from sqlalchemy import ForeignKey, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column, relationship
-from ring.pydantic.pydantic_model import PydanticModel
+from ring.ring_pydantic.pydantic_model import PydanticModel
 from ring.tasks.models.task_model import Task
 
-from ring.pydantic.linked_schemas import ScheduleLinked
+from ring.ring_pydantic.linked_schemas import ScheduleLinked
 from ring.sqlalchemy_base import Base
 
 if TYPE_CHECKING:

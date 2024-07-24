@@ -3,8 +3,7 @@ from __future__ import annotations
 from typing import Callable
 from sqlalchemy.orm import Session
 from ring.email_util import construct_email, send_email
-from ring.postgres_models import Task
-from ring.tasks.models.task_model import SendEmailTask, TaskStatus, TaskType
+from ring.tasks.models.task_model import SendEmailTask, TaskStatus, TaskType, Task
 from ring.sqlalchemy_base import get_db
 from ring.worker.celery_app import CeleryTask, register_task_factory  # type: ignore
 from ring.letters.crud import letter as letter_crud

@@ -9,7 +9,7 @@ from ring.api_identifier import (
     util as api_identifier_crud,
 )
 from ring.letters.crud import letter as letter_crud, response as response_crud
-from ring.pydantic import PublicLetter as LetterSchema
+from ring.ring_pydantic import PublicLetter as LetterSchema
 from ring.letters.schemas.letter import LetterCreate
 from ring.letters.models.letter_model import Letter
 from ring.letters.schemas.question import QuestionCreate

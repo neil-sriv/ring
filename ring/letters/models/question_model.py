@@ -4,15 +4,14 @@ from sqlalchemy import ForeignKey, Text
 from sqlalchemy.orm import relationship, Mapped, mapped_column
 from ring.api_identifier.api_identified_model import APIIdentified
 
-from ring.pydantic.pydantic_model import PydanticModel
+from ring.ring_pydantic.pydantic_model import PydanticModel
 from ring.parties.models.user_model import User
-from ring.pydantic.linked_schemas import QuestionLinked
+from ring.ring_pydantic.linked_schemas import QuestionLinked
 from ring.sqlalchemy_base import Base
 
 if TYPE_CHECKING:
     from ring.letters.models.letter_model import Letter
 
-    # from ring.postgres_models.user_model import User
     from ring.letters.models.response_model import Response
 
 

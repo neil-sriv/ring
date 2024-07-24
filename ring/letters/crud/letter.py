@@ -4,7 +4,8 @@ from typing import TYPE_CHECKING, Sequence
 
 from sqlalchemy import select
 from ring.api_identifier import util as api_identifier_crud
-from ring.postgres_models import Letter, Group
+from ring.letters.models.letter_model import Letter
+from ring.parties.models.group_model import Group
 from ring.tasks.crud import schedule as schedule_crud
 from ring.letters.constants import LetterStatus
 from ring.letters.models.question_model import Question

@@ -5,8 +5,8 @@ from sqlalchemy.orm import relationship, Mapped, mapped_column
 from sqlalchemy.ext.hybrid import hybrid_property
 from ring.api_identifier.api_identified_model import APIIdentified
 
-from ring.pydantic.pydantic_model import PydanticModel
-from ring.pydantic.linked_schemas import GroupLinked
+from ring.ring_pydantic.pydantic_model import PydanticModel
+from ring.ring_pydantic.linked_schemas import GroupLinked
 from ring.sqlalchemy_base import Base
 from ring.parties.models.user_group_assocation import user_group_association
 from ring.tasks.models.schedule_model import Schedule

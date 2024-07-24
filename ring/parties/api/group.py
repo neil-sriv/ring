@@ -10,7 +10,7 @@ from ring.api_identifier import (
     util as api_identifier_crud,
 )
 from ring.parties.crud import group as group_crud
-from ring.pydantic import GroupLinked as GroupSchema
+from ring.ring_pydantic import GroupLinked as GroupSchema
 from ring.parties.schemas.group import GroupCreate, GroupUpdate
 from ring.tasks.schemas.schedule import ScheduleSendParam
 from ring.parties.models.group_model import Group

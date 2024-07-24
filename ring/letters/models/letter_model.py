@@ -15,8 +15,8 @@ from sqlalchemy.ext.declarative import declared_attr
 from ring.letters.constants import LetterStatus
 from ring.api_identifier.api_identified_model import APIIdentified
 
-from ring.pydantic.pydantic_model import PydanticModel
-from ring.pydantic.linked_schemas import LetterLinked
+from ring.ring_pydantic.pydantic_model import PydanticModel
+from ring.ring_pydantic.linked_schemas import LetterLinked
 from ring.sqlalchemy_base import Base
 
 if TYPE_CHECKING:

@@ -10,8 +10,8 @@ from ring.dependencies import (
 from fastapi import HTTPException
 from ring.api_identifier import util as api_identifier_crud
 from ring.parties.crud import user as user_crud
-from ring.pydantic import UserLinked as UserSchema
-from ring.pydantic.core import ResponseMessage
+from ring.ring_pydantic import UserLinked as UserSchema
+from ring.ring_pydantic.core import ResponseMessage
 from ring.parties.schemas.user import (
     UserCreate,
     UserUpdate,

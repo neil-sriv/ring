@@ -10,7 +10,7 @@ from ring.api_identifier import (
 from ring.letters.crud import question as question_crud
 from ring.letters.models.question_model import Question
 from ring.letters.models.response_model import Response
-from ring.pydantic.linked_schemas import QuestionLinked
+from ring.ring_pydantic.linked_schemas import QuestionLinked
 from ring.letters.schemas.response import ResponseUpsert
 
 router = APIRouter()

@@ -9,7 +9,7 @@ from ring.api_identifier import (
 )
 from ring.letters.crud import question as question_crud, response as response_crud
 from ring.letters.models.response_model import Response
-from ring.pydantic.linked_schemas import ResponseLinked
+from ring.ring_pydantic.linked_schemas import ResponseLinked
 from ring.letters.schemas.response import ResponseCreateBase
 
 router = APIRouter()

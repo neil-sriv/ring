@@ -2,7 +2,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, Sequence
 
 from sqlalchemy import select
-from ring.postgres_models import Letter
+from ring.letters.models.letter_model import Letter
 from ring.api_identifier import util as api_identifier_crud
 from ring.letters.models.question_model import Question
 from ring.letters.models.response_model import Response

@@ -2,7 +2,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, Optional, Sequence
 
 from sqlalchemy import select
-from ring.postgres_models import User
+from ring.parties.models.user_model import User
 from ring.security import get_password_hash, verify_password
 
 if TYPE_CHECKING:

@@ -8,10 +8,10 @@ from typing import TYPE_CHECKING
 from ring.tasks.crud import (
     schedule as schedule_crud,
 )
-from ring.pydantic import ScheduleLinked as ScheduleSchema
+from ring.ring_pydantic import ScheduleLinked as ScheduleSchema
 
 if TYPE_CHECKING:
-    from ring.postgres_models import Schedule
+    from ring.tasks.models.schedule_model import Schedule
 
 router = APIRouter()
 
