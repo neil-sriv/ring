@@ -1,5 +1,9 @@
+from ring.api_identifier import util as api_identifier_crud
+from ring.letters.crud import letter as letter_crud, question as question_crud
+from ring.parties.crud import group as group_crud, user as user_crud
 from ring.scripts.script_base import script_di
 from ring.sqlalchemy_base import Session
+from ring.tasks.crud import schedule as schedule_crud
 
 
 def _autoreload():
@@ -19,13 +23,7 @@ def run_script(db: Session) -> None:
     import ring
     from ring.lib.util import get_all_subclasses
     from ring.sqlalchemy_base import Base
-    from ring.crud import (
-        user as user_crud,
-        group as group_crud,
-        api_identifier as api_identifier_crud,
-        letter as letter_crud,
-        question as question_crud,
-        schedule as schedule_crud,
+    from ring.tasks.crud import (
         task as task_crud,
     )
 

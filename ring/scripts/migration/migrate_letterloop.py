@@ -2,21 +2,27 @@ from datetime import datetime
 from pathlib import Path
 from pprint import pp
 from sqlalchemy import select
-import ring.crud.question as question_crud
-import ring.crud.letter as letter_crud
-from ring.postgres_models.group_model import Group
-from ring.postgres_models.letter_model import Letter
-from ring.letter.enums import LetterStatus
-from ring.postgres_models.user_model import User
+import ring.letters.crud.question as question_crud
+import ring.letters.crud.letter as letter_crud
+from ring.parties.models.group_model import Group
+from ring.letters.models.letter_model import Letter
+from ring.letters.constants import LetterStatus
+from ring.parties.models.user_model import User
 from ring.sqlalchemy_base import Session
 from ring.scripts.script_base import script_di
 
 
 @script_di()
 def run_script(
-    db: Session, group_name: str, issue_number: int, user_admin_email: str, dry_run: bool = True
+    db: Session,
+    group_name: str,
+    issue_number: int,
+    user_admin_email: str,
+    dry_run: bool = True,
 ) -> None:
-    issue_file_path = Path(f"/src/ring/scripts/migration/{group_name}/{issue_number}.txt")
+    issue_file_path = Path(
+        f"/src/ring/scripts/migration/{group_name}/{issue_number}.txt"
+    )
     if not issue_file_path.exists():
         raise ValueError(f"File not found: {issue_file_path}")
     user = db.scalars(select(User).where(User.email == user_admin_email)).one_or_none()

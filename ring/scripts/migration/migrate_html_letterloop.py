@@ -5,16 +5,16 @@ import re
 import tempfile
 import requests
 from sqlalchemy import select
-import ring.crud.question as question_crud
-import ring.crud.letter as letter_crud
-from ring.crud.response import add_image_to_response, upload_image
-from ring.postgres_models.group_model import Group
-from ring.postgres_models.letter_model import Letter
-from ring.letter.enums import LetterStatus
-from ring.postgres_models.question_model import Question
-from ring.postgres_models.response_model import Response
-from ring.postgres_models.s3_model import Image
-from ring.postgres_models.user_model import User
+import ring.letters.crud.question as question_crud
+import ring.letters.crud.letter as letter_crud
+from ring.letters.crud.response import add_image_to_response, upload_image
+from ring.parties.models.group_model import Group
+from ring.letters.models.letter_model import Letter
+from ring.letters.constants import LetterStatus
+from ring.letters.models.question_model import Question
+from ring.letters.models.response_model import Response
+from ring.s3.models.s3_model import Image
+from ring.parties.models.user_model import User
 from ring.sqlalchemy_base import Session
 from ring.scripts.script_base import script_di
 from bs4 import BeautifulSoup, PageElement, Tag

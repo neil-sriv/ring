@@ -1,10 +1,11 @@
 import json
 from pprint import pp
 from typing import Any
-from ring.postgres_models.group_model import Group
+from ring.parties.crud import group as group_crud
+from ring.parties.models.group_model import Group
 from ring.sqlalchemy_base import Session
 from ring.scripts.script_base import script_di
-from ring.crud import group as group_crud, user as user_crud
+from ring.parties.crud import user as user_crud
 import os
 
 

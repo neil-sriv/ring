@@ -7,8 +7,8 @@ import boto3
 from fastapi import Depends, HTTPException, status
 from mypy_boto3_s3 import S3Client
 from ring.security import decode_token, oauth2_scheme
-from ring.crud import user as user_crud
-from ring.postgres_models.user_model import User
+from ring.parties.crud import user as user_crud
+from ring.parties.models.user_model import User
 from ring.sqlalchemy_base import get_db
 
 if TYPE_CHECKING:
