@@ -3,6 +3,7 @@ from __future__ import annotations
 from typing import Callable
 from sqlalchemy.orm import Session
 from ring.email_util import send_email, construct_html_email
+from ring.letters.constants import LetterStatus
 from ring.tasks.models.task_model import SendEmailTask, TaskStatus, TaskType, Task
 from ring.sqlalchemy_base import get_db
 from ring.worker.celery_app import CeleryTask, register_task_factory  # type: ignore
@@ -11,7 +12,14 @@ from ring.letters.crud import letter as letter_crud
 
 def execute_send_email_task(db: Session, task: SendEmailTask) -> None:
     group = task.schedule.group
-    letter_to_send = group.letters[-1]
+    letter_to_send = sorted(
+        [
+            letter
+            for letter in group.letters
+            if letter.status == LetterStatus.IN_PROGRESS
+        ],
+        key=lambda l: l.number,
+    )[-1]
     send_email(
         construct_html_email(
             [u.email for u in letter_to_send.participants],
@@ -21,6 +29,7 @@ def execute_send_email_task(db: Session, task: SendEmailTask) -> None:
         )
     )
     task.status = TaskStatus.COMPLETED
+    letter_to_send.status = LetterStatus.SENT
     db.add(task)
     db.commit()
 

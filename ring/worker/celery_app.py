@@ -12,7 +12,7 @@ def celerybeat_schedule() -> dict:
     return {
         "poll_schedule": {
             "task": "poll_schedule",
-            "schedule": crontab(hour="*/1"),
+            "schedule": crontab(),
         }
     }
 

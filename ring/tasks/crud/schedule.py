@@ -36,18 +36,14 @@ def register_task(
 
 def collect_pending_tasks(
     db: Session,
-    recent_hour: datetime.datetime,
+    recent_time: datetime.datetime,
 ) -> Sequence[Task]:
-    missed_tasks_filter = and_(
-        Task.status == TaskStatus.PENDING,
-        Task.execute_at < recent_hour,
-    )
-    scheduled_tasks_filter = and_(
-        Task.status == TaskStatus.PENDING, Task.execute_at == recent_hour
-    )
     tasks = db.scalars(
         select(Task)
-        .filter(or_(missed_tasks_filter, scheduled_tasks_filter))
+        .where(
+            or_(Task.execute_at < recent_time, Task.execute_at == recent_time),
+            Task.status == TaskStatus.PENDING,
+        )
         .order_by(Task.schedule_id, Task.type, Task.execute_at)
     ).all()
 
@@ -66,9 +62,7 @@ def poll_schedule_task(self: CeleryTask) -> dict[str, str]:
 
     time.sleep(5)
     db = next(get_db())
-    hour_floor = datetime.datetime.now(datetime.UTC).replace(
-        minute=0, second=0, microsecond=0
-    )
+    hour_floor = datetime.datetime.now(datetime.UTC)
     tasks = schedule_crud.collect_pending_tasks(db, hour_floor)
     schedule_crud.execute_tasks(
         db,
