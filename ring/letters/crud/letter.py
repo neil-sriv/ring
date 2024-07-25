@@ -60,10 +60,21 @@ def add_question(
     return question
 
 
-def compile_letter_dict(letter: Letter) -> dict[str, list[str]]:
+def compile_letter_dict(letter: Letter) -> dict[str, list[tuple[str, list[str]]]]:
+    def construct_question_text(question: Question) -> str:
+        return (
+            f"{question.author.name}: {question.question_text}"
+            if question.author
+            else question.question_text
+        )
+
     return {
-        q.question_text: [
-            f"{resp.participant.name}: {resp.response_text}" for resp in q.responses
+        construct_question_text(q): [
+            (
+                f"{resp.participant.name}: {resp.response_text}",
+                [assoc.image.qualified_s3_url for assoc in resp.image_associations],
+            )
+            for resp in q.responses
         ]
         for q in letter.questions
     }

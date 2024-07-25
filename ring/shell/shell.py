@@ -15,7 +15,14 @@ def _autoreload():
 
 @script_di()
 def run_script(db: Session) -> None:
-    import ring.postgres_models
+    # import ring.postgres_models
+    from ring.parties.models.group_model import Group
+    from ring.parties.models.user_model import User
+    from ring.letters.models.letter_model import Letter
+    from ring.letters.models.question_model import Question
+    from ring.letters.models.response_model import Response
+    from ring.tasks.models.schedule_model import Schedule
+    from ring.tasks.models.task_model import Task
     import sqlalchemy
     import click
     from IPython import embed  # type: ignore

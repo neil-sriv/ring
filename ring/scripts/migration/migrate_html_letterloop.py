@@ -24,27 +24,30 @@ from bs4 import BeautifulSoup, PageElement, Tag
 def run_script(
     db: Session,
     group_name: str,
-    issue_number: int,
+    issue_numbers: list[int],
     user_admin_email: str,
     dry_run: bool = True,
 ) -> None:
-    issue_file_path = Path(
-        f"/src/ring/scripts/migration/{group_name}/{issue_number}.html"
-    )
-    if not issue_file_path.exists():
-        raise ValueError(f"File not found: {issue_file_path}")
-    user = db.scalars(select(User).where(User.email == user_admin_email)).one_or_none()
-    assert user is not None, f"User not found: {user_admin_email}"
-    with open(issue_file_path) as f:
-        soup = BeautifulSoup(f, "html.parser")
-    try:
-        _parse_issue(db, soup, user)
-    except Exception as e:
-        pp(e)
-        db.rollback()
-        raise e
+    for issue_number in issue_numbers:
+        issue_file_path = Path(
+            f"/src/ring/scripts/migration/{group_name}/{issue_number}.html"
+        )
+        if not issue_file_path.exists():
+            raise ValueError(f"File not found: {issue_file_path}")
+        user = db.scalars(
+            select(User).where(User.email == user_admin_email)
+        ).one_or_none()
+        assert user is not None, f"User not found: {user_admin_email}"
+        with open(issue_file_path) as f:
+            soup = BeautifulSoup(f, "html.parser")
+        try:
+            _parse_issue(db, soup, user)
+        except Exception as e:
+            pp(e)
+            db.rollback()
+            raise e
 
-    pp("Issue parsed successfully")
+        pp("Issue parsed successfully")
     if dry_run:
         pp("Dry run, rolling back")
         db.rollback()

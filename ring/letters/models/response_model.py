@@ -7,11 +7,11 @@ from ring.api_identifier.api_identified_model import APIIdentified
 from ring.ring_pydantic.pydantic_model import PydanticModel
 from ring.ring_pydantic.linked_schemas import ResponseLinked
 from ring.sqlalchemy_base import Base
+from ring.s3.models.s3_model import Image
 
 if TYPE_CHECKING:
     from ring.parties.models.user_model import User
     from ring.letters.models.question_model import Question
-    from ring.s3.models.s3_model import Image
 
 
 class ImageResponseAssociation(Base):

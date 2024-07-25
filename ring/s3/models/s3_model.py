@@ -3,6 +3,7 @@ from typing import TYPE_CHECKING
 from sqlalchemy import ForeignKey
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from ring.sqlalchemy_base import Base
+from sqlalchemy.ext.hybrid import hybrid_property
 
 if TYPE_CHECKING:
     from ring.letters.models.response_model import ImageResponseAssociation
@@ -20,6 +21,10 @@ class S3File(Base):
         "polymorphic_identity": "s3_file",
         "polymorphic_on": "type",
     }
+
+    @hybrid_property
+    def qualified_s3_url(self) -> str:
+        return "https://du32exnxihxuf.cloudfront.net/" + self.s3_url
 
 
 class Image(S3File):

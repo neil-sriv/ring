@@ -7,10 +7,10 @@ from ring.ring_pydantic.pydantic_model import PydanticModel
 from ring.ring_pydantic.linked_schemas import UserLinked
 from ring.sqlalchemy_base import Base
 from ring.parties.models.user_group_assocation import user_group_association
+from ring.letters.models.response_model import Response
 
 if TYPE_CHECKING:
     from ring.parties.models.group_model import Group
-    from ring.letters.models.response_model import Response
 
 
 class User(Base, APIIdentified, PydanticModel):
