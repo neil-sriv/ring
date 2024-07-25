@@ -4,6 +4,7 @@ from sqlalchemy import ForeignKey, Integer, Text, UniqueConstraint
 from sqlalchemy.orm import relationship, Mapped, mapped_column
 from ring.api_identifier.api_identified_model import APIIdentified
 
+from ring.created_at import CreatedAtMixin
 from ring.ring_pydantic.pydantic_model import PydanticModel
 from ring.ring_pydantic.linked_schemas import ResponseLinked
 from ring.sqlalchemy_base import Base
@@ -32,7 +33,7 @@ class ImageResponseAssociation(Base):
     )
 
 
-class Response(Base, APIIdentified, PydanticModel):
+class Response(Base, APIIdentified, PydanticModel, CreatedAtMixin):
     __tablename__ = "response"
 
     API_ID_PREFIX = "rspn"

@@ -4,6 +4,7 @@ from sqlalchemy import ForeignKey, Text
 from sqlalchemy.orm import relationship, Mapped, mapped_column
 from ring.api_identifier.api_identified_model import APIIdentified
 
+from ring.created_at import CreatedAtMixin
 from ring.ring_pydantic.pydantic_model import PydanticModel
 from ring.parties.models.user_model import User
 from ring.ring_pydantic.linked_schemas import QuestionLinked
@@ -15,7 +16,7 @@ if TYPE_CHECKING:
     from ring.letters.models.response_model import Response
 
 
-class Question(Base, APIIdentified, PydanticModel):
+class Question(Base, APIIdentified, PydanticModel, CreatedAtMixin):
     __tablename__ = "question"
 
     API_ID_PREFIX = "qstn"

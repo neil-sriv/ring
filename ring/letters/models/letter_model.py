@@ -12,6 +12,7 @@ from sqlalchemy import (
 )
 from sqlalchemy.orm import relationship, Mapped, mapped_column
 from sqlalchemy.ext.declarative import declared_attr
+from ring.created_at import CreatedAtMixin
 from ring.letters.constants import LetterStatus
 from ring.api_identifier.api_identified_model import APIIdentified
 
@@ -33,7 +34,7 @@ letter_to_user_assocation = Table(
 )
 
 
-class Letter(Base, APIIdentified, PydanticModel):
+class Letter(Base, APIIdentified, PydanticModel, CreatedAtMixin):
     __tablename__ = "letter"
 
     API_ID_PREFIX = "lttr"
