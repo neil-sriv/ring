@@ -76,6 +76,11 @@ export const $GroupLinked = {
 	type: 'string',
 	isRequired: true,
 },
+		created_at: {
+	type: 'string',
+	isRequired: true,
+	format: 'date-time',
+},
 		members: {
 	type: 'array',
 	contains: {
@@ -111,6 +116,11 @@ export const $GroupUnlinked = {
 		api_identifier: {
 	type: 'string',
 	isRequired: true,
+},
+		created_at: {
+	type: 'string',
+	isRequired: true,
+	format: 'date-time',
 },
 	},
 } as const;
@@ -177,6 +187,11 @@ export const $LetterUnlinked = {
 	isRequired: true,
 	format: 'date-time',
 },
+		created_at: {
+	type: 'string',
+	isRequired: true,
+	format: 'date-time',
+},
 	},
 } as const;
 
@@ -212,6 +227,11 @@ export const $PublicLetter = {
 	isRequired: true,
 	format: 'date-time',
 },
+		created_at: {
+	type: 'string',
+	isRequired: true,
+	format: 'date-time',
+},
 		group: {
 	type: 'GroupUnlinked',
 	isRequired: true,
@@ -235,6 +255,11 @@ export const $PublicQuestion = {
 		api_identifier: {
 	type: 'string',
 	isRequired: true,
+},
+		created_at: {
+	type: 'string',
+	isRequired: true,
+	format: 'date-time',
 },
 		responses: {
 	type: 'array',
@@ -283,6 +308,11 @@ export const $QuestionLinked = {
 	type: 'string',
 	isRequired: true,
 },
+		created_at: {
+	type: 'string',
+	isRequired: true,
+	format: 'date-time',
+},
 		letter: {
 	type: 'LetterUnlinked',
 	isRequired: true,
@@ -307,6 +337,11 @@ export const $QuestionUnlinked = {
 	type: 'string',
 	isRequired: true,
 },
+		created_at: {
+	type: 'string',
+	isRequired: true,
+	format: 'date-time',
+},
 	},
 } as const;
 
@@ -328,6 +363,11 @@ export const $ResponseLinked = {
 		api_identifier: {
 	type: 'string',
 	isRequired: true,
+},
+		created_at: {
+	type: 'string',
+	isRequired: true,
+	format: 'date-time',
 },
 		question: {
 	type: 'QuestionUnlinked',
@@ -367,6 +407,11 @@ export const $ResponseUnlinked = {
 	type: 'string',
 	isRequired: true,
 },
+		created_at: {
+	type: 'string',
+	isRequired: true,
+	format: 'date-time',
+},
 	},
 } as const;
 
@@ -404,6 +449,11 @@ export const $ResponseWithParticipant = {
 		api_identifier: {
 	type: 'string',
 	isRequired: true,
+},
+		created_at: {
+	type: 'string',
+	isRequired: true,
+	format: 'date-time',
 },
 		participant: {
 	type: 'UserUnlinked',

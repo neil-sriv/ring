@@ -25,6 +25,7 @@ export type GroupCreate = {
 export type GroupLinked = {
 	name: string;
 	api_identifier: string;
+	created_at: string;
 	members: Array<UserUnlinked>;
 	letters: Array<LetterUnlinked>;
 	schedule: ScheduleUnlinked | null;
@@ -35,6 +36,7 @@ export type GroupLinked = {
 export type GroupUnlinked = {
 	name: string;
 	api_identifier: string;
+	created_at: string;
 };
 
 
@@ -67,6 +69,7 @@ export type LetterUnlinked = {
 	number: number;
 	status: LetterStatus;
 	send_at: string;
+	created_at: string;
 };
 
 
@@ -83,6 +86,7 @@ export type PublicLetter = {
 	number: number;
 	status: LetterStatus;
 	send_at: string;
+	created_at: string;
 	group: GroupUnlinked;
 	questions: Array<PublicQuestion>;
 };
@@ -92,6 +96,7 @@ export type PublicLetter = {
 export type PublicQuestion = {
 	question_text: string;
 	api_identifier: string;
+	created_at: string;
 	responses: Array<ResponseWithParticipant>;
 	author: UserUnlinked | null;
 };
@@ -108,6 +113,7 @@ export type QuestionCreate = {
 export type QuestionLinked = {
 	question_text: string;
 	api_identifier: string;
+	created_at: string;
 	letter: LetterUnlinked;
 	responses: Array<ResponseUnlinked>;
 };
@@ -117,6 +123,7 @@ export type QuestionLinked = {
 export type QuestionUnlinked = {
 	question_text: string;
 	api_identifier: string;
+	created_at: string;
 };
 
 
@@ -130,6 +137,7 @@ export type ResponseCreateBase = {
 export type ResponseLinked = {
 	response_text: string;
 	api_identifier: string;
+	created_at: string;
 	question: QuestionUnlinked;
 	participant: UserUnlinked;
 	readonly image_urls: Array<string>;
@@ -146,6 +154,7 @@ export type ResponseMessage = {
 export type ResponseUnlinked = {
 	response_text: string;
 	api_identifier: string;
+	created_at: string;
 };
 
 
@@ -161,6 +170,7 @@ export type ResponseUpsert = {
 export type ResponseWithParticipant = {
 	response_text: string;
 	api_identifier: string;
+	created_at: string;
 	participant: UserUnlinked;
 	readonly image_urls: Array<string>;
 };

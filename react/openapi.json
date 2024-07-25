@@ -1597,6 +1597,11 @@
             "type": "string",
             "title": "Api Identifier"
           },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          },
           "members": {
             "items": {
               "$ref": "#/components/schemas/UserUnlinked"
@@ -1626,6 +1631,7 @@
         "required": [
           "name",
           "api_identifier",
+          "created_at",
           "members",
           "letters",
           "schedule"
@@ -1641,12 +1647,18 @@
           "api_identifier": {
             "type": "string",
             "title": "Api Identifier"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
           }
         },
         "type": "object",
         "required": [
           "name",
-          "api_identifier"
+          "api_identifier",
+          "created_at"
         ],
         "title": "GroupUnlinked"
       },
@@ -1724,6 +1736,11 @@
             "type": "string",
             "format": "date-time",
             "title": "Send At"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
           }
         },
         "type": "object",
@@ -1731,7 +1748,8 @@
           "api_identifier",
           "number",
           "status",
-          "send_at"
+          "send_at",
+          "created_at"
         ],
         "title": "LetterUnlinked"
       },
@@ -1771,6 +1789,11 @@
             "format": "date-time",
             "title": "Send At"
           },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          },
           "group": {
             "$ref": "#/components/schemas/GroupUnlinked"
           },
@@ -1788,6 +1811,7 @@
           "number",
           "status",
           "send_at",
+          "created_at",
           "group",
           "questions"
         ],
@@ -1802,6 +1826,11 @@
           "api_identifier": {
             "type": "string",
             "title": "Api Identifier"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
           },
           "responses": {
             "items": {
@@ -1825,6 +1854,7 @@
         "required": [
           "question_text",
           "api_identifier",
+          "created_at",
           "responses",
           "author"
         ],
@@ -1865,6 +1895,11 @@
             "type": "string",
             "title": "Api Identifier"
           },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          },
           "letter": {
             "$ref": "#/components/schemas/LetterUnlinked"
           },
@@ -1880,6 +1915,7 @@
         "required": [
           "question_text",
           "api_identifier",
+          "created_at",
           "letter",
           "responses"
         ],
@@ -1894,12 +1930,18 @@
           "api_identifier": {
             "type": "string",
             "title": "Api Identifier"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
           }
         },
         "type": "object",
         "required": [
           "question_text",
-          "api_identifier"
+          "api_identifier",
+          "created_at"
         ],
         "title": "QuestionUnlinked"
       },
@@ -1926,6 +1968,11 @@
             "type": "string",
             "title": "Api Identifier"
           },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          },
           "question": {
             "$ref": "#/components/schemas/QuestionUnlinked"
           },
@@ -1945,6 +1992,7 @@
         "required": [
           "response_text",
           "api_identifier",
+          "created_at",
           "question",
           "participant",
           "image_urls"
@@ -1973,12 +2021,18 @@
           "api_identifier": {
             "type": "string",
             "title": "Api Identifier"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
           }
         },
         "type": "object",
         "required": [
           "response_text",
-          "api_identifier"
+          "api_identifier",
+          "created_at"
         ],
         "title": "ResponseUnlinked"
       },
@@ -2027,6 +2081,11 @@
             "type": "string",
             "title": "Api Identifier"
           },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          },
           "participant": {
             "$ref": "#/components/schemas/UserUnlinked"
           },
@@ -2043,6 +2102,7 @@
         "required": [
           "response_text",
           "api_identifier",
+          "created_at",
           "participant",
           "image_urls"
         ],

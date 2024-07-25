@@ -21,6 +21,7 @@ class Letter(LetterBase):
     number: int
     status: LetterStatus
     send_at: datetime
+    created_at: datetime
 
 
 class LetterUnlinked(Letter):
