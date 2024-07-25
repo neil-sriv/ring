@@ -32,7 +32,7 @@ class Question(Base, APIIdentified, PydanticModel):
     author_id: Mapped[int] = mapped_column(
         ForeignKey("user.id"), nullable=True, default=None
     )
-    author: Mapped["User | None"] = relationship(cascade="all")
+    author: Mapped["User | None"] = relationship()
 
     letter_id: Mapped[int] = mapped_column(ForeignKey("letter.id"))
     letter: Mapped["Letter"] = relationship(back_populates="questions")
