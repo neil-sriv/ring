@@ -35,7 +35,7 @@ def execute_send_email_task(db: Session, task: SendEmailTask) -> None:
 def async_send_email_task(self: CeleryTask, task_id: int) -> None:
     task = self.session.query(SendEmailTask).filter(SendEmailTask.id == task_id).one()
     try:
-        execute_send_email_task(db, task)
+        execute_send_email_task(self.session, task)
     except Exception as e:
         task.status = TaskStatus.FAILED
         task.message = str(e)

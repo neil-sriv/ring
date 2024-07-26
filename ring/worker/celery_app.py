@@ -4,6 +4,7 @@ import os
 from celery import Celery
 from celery.schedules import crontab
 
+from ring.config import RingConfig, get_config
 from ring.sqlalchemy_base import SessionLocal
 from sqlalchemy.orm import Session
 from ring.worker.celery_imports import CELERY_IMPORTS
@@ -31,6 +32,7 @@ class CeleryTask(celery.Task):
     def __init__(self):
         super().__init__()
         self.sessions: dict[str, Session] = {}
+        self.config: RingConfig = get_config()
 
     def before_start(self, task_id: str, args, kwargs):
         self.sessions[task_id] = SessionLocal()
