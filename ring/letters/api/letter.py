@@ -36,6 +36,8 @@ async def add_next_letter(
         group_api_id=letter.group_api_identifier,
         send_at=letter.send_at,
     )
+    letter_crud.add_random_questions(req_dep.db, db_letter)
+    letter_crud.add_default_questions(req_dep.db, db_letter)
     req_dep.db.commit()
     return db_letter
 

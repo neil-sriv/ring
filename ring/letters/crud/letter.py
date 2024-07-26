@@ -1,5 +1,6 @@
 from __future__ import annotations
 from datetime import datetime
+from random import randint
 from typing import TYPE_CHECKING, Sequence
 
 from sqlalchemy import select
@@ -7,7 +8,7 @@ from ring.api_identifier import util as api_identifier_crud
 from ring.letters.models.letter_model import Letter
 from ring.parties.models.group_model import Group
 from ring.tasks.crud import schedule as schedule_crud
-from ring.letters.constants import LetterStatus
+from ring.letters.constants import DEFAULT_QUESTIONS, QUESTION_BANK, LetterStatus
 from ring.letters.models.question_model import Question
 from ring.tasks.models.task_model import TaskType
 from ring.parties.models.user_model import User
@@ -58,6 +59,37 @@ def add_question(
     db.add(question)
     letter.questions.append(question)
     return question
+
+
+def add_default_questions(db: Session, letter: Letter) -> Sequence[Question]:
+    questions = [
+        Question.create(
+            letter,
+            text,
+            author=None,
+        )
+        for text in DEFAULT_QUESTIONS
+    ]
+    db.add_all(questions)
+    letter.questions.extend(questions)
+    return questions
+
+
+def add_random_questions(
+    db: Session, letter: Letter, num_questions: int = 3
+) -> Sequence[Question]:
+    questions: list[Question] = []
+    for _ in range(num_questions):
+        idx = randint(0, len(DEFAULT_QUESTIONS) - 1)
+        question = Question.create(
+            letter,
+            QUESTION_BANK[idx],
+            author=None,
+        )
+        questions.append(question)
+    db.add_all(questions)
+    letter.questions.extend(questions)
+    return questions
 
 
 def compile_letter_dict(letter: Letter) -> dict[str, list[tuple[str, list[str]]]]:
