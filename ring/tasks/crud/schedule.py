@@ -9,7 +9,6 @@ from ring.tasks.crud import task as task_crud
 from ring.tasks.models.schedule_model import Schedule
 from ring.parties.models.group_model import Group
 from ring.tasks.models.task_model import Task, TaskStatus, TaskType
-from ring.sqlalchemy_base import get_db
 from ring.worker.celery_app import CeleryTask, register_task_factory  # type: ignore
 
 if TYPE_CHECKING:
@@ -55,9 +54,9 @@ def poll_schedule_task(self: CeleryTask) -> dict[str, str]:
     from ring.tasks.crud import schedule as schedule_crud
 
     time.sleep(5)
-    db = next(get_db())
+
     hour_floor = datetime.datetime.now(datetime.UTC)
-    tasks = schedule_crud.collect_pending_tasks(db, hour_floor)
+    tasks = schedule_crud.collect_pending_tasks(self.session, hour_floor)
     if tasks:
         task_crud.execute_tasks_async.delay(
             [task.id for task in tasks],
