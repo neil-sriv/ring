@@ -76,5 +76,5 @@ def compile_letter_dict(letter: Letter) -> dict[str, list[tuple[str, list[str]]]
             )
             for resp in q.responses
         ]
-        for q in letter.questions
+        for q in sorted(letter.questions, key=lambda q: q.created_at)
     }
