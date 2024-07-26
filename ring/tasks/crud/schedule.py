@@ -64,12 +64,13 @@ def poll_schedule_task(self: CeleryTask) -> dict[str, str]:
     db = next(get_db())
     hour_floor = datetime.datetime.now(datetime.UTC)
     tasks = schedule_crud.collect_pending_tasks(db, hour_floor)
-    schedule_crud.execute_tasks(
-        db,
-        [task.id for task in tasks],
-        execute_async=True,
-    )
-    print([task.__dict__ for task in tasks])
+    if tasks:
+        schedule_crud.execute_tasks(
+            db,
+            [task.id for task in tasks],
+            execute_async=True,
+        )
+        print([task.__dict__ for task in tasks])
 
     return {
         "status": "success",

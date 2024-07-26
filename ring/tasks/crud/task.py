@@ -28,14 +28,30 @@ def execute_send_email_task(db: Session, task: SendEmailTask) -> None:
             letter_crud.compile_letter_dict(letter_to_send),
         )
     )
-    task.status = TaskStatus.COMPLETED
     letter_to_send.status = LetterStatus.SENT
-    db.add(task)
+    db.commit()
+
+
+@register_task_factory(name="send_email_task")
+def async_send_email_task(self: CeleryTask, task_id: int) -> None:
+    db = next(get_db())
+    task = db.query(SendEmailTask).filter(SendEmailTask.id == task_id).one()
+    try:
+        execute_send_email_task(db, task)
+    except Exception as e:
+        task.status = TaskStatus.FAILED
+        task.message = str(e)
+    else:
+        task.status = TaskStatus.COMPLETED
     db.commit()
 
 
 TASK_TO_EXECUTE_MAPPING: dict[TaskType, Callable[..., None]] = {
     TaskType.SEND_EMAIL: execute_send_email_task,
+}
+
+ASYNC_TASK_TO_EXECUTE_MAPPING: dict[TaskType, Callable[..., None]] = {
+    TaskType.SEND_EMAIL: async_send_email_task
 }
 
 
@@ -52,6 +68,15 @@ def execute_tasks(
         execute_tasks_async.delay(task_ids)  # type: ignore
     tasks = db.query(Task).filter(Task.id.in_(task_ids)).all()
     for task in tasks:
+        task.status = TaskStatus.IN_PROGRESS
+    db.commit()
+    for task in tasks:
         task_type = TaskType(task.type)
-        task_to_execute = TASK_TO_EXECUTE_MAPPING[task_type]
-        task_to_execute(db, task)
+        if task_type in ASYNC_TASK_TO_EXECUTE_MAPPING:
+            task_to_execute = ASYNC_TASK_TO_EXECUTE_MAPPING[task_type]
+            task_to_execute.delay(task.id)  # type: ignore
+        else:
+            task_to_execute = TASK_TO_EXECUTE_MAPPING[task_type]
+            task_to_execute(db, task)
+            task.status = TaskStatus.COMPLETED
+    db.commit()

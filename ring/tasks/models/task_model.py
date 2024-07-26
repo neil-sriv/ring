@@ -14,6 +14,7 @@ class TaskStatus(StrEnum):
     PENDING = "pending"
     IN_PROGRESS = "in_progress"
     COMPLETED = "completed"
+    FAILED = "failed"
 
 
 class TaskType(StrEnum):
@@ -34,6 +35,7 @@ class Task(Base):
     status: Mapped[str] = mapped_column(index=True, nullable=False)
     execute_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), index=True)
     arguments: Mapped[dict[str, str]] = mapped_column(type_=JSON)
+    message: Mapped[str] = mapped_column(nullable=True)
 
     __mapper_args__ = {
         "polymorphic_on": type,
