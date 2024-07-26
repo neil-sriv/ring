@@ -6,7 +6,10 @@ function DraftLoop({ loop }: { loop: PublicLetter }) {
   return (
     <Container>
       {loop.questions
-        .sort((a, b) => a.created_at - b.created_at)
+        .sort(
+          (a, b) =>
+            new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
+        )
         .map((question) => {
           return (
             <DraftQuestion question={question} key={question.api_identifier} />
