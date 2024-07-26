@@ -40,6 +40,7 @@ def async_send_email_task(self: CeleryTask, task_id: int) -> None:
         task.status = TaskStatus.FAILED
         task.message = str(e)
     else:
+        task.message = ""
         task.status = TaskStatus.COMPLETED
     self.session.commit()
 
