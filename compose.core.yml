@@ -30,7 +30,7 @@ services:
       # image: email_circle-worker
     volumes:
       - ./ring:/src/ring
-    command: "celery --app=ring.worker.celery_app worker"
+    command: "celery --app=ring.worker.celery_app worker --loglevel=debug"
     depends_on:
       - redis
   beat:
