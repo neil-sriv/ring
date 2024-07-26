@@ -1,6 +1,7 @@
 from __future__ import annotations
 from datetime import datetime
 from random import randint
+import random
 from typing import TYPE_CHECKING, Sequence
 
 from sqlalchemy import select
@@ -79,11 +80,12 @@ def add_random_questions(
     db: Session, letter: Letter, num_questions: int = 3
 ) -> Sequence[Question]:
     questions: list[Question] = []
-    for _ in range(num_questions):
-        idx = randint(0, len(DEFAULT_QUESTIONS) - 1)
+    texts = random.sample(QUESTION_BANK, num_questions)
+    for text in texts:
+        # idx = randint(0, len(DEFAULT_QUESTIONS) - 1)
         question = Question.create(
             letter,
-            QUESTION_BANK[idx],
+            text,
             author=None,
         )
         questions.append(question)
