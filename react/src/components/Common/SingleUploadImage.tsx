@@ -52,11 +52,13 @@ import { MdAddPhotoAlternate } from "react-icons/md";
 type SingleUploadImageProps = {
   size?: string;
   onUpdateFile(file: File): Promise<void>;
+  name: string;
 };
 
 export function SingleUploadImage({
   size = "50px",
   onUpdateFile,
+  name,
 }: SingleUploadImageProps): JSX.Element {
   const [uploadedFile, setUploadedFile] = useState<File | null>(null);
 
@@ -76,7 +78,7 @@ export function SingleUploadImage({
       w={size}
       h={size}
       as={chakra.label}
-      htmlFor="file"
+      htmlFor={name}
       cursor="pointer"
       overflow="hidden"
       position="relative"
@@ -107,8 +109,10 @@ export function SingleUploadImage({
         required
         style={{ display: "none" }}
         type="file"
-        id="file"
-        name="file"
+        // id="file"
+        // name="file"
+        id={name}
+        name={name}
         onChange={handleFileChange}
       />
     </Center>

@@ -27,7 +27,7 @@ def send_email(draft: EmailDraft) -> Optional[str]:
         print(e.response["Error"]["Message"])
         return None
     else:
-        print("Email sent! Message ID:")
+        print(f"Email sent! Message ID: {response['MessageId']}")
         return response["MessageId"]
 
 

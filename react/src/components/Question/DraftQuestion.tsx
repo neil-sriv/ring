@@ -3,6 +3,7 @@ import {
   PublicQuestion,
   QuestionsService,
   ResponsesService,
+  ResponseWithParticipant,
   UserLinked,
 } from "../../client";
 import { useState } from "react";
@@ -11,15 +12,18 @@ import useCustomToast from "../../hooks/useCustomToast";
 import { S3Image, SingleUploadImage } from "../Common/SingleUploadImage";
 
 type ResponseBlockProps = {
+  // uploadFunction?: (file: File, response_api_id: string) => Promise<void>;
   uploadFunction?: (file: File) => Promise<void>;
   questionApiId: string;
-  responseText: string;
+  response?: ResponseWithParticipant;
   submitResponse: (responseText: string) => Promise<void>;
   imageUrls?: string[];
 };
 
 function ResponseBlock(props: ResponseBlockProps) {
-  const [responseText, setResponseText] = useState(props.responseText);
+  const [responseText, setResponseText] = useState(
+    props.response?.response_text ?? ""
+  );
   const showToast = useCustomToast();
   const handleResponseChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     setResponseText(e.target.value);
@@ -28,13 +32,12 @@ function ResponseBlock(props: ResponseBlockProps) {
   return (
     <Box my="10px">
       <Textarea
-        // key={props.questionApiId}
         size="md"
         variant="filled"
         value={responseText}
         onChange={handleResponseChange}
         onBlur={async () => {
-          if (props.responseText !== responseText) {
+          if (props.response?.response_text !== responseText) {
             await props.submitResponse(responseText);
             showToast("Success!", "Answer saved.", "success");
           }
@@ -43,11 +46,17 @@ function ResponseBlock(props: ResponseBlockProps) {
       {props.imageUrls?.map((url, index) => {
         return <S3Image s3Key={url} alt="response" key={index} />;
       })}
-      {props.uploadFunction !== undefined && (
+      {props.uploadFunction && (
         <SingleUploadImage
           onUpdateFile={props.uploadFunction}
-          // key={props.questionApiId}
+          name={props.questionApiId}
         />
+        // <SingleUploadImage
+        //   onUpdateFile={async (file: File) => {
+        //     await props.uploadFunction(file, props.response?.api_identifier);
+        //   }}
+        //   name={props.response.api_identifier}
+        // />
       )}
     </Box>
   );
@@ -116,8 +125,10 @@ function DraftQuestion({
       )}
       <ResponseBlock
         questionApiId={question.api_identifier}
-        responseText={response?.response_text || ""}
+        response={response}
+        // responseText={response?.response_text || ""}
         submitResponse={response === undefined ? handleInsert : handleUpdate}
+        // uploadFunction={response == null ? undefined : handleUpload}
         uploadFunction={handleUpload}
         imageUrls={response?.image_urls || []}
         key={question.api_identifier}
@@ -127,3 +138,13 @@ function DraftQuestion({
 }
 
 export default DraftQuestion;
+
+// async function handleUpload(file: File, response_api_id: string) {
+//   const formData = { response_images: [file] };
+//   await ResponsesService.uploadImageResponsesResponseResponseApiIdUploadImagePost(
+//     {
+//       responseApiId: response_api_id,
+//       formData,
+//     }
+//   );
+// }
