@@ -50,12 +50,6 @@ def collect_pending_tasks(
     return tasks
 
 
-def execute_tasks(
-    db: Session, task_ids: list[int], execute_async: bool = False
-) -> None:
-    task_crud.execute_tasks(db, task_ids, execute_async)
-
-
 @register_task_factory(name="poll_schedule")
 def poll_schedule_task(self: CeleryTask) -> dict[str, str]:
     from ring.tasks.crud import schedule as schedule_crud
@@ -65,15 +59,12 @@ def poll_schedule_task(self: CeleryTask) -> dict[str, str]:
     hour_floor = datetime.datetime.now(datetime.UTC)
     tasks = schedule_crud.collect_pending_tasks(db, hour_floor)
     if tasks:
-        schedule_crud.execute_tasks(
-            db,
+        task_crud.execute_tasks_async.delay(
             [task.id for task in tasks],
-            execute_async=True,
         )
-        print([task.__dict__ for task in tasks])
 
     return {
         "status": "success",
-        "message": "Group ids emailed:",
+        "message": f"task ids {[task.id for task in tasks]}",
         "task_name": "poll_schedule",
     }

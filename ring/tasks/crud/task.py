@@ -57,11 +57,7 @@ def execute_tasks_async(self: CeleryTask, task_ids: list[int]) -> None:
     execute_tasks(db, task_ids)
 
 
-def execute_tasks(
-    db: Session, task_ids: list[int], execute_async: bool = False
-) -> None:
-    if execute_async:
-        execute_tasks_async.delay(task_ids)  # type: ignore
+def execute_tasks(db: Session, task_ids: list[int]) -> None:
     tasks = db.query(Task).filter(Task.id.in_(task_ids)).all()
     for task in tasks:
         task.status = TaskStatus.IN_PROGRESS
