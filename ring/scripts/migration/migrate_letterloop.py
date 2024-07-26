@@ -59,9 +59,6 @@ def _create_letter(
         send_at=sent_at,
         letter_status=LetterStatus.SENT,
     )
-    if sent_at:
-        letter.issue_sent = sent_at
-        # letter.send_at = sent_at
     db.add(letter)
     db.flush()
     return letter

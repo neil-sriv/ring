@@ -44,7 +44,6 @@ class Letter(Base, APIIdentified, PydanticModel, CreatedAtMixin):
     number: Mapped[int] = mapped_column()
     api_identifier: Mapped[str] = mapped_column(unique=True, index=True)
     status: Mapped[str] = mapped_column()
-    issue_sent: Mapped[datetime] = mapped_column(nullable=True)
     send_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),
         nullable=True,
