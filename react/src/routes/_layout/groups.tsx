@@ -1,4 +1,5 @@
 import {
+  Box,
   Container,
   Flex,
   Heading,
@@ -9,6 +10,7 @@ import {
   Td,
   Th,
   Thead,
+  Text,
   Tr,
 } from "@chakra-ui/react";
 import { useQueryClient, useSuspenseQuery } from "@tanstack/react-query";
@@ -53,20 +55,25 @@ function GroupTableBody() {
             </ChakraLink>
           </Td>
           <Td>
-            {group.members
-              .map((member) => {
-                return member.name;
-              })
-              .sort()
-              .join(", ")}
+            <Box>
+              <Text>
+                {group.members
+                  .map((member) => {
+                    return member.name;
+                  })
+                  .sort()
+                  .join(", ")}
+              </Text>
+            </Box>
           </Td>
-          <Td>
+          {/* <Td>
             {group.letters
               .map((letter) => {
                 return letter.number;
               })
+              .sort()
               .join(", ")}
-          </Td>
+          </Td> */}
           <Td>
             <ActionsMenu type={"Group"} value={group} />
           </Td>
@@ -78,12 +85,12 @@ function GroupTableBody() {
 function GroupTable() {
   return (
     <TableContainer>
-      <Table size={{ base: "sm", md: "md" }}>
+      <Table size={{ base: "sm", md: "md" }} maxW="100%">
         <Thead>
           <Tr>
             <Th>Name</Th>
             <Th>Members</Th>
-            <Th>Letters</Th>
+            {/* <Th>Letters</Th> */}
             <Th>Actions</Th>
           </Tr>
         </Thead>
@@ -123,7 +130,7 @@ function GroupTable() {
 
 function Groups() {
   return (
-    <Container maxW="full">
+    <Container maxW="container.xl">
       <Heading size="lg" textAlign={{ base: "center", md: "left" }} pt={12}>
         Groups
       </Heading>
