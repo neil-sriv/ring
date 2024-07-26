@@ -46,10 +46,6 @@ def async_send_email_task(self: CeleryTask, task_id: int) -> None:
     db.commit()
 
 
-TASK_TO_EXECUTE_MAPPING: dict[TaskType, Callable[..., None]] = {
-    TaskType.SEND_EMAIL: execute_send_email_task,
-}
-
 ASYNC_TASK_TO_EXECUTE_MAPPING: dict[TaskType, Callable[..., None]] = {
     TaskType.SEND_EMAIL: async_send_email_task
 }
@@ -72,11 +68,6 @@ def execute_tasks(
     db.commit()
     for task in tasks:
         task_type = TaskType(task.type)
-        if task_type in ASYNC_TASK_TO_EXECUTE_MAPPING:
-            task_to_execute = ASYNC_TASK_TO_EXECUTE_MAPPING[task_type]
-            task_to_execute.delay(task.id)  # type: ignore
-        else:
-            task_to_execute = TASK_TO_EXECUTE_MAPPING[task_type]
-            task_to_execute(db, task)
-            task.status = TaskStatus.COMPLETED
+        task_to_execute = ASYNC_TASK_TO_EXECUTE_MAPPING[task_type]
+        task_to_execute.delay(task.id)  # type: ignore
     db.commit()
