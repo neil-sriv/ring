@@ -1123,6 +1123,63 @@
         }
       }
     },
+    "/letters/letter/{letter_api_id}:edit_letter": {
+      "post": {
+        "tags": [
+          "letters"
+        ],
+        "summary": "Edit Letter",
+        "operationId": "edit_letter_letters_letter__letter_api_id__edit_letter_post",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "letter_api_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Letter Api Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LetterUpdate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PublicLetter"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/letters/letter/{letter_api_id}:add_question": {
       "post": {
         "tags": [
@@ -1752,6 +1809,20 @@
           "created_at"
         ],
         "title": "LetterUnlinked"
+      },
+      "LetterUpdate": {
+        "properties": {
+          "send_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Send At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "send_at"
+        ],
+        "title": "LetterUpdate"
       },
       "NewPassword": {
         "properties": {

@@ -11,7 +11,7 @@ from ring.api_identifier import (
 from ring.letters.crud import letter as letter_crud, response as response_crud
 from ring.parties.models.user_model import User
 from ring.ring_pydantic import PublicLetter as LetterSchema
-from ring.letters.schemas.letter import LetterCreate
+from ring.letters.schemas.letter import LetterCreate, LetterUpdate
 from ring.letters.models.letter_model import Letter
 from ring.letters.schemas.question import QuestionCreate
 from ring.letters.schemas.response import ResponseUnlinked
@@ -69,6 +69,27 @@ async def read_letter(
         Letter,
         api_id=letter_api_id,
     )
+    return db_letter
+
+
+@router.post(
+    "/letter/{letter_api_id}:edit_letter",
+    response_model=LetterSchema,
+)
+async def edit_letter(
+    letter_api_id: str,
+    letter: LetterUpdate,
+    req_dep: AuthenticatedRequestDependencies = Depends(
+        get_request_dependencies,
+    ),
+) -> Letter:
+    db_letter = api_identifier_crud.get_model(
+        req_dep.db,
+        Letter,
+        api_id=letter_api_id,
+    )
+    letter_crud.edit_letter(req_dep.db, db_letter, letter.send_at)
+    req_dep.db.commit()
     return db_letter
 
 

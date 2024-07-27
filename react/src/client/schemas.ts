@@ -195,6 +195,16 @@ export const $LetterUnlinked = {
 	},
 } as const;
 
+export const $LetterUpdate = {
+	properties: {
+		send_at: {
+	type: 'string',
+	isRequired: true,
+	format: 'date-time',
+},
+	},
+} as const;
+
 export const $NewPassword = {
 	properties: {
 		new_password: {

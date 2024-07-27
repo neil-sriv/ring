@@ -74,6 +74,12 @@ export type LetterUnlinked = {
 
 
 
+export type LetterUpdate = {
+	send_at: string;
+};
+
+
+
 export type NewPassword = {
 	new_password: string;
 	token: string;

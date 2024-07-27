@@ -7,6 +7,7 @@ import PublishedLoop from "../../../components/Loops/PublishedLoop";
 import DraftLoop from "../../../components/Loops/DraftLoop";
 import QuestionNav from "../../../components/Question/QuestionNav";
 import { useSuspenseQuery } from "@tanstack/react-query";
+import { toISOLocal } from "../../../utils";
 
 type IssueLoaderProps = {
   loop: PublicLetter;
@@ -31,7 +32,6 @@ export const Route = createFileRoute("/_layout/loops/$loopId")({
 });
 
 function IssueContent() {
-  // const loop = Route.useLoaderData().loop;
   const routeParams = Route.useParams();
   const { data: loop } = useSuspenseQuery({
     queryKey: ["loop", routeParams.loopId],
@@ -41,12 +41,18 @@ function IssueContent() {
       });
     },
   });
+  const localDueDate = new Date(loop.send_at);
 
   return (
     <Container maxW="container.lg" py={4}>
       <Heading size="lg" textAlign={{ base: "center", md: "left" }} pt={12}>
         {loop.group.name} Issue #{loop.number}
       </Heading>
+      {loop.status === "IN_PROGRESS" && (
+        <Heading size="md" textAlign={{ base: "center", md: "left" }} pt={2}>
+          Due: {localDueDate.toLocaleString()}
+        </Heading>
+      )}
       {loop.status === "SENT" ? (
         <PublishedLoop loop={loop} />
       ) : (

@@ -52,6 +52,15 @@ def create_letter(
         )
     return db_letter
 
+def edit_letter(
+    db: Session,
+    letter: Letter,
+    send_at: datetime,
+) -> Letter:
+    letter.send_at = send_at
+    db.add(letter)
+    return letter
+
 
 def add_question(
     db: Session, letter: Letter, question_text: str, author: User | None = None

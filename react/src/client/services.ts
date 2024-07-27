@@ -2,7 +2,7 @@ import type { CancelablePromise } from './core/CancelablePromise';
 import { OpenAPI } from './core/OpenAPI';
 import { request as __request } from './core/request';
 
-import type { Body_login_access_token_login_access_token_post,NewPassword,Token,GroupCreate,GroupLinked,GroupUpdate,ResponseMessage,ScheduleSendParam,UserCreate,UserLinked,UserUpdate,UserUpdatePassword,LetterCreate,PublicLetter,QuestionCreate,ResponseUnlinked,ScheduleLinked,QuestionLinked,ResponseUpsert,Body_upload_image_responses_response__response_api_id__upload_image_post,ResponseCreateBase,ResponseLinked } from './models';
+import type { Body_login_access_token_login_access_token_post,NewPassword,Token,GroupCreate,GroupLinked,GroupUpdate,ResponseMessage,ScheduleSendParam,UserCreate,UserLinked,UserUpdate,UserUpdatePassword,LetterCreate,LetterUpdate,PublicLetter,QuestionCreate,ResponseUnlinked,ScheduleLinked,QuestionLinked,ResponseUpsert,Body_upload_image_responses_response__response_api_id__upload_image_post,ResponseCreateBase,ResponseLinked } from './models';
 
 export type LoginData = {
         LoginAccessTokenLoginAccessTokenPost: {
@@ -94,6 +94,11 @@ skip?: number
                 };
 ReadLetterLettersLetterLetterApiIdGet: {
                     letterApiId: string
+                    
+                };
+EditLetterLettersLetterLetterApiIdEditLetterPost: {
+                    letterApiId: string
+requestBody: LetterUpdate
                     
                 };
 AddQuestionLettersLetterLetterApiIdAddQuestionPost: {
@@ -640,6 +645,30 @@ letterApiId,
 			path: {
 				letter_api_id: letterApiId
 			},
+			errors: {
+				422: `Validation Error`,
+			},
+		});
+	}
+
+	/**
+	 * Edit Letter
+	 * @returns PublicLetter Successful Response
+	 * @throws ApiError
+	 */
+	public static editLetterLettersLetterLetterApiIdEditLetterPost(data: LettersData['EditLetterLettersLetterLetterApiIdEditLetterPost']): CancelablePromise<PublicLetter> {
+		const {
+letterApiId,
+requestBody,
+} = data;
+		return __request(OpenAPI, {
+			method: 'POST',
+			url: '/letters/letter/{letter_api_id}:edit_letter',
+			path: {
+				letter_api_id: letterApiId
+			},
+			body: requestBody,
+			mediaType: 'application/json',
 			errors: {
 				422: `Validation Error`,
 			},
