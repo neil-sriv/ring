@@ -1682,6 +1682,9 @@
                 "type": "null"
               }
             ]
+          },
+          "admin": {
+            "$ref": "#/components/schemas/UserUnlinked"
           }
         },
         "type": "object",
@@ -1691,7 +1694,8 @@
           "created_at",
           "members",
           "letters",
-          "schedule"
+          "schedule",
+          "admin"
         ],
         "title": "GroupLinked"
       },

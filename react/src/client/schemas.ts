@@ -104,6 +104,10 @@ export const $GroupLinked = {
 }],
 	isRequired: true,
 },
+		admin: {
+	type: 'UserUnlinked',
+	isRequired: true,
+},
 	},
 } as const;
 

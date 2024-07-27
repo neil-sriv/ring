@@ -20,6 +20,7 @@ class GroupLinked(Group):
     members: list["UserUnlinked"]
     letters: list["LetterUnlinked"]
     schedule: Optional["ScheduleUnlinked"]
+    admin: "UserUnlinked"
 
 
 class ScheduleLinked(Schedule):

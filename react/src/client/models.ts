@@ -29,6 +29,7 @@ export type GroupLinked = {
 	members: Array<UserUnlinked>;
 	letters: Array<LetterUnlinked>;
 	schedule: ScheduleUnlinked | null;
+	admin: UserUnlinked;
 };
 
 

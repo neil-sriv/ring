@@ -1,13 +1,12 @@
 import { Box, Container, Heading, Text } from "@chakra-ui/react";
 import { createFileRoute } from "@tanstack/react-router";
-import { LettersService, PublicLetter } from "../../../client";
+import { LettersService, PartiesService, PublicLetter } from "../../../client";
 import { Suspense } from "react";
 import { ErrorBoundary } from "react-error-boundary";
 import PublishedLoop from "../../../components/Loops/PublishedLoop";
 import DraftLoop from "../../../components/Loops/DraftLoop";
 import QuestionNav from "../../../components/Question/QuestionNav";
-import { useSuspenseQuery } from "@tanstack/react-query";
-import { toISOLocal } from "../../../utils";
+import { useSuspenseQueries, useSuspenseQuery } from "@tanstack/react-query";
 
 type IssueLoaderProps = {
   loop: PublicLetter;
@@ -41,6 +40,14 @@ function IssueContent() {
       });
     },
   });
+  const { data: group } = useSuspenseQuery({
+    queryKey: ["group", loop.group.api_identifier],
+    queryFn: async () => {
+      return await PartiesService.readGroupPartiesGroupGroupApiIdGet({
+        groupApiId: loop.group.api_identifier,
+      });
+    },
+  });
   const localDueDate = new Date(loop.send_at);
 
   return (
@@ -57,7 +64,7 @@ function IssueContent() {
         <PublishedLoop loop={loop} />
       ) : (
         <>
-          <QuestionNav loop={loop} />
+          <QuestionNav loop={loop} group={group} />
           <DraftLoop loop={loop} />
         </>
       )}
