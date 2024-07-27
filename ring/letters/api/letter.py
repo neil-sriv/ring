@@ -1,5 +1,6 @@
 from __future__ import annotations
 from fastapi import APIRouter, Depends
+from datetime import datetime
 from ring.dependencies import (
     AuthenticatedRequestDependencies,
     get_request_dependencies,
@@ -8,6 +9,7 @@ from typing import Sequence
 from ring.api_identifier import (
     util as api_identifier_crud,
 )
+from ring.letters.constants import LetterStatus
 from ring.letters.crud import letter as letter_crud, response as response_crud
 from ring.parties.models.user_model import User
 from ring.ring_pydantic import PublicLetter as LetterSchema
@@ -31,13 +33,12 @@ async def add_next_letter(
     )
     if any(letter.status == "IN_PROGRESS" for letter in group_letters):
         raise ValueError("There is already a letter in progress for this group")
-    db_letter = letter_crud.create_letter(
-        db=req_dep.db,
+    db_letter = letter_crud.create_letter_with_questions(
+        req_dep.db,
         group_api_id=letter.group_api_identifier,
         send_at=letter.send_at,
+        letter_status=LetterStatus.IN_PROGRESS,
     )
-    letter_crud.add_random_questions(req_dep.db, db_letter)
-    letter_crud.add_default_questions(req_dep.db, db_letter)
     req_dep.db.commit()
     return db_letter
 
@@ -88,6 +89,10 @@ async def edit_letter(
         Letter,
         api_id=letter_api_id,
     )
+    if db_letter.status == LetterStatus.UPCOMING:
+        assert letter.send_at > db_letter.group.in_progress_letter.send_at
+    else:
+        assert letter.send_at > datetime.now()
     letter_crud.edit_letter(req_dep.db, db_letter, letter.send_at)
     req_dep.db.commit()
     return db_letter

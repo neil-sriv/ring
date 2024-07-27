@@ -1,5 +1,6 @@
 from __future__ import annotations
 from typing import TYPE_CHECKING
+from ring.letters.constants import LetterStatus
 from sqlalchemy import ForeignKey
 from sqlalchemy.orm import relationship, Mapped, mapped_column
 from sqlalchemy.ext.hybrid import hybrid_property
@@ -61,3 +62,15 @@ class Group(Base, PydanticModel, APIIdentified, CreatedAtMixin):
             self._admin = admin
         else:
             raise ValueError("Admin must be a member of the group")
+
+    @hybrid_property
+    def in_progress_letter(self) -> Letter | None:
+        upcoming = [letter for letter in self.letters if letter.status == LetterStatus.IN_PROGRESS]
+        assert len(upcoming) <= 1
+        return upcoming[0] if upcoming else None
+
+    @hybrid_property
+    def upcoming_letter(self) -> Letter | None:
+        upcoming = [letter for letter in self.letters if letter.status == LetterStatus.UPCOMING]
+        assert len(upcoming) <= 1
+        return upcoming[0] if upcoming else None

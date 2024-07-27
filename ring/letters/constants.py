@@ -2,6 +2,7 @@ from enum import StrEnum
 
 
 class LetterStatus(StrEnum):
+    UPCOMING = "UPCOMING"
     IN_PROGRESS = "IN_PROGRESS"
     SENT = "SENT"
 

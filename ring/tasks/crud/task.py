@@ -7,19 +7,13 @@ from ring.letters.constants import LetterStatus
 from ring.tasks.models.task_model import SendEmailTask, TaskStatus, TaskType, Task
 from ring.worker.celery_app import CeleryTask, register_task_factory  # type: ignore
 from ring.letters.crud import letter as letter_crud
-
+from ring.letters.models.letter_model import Letter
 
 def execute_send_email_task(db: Session, task: SendEmailTask) -> None:
     group = task.schedule.group
-    letter_to_send = sorted(
-        [
-            letter
-            for letter in group.letters
-            if letter.status == LetterStatus.IN_PROGRESS
-        ],
-        key=lambda l: l.number,
-    )[-1]
-    send_email(
+    letter_to_send = group.in_progress_letter
+    assert letter_to_send
+    message_id = send_email(
         construct_html_email(
             [u.email for u in letter_to_send.participants],
             letter_to_send.number,
@@ -27,7 +21,9 @@ def execute_send_email_task(db: Session, task: SendEmailTask) -> None:
             letter_crud.compile_letter_dict(letter_to_send),
         )
     )
-    letter_to_send.status = LetterStatus.SENT
+    if message_id:
+        letter_to_send.status = LetterStatus.SENT
+
     db.commit()
 
 
