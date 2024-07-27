@@ -18,11 +18,12 @@ type ResponseBlockProps = {
   response?: ResponseWithParticipant;
   submitResponse: (responseText: string) => Promise<void>;
   imageUrls?: string[];
+  readOnly?: boolean;
 };
 
 function ResponseBlock(props: ResponseBlockProps) {
   const [responseText, setResponseText] = useState(
-    props.response?.response_text ?? ""
+    props.response?.response_text ?? "",
   );
   const showToast = useCustomToast();
   const handleResponseChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
@@ -36,6 +37,7 @@ function ResponseBlock(props: ResponseBlockProps) {
         variant="filled"
         value={responseText}
         onChange={handleResponseChange}
+        isDisabled={props.readOnly}
         onBlur={async () => {
           if (props.response?.response_text !== responseText) {
             await props.submitResponse(responseText);
@@ -64,8 +66,10 @@ function ResponseBlock(props: ResponseBlockProps) {
 
 function DraftQuestion({
   question,
+  readOnly = false,
 }: {
   question: PublicQuestion;
+  readOnly?: boolean;
 }): JSX.Element {
   const queryClient = useQueryClient();
   const currentUser = queryClient.getQueryData<UserLinked>(["currentUser"]);
@@ -74,7 +78,7 @@ function DraftQuestion({
   }
   const response = question.responses.find(
     (response) =>
-      response.participant.api_identifier === currentUser.api_identifier
+      response.participant.api_identifier === currentUser.api_identifier,
   );
 
   const handleUpdate = async (responseText: string) => {
@@ -85,7 +89,7 @@ function DraftQuestion({
           response_text: responseText,
           api_identifier: response!.api_identifier,
         },
-      }
+      },
     );
   };
 
@@ -97,7 +101,7 @@ function DraftQuestion({
           response_text: responseText,
           participant_api_identifier: currentUser.api_identifier,
         },
-      }
+      },
     );
   };
 
@@ -110,7 +114,7 @@ function DraftQuestion({
             {
               responseApiId: response?.api_identifier,
               formData,
-            }
+            },
           );
         };
 
@@ -132,6 +136,7 @@ function DraftQuestion({
         uploadFunction={handleUpload}
         imageUrls={response?.image_urls || []}
         key={question.api_identifier}
+        readOnly={readOnly}
       />
     </Box>
   );

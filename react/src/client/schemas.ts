@@ -169,7 +169,7 @@ export const $LetterCreate = {
 
 export const $LetterStatus = {
 	type: 'Enum',
-	enum: ['IN_PROGRESS','SENT',],
+	enum: ['UPCOMING','IN_PROGRESS','SENT',],
 } as const;
 
 export const $LetterUnlinked = {

@@ -6,7 +6,7 @@ import { ErrorBoundary } from "react-error-boundary";
 import PublishedLoop from "../../../components/Loops/PublishedLoop";
 import DraftLoop from "../../../components/Loops/DraftLoop";
 import QuestionNav from "../../../components/Question/QuestionNav";
-import { useSuspenseQueries, useSuspenseQuery } from "@tanstack/react-query";
+import { useSuspenseQuery } from "@tanstack/react-query";
 
 type IssueLoaderProps = {
   loop: PublicLetter;

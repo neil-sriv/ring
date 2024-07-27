@@ -86,7 +86,10 @@ function LoopCard(props: LoopCardProps): JSX.Element {
             {props.loop.status === "SENT" ? (
               <Text>Published {sendDate.toLocaleDateString()}</Text>
             ) : (
-              <Text>Due {sendDate.toLocaleString()}</Text>
+              <>
+                <Text>Due {sendDate.toLocaleString()}</Text>
+                <Text> {props.loop.status} </Text>
+              </>
             )}
           </LinkOverlay>
         </CardHeader>
@@ -110,7 +113,7 @@ function LoopsContent() {
       <Heading size="lg" textAlign={{ base: "center", md: "left" }} pt={12}>
         {group!.name}
       </Heading>
-      <LoopNav loops={props.loops} groupId={groupId} />
+      <LoopNav loops={props.loops} group={group} />
       <Container maxW="container.lg" py={4}>
         <SimpleGrid columns={4} gap={4}>
           {props.loops

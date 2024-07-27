@@ -90,7 +90,7 @@ async def edit_letter(
         api_id=letter_api_id,
     )
     if db_letter.status == LetterStatus.UPCOMING:
-        assert letter.send_at > db_letter.group.in_progress_letter.send_at
+        assert letter.send_at > db_letter.group.in_progress_letter.send_at if db_letter.group.in_progress_letter else datetime.now()
     else:
         assert letter.send_at > datetime.now()
     letter_crud.edit_letter(req_dep.db, db_letter, letter.send_at)

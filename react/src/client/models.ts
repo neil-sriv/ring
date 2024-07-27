@@ -61,7 +61,7 @@ export type LetterCreate = {
 
 
 
-export type LetterStatus = 'IN_PROGRESS' | 'SENT';
+export type LetterStatus = 'UPCOMING' | 'IN_PROGRESS' | 'SENT';
 
 
 

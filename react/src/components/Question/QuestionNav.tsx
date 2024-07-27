@@ -40,16 +40,18 @@ function QuestionNav(props: QuestionNavProps): JSX.Element {
             Edit Loop
           </Button>
         )}
-        <Button
-          variant="primary"
-          gap={1}
-          fontSize={{ base: "sm", md: "inherit" }}
-          onClick={() => onClickAddQuestion()}
-        >
-          <Icon as={FaPlus} />{" "}
-          {/* {enabled ? "Add new question" : "Loop in progress"} */}
-          Add new question
-        </Button>
+        {props.loop.status === "UPCOMING" && (
+          <Button
+            variant="primary"
+            gap={1}
+            fontSize={{ base: "sm", md: "inherit" }}
+            onClick={() => onClickAddQuestion()}
+          >
+            <Icon as={FaPlus} />{" "}
+            {/* {enabled ? "Add new question" : "Loop in progress"} */}
+            Add new question
+          </Button>
+        )}
         <EditLetter
           isOpen={editLoopModal.isOpen}
           onClose={editLoopModal.onClose}

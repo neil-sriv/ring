@@ -8,11 +8,15 @@ function DraftLoop({ loop }: { loop: PublicLetter }) {
       {loop.questions
         .sort(
           (a, b) =>
-            new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
+            new Date(a.created_at).getTime() - new Date(b.created_at).getTime(),
         )
         .map((question) => {
           return (
-            <DraftQuestion question={question} key={question.api_identifier} />
+            <DraftQuestion
+              question={question}
+              key={question.api_identifier}
+              readOnly={loop.status === "UPCOMING"}
+            />
           );
         })}
     </Container>
