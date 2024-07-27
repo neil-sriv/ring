@@ -79,3 +79,10 @@ def schedule_send(
         {"letter_api_id": db_letter.api_identifier},
     )
     return db_group
+
+def add_members(
+    db: Session, group: Group, members: Sequence[User]
+) -> None:
+    for member in members:
+        if member not in group.members:
+            group.members.append(member)

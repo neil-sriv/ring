@@ -1,3 +1,15 @@
+export const $AddMembers = {
+	properties: {
+		member_emails: {
+	type: 'array',
+	contains: {
+	type: 'string',
+},
+	isRequired: true,
+},
+	},
+} as const;
+
 export const $Body_login_access_token_login_access_token_post = {
 	properties: {
 		grant_type: {

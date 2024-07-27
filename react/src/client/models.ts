@@ -1,3 +1,9 @@
+export type AddMembers = {
+	member_emails: Array<string>;
+};
+
+
+
 export type Body_login_access_token_login_access_token_post = {
 	grant_type?: string | null;
 	username: string;

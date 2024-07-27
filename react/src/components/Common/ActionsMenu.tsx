@@ -13,6 +13,7 @@ import type { GroupLinked, UserLinked } from "../../client";
 import EditUser from "../Admin/EditUser";
 import Delete from "./DeleteAlert";
 import EditGroup from "../Groups/EditGroup";
+import AddMembers from "../Groups/AddMembers";
 
 interface ActionsMenuProps {
   type: string;
@@ -23,6 +24,7 @@ interface ActionsMenuProps {
 const ActionsMenu = ({ type, value, disabled }: ActionsMenuProps) => {
   const editUserModal = useDisclosure();
   const deleteModal = useDisclosure();
+  const addMembersModal = useDisclosure();
 
   return (
     <>
@@ -47,6 +49,14 @@ const ActionsMenu = ({ type, value, disabled }: ActionsMenuProps) => {
           >
             Delete {type}
           </MenuItem>
+          {type === "Group" && (
+            <MenuItem
+              icon={<FiEdit fontSize="16px" />}
+              onClick={addMembersModal.onOpen}
+            >
+              Add Members
+            </MenuItem>
+          )}
         </MenuList>
         {type === "User" ? (
           <EditUser
@@ -55,11 +65,18 @@ const ActionsMenu = ({ type, value, disabled }: ActionsMenuProps) => {
             onClose={editUserModal.onClose}
           />
         ) : (
-          <EditGroup
-            group={value as GroupLinked}
-            isOpen={editUserModal.isOpen}
-            onClose={editUserModal.onClose}
-          />
+          <>
+            <EditGroup
+              group={value as GroupLinked}
+              isOpen={editUserModal.isOpen}
+              onClose={editUserModal.onClose}
+            />
+            <AddMembers
+              group={value as GroupLinked}
+              isOpen={addMembersModal.isOpen}
+              onClose={addMembersModal.onClose}
+            />
+          </>
         )}
         <Delete
           type={type}

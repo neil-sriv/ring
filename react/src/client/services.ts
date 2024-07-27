@@ -2,7 +2,7 @@ import type { CancelablePromise } from './core/CancelablePromise';
 import { OpenAPI } from './core/OpenAPI';
 import { request as __request } from './core/request';
 
-import type { Body_login_access_token_login_access_token_post,NewPassword,Token,GroupCreate,GroupLinked,GroupUpdate,ResponseMessage,ScheduleSendParam,UserCreate,UserLinked,UserUpdate,UserUpdatePassword,LetterCreate,LetterUpdate,PublicLetter,QuestionCreate,ResponseUnlinked,ScheduleLinked,QuestionLinked,ResponseUpsert,Body_upload_image_responses_response__response_api_id__upload_image_post,ResponseCreateBase,ResponseLinked } from './models';
+import type { Body_login_access_token_login_access_token_post,NewPassword,Token,AddMembers,GroupCreate,GroupLinked,GroupUpdate,ResponseMessage,ScheduleSendParam,UserCreate,UserLinked,UserUpdate,UserUpdatePassword,LetterCreate,LetterUpdate,PublicLetter,QuestionCreate,ResponseUnlinked,ScheduleLinked,QuestionLinked,ResponseUpsert,Body_upload_image_responses_response__response_api_id__upload_image_post,ResponseCreateBase,ResponseLinked } from './models';
 
 export type LoginData = {
         LoginAccessTokenLoginAccessTokenPost: {
@@ -77,6 +77,11 @@ userApiId: string
 ScheduleSendPartiesGroupGroupApiIdScheduleSendPost: {
                     groupApiId: string
 requestBody: ScheduleSendParam
+                    
+                };
+AddMembersPartiesGroupGroupApiIdAddMembersPost: {
+                    groupApiId: string
+requestBody: AddMembers
                     
                 };
     }
@@ -572,6 +577,30 @@ requestBody,
 		return __request(OpenAPI, {
 			method: 'POST',
 			url: '/parties/group/{group_api_id}:schedule_send',
+			path: {
+				group_api_id: groupApiId
+			},
+			body: requestBody,
+			mediaType: 'application/json',
+			errors: {
+				422: `Validation Error`,
+			},
+		});
+	}
+
+	/**
+	 * Add Members
+	 * @returns GroupLinked Successful Response
+	 * @throws ApiError
+	 */
+	public static addMembersPartiesGroupGroupApiIdAddMembersPost(data: PartiesData['AddMembersPartiesGroupGroupApiIdAddMembersPost']): CancelablePromise<GroupLinked> {
+		const {
+groupApiId,
+requestBody,
+} = data;
+		return __request(OpenAPI, {
+			method: 'POST',
+			url: '/parties/group/{group_api_id}:add_members',
 			path: {
 				group_api_id: groupApiId
 			},

@@ -959,6 +959,63 @@
         }
       }
     },
+    "/parties/group/{group_api_id}:add_members": {
+      "post": {
+        "tags": [
+          "parties"
+        ],
+        "summary": "Add Members",
+        "operationId": "add_members_parties_group__group_api_id__add_members_post",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "group_api_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Group Api Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AddMembers"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GroupLinked"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/letters/letter": {
       "post": {
         "tags": [
@@ -1552,6 +1609,22 @@
   },
   "components": {
     "schemas": {
+      "AddMembers": {
+        "properties": {
+          "member_emails": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Member Emails"
+          }
+        },
+        "type": "object",
+        "required": [
+          "member_emails"
+        ],
+        "title": "AddMembers"
+      },
       "Body_login_access_token_login_access_token_post": {
         "properties": {
           "grant_type": {
