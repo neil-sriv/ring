@@ -68,7 +68,14 @@ function LoopCard(props: LoopCardProps): JSX.Element {
   const sendDate = new Date(props.loop.send_at);
   return (
     <LinkBox as="div">
-      <Card w="150px" h="150px" flexGrow="1" border="1px solid" boxShadow="lg">
+      <Card
+        w="150px"
+        h="150px"
+        flexGrow="1"
+        border="1px solid"
+        boxShadow="lg"
+        bgColor={props.loop.status === "SENT" ? "ui.dim" : "ui.main"}
+      >
         <CardHeader>
           <LinkOverlay
             as={Link}
@@ -107,7 +114,7 @@ function LoopsContent() {
       <Container maxW="container.lg" py={4}>
         <SimpleGrid columns={4} gap={4}>
           {props.loops
-            .sort((a, b) => a.number - b.number)
+            .sort((a, b) => b.number - a.number)
             .map((loop) => (
               <LoopCard key={loop.api_identifier} loop={loop} />
             ))}
