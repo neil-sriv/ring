@@ -1,6 +1,6 @@
 from __future__ import annotations
 from fastapi import APIRouter, Depends
-from datetime import datetime
+from datetime import datetime, UTC
 from ring.dependencies import (
     AuthenticatedRequestDependencies,
     get_request_dependencies,
@@ -89,10 +89,11 @@ async def edit_letter(
         Letter,
         api_id=letter_api_id,
     )
+    curr_time = datetime.now(tz=UTC)
     if db_letter.status == LetterStatus.UPCOMING:
-        assert letter.send_at > db_letter.group.in_progress_letter.send_at if db_letter.group.in_progress_letter else datetime.now()
+        assert letter.send_at > db_letter.group.in_progress_letter.send_at if db_letter.group.in_progress_letter else letter.send_at > curr_time
     else:
-        assert letter.send_at > datetime.now()
+        assert letter.send_at > curr_time
     letter_crud.edit_letter(req_dep.db, db_letter, letter.send_at)
     req_dep.db.commit()
     return db_letter
