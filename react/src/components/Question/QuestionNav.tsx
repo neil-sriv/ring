@@ -27,17 +27,19 @@ function QuestionNav(props: QuestionNavProps): JSX.Element {
   return (
     <>
       <Flex py={8} gap={4}>
-        <Button
-          variant="primary"
-          gap={1}
-          fontSize={{ base: "sm", md: "inherit" }}
-          onClick={() => onClickEdit()}
-          isDisabled={
-            props.group.admin.api_identifier !== currentUser?.api_identifier
-          }
-        >
-          Edit Loop
-        </Button>
+        {props.group.admin.api_identifier === currentUser?.api_identifier && (
+          <Button
+            variant="primary"
+            gap={1}
+            fontSize={{ base: "sm", md: "inherit" }}
+            onClick={() => onClickEdit()}
+            isDisabled={
+              props.group.admin.api_identifier !== currentUser?.api_identifier
+            }
+          >
+            Edit Loop
+          </Button>
+        )}
         <Button
           variant="primary"
           gap={1}
