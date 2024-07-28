@@ -191,4 +191,4 @@ def postpend_upcoming_letters(self: CeleryTask, letter_ids: list[int]) -> None:
 
 def add_participants(db: Session, letter: Letter, participants: list[User]) -> None:
     for participant in participants:
-        letter.participants.append(participant))
+        letter.participants.append(participant)
