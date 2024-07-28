@@ -1460,6 +1460,63 @@
         }
       }
     },
+    "/questions/question/{question_api_id}:upload_image": {
+      "post": {
+        "tags": [
+          "questions"
+        ],
+        "summary": "Upload Image",
+        "operationId": "upload_image_questions_question__question_api_id__upload_image_post",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "question_api_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Question Api Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/Body_upload_image_questions_question__question_api_id__upload_image_post"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/QuestionLinked"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/responses/response/{response_api_id}:edit_response": {
       "post": {
         "tags": [
@@ -1681,6 +1738,20 @@
           "password"
         ],
         "title": "Body_login_access_token_login_access_token_post"
+      },
+      "Body_upload_image_questions_question__question_api_id__upload_image_post": {
+        "properties": {
+          "response_image": {
+            "type": "string",
+            "format": "binary",
+            "title": "Response Image"
+          }
+        },
+        "type": "object",
+        "required": [
+          "response_image"
+        ],
+        "title": "Body_upload_image_questions_question__question_api_id__upload_image_post"
       },
       "Body_upload_image_responses_response__response_api_id__upload_image_post": {
         "properties": {

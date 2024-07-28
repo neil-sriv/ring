@@ -52,6 +52,16 @@ export const $Body_login_access_token_login_access_token_post = {
 	},
 } as const;
 
+export const $Body_upload_image_questions_question__question_api_id__upload_image_post = {
+	properties: {
+		response_image: {
+	type: 'binary',
+	isRequired: true,
+	format: 'binary',
+},
+	},
+} as const;
+
 export const $Body_upload_image_responses_response__response_api_id__upload_image_post = {
 	properties: {
 		response_images: {

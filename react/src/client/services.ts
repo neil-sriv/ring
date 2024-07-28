@@ -2,7 +2,7 @@ import type { CancelablePromise } from './core/CancelablePromise';
 import { OpenAPI } from './core/OpenAPI';
 import { request as __request } from './core/request';
 
-import type { Body_login_access_token_login_access_token_post,NewPassword,Token,AddMembers,GroupCreate,GroupLinked,GroupUpdate,ResponseMessage,ScheduleSendParam,UserCreate,UserLinked,UserUpdate,UserUpdatePassword,LetterCreate,LetterUpdate,PublicLetter,QuestionCreate,ResponseUnlinked,ScheduleLinked,QuestionLinked,ResponseUpsert,Body_upload_image_responses_response__response_api_id__upload_image_post,ResponseCreateBase,ResponseLinked } from './models';
+import type { Body_login_access_token_login_access_token_post,NewPassword,Token,AddMembers,GroupCreate,GroupLinked,GroupUpdate,ResponseMessage,ScheduleSendParam,UserCreate,UserLinked,UserUpdate,UserUpdatePassword,LetterCreate,LetterUpdate,PublicLetter,QuestionCreate,ResponseUnlinked,ScheduleLinked,Body_upload_image_questions_question__question_api_id__upload_image_post,QuestionLinked,ResponseUpsert,Body_upload_image_responses_response__response_api_id__upload_image_post,ResponseCreateBase,ResponseLinked } from './models';
 
 export type LoginData = {
         LoginAccessTokenLoginAccessTokenPost: {
@@ -129,6 +129,11 @@ export type QuestionsData = {
         UpsertResponseQuestionsQuestionQuestionApiIdUpsertResponsePost: {
                     questionApiId: string
 requestBody: ResponseUpsert
+                    
+                };
+UploadImageQuestionsQuestionQuestionApiIdUploadImagePost: {
+                    formData: Body_upload_image_questions_question__question_api_id__upload_image_post
+questionApiId: string
                     
                 };
     }
@@ -800,6 +805,30 @@ requestBody,
 			},
 			body: requestBody,
 			mediaType: 'application/json',
+			errors: {
+				422: `Validation Error`,
+			},
+		});
+	}
+
+	/**
+	 * Upload Image
+	 * @returns QuestionLinked Successful Response
+	 * @throws ApiError
+	 */
+	public static uploadImageQuestionsQuestionQuestionApiIdUploadImagePost(data: QuestionsData['UploadImageQuestionsQuestionQuestionApiIdUploadImagePost']): CancelablePromise<QuestionLinked> {
+		const {
+questionApiId,
+formData,
+} = data;
+		return __request(OpenAPI, {
+			method: 'POST',
+			url: '/questions/question/{question_api_id}:upload_image',
+			path: {
+				question_api_id: questionApiId
+			},
+			formData: formData,
+			mediaType: 'multipart/form-data',
 			errors: {
 				422: `Validation Error`,
 			},

@@ -41,6 +41,7 @@ async def edit_response(
 @router.post(
     "/response/{response_api_id}:upload_image",
     response_model=ResponseLinked,
+    deprecated=True
 )
 async def upload_image(
     response_api_id: str,

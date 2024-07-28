@@ -15,6 +15,12 @@ export type Body_login_access_token_login_access_token_post = {
 
 
 
+export type Body_upload_image_questions_question__question_api_id__upload_image_post = {
+	response_image: Blob | File;
+};
+
+
+
 export type Body_upload_image_responses_response__response_api_id__upload_image_post = {
 	response_images: Array<Blob | File>;
 };

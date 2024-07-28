@@ -2,7 +2,6 @@ import { Box, Heading, Textarea } from "@chakra-ui/react";
 import {
   PublicQuestion,
   QuestionsService,
-  ResponsesService,
   ResponseWithParticipant,
   UserLinked,
 } from "../../client";
@@ -12,8 +11,7 @@ import useCustomToast from "../../hooks/useCustomToast";
 import { S3Image, SingleUploadImage } from "../Common/SingleUploadImage";
 
 type ResponseBlockProps = {
-  // uploadFunction?: (file: File, response_api_id: string) => Promise<void>;
-  uploadFunction?: (file: File) => Promise<void>;
+  uploadFunction: (file: File) => Promise<void>;
   questionApiId: string;
   response?: ResponseWithParticipant;
   submitResponse: (responseText: string) => Promise<void>;
@@ -39,7 +37,7 @@ function ResponseBlock(props: ResponseBlockProps) {
         onChange={handleResponseChange}
         isDisabled={props.readOnly}
         onBlur={async () => {
-          if (props.response?.response_text !== responseText) {
+          if ((props.response?.response_text ?? "") !== responseText) {
             await props.submitResponse(responseText);
             showToast("Success!", "Answer saved.", "success");
           }
@@ -48,17 +46,11 @@ function ResponseBlock(props: ResponseBlockProps) {
       {props.imageUrls?.map((url, index) => {
         return <S3Image s3Key={url} alt="response" key={index} />;
       })}
-      {props.uploadFunction && (
+      {!props.readOnly && (
         <SingleUploadImage
           onUpdateFile={props.uploadFunction}
           name={props.questionApiId}
         />
-        // <SingleUploadImage
-        //   onUpdateFile={async (file: File) => {
-        //     await props.uploadFunction(file, props.response?.api_identifier);
-        //   }}
-        //   name={props.response.api_identifier}
-        // />
       )}
     </Box>
   );
@@ -81,19 +73,7 @@ function DraftQuestion({
       response.participant.api_identifier === currentUser.api_identifier,
   );
 
-  const handleUpdate = async (responseText: string) => {
-    await QuestionsService.upsertResponseQuestionsQuestionQuestionApiIdUpsertResponsePost(
-      {
-        questionApiId: question.api_identifier,
-        requestBody: {
-          response_text: responseText,
-          api_identifier: response!.api_identifier,
-        },
-      },
-    );
-  };
-
-  const handleInsert = async (responseText: string) => {
+  const handleUpsert = async (responseText: string) => {
     await QuestionsService.upsertResponseQuestionsQuestionQuestionApiIdUpsertResponsePost(
       {
         questionApiId: question.api_identifier,
@@ -105,18 +85,16 @@ function DraftQuestion({
     );
   };
 
-  const handleUpload =
-    response === undefined
-      ? undefined
-      : async (file: File) => {
-          const formData = { response_images: [file] };
-          await ResponsesService.uploadImageResponsesResponseResponseApiIdUploadImagePost(
-            {
-              responseApiId: response?.api_identifier,
-              formData,
-            },
-          );
-        };
+  const newHandleUpload = async (file: File) => {
+    await QuestionsService.uploadImageQuestionsQuestionQuestionApiIdUploadImagePost(
+      {
+        questionApiId: question.api_identifier,
+        formData: {
+          response_image: file,
+        },
+      },
+    );
+  };
 
   return (
     <Box my="20px">
@@ -130,10 +108,8 @@ function DraftQuestion({
       <ResponseBlock
         questionApiId={question.api_identifier}
         response={response}
-        // responseText={response?.response_text || ""}
-        submitResponse={response === undefined ? handleInsert : handleUpdate}
-        // uploadFunction={response == null ? undefined : handleUpload}
-        uploadFunction={handleUpload}
+        submitResponse={handleUpsert}
+        uploadFunction={newHandleUpload}
         imageUrls={response?.image_urls || []}
         key={question.api_identifier}
         readOnly={readOnly}
@@ -143,13 +119,3 @@ function DraftQuestion({
 }
 
 export default DraftQuestion;
-
-// async function handleUpload(file: File, response_api_id: string) {
-//   const formData = { response_images: [file] };
-//   await ResponsesService.uploadImageResponsesResponseResponseApiIdUploadImagePost(
-//     {
-//       responseApiId: response_api_id,
-//       formData,
-//     }
-//   );
-// }
