@@ -188,3 +188,7 @@ def postpend_upcoming_letters(self: CeleryTask, letter_ids: list[int]) -> None:
     for letter in letters:
         create_letter_with_questions(self.session, letter.group.api_identifier, letter.send_at + timedelta(days=30))
     self.session.commit()
+
+def add_participants(db: Session, letter: Letter, participants: list[User]) -> None:
+    for participant in participants:
+        letter.participants.append(participant))

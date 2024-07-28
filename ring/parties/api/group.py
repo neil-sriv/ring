@@ -9,6 +9,7 @@ from typing import Sequence
 from ring.api_identifier import (
     util as api_identifier_crud,
 )
+from ring.letters.crud.letter import add_participants
 from ring.parties.crud import group as group_crud
 from ring.ring_pydantic import GroupLinked as GroupSchema
 from ring.parties.schemas.group import GroupCreate, GroupUpdate, AddMembers
@@ -159,6 +160,11 @@ def add_members(
         raise HTTPException(  status_code=400, detail=f"Some emails are not registered: {unregistered}")
 
     group_crud.add_members(req_dep.db, db_group, db_users)
+    in_prog, upcoming = db_group.in_progress_letter, db_group.upcoming_letter
+    if in_prog is not None:
+        add_participants(req_dep.db, in_prog, db_users)
+    if upcoming is not None:
+        add_participants(req_dep.db, upcoming, db_users)
     req_dep.db.commit()
 
     return db_group
