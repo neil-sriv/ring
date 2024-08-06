@@ -46,6 +46,11 @@ async def upsert_response(
         db_responses = [resp for resp in db_question.responses if resp.participant.api_identifier == response.participant_api_identifier]
         if db_responses:
             db_response = db_responses[0]
+            question_crud.edit_response(
+                req_dep.db,
+                db_response,
+                response.response_text,
+            )
     else:
         db_response = question_crud.add_response(
             req_dep.db,
