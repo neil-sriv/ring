@@ -6,6 +6,7 @@ import {
   DrawerContent,
   DrawerOverlay,
   Flex,
+  Heading,
   IconButton,
   Image,
   Text,
@@ -93,7 +94,10 @@ const Sidebar = () => {
           borderRadius={12}
         >
           <Box>
-            <Image src={Logo} alt="Logo" w="180px" maxW="2xs" p={6} />
+            {/* <Image src={Logo} alt="Logo" w="180px" maxW="2xs" p={6} /> */}
+            <Heading as="h1" size="lg" textAlign="center" p={2}>
+              Ring
+            </Heading>
             <SidebarItems />
           </Box>
           {currentUser?.email && (
