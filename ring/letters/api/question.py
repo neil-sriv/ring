@@ -51,13 +51,13 @@ async def upsert_response(
                 db_response,
                 response.response_text,
             )
-    else:
-        db_response = question_crud.add_response(
-            req_dep.db,
-            db_question,
-            req_dep.current_user,
-            response.response_text,
-        )
+        else:
+            db_response = question_crud.add_response(
+                req_dep.db,
+                db_question,
+                req_dep.current_user,
+                response.response_text,
+            )
     req_dep.db.commit()
     return db_question
 
