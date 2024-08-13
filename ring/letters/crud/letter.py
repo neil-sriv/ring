@@ -72,9 +72,9 @@ def edit_letter(
     letter: Letter,
     send_at: datetime,
 ) -> Letter:
-    letter.send_at = send_at
     schedule = schedule_crud.get_schedule_for_group(db, letter.group.api_identifier)
     tasks = [t for t in schedule.tasks if t.status == TaskStatus.PENDING and t.type == TaskType.SEND_EMAIL and t.execute_at == letter.send_at]
+    letter.send_at = send_at
     if tasks:
         print(tasks)
         assert len(tasks) == 1

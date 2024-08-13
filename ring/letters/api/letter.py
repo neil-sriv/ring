@@ -31,13 +31,13 @@ async def add_next_letter(
     group_letters = letter_crud.get_letters(
         req_dep.db, group_api_id=letter.group_api_identifier
     )
-    if any(letter.status == "IN_PROGRESS" for letter in group_letters):
-        raise ValueError("There is already a letter in progress for this group")
+    if any(letter.status in [LetterStatus.IN_PROGRESS, LetterStatus.UPCOMING] for letter in group_letters):
+        raise ValueError("There is already a letter in progress or upcoming for this group")
     db_letter = letter_crud.create_letter_with_questions(
         req_dep.db,
         group_api_id=letter.group_api_identifier,
         send_at=letter.send_at,
-        letter_status=LetterStatus.IN_PROGRESS,
+        letter_status=LetterStatus.UPCOMING,
     )
     req_dep.db.commit()
     return db_letter
