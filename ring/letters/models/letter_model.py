@@ -12,6 +12,7 @@ from sqlalchemy import (
 )
 from sqlalchemy.orm import relationship, Mapped, mapped_column
 from sqlalchemy.ext.declarative import declared_attr
+from sqlalchemy.ext.hybrid import hybrid_property
 from ring.created_at import CreatedAtMixin
 from ring.letters.constants import LetterStatus
 from ring.api_identifier.api_identified_model import APIIdentified
@@ -93,3 +94,12 @@ class Letter(Base, APIIdentified, PydanticModel, CreatedAtMixin):
     ) -> Letter:
         letter = cls(group, send_at, letter_status, number=number)
         return letter
+
+    @hybrid_property
+    def respondents(self) -> list[User]:
+        respondents = {
+            response.participant
+            for question in self.questions
+            for response in question.responses
+        }
+        return list(respondents)
