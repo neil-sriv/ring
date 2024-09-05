@@ -45,7 +45,7 @@ def construct_question_html(
 def construct_response_html(response: tuple[str, list[str]]) -> str:
     image_htmls = "".join(
         [
-            f'<img src="{url}" alt="Image" style="display:block"/>'
+            f'<img src="{url}" alt="Image" style="display:block; width:auto; height:auto; max-width:50%;"/>'
             for url in response[1]
         ]
     )

@@ -121,5 +121,5 @@ export function SingleUploadImage({
 
 export function S3Image({ s3Key, alt }: { s3Key: string; alt?: string }) {
   const url = `https://du32exnxihxuf.cloudfront.net/${s3Key}`;
-  return <Image src={url} alt={alt} />;
+  return <Image src={url} alt={alt} boxSize="50%" />;
 }
