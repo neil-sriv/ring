@@ -62,11 +62,8 @@ async def a_upload_image(
     # upload image to S3
     client = await a_get_s3_client_dependencies()
     for image_file in response_images:
-        if image_file.filename:
-            s3_file_path = s3_file_prefix + hashlib.sha1(bytearray(image_file.filename, 'utf-8')).hexdigest() + ".png"
-        else:
-            random_string = "".join(random.choices(string_lib.ascii_letters, k=12))
-            s3_file_path =s3_file_prefix + hashlib.sha1(bytearray(random_string, 'utf-8')).hexdigest() + ".png"
+        random_string = "".join(random.choices(string_lib.ascii_letters, k=12))
+        s3_file_path =s3_file_prefix + hashlib.sha1(bytearray(random_string, 'utf-8')).hexdigest() + ".png"
         client.upload_fileobj(
             image_file.file,
             get_config().BUCKET_NAME,
