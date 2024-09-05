@@ -1,4 +1,7 @@
 from __future__ import annotations
+import hashlib
+import string as string_lib
+import random
 from tempfile import SpooledTemporaryFile
 from typing import TYPE_CHECKING, Sequence
 
@@ -55,19 +58,24 @@ async def a_upload_image(
     response: Response,
     response_images: list[UploadFile],
 ) -> Response:
-    s3_file_path = f"{response.question.letter.group.api_identifier}/{response.question.letter.api_identifier}/{response.api_identifier}.png"
+    s3_file_prefix = f"{response.question.letter.group.api_identifier}/{response.question.letter.api_identifier}/{response.api_identifier}/"
     # upload image to S3
     client = await a_get_s3_client_dependencies()
     for image_file in response_images:
+        if image_file.filename:
+            s3_file_path = s3_file_prefix + hashlib.sha1(bytearray(image_file.filename, 'utf-8')).hexdigest() + ".png"
+        else:
+            random_string = "".join(random.choices(string_lib.ascii_letters, k=12))
+            s3_file_path =s3_file_prefix + hashlib.sha1(bytearray(random_string, 'utf-8')).hexdigest() + ".png"
         client.upload_fileobj(
             image_file.file,
             get_config().BUCKET_NAME,
             s3_file_path,
         )
 
-    # Update response with _image_file S3 path
-    image = Image.create(s3_url=s3_file_path)
-    add_image_to_response(db, response, image)
+        # Update response with _image_file S3 path
+        image = Image.create(s3_url=s3_file_path)
+        add_image_to_response(db, response, image)
 
     return response
 
@@ -77,7 +85,9 @@ def upload_image(
     response: Response,
     response_images: list[SpooledTemporaryFile],
 ) -> Response:
-    s3_file_path = f"{response.question.letter.group.api_identifier}/{response.question.letter.api_identifier}/{response.api_identifier}.png"
+    s3_file_prefix = f"{response.question.letter.group.api_identifier}/{response.question.letter.api_identifier}/{response.api_identifier}/"
+    random_string = "".join(random.choices(string_lib.ascii_letters, k=12))
+    s3_file_path =s3_file_prefix + hashlib.sha1(bytearray(random_string, 'utf-8')).hexdigest() + ".png"
     # upload image to S3
     client = get_s3_client_dependencies()
     for image_file in response_images:
