@@ -18,6 +18,7 @@ def execute_send_email_task(db: Session, task: SendEmailTask) -> None:
             [u.email for u in letter_to_send.participants],
             letter_to_send.number,
             group.name,
+            letter_to_send.api_identifier,
             letter_crud.compile_letter_dict(letter_to_send),
         )
     )

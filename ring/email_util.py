@@ -67,6 +67,7 @@ def construct_html_email(
     recipients: list[str],
     letter_number: int,
     group_name: str,
+    letter_api_id: str,
     letter_dict: dict[str, list[tuple[str, list[str]]]],
 ) -> EmailDraft:
     question_text = "".join(
@@ -85,12 +86,14 @@ def construct_html_email(
     <head></head>
     <body>
     <h1>Ring Newsletter #{letter_number} for {group_name}</h1>
+    <h2>Check out the newsletter online at <a href="http://ring.neilsriv.tech/loops/{letter_api_id}">ring.neilsriv.tech</a></h2>
     {question_html}
     </body>
     </html>
                 """.format(
         letter_number=letter_number,
         group_name=group_name,
+        letter_api_id=letter_api_id,
         question_html=question_html,
     )
 
