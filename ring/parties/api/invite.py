@@ -22,9 +22,8 @@ from ring.ring_pydantic.linked_schemas import InviteLinked
 router = APIRouter()
 
 
-@router.post("/{inviter_api_id}", response_model=InviteSchema)
+@router.post("/", response_model=InviteSchema)
 async def create_invite(
-    inviter_api_id: str,
     invite: InviteCreate,
     req_dep: AuthenticatedRequestDependencies = Depends(
         get_request_dependencies,
@@ -36,7 +35,7 @@ async def create_invite(
     db_invite = invite_crud.create_invite(
         db=req_dep.db,
         email=invite.email,
-        inviter_api_id=inviter_api_id,
+        inviter_api_id=req_dep.current_user.api_identifier,
     )
     req_dep.db.commit()
     return db_invite
