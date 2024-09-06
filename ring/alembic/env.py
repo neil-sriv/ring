@@ -15,6 +15,7 @@ from ring.letters.models.response_model import Response  # type: ignore # noqa: 
 from ring.tasks.models.schedule_model import Schedule  # type: ignore # noqa: F401
 from ring.tasks.models.task_model import Task  # type: ignore # noqa: F401
 from ring.s3.models.s3_model import Image, S3File  # type: ignore # noqa: F401
+from ring.parties.models.invite_model import Invite  # type: ignore # noqa: F401
 
 
 # this is the Alembic Config object, which provides

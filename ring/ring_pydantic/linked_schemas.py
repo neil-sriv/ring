@@ -1,6 +1,7 @@
 from __future__ import annotations
 from typing import Optional
 
+from ring.parties.schemas.invite import Invite
 from ring.s3.schemas.image import WithImageMixin
 from ring.tasks.schemas.task import TaskUnlinked
 from ring.tasks.schemas.schedule import Schedule, ScheduleUnlinked
@@ -60,3 +61,6 @@ class ResponseLinked(Response, WithImageMixin):
 
 class ResponseWithParticipant(Response, WithImageMixin):
     participant: "UserUnlinked"
+
+class InviteLinked(Invite):
+    inviter: "UserUnlinked"

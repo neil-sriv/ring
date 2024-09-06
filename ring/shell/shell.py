@@ -23,6 +23,7 @@ def run_script(db: Session) -> None:
     from ring.letters.models.response_model import Response
     from ring.tasks.models.schedule_model import Schedule
     from ring.tasks.models.task_model import Task
+    from ring.parties.models.invite_model import Invite
     import sqlalchemy
     import click
     from IPython import embed  # type: ignore

@@ -4,6 +4,7 @@ from sqlalchemy.orm import relationship, Mapped, mapped_column
 from ring.api_identifier.api_identified_model import APIIdentified
 
 from ring.created_at import CreatedAtMixin
+from ring.parties.schemas.invite import Invite
 from ring.ring_pydantic.pydantic_model import PydanticModel
 from ring.ring_pydantic.linked_schemas import UserLinked
 from ring.sqlalchemy_base import Base
@@ -32,6 +33,7 @@ class User(Base, APIIdentified, PydanticModel, CreatedAtMixin):
     responses: Mapped[list["Response"]] = relationship(
         back_populates="participant",
     )
+    invites: Mapped[list["Invite"]] = relationship("Invite", back_populates="inviter")
 
     def __init__(
         self,
