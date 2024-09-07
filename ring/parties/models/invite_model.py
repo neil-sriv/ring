@@ -27,11 +27,15 @@ class Invite(Base, APIIdentified, PydanticModel, CreatedAtMixin):
     api_identifier: Mapped[str] = mapped_column(unique=True, index=True)
     ttl: Mapped[float] = mapped_column()
 
-    inviter_id: Mapped[int] = mapped_column(ForeignKey("user.id"))
-    inviter: Mapped[User] = relationship(cascade="all")
+    inviter_id: Mapped[int] = mapped_column(
+        ForeignKey("user.id", ondelete="CASCADE")
+    )
+    inviter: Mapped[User] = relationship()
 
-    group_id: Mapped[int] = mapped_column(ForeignKey("group.id"))
-    group: Mapped[Group] = relationship(cascade="all")
+    group_id: Mapped[int] = mapped_column(
+        ForeignKey("group.id", ondelete="CASCADE")
+    )
+    group: Mapped[Group] = relationship()
 
     def __init__(
         self,
