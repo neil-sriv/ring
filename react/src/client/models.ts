@@ -66,6 +66,25 @@ export type HTTPValidationError = {
 
 
 
+export type InviteCreate = {
+	email: string;
+	group_api_id: string;
+};
+
+
+
+export type InviteLinked = {
+	email: string;
+	api_identifier: string;
+	created_at: string;
+	is_expired: boolean;
+	token: string;
+	inviter: UserUnlinked;
+	group: GroupUnlinked;
+};
+
+
+
 export type LetterCreate = {
 	group_api_identifier: string;
 	send_at: string;

@@ -175,6 +175,53 @@ export const $HTTPValidationError = {
 	},
 } as const;
 
+export const $InviteCreate = {
+	properties: {
+		email: {
+	type: 'string',
+	isRequired: true,
+},
+		group_api_id: {
+	type: 'string',
+	isRequired: true,
+},
+	},
+} as const;
+
+export const $InviteLinked = {
+	properties: {
+		email: {
+	type: 'string',
+	isRequired: true,
+},
+		api_identifier: {
+	type: 'string',
+	isRequired: true,
+},
+		created_at: {
+	type: 'string',
+	isRequired: true,
+	format: 'date-time',
+},
+		is_expired: {
+	type: 'boolean',
+	isRequired: true,
+},
+		token: {
+	type: 'string',
+	isRequired: true,
+},
+		inviter: {
+	type: 'UserUnlinked',
+	isRequired: true,
+},
+		group: {
+	type: 'GroupUnlinked',
+	isRequired: true,
+},
+	},
+} as const;
+
 export const $LetterCreate = {
 	properties: {
 		group_api_identifier: {

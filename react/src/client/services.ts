@@ -2,7 +2,7 @@ import type { CancelablePromise } from './core/CancelablePromise';
 import { OpenAPI } from './core/OpenAPI';
 import { request as __request } from './core/request';
 
-import type { Body_login_access_token_login_access_token_post,NewPassword,Token,AddMembers,GroupCreate,GroupLinked,GroupUpdate,ResponseMessage,ScheduleSendParam,UserCreate,UserLinked,UserUpdate,UserUpdatePassword,LetterCreate,LetterUpdate,PublicLetter,QuestionCreate,ResponseUnlinked,ScheduleLinked,Body_upload_image_questions_question__question_api_id__upload_image_post,QuestionLinked,ResponseUpsert,Body_upload_image_responses_response__response_api_id__upload_image_post,ResponseCreateBase,ResponseLinked } from './models';
+import type { Body_login_access_token_login_access_token_post,NewPassword,Token,AddMembers,GroupCreate,GroupLinked,GroupUpdate,ResponseMessage,ScheduleSendParam,UserCreate,UserLinked,UserUpdate,UserUpdatePassword,LetterCreate,LetterUpdate,PublicLetter,QuestionCreate,ResponseUnlinked,ScheduleLinked,Body_upload_image_questions_question__question_api_id__upload_image_post,QuestionLinked,ResponseUpsert,Body_upload_image_responses_response__response_api_id__upload_image_post,ResponseCreateBase,ResponseLinked,InviteCreate,InviteLinked } from './models';
 
 export type LoginData = {
         LoginAccessTokenLoginAccessTokenPost: {
@@ -30,6 +30,11 @@ export type PartiesData = {
                 };
 CreateUserPartiesUserPost: {
                     requestBody: UserCreate
+                    
+                };
+RegisterUserPartiesRegisterTokenPost: {
+                    requestBody: UserCreate
+token: string
                     
                 };
 ReadUsersPartiesUsersGet: {
@@ -147,6 +152,17 @@ responseApiId: string
 UploadImageResponsesResponseResponseApiIdUploadImagePost: {
                     formData: Body_upload_image_responses_response__response_api_id__upload_image_post
 responseApiId: string
+                    
+                };
+    }
+
+export type InvitesData = {
+        CreateInviteInvitesPost: {
+                    requestBody: InviteCreate
+                    
+                };
+ValidateTokenInvitesTokenTokenGet: {
+                    token: string
                     
                 };
     }
@@ -331,6 +347,30 @@ requestBody,
 	}
 
 	/**
+	 * Register User
+	 * @returns UserLinked Successful Response
+	 * @throws ApiError
+	 */
+	public static registerUserPartiesRegisterTokenPost(data: PartiesData['RegisterUserPartiesRegisterTokenPost']): CancelablePromise<UserLinked> {
+		const {
+token,
+requestBody,
+} = data;
+		return __request(OpenAPI, {
+			method: 'POST',
+			url: '/parties/register/{token}',
+			path: {
+				token
+			},
+			body: requestBody,
+			mediaType: 'application/json',
+			errors: {
+				422: `Validation Error`,
+			},
+		});
+	}
+
+	/**
 	 * Read Users
 	 * @returns UserLinked Successful Response
 	 * @throws ApiError
@@ -396,12 +436,12 @@ requestBody,
 
 	/**
 	 * @deprecated
-	 * Register User
+	 * Signup
 	 * Create new user without the need to be logged in.
 	 * @returns null Successful Response
 	 * @throws ApiError
 	 */
-	public static registerUserPartiesSignupPost(): CancelablePromise<null> {
+	public static signupPartiesSignupPost(): CancelablePromise<null> {
 				return __request(OpenAPI, {
 			method: 'POST',
 			url: '/parties/signup',
@@ -864,6 +904,7 @@ requestBody,
 	}
 
 	/**
+	 * @deprecated
 	 * Upload Image
 	 * @returns ResponseLinked Successful Response
 	 * @throws ApiError
@@ -881,6 +922,51 @@ formData,
 			},
 			formData: formData,
 			mediaType: 'multipart/form-data',
+			errors: {
+				422: `Validation Error`,
+			},
+		});
+	}
+
+}
+
+export class InvitesService {
+
+	/**
+	 * Create Invite
+	 * @returns InviteLinked Successful Response
+	 * @throws ApiError
+	 */
+	public static createInviteInvitesPost(data: InvitesData['CreateInviteInvitesPost']): CancelablePromise<InviteLinked> {
+		const {
+requestBody,
+} = data;
+		return __request(OpenAPI, {
+			method: 'POST',
+			url: '/invites/',
+			body: requestBody,
+			mediaType: 'application/json',
+			errors: {
+				422: `Validation Error`,
+			},
+		});
+	}
+
+	/**
+	 * Validate Token
+	 * @returns InviteLinked Successful Response
+	 * @throws ApiError
+	 */
+	public static validateTokenInvitesTokenTokenGet(data: InvitesData['ValidateTokenInvitesTokenTokenGet']): CancelablePromise<InviteLinked> {
+		const {
+token,
+} = data;
+		return __request(OpenAPI, {
+			method: 'GET',
+			url: '/invites/token/{token}',
+			path: {
+				token
+			},
 			errors: {
 				422: `Validation Error`,
 			},

@@ -343,6 +343,58 @@
         }
       }
     },
+    "/parties/register/{token}": {
+      "post": {
+        "tags": [
+          "parties"
+        ],
+        "summary": "Register User",
+        "operationId": "register_user_parties_register__token__post",
+        "parameters": [
+          {
+            "name": "token",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Token"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UserCreate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserLinked"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/parties/users": {
       "get": {
         "tags": [
@@ -504,9 +556,9 @@
         "tags": [
           "parties"
         ],
-        "summary": "Register User",
+        "summary": "Signup",
         "description": "Create new user without the need to be logged in.",
-        "operationId": "register_user_parties_signup_post",
+        "operationId": "signup_parties_signup_post",
         "responses": {
           "200": {
             "description": "Successful Response",
@@ -514,7 +566,7 @@
               "application/json": {
                 "schema": {
                   "type": "null",
-                  "title": "Response Register User Parties Signup Post"
+                  "title": "Response Signup Parties Signup Post"
                 }
               }
             }
@@ -1581,6 +1633,7 @@
         ],
         "summary": "Upload Image",
         "operationId": "upload_image_responses_response__response_api_id__upload_image_post",
+        "deprecated": true,
         "security": [
           {
             "OAuth2PasswordBearer": []
@@ -1614,6 +1667,99 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ResponseLinked"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/invites/": {
+      "post": {
+        "tags": [
+          "invites"
+        ],
+        "summary": "Create Invite",
+        "operationId": "create_invite_invites__post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/InviteCreate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InviteLinked"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ]
+      }
+    },
+    "/invites/token/{token}": {
+      "get": {
+        "tags": [
+          "invites"
+        ],
+        "summary": "Validate Token",
+        "operationId": "validate_token_invites_token__token__get",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "token",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Token"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InviteLinked"
                 }
               }
             }
@@ -1896,6 +2042,66 @@
         },
         "type": "object",
         "title": "HTTPValidationError"
+      },
+      "InviteCreate": {
+        "properties": {
+          "email": {
+            "type": "string",
+            "title": "Email"
+          },
+          "group_api_id": {
+            "type": "string",
+            "title": "Group Api Id"
+          }
+        },
+        "type": "object",
+        "required": [
+          "email",
+          "group_api_id"
+        ],
+        "title": "InviteCreate"
+      },
+      "InviteLinked": {
+        "properties": {
+          "email": {
+            "type": "string",
+            "title": "Email"
+          },
+          "api_identifier": {
+            "type": "string",
+            "title": "Api Identifier"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          },
+          "is_expired": {
+            "type": "boolean",
+            "title": "Is Expired"
+          },
+          "token": {
+            "type": "string",
+            "title": "Token"
+          },
+          "inviter": {
+            "$ref": "#/components/schemas/UserUnlinked"
+          },
+          "group": {
+            "$ref": "#/components/schemas/GroupUnlinked"
+          }
+        },
+        "type": "object",
+        "required": [
+          "email",
+          "api_identifier",
+          "created_at",
+          "is_expired",
+          "token",
+          "inviter",
+          "group"
+        ],
+        "title": "InviteLinked"
       },
       "LetterCreate": {
         "properties": {
