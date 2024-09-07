@@ -1,5 +1,5 @@
 from __future__ import annotations
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends
 from datetime import timezone
 from ring.dependencies import (
     AuthenticatedRequestDependencies,
@@ -11,6 +11,7 @@ from ring.api_identifier import (
 )
 from ring.letters.crud.letter import add_participants
 from ring.parties.crud import group as group_crud
+from ring.parties.crud import invite as invite_crud
 from ring.ring_pydantic import GroupLinked as GroupSchema
 from ring.parties.schemas.group import GroupCreate, GroupUpdate, AddMembers
 from ring.tasks.schemas.schedule import ScheduleSendParam
@@ -138,6 +139,7 @@ def update_group(
 ) -> None:
     raise NotImplementedError()
 
+
 @router.post(
     "/group/{group_api_id}:add_members",
     response_model=GroupSchema,
@@ -154,11 +156,19 @@ def add_members(
     )
     if not add_members.member_emails:
         return db_group
-    db_users = req_dep.db.query(User).where(User.email.in_(add_members.member_emails)).all()
-    unregistered = [email for email in add_members.member_emails if email not in [db_u.email for db_u in db_users]]
-    if unregistered:
-        raise HTTPException(  status_code=400, detail=f"Some emails are not registered: {unregistered}")
-
+    db_users = (
+        req_dep.db.query(User)
+        .where(User.email.in_(add_members.member_emails))
+        .all()
+    )
+    unregistered = [
+        email
+        for email in add_members.member_emails
+        if email not in [db_u.email for db_u in db_users]
+    ]
+    invite_crud.invite_users(
+        req_dep.db, db_group, req_dep.current_user, unregistered
+    )
     group_crud.add_members(req_dep.db, db_group, db_users)
     in_prog, upcoming = db_group.in_progress_letter, db_group.upcoming_letter
     if in_prog is not None:

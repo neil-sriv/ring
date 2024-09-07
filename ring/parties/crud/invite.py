@@ -7,6 +7,8 @@ from ring.parties.models.invite_model import Invite
 from ring.parties.models.user_model import User
 from sqlalchemy import select
 
+from ring.worker.celery_app import CeleryTask, register_task_factory
+
 if TYPE_CHECKING:
     from sqlalchemy.orm import Session
 
@@ -52,24 +54,40 @@ def get_invite_by_token(
     )
 
 
+def invite_users(
+    db: Session, group: Group, inviter: User, emails: Sequence[str]
+) -> list[Invite]:
+    invites: list[Invite] = []
+    for email in emails:
+        existing_invite = get_invite_by_email(db, email)
+        if existing_invite:
+            continue
+        invite = create_invite(db, email, inviter, group)
+        invites.append(invite)
+    email_user_invites.delay([invite.id for invite in invites])
+    return invites
+
+
 def create_invite(
     db: Session,
     email: str,
-    inviter_api_id: str,
-    group_api_id: str,
+    inviter: User,
+    group: Group,
 ) -> Invite:
-    inviter = api_identifier_crud.get_model(
-        db,
-        User,
-        api_id=inviter_api_id,
-    )
-    group = api_identifier_crud.get_model(
-        db,
-        Group,
-        api_id=group_api_id,
-    )
     # generate token
     token = token_urlsafe(16)
     db_invite = Invite.create(email, token, inviter, group)
     db.add(db_invite)
     return db_invite
+
+
+@register_task_factory(name="email_user_invites")
+def email_user_invites(self: CeleryTask, invite_ids: list[int]) -> None:
+    invites = self.session.scalars(
+        select(Invite).filter(Invite.id.in_(invite_ids))
+    ).all()
+    for invite in invites:
+        # send email
+        pass
+    self.session.commit()
+    return None

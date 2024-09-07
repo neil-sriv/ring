@@ -6,6 +6,9 @@ from ring.dependencies import (
 )
 from fastapi import HTTPException
 from ring.parties.crud import invite as invite_crud
+from ring.api_identifier import util as api_identifier_crud
+from ring.parties.models.group_model import Group
+from ring.parties.models.user_model import User
 from ring.parties.models.invite_model import Invite
 from ring.ring_pydantic import InviteLinked as InviteSchema
 from ring.parties.schemas.invite import (
@@ -28,11 +31,18 @@ async def create_invite(
     )
     if existing_unexpired_invite:
         raise HTTPException(status_code=400, detail="Email already invited")
-    db_invite = invite_crud.create_invite(
+    db_group = api_identifier_crud.get_model(
+        req_dep.db, Group, api_id=invite.group_api_id
+    )
+    db_inviter = api_identifier_crud.get_model(
+        req_dep.db, User, api_id=req_dep.current_user.api_identifier
+    )
+
+    [db_invite] = invite_crud.invite_users(
         db=req_dep.db,
-        email=invite.email,
-        inviter_api_id=req_dep.current_user.api_identifier,
-        group_api_id=invite.group_api_id,
+        emails=[invite.email],
+        inviter=db_inviter,
+        group=db_group,
     )
     req_dep.db.commit()
     return db_invite
