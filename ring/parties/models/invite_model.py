@@ -5,6 +5,7 @@ from sqlalchemy import ColumnElement, extract, func, ForeignKey
 from sqlalchemy.ext.hybrid import hybrid_property
 from ring.api_identifier.api_identified_model import APIIdentified
 from ring.created_at import CreatedAtMixin
+from ring.parties.models.group_model import Group
 from ring.parties.schemas.invite import InviteUnlinked
 from ring.ring_pydantic.pydantic_model import PydanticModel
 from ring.sqlalchemy_base import Base
@@ -27,30 +28,30 @@ class Invite(Base, APIIdentified, PydanticModel, CreatedAtMixin):
     ttl: Mapped[float] = mapped_column()
 
     inviter_id: Mapped[int] = mapped_column(ForeignKey("user.id"))
-    inviter: Mapped[User] = relationship(
-        back_populates="invites", cascade="all"
-    )
+    inviter: Mapped[User] = relationship(cascade="all")
+
+    group_id: Mapped[int] = mapped_column(ForeignKey("group.id"))
+    group: Mapped[Group] = relationship(cascade="all")
 
     def __init__(
         self,
         email: str,
         token: str,
         inviter: User,
+        group: Group,
     ) -> None:
         APIIdentified.__init__(self)
         self.email = email
         self.token = token
         self.inviter = inviter
+        self.group = group
         self.ttl = DEFAULT_INVITE_TOKEN_TTL
 
     @classmethod
     def create(
-        cls,
-        email: str,
-        token: str,
-        inviter: User,
+        cls, email: str, token: str, inviter: User, group: Group
     ) -> Invite:
-        return cls(email, token, inviter)
+        return cls(email, token, inviter, group)
 
     @hybrid_property
     def is_expired(self) -> bool:

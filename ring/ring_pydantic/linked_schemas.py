@@ -62,5 +62,7 @@ class ResponseLinked(Response, WithImageMixin):
 class ResponseWithParticipant(Response, WithImageMixin):
     participant: "UserUnlinked"
 
+
 class InviteLinked(Invite):
     inviter: "UserUnlinked"
+    group: "GroupUnlinked"

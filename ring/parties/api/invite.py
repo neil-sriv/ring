@@ -1,4 +1,3 @@
-
 from __future__ import annotations
 from fastapi import APIRouter, Depends
 from ring.dependencies import (
@@ -24,16 +23,20 @@ async def create_invite(
         get_request_dependencies,
     ),
 ) -> Invite:
-    existing_unexpired_invite = invite_crud.get_invite_by_email(req_dep.db, email=invite.email)
+    existing_unexpired_invite = invite_crud.get_invite_by_email(
+        req_dep.db, email=invite.email
+    )
     if existing_unexpired_invite:
         raise HTTPException(status_code=400, detail="Email already invited")
     db_invite = invite_crud.create_invite(
         db=req_dep.db,
         email=invite.email,
         inviter_api_id=req_dep.current_user.api_identifier,
+        group_api_id=invite.group_api_id,
     )
     req_dep.db.commit()
     return db_invite
+
 
 @router.get("/token/{token}", response_model=InviteLinked)
 async def validate_token(
