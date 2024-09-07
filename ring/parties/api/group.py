@@ -166,7 +166,7 @@ def add_members(
         for email in add_members.member_emails
         if email not in [db_u.email for db_u in db_users]
     ]
-    invite_crud.invite_users(
+    invites = invite_crud.invite_users(
         req_dep.db, db_group, req_dep.current_user, unregistered
     )
     group_crud.add_members(req_dep.db, db_group, db_users)
@@ -176,5 +176,8 @@ def add_members(
     if upcoming is not None:
         add_participants(req_dep.db, upcoming, db_users)
     req_dep.db.commit()
+
+    if invites:
+        invite_crud.email_user_invites.delay([invite.id for invite in invites])
 
     return db_group

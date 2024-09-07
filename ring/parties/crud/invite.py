@@ -64,7 +64,6 @@ def invite_users(
             continue
         invite = create_invite(db, email, inviter, group)
         invites.append(invite)
-    email_user_invites.delay([invite.id for invite in invites])
     return invites
 
 
