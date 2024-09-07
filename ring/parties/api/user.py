@@ -9,7 +9,11 @@ from ring.dependencies import (
 )
 from fastapi import HTTPException
 from ring.api_identifier import util as api_identifier_crud
-from ring.parties.crud import user as user_crud
+from ring.parties.crud import (
+    user as user_crud,
+    invite as invite_crud,
+    group as group_crud,
+)
 from ring.ring_pydantic import UserLinked as UserSchema
 from ring.ring_pydantic.core import ResponseMessage
 from ring.parties.schemas.user import (
@@ -46,6 +50,35 @@ async def create_user(
         name=user.name,
         email=user.email,
         password=user.password,
+    )
+    req_dep.db.commit()
+    return db_user
+
+
+@router.post("/register/{token}", response_model=UserSchema)
+async def register_user(
+    token: str,
+    user: UserCreate,
+    req_dep: RequestDependenciesBase = Depends(
+        get_unauthenticated_request_dependencies,
+    ),
+) -> User:
+    db_invite = invite_crud.get_invite_by_token(req_dep.db, token)
+    if not db_invite:
+        raise HTTPException(status_code=400, detail="Invalid token")
+    if db_invite.is_expired:
+        raise HTTPException(status_code=400, detail="Token expired")
+    db_user = user_crud.get_user_by_email(req_dep.db, email=user.email)
+    if db_user:
+        raise HTTPException(status_code=400, detail="Email already registered")
+
+    db_user = user_crud.create_user(
+        db=req_dep.db, name=user.name, email=user.email, password=user.password
+    )
+    db_group = db_invite.group
+    req_dep.db.flush()
+    group_crud.add_member(
+        req_dep.db, db_group.api_identifier, db_user.api_identifier
     )
     req_dep.db.commit()
     return db_user
@@ -123,13 +156,18 @@ def update_password_me(
         req_dep.current_user.hashed_password,
     ):
         raise HTTPException(status_code=400, detail="Incorrect password")
-    if update_password_data.current_password == update_password_data.new_password:
+    if (
+        update_password_data.current_password
+        == update_password_data.new_password
+    ):
         raise HTTPException(
             status_code=400,
             detail="New password must be different from the current password",
         )
 
-    hashed_password = user_crud.get_password_hash(update_password_data.new_password)
+    hashed_password = user_crud.get_password_hash(
+        update_password_data.new_password
+    )
     req_dep.current_user.hashed_password = hashed_password
     req_dep.db.commit()
     return ResponseMessage(message="Password updated successfully")
@@ -144,7 +182,7 @@ def delete_user_me() -> None:
 
 
 @router.post("/signup", deprecated=True)
-def register_user() -> None:
+def signup() -> None:
     """
     Create new user without the need to be logged in.
     """
