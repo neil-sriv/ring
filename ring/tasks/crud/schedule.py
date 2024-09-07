@@ -3,8 +3,7 @@ import datetime
 import time
 from typing import TYPE_CHECKING, Sequence
 
-from ring.letters.models.letter_model import Letter, LetterStatus
-from sqlalchemy import and_, or_, select
+from sqlalchemy import or_, select
 from ring.api_identifier import util as api_identifier_crud
 from ring.tasks.crud import task as task_crud
 from ring.tasks.models.schedule_model import Schedule

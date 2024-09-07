@@ -1,10 +1,9 @@
 from __future__ import annotations
 from datetime import datetime, timedelta
-from random import randint
 import random
 from typing import TYPE_CHECKING, Sequence
 
-from sqlalchemy import select, and_
+from sqlalchemy import select
 from ring.api_identifier import util as api_identifier_crud
 from ring.letters.models.letter_model import Letter
 from ring.parties.models.group_model import Group

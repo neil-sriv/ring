@@ -5,8 +5,7 @@ import random
 from tempfile import SpooledTemporaryFile
 from typing import TYPE_CHECKING, Sequence
 
-import boto3
-from fastapi import HTTPException, UploadFile
+from fastapi import UploadFile
 
 from ring.config import get_config
 from ring.api_identifier import util as api_identifier_crud

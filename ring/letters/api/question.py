@@ -1,5 +1,4 @@
 from __future__ import annotations
-from typing import Optional
 from fastapi import APIRouter, Depends, UploadFile
 from ring.dependencies import (
     AuthenticatedRequestDependencies,

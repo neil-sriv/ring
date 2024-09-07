@@ -10,6 +10,9 @@ where = ["."]
 include = ["ring", "dev_util"]
 namespaces = false
 
+[tool.ruff]
+line-length = 79
+
 [project]
 name = "ring"
 version = "0.1.0"

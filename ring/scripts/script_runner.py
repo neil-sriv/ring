@@ -1,5 +1,4 @@
 import json
-import subprocess
 import click
 import pathlib
 import importlib.util

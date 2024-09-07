@@ -7,7 +7,6 @@ from ring.letters.constants import LetterStatus
 from ring.tasks.models.task_model import SendEmailTask, TaskStatus, TaskType, Task
 from ring.worker.celery_app import CeleryTask, register_task_factory  # type: ignore
 from ring.letters.crud import letter as letter_crud
-from ring.letters.models.letter_model import Letter
 
 def execute_send_email_task(db: Session, task: SendEmailTask) -> None:
     group = task.schedule.group
