@@ -58,6 +58,6 @@ class Question(Base, APIIdentified, PydanticModel, CreatedAtMixin):
         return question
 
     @hybrid_property
-    def respondents(self) -> list[User]:
+    def responders(self) -> list[User]:
         respondents = {response.participant for response in self.responses}
         return list(respondents)

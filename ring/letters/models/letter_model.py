@@ -96,7 +96,7 @@ class Letter(Base, APIIdentified, PydanticModel, CreatedAtMixin):
         return letter
 
     @hybrid_property
-    def respondents(self) -> list[User]:
+    def responders(self) -> list[User]:
         respondents = {
             response.participant
             for question in self.questions
