@@ -2,6 +2,7 @@ from __future__ import annotations
 from secrets import token_urlsafe
 from typing import TYPE_CHECKING, Sequence
 from ring.api_identifier import util as api_identifier_crud
+from ring.email_util import CHARSET, EmailDraft, send_email
 from ring.parties.models.group_model import Group
 from ring.parties.models.invite_model import Invite
 from ring.parties.models.user_model import User
@@ -85,8 +86,47 @@ def email_user_invites(self: CeleryTask, invite_ids: list[int]) -> None:
     invites = self.session.scalars(
         select(Invite).filter(Invite.id.in_(invite_ids))
     ).all()
-    for invite in invites:
-        # send email
-        pass
+    email_drafts = [
+        construct_invite_email(i.email, i.group, i.token) for i in invites
+    ]
+    for draft in email_drafts:
+        send_email(draft)
     self.session.commit()
     return None
+
+
+def construct_invite_email(
+    recipient: str,
+    group: Group,
+    token: str,
+) -> EmailDraft:
+    BODY_HTML = """
+    <html>
+    <head></head>
+    <body>
+    <h1 style="text-align:center">Join <b>{group_name}</b> and make custom monthly newsletters with your friends!</h1>
+    <spacer type="" size="">
+    <span>Click the link below to join the group and start creating newsletters!</span>
+    <spacer type="" size="">
+    <h3>Please use this custom URL to create an account: <a href="http://ring.neilsriv.tech/register/{token}">http://ring.neilsriv.tech/register/{token}</a></h2>
+    <p>
+    You've been invited to join a Ring Newsletter! Ring is a custom newsletter platform made by Neil Srivastava that allows you to create newsletters with your friends.
+    </p>
+    </body>
+    </html>
+                """.format(group_name=group.name, token=token)
+    return EmailDraft(
+        destination={"ToAddresses": [recipient]},
+        message={
+            "Subject": {
+                "Data": "You've been invited to join a Ring Newsletter!",
+                "Charset": CHARSET,
+            },
+            "Body": {
+                "Html": {
+                    "Data": BODY_HTML,
+                    "Charset": CHARSET,
+                },
+            },
+        },
+    )

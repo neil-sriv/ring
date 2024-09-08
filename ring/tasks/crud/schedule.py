@@ -1,14 +1,11 @@
 from __future__ import annotations
-from dataclasses import dataclass
 import datetime
 import time
-from typing import TYPE_CHECKING, Callable, Sequence
+from typing import TYPE_CHECKING, Sequence
 
 from sqlalchemy import or_, select
 from ring.api_identifier import util as api_identifier_crud
-from ring.sqlalchemy_base import Base
 from ring.tasks.crud import task as task_crud
-from ring.tasks.crud.collection import register_collection_event
 from ring.tasks.models.schedule_model import Schedule
 from ring.parties.models.group_model import Group
 from ring.tasks.models.task_model import Task, TaskStatus, TaskType
