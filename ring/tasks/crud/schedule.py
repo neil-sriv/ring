@@ -1,11 +1,14 @@
 from __future__ import annotations
+from dataclasses import dataclass
 import datetime
 import time
-from typing import TYPE_CHECKING, Sequence
+from typing import TYPE_CHECKING, Callable, Sequence
 
 from sqlalchemy import or_, select
 from ring.api_identifier import util as api_identifier_crud
+from ring.sqlalchemy_base import Base
 from ring.tasks.crud import task as task_crud
+from ring.tasks.crud.collection import register_collection_event
 from ring.tasks.models.schedule_model import Schedule
 from ring.parties.models.group_model import Group
 from ring.tasks.models.task_model import Task, TaskStatus, TaskType
@@ -52,7 +55,11 @@ def collect_pending_tasks(
 @register_task_factory(name="poll_schedule")
 def poll_schedule_task(self: CeleryTask) -> dict[str, str]:
     from ring.tasks.crud import schedule as schedule_crud
-    from ring.letters.crud.letter import promote_and_create_new_letters, postpend_upcoming_letters, collect_future_letters
+    from ring.letters.crud.letter import (
+        promote_and_create_new_letters,
+        postpend_upcoming_letters,
+        collect_future_letters,
+    )
 
     time.sleep(5)
 
@@ -63,8 +70,9 @@ def poll_schedule_task(self: CeleryTask) -> dict[str, str]:
             [task.id for task in tasks],
         )
 
-
-    postpend, promote = collect_future_letters(self.session, curr_time + datetime.timedelta(days=7))
+    postpend, promote = collect_future_letters(
+        self.session, curr_time + datetime.timedelta(days=7)
+    )
     if postpend:
         postpend_upcoming_letters.delay(
             [letter.id for letter in postpend],

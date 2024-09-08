@@ -8,7 +8,11 @@ from ring.api_identifier import util as api_identifier_crud
 from ring.letters.models.letter_model import Letter
 from ring.parties.models.group_model import Group
 from ring.tasks.crud import schedule as schedule_crud
-from ring.letters.constants import DEFAULT_QUESTIONS, QUESTION_BANK, LetterStatus
+from ring.letters.constants import (
+    DEFAULT_QUESTIONS,
+    QUESTION_BANK,
+    LetterStatus,
+)
 from ring.letters.models.question_model import Question
 from ring.tasks.models.task_model import TaskType, TaskStatus
 from ring.worker.celery_app import register_task_factory
@@ -53,6 +57,7 @@ def create_letter(
         )
     return db_letter
 
+
 def create_letter_with_questions(
     db: Session,
     group_api_id: str,
@@ -71,8 +76,16 @@ def edit_letter(
     letter: Letter,
     send_at: datetime,
 ) -> Letter:
-    schedule = schedule_crud.get_schedule_for_group(db, letter.group.api_identifier)
-    tasks = [t for t in schedule.tasks if t.status == TaskStatus.PENDING and t.type == TaskType.SEND_EMAIL and t.execute_at == letter.send_at]
+    schedule = schedule_crud.get_schedule_for_group(
+        db, letter.group.api_identifier
+    )
+    tasks = [
+        t
+        for t in schedule.tasks
+        if t.status == TaskStatus.PENDING
+        and t.type == TaskType.SEND_EMAIL
+        and t.execute_at == letter.send_at
+    ]
     letter.send_at = send_at
     if tasks:
         print(tasks)
@@ -131,7 +144,9 @@ def add_random_questions(
     return questions
 
 
-def compile_letter_dict(letter: Letter) -> dict[str, list[tuple[str, list[str]]]]:
+def compile_letter_dict(
+    letter: Letter,
+) -> dict[str, list[tuple[str, list[str]]]]:
     def construct_question_text(question: Question) -> str:
         return (
             f"{question.author.name}: {question.question_text}"
@@ -143,12 +158,16 @@ def compile_letter_dict(letter: Letter) -> dict[str, list[tuple[str, list[str]]]
         construct_question_text(q): [
             (
                 f"{resp.participant.name}: {resp.response_text}",
-                [assoc.image.qualified_s3_url for assoc in resp.image_associations],
+                [
+                    assoc.image.qualified_s3_url
+                    for assoc in resp.image_associations
+                ],
             )
             for resp in q.responses
         ]
         for q in sorted(letter.questions, key=lambda q: q.created_at)
     }
+
 
 def collect_future_letters(
     db: Session,
@@ -158,7 +177,9 @@ def collect_future_letters(
         select(Letter)
         .where(
             Letter.send_at < recent_time,
-            Letter.status.in_([LetterStatus.IN_PROGRESS, LetterStatus.UPCOMING]),
+            Letter.status.in_(
+                [LetterStatus.IN_PROGRESS, LetterStatus.UPCOMING]
+            ),
         )
         .order_by(Letter.send_at)
     ).all()
@@ -173,21 +194,40 @@ def collect_future_letters(
 
     return letters_to_be_postpended, letters_to_be_promoted
 
+
 @register_task_factory(name="promote_and_create_new_letters")
-def promote_and_create_new_letters(self: CeleryTask, letter_ids: list[int]) -> None:
-    letters = self.session.query(Letter).filter(Letter.id.in_(letter_ids)).all()
+def promote_and_create_new_letters(
+    self: CeleryTask, letter_ids: list[int]
+) -> None:
+    letters = (
+        self.session.query(Letter).filter(Letter.id.in_(letter_ids)).all()
+    )
     for letter in letters:
         letter.status = LetterStatus.IN_PROGRESS
-        create_letter_with_questions(self.session, letter.group.api_identifier, letter.send_at + timedelta(days=30))
+        create_letter_with_questions(
+            self.session,
+            letter.group.api_identifier,
+            letter.send_at + timedelta(days=30),
+        )
     self.session.commit()
+
 
 @register_task_factory(name="postpend_upcoming_letters")
 def postpend_upcoming_letters(self: CeleryTask, letter_ids: list[int]) -> None:
-    letters = self.session.query(Letter).filter(Letter.id.in_(letter_ids)).all()
+    letters = (
+        self.session.query(Letter).filter(Letter.id.in_(letter_ids)).all()
+    )
     for letter in letters:
-        create_letter_with_questions(self.session, letter.group.api_identifier, letter.send_at + timedelta(days=30))
+        create_letter_with_questions(
+            self.session,
+            letter.group.api_identifier,
+            letter.send_at + timedelta(days=30),
+        )
     self.session.commit()
 
-def add_participants(db: Session, letter: Letter, participants: list[User]) -> None:
+
+def add_participants(
+    db: Session, letter: Letter, participants: list[User]
+) -> None:
     for participant in participants:
         letter.participants.append(participant)
