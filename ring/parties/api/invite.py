@@ -2,7 +2,9 @@ from __future__ import annotations
 from fastapi import APIRouter, Depends
 from ring.dependencies import (
     AuthenticatedRequestDependencies,
+    RequestDependenciesBase,
     get_request_dependencies,
+    get_unauthenticated_request_dependencies,
 )
 from fastapi import HTTPException
 from ring.parties.crud import invite as invite_crud
@@ -51,8 +53,8 @@ async def create_invite(
 @router.get("/token/{token}", response_model=InviteLinked)
 async def validate_token(
     token: str,
-    req_dep: AuthenticatedRequestDependencies = Depends(
-        get_request_dependencies,
+    req_dep: RequestDependenciesBase = Depends(
+        get_unauthenticated_request_dependencies,
     ),
 ) -> Invite:
     db_invite = invite_crud.get_invite_by_token(req_dep.db, token)

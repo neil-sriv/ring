@@ -22,18 +22,20 @@ class Invite(Base, APIIdentified, PydanticModel, CreatedAtMixin):
     PYDANTIC_MODEL = InviteUnlinked
 
     id: Mapped[int] = mapped_column(primary_key=True, index=True)
-    email: Mapped[str] = mapped_column(unique=True, index=True)
+    email: Mapped[str] = mapped_column(index=True)
     token: Mapped[str] = mapped_column()
     api_identifier: Mapped[str] = mapped_column(unique=True, index=True)
     ttl: Mapped[float] = mapped_column()
 
     inviter_id: Mapped[int] = mapped_column(
-        ForeignKey("user.id", ondelete="CASCADE")
+        ForeignKey(
+            "user.id", name="invite_inviter_id_fkey", ondelete="CASCADE"
+        )
     )
     inviter: Mapped[User] = relationship()
 
     group_id: Mapped[int] = mapped_column(
-        ForeignKey("group.id", ondelete="CASCADE")
+        ForeignKey("group.id", name="invite_group_id_fkey", ondelete="CASCADE")
     )
     group: Mapped[Group] = relationship()
 

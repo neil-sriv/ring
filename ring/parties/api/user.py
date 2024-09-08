@@ -68,6 +68,8 @@ async def register_user(
         raise HTTPException(status_code=400, detail="Invalid token")
     if db_invite.is_expired:
         raise HTTPException(status_code=400, detail="Token expired")
+    if user.email != db_invite.email:
+        raise HTTPException(status_code=400, detail="Email mismatch")
     db_user = user_crud.get_user_by_email(req_dep.db, email=user.email)
     if db_user:
         raise HTTPException(status_code=400, detail="Email already registered")
