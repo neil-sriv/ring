@@ -54,7 +54,7 @@ function GroupTableBody() {
               {group.name}
             </ChakraLink>
           </Td>
-          <Td>
+          <Td whiteSpace="normal">
             <Box>
               <Text>
                 {group.members
@@ -82,10 +82,11 @@ function GroupTableBody() {
     </Tbody>
   );
 }
+
 function GroupTable() {
   return (
     <TableContainer>
-      <Table size={{ base: "sm", md: "md" }} maxW="100%">
+      <Table size={{ base: "sm", md: "md" }} maxW="50%">
         <Thead>
           <Tr>
             <Th>Name</Th>
