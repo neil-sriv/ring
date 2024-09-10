@@ -86,7 +86,7 @@ function GroupTableBody() {
 function GroupTable() {
   return (
     <TableContainer>
-      <Table size={{ base: "sm", md: "md" }} maxW="50%">
+      <Table size={{ base: "sm", md: "md" }} maxW="100%">
         <Thead>
           <Tr>
             <Th>Name</Th>
