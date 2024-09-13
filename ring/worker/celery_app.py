@@ -27,6 +27,12 @@ celery = Celery(
     beat_schedule=celerybeat_schedule(),
 )
 
+celery.conf.update(
+    result_expires=3600,
+    concrrency=1,
+    worker_max_memory_per_child=120000,  # 120MB
+)
+
 
 class CeleryTask(celery.Task):
     def __init__(self):

@@ -178,6 +178,9 @@ def add_members(
     req_dep.db.commit()
 
     if invites:
-        invite_crud.email_user_invites.delay([invite.id for invite in invites])
+        [
+            invite_crud.email_user_invites.delay([invite.id])
+            for invite in invites
+        ]
 
     return db_group
