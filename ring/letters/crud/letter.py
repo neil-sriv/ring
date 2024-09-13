@@ -165,7 +165,9 @@ def compile_letter_dict(
             )
             for resp in q.responses
         ]
-        for q in sorted(letter.questions, key=lambda q: q.created_at)
+        for q in sorted(
+            letter.questions, key=lambda q: q.created_at, reverse=True
+        )
     }
 
 
