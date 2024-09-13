@@ -20,6 +20,14 @@ const theme = extendTheme({
     },
   },
   components: {
+    Link: {
+      baseStyle: {
+        color: "ui.main",
+        _hover: {
+          color: "ui.dim",
+        },
+      },
+    },
     Button: {
       variants: {
         primary: {
