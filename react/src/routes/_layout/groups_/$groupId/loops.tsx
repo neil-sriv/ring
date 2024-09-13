@@ -88,13 +88,34 @@ function LoopCard(props: LoopCardProps): JSX.Element {
             ) : (
               <>
                 <Text>Due {sendDate.toLocaleString()}</Text>
-                <Text> {props.loop.status} </Text>
               </>
             )}
           </LinkOverlay>
         </CardHeader>
       </Card>
     </LinkBox>
+  );
+}
+
+function LoopsGrid({
+  loops,
+  heading,
+  subheading,
+}: {
+  loops: PublicLetter[];
+  heading: string;
+  subheading?: string;
+}): JSX.Element {
+  return (
+    <Box paddingBottom="15px">
+      <Heading size="md">{heading}</Heading>
+      {subheading && <Heading size="sm">{subheading}</Heading>}
+      <SimpleGrid columns={[1, 4, 6]} gap={4}>
+        {loops.map((loop) => (
+          <LoopCard key={loop.api_identifier} loop={loop} />
+        ))}
+      </SimpleGrid>
+    </Box>
   );
 }
 
@@ -108,6 +129,18 @@ function LoopsContent() {
         groupApiId: groupId,
       }),
   });
+  const publishedLoops = new Array<PublicLetter>();
+  const inProgressLoops = new Array<PublicLetter>();
+  const upcomingLoops = new Array<PublicLetter>();
+  props.loops.forEach((loop) => {
+    if (loop.status === "SENT") {
+      publishedLoops.push(loop);
+    } else if (loop.status === "IN_PROGRESS") {
+      inProgressLoops.push(loop);
+    } else {
+      upcomingLoops.push(loop);
+    }
+  });
   return (
     <Container maxW="container.lg" py={4}>
       <Heading size="lg" textAlign={{ base: "center", md: "left" }} pt={12}>
@@ -115,13 +148,28 @@ function LoopsContent() {
       </Heading>
       <LoopNav loops={props.loops} group={group} />
       <Container maxW="container.lg" py={4}>
-        <SimpleGrid columns={4} gap={4}>
-          {props.loops
-            .sort((a, b) => b.number - a.number)
-            .map((loop) => (
-              <LoopCard key={loop.api_identifier} loop={loop} />
-            ))}
-        </SimpleGrid>
+        {inProgressLoops.length > 0 && (
+          <LoopsGrid
+            loops={inProgressLoops}
+            heading="In Progress"
+            subheading="Add your response now!"
+          />
+        )}
+
+        {upcomingLoops.length > 0 && (
+          <LoopsGrid
+            loops={upcomingLoops}
+            heading="Upcoming Issues"
+            subheading="You can add questions to the upcoming issues before they are available for responses."
+          />
+        )}
+
+        {publishedLoops.length > 0 && (
+          <LoopsGrid
+            loops={publishedLoops.sort((a, b) => a.number - b.number)}
+            heading="Published Issues"
+          />
+        )}
       </Container>
     </Container>
   );
