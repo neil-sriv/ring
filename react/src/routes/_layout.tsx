@@ -11,6 +11,9 @@ export const Route = createFileRoute("/_layout")({
     if (!isLoggedIn()) {
       throw redirect({
         to: "/login",
+        search: {
+          path: location.pathname,
+        },
       });
     }
   },

@@ -1,5 +1,5 @@
 import { useMutation, useQuery } from "@tanstack/react-query";
-import { useNavigate } from "@tanstack/react-router";
+import { useNavigate, useSearch } from "@tanstack/react-router";
 import { useState } from "react";
 
 import { AxiosError } from "axios";
@@ -16,6 +16,7 @@ const isLoggedIn = () => {
 };
 
 const useAuth = () => {
+  const search = useSearch({ strict: false });
   const [error, setError] = useState<string | null>(null);
   const navigate = useNavigate();
   const { data: user, isLoading } = useQuery<UserLinked | null, Error>({
@@ -34,7 +35,8 @@ const useAuth = () => {
   const loginMutation = useMutation({
     mutationFn: login,
     onSuccess: () => {
-      navigate({ to: "/groups" });
+      // @ts-expect-error
+      navigate({ to: search.path || "/groups" });
     },
     onError: (err: ApiError) => {
       let errDetail = (err.body as any)?.detail;
