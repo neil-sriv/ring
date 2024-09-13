@@ -10,7 +10,7 @@ from ring.config import get_config
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="login/access-token")
 password_hash = PasswordHash([BcryptHasher()])
 
-ACCESS_TOKEN_TTL = 60 * 30  # 30 minutes
+ACCESS_TOKEN_TTL = 60 * 60 * 24 * 7  # 1 week
 
 
 def verify_password(plain_password: str, hashed_password: str) -> bool:
@@ -26,7 +26,7 @@ def create_access_token(
 ) -> str:
     config = get_config()
     to_encode = data.copy()
-    expire = datetime.now(tz=UTC) + timedelta(minutes=expires_ttl)
+    expire = datetime.now(tz=UTC) + timedelta(seconds=expires_ttl)
     to_encode.update({"exp": expire})
     encoded_jwt = jwt.encode(
         to_encode,
