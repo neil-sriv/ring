@@ -62,7 +62,9 @@ export function SingleUploadImage({
 }: SingleUploadImageProps): JSX.Element {
   const [uploadedFile, setUploadedFile] = useState<File | null>(null);
 
-  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileChange = async (
+    event: React.ChangeEvent<HTMLInputElement>
+  ) => {
     const { files } = event.target;
     if (!files || files.length === 0) {
       return;
@@ -70,7 +72,8 @@ export function SingleUploadImage({
     const selectedFiles = files as FileList;
     const file = selectedFiles?.[0];
     setUploadedFile(file);
-    onUpdateFile(file);
+    await onUpdateFile(file);
+    setUploadedFile(null);
   };
 
   return (

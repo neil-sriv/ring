@@ -21,7 +21,7 @@ type ResponseBlockProps = {
 
 function ResponseBlock(props: ResponseBlockProps) {
   const [responseText, setResponseText] = useState(
-    props.response?.response_text ?? "",
+    props.response?.response_text ?? ""
   );
   const showToast = useCustomToast();
   const handleResponseChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
@@ -70,7 +70,7 @@ function DraftQuestion({
   }
   const response = question.responses.find(
     (response) =>
-      response.participant.api_identifier === currentUser.api_identifier,
+      response.participant.api_identifier === currentUser.api_identifier
   );
 
   const handleUpsert = async (responseText: string) => {
@@ -81,7 +81,7 @@ function DraftQuestion({
           response_text: responseText,
           participant_api_identifier: currentUser.api_identifier,
         },
-      },
+      }
     );
   };
 
@@ -92,8 +92,9 @@ function DraftQuestion({
         formData: {
           response_image: file,
         },
-      },
+      }
     );
+    queryClient.invalidateQueries({ queryKey: ["loop"] });
   };
 
   return (
