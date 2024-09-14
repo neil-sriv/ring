@@ -2,6 +2,7 @@ import {
   Center,
   Icon,
   Image,
+  Input,
   ScaleFade,
   VStack,
   chakra,
@@ -108,7 +109,7 @@ export function SingleUploadImage({
         </ScaleFade>
       )}
 
-      <chakra.input
+      <Input
         required
         style={{ display: "none" }}
         type="file"
@@ -117,6 +118,7 @@ export function SingleUploadImage({
         id={name}
         name={name}
         onChange={handleFileChange}
+        isDisabled={uploadedFile !== null}
       />
     </Center>
   );
