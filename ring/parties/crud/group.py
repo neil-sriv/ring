@@ -44,6 +44,10 @@ def add_member(db: Session, group_api_id: str, user_api_id: str) -> Group:
     db_group = api_identifier_crud.get_model(db, Group, api_id=group_api_id)
     db_user = api_identifier_crud.get_model(db, User, api_id=user_api_id)
     db_group.members.append(db_user)
+    if db_group.in_progress_letter:
+        db_group.in_progress_letter.participants.append(db_user)
+    if db_group.upcoming_letter:
+        db_group.upcoming_letter.participants.append(db_user)
     return db_group
 
 
@@ -80,9 +84,8 @@ def schedule_send(
     )
     return db_group
 
-def add_members(
-    db: Session, group: Group, members: Sequence[User]
-) -> None:
+
+def add_members(db: Session, group: Group, members: Sequence[User]) -> None:
     for member in members:
         if member not in group.members:
             group.members.append(member)
