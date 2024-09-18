@@ -3,7 +3,7 @@ This is a clone of LetterLoop as a fun side project.
 
 ## Set up
 ### Requirements
-- Docker Installed
+- Docker or Orbstack Installed
 - node v18 or greater
 - yarn
 ### pyenv
@@ -23,7 +23,7 @@ pyenv activate ring
 ```
 
 ### Install
-There is a `pyproject.toml` file that will install local `dev` commands and requirements.
+There is a `pyproject.toml` file that will install local `ring` commands and requirements.
 ```
 pip install -e .
 ```
@@ -35,7 +35,7 @@ uv pip install -e .
 ## Development
 ### Running the server
 ```
-dev compose up
+ring compose up
 ```
 API accessible and `localhost/api/v1/docs`
 ### Running the client
@@ -45,9 +45,9 @@ yarn run dev
 ```
 Accessible at `localhost:5173`
 
-### `dev` commands
+### `ring` commands
 ```
-Usage: dev [OPTIONS] COMMAND [ARGS]...
+Usage: ring [OPTIONS] COMMAND [ARGS]...
 
 Options:
   --help  Show this message and exit.
@@ -58,10 +58,10 @@ Commands:
   docker
   run
 ```
-#### `dev compose`
+#### `ring compose`
 A wrapper around docker compose. By default it will use the compose.dev.yml and always build the images. Pass --prod to use the compose.prod.yml file.
 ```
-Usage: dev compose [OPTIONS] COMMAND [ARGS]...
+Usage: ring compose [OPTIONS] COMMAND [ARGS]...
 
 Options:
   --help  Show this message and exit.
@@ -72,10 +72,10 @@ Commands:
   up
 ```
 
-#### `dev db`
+#### `ring db`
 Entrypoint to working with the database. Can open pgcli or run migrations.
 ```
-Usage: dev db [OPTIONS] COMMAND [ARGS]...
+Usage: ring db [OPTIONS] COMMAND [ARGS]...
 
 Options:
   --help  Show this message and exit.
@@ -87,10 +87,10 @@ Commands:
   upgrade
 ```
 
-#### `dev docker`
+#### `ring docker`
 Entrypoint to working with the docker registry. Can tag and push images to the registry.
 ```
-Usage: dev docker [OPTIONS] COMMAND [ARGS]...
+Usage: ring docker [OPTIONS] COMMAND [ARGS]...
 
 Options:
   --help  Show this message and exit.
@@ -101,10 +101,10 @@ Commands:
   tp
 ```
 
-#### `dev run`
+#### `ring run`
 Run scripts or start a shell.
 ```
-Usage: dev run [OPTIONS] COMMAND [ARGS]...
+Usage: ring run [OPTIONS] COMMAND [ARGS]...
 
 Options:
   --help  Show this message and exit.
@@ -117,11 +117,11 @@ Commands:
 ## Deployment
 ### Build new images
 ```
-dev compose any --prod build
+ring compose any --prod build
 ```
 ### Push to registry
 ```
-dev docker tp
+ring docker tp
 ```
 ### Deploy
 - ssh into the server
@@ -130,9 +130,9 @@ dev docker tp
 cd ring
 git pull
 ./dev_util/prod.sh
-dev compose any --prod down worker beat
-dev db upgrade
-dev compose any --prod up -d
+ring compose any --prod down worker beat
+ring db upgrade
+ring compose any --prod up -d
 # may need to restart nginx
-dev compose any --prod restart nginx
+ring compose any --prod restart nginx
 ```
