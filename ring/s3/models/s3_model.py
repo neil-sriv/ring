@@ -1,4 +1,5 @@
 from __future__ import annotations
+from enum import StrEnum
 from typing import TYPE_CHECKING
 from sqlalchemy import ForeignKey
 from sqlalchemy.orm import Mapped, mapped_column, relationship
@@ -27,12 +28,18 @@ class S3File(Base):
         return "https://du32exnxihxuf.cloudfront.net/" + self.s3_url
 
 
+class MediaType(StrEnum):
+    IMAGE = "image"
+    VIDEO = "video"
+
+
 class Image(S3File):
     __tablename__ = "image"
 
     id: Mapped[int] = mapped_column(
         ForeignKey("s3_file.id"), primary_key=True, index=True
     )
+    media_type: Mapped[str] = mapped_column(nullable=False)
     # parent: Mapped["ImageResponseAssociation"] = relationship(
     #     back_populates="images",
     # )
@@ -47,12 +54,15 @@ class Image(S3File):
     def __init__(
         self,
         s3_url: str,
+        media_type: MediaType = MediaType.IMAGE,
     ) -> None:
         self.s3_url = s3_url
+        self.media_type = media_type
 
     @classmethod
     def create(
         cls,
         s3_url: str,
+        media_type: MediaType = MediaType.IMAGE,
     ) -> Image:
-        return Image(s3_url=s3_url)
+        return Image(s3_url=s3_url, media_type=media_type)

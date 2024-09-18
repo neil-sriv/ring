@@ -18,7 +18,7 @@ from ring.letters.models.response_model import (
     ImageResponseAssociation,
     Response,
 )
-from ring.s3.models.s3_model import Image
+from ring.s3.models.s3_model import Image, MediaType
 from ring.letters.schemas.response import Response as ResponseUpdate
 
 if TYPE_CHECKING:
@@ -74,6 +74,10 @@ async def a_upload_image(
             s3_file_prefix
             + hashlib.sha1(bytearray(random_string, "utf-8")).hexdigest()
         )
+        content_type = MediaType.IMAGE
+        if image_file.content_type and "video" in image_file.content_type:
+            content_type = MediaType.VIDEO
+
         client.upload_fileobj(
             image_file.file,
             get_config().BUCKET_NAME,
@@ -81,34 +85,34 @@ async def a_upload_image(
         )
 
         # Update response with _image_file S3 path
-        image = Image.create(s3_url=s3_file_path)
+        image = Image.create(s3_url=s3_file_path, media_type=content_type)
         add_image_to_response(db, response, image)
 
     return response
 
 
-def upload_image(
-    db: Session,
-    response: Response,
-    response_images: list[SpooledTemporaryFile],
-) -> Response:
-    s3_file_prefix = f"{response.question.letter.group.api_identifier}/{response.question.letter.api_identifier}/{response.api_identifier}/"
-    random_string = "".join(random.choices(string_lib.ascii_letters, k=12))
-    s3_file_path = (
-        s3_file_prefix
-        + hashlib.sha1(bytearray(random_string, "utf-8")).hexdigest()
-    )
-    # upload image to S3
-    client = get_s3_client_dependencies()
-    for image_file in response_images:
-        client.upload_fileobj(
-            image_file,
-            get_config().BUCKET_NAME,
-            s3_file_path,
-        )
+# def upload_image(
+#     db: Session,
+#     response: Response,
+#     response_images: list[SpooledTemporaryFile],
+# ) -> Response:
+#     s3_file_prefix = f"{response.question.letter.group.api_identifier}/{response.question.letter.api_identifier}/{response.api_identifier}/"
+#     random_string = "".join(random.choices(string_lib.ascii_letters, k=12))
+#     s3_file_path = (
+#         s3_file_prefix
+#         + hashlib.sha1(bytearray(random_string, "utf-8")).hexdigest()
+#     )
+#     # upload image to S3
+#     client = get_s3_client_dependencies()
+#     for image_file in response_images:
+#         client.upload_fileobj(
+#             image_file,
+#             get_config().BUCKET_NAME,
+#             s3_file_path,
+#         )
 
-    # Update response with _image_file S3 path
-    image = Image.create(s3_url=s3_file_path)
-    add_image_to_response(db, response, image)
+#     # Update response with _image_file S3 path
+#     image = Image.create(s3_url=s3_file_path)
+#     add_image_to_response(db, response, image)
 
-    return response
+#     return response

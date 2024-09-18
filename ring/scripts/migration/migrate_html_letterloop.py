@@ -113,7 +113,9 @@ def _parse_issue(db: Session, soup: BeautifulSoup, user: User) -> Letter:
     return letter
 
 
-def _parse_question(db: Session, letter: Letter, question_stack: Tag) -> Question:
+def _parse_question(
+    db: Session, letter: Letter, question_stack: Tag
+) -> Question:
     if not question_stack.contents:
         return
     author_name = None
@@ -128,7 +130,9 @@ def _parse_question(db: Session, letter: Letter, question_stack: Tag) -> Questio
     author_user = (
         None
         if not author_name
-        else db.scalars(select(User).where(User.name == author_name)).one_or_none()
+        else db.scalars(
+            select(User).where(User.name == author_name)
+        ).one_or_none()
     )
     current_question = letter_crud.add_question(
         db,
@@ -198,7 +202,9 @@ def _parse_question(db: Session, letter: Letter, question_stack: Tag) -> Questio
                 idx += 1
         print([author])
         # print([m.name for m in letter.group.members])
-        [current_user] = [m for m in letter.group.members if m.name == author.strip()]
+        [current_user] = [
+            m for m in letter.group.members if m.name == author.strip()
+        ]
         response = question_crud.add_response(
             db, current_question, current_user, response_text
         )
@@ -207,12 +213,14 @@ def _parse_question(db: Session, letter: Letter, question_stack: Tag) -> Questio
             with tempfile.SpooledTemporaryFile() as f:
                 f.write(requests.get(url).content)
                 f.seek(0)
-                upload_result = upload_image(db, response, [f])
+                # upload_result = upload_image(db, response, [f])
 
     return current_question
 
 
-def _parse_asked_question_text(question: PageElement) -> tuple[str | None, str]:
+def _parse_asked_question_text(
+    question: PageElement,
+) -> tuple[str | None, str]:
     author_name = None
     parts = question.contents[0].contents
     if len(parts) > 1:
