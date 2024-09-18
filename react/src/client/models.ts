@@ -66,6 +66,13 @@ export type HTTPValidationError = {
 
 
 
+export type Image = {
+	s3_url: string;
+	media_type: MediaType;
+};
+
+
+
 export type InviteCreate = {
 	email: string;
 	group_api_id: string;
@@ -109,6 +116,10 @@ export type LetterUnlinked = {
 export type LetterUpdate = {
 	send_at: string;
 };
+
+
+
+export type MediaType = 'image' | 'video';
 
 
 
@@ -178,7 +189,7 @@ export type ResponseLinked = {
 	created_at: string;
 	question: QuestionUnlinked;
 	participant: UserUnlinked;
-	readonly image_urls: Array<string>;
+	readonly images: Array<Image>;
 };
 
 
@@ -210,7 +221,7 @@ export type ResponseWithParticipant = {
 	api_identifier: string;
 	created_at: string;
 	participant: UserUnlinked;
-	readonly image_urls: Array<string>;
+	readonly images: Array<Image>;
 };
 
 

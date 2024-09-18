@@ -1737,11 +1737,6 @@
         ],
         "summary": "Validate Token",
         "operationId": "validate_token_invites_token__token__get",
-        "security": [
-          {
-            "OAuth2PasswordBearer": []
-          }
-        ],
         "parameters": [
           {
             "name": "token",
@@ -2043,6 +2038,23 @@
         "type": "object",
         "title": "HTTPValidationError"
       },
+      "Image": {
+        "properties": {
+          "s3_url": {
+            "type": "string",
+            "title": "S3 Url"
+          },
+          "media_type": {
+            "$ref": "#/components/schemas/MediaType"
+          }
+        },
+        "type": "object",
+        "required": [
+          "s3_url",
+          "media_type"
+        ],
+        "title": "Image"
+      },
       "InviteCreate": {
         "properties": {
           "email": {
@@ -2178,6 +2190,14 @@
           "send_at"
         ],
         "title": "LetterUpdate"
+      },
+      "MediaType": {
+        "type": "string",
+        "enum": [
+          "image",
+          "video"
+        ],
+        "title": "MediaType"
       },
       "NewPassword": {
         "properties": {
@@ -2405,12 +2425,12 @@
           "participant": {
             "$ref": "#/components/schemas/UserUnlinked"
           },
-          "image_urls": {
+          "images": {
             "items": {
-              "type": "string"
+              "$ref": "#/components/schemas/Image"
             },
             "type": "array",
-            "title": "Image Urls",
+            "title": "Images",
             "readOnly": true
           }
         },
@@ -2421,7 +2441,7 @@
           "created_at",
           "question",
           "participant",
-          "image_urls"
+          "images"
         ],
         "title": "ResponseLinked"
       },
@@ -2515,12 +2535,12 @@
           "participant": {
             "$ref": "#/components/schemas/UserUnlinked"
           },
-          "image_urls": {
+          "images": {
             "items": {
-              "type": "string"
+              "$ref": "#/components/schemas/Image"
             },
             "type": "array",
-            "title": "Image Urls",
+            "title": "Images",
             "readOnly": true
           }
         },
@@ -2530,7 +2550,7 @@
           "api_identifier",
           "created_at",
           "participant",
-          "image_urls"
+          "images"
         ],
         "title": "ResponseWithParticipant"
       },

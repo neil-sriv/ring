@@ -1,5 +1,12 @@
 from typing import Any
-from pydantic import Field, computed_field
+from pydantic import BaseModel, Field, computed_field
+
+from ring.s3.models.s3_model import MediaType
+
+
+class Image(BaseModel):
+    s3_url: str
+    media_type: MediaType
 
 
 class WithImageMixin:
@@ -7,5 +14,5 @@ class WithImageMixin:
 
     @computed_field
     @property
-    def image_urls(self) -> list[str]:
-        return [assoc.image.s3_url for assoc in self.image_associations]
+    def images(self) -> list[Image]:
+        return [assoc.image for assoc in self.image_associations]

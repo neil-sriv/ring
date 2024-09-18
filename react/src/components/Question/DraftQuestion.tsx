@@ -8,14 +8,17 @@ import {
 import { useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import useCustomToast from "../../hooks/useCustomToast";
-import { S3Image, SingleUploadImage } from "../Common/SingleUploadImage";
+import {
+  S3Image,
+  S3Video,
+  SingleUploadImage,
+} from "../Common/SingleUploadImage";
 
 type ResponseBlockProps = {
   uploadFunction: (file: File) => Promise<void>;
   questionApiId: string;
   response?: ResponseWithParticipant;
   submitResponse: (responseText: string) => Promise<void>;
-  imageUrls?: string[];
   readOnly?: boolean;
 };
 
@@ -43,8 +46,12 @@ function ResponseBlock(props: ResponseBlockProps) {
           }
         }}
       />
-      {props.imageUrls?.map((url, index) => {
-        return <S3Image s3Key={url} alt="response" key={index} />;
+      {props.response?.images.map((image, index) => {
+        return image.media_type === "image" ? (
+          <S3Image s3Key={image.s3_url} alt="response" key={index} />
+        ) : (
+          <S3Video s3Key={image.s3_url} key={index} />
+        );
       })}
       {!props.readOnly && (
         <SingleUploadImage
@@ -111,7 +118,6 @@ function DraftQuestion({
         response={response}
         submitResponse={handleUpsert}
         uploadFunction={newHandleUpload}
-        imageUrls={response?.image_urls || []}
         key={question.api_identifier}
         readOnly={readOnly}
       />

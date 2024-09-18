@@ -1,4 +1,5 @@
 import {
+  Box,
   Center,
   Icon,
   Image,
@@ -119,7 +120,7 @@ export function SingleUploadImage({
         name={name}
         onChange={handleFileChange}
         isDisabled={uploadedFile !== null}
-        accept="image/*"
+        accept="image/*, video/*"
       />
     </Center>
   );
@@ -128,4 +129,9 @@ export function SingleUploadImage({
 export function S3Image({ s3Key, alt }: { s3Key: string; alt?: string }) {
   const url = `https://du32exnxihxuf.cloudfront.net/${s3Key}`;
   return <Image src={url} alt={alt} boxSize="50%" />;
+}
+
+export function S3Video({ s3Key }: { s3Key: string }) {
+  const url = `https://du32exnxihxuf.cloudfront.net/${s3Key}`;
+  return <Box as="video" src={url} controls boxSize="50%" />;
 }

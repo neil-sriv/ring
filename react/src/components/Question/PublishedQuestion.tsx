@@ -1,6 +1,6 @@
 import { Box, Heading, Link, Text } from "@chakra-ui/react";
 import { PublicQuestion, ResponseWithParticipant } from "../../client";
-import { S3Image } from "../Common/SingleUploadImage";
+import { S3Image, S3Video } from "../Common/SingleUploadImage";
 import { splitText, URLMatch } from "../../util/URLParse";
 
 function TextBlockWithUrls({
@@ -39,8 +39,12 @@ function ResponseBlock({ response }: { response: ResponseWithParticipant }) {
         texts={responseText}
         responseApiId={response.api_identifier}
       />
-      {response.image_urls.map((url) => {
-        return <S3Image s3Key={url} alt="IMAGE HERE" key={url} />;
+      {response.images.map((image) => {
+        return image.media_type === "image" ? (
+          <S3Image s3Key={image.s3_url} alt="IMAGE HERE" key={image.s3_url} />
+        ) : (
+          <S3Video s3Key={image.s3_url} key={image.s3_url} />
+        );
       })}
     </Box>
   );

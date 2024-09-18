@@ -175,6 +175,19 @@ export const $HTTPValidationError = {
 	},
 } as const;
 
+export const $Image = {
+	properties: {
+		s3_url: {
+	type: 'string',
+	isRequired: true,
+},
+		media_type: {
+	type: 'MediaType',
+	isRequired: true,
+},
+	},
+} as const;
+
 export const $InviteCreate = {
 	properties: {
 		email: {
@@ -276,6 +289,11 @@ export const $LetterUpdate = {
 	format: 'date-time',
 },
 	},
+} as const;
+
+export const $MediaType = {
+	type: 'Enum',
+	enum: ['image','video',],
 } as const;
 
 export const $NewPassword = {
@@ -460,11 +478,11 @@ export const $ResponseLinked = {
 	type: 'UserUnlinked',
 	isRequired: true,
 },
-		image_urls: {
+		images: {
 	type: 'array',
 	contains: {
-	type: 'string',
-},
+		type: 'Image',
+	},
 	isReadOnly: true,
 	isRequired: true,
 },
@@ -542,11 +560,11 @@ export const $ResponseWithParticipant = {
 	type: 'UserUnlinked',
 	isRequired: true,
 },
-		image_urls: {
+		images: {
 	type: 'array',
 	contains: {
-	type: 'string',
-},
+		type: 'Image',
+	},
 	isReadOnly: true,
 	isRequired: true,
 },
