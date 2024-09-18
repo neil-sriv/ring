@@ -119,6 +119,7 @@ export function SingleUploadImage({
         name={name}
         onChange={handleFileChange}
         isDisabled={uploadedFile !== null}
+        accept="image/*"
       />
     </Center>
   );
