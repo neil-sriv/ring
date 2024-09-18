@@ -9,9 +9,15 @@ from fastapi import UploadFile
 
 from ring.config import get_config
 from ring.api_identifier import util as api_identifier_crud
-from ring.dependencies import a_get_s3_client_dependencies, get_s3_client_dependencies
+from ring.dependencies import (
+    a_get_s3_client_dependencies,
+    get_s3_client_dependencies,
+)
 from ring.letters.models.letter_model import Letter
-from ring.letters.models.response_model import ImageResponseAssociation, Response
+from ring.letters.models.response_model import (
+    ImageResponseAssociation,
+    Response,
+)
 from ring.s3.models.s3_model import Image
 from ring.letters.schemas.response import Response as ResponseUpdate
 
@@ -27,7 +33,9 @@ def get_responses(
     db: Session, letter: Letter, response_api_ids: list[str]
 ) -> list[Response]:
     responses = api_identifier_crud.get_models(db, Response, response_api_ids)
-    assert all(response.question.letter_id == letter.id for response in responses)
+    assert all(
+        response.question.letter_id == letter.id for response in responses
+    )
     return responses
 
 
@@ -62,7 +70,10 @@ async def a_upload_image(
     client = await a_get_s3_client_dependencies()
     for image_file in response_images:
         random_string = "".join(random.choices(string_lib.ascii_letters, k=12))
-        s3_file_path =s3_file_prefix + hashlib.sha1(bytearray(random_string, 'utf-8')).hexdigest() + ".png"
+        s3_file_path = (
+            s3_file_prefix
+            + hashlib.sha1(bytearray(random_string, "utf-8")).hexdigest()
+        )
         client.upload_fileobj(
             image_file.file,
             get_config().BUCKET_NAME,
@@ -83,7 +94,10 @@ def upload_image(
 ) -> Response:
     s3_file_prefix = f"{response.question.letter.group.api_identifier}/{response.question.letter.api_identifier}/{response.api_identifier}/"
     random_string = "".join(random.choices(string_lib.ascii_letters, k=12))
-    s3_file_path =s3_file_prefix + hashlib.sha1(bytearray(random_string, 'utf-8')).hexdigest() + ".png"
+    s3_file_path = (
+        s3_file_prefix
+        + hashlib.sha1(bytearray(random_string, "utf-8")).hexdigest()
+    )
     # upload image to S3
     client = get_s3_client_dependencies()
     for image_file in response_images:
