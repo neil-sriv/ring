@@ -18,7 +18,7 @@ import {
   PartiesService,
 } from "../../client";
 import useCustomToast from "../../hooks/useCustomToast";
-import { confirmPasswordRules, passwordRules } from "../../utils";
+import { confirmPasswordRules, passwordRules } from "../../util/misc";
 
 interface UpdatePasswordForm extends UserUpdatePassword {
   confirm_password: string;

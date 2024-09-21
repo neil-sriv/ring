@@ -22,7 +22,7 @@ import { type SubmitHandler, useForm } from "react-hook-form";
 
 import { InvitesService, type UserCreate } from "../../client";
 import { isLoggedIn } from "../../hooks/useAuth";
-import { emailPattern } from "../../utils";
+import { emailPattern } from "../../util/misc";
 import useRegister from "../../hooks/useRegister";
 import { useQueryClient } from "@tanstack/react-query";
 

@@ -17,7 +17,7 @@ import { type SubmitHandler, useForm } from "react-hook-form";
 
 import { type ApiError, type LetterCreate, LettersService } from "../../client";
 import useCustomToast from "../../hooks/useCustomToast";
-import { toISOLocal } from "../../utils";
+import { toISOLocal } from "../../util/misc";
 
 type LetterFormProps = {
   sendAt: Date | string;

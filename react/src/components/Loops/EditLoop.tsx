@@ -22,7 +22,7 @@ import {
   PublicLetter,
 } from "../../client";
 import useCustomToast from "../../hooks/useCustomToast";
-import { toISOLocal } from "../../utils";
+import { toISOLocal } from "../../util/misc";
 
 type LetterFormProps = {
   sendAt: Date | string;

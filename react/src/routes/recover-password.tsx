@@ -13,7 +13,7 @@ import { type SubmitHandler, useForm } from "react-hook-form";
 import { LoginService } from "../client";
 import { isLoggedIn } from "../hooks/useAuth";
 import useCustomToast from "../hooks/useCustomToast";
-import { emailPattern } from "../utils";
+import { emailPattern } from "../util/misc";
 
 interface FormData {
   email: string;
