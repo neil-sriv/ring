@@ -130,7 +130,6 @@ ring docker tp
 cd ring
 git pull
 ./dev_util/prod.sh
-ring compose any --prod down worker beat
 ring db upgrade
 ring compose any --prod up -d
 # may need to restart nginx
