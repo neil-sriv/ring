@@ -24,7 +24,7 @@ import {
   UserUpdate,
 } from "../../client";
 import useCustomToast from "../../hooks/useCustomToast";
-import { emailPattern } from "../../utils";
+import { emailPattern } from "../../util/misc";
 
 interface EditUserProps {
   user: UserLinked;

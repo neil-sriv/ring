@@ -20,7 +20,7 @@ import { type SubmitHandler, useForm } from "react-hook-form";
 import { type UserCreate, PartiesService } from "../../client";
 import type { ApiError } from "../../client/core/ApiError";
 import useCustomToast from "../../hooks/useCustomToast";
-import { emailPattern } from "../../utils";
+import { emailPattern } from "../../util/misc";
 
 interface AddUserProps {
   isOpen: boolean;
