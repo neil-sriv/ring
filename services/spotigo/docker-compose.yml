@@ -4,9 +4,9 @@ services:
     build:
       context: ./spotigo
       dockerfile: ./Dockerfile
-    command: ./main
+    command: air -c /app/.air.toml
     volumes:
-      - ./spotigo:/src
+      - ./spotigo:/app
     ports:
       - "8005:8080"
     expose:

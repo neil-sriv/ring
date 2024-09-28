@@ -15,14 +15,15 @@ func main() {
 	router := gin.Default()
 	// router.SetTrustedProxies([]string{""})
 
-	router.GET("/", root)
+	router.GET("/", healthz)
+	router.GET("/healthz", healthz)
 
 	router.GET("/redis", getRedis)
 
 	router.Run(":8080")
 }
 
-func root(c *gin.Context) {
+func healthz(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{
 		"message": "Hello, World!",
 	})
