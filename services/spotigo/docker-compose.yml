@@ -1,0 +1,24 @@
+services:
+  spotigo:
+    container_name: ring-spotigo
+    build:
+      context: ./spotigo
+      dockerfile: ./Dockerfile
+    command: ./main
+    volumes:
+      - ./spotigo:/src
+    ports:
+      - "8005:8080"
+    expose:
+      - 8080
+    networks:
+      - default
+      - ring-bridge
+
+
+networks:
+  default:
+    name: spotigo-network
+    external: false
+  ring-bridge:
+    name: ring-network
