@@ -3,9 +3,10 @@ This is a clone of LetterLoop as a fun side project.
 
 ## Set up
 ### Requirements
-- Docker or Orbstack Installed
+- Orbstack or Docker Installed
 - node v18 or greater
 - yarn
+- oh-my-zsh (recommended)
 
 #### uv
 ```
