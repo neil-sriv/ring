@@ -138,7 +138,7 @@ Commands:
 ## Deployment
 ### Build new images
 ```
-ring compose any --prod build
+VITE_API_URL=http://ring.neilsriv.tech ring compose any --prod build
 ```
 ### Push to registry
 ```
