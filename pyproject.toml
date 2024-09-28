@@ -23,7 +23,6 @@ dependencies = [
     "pydantic ~= 2.5",
     "fastapi[all] ~= 0.104",
     "shortuuid ~= 1.0",
-    "pip-tools ~= 7.3",
     "flower ~= 2.0",
     "Redis ~= 5.0",
     "boto3 ~= 1.34",
