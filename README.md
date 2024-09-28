@@ -6,32 +6,16 @@ This is a clone of LetterLoop as a fun side project.
 - Docker or Orbstack Installed
 - node v18 or greater
 - yarn
-- any python virtual environment solution (e.g. pyenv, conda)
-#### pyenv
 
-1. Install and set-up pyenv from https://github.com/pyenv/pyenv?tab=readme-ov-file#installation
-2. Install pyenv-virtualenv from https://github.com/pyenv/pyenv-virtualenv
-3. Install python version
+#### uv
 ```
-pyenv install 3.12.1
+curl -LsSf https://astral.sh/uv/install.sh | sh
+uv install 3.12
 ```
-3. Create pyenv virtualenv
-```
-pyenv virtualenv 3.12.1 ring
-```
-4. Activate
-```
-pyenv activate ring
-```
-
 ### Install
 There is a `pyproject.toml` file that will install local `ring` commands and requirements.
 ```
-pip install -e .
-```
-or if you have `uv`
-```
-uv pip install -e .
+uv sync
 ```
 
 ### `env` set up
@@ -50,7 +34,9 @@ We'll need a `JWT_SIGNING_KEY` as well which can be generated with `openssl`
 ```
 echo "JWT_SIGNING_KEY=$(openssl rand -hex 32)" >> .env
 ```
-If you have `oh-my-zsh` set up, you can use the `dotenv` plugin to automatically load the `.env` file into the shell.
+
+### `oh-my-zsh` set up
+**Highly** recommend to use `oh-my-zsh` with the `virtualenvwrapper` and `dotenv` plugins.
 
 ## Development
 ### Running the server
