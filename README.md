@@ -1,4 +1,4 @@
-# Email Circle
+# Ring
 This is a clone of LetterLoop as a fun side project.
 
 ## Set up
