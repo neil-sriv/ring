@@ -69,6 +69,7 @@ def dev_command(
 def cmd_run(
     name: str,
     group: click.Group,
+    cwd: Path | None = ROOT_DIR,
 ) -> Callable[[Callable[..., list[str]]], click.Command]:
     def decorator(f: Callable[..., list[str]]) -> click.Command:
         @group.command(name=name, context_settings=UNLIMITED_ARGS_SETTINGS)
@@ -80,7 +81,7 @@ def cmd_run(
             try:
                 subprocess_run(
                     cmd_string + additional_args,
-                    cwd=ROOT_DIR,
+                    cwd=cwd,
                 )
             except subprocess.CalledProcessError:
                 pass
@@ -94,6 +95,7 @@ from .compose import *  # noqa
 from .database import *  # noqa
 from .docker import *  # noqa
 from .run import *  # noqa
+from .frontend import *  # noqa
 
 if __name__ == "__main__":
     dev()
