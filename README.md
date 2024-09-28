@@ -6,10 +6,12 @@ This is a clone of LetterLoop as a fun side project.
 - Docker or Orbstack Installed
 - node v18 or greater
 - yarn
-### pyenv
+- any python virtual environment solution (e.g. pyenv, conda)
+#### pyenv
 
 1. Install and set-up pyenv from https://github.com/pyenv/pyenv?tab=readme-ov-file#installation
-2. Install python version
+2. Install pyenv-virtualenv from https://github.com/pyenv/pyenv-virtualenv
+3. Install python version
 ```
 pyenv install 3.12.1
 ```
@@ -31,6 +33,24 @@ or if you have `uv`
 ```
 uv pip install -e .
 ```
+
+### `env` set up
+Add a `.env` file with the following:
+```
+ENVIRONMENT=LOCAL
+API_PORT=8001
+CELERY_BROKER_URL=redis://redis:6379/0
+CELERY_RESULT_BACKEND=redis://redis:6379/0
+SQLALCHEMY_DATABASE_URI=postgresql://ring-postgres:ring-postgres@db:5432/ring
+JWT_SIGNING_ALGORITHM=HS256
+VITE_API_URL=http://localhost
+BACKEND_CORS_ORIGINS=http://localhost:5173
+```
+We'll need a `JWT_SIGNING_KEY` as well which can be generated with `openssl`
+```
+echo "JWT_SIGNING_KEY=$(openssl rand -hex 32)" >> .env
+```
+If you have `oh-my-zsh` set up, you can use the `dotenv` plugin to automatically load the `.env` file into the shell.
 
 ## Development
 ### Running the server
