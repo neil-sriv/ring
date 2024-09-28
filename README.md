@@ -120,6 +120,20 @@ Commands:
   shell
 ```
 
+#### `ring fe`
+Frontend commands
+```
+Usage: ring fe [OPTIONS] COMMAND [ARGS]...
+
+Options:
+  --help  Show this message and exit.
+
+Commands:
+  build
+  dev
+  regen
+```
+
 ## Deployment
 ### Build new images
 ```
