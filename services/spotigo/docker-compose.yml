@@ -5,6 +5,8 @@ services:
       context: ./spotigo
       dockerfile: ./Dockerfile
     command: air -c /app/.air.toml
+    env_file:
+      - ./.env
     volumes:
       - ./spotigo:/app
     ports:
