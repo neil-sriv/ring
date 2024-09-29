@@ -10,6 +10,7 @@ import (
 	"github.com/redis/go-redis/v9"
 	"github.com/zmb3/spotify/v2"
 	spotifyauth "github.com/zmb3/spotify/v2/auth"
+	oauth2 "golang.org/x/oauth2"
 )
 
 var ctx = context.Background()
@@ -21,7 +22,7 @@ const (
 
  var (
 	auth = spotifyauth.New(spotifyauth.WithClientID(os.Getenv("SPOTIFY_CLIENT_ID")), spotifyauth.WithClientSecret(os.Getenv("SPOTIFY_CLIENT_SECRET")), spotifyauth.WithRedirectURL(redirectURI))
-	ch = make(chan *spotify.Client)
+	// ch = make(chan *spotify.Client)
 )
 
 func main() {
@@ -42,7 +43,9 @@ func main() {
 }
 
 func getUser(c *gin.Context) {
-	client := <-ch
+	tok := connectToRedis().Get(ctx, "token").Val()
+	oauth2Token := oauth2.Token{AccessToken: tok}
+	client := spotify.New(auth.Client(ctx, &oauth2Token))
 
 	user, err := client.CurrentUser(ctx)
 	if err != nil {
@@ -52,6 +55,17 @@ func getUser(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{
 		"user": user,
 	})
+	// oAuthToken := &spotifyauth.Token{AccessToken: tok}
+	// client := spotify.New(spotifyauth.New().Client(c, tok))
+
+	// user, err := client.CurrentUser(ctx)
+	// if err != nil {
+	// 	fmt.Println("ERROR", err)
+	// }
+
+	// c.JSON(http.StatusOK, gin.H{
+	// 	"user": user,
+	// })
 }
 
 func beginAuth(c *gin.Context) {
@@ -59,32 +73,22 @@ func beginAuth(c *gin.Context) {
 	fmt.Println("URL", url)
 	c.JSON(http.StatusOK, gin.H{
 		"url": url,})
-
-	// client := <-ch
-
-	// user, err := client.CurrentUser(ctx)
-	// if err != nil {
-	// 	log.Fatal(err)
-	// }
-
-	// fmt.Println("You are logged in as:", user.ID)
 }
 
 func completeAuth(c *gin.Context) {
 	// Use the authorization code to get a token
 	tok, err := auth.Token(ctx, state, c.Request)
+	fmt.Println("TOKEN", tok)
+	fmt.Println("refresh", tok.TokenType)
 	if err != nil {
 		http.Error(c.Writer, "Couldn't get token", http.StatusForbidden)
 		return
 	}
-
-	client := spotify.New(auth.Client(c, tok))
 	go func() {
-	ch <- client
-
+		rdc := connectToRedis()
+		rdc.Set(ctx, "token", tok.AccessToken, 0)
 	}()
-	fmt.Println("CLIENT", client)
-	// fmt.Fprintf(c.Writer, "Login Completed!")
+
 	c.JSON(http.StatusOK, gin.H{
 		"message": "Login Completed!",})
 }
