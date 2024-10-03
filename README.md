@@ -11,7 +11,7 @@ This is a clone of LetterLoop as a fun side project.
 #### uv
 ```
 curl -LsSf https://astral.sh/uv/install.sh | sh
-uv install 3.12
+uv python install 3.12
 ```
 ### Install
 There is a `pyproject.toml` file that will install local `ring` commands and requirements.
