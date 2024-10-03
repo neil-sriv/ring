@@ -48,6 +48,7 @@ API accessible and `localhost/api/v1/docs`
 ### Running the client
 ```
 cd react
+yarn
 yarn run dev
 ```
 Accessible at `localhost:5173`
