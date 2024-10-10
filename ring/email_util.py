@@ -19,6 +19,35 @@ class EmailDraft:
     source: str = "ring@neilsriv.tech"
 
 
+def construct_email_draft(
+    recipients: list[str],
+    subject: str,
+    body_html: str,
+    body_text: str | None = None,
+) -> EmailDraft:
+    if not body_text:
+        body_text = body_html
+    return EmailDraft(
+        destination={"ToAddresses": recipients},
+        message={
+            "Subject": {
+                "Data": subject,
+                "Charset": CHARSET,
+            },
+            "Body": {
+                "Text": {
+                    "Data": body_text,
+                    "Charset": CHARSET,
+                },
+                "Html": {
+                    "Data": body_html,
+                    "Charset": CHARSET,
+                },
+            },
+        },
+    )
+
+
 def send_email(draft: EmailDraft) -> Optional[str]:
     ses_client: SESClient = boto3.Session().client(
         "ses", region_name="us-east-1"

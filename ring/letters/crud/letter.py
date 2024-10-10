@@ -1,5 +1,5 @@
 from __future__ import annotations
-from datetime import datetime, timedelta
+from datetime import UTC, datetime, timedelta
 import random
 from typing import TYPE_CHECKING, Sequence
 
@@ -48,13 +48,7 @@ def create_letter(
     db.add(db_letter)
 
     if letter_status in [LetterStatus.IN_PROGRESS, LetterStatus.UPCOMING]:
-        schedule_crud.register_task(
-            db,
-            db_letter.group.schedule,
-            TaskType.SEND_EMAIL,
-            send_at,
-            {},
-        )
+        upsert_letter_tasks(db, db_letter, send_at)
     return db_letter
 
 
@@ -76,23 +70,24 @@ def edit_letter(
     letter: Letter,
     send_at: datetime,
 ) -> Letter:
-    schedule = schedule_crud.get_schedule_for_group(
-        db, letter.group.api_identifier
-    )
-    tasks = [
-        t
-        for t in schedule.tasks
-        if t.status == TaskStatus.PENDING
-        and t.type == TaskType.SEND_EMAIL
-        and t.execute_at == letter.send_at
-    ]
+    upsert_letter_tasks(db, letter, send_at)
     letter.send_at = send_at
-    if tasks:
-        print(tasks)
-        assert len(tasks) == 1
-        task = tasks[0]
-        task.execute_at = send_at
-    else:
+    db.flush()
+    return letter
+
+
+def upsert_letter_tasks(
+    db: Session, letter: Letter, send_at: datetime
+) -> None:
+    # send email
+    send_email_task = schedule_crud.update_task(
+        db,
+        letter.group.schedule,
+        TaskType.SEND_EMAIL,
+        letter.send_at,
+        send_at,
+    )
+    if not send_email_task:
         schedule_crud.register_task(
             db,
             letter.group.schedule,
@@ -100,7 +95,57 @@ def edit_letter(
             send_at,
             {},
         )
-    return letter
+
+    # reminder email 1
+    if letter.status == LetterStatus.UPCOMING:
+        if send_at - timedelta(days=8) < datetime.now(tz=UTC):
+            schedule_crud.unregister_task(
+                db,
+                letter.group.schedule,
+                TaskType.REMINDER_EMAIL,
+                letter.send_at - timedelta(days=8),
+            )
+        else:
+            reminder_email_task_1 = schedule_crud.update_task(
+                db,
+                letter.group.schedule,
+                TaskType.REMINDER_EMAIL,
+                letter.send_at - timedelta(days=8),
+                send_at - timedelta(days=8),
+            )
+            if not reminder_email_task_1:
+                schedule_crud.register_task(
+                    db,
+                    letter.group.schedule,
+                    TaskType.REMINDER_EMAIL,
+                    send_at - timedelta(days=8),
+                {"letter_status": LetterStatus.UPCOMING},
+                )
+
+    # reminder email 2
+    if send_at - timedelta(days=1) < datetime.now(tz=UTC):
+            schedule_crud.unregister_task(
+                db,
+                letter.group.schedule,
+                TaskType.REMINDER_EMAIL,
+                letter.send_at - timedelta(days=1),
+            )
+    else:
+        reminder_email_task_2 = schedule_crud.update_task(
+            db,
+            letter.group.schedule,
+            TaskType.REMINDER_EMAIL,
+            letter.send_at - timedelta(days=1),
+            send_at - timedelta(days=1),
+        )
+        if not reminder_email_task_2:
+            schedule_crud.register_task(
+                db,
+                letter.group.schedule,
+                TaskType.REMINDER_EMAIL,
+                send_at - timedelta(days=1),
+                {"letter_status": LetterStatus.IN_PROGRESS},
+            )
 
 
 def add_question(

@@ -1,6 +1,7 @@
 from __future__ import annotations
 from enum import StrEnum
 from datetime import datetime
+import json
 from typing import TYPE_CHECKING
 from sqlalchemy import JSON, DateTime, ForeignKey
 from sqlalchemy.orm import Mapped, mapped_column, relationship
@@ -20,6 +21,7 @@ class TaskStatus(StrEnum):
 class TaskType(StrEnum):
     GENERIC = "generic"
     SEND_EMAIL = "send_email"
+    REMINDER_EMAIL = "reminder_email"
 
 
 class Task(Base):
@@ -69,6 +71,15 @@ class Task(Base):
             execute_at=execute_at,
             arguments=arguments,
         )
+    
+    def __repr__(self) -> str:
+        return json.dumps(self.__dict__, indent=4, default=str)
+
+
+class ReminderEmailTask(Task):
+    __mapper_args__ = {
+        "polymorphic_identity": TaskType.REMINDER_EMAIL,
+    }
 
 
 class SendEmailTask(Task):
