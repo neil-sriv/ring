@@ -2,7 +2,6 @@ from __future__ import annotations
 import hashlib
 import string as string_lib
 import random
-from tempfile import SpooledTemporaryFile
 from typing import TYPE_CHECKING, Sequence
 
 from fastapi import UploadFile
@@ -11,7 +10,6 @@ from ring.config import get_config
 from ring.api_identifier import util as api_identifier_crud
 from ring.dependencies import (
     a_get_s3_client_dependencies,
-    get_s3_client_dependencies,
 )
 from ring.letters.models.letter_model import Letter
 from ring.letters.models.response_model import (

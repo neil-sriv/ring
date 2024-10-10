@@ -4,6 +4,7 @@ import time
 from typing import TYPE_CHECKING, Sequence
 
 from sqlalchemy import or_, select
+import sqlalchemy
 from ring.api_identifier import util as api_identifier_crud
 from ring.tasks.crud import task as task_crud
 from ring.tasks.models.schedule_model import Schedule
@@ -25,11 +26,60 @@ def register_task(
     schedule: Schedule,
     task_type: TaskType,
     execute_at: datetime.datetime,
-    arguments: dict[str, str] = {},
+    arguments: dict[str, str] | None = None,
 ) -> Task:
+    if not arguments:
+        arguments = {}
     task = Task.create(schedule, task_type, execute_at, arguments)
     schedule.tasks.append(task)
     db.add(task)
+    return task
+
+
+def unregister_task(
+    db: Session,
+    schedule: Schedule,
+    task_type: TaskType,
+    execute_at: datetime.datetime,
+):
+    task = db.scalars(
+        sqlalchemy.select(Task)
+        .where(
+            Task.schedule_id == schedule.id,
+            Task.type == task_type,
+            Task.status == TaskStatus.PENDING,
+            Task.execute_at == execute_at,
+        )
+    ).one_or_none()
+    if task:
+        print('deleting task:', task)
+        db.delete(task)
+
+
+def update_task(
+    db: Session,
+    schedule: Schedule,
+    task_type: TaskType,
+    execute_at: datetime.datetime,
+    new_execute_at: datetime.datetime,
+    arguments: dict[str, str] | None = None,
+) -> Task | None:
+    task = db.scalars(
+        sqlalchemy.select(Task)
+        .where(
+            Task.schedule_id == schedule.id,
+            Task.type == task_type,
+            Task.status == TaskStatus.PENDING,
+            Task.execute_at == execute_at,
+        )
+    ).one_or_none()
+    print('found task:', task)
+    if not task:
+        return None
+    task.execute_at = new_execute_at
+    if arguments:
+        task.arguments = arguments
+    
     return task
 
 
