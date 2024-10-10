@@ -11,6 +11,8 @@ services:
       - ./ring:/src/ring
     environment:
       - PYTHONPATH=.
+    networks:
+      - default
 
   nginx:
     restart: unless-stopped
@@ -20,6 +22,8 @@ services:
       - "80:80"
     depends_on:
       - api
+    networks:
+      - default
 
   worker:
     container_name: ring-worker
@@ -33,6 +37,8 @@ services:
     command: "celery --app=ring.worker.celery_app worker --loglevel=debug"
     depends_on:
       - redis
+    networks:
+      - default
   beat:
     container_name: ring-beat
     build:
@@ -46,10 +52,14 @@ services:
     depends_on:
       - redis 
       - worker
+    networks:
+      - default
   redis:
     image: redis:alpine
     expose:
       - 6379
+    networks:
+      - default
   flower:
     container_name: ring-flower
     build:
@@ -63,3 +73,10 @@ services:
       - redis
       - worker
     profiles: ["debug"]
+    networks:
+      - default
+
+networks:
+  default:
+    name: ring-network
+    external: true

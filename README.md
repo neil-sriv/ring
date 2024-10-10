@@ -1,36 +1,43 @@
-# Email Circle
+# Ring
 This is a clone of LetterLoop as a fun side project.
 
 ## Set up
 ### Requirements
-- Docker or Orbstack Installed
+- Orbstack or Docker Installed
 - node v18 or greater
 - yarn
-### pyenv
+- oh-my-zsh (recommended)
 
-1. Install and set-up pyenv from https://github.com/pyenv/pyenv?tab=readme-ov-file#installation
-2. Install python version
+#### uv
 ```
-pyenv install 3.12.1
+curl -LsSf https://astral.sh/uv/install.sh | sh
+uv python install 3.12
 ```
-3. Create pyenv virtualenv
-```
-pyenv virtualenv 3.12.1 ring
-```
-4. Activate
-```
-pyenv activate ring
-```
-
 ### Install
 There is a `pyproject.toml` file that will install local `ring` commands and requirements.
 ```
-pip install -e .
+uv sync
 ```
-or if you have `uv`
+
+### `env` set up
+Add a `.env` file with the following:
 ```
-uv pip install -e .
+ENVIRONMENT=LOCAL
+API_PORT=8001
+CELERY_BROKER_URL=redis://redis:6379/0
+CELERY_RESULT_BACKEND=redis://redis:6379/0
+SQLALCHEMY_DATABASE_URI=postgresql://ring-postgres:ring-postgres@db:5432/ring
+JWT_SIGNING_ALGORITHM=HS256
+VITE_API_URL=http://localhost
+BACKEND_CORS_ORIGINS=http://localhost:5173
 ```
+We'll need a `JWT_SIGNING_KEY` as well which can be generated with `openssl`
+```
+echo "JWT_SIGNING_KEY=$(openssl rand -hex 32)" >> .env
+```
+
+### `oh-my-zsh` set up
+**Highly** recommend to use `oh-my-zsh` with the `virtualenvwrapper` and `dotenv` plugins.
 
 ## Development
 ### Running the server
@@ -41,6 +48,7 @@ API accessible and `localhost/api/v1/docs`
 ### Running the client
 ```
 cd react
+yarn
 yarn run dev
 ```
 Accessible at `localhost:5173`
@@ -114,10 +122,24 @@ Commands:
   shell
 ```
 
+#### `ring fe`
+Frontend commands
+```
+Usage: ring fe [OPTIONS] COMMAND [ARGS]...
+
+Options:
+  --help  Show this message and exit.
+
+Commands:
+  build
+  dev
+  regen
+```
+
 ## Deployment
 ### Build new images
 ```
-ring compose any --prod build
+VITE_API_URL=http://ring.neilsriv.tech ring compose any --prod build
 ```
 ### Push to registry
 ```
