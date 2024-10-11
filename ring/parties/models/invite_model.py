@@ -1,5 +1,6 @@
 from __future__ import annotations
 from datetime import UTC, datetime, timedelta
+import sqlalchemy
 from sqlalchemy.orm import relationship, Mapped, mapped_column
 from sqlalchemy import ColumnElement, extract, func, ForeignKey
 from sqlalchemy.ext.hybrid import hybrid_property
@@ -26,6 +27,9 @@ class Invite(Base, APIIdentified, PydanticModel, CreatedAtMixin):
     token: Mapped[str] = mapped_column()
     api_identifier: Mapped[str] = mapped_column(unique=True, index=True)
     ttl: Mapped[float] = mapped_column()
+    used: Mapped[bool] = mapped_column(
+        server_default=sqlalchemy.false(), nullable=False
+    )
 
     inviter_id: Mapped[int] = mapped_column(
         ForeignKey(

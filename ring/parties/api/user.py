@@ -68,6 +68,8 @@ async def register_user(
         raise HTTPException(status_code=400, detail="Invalid token")
     if db_invite.is_expired:
         raise HTTPException(status_code=400, detail="Token expired")
+    if db_invite.used:
+        raise HTTPException(status_code=400, detail="Token already used")
     if user.email != db_invite.email:
         raise HTTPException(status_code=400, detail="Email mismatch")
     db_user = user_crud.get_user_by_email(req_dep.db, email=user.email)
@@ -78,6 +80,7 @@ async def register_user(
         db=req_dep.db, name=user.name, email=user.email, password=user.password
     )
     db_group = db_invite.group
+    db_invite.used = True
     req_dep.db.flush()
     group_crud.add_member(
         req_dep.db, db_group.api_identifier, db_user.api_identifier

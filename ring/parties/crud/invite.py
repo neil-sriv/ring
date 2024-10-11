@@ -75,7 +75,7 @@ def create_invite(
     group: Group,
 ) -> Invite:
     # generate token
-    token = token_urlsafe(16)
+    token = token_urlsafe(32)
     db_invite = Invite.create(email, token, inviter, group)
     db.add(db_invite)
     return db_invite
