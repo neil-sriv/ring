@@ -49,7 +49,7 @@ def get_invite_by_token(
 ) -> Invite | None:
     return db.scalar(
         select(Invite).filter(
-            Invite.token == token,
+            Invite._deprecated_token == token,
             Invite.is_expired.is_(expired),
         )
     )

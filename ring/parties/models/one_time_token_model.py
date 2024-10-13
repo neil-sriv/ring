@@ -28,7 +28,6 @@ class OneTimeToken(Base, CreatedAtMixin):
         self,
         token: str,
     ) -> None:
-        APIIdentified.__init__(self)
         self.token = token
         self.ttl = DEFAULT_TOKEN_TTL
         self.used = False

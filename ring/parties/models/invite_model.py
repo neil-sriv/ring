@@ -7,6 +7,7 @@ from sqlalchemy.ext.hybrid import hybrid_property
 from ring.api_identifier.api_identified_model import APIIdentified
 from ring.created_at import CreatedAtMixin
 from ring.parties.models.group_model import Group
+from ring.parties.models.one_time_token_model import OneTimeToken
 from ring.parties.schemas.invite import InviteUnlinked
 from ring.ring_pydantic.pydantic_model import PydanticModel
 from ring.sqlalchemy_base import Base
@@ -24,11 +25,26 @@ class Invite(Base, APIIdentified, PydanticModel, CreatedAtMixin):
 
     id: Mapped[int] = mapped_column(primary_key=True, index=True)
     email: Mapped[str] = mapped_column(index=True)
-    token: Mapped[str] = mapped_column()
+    _deprecated_token: Mapped[str] = mapped_column("token")
     api_identifier: Mapped[str] = mapped_column(unique=True, index=True)
     ttl: Mapped[float] = mapped_column()
     used: Mapped[bool] = mapped_column(
         server_default=sqlalchemy.false(), nullable=False
+    )
+
+    one_time_token_id: Mapped[int] = mapped_column(
+        ForeignKey(
+            "one_time_token.id",
+            name="invite_one_time_token_id_fkey",
+            ondelete="CASCADE",
+        ),
+        nullable=False,
+        index=True,
+        unique=True,
+    )
+
+    one_time_token: Mapped["OneTimeToken"] = relationship(
+        "OneTimeToken", uselist=False
     )
 
     inviter_id: Mapped[int] = mapped_column(
@@ -52,7 +68,7 @@ class Invite(Base, APIIdentified, PydanticModel, CreatedAtMixin):
     ) -> None:
         APIIdentified.__init__(self)
         self.email = email
-        self.token = token
+        self._deprecated_token = token
         self.inviter = inviter
         self.group = group
         self.ttl = DEFAULT_INVITE_TOKEN_TTL
