@@ -5,6 +5,7 @@ from ring.api_identifier import util as api_identifier_crud
 from ring.email_util import CHARSET, EmailDraft, send_email
 from ring.parties.models.group_model import Group
 from ring.parties.models.invite_model import Invite
+from ring.parties.models.one_time_token_model import OneTimeToken
 from ring.parties.models.user_model import User
 from sqlalchemy import select
 
@@ -48,8 +49,10 @@ def get_invite_by_token(
     db: Session, token: str, expired: bool = False
 ) -> Invite | None:
     return db.scalar(
-        select(Invite).filter(
-            Invite._deprecated_token == token,
+        select(Invite)
+        .join(Invite.one_time_token)
+        .filter(
+            OneTimeToken.token == token,
             Invite.is_expired.is_(expired),
         )
     )
@@ -87,7 +90,8 @@ def email_user_invites(self: CeleryTask, invite_ids: list[int]) -> None:
         select(Invite).filter(Invite.id.in_(invite_ids))
     ).all()
     email_drafts = [
-        construct_invite_email(i.email, i.group, i.token) for i in invites
+        construct_invite_email(i.email, i.group, i.one_time_token.token)
+        for i in invites
     ]
     for draft in email_drafts:
         send_email(draft)

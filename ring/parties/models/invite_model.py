@@ -68,7 +68,7 @@ class Invite(Base, APIIdentified, PydanticModel, CreatedAtMixin):
     ) -> None:
         APIIdentified.__init__(self)
         self.email = email
-        self._deprecated_token = token
+        self.one_time_token = OneTimeToken.create(token)
         self.inviter = inviter
         self.group = group
         self.ttl = DEFAULT_INVITE_TOKEN_TTL
