@@ -17,6 +17,7 @@ from ring.tasks.models.schedule_model import Schedule
 if TYPE_CHECKING:
     from ring.letters.models.letter_model import Letter
     from ring.parties.models.user_model import User
+    from ring.letters.models.default_question import DefaultQuestion
 
 
 class Group(Base, PydanticModel, APIIdentified, CreatedAtMixin):
@@ -38,6 +39,9 @@ class Group(Base, PydanticModel, APIIdentified, CreatedAtMixin):
         back_populates="group", cascade="all"
     )
     schedule: Mapped["Schedule"] = relationship(
+        back_populates="group", cascade="all, delete-orphan"
+    )
+    default_questions: Mapped[list["DefaultQuestion"]] = relationship(
         back_populates="group", cascade="all, delete-orphan"
     )
 
