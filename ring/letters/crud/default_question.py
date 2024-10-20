@@ -1,7 +1,7 @@
 from typing import Sequence
 import sqlalchemy
 from ring.api_identifier.util import get_model
-from ring.letters.models.default_question import DefaultQuestion
+from ring.letters.models.default_question_model import DefaultQuestion
 from ring.parties.models.group_model import Group
 from sqlalchemy.orm import Session
 
