@@ -4,6 +4,9 @@ from alembic import context
 from sqlalchemy import engine_from_config, pool
 
 from ring.config import get_config
+from ring.letters.models.default_question import (
+    DefaultQuestion,  # type: ignore # noqa: F401
+)
 from ring.letters.models.letter_model import (
     Letter,  # type: ignore # noqa: F401
 )
