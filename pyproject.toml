@@ -49,6 +49,7 @@ dependencies = [
     "ruff",
     "bs4",
     "requests",
+    "pre-commit>=4.0.1",
 ]
 
 [project.scripts]
