@@ -12,12 +12,18 @@ from ring.dependencies import (
     AuthenticatedRequestDependencies,
     get_request_dependencies,
 )
+from ring.letters.crud.default_question import replace_default_questions
 from ring.letters.crud.letter import add_participants
 from ring.parties.crud import group as group_crud
 from ring.parties.crud import invite as invite_crud
 from ring.parties.models.group_model import Group
 from ring.parties.models.user_model import User
-from ring.parties.schemas.group import AddMembers, GroupCreate, GroupUpdate
+from ring.parties.schemas.group import (
+    AddMembers,
+    GroupCreate,
+    GroupUpdate,
+    ReplaceDefaultQuestions,
+)
 from ring.ring_pydantic import GroupLinked as GroupSchema
 from ring.tasks.schemas.schedule import ScheduleSendParam
 
@@ -186,4 +192,25 @@ def add_members(
             for invite in invites
         ]
 
+    return db_group
+
+
+@router.post(
+    "/group/{group_api_id}:replace_default_questions",
+    response_model=GroupSchema,
+)
+def replace_group_default_questions(
+    group_api_id: str,
+    default_questions: ReplaceDefaultQuestions,
+    req_dep: AuthenticatedRequestDependencies = Depends(
+        get_request_dependencies,
+    ),
+) -> Group:
+    db_group = api_identifier_crud.get_model(
+        req_dep.db, Group, api_id=group_api_id
+    )
+    replace_default_questions(
+        req_dep.db, db_group, default_questions.questions
+    )
+    req_dep.db.commit()
     return db_group
