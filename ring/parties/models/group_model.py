@@ -18,7 +18,7 @@ from ring.tasks.models.schedule_model import Schedule
 
 if TYPE_CHECKING:
     from ring.parties.models.user_model import User
-    from ring.letters.models.default_question import DefaultQuestion
+    from ring.letters.models.default_question_model import DefaultQuestion
 
 
 class Group(Base, PydanticModel, APIIdentified, CreatedAtMixin):

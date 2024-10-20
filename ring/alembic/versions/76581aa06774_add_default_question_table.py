@@ -13,7 +13,7 @@ import sqlalchemy as sa
 from sqlalchemy.orm import Session
 
 from ring.letters.constants import DEFAULT_QUESTIONS
-from ring.letters.models.default_question import DefaultQuestion
+from ring.letters.models.default_question_model import DefaultQuestion
 from ring.parties.models.group_model import Group
 
 
