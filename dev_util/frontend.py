@@ -15,10 +15,16 @@ def fe(ctx: click.Context) -> None:
 def fe_dev() -> list[str]:
     return ["yarn", "run", "dev"]
 
+
 @cmd_run("build", fe, cwd=FE_DIR)
 def fe_build() -> list[str]:
     return ["yarn", "run", "build"]
 
+
 @cmd_run("regen", fe, cwd=FE_DIR)
 def fe_regen() -> list[str]:
-    return ["node", "modify-openapi-operationids.js"] + ["&&"] + ["yarn", "run", "generate-client"]
+    return (
+        ["node", "modify-openapi-operationids.js"]
+        + ["&&"]
+        + ["yarn", "run", "generate-client"]
+    )

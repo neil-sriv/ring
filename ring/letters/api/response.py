@@ -7,7 +7,10 @@ from ring.dependencies import (
 from ring.api_identifier import (
     util as api_identifier_crud,
 )
-from ring.letters.crud import question as question_crud, response as response_crud
+from ring.letters.crud import (
+    question as question_crud,
+    response as response_crud,
+)
 from ring.letters.models.response_model import Response
 from ring.ring_pydantic.linked_schemas import ResponseLinked
 from ring.letters.schemas.response import ResponseCreateBase
@@ -41,7 +44,7 @@ async def edit_response(
 @router.post(
     "/response/{response_api_id}:upload_image",
     response_model=ResponseLinked,
-    deprecated=True
+    deprecated=True,
 )
 async def upload_image(
     response_api_id: str,

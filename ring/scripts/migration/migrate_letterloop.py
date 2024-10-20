@@ -25,7 +25,9 @@ def run_script(
     )
     if not issue_file_path.exists():
         raise ValueError(f"File not found: {issue_file_path}")
-    user = db.scalars(select(User).where(User.email == user_admin_email)).one_or_none()
+    user = db.scalars(
+        select(User).where(User.email == user_admin_email)
+    ).one_or_none()
     assert user is not None, f"User not found: {user_admin_email}"
     with open(issue_file_path) as f:
         issue = f.readlines()
@@ -99,7 +101,9 @@ def _parse_issue(db: Session, issue_lines: list[str], user: User) -> Letter:
             )
             print(current_question)
             db.add(current_question)
-        elif ":" in line and (member_name := line.split(":")[0]) in member_names:
+        elif (
+            ":" in line and (member_name := line.split(":")[0]) in member_names
+        ):
             if current_answer and current_user and current_question:
                 response = question_crud.add_response(
                     db, current_question, current_user, current_answer
@@ -107,7 +111,9 @@ def _parse_issue(db: Session, issue_lines: list[str], user: User) -> Letter:
                 db.add(response)
                 pp(str(response))
             current_answer = None
-            [current_user] = [m for m in group.members if m.name == member_name]
+            [current_user] = [
+                m for m in group.members if m.name == member_name
+            ]
             current_answer = line.split(":", maxsplit=1)[1].strip()
         else:
             if current_answer:
