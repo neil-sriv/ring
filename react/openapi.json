@@ -1075,6 +1075,63 @@
         }
       }
     },
+    "/parties/group/{group_api_id}:replace_default_questions": {
+      "post": {
+        "tags": [
+          "parties"
+        ],
+        "summary": "Replace Group Default Questions",
+        "operationId": "replace_group_default_questions_parties_group__group_api_id__replace_default_questions_post",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "group_api_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Group Api Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReplaceDefaultQuestions"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GroupLinked"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/letters/letter": {
       "post": {
         "tags": [
@@ -1977,6 +2034,13 @@
           },
           "admin": {
             "$ref": "#/components/schemas/UserUnlinked"
+          },
+          "default_questions": {
+            "items": {
+              "$ref": "#/components/schemas/QuestionUnlinked"
+            },
+            "type": "array",
+            "title": "Default Questions"
           }
         },
         "type": "object",
@@ -1987,7 +2051,8 @@
           "members",
           "letters",
           "schedule",
-          "admin"
+          "admin",
+          "default_questions"
         ],
         "title": "GroupLinked"
       },
@@ -2394,6 +2459,22 @@
           "created_at"
         ],
         "title": "QuestionUnlinked"
+      },
+      "ReplaceDefaultQuestions": {
+        "properties": {
+          "questions": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Questions"
+          }
+        },
+        "type": "object",
+        "required": [
+          "questions"
+        ],
+        "title": "ReplaceDefaultQuestions"
       },
       "ResponseCreateBase": {
         "properties": {
