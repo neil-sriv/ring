@@ -14,7 +14,7 @@ from ring.letters.constants import (
     LetterStatus,
 )
 from ring.letters.models.question_model import Question
-from ring.tasks.models.task_model import TaskType, TaskStatus
+from ring.tasks.models.task_model import TaskType
 from ring.worker.celery_app import register_task_factory
 from ring.parties.models.user_model import User
 

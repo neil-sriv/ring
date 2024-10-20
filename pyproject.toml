@@ -13,6 +13,9 @@ namespaces = false
 [tool.ruff]
 line-length = 79
 
+[tool.ruff.lint.per-file-ignores]
+"ring/alembic/versions/**.py" = ["F401"]
+
 [project]
 name = "ring"
 version = "0.1.0"
