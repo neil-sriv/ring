@@ -1,5 +1,3 @@
-
-
 from ring.email_util import EmailDraft, construct_email_draft
 
 
@@ -79,5 +77,5 @@ def construct_send_letter_email(
     email_draft = construct_email_draft(
         recipients, subject, BODY_HTML, BODY_TEXT
     )
-    
+
     return email_draft

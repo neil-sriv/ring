@@ -21,7 +21,8 @@ class APIIdentifierException(HTTPException):
 class IDNotFoundException(APIIdentifierException):
     def __init__(self, model_cls: type[Base], api_id: str):
         super().__init__(
-            model_cls, f'Could not resolve "{api_id}" for model class {model_cls}'
+            model_cls,
+            f'Could not resolve "{api_id}" for model class {model_cls}',
         )
 
 
@@ -29,7 +30,11 @@ def get_model(
     db: Session, model_cls: type[APIIdentifiedType], api_id: str
 ) -> APIIdentifiedType:
     try:
-        return db.query(model_cls).filter(model_cls.api_identifier == api_id).one()
+        return (
+            db.query(model_cls)
+            .filter(model_cls.api_identifier == api_id)
+            .one()
+        )
     except NoResultFound:
         raise IDNotFoundException(model_cls, api_id)
 
@@ -38,6 +43,10 @@ def get_models(
     db: Session, model_cls: type[APIIdentifiedType], api_ids: list[str]
 ) -> list[APIIdentifiedType]:
     try:
-        return db.query(model_cls).filter(model_cls.api_identifier.in_(api_ids)).all()
+        return (
+            db.query(model_cls)
+            .filter(model_cls.api_identifier.in_(api_ids))
+            .all()
+        )
     except NoResultFound:
         raise IDNotFoundException(model_cls, api_ids)

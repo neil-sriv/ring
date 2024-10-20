@@ -13,6 +13,7 @@ class LetterCreate(LetterBase):
     group_api_identifier: str
     send_at: datetime
 
+
 class LetterUpdate(LetterBase):
     send_at: datetime
 

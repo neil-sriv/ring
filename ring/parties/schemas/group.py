@@ -14,8 +14,10 @@ class GroupCreate(GroupBase):
 class GroupUpdate(BaseModel):
     name: str | None = None
 
+
 class AddMembers(BaseModel):
     member_emails: list[str]
+
 
 class Group(GroupBase):
     model_config = ConfigDict(from_attributes=True)

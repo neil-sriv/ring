@@ -35,7 +35,9 @@ class Task(Base):
     schedule: Mapped["Schedule"] = relationship(back_populates="tasks")
     type: Mapped[str] = mapped_column(index=True, nullable=False)
     status: Mapped[str] = mapped_column(index=True, nullable=False)
-    execute_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), index=True)
+    execute_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), index=True
+    )
     arguments: Mapped[dict[str, str]] = mapped_column(type_=JSON)
     message: Mapped[str] = mapped_column(nullable=True)
 
@@ -71,7 +73,7 @@ class Task(Base):
             execute_at=execute_at,
             arguments=arguments,
         )
-    
+
     def __repr__(self) -> str:
         return json.dumps(self.__dict__, indent=4, default=str)
 

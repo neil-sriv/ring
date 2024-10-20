@@ -17,7 +17,9 @@ def run_script(db: Session, dry_run: bool = True) -> None:
     with open(os.path.join(os.path.dirname(__file__), "users.json")) as f:
         groups_dict: list[dict[str, Any]] = json.load(f)["groups"]
     groups: Sequence[Group] = db.scalars(
-        sqlalchemy.select(Group).where(Group.name.in_([g["name"] for g in groups_dict]))
+        sqlalchemy.select(Group).where(
+            Group.name.in_([g["name"] for g in groups_dict])
+        )
     ).all()
     for group in groups_dict:
         new_users: list[User] = []
@@ -26,7 +28,9 @@ def run_script(db: Session, dry_run: bool = True) -> None:
         assert admin is not None, "Admin user not found"
         current_group = [g for g in groups if g.name == group["name"]]
         if not current_group:
-            g = group_crud.create_group(db, admin.api_identifier, group["name"])
+            g = group_crud.create_group(
+                db, admin.api_identifier, group["name"]
+            )
             db.add(g)
             db.flush()
             pp(f"New group {g.name} created with admin {admin.name}")

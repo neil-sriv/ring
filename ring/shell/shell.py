@@ -1,3 +1,8 @@
+# ruff: noqa: F401
+# pyright: reportUnusedImport=false
+# flake8: noqa: F401
+
+from typing import Any
 from ring.api_identifier import util as api_identifier_crud
 from ring.letters.crud import letter as letter_crud, question as question_crud
 from ring.parties.crud import group as group_crud, user as user_crud
@@ -37,7 +42,7 @@ def run_script(db: Session) -> None:
 
     click.echo("Configuring IPython...")
     c = Config()
-    context = {
+    context: dict[str, Any] = {
         "ring": ring,
         "db": db,
         "ar": _autoreload,
