@@ -62,4 +62,6 @@ async def validate_token(
         raise HTTPException(status_code=400, detail="Invalid token")
     if db_invite.is_expired:
         raise HTTPException(status_code=400, detail="Token expired")
+    if db_invite.used:
+        raise HTTPException(status_code=400, detail="Token already used")
     return db_invite
