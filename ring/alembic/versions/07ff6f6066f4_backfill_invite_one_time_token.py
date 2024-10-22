@@ -70,4 +70,9 @@ def downgrade() -> None:
     )
     op.drop_index(op.f("ix_invite_one_time_token_id"), table_name="invite")
     op.drop_column("invite", "one_time_token_id")
+    session = Session(bind=op.get_bind())
+    otts = session.scalars(sa.select(OneTimeToken)).all()
+    for ott in otts:
+        session.delete(ott)
+    session.commit()
     # ### end Alembic commands ###
