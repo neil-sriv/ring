@@ -9,6 +9,10 @@ from ring.dependencies import (
 from fastapi import HTTPException
 from ring.parties.crud import invite as invite_crud
 from ring.api_identifier import util as api_identifier_crud
+from ring.parties.crud.one_time_token import (
+    TokenAlreadyUsedError,
+    TokenExpiredError,
+)
 from ring.parties.models.group_model import Group
 from ring.parties.models.user_model import User
 from ring.parties.models.invite_model import Invite
@@ -57,11 +61,10 @@ async def validate_token(
         get_unauthenticated_request_dependencies,
     ),
 ) -> Invite:
-    db_invite = invite_crud.get_invite_by_token(req_dep.db, token)
+    try:
+        db_invite = invite_crud.get_invite_by_token(req_dep.db, token)
+    except (TokenAlreadyUsedError, TokenExpiredError):
+        raise HTTPException(status_code=400, detail="Invalid token")
     if not db_invite:
         raise HTTPException(status_code=400, detail="Invalid token")
-    if db_invite.is_expired:
-        raise HTTPException(status_code=400, detail="Token expired")
-    if db_invite.used:
-        raise HTTPException(status_code=400, detail="Token already used")
     return db_invite

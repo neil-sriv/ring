@@ -1,8 +1,8 @@
 from __future__ import annotations
-from secrets import token_urlsafe
 from typing import TYPE_CHECKING, Sequence
 from ring.api_identifier import util as api_identifier_crud
 from ring.email_util import CHARSET, EmailDraft, send_email
+from ring.parties.crud.one_time_token import generate_token, validate_token
 from ring.parties.models.group_model import Group
 from ring.parties.models.invite_model import Invite
 from ring.parties.models.one_time_token_model import OneTimeToken
@@ -48,7 +48,7 @@ def get_invite_by_email(
 def get_invite_by_token(
     db: Session, token: str, expired: bool = False
 ) -> Invite | None:
-    return db.scalar(
+    invite = db.scalar(
         select(Invite)
         .join(Invite.one_time_token)
         .filter(
@@ -56,6 +56,10 @@ def get_invite_by_token(
             Invite.is_expired.is_(expired),
         )
     )
+    if not invite:
+        return None
+    validate_token(db, invite.one_time_token)
+    return invite
 
 
 def invite_users(
@@ -78,8 +82,8 @@ def create_invite(
     group: Group,
 ) -> Invite:
     # generate token
-    token = token_urlsafe(32)
-    db_invite = Invite.create(email, token, inviter, group)
+    one_time_token = generate_token()
+    db_invite = Invite.create(email, one_time_token, inviter, group)
     db.add(db_invite)
     return db_invite
 

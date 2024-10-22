@@ -14,6 +14,10 @@ from ring.parties.crud import (
     invite as invite_crud,
     group as group_crud,
 )
+from ring.parties.crud.one_time_token import (
+    TokenAlreadyUsedError,
+    TokenExpiredError,
+)
 from ring.ring_pydantic import UserLinked as UserSchema
 from ring.ring_pydantic.core import ResponseMessage
 from ring.parties.schemas.user import (
@@ -63,13 +67,13 @@ async def register_user(
         get_unauthenticated_request_dependencies,
     ),
 ) -> User:
-    db_invite = invite_crud.get_invite_by_token(req_dep.db, token)
-    if not db_invite:
+    try:
+        db_invite = invite_crud.get_invite_by_token(req_dep.db, token)
+    except (TokenAlreadyUsedError, TokenExpiredError):
         raise HTTPException(status_code=400, detail="Invalid token")
-    if db_invite.is_expired:
-        raise HTTPException(status_code=400, detail="Token expired")
-    if db_invite.used:
-        raise HTTPException(status_code=400, detail="Token already used")
+    if not db_invite or db_invite.used:
+        raise HTTPException(status_code=400, detail="Invalid token")
+
     if user.email != db_invite.email:
         raise HTTPException(status_code=400, detail="Email mismatch")
     db_user = user_crud.get_user_by_email(req_dep.db, email=user.email)
@@ -81,6 +85,7 @@ async def register_user(
     )
     db_group = db_invite.group
     db_invite.used = True
+    db_invite.one_time_token.used = True
     req_dep.db.flush()
     group_crud.add_member(
         req_dep.db, db_group.api_identifier, db_user.api_identifier

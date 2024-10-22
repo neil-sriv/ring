@@ -1,12 +1,11 @@
-
 from __future__ import annotations
 from datetime import UTC, datetime, timedelta
 import sqlalchemy
 from sqlalchemy.orm import Mapped, mapped_column
 from sqlalchemy import ColumnElement, extract, func
 from sqlalchemy.ext.hybrid import hybrid_property
-from ring.api_identifier.api_identified_model import APIIdentified
 from ring.created_at import CreatedAtMixin
+
 # from ring.ring_pydantic.pydantic_model import PydanticModel
 from ring.sqlalchemy_base import Base
 
@@ -33,9 +32,7 @@ class OneTimeToken(Base, CreatedAtMixin):
         self.used = False
 
     @classmethod
-    def create(
-        cls, token: str
-    ) -> OneTimeToken:
+    def create(cls, token: str) -> OneTimeToken:
         return cls(token)
 
     @hybrid_property

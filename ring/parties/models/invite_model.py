@@ -62,20 +62,20 @@ class Invite(Base, APIIdentified, PydanticModel, CreatedAtMixin):
     def __init__(
         self,
         email: str,
-        token: str,
+        token: OneTimeToken,
         inviter: User,
         group: Group,
     ) -> None:
         APIIdentified.__init__(self)
         self.email = email
-        self.one_time_token = OneTimeToken.create(token)
+        self.one_time_token = token
         self.inviter = inviter
         self.group = group
         self.ttl = DEFAULT_INVITE_TOKEN_TTL
 
     @classmethod
     def create(
-        cls, email: str, token: str, inviter: User, group: Group
+        cls, email: str, token: OneTimeToken, inviter: User, group: Group
     ) -> Invite:
         return cls(email, token, inviter, group)
 
