@@ -29,6 +29,7 @@ def run_script(db: Session) -> None:
     from ring.tasks.models.schedule_model import Schedule
     from ring.tasks.models.task_model import Task
     from ring.parties.models.invite_model import Invite
+    from ring.letters.models.default_question_model import DefaultQuestion
     import sqlalchemy
     import click
     from IPython import embed  # type: ignore

@@ -61,7 +61,14 @@ def create_letter_with_questions(
 ) -> Letter:
     letter = create_letter(db, group_api_id, send_at, number, letter_status)
     add_random_questions(db, letter)
-    add_default_questions(db, letter)
+    group = api_identifier_crud.get_model(db, Group, api_id=group_api_id)
+    if not group.default_questions:
+        add_default_questions(db, letter)
+    else:
+        [
+            add_question(db, letter, question.question_text)
+            for question in group.default_questions
+        ]
     return letter
 
 
@@ -230,7 +237,8 @@ def collect_future_letters(
         )
         .order_by(Letter.send_at)
     ).all()
-    letters_to_be_postpended, letters_to_be_promoted = [], []
+    letters_to_be_postpended: list[Letter] = []
+    letters_to_be_promoted: list[Letter] = []
     for letter in letters:
         if letter.status == LetterStatus.IN_PROGRESS:
             if not letter.group.upcoming_letter:
