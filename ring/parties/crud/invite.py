@@ -5,7 +5,7 @@ from ring.email_util import CHARSET, EmailDraft, send_email
 from ring.parties.crud.one_time_token import generate_token, validate_token
 from ring.parties.models.group_model import Group
 from ring.parties.models.invite_model import Invite
-from ring.parties.models.one_time_token_model import OneTimeToken
+from ring.parties.models.one_time_token_model import OneTimeToken, TokenType
 from ring.parties.models.user_model import User
 from sqlalchemy import select
 
@@ -53,6 +53,7 @@ def get_invite_by_token(
         .join(Invite.one_time_token)
         .filter(
             OneTimeToken.token == token,
+            OneTimeToken.type == TokenType.INVITE,
             Invite.is_expired.is_(expired),
         )
     )
@@ -82,7 +83,7 @@ def create_invite(
     group: Group,
 ) -> Invite:
     # generate token
-    one_time_token = generate_token()
+    one_time_token = generate_token(TokenType.INVITE, token=None)
     db_invite = Invite.create(email, one_time_token, inviter, group)
     db.add(db_invite)
     return db_invite
