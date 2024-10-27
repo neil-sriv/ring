@@ -12,10 +12,10 @@ from ring.ring_pydantic.linked_schemas import GroupLinked
 from ring.sqlalchemy_base import Base
 from ring.parties.models.user_group_assocation import user_group_association
 from ring.tasks.models.schedule_model import Schedule
+from ring.letters.models.letter_model import Letter
 
 
 if TYPE_CHECKING:
-    from ring.letters.models.letter_model import Letter
     from ring.parties.models.user_model import User
 
 
