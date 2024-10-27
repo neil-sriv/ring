@@ -16,6 +16,7 @@ from ring.tasks.models.schedule_model import Schedule  # type: ignore # noqa: F4
 from ring.tasks.models.task_model import Task  # type: ignore # noqa: F401
 from ring.s3.models.s3_model import Image, S3File  # type: ignore # noqa: F401
 from ring.parties.models.invite_model import Invite  # type: ignore # noqa: F401
+from ring.parties.models.one_time_token_model import OneTimeToken  # type: ignore # noqa: F401
 
 
 # this is the Alembic Config object, which provides
@@ -78,7 +79,9 @@ def run_migrations_online() -> None:
     )
 
     with connectable.connect() as connection:
-        context.configure(connection=connection, target_metadata=target_metadata)
+        context.configure(
+            connection=connection, target_metadata=target_metadata
+        )
 
         with context.begin_transaction():
             context.run_migrations()

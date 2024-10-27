@@ -4,7 +4,9 @@ from dev_util.dev import cmd_run, dev_group
 import os
 
 
-LOCAL_POSTGRES_URI = "postgresql://ring-postgres:ring-postgres@localhost:8004/ring"
+LOCAL_POSTGRES_URI = (
+    "postgresql://ring-postgres:ring-postgres@localhost:8004/ring"
+)
 PROD_POSTGRES_URI = "postgresql://ringpostgres:ringpostgres@ring-postgres.c9gw8w2m4ayu.us-east-1.rds.amazonaws.com:5432/ring"
 
 

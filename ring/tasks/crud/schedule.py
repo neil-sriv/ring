@@ -43,8 +43,7 @@ def unregister_task(
     execute_at: datetime.datetime,
 ):
     task = db.scalars(
-        sqlalchemy.select(Task)
-        .where(
+        sqlalchemy.select(Task).where(
             Task.schedule_id == schedule.id,
             Task.type == task_type,
             Task.status == TaskStatus.PENDING,
@@ -52,7 +51,7 @@ def unregister_task(
         )
     ).one_or_none()
     if task:
-        print('deleting task:', task)
+        print("deleting task:", task)
         db.delete(task)
 
 
@@ -65,21 +64,20 @@ def update_task(
     arguments: dict[str, str] | None = None,
 ) -> Task | None:
     task = db.scalars(
-        sqlalchemy.select(Task)
-        .where(
+        sqlalchemy.select(Task).where(
             Task.schedule_id == schedule.id,
             Task.type == task_type,
             Task.status == TaskStatus.PENDING,
             Task.execute_at == execute_at,
         )
     ).one_or_none()
-    print('found task:', task)
+    print("found task:", task)
     if not task:
         return None
     task.execute_at = new_execute_at
     if arguments:
         task.arguments = arguments
-    
+
     return task
 
 

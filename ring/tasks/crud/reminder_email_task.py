@@ -1,4 +1,3 @@
-
 from ring.email_util import EmailDraft, construct_email_draft
 from ring.letters.constants import LetterStatus
 
@@ -9,8 +8,12 @@ def construct_reminder_email(
     letter_api_id: str,
     letter_status: str,
 ) -> EmailDraft:
-    subject_text = "add questions" if letter_status == LetterStatus.UPCOMING else "respond"
-    
+    subject_text = (
+        "add questions"
+        if letter_status == LetterStatus.UPCOMING
+        else "respond"
+    )
+
     question_text = "Today is the last day to {} for the newsletter. Please visit the link above to {}.".format(
         subject_text,
         subject_text,
@@ -42,5 +45,5 @@ def construct_reminder_email(
     email_draft = construct_email_draft(
         recipients, subject, BODY_HTML, BODY_TEXT
     )
-    
+
     return email_draft

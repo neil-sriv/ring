@@ -42,7 +42,12 @@ async def upsert_response(
             response.response_text,
         )
     elif response.participant_api_identifier:
-        db_responses = [resp for resp in db_question.responses if resp.participant.api_identifier == response.participant_api_identifier]
+        db_responses = [
+            resp
+            for resp in db_question.responses
+            if resp.participant.api_identifier
+            == response.participant_api_identifier
+        ]
         if db_responses:
             db_response = db_responses[0]
             question_crud.edit_response(
@@ -75,20 +80,22 @@ async def upload_image(
     db_question = api_identifier_crud.get_model(
         req_dep.db, Question, api_id=question_api_id
     )
-    response = [resp for resp in db_question.responses if resp.participant.api_identifier == req_dep.current_user.api_identifier]
+    response = [
+        resp
+        for resp in db_question.responses
+        if resp.participant.api_identifier
+        == req_dep.current_user.api_identifier
+    ]
     if response:
         db_response = response[0]
     else:
         db_response = question_crud.add_response(
-            req_dep.db,
-            db_question,
-            req_dep.current_user,
-            ""
+            req_dep.db, db_question, req_dep.current_user, ""
         )
     await a_upload_image(
-            req_dep.db,
-            db_response,
-            [response_image],
-        )
+        req_dep.db,
+        db_response,
+        [response_image],
+    )
     req_dep.db.commit()
     return db_question

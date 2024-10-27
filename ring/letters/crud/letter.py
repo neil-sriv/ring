@@ -14,7 +14,7 @@ from ring.letters.constants import (
     LetterStatus,
 )
 from ring.letters.models.question_model import Question
-from ring.tasks.models.task_model import TaskType, TaskStatus
+from ring.tasks.models.task_model import TaskType
 from ring.worker.celery_app import register_task_factory
 from ring.parties.models.user_model import User
 
@@ -119,17 +119,17 @@ def upsert_letter_tasks(
                     letter.group.schedule,
                     TaskType.REMINDER_EMAIL,
                     send_at - timedelta(days=8),
-                {"letter_status": LetterStatus.UPCOMING},
+                    {"letter_status": LetterStatus.UPCOMING},
                 )
 
     # reminder email 2
     if send_at - timedelta(days=1) < datetime.now(tz=UTC):
-            schedule_crud.unregister_task(
-                db,
-                letter.group.schedule,
-                TaskType.REMINDER_EMAIL,
-                letter.send_at - timedelta(days=1),
-            )
+        schedule_crud.unregister_task(
+            db,
+            letter.group.schedule,
+            TaskType.REMINDER_EMAIL,
+            letter.send_at - timedelta(days=1),
+        )
     else:
         reminder_email_task_2 = schedule_crud.update_task(
             db,

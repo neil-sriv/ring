@@ -31,8 +31,13 @@ async def add_next_letter(
     group_letters = letter_crud.get_letters(
         req_dep.db, group_api_id=letter.group_api_identifier
     )
-    if any(letter.status in [LetterStatus.IN_PROGRESS, LetterStatus.UPCOMING] for letter in group_letters):
-        raise ValueError("There is already a letter in progress or upcoming for this group")
+    if any(
+        letter.status in [LetterStatus.IN_PROGRESS, LetterStatus.UPCOMING]
+        for letter in group_letters
+    ):
+        raise ValueError(
+            "There is already a letter in progress or upcoming for this group"
+        )
     db_letter = letter_crud.create_letter_with_questions(
         req_dep.db,
         group_api_id=letter.group_api_identifier,
@@ -91,7 +96,11 @@ async def edit_letter(
     )
     curr_time = datetime.now(tz=UTC)
     if db_letter.status == LetterStatus.UPCOMING:
-        assert letter.send_at > db_letter.group.in_progress_letter.send_at if db_letter.group.in_progress_letter else letter.send_at > curr_time
+        assert (
+            letter.send_at > db_letter.group.in_progress_letter.send_at
+            if db_letter.group.in_progress_letter
+            else letter.send_at > curr_time
+        )
     else:
         assert letter.send_at > curr_time
     letter_crud.edit_letter(req_dep.db, db_letter, letter.send_at)
@@ -150,7 +159,9 @@ async def bulk_edit_responses(
         api_id=letter_api_id,
     )
     db_responses = response_crud.get_responses(
-        req_dep.db, db_letter, [resp.api_identifier for resp in updated_responses]
+        req_dep.db,
+        db_letter,
+        [resp.api_identifier for resp in updated_responses],
     )
     response_map = {resp.api_identifier: resp for resp in db_responses}
     response_crud.edit_responses(response_map, updated_responses)

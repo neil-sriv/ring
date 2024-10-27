@@ -12,10 +12,10 @@ from ring.ring_pydantic.linked_schemas import GroupLinked
 from ring.sqlalchemy_base import Base
 from ring.parties.models.user_group_assocation import user_group_association
 from ring.tasks.models.schedule_model import Schedule
+from ring.letters.models.letter_model import Letter
 
 
 if TYPE_CHECKING:
-    from ring.letters.models.letter_model import Letter
     from ring.parties.models.user_model import User
 
 
@@ -65,12 +65,20 @@ class Group(Base, PydanticModel, APIIdentified, CreatedAtMixin):
 
     @hybrid_property
     def in_progress_letter(self) -> Letter | None:
-        upcoming = [letter for letter in self.letters if letter.status == LetterStatus.IN_PROGRESS]
+        upcoming = [
+            letter
+            for letter in self.letters
+            if letter.status == LetterStatus.IN_PROGRESS
+        ]
         assert len(upcoming) <= 1
         return upcoming[0] if upcoming else None
 
     @hybrid_property
     def upcoming_letter(self) -> Letter | None:
-        upcoming = [letter for letter in self.letters if letter.status == LetterStatus.UPCOMING]
+        upcoming = [
+            letter
+            for letter in self.letters
+            if letter.status == LetterStatus.UPCOMING
+        ]
         assert len(upcoming) <= 1
         return upcoming[0] if upcoming else None

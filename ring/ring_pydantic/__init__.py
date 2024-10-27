@@ -1,3 +1,6 @@
+# ruff: noqa: F405, F403
+# flake8: noqa: F405
+
 from __future__ import annotations
 
 # from .task import *

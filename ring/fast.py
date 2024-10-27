@@ -11,7 +11,8 @@ if ring_config.BACKEND_CORS_ORIGINS:
     app.add_middleware(
         CORSMiddleware,
         allow_origins=[
-            str(origin).strip("/") for origin in ring_config.BACKEND_CORS_ORIGINS
+            str(origin).strip("/")
+            for origin in ring_config.BACKEND_CORS_ORIGINS
         ],
         allow_credentials=True,
         allow_methods=["*"],

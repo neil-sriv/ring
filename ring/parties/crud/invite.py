@@ -1,10 +1,11 @@
 from __future__ import annotations
-from secrets import token_urlsafe
 from typing import TYPE_CHECKING, Sequence
 from ring.api_identifier import util as api_identifier_crud
 from ring.email_util import CHARSET, EmailDraft, send_email
+from ring.parties.crud.one_time_token import generate_token, validate_token
 from ring.parties.models.group_model import Group
 from ring.parties.models.invite_model import Invite
+from ring.parties.models.one_time_token_model import OneTimeToken
 from ring.parties.models.user_model import User
 from sqlalchemy import select
 
@@ -47,12 +48,18 @@ def get_invite_by_email(
 def get_invite_by_token(
     db: Session, token: str, expired: bool = False
 ) -> Invite | None:
-    return db.scalar(
-        select(Invite).filter(
-            Invite.token == token,
+    invite = db.scalar(
+        select(Invite)
+        .join(Invite.one_time_token)
+        .filter(
+            OneTimeToken.token == token,
             Invite.is_expired.is_(expired),
         )
     )
+    if not invite:
+        return None
+    validate_token(db, invite.one_time_token)
+    return invite
 
 
 def invite_users(
@@ -75,8 +82,8 @@ def create_invite(
     group: Group,
 ) -> Invite:
     # generate token
-    token = token_urlsafe(16)
-    db_invite = Invite.create(email, token, inviter, group)
+    one_time_token = generate_token()
+    db_invite = Invite.create(email, one_time_token, inviter, group)
     db.add(db_invite)
     return db_invite
 
@@ -87,7 +94,8 @@ def email_user_invites(self: CeleryTask, invite_ids: list[int]) -> None:
         select(Invite).filter(Invite.id.in_(invite_ids))
     ).all()
     email_drafts = [
-        construct_invite_email(i.email, i.group, i.token) for i in invites
+        construct_invite_email(i.email, i.group, i.one_time_token.token)
+        for i in invites
     ]
     for draft in email_drafts:
         send_email(draft)

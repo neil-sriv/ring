@@ -96,6 +96,7 @@ from .database import *  # noqa
 from .docker import *  # noqa
 from .run import *  # noqa
 from .frontend import *  # noqa
+from .setup import *  # noqa
 
 if __name__ == "__main__":
     dev()

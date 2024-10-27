@@ -100,7 +100,9 @@ def _find_and_execute_task(
 
 
 @register_task_factory(name="send_email_task")
-def async_send_email_task(self: CeleryTask, task_id: int, **kwargs: Any) -> None:
+def async_send_email_task(
+    self: CeleryTask, task_id: int, **kwargs: Any
+) -> None:
     _find_and_execute_task(
         self.session, task_id, SendEmailTask, execute_send_email_task, **kwargs
     )
@@ -108,9 +110,15 @@ def async_send_email_task(self: CeleryTask, task_id: int, **kwargs: Any) -> None
 
 
 @register_task_factory(name="reminder_email_task")
-def async_reminder_email_task(self: CeleryTask, task_id: int, **kwargs: Any) -> None:
+def async_reminder_email_task(
+    self: CeleryTask, task_id: int, **kwargs: Any
+) -> None:
     _find_and_execute_task(
-        self.session, task_id, ReminderEmailTask, execute_reminder_email_task, **kwargs
+        self.session,
+        task_id,
+        ReminderEmailTask,
+        execute_reminder_email_task,
+        **kwargs,
     )
     self.session.commit()
 
