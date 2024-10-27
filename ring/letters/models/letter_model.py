@@ -20,10 +20,10 @@ from ring.api_identifier.api_identified_model import APIIdentified
 from ring.ring_pydantic.pydantic_model import PydanticModel
 from ring.ring_pydantic.linked_schemas import LetterLinked
 from ring.sqlalchemy_base import Base
+from ring.letters.models.question_model import Question
 
 if TYPE_CHECKING:
     from ring.parties.models.group_model import Group
-    from ring.letters.models.question_model import Question
 
     from ring.parties.models.user_model import User
 
