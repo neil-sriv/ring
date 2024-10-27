@@ -44,6 +44,13 @@ services:
       - POSTGRES_PASSWORD=ring-postgres
       - POSTGRES_DB=ring
     profiles: ["dev"]
+    networks:
+      - default
+
+networks:
+  default:
+    name: ring-network
+    external: true
       
 
 volumes:
