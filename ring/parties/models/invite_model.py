@@ -38,7 +38,7 @@ class Invite(Base, APIIdentified, PydanticModel, CreatedAtMixin):
             name="invite_one_time_token_id_fkey",
             ondelete="CASCADE",
         ),
-        nullable=False,
+        nullable=True,
         index=True,
         unique=True,
     )

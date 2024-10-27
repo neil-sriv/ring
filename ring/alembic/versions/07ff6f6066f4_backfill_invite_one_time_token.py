@@ -10,10 +10,6 @@ from typing import Sequence, Union
 
 from alembic import op
 import sqlalchemy as sa
-from sqlalchemy.orm import Session
-
-from ring.parties.models.invite_model import Invite
-from ring.parties.models.one_time_token_model import OneTimeToken
 
 
 # revision identifiers, used by Alembic.
@@ -42,24 +38,6 @@ def upgrade() -> None:
         ["id"],
         ondelete="CASCADE",
     )
-    # DO BACKFILL STUFF
-    session = Session(bind=op.get_bind())
-    invites = session.scalars(sa.select(Invite)).all()
-    for invite in invites:
-        if invite._deprecated_token is None:
-            continue
-        ott = OneTimeToken.create(invite._deprecated_token)  # type: ignore
-        session.add(ott)
-        invite.one_time_token = ott
-        invite.one_time_token.ttl = 0
-        invite.one_time_token.used = True
-    session.commit()
-    op.alter_column(
-        "invite",
-        "one_time_token_id",
-        existing_type=sa.INTEGER(),
-        nullable=False,
-    )
     # ### end Alembic commands ###
 
 
@@ -70,9 +48,4 @@ def downgrade() -> None:
     )
     op.drop_index(op.f("ix_invite_one_time_token_id"), table_name="invite")
     op.drop_column("invite", "one_time_token_id")
-    session = Session(bind=op.get_bind())
-    otts = session.scalars(sa.select(OneTimeToken)).all()
-    for ott in otts:
-        session.delete(ott)
-    session.commit()
     # ### end Alembic commands ###
