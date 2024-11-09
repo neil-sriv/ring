@@ -28,6 +28,9 @@ def upgrade() -> None:
         existing_type=sa.INTEGER(),
         nullable=False,
     )
+    op.alter_column(
+        "invite", "token", existing_type=sa.String(), nullable=True
+    )
     # ### end Alembic commands ###
 
 
@@ -38,5 +41,8 @@ def downgrade() -> None:
         "one_time_token_id",
         existing_type=sa.INTEGER(),
         nullable=True,
+    )
+    op.alter_column(
+        "invite", "token", existing_type=sa.String(), nullable=False
     )
     # ### end Alembic commands ###

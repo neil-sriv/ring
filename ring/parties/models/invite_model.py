@@ -25,7 +25,7 @@ class Invite(Base, APIIdentified, PydanticModel, CreatedAtMixin):
 
     id: Mapped[int] = mapped_column(primary_key=True, index=True)
     email: Mapped[str] = mapped_column(index=True)
-    _deprecated_token: Mapped[str] = mapped_column("token")
+    _deprecated_token: Mapped[str] = mapped_column("token", nullable=True)
     api_identifier: Mapped[str] = mapped_column(unique=True, index=True)
     ttl: Mapped[float] = mapped_column()
     used: Mapped[bool] = mapped_column(
