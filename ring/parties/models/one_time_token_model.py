@@ -1,5 +1,6 @@
 from __future__ import annotations
 from datetime import UTC, datetime, timedelta
+from enum import StrEnum
 import sqlalchemy
 from sqlalchemy.orm import Mapped, mapped_column
 from sqlalchemy import ColumnElement, extract, func
@@ -13,6 +14,11 @@ from ring.sqlalchemy_base import Base
 DEFAULT_TOKEN_TTL = 60 * 60 * 24 * 7  # 1 week
 
 
+class TokenType(StrEnum):
+    INVITE = "invite"
+    PASSWORD_RESET = "password_reset"
+
+
 class OneTimeToken(Base, CreatedAtMixin):
     __tablename__ = "one_time_token"
 
@@ -22,18 +28,21 @@ class OneTimeToken(Base, CreatedAtMixin):
     used: Mapped[bool] = mapped_column(
         server_default=sqlalchemy.false(), nullable=False
     )
+    type: Mapped[str] = mapped_column(nullable=False)
 
     def __init__(
         self,
         token: str,
+        type: TokenType,
     ) -> None:
         self.token = token
+        self.type = type
         self.ttl = DEFAULT_TOKEN_TTL
         self.used = False
 
     @classmethod
-    def create(cls, token: str) -> OneTimeToken:
-        return cls(token)
+    def create(cls, token: str, type: TokenType) -> OneTimeToken:
+        return cls(token, type)
 
     @hybrid_property
     def is_expired(self) -> bool:
