@@ -1,9 +1,8 @@
 from fastapi import APIRouter
 
-
 from ring.auth.api import authn
 from ring.letters.api import letter, question, response
-from ring.parties.api import group, user, invite
+from ring.parties.api import group, invite, user
 from ring.tasks.api import schedule
 
 router = APIRouter()

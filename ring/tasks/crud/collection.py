@@ -1,6 +1,8 @@
 from __future__ import annotations
+
 from dataclasses import dataclass
 from typing import TYPE_CHECKING, Callable, Generic, Sequence, TypeVar
+
 from ring.sqlalchemy_base import Base
 from ring.worker.celery_app import CeleryTask
 

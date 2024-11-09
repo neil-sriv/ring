@@ -1,6 +1,8 @@
-from sqlalchemy.orm import Session
 from secrets import token_urlsafe
-from ring.parties.models.one_time_token_model import OneTimeToken
+
+from sqlalchemy.orm import Session
+
+from ring.parties.models.one_time_token_model import OneTimeToken, TokenType
 
 
 class TokenExpiredError(Exception):
@@ -24,10 +26,10 @@ def validate_token(db: Session, token: OneTimeToken) -> OneTimeToken:
     return token
 
 
-def generate_token(token: str | None = None) -> OneTimeToken:
+def generate_token(type: TokenType, token: str | None = None) -> OneTimeToken:
     if not token:
         token = token_urlsafe(32)
-    return OneTimeToken.create(token)
+    return OneTimeToken.create(token, type)
 
 
 def validate_and_use_token(db: Session, token: OneTimeToken) -> OneTimeToken:

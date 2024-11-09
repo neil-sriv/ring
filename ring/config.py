@@ -1,8 +1,9 @@
 from functools import lru_cache
 from typing import Annotated
+
+from dotenv import load_dotenv
 from pydantic import AnyUrl, BeforeValidator
 from pydantic_settings import BaseSettings
-from dotenv import load_dotenv
 
 
 def parse_cors(origins: str) -> list[str]:

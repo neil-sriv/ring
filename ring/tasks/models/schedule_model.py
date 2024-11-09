@@ -1,13 +1,15 @@
 from __future__ import annotations
+
 from typing import TYPE_CHECKING
+
 from sqlalchemy import ForeignKey, UniqueConstraint
 from sqlalchemy.ext.hybrid import hybrid_property
 from sqlalchemy.orm import Mapped, mapped_column, relationship
-from ring.ring_pydantic.pydantic_model import PydanticModel
-from ring.tasks.models.task_model import Task, TaskStatus, TaskType
 
 from ring.ring_pydantic.linked_schemas import ScheduleLinked
+from ring.ring_pydantic.pydantic_model import PydanticModel
 from ring.sqlalchemy_base import Base
+from ring.tasks.models.task_model import Task, TaskStatus, TaskType
 
 if TYPE_CHECKING:
     from ring.parties.models.group_model import Group

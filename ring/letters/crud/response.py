@@ -1,13 +1,14 @@
 from __future__ import annotations
+
 import hashlib
-import string as string_lib
 import random
+import string as string_lib
 from typing import TYPE_CHECKING, Sequence
 
 from fastapi import UploadFile
 
-from ring.config import get_config
 from ring.api_identifier import util as api_identifier_crud
+from ring.config import get_config
 from ring.dependencies import (
     a_get_s3_client_dependencies,
 )
@@ -16,8 +17,8 @@ from ring.letters.models.response_model import (
     ImageResponseAssociation,
     Response,
 )
-from ring.s3.models.s3_model import Image, MediaType
 from ring.letters.schemas.response import Response as ResponseUpdate
+from ring.s3.models.s3_model import Image, MediaType
 
 if TYPE_CHECKING:
     from sqlalchemy.orm import Session

@@ -1,14 +1,16 @@
 from __future__ import annotations
+
 from typing import TYPE_CHECKING, Sequence
+
+from sqlalchemy import select
+
 from ring.api_identifier import util as api_identifier_crud
 from ring.email_util import CHARSET, EmailDraft, send_email
 from ring.parties.crud.one_time_token import generate_token, validate_token
 from ring.parties.models.group_model import Group
 from ring.parties.models.invite_model import Invite
-from ring.parties.models.one_time_token_model import OneTimeToken
+from ring.parties.models.one_time_token_model import OneTimeToken, TokenType
 from ring.parties.models.user_model import User
-from sqlalchemy import select
-
 from ring.worker.celery_app import CeleryTask, register_task_factory
 
 if TYPE_CHECKING:
@@ -25,9 +27,10 @@ def get_invites(
     inviter = api_identifier_crud.get_model(db, User, api_id=inviter_api_id)
     return db.scalars(
         select(Invite)
+        .join(Invite.one_time_token)
         .filter(
             Invite.inviter == inviter,
-            Invite.is_expired.is_(expired),
+            OneTimeToken.is_expired.is_(expired),  # type: ignore
         )
         .offset(skip)
         .limit(limit)
@@ -38,22 +41,22 @@ def get_invite_by_email(
     db: Session, email: str, expired: bool = False
 ) -> Invite | None:
     return db.scalar(
-        select(Invite).filter(
+        select(Invite)
+        .join(Invite.one_time_token)
+        .filter(
             Invite.email == email,
-            Invite.is_expired.is_(expired),
+            OneTimeToken.is_expired.is_(expired),  # type: ignore
         )
     )
 
 
-def get_invite_by_token(
-    db: Session, token: str, expired: bool = False
-) -> Invite | None:
+def get_invite_by_token(db: Session, token: str) -> Invite | None:
     invite = db.scalar(
         select(Invite)
         .join(Invite.one_time_token)
         .filter(
             OneTimeToken.token == token,
-            Invite.is_expired.is_(expired),
+            OneTimeToken.type == TokenType.INVITE,
         )
     )
     if not invite:
@@ -82,7 +85,7 @@ def create_invite(
     group: Group,
 ) -> Invite:
     # generate token
-    one_time_token = generate_token()
+    one_time_token = generate_token(TokenType.INVITE, token=None)
     db_invite = Invite.create(email, one_time_token, inviter, group)
     db.add(db_invite)
     return db_invite

@@ -1,8 +1,8 @@
 from fastapi import FastAPI
+from starlette.middleware.cors import CORSMiddleware
 
 from ring.config import get_config
 from ring.routes import router
-from starlette.middleware.cors import CORSMiddleware
 
 ring_config = get_config()
 app = FastAPI(root_path=ring_config.root_path)

@@ -1,14 +1,17 @@
 from __future__ import annotations
-from fastapi import APIRouter, Depends
-from ring.dependencies import (
-    get_request_dependencies,
-    AuthenticatedRequestDependencies,
-)
+
 from typing import TYPE_CHECKING
+
+from fastapi import APIRouter, Depends
+
+from ring.dependencies import (
+    AuthenticatedRequestDependencies,
+    get_request_dependencies,
+)
+from ring.ring_pydantic import ScheduleLinked as ScheduleSchema
 from ring.tasks.crud import (
     schedule as schedule_crud,
 )
-from ring.ring_pydantic import ScheduleLinked as ScheduleSchema
 
 if TYPE_CHECKING:
     from ring.tasks.models.schedule_model import Schedule

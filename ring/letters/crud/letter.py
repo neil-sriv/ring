@@ -1,26 +1,29 @@
 from __future__ import annotations
-from datetime import UTC, datetime, timedelta
+
 import random
+from datetime import UTC, datetime, timedelta
 from typing import TYPE_CHECKING, Sequence
 
 from sqlalchemy import select
+
 from ring.api_identifier import util as api_identifier_crud
-from ring.letters.models.letter_model import Letter
-from ring.parties.models.group_model import Group
-from ring.tasks.crud import schedule as schedule_crud
 from ring.letters.constants import (
     DEFAULT_QUESTIONS,
     QUESTION_BANK,
     LetterStatus,
 )
+from ring.letters.models.letter_model import Letter
 from ring.letters.models.question_model import Question
+from ring.parties.models.group_model import Group
+from ring.parties.models.user_model import User
+from ring.tasks.crud import schedule as schedule_crud
 from ring.tasks.models.task_model import TaskType
 from ring.worker.celery_app import register_task_factory
-from ring.parties.models.user_model import User
 
 if TYPE_CHECKING:
-    from ring.worker.celery_app import CeleryTask
     from sqlalchemy.orm import Session
+
+    from ring.worker.celery_app import CeleryTask
 
 
 def get_letters(

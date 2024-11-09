@@ -1,25 +1,26 @@
 from __future__ import annotations
-from fastapi import APIRouter, Depends
+
+from fastapi import APIRouter, Depends, HTTPException
+
+from ring.api_identifier import util as api_identifier_crud
 from ring.dependencies import (
     AuthenticatedRequestDependencies,
     RequestDependenciesBase,
     get_request_dependencies,
     get_unauthenticated_request_dependencies,
 )
-from fastapi import HTTPException
 from ring.parties.crud import invite as invite_crud
-from ring.api_identifier import util as api_identifier_crud
 from ring.parties.crud.one_time_token import (
     TokenAlreadyUsedError,
     TokenExpiredError,
 )
 from ring.parties.models.group_model import Group
-from ring.parties.models.user_model import User
 from ring.parties.models.invite_model import Invite
-from ring.ring_pydantic import InviteLinked as InviteSchema
+from ring.parties.models.user_model import User
 from ring.parties.schemas.invite import (
     InviteCreate,
 )
+from ring.ring_pydantic import InviteLinked as InviteSchema
 from ring.ring_pydantic.linked_schemas import InviteLinked
 
 router = APIRouter()

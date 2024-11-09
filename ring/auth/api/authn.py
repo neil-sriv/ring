@@ -1,12 +1,13 @@
 from __future__ import annotations
-from fastapi import APIRouter, Depends
+
+from fastapi import APIRouter, Depends, HTTPException
 from fastapi.security import OAuth2PasswordRequestForm
+
 from ring.auth.schemas.token import Token
 from ring.dependencies import (
     RequestDependenciesBase,
     get_unauthenticated_request_dependencies,
 )
-from fastapi import HTTPException
 from ring.parties.crud import user as user_crud
 from ring.parties.schemas.user import NewPassword
 from ring.security import create_access_token

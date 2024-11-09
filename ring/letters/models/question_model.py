@@ -1,19 +1,20 @@
 from __future__ import annotations
-from typing import TYPE_CHECKING
-from sqlalchemy import ForeignKey, Text
-from sqlalchemy.orm import relationship, Mapped, mapped_column
-from sqlalchemy.ext.hybrid import hybrid_property
-from ring.api_identifier.api_identified_model import APIIdentified
 
+from typing import TYPE_CHECKING
+
+from sqlalchemy import ForeignKey, Text
+from sqlalchemy.ext.hybrid import hybrid_property
+from sqlalchemy.orm import Mapped, mapped_column, relationship
+
+from ring.api_identifier.api_identified_model import APIIdentified
 from ring.created_at import CreatedAtMixin
-from ring.ring_pydantic.pydantic_model import PydanticModel
 from ring.parties.models.user_model import User
 from ring.ring_pydantic.linked_schemas import QuestionLinked
+from ring.ring_pydantic.pydantic_model import PydanticModel
 from ring.sqlalchemy_base import Base
 
 if TYPE_CHECKING:
     from ring.letters.models.letter_model import Letter
-
     from ring.letters.models.response_model import Response
 
 
