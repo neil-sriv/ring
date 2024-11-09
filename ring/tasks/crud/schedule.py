@@ -1,16 +1,21 @@
 from __future__ import annotations
+
 import datetime
 import time
 from typing import TYPE_CHECKING, Sequence
 
-from sqlalchemy import or_, select
 import sqlalchemy
+from sqlalchemy import or_, select
+
 from ring.api_identifier import util as api_identifier_crud
+from ring.parties.models.group_model import Group
 from ring.tasks.crud import task as task_crud
 from ring.tasks.models.schedule_model import Schedule
-from ring.parties.models.group_model import Group
 from ring.tasks.models.task_model import Task, TaskStatus, TaskType
-from ring.worker.celery_app import CeleryTask, register_task_factory  # type: ignore
+from ring.worker.celery_app import (  # type: ignore
+    CeleryTask,
+    register_task_factory,
+)
 
 if TYPE_CHECKING:
     from sqlalchemy.orm import Session
@@ -99,12 +104,12 @@ def collect_pending_tasks(
 
 @register_task_factory(name="poll_schedule")
 def poll_schedule_task(self: CeleryTask) -> dict[str, str]:
-    from ring.tasks.crud import schedule as schedule_crud
     from ring.letters.crud.letter import (
-        promote_and_create_new_letters,
-        postpend_upcoming_letters,
         collect_future_letters,
+        postpend_upcoming_letters,
+        promote_and_create_new_letters,
     )
+    from ring.tasks.crud import schedule as schedule_crud
 
     time.sleep(5)
 

@@ -1,15 +1,17 @@
 from datetime import datetime
 from pathlib import Path
 from pprint import pp
+
 from sqlalchemy import select
-import ring.letters.crud.question as question_crud
+
 import ring.letters.crud.letter as letter_crud
-from ring.parties.models.group_model import Group
-from ring.letters.models.letter_model import Letter
+import ring.letters.crud.question as question_crud
 from ring.letters.constants import LetterStatus
+from ring.letters.models.letter_model import Letter
+from ring.parties.models.group_model import Group
 from ring.parties.models.user_model import User
-from ring.sqlalchemy_base import Session
 from ring.scripts.script_base import script_di
+from ring.sqlalchemy_base import Session
 
 
 @script_di()

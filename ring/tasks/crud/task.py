@@ -1,22 +1,26 @@
 from __future__ import annotations
 
 from datetime import timedelta
-from typing import Callable
+from typing import Any, Callable
+
 from sqlalchemy.orm import Session
-from typing import Any
+
 from ring.email_util import send_email
 from ring.letters.constants import LetterStatus
+from ring.letters.crud import letter as letter_crud
 from ring.tasks.crud.reminder_email_task import construct_reminder_email
 from ring.tasks.crud.send_email_task import construct_send_letter_email
 from ring.tasks.models.task_model import (
     ReminderEmailTask,
     SendEmailTask,
+    Task,
     TaskStatus,
     TaskType,
-    Task,
 )
-from ring.worker.celery_app import CeleryTask, register_task_factory  # type: ignore
-from ring.letters.crud import letter as letter_crud
+from ring.worker.celery_app import (  # type: ignore
+    CeleryTask,
+    register_task_factory,
+)
 
 
 def execute_reminder_email_task(

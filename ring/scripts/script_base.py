@@ -1,6 +1,7 @@
 import functools
 from typing import Any, Callable
-from ring.sqlalchemy_base import Session, db_session, T
+
+from ring.sqlalchemy_base import Session, T, db_session
 
 
 def script_di() -> Callable[[Callable[..., T]], Callable[..., T]]:

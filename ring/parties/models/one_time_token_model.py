@@ -1,15 +1,17 @@
 from __future__ import annotations
+
 from datetime import UTC, datetime, timedelta
 from enum import StrEnum
+
 import sqlalchemy
-from sqlalchemy.orm import Mapped, mapped_column
 from sqlalchemy import ColumnElement, extract, func
 from sqlalchemy.ext.hybrid import hybrid_property
+from sqlalchemy.orm import Mapped, mapped_column
+
 from ring.created_at import CreatedAtMixin
 
 # from ring.ring_pydantic.pydantic_model import PydanticModel
 from ring.sqlalchemy_base import Base
-
 
 DEFAULT_TOKEN_TTL = 60 * 60 * 24 * 7  # 1 week
 

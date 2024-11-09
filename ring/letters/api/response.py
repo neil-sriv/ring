@@ -1,19 +1,23 @@
 from __future__ import annotations
+
 from fastapi import APIRouter, Depends, UploadFile
+
+from ring.api_identifier import (
+    util as api_identifier_crud,
+)
 from ring.dependencies import (
     AuthenticatedRequestDependencies,
     get_request_dependencies,
 )
-from ring.api_identifier import (
-    util as api_identifier_crud,
-)
 from ring.letters.crud import (
     question as question_crud,
+)
+from ring.letters.crud import (
     response as response_crud,
 )
 from ring.letters.models.response_model import Response
-from ring.ring_pydantic.linked_schemas import ResponseLinked
 from ring.letters.schemas.response import ResponseCreateBase
+from ring.ring_pydantic.linked_schemas import ResponseLinked
 
 router = APIRouter()
 

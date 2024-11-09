@@ -1,11 +1,12 @@
-from datetime import datetime, timedelta, UTC
+from datetime import UTC, datetime, timedelta
+
 from fastapi import HTTPException, status
 from fastapi.security import OAuth2PasswordBearer
+from jose import JWTError, jwt
 from pwdlib import PasswordHash
 from pwdlib.hashers.bcrypt import BcryptHasher
-from jose import jwt, JWTError
-from ring.config import get_config
 
+from ring.config import get_config
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="login/access-token")
 password_hash = PasswordHash([BcryptHasher()])

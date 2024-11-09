@@ -1,11 +1,13 @@
 #!/usr/bin/env python
 from __future__ import annotations
-import os
-from pathlib import Path
-import click
-import subprocess
+
 import functools
+import os
+import subprocess
+from pathlib import Path
 from typing import Any, Callable
+
+import click
 
 ROOT_DIR = Path(
     Path(os.environ.get("ROOT_DIR")).resolve()

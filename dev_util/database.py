@@ -1,8 +1,9 @@
-import click
-from dev_util.compose import compose_exec
-from dev_util.dev import cmd_run, dev_group
 import os
 
+import click
+
+from dev_util.compose import compose_exec
+from dev_util.dev import cmd_run, dev_group
 
 LOCAL_POSTGRES_URI = (
     "postgresql://ring-postgres:ring-postgres@localhost:8004/ring"

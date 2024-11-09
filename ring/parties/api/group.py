@@ -1,22 +1,25 @@
 from __future__ import annotations
-from fastapi import APIRouter, Depends
+
 from datetime import timezone
+from typing import Sequence
+
+from fastapi import APIRouter, Depends
+
+from ring.api_identifier import (
+    util as api_identifier_crud,
+)
 from ring.dependencies import (
     AuthenticatedRequestDependencies,
     get_request_dependencies,
 )
-from typing import Sequence
-from ring.api_identifier import (
-    util as api_identifier_crud,
-)
 from ring.letters.crud.letter import add_participants
 from ring.parties.crud import group as group_crud
 from ring.parties.crud import invite as invite_crud
-from ring.ring_pydantic import GroupLinked as GroupSchema
-from ring.parties.schemas.group import GroupCreate, GroupUpdate, AddMembers
-from ring.tasks.schemas.schedule import ScheduleSendParam
 from ring.parties.models.group_model import Group
 from ring.parties.models.user_model import User
+from ring.parties.schemas.group import AddMembers, GroupCreate, GroupUpdate
+from ring.ring_pydantic import GroupLinked as GroupSchema
+from ring.tasks.schemas.schedule import ScheduleSendParam
 
 router = APIRouter()
 

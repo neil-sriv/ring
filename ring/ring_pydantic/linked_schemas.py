@@ -1,15 +1,16 @@
 from __future__ import annotations
+
 from typing import Optional
 
-from ring.parties.schemas.invite import Invite
-from ring.s3.schemas.image import WithImageMixin
-from ring.tasks.schemas.task import TaskUnlinked
-from ring.tasks.schemas.schedule import Schedule, ScheduleUnlinked
-from ring.parties.schemas.user import User, UserUnlinked
-from ring.parties.schemas.group import Group, GroupUnlinked
 from ring.letters.schemas.letter import Letter, LetterUnlinked
 from ring.letters.schemas.question import Question, QuestionUnlinked
 from ring.letters.schemas.response import Response, ResponseUnlinked
+from ring.parties.schemas.group import Group, GroupUnlinked
+from ring.parties.schemas.invite import Invite
+from ring.parties.schemas.user import User, UserUnlinked
+from ring.s3.schemas.image import WithImageMixin
+from ring.tasks.schemas.schedule import Schedule, ScheduleUnlinked
+from ring.tasks.schemas.task import TaskUnlinked
 
 
 class UserLinked(User):

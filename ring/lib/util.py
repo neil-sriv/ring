@@ -1,6 +1,5 @@
-from typing import Generic, TypeVar, overload
-
 from collections.abc import Mapping, Sequence
+from typing import Generic, TypeVar, overload
 
 _KT = TypeVar("_KT")
 _VT = TypeVar("_VT")
