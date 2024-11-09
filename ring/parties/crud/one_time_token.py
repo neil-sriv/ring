@@ -1,5 +1,7 @@
-from sqlalchemy.orm import Session
 from secrets import token_urlsafe
+
+from sqlalchemy.orm import Session
+
 from ring.parties.models.one_time_token_model import OneTimeToken, TokenType
 
 

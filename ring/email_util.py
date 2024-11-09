@@ -1,12 +1,12 @@
+from dataclasses import dataclass
 from typing import Optional
-from mypy_boto3_ses.client import SESClient, BotocoreClientError
+
+import boto3
+from mypy_boto3_ses.client import BotocoreClientError, SESClient
 from mypy_boto3_ses.type_defs import (
     DestinationTypeDef,
     MessageTypeDef,
 )
-from dataclasses import dataclass
-import boto3
-
 
 # The character encoding for the email.
 CHARSET = "UTF-8"

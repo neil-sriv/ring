@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, Table, ForeignKey
+from sqlalchemy import Column, ForeignKey, Integer, Table
 
 from ring.sqlalchemy_base import Base
 

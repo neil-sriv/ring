@@ -1,15 +1,16 @@
 from __future__ import annotations
-from sqlalchemy.orm import relationship, Mapped, mapped_column
+
 from sqlalchemy import ForeignKey
+from sqlalchemy.orm import Mapped, mapped_column, relationship
+
 from ring.api_identifier.api_identified_model import APIIdentified
 from ring.created_at import CreatedAtMixin
 from ring.parties.models.group_model import Group
 from ring.parties.models.one_time_token_model import OneTimeToken
+from ring.parties.models.user_model import User
 from ring.parties.schemas.invite import InviteUnlinked
 from ring.ring_pydantic.pydantic_model import PydanticModel
 from ring.sqlalchemy_base import Base
-from ring.parties.models.user_model import User
-
 
 DEFAULT_INVITE_TOKEN_TTL = 60 * 60 * 24 * 7  # 1 week
 

@@ -1,5 +1,9 @@
 from __future__ import annotations
+
 from typing import TYPE_CHECKING, Sequence
+
+from sqlalchemy import select
+
 from ring.api_identifier import util as api_identifier_crud
 from ring.email_util import CHARSET, EmailDraft, send_email
 from ring.parties.crud.one_time_token import generate_token, validate_token
@@ -7,8 +11,6 @@ from ring.parties.models.group_model import Group
 from ring.parties.models.invite_model import Invite
 from ring.parties.models.one_time_token_model import OneTimeToken, TokenType
 from ring.parties.models.user_model import User
-from sqlalchemy import select
-
 from ring.worker.celery_app import CeleryTask, register_task_factory
 
 if TYPE_CHECKING:

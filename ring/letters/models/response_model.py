@@ -1,18 +1,20 @@
 from __future__ import annotations
-from typing import TYPE_CHECKING, List
-from sqlalchemy import ForeignKey, Integer, Text, UniqueConstraint
-from sqlalchemy.orm import relationship, Mapped, mapped_column
-from ring.api_identifier.api_identified_model import APIIdentified
 
+from typing import TYPE_CHECKING, List
+
+from sqlalchemy import ForeignKey, Integer, Text, UniqueConstraint
+from sqlalchemy.orm import Mapped, mapped_column, relationship
+
+from ring.api_identifier.api_identified_model import APIIdentified
 from ring.created_at import CreatedAtMixin
-from ring.ring_pydantic.pydantic_model import PydanticModel
 from ring.ring_pydantic.linked_schemas import ResponseLinked
-from ring.sqlalchemy_base import Base
+from ring.ring_pydantic.pydantic_model import PydanticModel
 from ring.s3.models.s3_model import Image
+from ring.sqlalchemy_base import Base
 
 if TYPE_CHECKING:
-    from ring.parties.models.user_model import User
     from ring.letters.models.question_model import Question
+    from ring.parties.models.user_model import User
 
 
 class ImageResponseAssociation(Base):

@@ -1,6 +1,8 @@
 from __future__ import annotations
+
 from datetime import datetime
 from typing import TYPE_CHECKING
+
 from sqlalchemy import (
     Column,
     Constraint,
@@ -10,21 +12,20 @@ from sqlalchemy import (
     Table,
     UniqueConstraint,
 )
-from sqlalchemy.orm import relationship, Mapped, mapped_column
 from sqlalchemy.ext.declarative import declared_attr
 from sqlalchemy.ext.hybrid import hybrid_property
+from sqlalchemy.orm import Mapped, mapped_column, relationship
+
+from ring.api_identifier.api_identified_model import APIIdentified
 from ring.created_at import CreatedAtMixin
 from ring.letters.constants import LetterStatus
-from ring.api_identifier.api_identified_model import APIIdentified
-
-from ring.ring_pydantic.pydantic_model import PydanticModel
-from ring.ring_pydantic.linked_schemas import LetterLinked
-from ring.sqlalchemy_base import Base
 from ring.letters.models.question_model import Question
+from ring.ring_pydantic.linked_schemas import LetterLinked
+from ring.ring_pydantic.pydantic_model import PydanticModel
+from ring.sqlalchemy_base import Base
 
 if TYPE_CHECKING:
     from ring.parties.models.group_model import Group
-
     from ring.parties.models.user_model import User
 
 letter_to_user_assocation = Table(

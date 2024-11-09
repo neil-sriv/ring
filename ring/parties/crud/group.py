@@ -1,15 +1,18 @@
 from __future__ import annotations
+
 from datetime import datetime
 from typing import TYPE_CHECKING, Sequence
+
+from sqlalchemy import select
+
 from ring.api_identifier import util as api_identifier_crud
+from ring.letters.models.letter_model import Letter
+from ring.parties.models.group_model import Group
+from ring.parties.models.user_model import User
 from ring.tasks.crud import (
     schedule as schedule_crud,
 )
-from ring.letters.models.letter_model import Letter
 from ring.tasks.models.task_model import TaskType
-from ring.parties.models.group_model import Group
-from ring.parties.models.user_model import User
-from sqlalchemy import select
 
 if TYPE_CHECKING:
     from sqlalchemy.orm import Session

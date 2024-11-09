@@ -1,5 +1,7 @@
 from pathlib import Path
+
 import click
+
 from dev_util.dev import cmd_run, dev_group
 
 FE_DIR = Path(Path(__file__).resolve().parents[1], "react")

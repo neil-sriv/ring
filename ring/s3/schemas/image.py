@@ -1,4 +1,5 @@
 from typing import Any
+
 from pydantic import BaseModel, Field, computed_field
 
 from ring.s3.models.s3_model import MediaType

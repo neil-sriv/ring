@@ -1,7 +1,8 @@
-from sqlalchemy import text
 from pprintpp import pprint  # type: ignore
-from ring.sqlalchemy_base import Session
+from sqlalchemy import text
+
 from ring.scripts.script_base import script_di
+from ring.sqlalchemy_base import Session
 
 
 @script_di()

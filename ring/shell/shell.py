@@ -3,9 +3,12 @@
 # flake8: noqa: F401
 
 from typing import Any
+
 from ring.api_identifier import util as api_identifier_crud
-from ring.letters.crud import letter as letter_crud, question as question_crud
-from ring.parties.crud import group as group_crud, user as user_crud
+from ring.letters.crud import letter as letter_crud
+from ring.letters.crud import question as question_crud
+from ring.parties.crud import group as group_crud
+from ring.parties.crud import user as user_crud
 from ring.scripts.script_base import script_di
 from ring.sqlalchemy_base import Session
 from ring.tasks.crud import schedule as schedule_crud
@@ -21,24 +24,25 @@ def _autoreload():
 @script_di()
 def run_script(db: Session) -> None:
     # import ring.postgres_models
-    from ring.parties.models.group_model import Group
-    from ring.parties.models.user_model import User
+    import click
+    import sqlalchemy
+    from IPython import embed  # type: ignore
+    from traitlets.config import Config
+
+    import ring
     from ring.letters.models.letter_model import Letter
     from ring.letters.models.question_model import Question
     from ring.letters.models.response_model import Response
-    from ring.tasks.models.schedule_model import Schedule
-    from ring.tasks.models.task_model import Task
-    from ring.parties.models.invite_model import Invite
-    import sqlalchemy
-    import click
-    from IPython import embed  # type: ignore
-    from traitlets.config import Config
-    import ring
     from ring.lib.util import get_all_subclasses
+    from ring.parties.models.group_model import Group
+    from ring.parties.models.invite_model import Invite
+    from ring.parties.models.user_model import User
     from ring.sqlalchemy_base import Base
     from ring.tasks.crud import (
         task as task_crud,
     )
+    from ring.tasks.models.schedule_model import Schedule
+    from ring.tasks.models.task_model import Task
 
     click.echo("Configuring IPython...")
     c = Config()

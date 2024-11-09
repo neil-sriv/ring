@@ -1,22 +1,26 @@
 from __future__ import annotations
+
+from datetime import UTC, datetime
+from typing import Sequence
+
 from fastapi import APIRouter, Depends
-from datetime import datetime, UTC
+
+from ring.api_identifier import (
+    util as api_identifier_crud,
+)
 from ring.dependencies import (
     AuthenticatedRequestDependencies,
     get_request_dependencies,
 )
-from typing import Sequence
-from ring.api_identifier import (
-    util as api_identifier_crud,
-)
 from ring.letters.constants import LetterStatus
-from ring.letters.crud import letter as letter_crud, response as response_crud
-from ring.parties.models.user_model import User
-from ring.ring_pydantic import PublicLetter as LetterSchema
-from ring.letters.schemas.letter import LetterCreate, LetterUpdate
+from ring.letters.crud import letter as letter_crud
+from ring.letters.crud import response as response_crud
 from ring.letters.models.letter_model import Letter
+from ring.letters.schemas.letter import LetterCreate, LetterUpdate
 from ring.letters.schemas.question import QuestionCreate
 from ring.letters.schemas.response import ResponseUnlinked
+from ring.parties.models.user_model import User
+from ring.ring_pydantic import PublicLetter as LetterSchema
 
 router = APIRouter()
 

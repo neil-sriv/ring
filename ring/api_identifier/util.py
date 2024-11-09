@@ -1,10 +1,11 @@
 from __future__ import annotations
-from fastapi import HTTPException
-from sqlalchemy.exc import NoResultFound
+
 from typing import TYPE_CHECKING, Optional, TypeVar
 
-from ring.sqlalchemy_base import Base
+from fastapi import HTTPException
+from sqlalchemy.exc import NoResultFound
 
+from ring.sqlalchemy_base import Base
 
 if TYPE_CHECKING:
     from sqlalchemy.orm import Session
