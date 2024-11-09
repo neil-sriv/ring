@@ -71,7 +71,7 @@ async def register_user(
         db_invite = invite_crud.get_invite_by_token(req_dep.db, token)
     except (TokenAlreadyUsedError, TokenExpiredError):
         raise HTTPException(status_code=400, detail="Invalid token")
-    if not db_invite or db_invite.used:
+    if not db_invite or db_invite.one_time_token.used:
         raise HTTPException(status_code=400, detail="Invalid token")
 
     if user.email != db_invite.email:
@@ -84,7 +84,6 @@ async def register_user(
         db=req_dep.db, name=user.name, email=user.email, password=user.password
     )
     db_group = db_invite.group
-    db_invite.used = True
     db_invite.one_time_token.used = True
     req_dep.db.flush()
     group_crud.add_member(

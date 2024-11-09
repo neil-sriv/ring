@@ -25,9 +25,10 @@ def get_invites(
     inviter = api_identifier_crud.get_model(db, User, api_id=inviter_api_id)
     return db.scalars(
         select(Invite)
+        .join(Invite.one_time_token)
         .filter(
             Invite.inviter == inviter,
-            Invite.is_expired.is_(expired),
+            OneTimeToken.is_expired.is_(expired),  # type: ignore
         )
         .offset(skip)
         .limit(limit)
@@ -38,23 +39,22 @@ def get_invite_by_email(
     db: Session, email: str, expired: bool = False
 ) -> Invite | None:
     return db.scalar(
-        select(Invite).filter(
+        select(Invite)
+        .join(Invite.one_time_token)
+        .filter(
             Invite.email == email,
-            Invite.is_expired.is_(expired),
+            OneTimeToken.is_expired.is_(expired),  # type: ignore
         )
     )
 
 
-def get_invite_by_token(
-    db: Session, token: str, expired: bool = False
-) -> Invite | None:
+def get_invite_by_token(db: Session, token: str) -> Invite | None:
     invite = db.scalar(
         select(Invite)
         .join(Invite.one_time_token)
         .filter(
             OneTimeToken.token == token,
             OneTimeToken.type == TokenType.INVITE,
-            Invite.is_expired.is_(expired),
         )
     )
     if not invite:
