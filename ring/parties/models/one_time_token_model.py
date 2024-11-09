@@ -32,19 +32,29 @@ class OneTimeToken(Base, CreatedAtMixin):
     )
     type: Mapped[str] = mapped_column(nullable=False)
 
+    email: Mapped[str] = mapped_column(index=True, nullable=True)
+
     def __init__(
         self,
         token: str,
         type: TokenType,
+        email: str | None = None,
     ) -> None:
         self.token = token
         self.type = type
         self.ttl = DEFAULT_TOKEN_TTL
         self.used = False
+        if email:
+            self.email = email
 
     @classmethod
-    def create(cls, token: str, type: TokenType) -> OneTimeToken:
-        return cls(token, type)
+    def create(
+        cls,
+        token: str,
+        type: TokenType,
+        email: str | None = None,
+    ) -> OneTimeToken:
+        return cls(token, type, email)
 
     @hybrid_property
     def is_expired(self) -> bool:
