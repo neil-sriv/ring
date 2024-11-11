@@ -13,6 +13,8 @@ from ring.dependencies import (
 from ring.parties.crud import user as user_crud
 from ring.parties.crud.authn import email_password_reset, reset_user_password
 from ring.parties.crud.one_time_token import (
+    TokenAlreadyUsedError,
+    TokenExpiredError,
     generate_token,
     get_ott_by_token,
     validate_and_use_token,
@@ -73,7 +75,9 @@ def reset_password_request(
             detail="User with this email does not exist",
         )
     ott = generate_token(TokenType.PASSWORD_RESET, email)
+    req_dep.db.add(ott)
     email_password_reset.delay(email, ott.token)
+    req_dep.db.commit()
     return ResponseMessage(message="Password recovery email sent")
 
 
@@ -91,7 +95,12 @@ def reset_password(
     ott = get_ott_by_token(req_dep.db, token)
     if not ott:
         raise HTTPException(status_code=400, detail="Invalid token")
-    validate_and_use_token(req_dep.db, ott)
+    try:
+        validate_and_use_token(req_dep.db, ott)
+    except TokenExpiredError:
+        raise HTTPException(status_code=400, detail="Token expired")
+    except TokenAlreadyUsedError:
+        raise HTTPException(status_code=400, detail="Token already used")
     db_user = user_crud.get_user_by_email(req_dep.db, ott.email)
     if not db_user:
         raise HTTPException(status_code=400, detail="Invalid token")
