@@ -21,7 +21,6 @@ import {
   type UserUpdate,
   PartiesService,
 } from "../../client";
-import useAuth from "../../hooks/useAuth";
 import useCustomToast from "../../hooks/useCustomToast";
 import { emailPattern } from "../../util/misc";
 
@@ -30,7 +29,7 @@ const UserInformation = () => {
   const color = useColorModeValue("inherit", "ui.light");
   const showToast = useCustomToast();
   const [editMode, setEditMode] = useState(false);
-  const { user: currentUser } = useAuth();
+  const currentUser = queryClient.getQueryData<UserLinked>(["currentUser"]);
   const {
     register,
     handleSubmit,
