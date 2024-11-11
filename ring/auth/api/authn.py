@@ -95,6 +95,7 @@ def reset_password(
     ott = get_ott_by_token(req_dep.db, token)
     if not ott:
         raise HTTPException(status_code=400, detail="Invalid token")
+    ott.used = True
     try:
         validate_and_use_token(req_dep.db, ott)
     except TokenExpiredError:
