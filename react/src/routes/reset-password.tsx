@@ -10,7 +10,7 @@ import {
 import { createFileRoute, redirect } from "@tanstack/react-router";
 import { type SubmitHandler, useForm } from "react-hook-form";
 
-import { LoginService } from "../client";
+import { ApiError, LoginService } from "../client";
 import { isLoggedIn } from "../hooks/useAuth";
 import useCustomToast from "../hooks/useCustomToast";
 import { emailPattern } from "../util/misc";
@@ -41,12 +41,21 @@ function ResetPasswordRequest() {
   const onSubmit: SubmitHandler<FormData> = async (data) => {
     await LoginService.resetPasswordRequestResetPasswordRequestEmailPost({
       email: data.email,
-    });
-    showToast(
-      "Email sent.",
-      "We sent an email with a link to get back into your account.",
-      "success"
-    );
+    })
+      .then(() => {
+        showToast(
+          "Email sent.",
+          "We sent an email with a link to get back into your account.",
+          "success"
+        );
+      })
+      .catch((error) => {
+        showToast(
+          "Something went wrong",
+          (error as ApiError).body.detail,
+          "error"
+        );
+      });
   };
 
   return (
