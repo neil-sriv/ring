@@ -34,4 +34,3 @@ class UserUnlinked(User):
 
 class NewPassword(BaseModel):
     new_password: str
-    token: str

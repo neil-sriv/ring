@@ -233,7 +233,8 @@ def collect_future_letters(
         )
         .order_by(Letter.send_at)
     ).all()
-    letters_to_be_postpended, letters_to_be_promoted = [], []
+    letters_to_be_postpended: list[Letter] = []
+    letters_to_be_promoted: list[Letter] = []
     for letter in letters:
         if letter.status == LetterStatus.IN_PROGRESS:
             if not letter.group.upcoming_letter:

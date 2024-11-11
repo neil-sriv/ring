@@ -85,7 +85,7 @@ def create_invite(
     group: Group,
 ) -> Invite:
     # generate token
-    one_time_token = generate_token(TokenType.INVITE, token=None)
+    one_time_token = generate_token(TokenType.INVITE, email, token=None)
     db_invite = Invite.create(email, one_time_token, inviter, group)
     db.add(db_invite)
     return db_invite

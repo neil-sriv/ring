@@ -216,20 +216,22 @@ export const $InviteLinked = {
 	isRequired: true,
 	format: 'date-time',
 },
-		is_expired: {
-	type: 'boolean',
-	isRequired: true,
-},
-		token: {
-	type: 'string',
-	isRequired: true,
-},
 		inviter: {
 	type: 'UserUnlinked',
 	isRequired: true,
 },
 		group: {
 	type: 'GroupUnlinked',
+	isRequired: true,
+},
+		token: {
+	type: 'string',
+	isReadOnly: true,
+	isRequired: true,
+},
+		is_expired: {
+	type: 'boolean',
+	isReadOnly: true,
 	isRequired: true,
 },
 	},
@@ -299,10 +301,6 @@ export const $MediaType = {
 export const $NewPassword = {
 	properties: {
 		new_password: {
-	type: 'string',
-	isRequired: true,
-},
-		token: {
 	type: 'string',
 	isRequired: true,
 },

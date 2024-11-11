@@ -125,7 +125,7 @@ function Login() {
           {error && <FormErrorMessage>{error}</FormErrorMessage>}
         </FormControl>
         <Center>
-          <Link as={RouterLink} to="/recover-password" color="blue.500">
+          <Link as={RouterLink} to="/reset-password" color="blue.500">
             Forgot password?
           </Link>
         </Center>
