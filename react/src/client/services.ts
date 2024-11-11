@@ -2,19 +2,20 @@ import type { CancelablePromise } from './core/CancelablePromise';
 import { OpenAPI } from './core/OpenAPI';
 import { request as __request } from './core/request';
 
-import type { Body_login_access_token_login_access_token_post,NewPassword,Token,AddMembers,GroupCreate,GroupLinked,GroupUpdate,ResponseMessage,ScheduleSendParam,UserCreate,UserLinked,UserUpdate,UserUpdatePassword,LetterCreate,LetterUpdate,PublicLetter,QuestionCreate,ResponseUnlinked,ScheduleLinked,Body_upload_image_questions_question__question_api_id__upload_image_post,QuestionLinked,ResponseUpsert,Body_upload_image_responses_response__response_api_id__upload_image_post,ResponseCreateBase,ResponseLinked,InviteCreate,InviteLinked } from './models';
+import type { Body_login_access_token_login_access_token_post,NewPassword,ResponseMessage,Token,AddMembers,GroupCreate,GroupLinked,GroupUpdate,ScheduleSendParam,UserCreate,UserLinked,UserUpdate,UserUpdatePassword,LetterCreate,LetterUpdate,PublicLetter,QuestionCreate,ResponseUnlinked,ScheduleLinked,Body_upload_image_questions_question__question_api_id__upload_image_post,QuestionLinked,ResponseUpsert,Body_upload_image_responses_response__response_api_id__upload_image_post,ResponseCreateBase,ResponseLinked,InviteCreate,InviteLinked } from './models';
 
 export type LoginData = {
         LoginAccessTokenLoginAccessTokenPost: {
                     formData: Body_login_access_token_login_access_token_post
                     
                 };
-RecoverPasswordPasswordRecoveryEmailPost: {
+ResetPasswordRequestResetPasswordRequestEmailPost: {
                     email: string
                     
                 };
-ResetPasswordResetPasswordPost: {
+ResetPasswordResetPasswordTokenPost: {
                     requestBody: NewPassword
+token: string
                     
                 };
 RecoverPasswordHtmlContentPasswordRecoveryHtmlContentEmailPost: {
@@ -208,19 +209,18 @@ formData,
 	}
 
 	/**
-	 * @deprecated
-	 * Recover Password
-	 * Password Recovery
-	 * @returns null Successful Response
+	 * Reset Password Request
+	 * Password Reset Request
+	 * @returns ResponseMessage Successful Response
 	 * @throws ApiError
 	 */
-	public static recoverPasswordPasswordRecoveryEmailPost(data: LoginData['RecoverPasswordPasswordRecoveryEmailPost']): CancelablePromise<null> {
+	public static resetPasswordRequestResetPasswordRequestEmailPost(data: LoginData['ResetPasswordRequestResetPasswordRequestEmailPost']): CancelablePromise<ResponseMessage> {
 		const {
 email,
 } = data;
 		return __request(OpenAPI, {
 			method: 'POST',
-			url: '/password-recovery/{email}',
+			url: '/reset-password:request/{email}',
 			path: {
 				email
 			},
@@ -231,19 +231,22 @@ email,
 	}
 
 	/**
-	 * @deprecated
 	 * Reset Password
 	 * Reset password
-	 * @returns null Successful Response
+	 * @returns ResponseMessage Successful Response
 	 * @throws ApiError
 	 */
-	public static resetPasswordResetPasswordPost(data: LoginData['ResetPasswordResetPasswordPost']): CancelablePromise<null> {
+	public static resetPasswordResetPasswordTokenPost(data: LoginData['ResetPasswordResetPasswordTokenPost']): CancelablePromise<ResponseMessage> {
 		const {
+token,
 requestBody,
 } = data;
 		return __request(OpenAPI, {
 			method: 'POST',
-			url: '/reset-password/',
+			url: '/reset-password/{token}',
+			path: {
+				token
+			},
 			body: requestBody,
 			mediaType: 'application/json',
 			errors: {

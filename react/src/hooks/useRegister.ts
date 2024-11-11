@@ -21,7 +21,7 @@ const useRegister = () => {
       navigate({ to: "/login" });
     },
     onError: (err: ApiError) => {
-      let errDetail = (err.body as any)?.detail;
+      let errDetail = err.body.detail;
 
       if (err instanceof AxiosError) {
         errDetail = err.message;
