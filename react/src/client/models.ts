@@ -84,10 +84,10 @@ export type InviteLinked = {
 	email: string;
 	api_identifier: string;
 	created_at: string;
-	is_expired: boolean;
-	token: string;
 	inviter: UserUnlinked;
 	group: GroupUnlinked;
+	readonly token: string;
+	readonly is_expired: boolean;
 };
 
 
@@ -125,7 +125,6 @@ export type MediaType = 'image' | 'video';
 
 export type NewPassword = {
 	new_password: string;
-	token: string;
 };
 
 

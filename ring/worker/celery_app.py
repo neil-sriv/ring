@@ -1,5 +1,6 @@
 # type: ignore
 import os
+from typing import Any
 
 from celery import Celery
 from celery.schedules import crontab
@@ -54,7 +55,7 @@ class CeleryTask(celery.Task):
         return self.sessions[self.request.id]
 
 
-def register_task_factory(*dec_args, **dec_kwargs):
+def register_task_factory(*dec_args: Any, **dec_kwargs: Any) -> Any:
     def decorator(f):
         @celery.task(
             *dec_args,

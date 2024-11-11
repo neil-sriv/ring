@@ -75,15 +75,14 @@
         "deprecated": true
       }
     },
-    "/password-recovery/{email}": {
+    "/reset-password:request/{email}": {
       "post": {
         "tags": [
           "login"
         ],
-        "summary": "Recover Password",
-        "description": "Password Recovery",
-        "operationId": "recover_password_password_recovery__email__post",
-        "deprecated": true,
+        "summary": "Reset Password Request",
+        "description": "Password Reset Request",
+        "operationId": "reset_password_request_reset_password_request__email__post",
         "parameters": [
           {
             "name": "email",
@@ -101,8 +100,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "null",
-                  "title": "Response Recover Password Password Recovery  Email  Post"
+                  "$ref": "#/components/schemas/ResponseMessage"
                 }
               }
             }
@@ -120,23 +118,34 @@
         }
       }
     },
-    "/reset-password/": {
+    "/reset-password/{token}": {
       "post": {
         "tags": [
           "login"
         ],
         "summary": "Reset Password",
         "description": "Reset password",
-        "operationId": "reset_password_reset_password__post",
+        "operationId": "reset_password_reset_password__token__post",
+        "parameters": [
+          {
+            "name": "token",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Token"
+            }
+          }
+        ],
         "requestBody": {
+          "required": true,
           "content": {
             "application/json": {
               "schema": {
                 "$ref": "#/components/schemas/NewPassword"
               }
             }
-          },
-          "required": true
+          }
         },
         "responses": {
           "200": {
@@ -144,8 +153,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "null",
-                  "title": "Response Reset Password Reset Password  Post"
+                  "$ref": "#/components/schemas/ResponseMessage"
                 }
               }
             }
@@ -160,8 +168,7 @@
               }
             }
           }
-        },
-        "deprecated": true
+        }
       }
     },
     "/password-recovery-html-content/{email}": {
@@ -2088,19 +2095,21 @@
             "format": "date-time",
             "title": "Created At"
           },
-          "is_expired": {
-            "type": "boolean",
-            "title": "Is Expired"
-          },
-          "token": {
-            "type": "string",
-            "title": "Token"
-          },
           "inviter": {
             "$ref": "#/components/schemas/UserUnlinked"
           },
           "group": {
             "$ref": "#/components/schemas/GroupUnlinked"
+          },
+          "token": {
+            "type": "string",
+            "title": "Token",
+            "readOnly": true
+          },
+          "is_expired": {
+            "type": "boolean",
+            "title": "Is Expired",
+            "readOnly": true
           }
         },
         "type": "object",
@@ -2108,10 +2117,10 @@
           "email",
           "api_identifier",
           "created_at",
-          "is_expired",
-          "token",
           "inviter",
-          "group"
+          "group",
+          "token",
+          "is_expired"
         ],
         "title": "InviteLinked"
       },
@@ -2204,16 +2213,11 @@
           "new_password": {
             "type": "string",
             "title": "New Password"
-          },
-          "token": {
-            "type": "string",
-            "title": "Token"
           }
         },
         "type": "object",
         "required": [
-          "new_password",
-          "token"
+          "new_password"
         ],
         "title": "NewPassword"
       },
