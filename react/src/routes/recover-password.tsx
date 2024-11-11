@@ -39,7 +39,7 @@ function RecoverPassword() {
   const showToast = useCustomToast();
 
   const onSubmit: SubmitHandler<FormData> = async (data) => {
-    await LoginService.recoverPasswordPasswordRecoveryEmailPost({
+    await LoginService.resetPasswordRequestResetPasswordRequestEmailPost({
       email: data.email,
     });
     showToast(
@@ -61,10 +61,10 @@ function RecoverPassword() {
       centerContent
     >
       <Heading size="xl" color="ui.main" textAlign="center" mb={2}>
-        Password Recovery
+        Password Reset
       </Heading>
       <Text align="center">
-        A password recovery email will be sent to the registered account.
+        A password reset email will be sent to the registered account.
       </Text>
       <FormControl isInvalid={!!errors.email}>
         <Input
