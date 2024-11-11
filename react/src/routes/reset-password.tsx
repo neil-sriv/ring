@@ -3,26 +3,24 @@ import {
   Container,
   FormControl,
   FormErrorMessage,
-  FormLabel,
   Heading,
   Input,
   Text,
 } from "@chakra-ui/react";
-import { useMutation } from "@tanstack/react-query";
-import { createFileRoute, redirect, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, redirect } from "@tanstack/react-router";
 import { type SubmitHandler, useForm } from "react-hook-form";
 
-import { type ApiError, LoginService, type NewPassword } from "../client";
+import { LoginService } from "../client";
 import { isLoggedIn } from "../hooks/useAuth";
 import useCustomToast from "../hooks/useCustomToast";
-import { confirmPasswordRules, passwordRules } from "../util/misc";
+import { emailPattern } from "../util/misc";
 
-interface NewPasswordForm extends NewPassword {
-  confirm_password: string;
+interface FormData {
+  email: string;
 }
 
 export const Route = createFileRoute("/reset-password")({
-  component: ResetPassword,
+  component: ResetPasswordRequest,
   beforeLoad: async () => {
     if (isLoggedIn()) {
       throw redirect({
@@ -32,46 +30,23 @@ export const Route = createFileRoute("/reset-password")({
   },
 });
 
-function ResetPassword() {
+function ResetPasswordRequest() {
   const {
     register,
     handleSubmit,
-    getValues,
-    reset,
-    formState: { errors },
-  } = useForm<NewPasswordForm>({
-    mode: "onBlur",
-    criteriaMode: "all",
-    defaultValues: {
-      new_password: "",
-    },
-  });
+    formState: { errors, isSubmitting },
+  } = useForm<FormData>();
   const showToast = useCustomToast();
-  const navigate = useNavigate();
 
-  const resetPassword = async (data: NewPassword) => {
-    const token = new URLSearchParams(window.location.search).get("token");
-    if (!token) return;
-    await LoginService.resetPasswordResetPasswordPost({
-      requestBody: { token, new_password: data.new_password },
+  const onSubmit: SubmitHandler<FormData> = async (data) => {
+    await LoginService.resetPasswordRequestResetPasswordRequestEmailPost({
+      email: data.email,
     });
-  };
-
-  const mutation = useMutation({
-    mutationFn: resetPassword,
-    onSuccess: () => {
-      showToast("Success!", "Password updated.", "success");
-      reset();
-      navigate({ to: "/login" });
-    },
-    onError: (err: ApiError) => {
-      const errDetail = (err.body as any)?.detail;
-      showToast("Something went wrong.", `${errDetail}`, "error");
-    },
-  });
-
-  const onSubmit: SubmitHandler<NewPasswordForm> = async (data) => {
-    mutation.mutate(data);
+    showToast(
+      "Email sent.",
+      "We sent an email with a link to get back into your account.",
+      "success"
+    );
   };
 
   return (
@@ -86,37 +61,27 @@ function ResetPassword() {
       centerContent
     >
       <Heading size="xl" color="ui.main" textAlign="center" mb={2}>
-        Reset Password
+        Password Reset
       </Heading>
-      <Text textAlign="center">
-        Please enter your new password and confirm it to reset your password.
+      <Text align="center">
+        A password reset email will be sent to the registered account.
       </Text>
-      <FormControl mt={4} isInvalid={!!errors.new_password}>
-        <FormLabel htmlFor="password">Set Password</FormLabel>
+      <FormControl isInvalid={!!errors.email}>
         <Input
-          id="password"
-          {...register("new_password", passwordRules())}
-          placeholder="Password"
-          type="password"
+          id="email"
+          {...register("email", {
+            required: "Email is required",
+            pattern: emailPattern,
+          })}
+          placeholder="Email"
+          type="email"
         />
-        {errors.new_password && (
-          <FormErrorMessage>{errors.new_password.message}</FormErrorMessage>
+        {errors.email && (
+          <FormErrorMessage>{errors.email.message}</FormErrorMessage>
         )}
       </FormControl>
-      <FormControl mt={4} isInvalid={!!errors.confirm_password}>
-        <FormLabel htmlFor="confirm_password">Confirm Password</FormLabel>
-        <Input
-          id="confirm_password"
-          {...register("confirm_password", confirmPasswordRules(getValues))}
-          placeholder="Password"
-          type="password"
-        />
-        {errors.confirm_password && (
-          <FormErrorMessage>{errors.confirm_password.message}</FormErrorMessage>
-        )}
-      </FormControl>
-      <Button variant="primary" type="submit">
-        Reset Password
+      <Button variant="primary" type="submit" isLoading={isSubmitting}>
+        Continue
       </Button>
     </Container>
   );
