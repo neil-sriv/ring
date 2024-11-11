@@ -95,7 +95,6 @@ def reset_password(
     ott = get_ott_by_token(req_dep.db, token)
     if not ott:
         raise HTTPException(status_code=400, detail="Invalid token")
-    ott.used = True
     try:
         validate_and_use_token(req_dep.db, ott)
     except TokenExpiredError:
@@ -107,6 +106,7 @@ def reset_password(
         raise HTTPException(status_code=400, detail="Invalid token")
 
     reset_user_password(db_user, new_password_data.new_password)
+    ott.used = True
     req_dep.db.commit()
     return ResponseMessage(message="Password updated successfully")
 
