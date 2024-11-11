@@ -1,26 +1,24 @@
 import { Flex, Spinner } from "@chakra-ui/react";
-import { Outlet, createFileRoute, redirect } from "@tanstack/react-router";
+import { Outlet, createFileRoute } from "@tanstack/react-router";
 
 import Sidebar from "../components/Common/Sidebar";
 import UserMenu from "../components/Common/UserMenu";
-import useAuth, { isLoggedIn } from "../hooks/useAuth";
+import { PartiesService } from "../client/services";
 
 export const Route = createFileRoute("/_layout")({
   component: Layout,
-  beforeLoad: async () => {
-    if (!isLoggedIn()) {
-      throw redirect({
-        to: "/login",
-        search: {
-          path: location.pathname,
-        },
-      });
-    }
+  loader: async ({ context }): Promise<void> => {
+    await context.queryClient.ensureQueryData({
+      queryKey: ["currentUser"],
+      queryFn: async () => {
+        return await PartiesService.readUserMePartiesMeGet();
+      },
+    });
   },
 });
 
 function Layout() {
-  const { isLoading } = useAuth();
+  const isLoading = false;
 
   return (
     <Flex maxW="large" h="auto" position="relative">

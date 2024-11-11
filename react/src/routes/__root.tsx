@@ -3,6 +3,7 @@ import React, { Suspense } from "react";
 
 import NotFound from "../components/Common/NotFound";
 import { QueryClient } from "@tanstack/react-query";
+import { AuthContext } from "../hooks/useAuth";
 
 const loadDevtools = () =>
   Promise.all([
@@ -22,9 +23,12 @@ const loadDevtools = () =>
 const TanStackDevtools =
   process.env.NODE_ENV === "production" ? () => null : React.lazy(loadDevtools);
 
-export const Route = createRootRouteWithContext<{
+interface RouterContext {
   queryClient: QueryClient;
-}>()({
+  auth: AuthContext;
+}
+
+export const Route = createRootRouteWithContext<RouterContext>()({
   component: () => (
     <>
       <Outlet />
