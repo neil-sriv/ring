@@ -57,14 +57,14 @@ def test_token() -> None:
 
 
 @router.post("/reset-password:request/{email}", response_model=ResponseMessage)
-def recover_password(
+def reset_password_request(
     email: str,
     req_dep: RequestDependenciesBase = Depends(
         get_unauthenticated_request_dependencies
     ),
 ) -> ResponseMessage:
     """
-    Password Recovery
+    Password Reset Request
     """
     db_user = user_crud.get_user_by_email(req_dep.db, email)
     if not db_user:
