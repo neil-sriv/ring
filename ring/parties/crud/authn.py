@@ -37,7 +37,7 @@ def construct_password_reset_email(
         destination={"ToAddresses": [recipient]},
         message={
             "Subject": {
-                "Data": "Ring: Password reset requested.!",
+                "Data": "Ring: Password reset requested!",
                 "Charset": CHARSET,
             },
             "Body": {
