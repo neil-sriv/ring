@@ -11,11 +11,13 @@ from ring.dependencies import (
     get_unauthenticated_request_dependencies,
 )
 from ring.parties.crud import user as user_crud
-from ring.parties.crud.authn import reset_user_password
+from ring.parties.crud.authn import email_password_reset, reset_user_password
 from ring.parties.crud.one_time_token import (
+    generate_token,
     get_ott_by_token,
     validate_and_use_token,
 )
+from ring.parties.models.one_time_token_model import TokenType
 from ring.parties.schemas.user import NewPassword
 from ring.ring_pydantic.core import ResponseMessage
 from ring.security import create_access_token
@@ -54,7 +56,7 @@ def test_token() -> None:
     raise NotImplementedError()
 
 
-@router.post("/password-recovery/{email}", response_model=ResponseMessage)
+@router.post("/reset-password:request/{email}", response_model=ResponseMessage)
 def recover_password(
     email: str,
     req_dep: RequestDependenciesBase = Depends(
@@ -70,8 +72,8 @@ def recover_password(
             status_code=HTTPStatus.BAD_REQUEST,
             detail="User with this email does not exist",
         )
-    # ott = generate_token(TokenType.PASSWORD_RESET, email)
-    # send email
+    ott = generate_token(TokenType.PASSWORD_RESET, email)
+    email_password_reset.delay(email, ott.token)
     return ResponseMessage(message="Password recovery email sent")
 
 
