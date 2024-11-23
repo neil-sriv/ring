@@ -1,8 +1,9 @@
 from __future__ import annotations
-from sqlalchemy import ForeignKey, Text
-from sqlalchemy.orm import relationship, Mapped, mapped_column
-from ring.api_identifier.api_identified_model import APIIdentified
 
+from sqlalchemy import ForeignKey, Text
+from sqlalchemy.orm import Mapped, mapped_column, relationship
+
+from ring.api_identifier.api_identified_model import APIIdentified
 from ring.created_at import CreatedAtMixin
 from ring.parties.models.group_model import Group
 from ring.sqlalchemy_base import Base

@@ -8,18 +8,17 @@ Create Date: 2024-10-20 06:54:21.737885
 
 from typing import Sequence, Union
 
-from alembic import op
 import sqlalchemy as sa
+from alembic import op
 from sqlalchemy.orm import Session
 
 from ring.letters.constants import DEFAULT_QUESTIONS
 from ring.letters.models.default_question_model import DefaultQuestion
 from ring.parties.models.group_model import Group
 
-
 # revision identifiers, used by Alembic.
 revision: str = "76581aa06774"
-down_revision: Union[str, None] = "8042a30020a6"
+down_revision: Union[str, None] = "6dd27b0c4e82"
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
 
