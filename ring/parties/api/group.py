@@ -74,6 +74,7 @@ async def read_group(
         Group,
         api_id=group_api_id,
     )
+    assert req_dep.current_user in db_group.members
     return db_group
 
 
@@ -151,6 +152,11 @@ def update_group(
     db_group = api_identifier_crud.get_model(
         req_dep.db, Group, api_id=group_api_id
     )
+    if req_dep.current_user != db_group.admin:
+        raise HTTPException(
+            status.HTTP_403_FORBIDDEN,
+            "Only the group admin can update the group information",
+        )
     db_group.name = group.name
     req_dep.db.commit()
     return db_group
@@ -216,6 +222,11 @@ def replace_group_default_questions(
     db_group = api_identifier_crud.get_model(
         req_dep.db, Group, api_id=group_api_id
     )
+    if req_dep.current_user != db_group.admin:
+        raise HTTPException(
+            status.HTTP_403_FORBIDDEN,
+            "Only the group admin can replace default questions",
+        )
     replace_default_questions(
         req_dep.db, db_group, default_questions.questions
     )

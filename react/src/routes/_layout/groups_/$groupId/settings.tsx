@@ -8,13 +8,13 @@ import {
   Tabs,
 } from "@chakra-ui/react";
 import { createFileRoute } from "@tanstack/react-router";
-import { GroupLinked, PartiesService } from "../../../../client";
+import { GroupLinked, PartiesService, UserLinked } from "../../../../client";
 import GroupInformation from "../../../../components/Groups/GroupInformation";
 import GroupMembershipSettings from "../../../../components/Groups/GroupMembershipSettings";
 import GroupLoopSettings from "../../../../components/Groups/GroupLoopSettings";
 
 export const Route = createFileRoute("/_layout/groups/$groupId/settings")({
-  loader: async ({ context, params }): Promise<GroupLinked> => {
+  beforeLoad: async ({ context, params }): Promise<{ group?: GroupLinked }> => {
     const group = await context.queryClient.ensureQueryData({
       queryKey: ["group", params.groupId],
       queryFn: async () => {
@@ -23,8 +23,15 @@ export const Route = createFileRoute("/_layout/groups/$groupId/settings")({
         });
       },
     });
-    return group;
+    const currentUser = context.queryClient.getQueryData<UserLinked>([
+      "currentUser",
+    ]);
+    if (currentUser?.api_identifier !== group.admin.api_identifier) {
+      throw new Error("You are not authorized to view this page");
+    }
+    return { group: group };
   },
+  loader: async ({ context: { group } }) => group,
   component: GroupSettings,
 });
 
@@ -32,7 +39,6 @@ const tabsConfig = [
   { title: "Group Information", component: GroupInformation },
   { title: "Membership", component: GroupMembershipSettings },
   { title: "Loop Settings", component: GroupLoopSettings },
-  // { title: "Danger zone", component: DeleteAccount },
 ];
 
 function GroupSettings() {
