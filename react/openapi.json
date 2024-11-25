@@ -797,7 +797,6 @@
         ],
         "summary": "Update Group",
         "operationId": "update_group_parties_group__group_api_id__patch",
-        "deprecated": true,
         "security": [
           {
             "OAuth2PasswordBearer": []
@@ -830,8 +829,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "null",
-                  "title": "Response Update Group Parties Group  Group Api Id  Patch"
+                  "$ref": "#/components/schemas/GroupLinked"
                 }
               }
             }

@@ -3,7 +3,7 @@ from __future__ import annotations
 from datetime import timezone
 from typing import Sequence
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException, status
 
 from ring.api_identifier import (
     util as api_identifier_crud,
@@ -137,7 +137,7 @@ async def schedule_send(
 
 @router.patch(
     "/group/{group_api_id}",
-    deprecated=True,
+    response_model=GroupSchema,
 )
 def update_group(
     group_api_id: str,
@@ -145,8 +145,15 @@ def update_group(
     req_dep: AuthenticatedRequestDependencies = Depends(
         get_request_dependencies,
     ),
-) -> None:
-    raise NotImplementedError()
+) -> Group:
+    if not group.name:
+        raise HTTPException(status.HTTP_400_BAD_REQUEST, "No name provided")
+    db_group = api_identifier_crud.get_model(
+        req_dep.db, Group, api_id=group_api_id
+    )
+    db_group.name = group.name
+    req_dep.db.commit()
+    return db_group
 
 
 @router.post(
