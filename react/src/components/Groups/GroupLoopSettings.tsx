@@ -24,11 +24,15 @@ import {
   type ApiError,
   GroupLinked,
   PartiesService,
-  QuestionUnlinked,
   ReplaceDefaultQuestions,
 } from "../../client";
 import useCustomToast from "../../hooks/useCustomToast";
 import { useRouter } from "@tanstack/react-router";
+import { FiPlus } from "react-icons/fi";
+
+type QuestionField = {
+  question_text: string;
+};
 
 function GroupInformation({ groupId }: { groupId: string }) {
   const queryClient = useQueryClient();
@@ -46,18 +50,26 @@ function GroupInformation({ groupId }: { groupId: string }) {
     handleSubmit,
     reset,
     control,
-    formState: { isSubmitting, isDirty },
-  } = useForm<{ questions: QuestionUnlinked[] }>({
+    register,
+    formState: { isSubmitting, isDirty, errors },
+  } = useForm<{ questions: QuestionField[] }>({
     mode: "onBlur",
     criteriaMode: "all",
     defaultValues: {
-      questions: group.default_questions,
+      questions: group.default_questions.map((question) => ({
+        question_text: question.question_text,
+      })),
     },
   });
 
-  const { fields, remove } = useFieldArray({
+  const { fields, append, remove } = useFieldArray({
     control,
     name: "questions",
+    rules: {
+      validate: (value) =>
+        value.every((question) => question.question_text.length > 0) ||
+        "Question cannot be empty.",
+    },
   });
 
   const toggleEditMode = () => {
@@ -87,7 +99,7 @@ function GroupInformation({ groupId }: { groupId: string }) {
     },
   });
 
-  const onSubmit: SubmitHandler<{ questions: QuestionUnlinked[] }> = async (
+  const onSubmit: SubmitHandler<{ questions: QuestionField[] }> = async (
     data
   ) => {
     mutation.mutate({
@@ -145,7 +157,13 @@ function GroupInformation({ groupId }: { groupId: string }) {
                         <Controller
                           control={control}
                           name={`questions.${index}.question_text`}
-                          render={({ field }) => <Input {...field} size="md" />}
+                          render={({ field }) => (
+                            <Input
+                              {...register(`questions.${index}.question_text`)}
+                              {...field}
+                              size="md"
+                            />
+                          )}
                         />
                         <Button
                           onClick={() => remove(index)}
@@ -164,6 +182,19 @@ function GroupInformation({ groupId }: { groupId: string }) {
                   </Flex>
                 </Box>
               ))}
+              {editMode && (
+                <Button
+                  type="button"
+                  onClick={() => append({ question_text: "" })}
+                >
+                  <FiPlus />
+                </Button>
+              )}
+              {errors.questions?.root && (
+                <Text color="ui.error" fontSize="sm">
+                  {errors.questions.root?.message}
+                </Text>
+              )}
             </List>
           </FormControl>
           <Flex mt={4} gap={3}>
