@@ -44,6 +44,9 @@ const tabsConfig = [
 function GroupSettings() {
   const finalTabs = false ? tabsConfig.slice(0, 3) : tabsConfig;
   const loadedGroup = Route.useLoaderData();
+  if (!loadedGroup) {
+    return null;
+  }
 
   return (
     <Container maxW="full">
