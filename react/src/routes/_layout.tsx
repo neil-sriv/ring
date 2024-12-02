@@ -7,7 +7,7 @@ import { PartiesService } from "../client/services";
 
 export const Route = createFileRoute("/_layout")({
   component: Layout,
-  loader: async ({ context }): Promise<void> => {
+  beforeLoad: async ({ context }): Promise<void> => {
     await context.queryClient.ensureQueryData({
       queryKey: ["currentUser"],
       queryFn: async () => {

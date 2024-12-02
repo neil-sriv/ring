@@ -2,7 +2,7 @@ import type { CancelablePromise } from './core/CancelablePromise';
 import { OpenAPI } from './core/OpenAPI';
 import { request as __request } from './core/request';
 
-import type { Body_login_access_token_login_access_token_post,NewPassword,ResponseMessage,Token,AddMembers,GroupCreate,GroupLinked,GroupUpdate,ScheduleSendParam,UserCreate,UserLinked,UserUpdate,UserUpdatePassword,LetterCreate,LetterUpdate,PublicLetter,QuestionCreate,ResponseUnlinked,ScheduleLinked,Body_upload_image_questions_question__question_api_id__upload_image_post,QuestionLinked,ResponseUpsert,Body_upload_image_responses_response__response_api_id__upload_image_post,ResponseCreateBase,ResponseLinked,InviteCreate,InviteLinked } from './models';
+import type { Body_login_access_token_login_access_token_post,NewPassword,ResponseMessage,Token,AddMembers,GroupCreate,GroupLinked,GroupUpdate,ReplaceDefaultQuestions,ScheduleSendParam,UserCreate,UserLinked,UserUpdate,UserUpdatePassword,LetterCreate,LetterUpdate,PublicLetter,QuestionCreate,ResponseUnlinked,ScheduleLinked,Body_upload_image_questions_question__question_api_id__upload_image_post,QuestionLinked,ResponseUpsert,Body_upload_image_responses_response__response_api_id__upload_image_post,ResponseCreateBase,ResponseLinked,InviteCreate,InviteLinked } from './models';
 
 export type LoginData = {
         LoginAccessTokenLoginAccessTokenPost: {
@@ -88,6 +88,11 @@ requestBody: ScheduleSendParam
 AddMembersPartiesGroupGroupApiIdAddMembersPost: {
                     groupApiId: string
 requestBody: AddMembers
+                    
+                };
+ReplaceGroupDefaultQuestionsPartiesGroupGroupApiIdReplaceDefaultQuestionsPost: {
+                    groupApiId: string
+requestBody: ReplaceDefaultQuestions
                     
                 };
     }
@@ -544,12 +549,11 @@ groupApiId,
 	}
 
 	/**
-	 * @deprecated
 	 * Update Group
-	 * @returns null Successful Response
+	 * @returns GroupLinked Successful Response
 	 * @throws ApiError
 	 */
-	public static updateGroupPartiesGroupGroupApiIdPatch(data: PartiesData['UpdateGroupPartiesGroupGroupApiIdPatch']): CancelablePromise<null> {
+	public static updateGroupPartiesGroupGroupApiIdPatch(data: PartiesData['UpdateGroupPartiesGroupGroupApiIdPatch']): CancelablePromise<GroupLinked> {
 		const {
 groupApiId,
 requestBody,
@@ -649,6 +653,30 @@ requestBody,
 		return __request(OpenAPI, {
 			method: 'POST',
 			url: '/parties/group/{group_api_id}:add_members',
+			path: {
+				group_api_id: groupApiId
+			},
+			body: requestBody,
+			mediaType: 'application/json',
+			errors: {
+				422: `Validation Error`,
+			},
+		});
+	}
+
+	/**
+	 * Replace Group Default Questions
+	 * @returns GroupLinked Successful Response
+	 * @throws ApiError
+	 */
+	public static replaceGroupDefaultQuestionsPartiesGroupGroupApiIdReplaceDefaultQuestionsPost(data: PartiesData['ReplaceGroupDefaultQuestionsPartiesGroupGroupApiIdReplaceDefaultQuestionsPost']): CancelablePromise<GroupLinked> {
+		const {
+groupApiId,
+requestBody,
+} = data;
+		return __request(OpenAPI, {
+			method: 'POST',
+			url: '/parties/group/{group_api_id}:replace_default_questions',
 			path: {
 				group_api_id: groupApiId
 			},

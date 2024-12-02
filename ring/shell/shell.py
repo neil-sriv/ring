@@ -26,10 +26,11 @@ def run_script(db: Session) -> None:
     # import ring.postgres_models
     import click
     import sqlalchemy
-    from IPython import embed  # type: ignore
+    from IPython import embed  # type: ignore  # type: ignore
     from traitlets.config import Config
 
     import ring
+    from ring.letters.models.default_question_model import DefaultQuestion
     from ring.letters.models.letter_model import Letter
     from ring.letters.models.question_model import Question
     from ring.letters.models.response_model import Response

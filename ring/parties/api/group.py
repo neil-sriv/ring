@@ -3,7 +3,7 @@ from __future__ import annotations
 from datetime import timezone
 from typing import Sequence
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException, status
 
 from ring.api_identifier import (
     util as api_identifier_crud,
@@ -12,12 +12,18 @@ from ring.dependencies import (
     AuthenticatedRequestDependencies,
     get_request_dependencies,
 )
+from ring.letters.crud.default_question import replace_default_questions
 from ring.letters.crud.letter import add_participants
 from ring.parties.crud import group as group_crud
 from ring.parties.crud import invite as invite_crud
 from ring.parties.models.group_model import Group
 from ring.parties.models.user_model import User
-from ring.parties.schemas.group import AddMembers, GroupCreate, GroupUpdate
+from ring.parties.schemas.group import (
+    AddMembers,
+    GroupCreate,
+    GroupUpdate,
+    ReplaceDefaultQuestions,
+)
 from ring.ring_pydantic import GroupLinked as GroupSchema
 from ring.tasks.schemas.schedule import ScheduleSendParam
 
@@ -68,6 +74,7 @@ async def read_group(
         Group,
         api_id=group_api_id,
     )
+    assert req_dep.current_user in db_group.members
     return db_group
 
 
@@ -131,7 +138,7 @@ async def schedule_send(
 
 @router.patch(
     "/group/{group_api_id}",
-    deprecated=True,
+    response_model=GroupSchema,
 )
 def update_group(
     group_api_id: str,
@@ -139,8 +146,20 @@ def update_group(
     req_dep: AuthenticatedRequestDependencies = Depends(
         get_request_dependencies,
     ),
-) -> None:
-    raise NotImplementedError()
+) -> Group:
+    if not group.name:
+        raise HTTPException(status.HTTP_400_BAD_REQUEST, "No name provided")
+    db_group = api_identifier_crud.get_model(
+        req_dep.db, Group, api_id=group_api_id
+    )
+    if req_dep.current_user != db_group.admin:
+        raise HTTPException(
+            status.HTTP_403_FORBIDDEN,
+            "Only the group admin can update the group information",
+        )
+    db_group.name = group.name
+    req_dep.db.commit()
+    return db_group
 
 
 @router.post(
@@ -186,4 +205,30 @@ def add_members(
             for invite in invites
         ]
 
+    return db_group
+
+
+@router.post(
+    "/group/{group_api_id}:replace_default_questions",
+    response_model=GroupSchema,
+)
+def replace_group_default_questions(
+    group_api_id: str,
+    default_questions: ReplaceDefaultQuestions,
+    req_dep: AuthenticatedRequestDependencies = Depends(
+        get_request_dependencies,
+    ),
+) -> Group:
+    db_group = api_identifier_crud.get_model(
+        req_dep.db, Group, api_id=group_api_id
+    )
+    if req_dep.current_user != db_group.admin:
+        raise HTTPException(
+            status.HTTP_403_FORBIDDEN,
+            "Only the group admin can replace default questions",
+        )
+    replace_default_questions(
+        req_dep.db, db_group, default_questions.questions
+    )
+    req_dep.db.commit()
     return db_group
