@@ -21,6 +21,10 @@ class AddMembers(BaseModel):
     member_emails: list[str]
 
 
+class ReplaceDefaultQuestions(BaseModel):
+    questions: list[str]
+
+
 class Group(GroupBase):
     model_config = ConfigDict(from_attributes=True)
 

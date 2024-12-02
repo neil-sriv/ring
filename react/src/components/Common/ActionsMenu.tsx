@@ -7,13 +7,14 @@ import {
   useDisclosure,
 } from "@chakra-ui/react";
 import { BsThreeDotsVertical } from "react-icons/bs";
-import { FiEdit, FiTrash } from "react-icons/fi";
+import { FiEdit, FiSettings, FiTrash } from "react-icons/fi";
 
 import type { GroupLinked, UserLinked } from "../../client";
 import EditUser from "../Admin/EditUser";
 import Delete from "./DeleteAlert";
 import EditGroup from "../Groups/EditGroup";
 import AddMembers from "../Groups/AddMembers";
+import { useNavigate } from "@tanstack/react-router";
 
 interface ActionsMenuProps {
   type: string;
@@ -25,6 +26,7 @@ const ActionsMenu = ({ type, value, disabled }: ActionsMenuProps) => {
   const editUserModal = useDisclosure();
   const deleteModal = useDisclosure();
   const addMembersModal = useDisclosure();
+  const navigate = useNavigate();
 
   return (
     <>
@@ -50,12 +52,25 @@ const ActionsMenu = ({ type, value, disabled }: ActionsMenuProps) => {
             Delete {type}
           </MenuItem>
           {type === "Group" && (
-            <MenuItem
-              icon={<FiEdit fontSize="16px" />}
-              onClick={addMembersModal.onOpen}
-            >
-              Add Members
-            </MenuItem>
+            <>
+              <MenuItem
+                icon={<FiEdit fontSize="16px" />}
+                onClick={addMembersModal.onOpen}
+              >
+                Add Members
+              </MenuItem>
+              <MenuItem
+                icon={<FiSettings fontSize="16px" />}
+                onClick={() =>
+                  navigate({
+                    to: "/groups/$groupId/settings",
+                    params: { groupId: value.api_identifier },
+                  })
+                }
+              >
+                Settings
+              </MenuItem>
+            </>
           )}
         </MenuList>
         {type === "User" ? (

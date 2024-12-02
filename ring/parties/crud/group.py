@@ -6,6 +6,8 @@ from typing import TYPE_CHECKING, Sequence
 from sqlalchemy import select
 
 from ring.api_identifier import util as api_identifier_crud
+from ring.letters.constants import DEFAULT_QUESTIONS
+from ring.letters.crud.default_question import replace_default_questions
 from ring.letters.models.letter_model import Letter
 from ring.parties.models.group_model import Group
 from ring.parties.models.user_model import User
@@ -38,9 +40,10 @@ def create_group(db: Session, admin_api_id: str, name: str) -> Group:
         User,
         api_id=admin_api_id,
     )
-    db_letter = Group.create(name, admin_user)
-    db.add(db_letter)
-    return db_letter
+    db_group = Group.create(name, admin_user)
+    db.add(db_group)
+    replace_default_questions(db, db_group, DEFAULT_QUESTIONS)
+    return db_group
 
 
 def add_member(db: Session, group_api_id: str, user_api_id: str) -> Group:

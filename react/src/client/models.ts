@@ -42,6 +42,7 @@ export type GroupLinked = {
 	letters: Array<LetterUnlinked>;
 	schedule: ScheduleUnlinked | null;
 	admin: UserUnlinked;
+	default_questions: Array<QuestionUnlinked>;
 };
 
 
@@ -172,6 +173,12 @@ export type QuestionUnlinked = {
 	question_text: string;
 	api_identifier: string;
 	created_at: string;
+};
+
+
+
+export type ReplaceDefaultQuestions = {
+	questions: Array<string>;
 };
 
 

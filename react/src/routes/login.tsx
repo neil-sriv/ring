@@ -21,13 +21,16 @@ import {
 import { type SubmitHandler, useForm } from "react-hook-form";
 
 import type { Body_login_access_token_login_access_token_post as AccessToken } from "../client";
-import useAuth, { isLoggedIn } from "../hooks/useAuth";
+import useAuth from "../hooks/useAuth";
 import { emailPattern } from "../util/misc";
 
 export const Route = createFileRoute("/login")({
   component: Login,
-  beforeLoad: async () => {
-    if (isLoggedIn()) {
+  beforeLoad: async ({ context }) => {
+    if (
+      context.auth.isAuthenticated &&
+      localStorage.getItem("access_token") !== null
+    ) {
       throw redirect({
         to: "/groups",
       });

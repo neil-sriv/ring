@@ -1,4 +1,4 @@
-import { useMutation, useQuery } from "@tanstack/react-query";
+import { useMutation } from "@tanstack/react-query";
 import { useNavigate, useSearch } from "@tanstack/react-router";
 import { useState } from "react";
 
@@ -8,8 +8,12 @@ import {
   type ApiError,
   LoginService,
   type UserLinked,
-  PartiesService,
 } from "../client";
+
+export interface AuthContext {
+  isAuthenticated?: boolean;
+  user: UserLinked | null | undefined;
+}
 
 const isLoggedIn = () => {
   return localStorage.getItem("access_token") !== null;
@@ -19,11 +23,6 @@ const useAuth = () => {
   const search = useSearch({ strict: false });
   const [error, setError] = useState<string | null>(null);
   const navigate = useNavigate();
-  const { data: user, isLoading } = useQuery<UserLinked | null, Error>({
-    queryKey: ["currentUser"],
-    queryFn: PartiesService.readUserMePartiesMeGet,
-    enabled: isLoggedIn(),
-  });
 
   const login = async (data: AccessToken) => {
     const response = await LoginService.loginAccessTokenLoginAccessTokenPost({
@@ -61,8 +60,6 @@ const useAuth = () => {
   return {
     loginMutation,
     logout,
-    user,
-    isLoading,
     error,
     resetError: () => setError(null),
   };

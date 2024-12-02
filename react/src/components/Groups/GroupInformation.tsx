@@ -4,7 +4,6 @@ import {
   Container,
   Flex,
   FormControl,
-  FormErrorMessage,
   FormLabel,
   Heading,
   Input,
@@ -17,31 +16,33 @@ import { type SubmitHandler, useForm } from "react-hook-form";
 
 import {
   type ApiError,
-  type UserLinked,
-  type UserUpdate,
+  GroupLinked,
+  GroupUpdate,
   PartiesService,
 } from "../../client";
 import useCustomToast from "../../hooks/useCustomToast";
-import { emailPattern } from "../../util/misc";
+import { useRouter } from "@tanstack/react-router";
 
-const UserInformation = () => {
+function GroupInformation({ groupId }: { groupId: string }) {
   const queryClient = useQueryClient();
   const color = useColorModeValue("inherit", "ui.light");
   const showToast = useCustomToast();
   const [editMode, setEditMode] = useState(false);
-  const currentUser = queryClient.getQueryData<UserLinked>(["currentUser"]);
+  const group = queryClient.getQueryData<GroupLinked>(["group", groupId]);
+  if (group === undefined) {
+    return null;
+  }
+  const router = useRouter();
   const {
     register,
     handleSubmit,
     reset,
-    getValues,
-    formState: { isSubmitting, errors, isDirty },
-  } = useForm<UserLinked>({
+    formState: { isSubmitting, isDirty },
+  } = useForm<GroupLinked>({
     mode: "onBlur",
     criteriaMode: "all",
     defaultValues: {
-      name: currentUser?.name,
-      email: currentUser?.email,
+      name: group.name,
     },
   });
 
@@ -50,23 +51,26 @@ const UserInformation = () => {
   };
 
   const mutation = useMutation({
-    mutationFn: (data: UserUpdate) =>
-      PartiesService.updateUserMePartiesMePatch({ requestBody: data }),
+    mutationFn: (data: GroupUpdate) =>
+      PartiesService.updateGroupPartiesGroupGroupApiIdPatch({
+        groupApiId: groupId,
+        requestBody: data,
+      }),
     onSuccess: () => {
-      showToast("Success!", "User updated successfully.", "success");
+      showToast("Success!", "Group updated successfully.", "success");
     },
     onError: (err: ApiError) => {
       const errDetail = (err.body as any)?.detail;
       showToast("Something went wrong.", `${errDetail}`, "error");
     },
-    onSettled: () => {
-      // TODO: can we do just one call now?
-      queryClient.invalidateQueries({ queryKey: ["users"] });
-      queryClient.invalidateQueries({ queryKey: ["currentUser"] });
+    onSettled: async () => {
+      queryClient.invalidateQueries({ queryKey: ["group", groupId] });
+      router.invalidate();
+      await queryClient.refetchQueries({ queryKey: ["group", groupId] });
     },
   });
 
-  const onSubmit: SubmitHandler<UserUpdate> = async (data) => {
+  const onSubmit: SubmitHandler<GroupUpdate> = async (data) => {
     mutation.mutate(data);
   };
 
@@ -79,7 +83,7 @@ const UserInformation = () => {
     <>
       <Container maxW="full">
         <Heading size="sm" py={4}>
-          User Information
+          Group Information
         </Heading>
         <Box
           w={{ sm: "full", md: "50%" }}
@@ -100,35 +104,24 @@ const UserInformation = () => {
             ) : (
               <Text
                 size="md"
-                py={2}
-                color={!currentUser?.name ? "ui.dim" : "inherit"}
+                // py={2}
+                color={!group.name ? "ui.dim" : "inherit"}
               >
-                {currentUser?.name || "N/A"}
+                {group.name || "N/A"}
               </Text>
             )}
           </FormControl>
-          <FormControl mt={4} isInvalid={!!errors.email}>
-            <FormLabel color={color} htmlFor="email">
-              Email
+          <FormControl mt={4}>
+            <FormLabel color={color} htmlFor="admin">
+              Admin
             </FormLabel>
-            {editMode ? (
-              <Input
-                id="email"
-                {...register("email", {
-                  required: "Email is required",
-                  pattern: emailPattern,
-                })}
-                type="email"
-                size="md"
-              />
-            ) : (
-              <Text size="md" py={2}>
-                {currentUser?.email}
-              </Text>
-            )}
-            {errors.email && (
-              <FormErrorMessage>{errors.email.message}</FormErrorMessage>
-            )}
+            <Text
+              size="md"
+              // py={2}
+              color={!group.admin.name ? "ui.dim" : "inherit"}
+            >
+              {group.admin.name}
+            </Text>
           </FormControl>
           <Flex mt={4} gap={3}>
             <Button
@@ -136,7 +129,7 @@ const UserInformation = () => {
               onClick={toggleEditMode}
               type={editMode ? "button" : "submit"}
               isLoading={editMode ? isSubmitting : false}
-              isDisabled={editMode ? !isDirty || !getValues("email") : false}
+              isDisabled={editMode ? !isDirty : false}
             >
               {editMode ? "Save" : "Edit"}
             </Button>
@@ -150,6 +143,6 @@ const UserInformation = () => {
       </Container>
     </>
   );
-};
+}
 
-export default UserInformation;
+export default GroupInformation;
