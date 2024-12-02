@@ -130,6 +130,13 @@ export const $GroupLinked = {
 	type: 'UserUnlinked',
 	isRequired: true,
 },
+		default_questions: {
+	type: 'array',
+	contains: {
+		type: 'QuestionUnlinked',
+	},
+	isRequired: true,
+},
 	},
 } as const;
 
@@ -440,6 +447,18 @@ export const $QuestionUnlinked = {
 	type: 'string',
 	isRequired: true,
 	format: 'date-time',
+},
+	},
+} as const;
+
+export const $ReplaceDefaultQuestions = {
+	properties: {
+		questions: {
+	type: 'array',
+	contains: {
+	type: 'string',
+},
+	isRequired: true,
 },
 	},
 } as const;
