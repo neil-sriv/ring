@@ -15,9 +15,9 @@ from ring.ring_pydantic.linked_schemas import GroupLinked
 from ring.ring_pydantic.pydantic_model import PydanticModel
 from ring.sqlalchemy_base import Base
 from ring.tasks.models.schedule_model import Schedule
+from ring.letters.models.default_question_model import DefaultQuestion
 
 if TYPE_CHECKING:
-    from ring.letters.models.default_question_model import DefaultQuestion
     from ring.parties.models.user_model import User
 
 
