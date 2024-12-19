@@ -19,7 +19,7 @@ def compose_starter(prod: bool = False, certbot: bool = False) -> list[str]:
         "-f",
         "compose.core.yml",
         "-f",
-        "compose.prod.yml" if prod else "compose.dev.yml",
+        "compose.prod.yml" if (prod or certbot) else "compose.dev.yml",
     ] + profile
 
 
