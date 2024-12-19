@@ -166,3 +166,6 @@ sql_app.db
 *.pem
 
 .DS_STORE
+
+localhost.crt
+localhost.key
