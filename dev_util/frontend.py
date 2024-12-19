@@ -20,7 +20,6 @@ def fe_dev(
     *args: list[Any],
     **kwargs: dict[Any, Any],
 ) -> list[str]:
-    print(ctx.args)
     return ["yarn", "run", "dev"]
 
 

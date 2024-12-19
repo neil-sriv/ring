@@ -169,3 +169,5 @@ sql_app.db
 
 localhost.crt
 localhost.key
+
+certbot/conf/
