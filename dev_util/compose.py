@@ -6,15 +6,21 @@ import click
 from dev_util.dev import cmd_run, dev_group
 
 
-def compose_starter(prod: bool = False) -> list[str]:
+def compose_starter(prod: bool = False, certbot: bool = False) -> list[str]:
+    if prod:
+        profile = []
+    elif certbot:
+        profile = ["--profile", "certbot"]
+    else:
+        profile = ["--profile", "dev"]
     return [
         "docker",
         "compose",
         "-f",
         "compose.core.yml",
         "-f",
-        "compose.prod.yml" if prod else "compose.dev.yml",
-    ] + ([] if prod else ["--profile", "dev"])
+        "compose.prod.yml" if (prod or certbot) else "compose.dev.yml",
+    ] + profile
 
 
 @dev_group("compose")
@@ -34,10 +40,21 @@ def compose_run(
             is_flag=True,
             default=False,
         )
+        @click.option(
+            "--certbot",
+            is_flag=True,
+            default=False,
+        )
         @functools.wraps(f)
-        def inner(prod: bool, *args: Any, **kwargs: Any) -> list[str]:
+        def inner(
+            ctx: click.Context,
+            *args: list[Any],
+            **kwargs: dict[Any, Any],
+        ) -> list[str]:
+            prod = kwargs.pop("prod", False)
+            certbot = kwargs.pop("certbot", False)
             cmd_string = f(*args, **kwargs)
-            return compose_starter(prod) + cmd_string
+            return compose_starter(prod, certbot) + cmd_string + ctx.args  # type: ignore
 
         return inner
 

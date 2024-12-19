@@ -1,4 +1,5 @@
 import os
+from typing import Any
 
 import click
 
@@ -18,7 +19,11 @@ def db(ctx: click.Context) -> None:
 
 
 @cmd_run("pgcli", db)
-def db_pgcli() -> list[str]:
+def db_pgcli(
+    ctx: click.Context,
+    *args: list[Any],
+    **kwargs: dict[Any, Any],
+) -> list[str]:
     os.getenv("")
     return ["pgcli", LOCAL_POSTGRES_URI]
 
