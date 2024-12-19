@@ -36,7 +36,7 @@ CELERY_RESULT_BACKEND=redis://redis:6379/0
 SQLALCHEMY_DATABASE_URI=postgresql://ring-postgres:ring-postgres@db:5432/ring
 JWT_SIGNING_ALGORITHM=HS256
 VITE_API_URL=https://localhost
-BACKEND_CORS_ORIGINS=https://localhost:5173
+BACKEND_CORS_ORIGINS=https://localhost:5173,http://localhost:5173
 ```
 We'll need a `JWT_SIGNING_KEY` as well which can be generated with `openssl`
 ```
