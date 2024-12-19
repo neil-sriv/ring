@@ -35,9 +35,14 @@ def compose_run(
             default=False,
         )
         @functools.wraps(f)
-        def inner(prod: bool, *args: Any, **kwargs: Any) -> list[str]:
+        def inner(
+            ctx: click.Context,
+            *args: list[Any],
+            **kwargs: dict[Any, Any],
+        ) -> list[str]:
+            prod = kwargs.pop("prod", False)
             cmd_string = f(*args, **kwargs)
-            return compose_starter(prod) + cmd_string
+            return compose_starter(prod) + cmd_string + ctx.args  # type: ignore
 
         return inner
 
