@@ -60,9 +60,3 @@ ReactDOM.createRoot(document.getElementById("root")!).render(
     </ChakraProvider>
   </StrictMode>
 );
-
-if ("serviceWorker" in navigator) {
-  window.addEventListener("load", function () {
-    navigator.serviceWorker.register("/serviceWorker.js");
-  });
-}
