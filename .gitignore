@@ -171,3 +171,5 @@ localhost.crt
 localhost.key
 
 certbot/conf/
+
+etc/
