@@ -54,7 +54,7 @@ def compose_run(
             prod = kwargs.pop("prod", False)
             certbot = kwargs.pop("certbot", False)
             cmd_string = f(*args, **kwargs)
-            return compose_starter(prod) + cmd_string + ctx.args  # type: ignore
+            return compose_starter(prod, certbot) + cmd_string + ctx.args  # type: ignore
 
         return inner
 
