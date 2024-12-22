@@ -18,6 +18,12 @@ jobs:
     - name: Sync uv
       run: uv sync --all-extras
     
+    - name: debug
+      run: |
+        pwd
+        ls -la
+        
+    
     - name: Install project
       run: uv pip install -e .
     
