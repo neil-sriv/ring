@@ -5,7 +5,7 @@ import click
 
 from dev_util.dev import cmd_run, dev_group
 
-SETUP_DIR = Path(__file__).resolve().parents[0]
+SETUP_DIR = Path(__file__).resolve().parents[1]
 
 
 @dev_group("setup")
@@ -20,7 +20,11 @@ def fe_dev(
     *args: list[Any],
     **kwargs: dict[Any, Any],
 ) -> list[list[str]]:
-    return [["uv", "sync"], ["pre-commit", "install"]]
+    return [
+        ["uv", "sync"],
+        ["pre-commit", "install"],
+        ["ring", "fe", "install"],
+    ]
 
 
 @cmd_run("local-ssl", setup, cwd=SETUP_DIR)
@@ -31,5 +35,5 @@ def local_ssl(
 ) -> list[str]:
     return [
         "bash",
-        "ssl.sh",
+        "dev_util/ssl.sh",
     ]

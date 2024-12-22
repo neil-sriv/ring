@@ -14,6 +14,15 @@ def fe(ctx: click.Context) -> None:
     pass
 
 
+@cmd_run("install", fe, cwd=FE_DIR)
+def fe_install(
+    ctx: click.Context,
+    *args: list[Any],
+    **kwargs: dict[Any, Any],
+) -> list[str]:
+    return ["yarn"]
+
+
 @cmd_run("dev", fe, cwd=FE_DIR)
 def fe_dev(
     ctx: click.Context,
