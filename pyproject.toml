@@ -64,6 +64,7 @@ dev = [
     "pytest>=8.3.4",
     "psycopg-binary",
     "pytest-pretty>=1.2.0",
+    "pytest-xdist>=3.6.1",
 ]
 
 [project.scripts]

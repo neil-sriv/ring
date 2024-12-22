@@ -89,6 +89,8 @@ ecdsa==0.19.0
     # via python-jose
 email-validator==2.2.0
     # via fastapi
+execnet==2.1.1
+    # via pytest-xdist
 executing==2.1.0
     # via stack-data
 factory-boy==3.3.1
@@ -258,9 +260,12 @@ pytest==8.3.4
     #   ring (pyproject.toml)
     #   pytest-factoryboy
     #   pytest-pretty
+    #   pytest-xdist
 pytest-factoryboy==2.7.0
     # via ring (pyproject.toml)
 pytest-pretty==1.2.0
+    # via ring (pyproject.toml)
+pytest-xdist==3.6.1
     # via ring (pyproject.toml)
 python-dateutil==2.9.0.post0
     # via

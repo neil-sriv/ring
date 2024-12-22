@@ -38,17 +38,19 @@ def compose(ctx: click.Context) -> None:
 def compose_run(
     name: str,
     group: click.Group = compose,
+    *args: Any,
+    profile: str = "dev",
 ) -> Callable[[Callable[..., list[str]]], click.Command]:
     def decorator(f: Callable[..., list[str]]) -> click.Command:
-        @cmd_run(name, group)
-        @click.option("--profile", type=str, default="dev")
+        @cmd_run(name, group, *args)
+        @click.option("--profile", type=str, default=profile)
         @functools.wraps(f)
         def inner(
             ctx: click.Context,
             *args: list[Any],
             **kwargs: dict[Any, Any],
         ) -> list[str]:
-            profile = kwargs.pop("profile", "dev")
+            profile = kwargs.pop("profile")
             cmd_string = f(*args, **kwargs)
             return compose_starter(profile) + cmd_string + ctx.args  # type: ignore
 
@@ -62,9 +64,11 @@ def compose_exec(
     group: click.Group = compose,
     service: str | None = None,
     directory: str | None = None,
+    cmd: str = "exec",
+    **kwargs: Any,
 ) -> Callable[[Callable[..., list[str]]], click.Command]:
     def decorator(f: Callable[..., list[str]]) -> click.Command:
-        @compose_run(name, group)
+        @compose_run(name, group, **kwargs)
         @click.option(
             "--service",
             "-s",
@@ -86,7 +90,7 @@ def compose_exec(
         ) -> list[str]:
             cmd_string = f(*args, **kwargs)
             working_dir = f"/src/{directory}" if directory else "/src"
-            return ["exec", "-w", working_dir] + [service] + cmd_string
+            return [cmd, "-w", working_dir] + [service] + cmd_string
 
         return inner
 

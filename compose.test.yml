@@ -18,7 +18,6 @@ services:
       context: ./ring
       dockerfile: tests/test.Dockerfile
       target: ring
-    command: "pytest"
     env_file:
       - ./.env
     depends_on:
