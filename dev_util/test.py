@@ -37,4 +37,6 @@ def server(
         "-f",
         "-c",
         "ring/pytest.ini",
+        "--color=yes",
+        "--code-highlight=yes",
     ]
