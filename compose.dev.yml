@@ -50,6 +50,8 @@ services:
     profiles: ["dev"]
     networks:
       - default
+    
+
 
 networks:
   default:
