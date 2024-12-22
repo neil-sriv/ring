@@ -15,13 +15,21 @@ def setup(ctx: click.Context) -> None:
 
 
 @cmd_run("requirements", setup, cwd=SETUP_DIR)
-def fe_dev(
+def requirements(
     ctx: click.Context,
     *args: list[Any],
     **kwargs: dict[Any, Any],
 ) -> list[list[str]]:
     return [
-        ["uv", "sync"],
+        ["uv", "sync", "--extra", "dev"],
+        [
+            "uv",
+            "pip",
+            "compile",
+            "pyproject.toml",
+            "-o",
+            "ring/requirements.txt",
+        ],
         ["pre-commit", "install"],
         ["ring", "fe", "install"],
     ]

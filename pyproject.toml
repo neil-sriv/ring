@@ -58,5 +58,10 @@ dependencies = [
     "pre-commit>=4.0.1",
 ]
 
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.3.4",
+]
+
 [project.scripts]
 ring = "dev_util.dev:dev"
