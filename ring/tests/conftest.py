@@ -1,9 +1,7 @@
 import logging
-import sys
 from typing import TYPE_CHECKING, Generator
 
 import pytest
-from dotenv import load_dotenv
 from fastapi.testclient import TestClient
 from sqlalchemy import Engine, create_engine
 from sqlalchemy.orm import (
@@ -11,30 +9,14 @@ from sqlalchemy.orm import (
     sessionmaker,
 )
 
-from ring.config import RingConfig
 from ring.fast import app
-
-# from ring.sqlalchemy_base import Base, get_db
-
+from ring.sqlalchemy_base import Base
 
 if TYPE_CHECKING:
     from ring.sqlalchemy_base import get_db
 
-
-load_dotenv()
-
-
-class TestConfig(RingConfig):
-    sqlalchemy_database_uri: str = (
-        "postgresql://ring:ring@test-db:5432/ring_test"
-    )
-
-
-# Set up a test database URL
-TEST_SQLALCHEMY_DATABASE_URL = TestConfig().sqlalchemy_database_uri  # type: ignore
-
 # Create a new SQLAlchemy engine instance
-engine = create_engine(TEST_SQLALCHEMY_DATABASE_URL)
+engine = create_engine("postgresql://ring:ring@test-db:5432/ring_test")
 
 # Create a configured "Session" class
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
@@ -47,24 +29,14 @@ def logger() -> Generator[logging.Logger, None, None]:
 
 
 @pytest.fixture(scope="session")
-def setup_db(
-    logger: logging.Logger, db_engine: Engine
-) -> Generator[None, None, None]:
-    logger.info("Creating test database")
-    # Base.metadata.create_all(bind=db_engine)
-    yield
-    logger.info("Dropping test database")
-    # Base.metadata.drop_all(bind=db_engine)
-
-
-@pytest.fixture(scope="session")
 def db_engine(logger: logging.Logger) -> Generator[Engine, None, None]:
     logger.info("Creating test database engine")
+    logger.warning("engine" + str(engine.__dict__))
     try:
-        # Base.metadata.create_all(bind=engine)
+        Base.metadata.create_all(bind=engine)
         yield engine
     finally:
-        # Base.metadata.drop_all(bind=engine)
+        Base.metadata.drop_all(bind=engine)
         logger.info("Dropped test database engine")
 
 
@@ -76,6 +48,7 @@ def db_session(
     connection = db_engine.connect()
     transaction = connection.begin()
     session = Session(bind=connection)
+    logger.warning("session" + str(session.__dict__))
 
     yield session
 
