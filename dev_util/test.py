@@ -22,7 +22,7 @@ def run(
     return [
         "pytest",
         "-c",
-        "ring/pytest.ini",
+        "ring/tests/pytest.ini",
     ]
 
 
@@ -36,7 +36,7 @@ def server(
         "pytest",
         "-f",
         "-c",
-        "ring/pytest.ini",
+        "ring/tests/pytest.ini",
         "--color=yes",
         "--code-highlight=yes",
     ]

@@ -1,7 +1,7 @@
 from sqlalchemy.orm import Session
 
 from ring.parties.crud import user as user_crud
-from ring.tests.factories.parties.user import UserFactory
+from ring.tests.factories.parties.user_factory import UserFactory
 
 
 def test_get_users(db_session: Session):

@@ -10,11 +10,8 @@ from sqlalchemy.orm import (
 )
 
 from ring.fast import app
-from ring.sqlalchemy_base import Base
+from ring.sqlalchemy_base import Base, get_db
 from ring.tests.factories.base_factory import BaseFactory
-
-if TYPE_CHECKING:
-    from ring.sqlalchemy_base import get_db
 
 # Create a new SQLAlchemy engine instance
 engine = create_engine("postgresql://ring:ring@test-db:5432/ring_test")
@@ -42,11 +39,10 @@ def db_engine(logger: logging.Logger) -> Generator[Engine, None, None]:
 
 def _patch_factories(logger: logging.Logger, session: Session) -> None:
     for factory in BaseFactory.__subclasses__():
-        logger.warning(f"Setting session for factory {factory}")
         factory._meta.sqlalchemy_session = session
 
 
-@pytest.fixture(scope="session")
+@pytest.fixture(scope="function")
 def db_session(
     db_engine: Engine, logger: logging.Logger
 ) -> Generator[Session, None, None]:

@@ -101,7 +101,6 @@ def compose_exec(
 @compose_run("ps")
 def compose_ps(
     ctx: click.Context,
-    script: str,
     *args: list[Any],
     **kwargs: dict[Any, Any],
 ) -> list[str]:
@@ -113,7 +112,6 @@ def compose_ps(
 @compose_run("any")
 def compose_any(
     ctx: click.Context,
-    script: str,
     *args: list[Any],
     **kwargs: dict[Any, Any],
 ) -> list[str]:
@@ -123,7 +121,6 @@ def compose_any(
 @compose_run("up")
 def compose_up(
     ctx: click.Context,
-    script: str,
     *args: list[Any],
     **kwargs: dict[Any, Any],
 ) -> list[str]:
