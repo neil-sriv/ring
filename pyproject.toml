@@ -60,6 +60,7 @@ dependencies = [
 
 [project.optional-dependencies]
 dev = [
+    "pytest-factoryboy>=2.7.0",
     "pytest>=8.3.4",
 ]
 
