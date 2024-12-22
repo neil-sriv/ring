@@ -24,8 +24,8 @@ jobs:
       run: uv pip install -e .
     
     - name: Docker build
-      run: ring compose any --profile test build
+      run: uv run ring compose any --profile test build
 
     - name: Run tests
-      run: ring test run
+      run: uv run ring test run
     
