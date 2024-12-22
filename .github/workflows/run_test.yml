@@ -1,0 +1,26 @@
+name: Run Unit Tests via pytest
+
+on: [push]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ["3.12"]
+    
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Install uv
+      uses: astral-sh/uv-action@v4
+    
+    - name: Install the project
+      run: uv sync --all-extras
+    
+    - name: Docker build
+      run: ring compose any --profile test build
+
+    - name: Run tests
+      run: ring test run
+    
