@@ -41,7 +41,6 @@ dependencies = [
     "pgcli ~= 4.0",
     "ipython ~= 8.20",
     "alembic ~= 1.13",
-    "psycopg-binary",
     "celery ~= 5.3",
     "python-jose[cryptography] ~= 3.3",
     "pwdlib[argon2,bcrypt] ~= 0.2",
@@ -56,12 +55,14 @@ dependencies = [
     "bs4",
     "requests",
     "pre-commit>=4.0.1",
+    "psycopg2-binary>=2.9.10",
 ]
 
 [project.optional-dependencies]
 dev = [
     "pytest-factoryboy>=2.7.0",
     "pytest>=8.3.4",
+    "psycopg-binary",
 ]
 
 [project.scripts]
