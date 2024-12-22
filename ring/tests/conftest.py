@@ -1,5 +1,6 @@
 import logging
-from typing import Generator
+import sys
+from typing import TYPE_CHECKING, Generator
 
 import pytest
 from dotenv import load_dotenv
@@ -11,16 +12,21 @@ from sqlalchemy.orm import (
 )
 
 from ring.config import RingConfig
-from ring.dependencies import get_db
 from ring.fast import app
-from ring.sqlalchemy_base import Base
+
+# from ring.sqlalchemy_base import Base, get_db
+
+
+if TYPE_CHECKING:
+    from ring.sqlalchemy_base import get_db
+
 
 load_dotenv()
 
 
 class TestConfig(RingConfig):
     sqlalchemy_database_uri: str = (
-        "postgresql://ring-postgres:ring-postgres@db:5432/ring-test"
+        "postgresql://ring:ring@test-db:5432/ring_test"
     )
 
 
@@ -37,7 +43,6 @@ SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 @pytest.fixture(scope="session")
 def logger() -> Generator[logging.Logger, None, None]:
     logger = logging.getLogger(__name__)
-    logging.basicConfig(level=logging.INFO)
     yield logger
 
 
@@ -46,20 +51,20 @@ def setup_db(
     logger: logging.Logger, db_engine: Engine
 ) -> Generator[None, None, None]:
     logger.info("Creating test database")
-    Base.metadata.create_all(bind=db_engine)
+    # Base.metadata.create_all(bind=db_engine)
     yield
     logger.info("Dropping test database")
-    Base.metadata.drop_all(bind=db_engine)
+    # Base.metadata.drop_all(bind=db_engine)
 
 
 @pytest.fixture(scope="session")
 def db_engine(logger: logging.Logger) -> Generator[Engine, None, None]:
     logger.info("Creating test database engine")
     try:
-        Base.metadata.create_all(bind=engine)
+        # Base.metadata.create_all(bind=engine)
         yield engine
     finally:
-        Base.metadata.drop_all(bind=engine)
+        # Base.metadata.drop_all(bind=engine)
         logger.info("Dropped test database engine")
 
 

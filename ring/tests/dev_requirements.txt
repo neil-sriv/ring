@@ -257,7 +257,10 @@ pytest==8.3.4
     # via
     #   ring (pyproject.toml)
     #   pytest-factoryboy
+    #   pytest-pretty
 pytest-factoryboy==2.7.0
+    # via ring (pyproject.toml)
+pytest-pretty==1.2.0
     # via ring (pyproject.toml)
 python-dateutil==2.9.0.post0
     # via
@@ -285,6 +288,7 @@ requests==2.32.3
     # via ring (pyproject.toml)
 rich==13.9.4
     # via
+    #   pytest-pretty
     #   rich-toolkit
     #   typer
 rich-toolkit==0.12.0
