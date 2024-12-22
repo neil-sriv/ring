@@ -51,18 +51,7 @@ services:
     networks:
       - default
     
-  test-db:
-    container_name: ring-test-db
-    image: postgres:16.1
-    ports:
-      - 8005:5432
-    environment:
-      - POSTGRES_USER=ring
-      - POSTGRES_PASSWORD=ring
-      - POSTGRES_DB=ring_test
-    profiles: ["dev"]
-    networks:
-      - default
+
 
 networks:
   default:

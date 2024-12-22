@@ -217,6 +217,8 @@ psycopg==3.2.3
     #   pgspecial
 psycopg-binary==3.2.3
     # via ring (pyproject.toml)
+psycopg2-binary==2.9.10
+    # via ring (pyproject.toml)
 ptyprocess==0.7.0
     # via pexpect
 pure-eval==0.2.3

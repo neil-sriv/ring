@@ -6,21 +6,27 @@ import click
 from dev_util.dev import cmd_run, dev_group
 
 
-def compose_starter(prod: bool = False, certbot: bool = False) -> list[str]:
-    if prod:
-        profile = []
-    elif certbot:
-        profile = ["--profile", "certbot"]
+def compose_starter(profile: str) -> list[str]:
+    profile_string = ["--profile", f"{profile}"]
+    compose_file_strings: list[str] = []
+    if profile == "test":
+        compose_file_strings.append("compose.test.yml")
     else:
-        profile = ["--profile", "dev"]
-    return [
-        "docker",
-        "compose",
-        "-f",
-        "compose.core.yml",
-        "-f",
-        "compose.prod.yml" if (prod or certbot) else "compose.dev.yml",
-    ] + profile
+        compose_file_strings.append("compose.core.yml")
+        if profile in ["prod", "certbot"]:
+            compose_file_strings.append("compose.prod.yml")
+        else:
+            compose_file_strings.append("compose.dev.yml")
+    compose_file = (" -f ".join(compose_file_strings)).split(" ")
+    return (
+        [
+            "docker",
+            "compose",
+            "-f",
+        ]
+        + compose_file
+        + profile_string
+    )
 
 
 @dev_group("compose")
@@ -35,26 +41,16 @@ def compose_run(
 ) -> Callable[[Callable[..., list[str]]], click.Command]:
     def decorator(f: Callable[..., list[str]]) -> click.Command:
         @cmd_run(name, group)
-        @click.option(
-            "--prod",
-            is_flag=True,
-            default=False,
-        )
-        @click.option(
-            "--certbot",
-            is_flag=True,
-            default=False,
-        )
+        @click.option("--profile", type=str, default="dev")
         @functools.wraps(f)
         def inner(
             ctx: click.Context,
             *args: list[Any],
             **kwargs: dict[Any, Any],
         ) -> list[str]:
-            prod = kwargs.pop("prod", False)
-            certbot = kwargs.pop("certbot", False)
+            profile = kwargs.pop("profile", "dev")
             cmd_string = f(*args, **kwargs)
-            return compose_starter(prod, certbot) + cmd_string + ctx.args  # type: ignore
+            return compose_starter(profile) + cmd_string + ctx.args  # type: ignore
 
         return inner
 
