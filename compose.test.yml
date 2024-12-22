@@ -1,0 +1,36 @@
+services:
+  test-db:
+    container_name: ring-test-db
+    image: postgres:16.1
+    ports:
+      - 8005:5432
+    environment:
+      - POSTGRES_USER=ring
+      - POSTGRES_PASSWORD=ring
+      - POSTGRES_DB=ring_test
+    profiles: ["test"]
+    networks:
+      - default
+  
+  test-runner:
+    container_name: ring-test-runner
+    build: 
+      context: ./ring
+      dockerfile: tests/test.Dockerfile
+      target: ring
+    env_file:
+      - ./.env
+    depends_on:
+      - test-db
+    volumes:
+      - ./ring:/src/ring
+    profiles: ["test"]
+    environment:
+      - PYTHONPATH=.
+    networks:
+      - default
+
+networks:
+  default:
+    name: ring-network
+    external: true

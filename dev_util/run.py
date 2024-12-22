@@ -1,3 +1,5 @@
+from typing import Any
+
 import click
 
 from dev_util.compose import compose_exec
@@ -12,7 +14,12 @@ def run(ctx: click.Context) -> None:
 
 @compose_exec("script", run, "api")
 @click.option("--script", type=str, required=True)
-def run_script(script: str) -> list[str]:
+def run_script(
+    ctx: click.Context,
+    script: str,
+    *args: list[Any],
+    **kwargs: dict[Any, Any],
+) -> list[str]:
     script_cmd = [
         "python",
         "ring/scripts/script_runner.py",
@@ -23,7 +30,11 @@ def run_script(script: str) -> list[str]:
 
 
 @compose_exec("shell", run, "api")
-def run_shell() -> list[str]:
+def run_shell(
+    ctx: click.Context,
+    *args: list[Any],
+    **kwargs: dict[Any, Any],
+) -> list[str]:
     return [
         "python",
         "ring/scripts/script_runner.py",
