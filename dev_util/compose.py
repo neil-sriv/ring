@@ -51,7 +51,7 @@ def compose_run(
             **kwargs: dict[Any, Any],
         ) -> list[str]:
             profile = kwargs.pop("profile")
-            cmd_string = f(*args, **kwargs)
+            cmd_string = f(ctx, *args, **kwargs)
             return compose_starter(profile) + cmd_string + ctx.args  # type: ignore
 
         return inner
@@ -83,12 +83,13 @@ def compose_exec(
         )
         @functools.wraps(f)
         def inner(
+            ctx: click.Context,
             service: str,
             directory: str,
             *args: Any,
             **kwargs: Any,
         ) -> list[str]:
-            cmd_string = f(*args, **kwargs)
+            cmd_string = f(ctx, *args, **kwargs)
             working_dir = f"/src/{directory}" if directory else "/src"
             return [cmd, "-w", working_dir] + [service] + cmd_string
 
@@ -98,19 +99,34 @@ def compose_exec(
 
 
 @compose_run("ps")
-def compose_ps() -> list[str]:
+def compose_ps(
+    ctx: click.Context,
+    script: str,
+    *args: list[Any],
+    **kwargs: dict[Any, Any],
+) -> list[str]:
     return [
         "ps",
     ]
 
 
 @compose_run("any")
-def compose_any() -> list[str]:
+def compose_any(
+    ctx: click.Context,
+    script: str,
+    *args: list[Any],
+    **kwargs: dict[Any, Any],
+) -> list[str]:
     return []
 
 
 @compose_run("up")
-def compose_up() -> list[str]:
+def compose_up(
+    ctx: click.Context,
+    script: str,
+    *args: list[Any],
+    **kwargs: dict[Any, Any],
+) -> list[str]:
     return [
         "up",
         "--build",

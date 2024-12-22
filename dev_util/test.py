@@ -15,7 +15,7 @@ def test(ctx: click.Context) -> None:
 
 @compose_exec("run", test, service="test-runner", profile="test", cmd="run")
 def run(
-    # ctx: click.Context,
+    ctx: click.Context,
     *args: list[Any],
     **kwargs: dict[Any, Any],
 ) -> list[str]:
@@ -28,7 +28,7 @@ def run(
 
 @compose_exec("server", test, service="test-runner", profile="test", cmd="run")
 def server(
-    # ctx: click.Context,
+    ctx: click.Context,
     *args: list[Any],
     **kwargs: dict[Any, Any],
 ) -> list[str]:
