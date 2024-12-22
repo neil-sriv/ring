@@ -11,6 +11,7 @@ from sqlalchemy.orm import (
 
 from ring.fast import app
 from ring.sqlalchemy_base import Base
+from ring.tests.factories.base_factory import BaseFactory
 
 if TYPE_CHECKING:
     from ring.sqlalchemy_base import get_db
@@ -31,13 +32,18 @@ def logger() -> Generator[logging.Logger, None, None]:
 @pytest.fixture(scope="session")
 def db_engine(logger: logging.Logger) -> Generator[Engine, None, None]:
     logger.info("Creating test database engine")
-    logger.warning("engine" + str(engine.__dict__))
     try:
         Base.metadata.create_all(bind=engine)
         yield engine
     finally:
         Base.metadata.drop_all(bind=engine)
         logger.info("Dropped test database engine")
+
+
+def _patch_factories(logger: logging.Logger, session: Session) -> None:
+    for factory in BaseFactory.__subclasses__():
+        logger.warning(f"Setting session for factory {factory}")
+        factory._meta.sqlalchemy_session = session
 
 
 @pytest.fixture(scope="session")
@@ -48,7 +54,8 @@ def db_session(
     connection = db_engine.connect()
     transaction = connection.begin()
     session = Session(bind=connection)
-    logger.warning("session" + str(session.__dict__))
+
+    _patch_factories(logger, session)
 
     yield session
 
