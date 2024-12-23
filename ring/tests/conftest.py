@@ -62,7 +62,7 @@ def db_session(
 
 
 @pytest.fixture(scope="function")
-def client(
+def unauthenticated_client(
     db_session: Session, logger: logging.Logger
 ) -> Generator[TestClient, None, None]:
     logger.info("Creating test client")
@@ -74,6 +74,6 @@ def client(
             pass
 
     app.dependency_overrides[get_db] = override_get_db
-    with TestClient(app) as c:
+    with TestClient(app, base_url="http://testserver/api/v1") as c:
         yield c
     logger.info("Closed test client")

@@ -23,14 +23,16 @@ def authenticated_client(
 
 @pytest.fixture(scope="function")
 def get_client_for_user(
-    client: TestClient,
+    unauthenticated_client: TestClient,
 ) -> Generator[TClientForUser, None, None]:
     def _method(user: User):
-        client.app.dependency_overrides[get_current_user] = lambda: user
-        return client
+        unauthenticated_client.app.dependency_overrides[get_current_user] = (
+            lambda: user
+        )
+        return unauthenticated_client
 
     yield _method
-    client.app.dependency_overrides.pop(get_current_user)
+    unauthenticated_client.app.dependency_overrides.pop(get_current_user)
 
 
 @pytest.fixture(scope="function")
