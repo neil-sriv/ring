@@ -3,7 +3,7 @@ from typing import Any
 
 import click
 
-from dev_util.compose import compose_exec
+from dev_util.compose import compose_exec, compose_run
 from dev_util.dev import dev_group
 
 

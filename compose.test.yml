@@ -14,12 +14,11 @@ services:
   
   test-runner:
     container_name: ring-test-runner
+    command: ["pytest", "-c", "ring/tests/pytest.ini"]
     build: 
       context: ./ring
       dockerfile: tests/test.Dockerfile
       target: ring
-    env_file:
-      - ./.env
     depends_on:
       - test-db
     volumes:
@@ -27,6 +26,10 @@ services:
     profiles: ["test"]
     environment:
       - PYTHONPATH=.
+      - JWT_SIGNING_KEY=secret
+      - JWT_SIGNING_ALGORITHM=HS256
+      - sqlalchemy_database_uri=postgresql://ring:ring@test-db:5432/ring_test
+      - environment=test
     networks:
       - default
 
