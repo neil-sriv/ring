@@ -1,4 +1,4 @@
-FROM python:3.12.1-bullseye AS ring
+FROM --platform=linux/amd64 python:3.12.1-bullseye as ring
 
 WORKDIR /src
 
