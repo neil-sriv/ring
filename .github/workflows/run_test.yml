@@ -30,5 +30,10 @@ jobs:
         docker network create ring-network
 
     - name: Run tests
-      run: uv run ring test run-ci
+      run: |
+        set +e
+        uv run ring test run-ci
+        exitcode="$?"
+        echo "exitcode=$exitcode" >> $GITHUB_OUTPUT
+        exit "$exitcode"
     
