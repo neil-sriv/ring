@@ -45,7 +45,9 @@ async def read_user_me(
     return req_dep.current_user
 
 
-@router.post("/user", response_model=UserSchema)
+@router.post(
+    "/user", response_model=UserSchema, deprecated=True, status_code=201
+)
 async def create_user(
     user: UserCreate,
     req_dep: RequestDependenciesBase = Depends(
