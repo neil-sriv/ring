@@ -12,7 +12,9 @@ class TestUserModel:
     def test_user_model(self, faker: Faker, db_session: Session) -> None:
         hashed_password = get_password_hash("password")
         email = faker.email()
-        user = User(email=email, name="test", hashed_password=hashed_password)
+        user = User.create(
+            email=email, name="test", hashed_password=hashed_password
+        )
         db_session.add(user)
         db_session.commit()
 
