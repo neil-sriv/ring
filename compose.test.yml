@@ -13,6 +13,7 @@ services:
       - default
   
   test-runner:
+    image: ring-test-runner
     container_name: ring-test-runner
     command: ["pytest", "-c", "ring/tests/pytest.ini"]
     build: 
