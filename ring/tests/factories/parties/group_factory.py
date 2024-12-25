@@ -9,7 +9,7 @@ class GroupFactory(BaseFactory[Group]):
     class Meta:
         model = Group
 
-    name = factory.Faker("name")
+    name = factory.Faker("pystr_format", string_format="Group-{{random_int}}")
     admin = factory.SubFactory(
         "ring.tests.factories.parties.user_factory.UserFactory"
     )

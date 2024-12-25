@@ -23,7 +23,7 @@ class IDNotFoundException(APIIdentifierException):
     def __init__(self, model_cls: type[Base], api_id: str):
         super().__init__(
             model_cls,
-            f'Could not resolve "{api_id}" for model class {model_cls}',
+            f'Could not resolve "{api_id}" for model class {model_cls.__name__}',
         )
 
 
