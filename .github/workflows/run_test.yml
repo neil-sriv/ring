@@ -27,8 +27,6 @@ jobs:
     - name: Docker set-up
       run: |
         docker pull ghcr.io/neil-sriv/ring/ring-test-runner:latest
-        docker tag ghcr.io/neil-sriv/ring/ring-test-runner:latest ring-test-runner:latest
-        docker rmi ghcr.io/neil-sriv/ring/ring-test-runner:latest
         uv run ring compose any --profile test pull
         docker network create ring-network
       env:
