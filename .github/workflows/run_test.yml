@@ -2,9 +2,6 @@ name: Run Unit Tests via pytest
 
 on: [push]
 
-permissions: 
-  packages: read
-
 jobs:
   build:
     name: pytest
@@ -35,8 +32,6 @@ jobs:
         docker rmi ghcr.io/neil-sriv/ring/ring-test-runner:latest
         uv run ring compose any --profile test pull test-db
         docker network create ring-network
-      env:
-        GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
     - name: Run tests
       run: uv run ring test run
