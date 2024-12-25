@@ -2,6 +2,9 @@ name: Run Unit Tests via pytest
 
 on: [push]
 
+permissions: 
+  packages: read
+
 jobs:
   build:
     name: pytest
