@@ -69,7 +69,8 @@ def get_letter_by_api_id(group: Group, api_id: str) -> Letter:
         filter(
             lambda letter: letter.api_identifier == api_id,
             group.letters,
-        )
+        ),
+        None,
     )
     if not letter:
         raise ValueError(f"Could not find letter with api_id {api_id}")
