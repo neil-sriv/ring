@@ -4,7 +4,8 @@ import click
 
 from dev_util.compose import compose_exec
 from dev_util.dev import cmd_run, dev_group
-from dev_util.docker import ECR_URI_BASE
+
+GH_ECR_URI_BASE = "ghcr.io"
 
 
 @dev_group("test")
@@ -19,7 +20,7 @@ def image(
     *args: list[Any],
     **kwargs: dict[Any, Any],
 ) -> list[list[str]]:
-    image_tag = f"{ECR_URI_BASE}ring-test-runner:latest"
+    image_tag = f"{GH_ECR_URI_BASE}/neil-sriv/ring/ring-test-runner:latest"
     return [
         [
             "docker",
