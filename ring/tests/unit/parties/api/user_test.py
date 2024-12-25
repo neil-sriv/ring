@@ -333,3 +333,5 @@ class TestUserAPI:
             resp.json()["detail"]
             == "New password must be different from the current password"
         )
+
+    assert False
