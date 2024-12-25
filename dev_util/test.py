@@ -3,7 +3,7 @@ from typing import Any
 
 import click
 
-from dev_util.compose import compose_exec
+from dev_util.compose import compose_exec, compose_run
 from dev_util.dev import dev_group
 
 
@@ -23,6 +23,19 @@ def run(
         "pytest",
         "-c",
         "ring/tests/pytest.ini",
+    ]
+
+
+@compose_run("run-ci", test, profile="test")
+def run_ci(
+    ctx: click.Context,
+    *args: list[Any],
+    **kwargs: dict[Any, Any],
+) -> list[str]:
+    return [
+        "up",
+        "--exit-code-from",
+        "test-runner",
     ]
 
 
