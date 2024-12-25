@@ -1,4 +1,4 @@
-from factory.faker import Faker
+from faker import Faker
 from sqlalchemy.orm import Session
 
 from ring.parties.crud import user as user_crud

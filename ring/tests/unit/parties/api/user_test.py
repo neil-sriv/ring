@@ -1,9 +1,10 @@
 import sqlalchemy
-from factory.faker import Faker
+from faker import Faker
 from fastapi.testclient import TestClient
 from sqlalchemy.orm import Session
 
 from ring.parties.models.user_model import User
+from ring.tests.factories.parties.invite_factory import InviteFactory
 from ring.tests.factories.parties.user_factory import UserFactory
 from ring.tests.unit.parties.conftest import TClientForUser
 
@@ -68,3 +69,39 @@ class TestUserAPI:
 
         assert resp.status_code == 400
         assert resp.json()["detail"] == "Email already registered"
+
+    def test_register_user(
+        self,
+        unauthenticated_client: TestClient,
+        faker: Faker,
+        db_session: Session,
+    ) -> None:
+        invite = InviteFactory.create()
+        db_session.commit()
+
+        email, name, password = invite.email, faker.name(), faker.password()
+
+        input = {
+            "email": email,
+            "name": name,
+            "password": password,
+        }
+        resp = unauthenticated_client.post(
+            f"/parties/register/{invite.one_time_token.token}", json=input
+        )
+
+        assert resp.status_code == 200
+        data = resp.json()
+        assert data == data | {
+            "email": email,
+            "name": name,
+        }
+
+        db_user = db_session.scalar(
+            sqlalchemy.select(User).where(User.email == email)
+        )
+        assert db_user
+        assert db_user.email == email
+        assert db_user.name == name
+
+        assert db_user in invite.group.members

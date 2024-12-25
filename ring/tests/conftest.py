@@ -1,5 +1,5 @@
 import logging
-from typing import TYPE_CHECKING, Generator
+from typing import Generator
 
 import pytest
 from fastapi.testclient import TestClient
@@ -11,7 +11,7 @@ from sqlalchemy.orm import (
 
 from ring.fast import app
 from ring.sqlalchemy_base import Base, get_db
-from ring.tests.factories.base_factory import BaseFactory
+from ring.tests.factories.base_factory import ALL_FACTORIES, BaseFactory
 
 # Create a new SQLAlchemy engine instance
 engine = create_engine("postgresql://ring:ring@test-db:5432/ring_test")
@@ -38,7 +38,11 @@ def db_engine(logger: logging.Logger) -> Generator[Engine, None, None]:
 
 
 def _patch_factories(logger: logging.Logger, session: Session) -> None:
-    for factory in BaseFactory.__subclasses__():
+    from ring.tests.factories.entrypoint.initialize import initialize_factories
+
+    initialize_factories()
+
+    for factory in ALL_FACTORIES:
         factory._meta.sqlalchemy_session = session
 
 

@@ -5,6 +5,8 @@ from typing import Any, Generic, Type, TypeVar, get_args
 from factory.alchemy import SQLAlchemyModelFactory
 from factory.base import FactoryMetaClass
 
+from ring.lib.util import RegistrationList
+
 T = TypeVar("T")
 
 
@@ -24,7 +26,7 @@ class BaseFactoryMeta(FactoryMetaClass):
 class BaseFactory(
     SQLAlchemyModelFactory, Generic[T], metaclass=BaseFactoryMeta
 ):
-    class Meta:
+    class Meta:  # type: ignore
         abstract = True
 
     @classmethod
@@ -34,3 +36,15 @@ class BaseFactory(
     @classmethod
     def build(cls, **kwargs: Any) -> T:
         return super().build(**kwargs)
+
+
+ALL_FACTORIES: RegistrationList[Type[SQLAlchemyModelFactory]] = (
+    RegistrationList("ALL_FACTORIES")
+)
+
+
+def register_factory(
+    cls: Type[BaseFactory[T]],
+) -> Type[BaseFactory[T]]:
+    ALL_FACTORIES.append(cls)
+    return cls
