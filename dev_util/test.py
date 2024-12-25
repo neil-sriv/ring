@@ -34,6 +34,7 @@ def run_ci(
 ) -> list[str]:
     return [
         "up",
+        "--abort-on-container-exit",
         "--exit-code-from",
         "test-runner",
     ]
