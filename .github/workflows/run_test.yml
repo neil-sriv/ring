@@ -26,7 +26,9 @@ jobs:
     
     - name: Docker set-up
       run: |
-        uv run ring compose any --profile test build
+        docker pull public.ecr.aws/z2k1e8p1/ring-test-runner:latest
+        docker tag public.ecr.aws/z2k1e8p1/ring-test-runner:latest ring-test-runner:latest
+        docker rmi public.ecr.aws/z2k1e8p1/ring-test-runner:latest
         uv run ring compose any --profile test pull
         docker network create ring-network
 
