@@ -26,20 +26,6 @@ def run(
     ]
 
 
-@compose_run("run-ci", test, profile="test")
-def run_ci(
-    ctx: click.Context,
-    *args: list[Any],
-    **kwargs: dict[Any, Any],
-) -> list[str]:
-    return [
-        "up",
-        "--abort-on-container-exit",
-        "--exit-code-from",
-        "test-runner",
-    ]
-
-
 @compose_exec("server", test, service="test-runner", profile="test", cmd="run")
 def server(
     ctx: click.Context,

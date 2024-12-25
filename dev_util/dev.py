@@ -93,8 +93,9 @@ def cmd_run(
                     )
                     for cmd_string in cmd_strings
                 ]
-            except subprocess.CalledProcessError:
-                pass
+            except subprocess.CalledProcessError as e:
+                print(e)
+                exit(1)
 
         return inner
 
