@@ -23,8 +23,11 @@ jobs:
     - name: Install project
       run: uv pip install -e .
     
-    - name: Docker build
-      run: uv run ring compose any --profile test build
+    - name: Docker set-up
+      run: |
+        uv run ring compose any --profile test build
+        uv run ring compose any --profile test pull
+        docker network create ring-network
 
     - name: Run tests
       run: uv run ring test run
