@@ -22,3 +22,4 @@ def test_get_me_unauthenticated(client: TestClient):
     assert response.status_code == 401
     data = response.json()
     assert data["detail"] == "Not authenticated"
+    assert False
