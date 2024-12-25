@@ -29,6 +29,7 @@ jobs:
     
     - name: Docker set-up
       run: |
+        docker login ghcr.io -u neil-sriv -p ${{ secrets.GH_TOKEN }}
         docker pull ghcr.io/neil-sriv/ring/ring-test-runner:latest
         uv run ring compose any --profile test pull
         docker network create ring-network
