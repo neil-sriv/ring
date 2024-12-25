@@ -9,13 +9,13 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 from ring.api_identifier.api_identified_model import APIIdentified
 from ring.created_at import CreatedAtMixin
 from ring.letters.constants import LetterStatus
+from ring.letters.models.default_question_model import DefaultQuestion
 from ring.letters.models.letter_model import Letter
 from ring.parties.models.user_group_assocation import user_group_association
 from ring.ring_pydantic.linked_schemas import GroupLinked
 from ring.ring_pydantic.pydantic_model import PydanticModel
 from ring.sqlalchemy_base import Base
 from ring.tasks.models.schedule_model import Schedule
-from ring.letters.models.default_question_model import DefaultQuestion
 
 if TYPE_CHECKING:
     from ring.parties.models.user_model import User
