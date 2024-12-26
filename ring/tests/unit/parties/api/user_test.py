@@ -11,6 +11,7 @@ from ring.tests.factories.parties.one_time_token_factory import (
 )
 from ring.tests.factories.parties.user_factory import UserFactory
 from ring.tests.lib.utils import (
+    assert_api_model_not_found,
     assert_pydantic_model_json_dump_equivalent_to_response_dict,
     assert_pydantic_models_json_dump_in_response_dict,
 )
@@ -242,10 +243,8 @@ class TestUserAPI:
     ) -> None:
         resp = authenticated_client.get("/parties/user/invalid_id")
         assert resp.status_code == 404
-        assert (
-            resp.json()["detail"]
-            == 'Could not resolve "invalid_id" for model class User'
-        )
+        data = resp.json()
+        assert_api_model_not_found(data, User, ["invalid_id"])
 
     def test_update_user_me_name(
         self,

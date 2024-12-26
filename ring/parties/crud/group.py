@@ -60,6 +60,10 @@ def add_member(db: Session, group_api_id: str, user_api_id: str) -> Group:
 def remove_member(db: Session, group_api_id: str, user_api_id: str) -> Group:
     db_group = api_identifier_crud.get_model(db, Group, api_id=group_api_id)
     db_user = api_identifier_crud.get_model(db, User, api_id=user_api_id)
+    if db_user not in db_group.members:
+        raise ValueError(
+            f"User {user_api_id} is not a member of group {group_api_id}"
+        )
     db_group.members.remove(db_user)
     return db_group
 

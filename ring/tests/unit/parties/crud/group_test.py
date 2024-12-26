@@ -97,6 +97,26 @@ class TestGroupCrud:
 
         assert user not in group.members
 
+    def test_remove_member_duplicate(self, db_session: Session) -> None:
+        group = GroupFactory.create()
+        user = UserFactory.create()
+        group.members.append(user)
+        db_session.commit()
+
+        assert user in group.members
+
+        group_crud.remove_member(
+            db_session, group.api_identifier, user.api_identifier
+        )
+        db_session.commit()
+
+        with pytest.raises(ValueError, match="is not a member of group"):
+            group_crud.remove_member(
+                db_session, group.api_identifier, user.api_identifier
+            )
+
+        assert user not in group.members
+
     def test_get_letter_by_api_id(self, db_session: Session) -> None:
         group = GroupFactory.create()
         letters = [
