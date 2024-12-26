@@ -30,7 +30,9 @@ from ring.tasks.schemas.schedule import ScheduleSendParam
 router = APIRouter()
 
 
-@router.post("/group", response_model=GroupSchema)
+@router.post(
+    "/group", response_model=GroupSchema, status_code=status.HTTP_201_CREATED
+)
 async def create_group(
     group: GroupCreate,
     req_dep: AuthenticatedRequestDependencies = Depends(
@@ -74,7 +76,11 @@ async def read_group(
         Group,
         api_id=group_api_id,
     )
-    assert req_dep.current_user in db_group.members
+    if req_dep.current_user not in db_group.members:
+        raise HTTPException(
+            status.HTTP_404_NOT_FOUND,
+            "Group not found",
+        )
     return db_group
 
 
@@ -107,6 +113,32 @@ async def remove_user_from_group(
         get_request_dependencies,
     ),
 ) -> Group:
+    db_group = api_identifier_crud.get_model(
+        req_dep.db, Group, api_id=group_api_id
+    )
+    if req_dep.current_user not in db_group.members:
+        raise HTTPException(
+            status.HTTP_404_NOT_FOUND,
+            "Group not found",
+        )
+    if req_dep.current_user != db_group.admin:
+        raise HTTPException(
+            status.HTTP_403_FORBIDDEN,
+            "Only the group admin can remove members",
+        )
+    if user_api_id == req_dep.current_user.api_identifier:
+        raise HTTPException(
+            status.HTTP_400_BAD_REQUEST,
+            "Cannot remove yourself from the group",
+        )
+    db_user = api_identifier_crud.get_model(
+        req_dep.db, User, api_id=user_api_id
+    )
+    if db_user not in db_group.members:
+        raise HTTPException(
+            status.HTTP_400_BAD_REQUEST,
+            "User is not a member of the group",
+        )
     group = group_crud.remove_member(
         req_dep.db, group_api_id=group_api_id, user_api_id=user_api_id
     )

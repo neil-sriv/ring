@@ -1,4 +1,7 @@
 def hydrate_factories_registry():
+    from ring.tests.factories.letters.default_question_factory import (
+        DefaultQuestionFactory,
+    )
     from ring.tests.factories.letters.letter_factory import LetterFactory
     from ring.tests.factories.letters.question_factory import QuestionFactory
     from ring.tests.factories.letters.response_factory import ResponseFactory
