@@ -4,8 +4,8 @@ from typing import Any
 import factory
 
 from ring.letters.constants import LetterStatus
+from ring.letters.crud.letter import upsert_letter_tasks
 from ring.letters.models.letter_model import Letter
-from ring.parties.crud.group import schedule_send
 from ring.tests.factories.base_factory import BaseFactory, register_factory
 
 
@@ -18,15 +18,14 @@ class LetterFactory(BaseFactory[Letter]):
     def _schedule(
         obj: Letter, create: bool, extracted: str | None, **kwargs: Any
     ):
-        schedule_send(
+        upsert_letter_tasks(
             LetterFactory._meta.sqlalchemy_session,
-            obj.group.api_identifier,
-            obj.api_identifier,
+            obj,
             obj.send_at,
         )
 
     send_at = factory.LazyFunction(
-        lambda: datetime.now(tz=UTC) + timedelta(days=1)
+        lambda: datetime.now(tz=UTC) + timedelta(days=2)
     )
     status = LetterStatus.IN_PROGRESS
     group = factory.SubFactory(

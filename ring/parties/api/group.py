@@ -149,6 +149,7 @@ async def remove_user_from_group(
 @router.post(
     "/group/{group_api_id}:schedule_send",
     response_model=GroupSchema,
+    deprecated=True,
 )
 async def schedule_send(
     group_api_id: str,

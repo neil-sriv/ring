@@ -1,5 +1,4 @@
 from datetime import UTC
-from pprint import pprint
 
 from faker import Faker
 from sqlalchemy.orm import Session
@@ -14,7 +13,7 @@ from ring.tests.factories.parties.user_factory import UserFactory
 
 
 class TestLetterModel:
-    def test_letter_model(self, db_session: Session, faker: Faker):
+    def test_letter_model(self, db_session: Session, faker: Faker) -> None:
         members = [UserFactory.create() for _ in range(3)]
         group = GroupFactory.create(admin=members[0])
         for member in members:
@@ -45,7 +44,9 @@ class TestLetterModel:
 
         assert letter.number == 4
 
-    def test_letter_model_number(self, db_session: Session, faker: Faker):
+    def test_letter_model_number(
+        self, db_session: Session, faker: Faker
+    ) -> None:
         group = GroupFactory.create()
         initial_letter = LetterFactory.create(group=group)
         db_session.commit()
@@ -62,7 +63,9 @@ class TestLetterModel:
 
         assert letter.number == 1
 
-    def test_letter_model_responders(self, db_session: Session, faker: Faker):
+    def test_letter_model_responders(
+        self, db_session: Session, faker: Faker
+    ) -> None:
         members = [UserFactory.create() for _ in range(4)]
         group = GroupFactory.create(admin=members[0])
         for member in members:
