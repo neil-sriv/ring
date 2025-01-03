@@ -65,6 +65,7 @@ def compose_exec(
     service: str | None = None,
     directory: str | None = None,
     cmd: str = "exec",
+    opts: list[str] | None = None,
     **kwargs: Any,
 ) -> Callable[[Callable[..., list[str]]], click.Command]:
     def decorator(f: Callable[..., list[str]]) -> click.Command:
@@ -89,9 +90,12 @@ def compose_exec(
             *args: Any,
             **kwargs: Any,
         ) -> list[str]:
+            nonlocal opts
+            if opts is None:
+                opts = []
             cmd_string = f(ctx, *args, **kwargs)
             working_dir = f"/src/{directory}" if directory else "/src"
-            return [cmd, "-w", working_dir] + [service] + cmd_string
+            return [cmd, "-w", working_dir] + opts + [service] + cmd_string
 
         return inner
 
