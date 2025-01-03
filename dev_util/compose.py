@@ -50,6 +50,7 @@ def compose_run(
             *args: list[Any],
             **kwargs: dict[Any, Any],
         ) -> list[str]:
+            profile = kwargs.pop("profile")
             cmd_string = f(ctx, *args, **kwargs)
             return compose_starter(profile) + cmd_string + ctx.args  # type: ignore
 
