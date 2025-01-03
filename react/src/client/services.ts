@@ -335,6 +335,7 @@ requestBody,
 	}
 
 	/**
+	 * @deprecated
 	 * Create User
 	 * @returns UserLinked Successful Response
 	 * @throws ApiError
