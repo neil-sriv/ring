@@ -36,7 +36,14 @@ def image(
     ]
 
 
-@compose_exec("run", test, service="test-runner", profile="test", cmd="run")
+@compose_exec(
+    "run",
+    test,
+    service="test-runner",
+    profile="test",
+    cmd="run",
+    opts=["--rm"],
+)
 def run(
     ctx: click.Context,
     *args: list[Any],
@@ -49,7 +56,14 @@ def run(
     ]
 
 
-@compose_exec("server", test, service="test-runner", profile="test", cmd="run")
+@compose_exec(
+    "server",
+    test,
+    service="test-runner",
+    profile="test",
+    cmd="run",
+    opts=["--rm"],
+)
 def server(
     ctx: click.Context,
     *args: list[Any],
