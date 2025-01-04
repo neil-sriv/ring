@@ -31,8 +31,7 @@ def subprocess_run(
 @click.group(
     context_settings=UNLIMITED_ARGS_SETTINGS,
 )
-@click.pass_context
-def dev(ctx: click.Context):
+def dev():
     pass
 
 
@@ -77,10 +76,9 @@ def cmd_run(
         f: Callable[..., list[str] | list[list[str]]],
     ) -> click.Command:
         @group.command(name=name, context_settings=UNLIMITED_ARGS_SETTINGS)
-        @click.pass_context
         @functools.wraps(f)
-        def inner(ctx: click.Context, *args: Any, **kwargs: Any) -> None:
-            cmd_string_s = f(ctx, *args, **kwargs)
+        def inner(*args: Any, **kwargs: Any) -> None:
+            cmd_string_s = f(*args, **kwargs)
             if isinstance(cmd_string_s[0], str):
                 cmd_strings = [cmd_string_s]
             else:

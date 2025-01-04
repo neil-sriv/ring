@@ -33,6 +33,28 @@ services:
       - environment=test
     networks:
       - default
+  
+  fe-test-runner:
+    # image: ring-test-runner
+    # container_name: ring-fe-test-runner
+    # command: ["pytest", "-c", "ring/tests/pytest.ini"]
+    # build: 
+    #   context: ./ring
+    #   dockerfile: tests/test.Dockerfile
+    #   target: ring
+    # depends_on:
+    #   - test-db
+    # volumes:
+    #   - ./ring:/src/ring
+    # profiles: ["test"]
+    # environment:
+    #   - PYTHONPATH=.
+    #   - JWT_SIGNING_KEY=secret
+    #   - JWT_SIGNING_ALGORITHM=HS256
+    #   - sqlalchemy_database_uri=postgresql://ring:ring@test-db:5432/ring_test
+    #   - environment=test
+    # networks:
+    #   - default
 
 networks:
   default:

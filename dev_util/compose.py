@@ -30,8 +30,7 @@ def compose_starter(profile: str) -> list[str]:
 
 
 @dev_group("compose")
-@click.pass_context
-def compose(ctx: click.Context) -> None:
+def compose() -> None:
     pass
 
 
@@ -44,6 +43,7 @@ def compose_run(
     def decorator(f: Callable[..., list[str]]) -> click.Command:
         @cmd_run(name, group, *args)
         @click.option("--profile", type=str, default=profile)
+        @click.pass_context
         @functools.wraps(f)
         def inner(
             ctx: click.Context,
@@ -51,7 +51,7 @@ def compose_run(
             **kwargs: dict[Any, Any],
         ) -> list[str]:
             profile = kwargs.pop("profile")
-            cmd_string = f(ctx, *args, **kwargs)
+            cmd_string = f(*args, **kwargs)
             return compose_starter(profile) + cmd_string + ctx.args  # type: ignore
 
         return inner
@@ -93,7 +93,7 @@ def compose_exec(
             nonlocal opts
             if opts is None:
                 opts = []
-            cmd_string = f(ctx, *args, **kwargs)
+            cmd_string = f(*args, **kwargs)
             working_dir = f"/src/{directory}" if directory else "/src"
             return [cmd, "-w", working_dir] + opts + [service] + cmd_string
 
@@ -104,7 +104,6 @@ def compose_exec(
 
 @compose_run("ps")
 def compose_ps(
-    ctx: click.Context,
     *args: list[Any],
     **kwargs: dict[Any, Any],
 ) -> list[str]:
@@ -115,7 +114,6 @@ def compose_ps(
 
 @compose_run("any")
 def compose_any(
-    ctx: click.Context,
     *args: list[Any],
     **kwargs: dict[Any, Any],
 ) -> list[str]:
@@ -124,7 +122,6 @@ def compose_any(
 
 @compose_run("up")
 def compose_up(
-    ctx: click.Context,
     *args: list[Any],
     **kwargs: dict[Any, Any],
 ) -> list[str]:
