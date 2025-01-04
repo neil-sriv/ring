@@ -1,5 +1,5 @@
 import { Box, Container, Heading, Text } from "@chakra-ui/react";
-import { createFileRoute } from "@tanstack/react-router";
+import { Link, createFileRoute } from "@tanstack/react-router";
 import { PublicLetter } from "../../../client";
 import { Suspense } from "react";
 import { ErrorBoundary } from "react-error-boundary";
@@ -47,7 +47,14 @@ function IssueContent() {
   return (
     <Container maxW="container.lg" py={4}>
       <Heading size="lg" textAlign={{ base: "center", md: "left" }} pt={12}>
-        {loop.group.name} Issue #{loop.number}
+        <Link
+          to="/groups/$groupId/loops"
+          params={{ groupId: group!.api_identifier }}
+          style={{ textDecoration: "underline" }}
+        >
+          {group!.name}
+        </Link>
+        <p> Issue #{loop.number}</p>
       </Heading>
       {loop.status === "IN_PROGRESS" && (
         <Heading size="md" textAlign={{ base: "center", md: "left" }} pt={2}>
