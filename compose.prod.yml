@@ -13,7 +13,22 @@ services:
     mem_limit: 300m
     volumes:
       - ./prod.nginx.conf:/etc/nginx/conf.d/default.conf:ro
+      - ./etc/letsencrypt:/etc/letsencrypt:ro
+      - ./certbot/www:/var/www/certbot
+      - ./webmanifest.json:/usr/share/nginx/html/manifest.webmanifest:ro
+      - ./serviceWorker.js:/usr/share/nginx/html/serviceWorker.js:ro
     platform: linux/amd64
+  certbot:
+    container_name: certbot
+    image: certbot/certbot:latest
+    profiles: ["certbot"]
+    command: >-
+             certonly --reinstall --webroot --webroot-path=/var/www/certbot
+             --email neilsriv.cs@gmail.com --agree-tos --no-eff-email
+             -d ring.neilsriv.tech
+    volumes:
+      - ./etc/letsencrypt:/etc/letsencrypt
+      - ./certbot/www:/var/www/certbot
 
   worker:
     image: prod-ring-worker

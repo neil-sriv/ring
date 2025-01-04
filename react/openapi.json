@@ -327,7 +327,7 @@
           "required": true
         },
         "responses": {
-          "200": {
+          "201": {
             "description": "Successful Response",
             "content": {
               "application/json": {
@@ -347,7 +347,8 @@
               }
             }
           }
-        }
+        },
+        "deprecated": true
       }
     },
     "/parties/register/{token}": {
@@ -646,7 +647,7 @@
           "required": true
         },
         "responses": {
-          "200": {
+          "201": {
             "description": "Successful Response",
             "content": {
               "application/json": {

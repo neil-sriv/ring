@@ -1,0 +1,40 @@
+services:
+  test-db:
+    container_name: ring-test-db
+    image: postgres:16.1
+    ports:
+      - 8005:5432
+    environment:
+      - POSTGRES_USER=ring
+      - POSTGRES_PASSWORD=ring
+      - POSTGRES_DB=ring_test
+    profiles: ["test"]
+    networks:
+      - default
+  
+  test-runner:
+    image: ring-test-runner
+    container_name: ring-test-runner
+    command: ["pytest", "-c", "ring/tests/pytest.ini"]
+    build: 
+      context: ./ring
+      dockerfile: tests/test.Dockerfile
+      target: ring
+    depends_on:
+      - test-db
+    volumes:
+      - ./ring:/src/ring
+    profiles: ["test"]
+    environment:
+      - PYTHONPATH=.
+      - JWT_SIGNING_KEY=secret
+      - JWT_SIGNING_ALGORITHM=HS256
+      - sqlalchemy_database_uri=postgresql://ring:ring@test-db:5432/ring_test
+      - environment=test
+    networks:
+      - default
+
+networks:
+  default:
+    name: ring-network
+    external: true

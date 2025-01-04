@@ -5,31 +5,32 @@ from typing import TYPE_CHECKING, Optional, TypeVar
 from fastapi import HTTPException
 from sqlalchemy.exc import NoResultFound
 
-from ring.sqlalchemy_base import Base
+from ring.api_identifier.api_identified_model import APIIdentified
 
 if TYPE_CHECKING:
     from sqlalchemy.orm import Session
 
-APIIdentifiedType = TypeVar("APIIdentifiedType")
-
 
 class APIIdentifierException(HTTPException):
-    def __init__(self, model_cls: type[Base], message: Optional[str] = None):
+    def __init__(
+        self, model_cls: type[APIIdentified], message: Optional[str] = None
+    ):
         super().__init__(404, detail=message)
         self.model_cls = model_cls
 
 
 class IDNotFoundException(APIIdentifierException):
-    def __init__(self, model_cls: type[Base], api_id: str):
+    def __init__(self, model_cls: type[APIIdentified], api_ids: list[str]):
+        self.api_ids = api_ids
         super().__init__(
             model_cls,
-            f'Could not resolve "{api_id}" for model class {model_cls}',
+            f'Could not resolve "{",".join(api_ids)}" for model class {model_cls.__name__}',
         )
 
 
 def get_model(
-    db: Session, model_cls: type[APIIdentifiedType], api_id: str
-) -> APIIdentifiedType:
+    db: Session, model_cls: type[APIIdentified], api_id: str
+) -> APIIdentified:
     try:
         return (
             db.query(model_cls)
@@ -37,17 +38,23 @@ def get_model(
             .one()
         )
     except NoResultFound:
-        raise IDNotFoundException(model_cls, api_id)
+        raise IDNotFoundException(model_cls, [api_id])
 
 
 def get_models(
-    db: Session, model_cls: type[APIIdentifiedType], api_ids: list[str]
-) -> list[APIIdentifiedType]:
+    db: Session, model_cls: type[APIIdentified], api_ids: list[str]
+) -> list[APIIdentified]:
     try:
-        return (
+        models = (
             db.query(model_cls)
             .filter(model_cls.api_identifier.in_(api_ids))
             .all()
         )
+        if len(models) == len(api_ids):
+            return models
+        missing_api_ids = set(api_ids) - {
+            model.api_identifier for model in models
+        }
+        raise IDNotFoundException(model_cls, list(missing_api_ids))
     except NoResultFound:
         raise IDNotFoundException(model_cls, api_ids)

@@ -10,7 +10,7 @@ from typing import Any, Callable
 import click
 
 ROOT_DIR = Path(
-    Path(os.environ.get("ROOT_DIR")).resolve()
+    Path(os.environ.get("ROOT_DIR")).resolve()  # type: ignore
     if os.environ.get("ROOT_DIR")
     else Path(__file__).resolve().parents[1],  # type: ignore
 )
@@ -72,21 +72,30 @@ def cmd_run(
     name: str,
     group: click.Group,
     cwd: Path | None = ROOT_DIR,
-) -> Callable[[Callable[..., list[str]]], click.Command]:
-    def decorator(f: Callable[..., list[str]]) -> click.Command:
+) -> Callable[[Callable[..., list[str] | list[list[str]]]], click.Command]:
+    def decorator(
+        f: Callable[..., list[str] | list[list[str]]],
+    ) -> click.Command:
         @group.command(name=name, context_settings=UNLIMITED_ARGS_SETTINGS)
         @click.pass_context
         @functools.wraps(f)
         def inner(ctx: click.Context, *args: Any, **kwargs: Any) -> None:
-            cmd_string = f(*args, **kwargs)
-            additional_args = ctx.args
+            cmd_string_s = f(ctx, *args, **kwargs)
+            if isinstance(cmd_string_s[0], str):
+                cmd_strings = [cmd_string_s]
+            else:
+                cmd_strings = cmd_string_s  # type: ignore
             try:
-                subprocess_run(
-                    cmd_string + additional_args,
-                    cwd=cwd,
-                )
-            except subprocess.CalledProcessError:
-                pass
+                [
+                    subprocess_run(
+                        cmd_string,  # type: ignore
+                        cwd=cwd,
+                    )
+                    for cmd_string in cmd_strings
+                ]
+            except subprocess.CalledProcessError as e:
+                print(e)
+                exit(1)
 
         return inner
 
@@ -99,6 +108,8 @@ from .docker import *  # noqa
 from .run import *  # noqa
 from .frontend import *  # noqa
 from .setup import *  # noqa
+from .test import *  # noqa
+from .check import *  # noqa
 
 if __name__ == "__main__":
     dev()

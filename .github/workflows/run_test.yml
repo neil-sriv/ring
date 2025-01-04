@@ -1,0 +1,38 @@
+name: Run Unit Tests via pytest
+
+on: [push]
+
+jobs:
+  build:
+    name: pytest
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ["3.12"]
+    
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Install uv
+      uses: astral-sh/setup-uv@v4
+    
+    - name: Sync uv
+      run: |
+        uv sync --all-extras
+        source .venv/bin/activate
+    
+    - name: Install project
+      run: uv pip install -e .
+    
+    - name: Docker set-up
+      run: |
+        docker login ghcr.io -u neil-sriv -p ${{ secrets.GITHUB_TOKEN }}
+        docker pull ghcr.io/neil-sriv/ring/ring-test-runner:latest
+        docker tag ghcr.io/neil-sriv/ring/ring-test-runner:latest ring-test-runner:latest
+        docker rmi ghcr.io/neil-sriv/ring/ring-test-runner:latest
+        uv run ring compose any --profile test pull test-db
+        docker network create ring-network
+
+    - name: Run tests
+      run: uv run ring test run
+    

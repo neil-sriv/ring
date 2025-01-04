@@ -15,6 +15,10 @@ services:
   nginx:
     volumes:
       - ./dev.nginx.conf:/etc/nginx/conf.d/default.conf:ro
+      - ./localhost.crt:/etc/nginx/certs/nginx-selfsigned.crt:ro
+      - ./localhost.key:/etc/nginx/certs/nginx-selfsigned.key:ro
+      - ./webmanifest.json:/usr/share/nginx/html/manifest.webmanifest:ro
+      - ./serviceWorker.js:/usr/share/nginx/html/serviceWorker.js:ro
 
   worker:
     command: "watchmedo auto-restart --directory=./ --pattern=*.py --recursive -- celery --app=ring.worker.celery_app worker --loglevel=debug"
@@ -46,6 +50,8 @@ services:
     profiles: ["dev"]
     networks:
       - default
+    
+
 
 networks:
   default:

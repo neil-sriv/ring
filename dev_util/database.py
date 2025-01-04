@@ -1,4 +1,5 @@
 import os
+from typing import Any
 
 import click
 
@@ -18,22 +19,39 @@ def db(ctx: click.Context) -> None:
 
 
 @cmd_run("pgcli", db)
-def db_pgcli() -> list[str]:
+def db_pgcli(
+    ctx: click.Context,
+    *args: list[Any],
+    **kwargs: dict[Any, Any],
+) -> list[str]:
     os.getenv("")
     return ["pgcli", LOCAL_POSTGRES_URI]
 
 
 @compose_exec("upgrade", db, "api", "ring")
-def db_upgrade() -> list[str]:
+def db_upgrade(
+    ctx: click.Context,
+    *args: list[Any],
+    **kwargs: dict[Any, Any],
+) -> list[str]:
     return ["alembic", "upgrade", "head"]
 
 
 @compose_exec("generate", db, "api", "ring")
 @click.argument("message")
-def db_generate(message: str) -> list[str]:
+def db_generate(
+    ctx: click.Context,
+    message: str,
+    *args: list[Any],
+    **kwargs: dict[Any, Any],
+) -> list[str]:
     return ["alembic", "revision", "--autogenerate", "-m", message]
 
 
 @compose_exec("alembic", db, "api", "ring")
-def db_alembic() -> list[str]:
+def db_alembic(
+    ctx: click.Context,
+    *args: list[Any],
+    **kwargs: dict[Any, Any],
+) -> list[str]:
     return ["alembic"]

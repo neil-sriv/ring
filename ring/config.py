@@ -7,7 +7,7 @@ from pydantic_settings import BaseSettings
 
 
 def parse_cors(origins: str) -> list[str]:
-    return [origin.strip() for origin in origins.split(",")] if origins else []
+    return [origin.strip() for origin in origins.split(" ")] if origins else []
 
 
 class RingConfig(BaseSettings):
