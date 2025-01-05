@@ -17,7 +17,6 @@ jobs:
       env:
         VITE_API_URL: https://ring.neilsriv.tech
       run: |
-        docker login ghcr.io -u neil-sriv -p ${{ secrets.GITHUB_TOKEN }}
         docker compose -f compose.core.yml -f compose.prod.yml --profile prod build frontend
 
     # - name: Run tests
