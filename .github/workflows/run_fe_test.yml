@@ -1,0 +1,22 @@
+name: Run Unit Tests for frontend
+
+on: [push]
+
+jobs:
+  build:
+    name: fe-test
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: build frontend docker version
+      env:
+        VITE_API_URL: https://ring.neilsriv.tech
+      run: |
+        docker login ghcr.io -u neil-sriv -p ${{ secrets.GITHUB_TOKEN }}
+        docker compose -f compose.core.yml -f compose.prod.yml --profile prod build
+
+    # - name: Run tests
+    #   run: uv run ring test run
+    
