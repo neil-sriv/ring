@@ -10,6 +10,9 @@ jobs:
     steps:
     - uses: actions/checkout@v4
 
+    - name: env
+      run: touch /home/runner/work/ring/ring/.env
+
     - name: build frontend docker version
       env:
         VITE_API_URL: https://ring.neilsriv.tech
