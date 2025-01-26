@@ -1,11 +1,16 @@
 from __future__ import annotations
 
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict, field_validator
 
 
 class UserBase(BaseModel):
     email: str
     name: str
+
+    @field_validator("email", mode="before")
+    @classmethod
+    def validate_email(cls, email: str) -> str:
+        return email.lower()
 
 
 class UserCreate(UserBase):

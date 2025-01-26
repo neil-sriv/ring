@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Optional, TypeVar
+from typing import TYPE_CHECKING, Optional, Sequence, TypeVar
 
 from fastapi import HTTPException
 from sqlalchemy.exc import NoResultFound
@@ -28,9 +28,10 @@ class IDNotFoundException(APIIdentifierException):
         )
 
 
-def get_model(
-    db: Session, model_cls: type[APIIdentified], api_id: str
-) -> APIIdentified:
+API_CLS = TypeVar("API_CLS", bound=APIIdentified)
+
+
+def get_model(db: Session, model_cls: type[API_CLS], api_id: str) -> API_CLS:
     try:
         return (
             db.query(model_cls)
@@ -42,8 +43,8 @@ def get_model(
 
 
 def get_models(
-    db: Session, model_cls: type[APIIdentified], api_ids: list[str]
-) -> list[APIIdentified]:
+    db: Session, model_cls: type[API_CLS], api_ids: list[str]
+) -> Sequence[API_CLS]:
     try:
         models = (
             db.query(model_cls)

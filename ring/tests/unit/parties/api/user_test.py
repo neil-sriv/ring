@@ -202,6 +202,31 @@ class TestUserAPI:
         assert resp.status_code == 400
         assert resp.json()["detail"] == "Email already registered"
 
+    def test_register_email_case_insensitive(
+        self,
+        unauthenticated_client: TestClient,
+        faker: Faker,
+        db_session: Session,
+    ) -> None:
+        invite = InviteFactory.create(email="invite_email")
+        db_session.commit()
+
+        input = {
+            "email": "INVITE_EMAIL",
+            "name": faker.name(),
+            "password": faker.password(),
+        }
+        resp = unauthenticated_client.post(
+            f"/parties/register/{invite.one_time_token.token}", json=input
+        )
+
+        assert resp.status_code == 200
+        data = resp.json()
+        assert data == data | {
+            "email": "invite_email",
+            "name": input["name"],
+        }
+
     def test_read_users(
         self,
         authenticated_client: TestClient,
