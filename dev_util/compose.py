@@ -84,7 +84,6 @@ def compose_exec(
         )
         @functools.wraps(f)
         def inner(
-            ctx: click.Context,
             service: str,
             directory: str,
             *args: Any,
