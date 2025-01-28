@@ -15,9 +15,14 @@ import {
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { type SubmitHandler, useForm } from "react-hook-form";
 
-import { type ApiError, type LetterCreate, LettersService } from "../../client";
+import { AddNextLetterLettersLetterPostError } from "../../client";
 import useCustomToast from "../../hooks/useCustomToast";
 import { toISOLocal } from "../../util/misc";
+import {
+  addNextLetterLettersLetterPostMutation,
+  listLettersLettersLettersGetQueryKey,
+} from "../../client/@tanstack/react-query.gen";
+import { AxiosError } from "axios";
 
 type LetterFormProps = {
   sendAt: Date | string;
@@ -52,32 +57,33 @@ const AddLetter = ({ isOpen, onClose, groupApiId }: AddLetterProps) => {
   });
 
   const mutation = useMutation({
-    mutationFn: (data: LetterCreate) =>
-      LettersService.addNextLetterLettersLetterPost({
-        requestBody: {
-          group_api_identifier: data.group_api_identifier,
-          send_at: data.send_at,
-        },
-      }),
+    ...addNextLetterLettersLetterPostMutation(),
     onSuccess: () => {
       showToast("Success!", "Next letter created successfully.", "success");
       reset();
       onClose();
     },
-    onError: (err: ApiError) => {
-      const errDetail = (err.body as any)?.detail;
+    onError: (err: AxiosError<AddNextLetterLettersLetterPostError>) => {
+      const errDetail =
+        err.response?.data.detail || "no error detail, please contact support";
       showToast("Something went wrong.", `${errDetail}`, "error");
     },
     onSettled: () => {
-      queryClient.invalidateQueries({ queryKey: ["loops", groupApiId] });
+      queryClient.invalidateQueries({
+        queryKey: listLettersLettersLettersGetQueryKey({
+          query: { group_api_id: groupApiId },
+        }),
+      });
     },
   });
 
   const onSubmit: SubmitHandler<LetterFormProps> = (data) => {
     mutation.mutate({
-      group_api_identifier: groupApiId,
-      send_at:
-        data.sendAt instanceof Date ? toISOLocal(data.sendAt) : data.sendAt,
+      body: {
+        group_api_identifier: groupApiId,
+        send_at:
+          data.sendAt instanceof Date ? toISOLocal(data.sendAt) : data.sendAt,
+      },
     });
   };
 

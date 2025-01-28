@@ -7,6 +7,7 @@ from sqlalchemy import select
 from ring.api_identifier import util as api_identifier_crud
 from ring.email_util import CHARSET, EmailDraft, send_email
 from ring.parties.crud.one_time_token import generate_token, validate_token
+from ring.parties.crud.user import get_user_by_email
 from ring.parties.models.group_model import Group
 from ring.parties.models.invite_model import Invite
 from ring.parties.models.one_time_token_model import OneTimeToken, TokenType
@@ -71,7 +72,8 @@ def invite_users(
     invites: list[Invite] = []
     for email in emails:
         existing_invite = get_invite_by_email(db, email)
-        if existing_invite:
+        existing_user = get_user_by_email(db, email)
+        if existing_invite or existing_user:
             continue
         invite = create_invite(db, email, inviter, group)
         invites.append(invite)

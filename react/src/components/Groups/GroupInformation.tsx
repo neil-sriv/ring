@@ -15,20 +15,28 @@ import { useState } from "react";
 import { type SubmitHandler, useForm } from "react-hook-form";
 
 import {
-  type ApiError,
   GroupLinked,
   GroupUpdate,
-  PartiesService,
+  UpdateGroupPartiesGroupGroupApiIdPatchError,
 } from "../../client";
 import useCustomToast from "../../hooks/useCustomToast";
 import { useRouter } from "@tanstack/react-router";
+import {
+  readGroupPartiesGroupGroupApiIdGetQueryKey,
+  updateGroupPartiesGroupGroupApiIdPatchMutation,
+} from "../../client/@tanstack/react-query.gen";
+import { AxiosError } from "axios";
 
 function GroupInformation({ groupId }: { groupId: string }) {
   const queryClient = useQueryClient();
   const color = useColorModeValue("inherit", "ui.light");
   const showToast = useCustomToast();
   const [editMode, setEditMode] = useState(false);
-  const group = queryClient.getQueryData<GroupLinked>(["group", groupId]);
+  const group = queryClient.getQueryData<GroupLinked>(
+    readGroupPartiesGroupGroupApiIdGetQueryKey({
+      path: { group_api_id: groupId },
+    })
+  );
   if (group === undefined) {
     return null;
   }
@@ -51,27 +59,31 @@ function GroupInformation({ groupId }: { groupId: string }) {
   };
 
   const mutation = useMutation({
-    mutationFn: (data: GroupUpdate) =>
-      PartiesService.updateGroupPartiesGroupGroupApiIdPatch({
-        groupApiId: groupId,
-        requestBody: data,
-      }),
+    ...updateGroupPartiesGroupGroupApiIdPatchMutation(),
     onSuccess: () => {
       showToast("Success!", "Group updated successfully.", "success");
+      reset();
     },
-    onError: (err: ApiError) => {
-      const errDetail = (err.body as any)?.detail;
+    onError: (err: AxiosError<UpdateGroupPartiesGroupGroupApiIdPatchError>) => {
+      const errDetail =
+        err.response?.data.detail || "no error detail, please contact support";
       showToast("Something went wrong.", `${errDetail}`, "error");
     },
     onSettled: async () => {
-      queryClient.invalidateQueries({ queryKey: ["group", groupId] });
+      queryClient.invalidateQueries({
+        queryKey: readGroupPartiesGroupGroupApiIdGetQueryKey({
+          path: { group_api_id: groupId },
+        }),
+      });
       router.invalidate();
-      await queryClient.refetchQueries({ queryKey: ["group", groupId] });
     },
   });
 
   const onSubmit: SubmitHandler<GroupUpdate> = async (data) => {
-    mutation.mutate(data);
+    mutation.mutate({
+      body: data,
+      path: { group_api_id: group.api_identifier },
+    });
   };
 
   const onCancel = () => {

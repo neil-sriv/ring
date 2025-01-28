@@ -14,6 +14,7 @@ from ring.parties.crud.one_time_token import (
     TokenAlreadyUsedError,
     TokenExpiredError,
 )
+from ring.parties.crud.user import get_user_by_email
 from ring.parties.models.group_model import Group
 from ring.parties.models.invite_model import Invite
 from ring.parties.models.user_model import User
@@ -38,6 +39,9 @@ async def create_invite(
     )
     if existing_unexpired_invite:
         raise HTTPException(status_code=400, detail="Email already invited")
+    existing_user = get_user_by_email(req_dep.db, email=invite.email)
+    if existing_user:
+        raise HTTPException(status_code=400, detail="Email already registered")
     db_group = api_identifier_crud.get_model(
         req_dep.db, Group, api_id=invite.group_api_id
     )

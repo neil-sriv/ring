@@ -20,26 +20,31 @@ import {
   useForm,
 } from "react-hook-form";
 
-import {
-  type ApiError,
-  GroupLinked,
-  PartiesService,
-  ReplaceDefaultQuestions,
-} from "../../client";
+import { GroupLinked } from "../../client";
+import { ReplaceGroupDefaultQuestionsPartiesGroupGroupApiIdReplaceDefaultQuestionsPostError } from "../../client/types.gen";
 import useCustomToast from "../../hooks/useCustomToast";
 import { useRouter } from "@tanstack/react-router";
 import { FiPlus } from "react-icons/fi";
+import {
+  readGroupPartiesGroupGroupApiIdGetQueryKey,
+  replaceGroupDefaultQuestionsPartiesGroupGroupApiIdReplaceDefaultQuestionsPostMutation,
+} from "../../client/@tanstack/react-query.gen";
+import { AxiosError } from "axios";
 
 type QuestionField = {
   question_text: string;
 };
 
-function GroupInformation({ groupId }: { groupId: string }) {
+function GroupLoopSettings({ groupId }: { groupId: string }) {
   const queryClient = useQueryClient();
   const color = useColorModeValue("inherit", "ui.light");
   const showToast = useCustomToast();
   const [editMode, setEditMode] = useState(false);
-  const group = queryClient.getQueryData<GroupLinked>(["group", groupId]);
+  const group = queryClient.getQueryData<GroupLinked>(
+    readGroupPartiesGroupGroupApiIdGetQueryKey({
+      path: { group_api_id: groupId },
+    })
+  );
 
   if (group === undefined) {
     return null;
@@ -77,25 +82,30 @@ function GroupInformation({ groupId }: { groupId: string }) {
   };
 
   const mutation = useMutation({
-    mutationFn: (data: ReplaceDefaultQuestions) =>
-      PartiesService.replaceGroupDefaultQuestionsPartiesGroupGroupApiIdReplaceDefaultQuestionsPost(
-        {
-          groupApiId: groupId,
-          requestBody: data,
-        }
-      ),
+    ...replaceGroupDefaultQuestionsPartiesGroupGroupApiIdReplaceDefaultQuestionsPostMutation(),
     onSuccess: () => {
       showToast("Success!", "Loop settings updated successfully.", "success");
+      reset();
     },
-    onError: (err: ApiError) => {
-      const errDetail = (err.body as any)?.detail;
+    onError: (
+      err: AxiosError<ReplaceGroupDefaultQuestionsPartiesGroupGroupApiIdReplaceDefaultQuestionsPostError>
+    ) => {
+      const errDetail =
+        err.response?.data.detail || "no error detail, please contact support";
       showToast("Something went wrong.", `${errDetail}`, "error");
     },
-    onSettled: async (group) => {
-      queryClient.invalidateQueries({ queryKey: ["group", groupId] });
+    onSettled: async () => {
+      queryClient.invalidateQueries({
+        queryKey: readGroupPartiesGroupGroupApiIdGetQueryKey({
+          path: { group_api_id: groupId },
+        }),
+      });
       router.invalidate();
-      await queryClient.refetchQueries({ queryKey: ["group", groupId] });
-      reset({ questions: group?.default_questions });
+      await queryClient.refetchQueries({
+        queryKey: readGroupPartiesGroupGroupApiIdGetQueryKey({
+          path: { group_api_id: groupId },
+        }),
+      });
     },
   });
 
@@ -103,7 +113,10 @@ function GroupInformation({ groupId }: { groupId: string }) {
     data
   ) => {
     mutation.mutate({
-      questions: data.questions.map((question) => question.question_text),
+      body: {
+        questions: data.questions.map((question) => question.question_text),
+      },
+      path: { group_api_id: groupId },
     });
   };
 
@@ -219,4 +232,4 @@ function GroupInformation({ groupId }: { groupId: string }) {
   );
 }
 
-export default GroupInformation;
+export default GroupLoopSettings;

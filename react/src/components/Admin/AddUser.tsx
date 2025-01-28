@@ -17,10 +17,14 @@ import {
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { type SubmitHandler, useForm } from "react-hook-form";
 
-import { type UserCreate, PartiesService } from "../../client";
-import type { ApiError } from "../../client/core/ApiError";
+import { CreateUserPartiesUserPostError, type UserCreate } from "../../client";
 import useCustomToast from "../../hooks/useCustomToast";
 import { emailPattern } from "../../util/misc";
+import {
+  createUserPartiesUserPostMutation,
+  readUsersPartiesUsersGetQueryKey,
+} from "../../client/@tanstack/react-query.gen";
+import { AxiosError } from "axios";
 
 interface AddUserProps {
   isOpen: boolean;
@@ -54,24 +58,29 @@ const AddUser = ({ isOpen, onClose }: AddUserProps) => {
   });
 
   const mutation = useMutation({
-    mutationFn: (data: UserCreate) =>
-      PartiesService.createUserPartiesUserPost({ requestBody: data }),
+    ...createUserPartiesUserPostMutation(),
     onSuccess: () => {
       showToast("Success!", "User created successfully.", "success");
       reset();
       onClose();
     },
-    onError: (err: ApiError) => {
-      const errDetail = (err.body as any)?.detail;
+    onError: (error: AxiosError<CreateUserPartiesUserPostError>) => {
+      const errDetail =
+        error.response?.data.detail ||
+        "no error detail, please contact support";
       showToast("Something went wrong.", `${errDetail}`, "error");
     },
     onSettled: () => {
-      queryClient.invalidateQueries({ queryKey: ["users"] });
+      queryClient.invalidateQueries({
+        queryKey: readUsersPartiesUsersGetQueryKey(),
+      });
     },
   });
 
   const onSubmit: SubmitHandler<UserCreateForm> = (data) => {
-    mutation.mutate(data);
+    mutation.mutate({
+      body: data,
+    });
   };
 
   return (

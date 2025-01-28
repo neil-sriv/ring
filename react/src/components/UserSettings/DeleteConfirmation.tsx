@@ -11,9 +11,10 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import React from "react";
 import { useForm } from "react-hook-form";
 
-import { type ApiError, PartiesService } from "../../client";
+import { deleteUserPartiesUserIdDelete } from "../../client";
 import useAuth from "../../hooks/useAuth";
 import useCustomToast from "../../hooks/useCustomToast";
+import { readUserMePartiesMeGetQueryKey } from "../../client/@tanstack/react-query.gen";
 
 interface DeleteProps {
   isOpen: boolean;
@@ -28,11 +29,10 @@ const DeleteConfirmation = ({ isOpen, onClose }: DeleteProps) => {
     handleSubmit,
     formState: { isSubmitting },
   } = useForm();
-  // const currentUser = queryClient.getQueryData<UserLinked>(["currentUser"]);
   const { logout } = useAuth();
 
   const mutation = useMutation({
-    mutationFn: () => PartiesService.deleteUserPartiesUserIdDelete(),
+    mutationFn: () => deleteUserPartiesUserIdDelete(),
     onSuccess: () => {
       showToast(
         "Success",
@@ -40,19 +40,22 @@ const DeleteConfirmation = ({ isOpen, onClose }: DeleteProps) => {
         "success"
       );
       logout();
+      queryClient.clear();
       onClose();
     },
-    onError: (err: ApiError) => {
-      const errDetail = (err.body as any)?.detail;
+    onError: (err: Error) => {
+      const errDetail =
+        err.message || "no error detail, please contact support";
       showToast("Something went wrong.", `${errDetail}`, "error");
     },
     onSettled: () => {
-      queryClient.invalidateQueries({ queryKey: ["currentUser"] });
+      queryClient.invalidateQueries({
+        queryKey: readUserMePartiesMeGetQueryKey(),
+      });
     },
   });
 
   const onSubmit = async () => {
-    // mutation.mutate(currentUser!.api_identifier);
     mutation.mutate();
   };
 

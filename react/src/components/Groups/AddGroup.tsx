@@ -16,12 +16,17 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { type SubmitHandler, useForm } from "react-hook-form";
 
 import {
-  type ApiError,
+  CreateGroupPartiesGroupPostError,
   type GroupCreate,
-  PartiesService,
   UserLinked,
 } from "../../client";
 import useCustomToast from "../../hooks/useCustomToast";
+import {
+  createGroupPartiesGroupPostMutation,
+  listGroupsPartiesGroupsGetQueryKey,
+  readUserMePartiesMeGetQueryKey,
+} from "../../client/@tanstack/react-query.gen";
+import { AxiosError } from "axios";
 
 interface AddGroupProps {
   isOpen: boolean;
@@ -30,7 +35,9 @@ interface AddGroupProps {
 
 const AddGroup = ({ isOpen, onClose }: AddGroupProps) => {
   const queryClient = useQueryClient();
-  const currentUser = queryClient.getQueryData<UserLinked>(["currentUser"]);
+  const currentUser = queryClient.getQueryData<UserLinked>(
+    readUserMePartiesMeGetQueryKey()
+  );
   const showToast = useCustomToast();
   const {
     register,
@@ -46,29 +53,35 @@ const AddGroup = ({ isOpen, onClose }: AddGroupProps) => {
   });
 
   const mutation = useMutation({
-    mutationFn: (data: GroupCreate) =>
-      PartiesService.createGroupPartiesGroupPost({
-        requestBody: {
-          admin_api_identifier: currentUser!.api_identifier,
-          name: data.name,
-        },
-      }),
+    ...createGroupPartiesGroupPostMutation(),
     onSuccess: () => {
       showToast("Success!", "Group created successfully.", "success");
       reset();
       onClose();
     },
-    onError: (err: ApiError) => {
-      const errDetail = (err.body as any)?.detail;
+    onError: (err: AxiosError<CreateGroupPartiesGroupPostError>) => {
+      const errDetail =
+        err.response?.data.detail || "no error detail, please contact support";
       showToast("Something went wrong.", `${errDetail}`, "error");
     },
-    onSettled: () => {
-      queryClient.invalidateQueries({ queryKey: ["groups"] });
+    onSettled: (data) => {
+      if (data) {
+        queryClient.invalidateQueries({
+          queryKey: listGroupsPartiesGroupsGetQueryKey({
+            query: { user_api_id: currentUser!.api_identifier },
+          }),
+        });
+      }
     },
   });
 
   const onSubmit: SubmitHandler<GroupCreate> = (data) => {
-    mutation.mutate(data);
+    mutation.mutate({
+      body: {
+        admin_api_identifier: currentUser!.api_identifier,
+        name: data.name,
+      },
+    });
   };
 
   return (

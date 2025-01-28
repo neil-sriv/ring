@@ -1,9 +1,12 @@
 from __future__ import annotations
 
-from datetime import UTC, datetime
+import itertools
+from collections import defaultdict
+from datetime import UTC, datetime, timedelta
 from typing import Sequence
 
 from fastapi import APIRouter, Depends
+from sqlalchemy import ColumnElement, and_, or_
 
 from ring.api_identifier import (
     util as api_identifier_crud,
@@ -21,6 +24,7 @@ from ring.letters.schemas.question import QuestionCreate
 from ring.letters.schemas.response import ResponseUnlinked
 from ring.parties.models.user_model import User
 from ring.ring_pydantic import PublicLetter as LetterSchema
+from ring.ring_pydantic.linked_schemas import DashboardLetters
 
 router = APIRouter()
 
@@ -80,6 +84,37 @@ async def read_letter(
         api_id=letter_api_id,
     )
     return db_letter
+
+
+@router.get("/letters:dashboard", response_model=DashboardLetters)
+async def list_dashboard_letters(
+    req_dep: AuthenticatedRequestDependencies = Depends(
+        get_request_dependencies,
+    ),
+) -> dict[str, list[Letter]]:
+    time = datetime.now(tz=UTC) - timedelta(days=8)
+    filters: list[ColumnElement[bool]] = [
+        or_(
+            Letter.status.in_(
+                [LetterStatus.UPCOMING, LetterStatus.IN_PROGRESS]
+            ),
+            and_(
+                Letter.status == LetterStatus.SENT,
+                Letter.send_at > time,
+            ),
+        )
+    ]
+    letters = letter_crud.get_letters_for_user(
+        req_dep.db, req_dep.current_user, filters=filters
+    )
+    grouped_letters: dict[str, list[Letter]] = defaultdict(list)
+    for k, g in itertools.groupby(letters, key=lambda letter: letter.status):
+        grouped_letters[k].extend(g)
+    return {
+        "upcoming": grouped_letters.get(LetterStatus.UPCOMING, []),
+        "in_progress": grouped_letters.get(LetterStatus.IN_PROGRESS, []),
+        "recently_completed": grouped_letters.get(LetterStatus.SENT, []),
+    }
 
 
 @router.post(

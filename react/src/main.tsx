@@ -9,13 +9,28 @@ import ReactDOM from "react-dom/client";
 import { routeTree } from "./routeTree.gen";
 
 import { StrictMode } from "react";
-import { OpenAPI, PartiesService, UserLinked } from "./client";
 import theme from "./theme";
 
-OpenAPI.BASE = import.meta.env.VITE_API_URL + OpenAPI.BASE;
-OpenAPI.TOKEN = async () => {
-  return localStorage.getItem("access_token") || "";
-};
+import { client } from "./client/client.gen";
+import { readUserMePartiesMeGetOptions } from "./client/@tanstack/react-query.gen";
+
+client.setConfig({
+  baseURL: import.meta.env.VITE_API_URL + "/api/v1",
+  auth: async () => {
+    return localStorage.getItem("access_token") || "";
+  },
+});
+
+client.instance.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    if (error.response?.status === 401) {
+      localStorage.removeItem("access_token");
+      window.location.href = "/login";
+    }
+    return Promise.reject(error);
+  }
+);
 
 const queryClient = new QueryClient();
 
@@ -30,15 +45,14 @@ declare module "@tanstack/react-router" {
 }
 
 function App() {
-  const resp = useQuery<UserLinked | null, Error>({
-    queryKey: ["currentUser"],
-    queryFn: PartiesService.readUserMePartiesMeGet,
+  const resp = useQuery({
+    ...readUserMePartiesMeGetOptions({}),
     retry: false,
     refetchInterval: 5000,
     enabled: localStorage.getItem("access_token") !== null,
   });
 
-  return resp.isLoading && !resp.isError && false ? null : (
+  return (
     <RouterProvider
       router={router}
       context={{

@@ -3,17 +3,15 @@ import { Outlet, createFileRoute } from "@tanstack/react-router";
 
 import Sidebar from "../components/Common/Sidebar";
 import UserMenu from "../components/Common/UserMenu";
-import { PartiesService } from "../client/services";
+import { readUserMePartiesMeGetOptions } from "../client/@tanstack/react-query.gen";
 
 export const Route = createFileRoute("/_layout")({
   component: Layout,
   beforeLoad: async ({ context }): Promise<void> => {
-    await context.queryClient.ensureQueryData({
-      queryKey: ["currentUser"],
-      queryFn: async () => {
-        return await PartiesService.readUserMePartiesMeGet();
-      },
+    const user = await context.queryClient.ensureQueryData({
+      ...readUserMePartiesMeGetOptions(),
     });
+    context.auth.user = user;
   },
 });
 

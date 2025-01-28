@@ -1295,6 +1295,32 @@
         }
       }
     },
+    "/letters/letters:dashboard": {
+      "get": {
+        "tags": [
+          "letters"
+        ],
+        "summary": "List Dashboard Letters",
+        "operationId": "list_dashboard_letters_letters_letters_dashboard_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DashboardLetters"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ]
+      }
+    },
     "/letters/letter/{letter_api_id}:edit_letter": {
       "post": {
         "tags": [
@@ -1973,6 +1999,38 @@
           "response_images"
         ],
         "title": "Body_upload_image_responses_response__response_api_id__upload_image_post"
+      },
+      "DashboardLetters": {
+        "properties": {
+          "upcoming": {
+            "items": {
+              "$ref": "#/components/schemas/PublicLetter"
+            },
+            "type": "array",
+            "title": "Upcoming"
+          },
+          "in_progress": {
+            "items": {
+              "$ref": "#/components/schemas/PublicLetter"
+            },
+            "type": "array",
+            "title": "In Progress"
+          },
+          "recently_completed": {
+            "items": {
+              "$ref": "#/components/schemas/PublicLetter"
+            },
+            "type": "array",
+            "title": "Recently Completed"
+          }
+        },
+        "type": "object",
+        "required": [
+          "upcoming",
+          "in_progress",
+          "recently_completed"
+        ],
+        "title": "DashboardLetters"
       },
       "GroupCreate": {
         "properties": {

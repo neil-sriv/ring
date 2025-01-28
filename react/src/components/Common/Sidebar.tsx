@@ -20,18 +20,23 @@ import Logo from "/assets/images/fastapi-logo.svg";
 import type { UserLinked } from "../../client";
 import useAuth from "../../hooks/useAuth";
 import SidebarItems from "./SidebarItems";
+import { Link } from "@tanstack/react-router";
+import { readUserMePartiesMeGetQueryKey } from "../../client/@tanstack/react-query.gen";
 
 const Sidebar = () => {
   const queryClient = useQueryClient();
   const bgColor = useColorModeValue("ui.light", "ui.dark");
   const textColor = useColorModeValue("ui.dark", "ui.light");
   const secBgColor = useColorModeValue("ui.secondary", "ui.darkSlate");
-  const currentUser = queryClient.getQueryData<UserLinked>(["currentUser"]);
+  const currentUser = queryClient.getQueryData<UserLinked>(
+    readUserMePartiesMeGetQueryKey()
+  );
   const { isOpen, onOpen, onClose } = useDisclosure();
   const { logout } = useAuth();
 
   const handleLogout = async () => {
     logout();
+    queryClient.clear();
   };
 
   return (
@@ -95,8 +100,8 @@ const Sidebar = () => {
         >
           <Box>
             {/* <Image src={Logo} alt="Logo" w="180px" maxW="2xs" p={6} /> */}
-            <Heading as="h1" size="lg" textAlign="center" p={2}>
-              Ring
+            <Heading size="lg" textAlign="center" p={2}>
+              <Link to="/">Ring</Link>
             </Heading>
             <SidebarItems />
           </Box>

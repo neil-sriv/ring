@@ -25,13 +25,6 @@ There are a few setup steps to get the project running locally.
 ring setup requirements
 ring setup local-ssl
 ```
-We'll need a `JWT_SIGNING_KEY` as well which can be generated with `openssl`
-```
-echo "JWT_SIGNING_KEY=$(openssl rand -hex 32)" >> .env
-```
-
-### `oh-my-zsh` set up
-**Highly** recommend to use `oh-my-zsh` with the `virtualenvwrapper` and `dotenv` plugins.
 
 
 Add a `.env` file with the following:

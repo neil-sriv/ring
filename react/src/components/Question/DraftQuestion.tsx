@@ -1,8 +1,9 @@
 import { Box, Heading, Textarea } from "@chakra-ui/react";
 import {
   PublicQuestion,
-  QuestionsService,
   ResponseWithParticipant,
+  uploadImageQuestionsQuestionQuestionApiIdUploadImagePost,
+  upsertResponseQuestionsQuestionQuestionApiIdUpsertResponsePost,
   UserLinked,
 } from "../../client";
 import { useState } from "react";
@@ -13,6 +14,10 @@ import {
   S3Video,
   SingleUploadImage,
 } from "../Common/SingleUploadImage";
+import {
+  readLetterLettersLetterLetterApiIdGetQueryKey,
+  readUserMePartiesMeGetQueryKey,
+} from "../../client/@tanstack/react-query.gen";
 
 type ResponseBlockProps = {
   uploadFunction: (file: File) => Promise<void>;
@@ -65,13 +70,17 @@ function ResponseBlock(props: ResponseBlockProps) {
 
 function DraftQuestion({
   question,
+  loopApiId,
   readOnly = false,
 }: {
   question: PublicQuestion;
+  loopApiId: string;
   readOnly?: boolean;
 }): JSX.Element {
   const queryClient = useQueryClient();
-  const currentUser = queryClient.getQueryData<UserLinked>(["currentUser"]);
+  const currentUser = queryClient.getQueryData<UserLinked>(
+    readUserMePartiesMeGetQueryKey()
+  );
   if (!currentUser) {
     return <Box>loading...</Box>;
   }
@@ -81,27 +90,27 @@ function DraftQuestion({
   );
 
   const handleUpsert = async (responseText: string) => {
-    await QuestionsService.upsertResponseQuestionsQuestionQuestionApiIdUpsertResponsePost(
-      {
-        questionApiId: question.api_identifier,
-        requestBody: {
-          response_text: responseText,
-          participant_api_identifier: currentUser.api_identifier,
-        },
-      }
-    );
+    await upsertResponseQuestionsQuestionQuestionApiIdUpsertResponsePost({
+      path: { question_api_id: question.api_identifier },
+      body: {
+        response_text: responseText,
+        participant_api_identifier: currentUser.api_identifier,
+      },
+    });
   };
 
   const newHandleUpload = async (file: File) => {
-    await QuestionsService.uploadImageQuestionsQuestionQuestionApiIdUploadImagePost(
-      {
-        questionApiId: question.api_identifier,
-        formData: {
-          response_image: file,
-        },
-      }
-    );
-    queryClient.invalidateQueries({ queryKey: ["loop"] });
+    await uploadImageQuestionsQuestionQuestionApiIdUploadImagePost({
+      path: { question_api_id: question.api_identifier },
+      body: {
+        response_image: file,
+      },
+    });
+    queryClient.invalidateQueries({
+      queryKey: readLetterLettersLetterLetterApiIdGetQueryKey({
+        path: { letter_api_id: loopApiId },
+      }),
+    });
   };
 
   return (

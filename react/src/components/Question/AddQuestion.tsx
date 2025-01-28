@@ -15,13 +15,17 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { type SubmitHandler, useForm } from "react-hook-form";
 
 import {
-  type ApiError,
-  LettersService,
-  QuestionCreate,
+  AddQuestionLettersLetterLetterApiIdAddQuestionPostError,
   UserLinked,
 } from "../../client";
 import useCustomToast from "../../hooks/useCustomToast";
 import { useRouter } from "@tanstack/react-router";
+import {
+  addQuestionLettersLetterLetterApiIdAddQuestionPostMutation,
+  readLetterLettersLetterLetterApiIdGetQueryKey,
+  readUserMePartiesMeGetQueryKey,
+} from "../../client/@tanstack/react-query.gen";
+import { AxiosError } from "axios";
 
 type QuestionFormProps = {
   questionText: string;
@@ -35,7 +39,9 @@ interface AddQuestionProps {
 
 const AddQuestion = ({ isOpen, onClose, loopApiId }: AddQuestionProps) => {
   const queryClient = useQueryClient();
-  const currentUser = queryClient.getQueryData<UserLinked>(["currentUser"]);
+  const currentUser = queryClient.getQueryData<UserLinked>(
+    readUserMePartiesMeGetQueryKey()
+  );
   const router = useRouter();
   const showToast = useCustomToast();
   const {
@@ -49,33 +55,36 @@ const AddQuestion = ({ isOpen, onClose, loopApiId }: AddQuestionProps) => {
   });
 
   const mutation = useMutation({
-    mutationFn: (data: QuestionCreate) =>
-      LettersService.addQuestionLettersLetterLetterApiIdAddQuestionPost({
-        letterApiId: loopApiId,
-        requestBody: {
-          question_text: data.question_text,
-          author_api_id: data.author_api_id,
-        },
-      }),
+    ...addQuestionLettersLetterLetterApiIdAddQuestionPostMutation(),
     onSuccess: () => {
       showToast("Success!", "New question created successfully.", "success");
       reset();
       onClose();
     },
-    onError: (err: ApiError) => {
-      const errDetail = (err.body as any)?.detail;
+    onError: (
+      err: AxiosError<AddQuestionLettersLetterLetterApiIdAddQuestionPostError>
+    ) => {
+      const errDetail =
+        err.response?.data.detail || "no error detail, please contact support";
       showToast("Something went wrong.", `${errDetail}`, "error");
     },
     onSettled: () => {
-      queryClient.invalidateQueries({ queryKey: ["loop", loopApiId] });
+      queryClient.invalidateQueries({
+        queryKey: readLetterLettersLetterLetterApiIdGetQueryKey({
+          path: { letter_api_id: loopApiId },
+        }),
+      });
       router.invalidate();
     },
   });
 
   const onSubmit: SubmitHandler<QuestionFormProps> = (data) => {
     mutation.mutate({
-      question_text: data.questionText,
-      author_api_id: currentUser!.api_identifier,
+      body: {
+        question_text: data.questionText,
+        author_api_id: currentUser!.api_identifier,
+      },
+      path: { letter_api_id: loopApiId },
     });
   };
 
