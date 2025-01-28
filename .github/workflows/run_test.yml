@@ -4,6 +4,20 @@ on: [push]
 
 jobs:
   build:
+    name: build python containers
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ["3.12"]
+    
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: build containers
+      run: |
+        docker compose -f compose.core.yml -f compose.prod.yml --profile prod build nginx api worker beat
+  
+  test:
     name: pytest
     runs-on: ubuntu-latest
     strategy:
