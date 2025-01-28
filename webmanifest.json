@@ -19,7 +19,7 @@
     }
   ],
   "scope": "/",
-  "start_url": "/",
+  "start_url": "/groups",
   "display": "standalone",
   "theme_color": "#000000",
   "background_color": "#ffffff"
