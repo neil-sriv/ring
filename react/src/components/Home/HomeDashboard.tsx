@@ -2,7 +2,6 @@ import { Box, Heading } from "@chakra-ui/react";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { LettersService } from "../../client";
 import { LoopsGrid } from "../../routes/_layout/groups_/$groupId/loops";
-// import { fetchPublishedIssues, fetchActionItems } from "../../api/issues";
 
 export function HomeDashboard() {
   const { data } = useSuspenseQuery({
@@ -16,7 +15,6 @@ export function HomeDashboard() {
       <Heading as="h1" mb={4}>
         Dashboard
       </Heading>
-      {/* <Container maxW="container.lg" py={4}> */}
       {data.recently_completed.length > 0 && (
         <LoopsGrid
           loops={data.recently_completed.sort((a, b) => a.number - b.number)}
@@ -41,7 +39,6 @@ export function HomeDashboard() {
           includeGroupName={true}
         />
       )}
-      {/* </Container> */}
     </Box>
   );
 }

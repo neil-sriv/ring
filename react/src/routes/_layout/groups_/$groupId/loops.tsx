@@ -66,7 +66,7 @@ type LoopCardProps = {
   includeGroupName?: boolean;
 };
 
-export function LoopCard(props: LoopCardProps): JSX.Element {
+function LoopCard(props: LoopCardProps): JSX.Element {
   const sendDate = new Date(props.loop.send_at);
   return (
     <LinkBox as="div">
