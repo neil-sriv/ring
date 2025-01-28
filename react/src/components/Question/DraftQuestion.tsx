@@ -14,6 +14,7 @@ import {
   S3Video,
   SingleUploadImage,
 } from "../Common/SingleUploadImage";
+import { readLetterLettersLetterLetterApiIdGetQueryKey } from "../../client/@tanstack/react-query.gen";
 
 type ResponseBlockProps = {
   uploadFunction: (file: File) => Promise<void>;
@@ -66,9 +67,11 @@ function ResponseBlock(props: ResponseBlockProps) {
 
 function DraftQuestion({
   question,
+  loopApiId,
   readOnly = false,
 }: {
   question: PublicQuestion;
+  loopApiId: string;
   readOnly?: boolean;
 }): JSX.Element {
   const queryClient = useQueryClient();
@@ -98,7 +101,11 @@ function DraftQuestion({
         response_image: file,
       },
     });
-    queryClient.invalidateQueries({ queryKey: ["loop"] });
+    queryClient.invalidateQueries({
+      queryKey: readLetterLettersLetterLetterApiIdGetQueryKey({
+        path: { letter_api_id: loopApiId },
+      }),
+    });
   };
 
   return (

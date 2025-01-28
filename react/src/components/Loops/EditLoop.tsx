@@ -21,7 +21,10 @@ import {
 } from "../../client";
 import useCustomToast from "../../hooks/useCustomToast";
 import { toISOLocal } from "../../util/misc";
-import { editLetterLettersLetterLetterApiIdEditLetterPostMutation } from "../../client/@tanstack/react-query.gen";
+import {
+  editLetterLettersLetterLetterApiIdEditLetterPostMutation,
+  readLetterLettersLetterLetterApiIdGetQueryKey,
+} from "../../client/@tanstack/react-query.gen";
 import { AxiosError } from "axios";
 
 type LetterFormProps = {
@@ -67,7 +70,9 @@ const EditLetter = ({ isOpen, onClose, loop }: EditLetterProps) => {
     },
     onSettled: () => {
       queryClient.invalidateQueries({
-        queryKey: ["loop", loop.api_identifier],
+        queryKey: readLetterLettersLetterLetterApiIdGetQueryKey({
+          path: { letter_api_id: loop.api_identifier },
+        }),
       });
     },
   });

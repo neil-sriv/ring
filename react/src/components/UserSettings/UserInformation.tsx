@@ -22,7 +22,10 @@ import {
 } from "../../client";
 import useCustomToast from "../../hooks/useCustomToast";
 import { emailPattern } from "../../util/misc";
-import { updateUserMePartiesMePatchMutation } from "../../client/@tanstack/react-query.gen";
+import {
+  readUsersPartiesUsersGetQueryKey,
+  updateUserMePartiesMePatchMutation,
+} from "../../client/@tanstack/react-query.gen";
 import { AxiosError } from "axios";
 
 const UserInformation = () => {
@@ -62,7 +65,9 @@ const UserInformation = () => {
     },
     onSettled: () => {
       // TODO: can we do just one call now?
-      queryClient.invalidateQueries({ queryKey: ["users"] });
+      queryClient.invalidateQueries({
+        queryKey: readUsersPartiesUsersGetQueryKey(),
+      });
       queryClient.invalidateQueries({ queryKey: ["currentUser"] });
     },
   });

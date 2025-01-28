@@ -20,7 +20,10 @@ import { type SubmitHandler, useForm } from "react-hook-form";
 import { CreateUserPartiesUserPostError, type UserCreate } from "../../client";
 import useCustomToast from "../../hooks/useCustomToast";
 import { emailPattern } from "../../util/misc";
-import { createUserPartiesUserPostMutation } from "../../client/@tanstack/react-query.gen";
+import {
+  createUserPartiesUserPostMutation,
+  readUsersPartiesUsersGetQueryKey,
+} from "../../client/@tanstack/react-query.gen";
 import { AxiosError } from "axios";
 
 interface AddUserProps {
@@ -68,7 +71,9 @@ const AddUser = ({ isOpen, onClose }: AddUserProps) => {
       showToast("Something went wrong.", `${errDetail}`, "error");
     },
     onSettled: () => {
-      queryClient.invalidateQueries({ queryKey: ["users"] });
+      queryClient.invalidateQueries({
+        queryKey: readUsersPartiesUsersGetQueryKey(),
+      });
     },
   });
 

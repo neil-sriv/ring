@@ -16,6 +16,7 @@ function DraftLoop({ loop }: { loop: PublicLetter }) {
               question={question}
               key={question.api_identifier}
               readOnly={loop.status === "UPCOMING"}
+              loopApiId={loop.api_identifier}
             />
           );
         })}

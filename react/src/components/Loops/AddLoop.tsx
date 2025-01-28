@@ -18,7 +18,10 @@ import { type SubmitHandler, useForm } from "react-hook-form";
 import { AddNextLetterLettersLetterPostError } from "../../client";
 import useCustomToast from "../../hooks/useCustomToast";
 import { toISOLocal } from "../../util/misc";
-import { addNextLetterLettersLetterPostMutation } from "../../client/@tanstack/react-query.gen";
+import {
+  addNextLetterLettersLetterPostMutation,
+  listLettersLettersLettersGetQueryKey,
+} from "../../client/@tanstack/react-query.gen";
 import { AxiosError } from "axios";
 
 type LetterFormProps = {
@@ -66,7 +69,11 @@ const AddLetter = ({ isOpen, onClose, groupApiId }: AddLetterProps) => {
       showToast("Something went wrong.", `${errDetail}`, "error");
     },
     onSettled: () => {
-      queryClient.invalidateQueries({ queryKey: ["loops", groupApiId] });
+      queryClient.invalidateQueries({
+        queryKey: listLettersLettersLettersGetQueryKey({
+          query: { group_api_id: groupApiId },
+        }),
+      });
     },
   });
 

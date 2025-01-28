@@ -20,7 +20,10 @@ import {
 } from "../../client";
 import useCustomToast from "../../hooks/useCustomToast";
 import { useRouter } from "@tanstack/react-router";
-import { addQuestionLettersLetterLetterApiIdAddQuestionPostMutation } from "../../client/@tanstack/react-query.gen";
+import {
+  addQuestionLettersLetterLetterApiIdAddQuestionPostMutation,
+  readLetterLettersLetterLetterApiIdGetQueryKey,
+} from "../../client/@tanstack/react-query.gen";
 import { AxiosError } from "axios";
 
 type QuestionFormProps = {
@@ -63,7 +66,11 @@ const AddQuestion = ({ isOpen, onClose, loopApiId }: AddQuestionProps) => {
       showToast("Something went wrong.", `${errDetail}`, "error");
     },
     onSettled: () => {
-      queryClient.invalidateQueries({ queryKey: ["loop", loopApiId] });
+      queryClient.invalidateQueries({
+        queryKey: readLetterLettersLetterLetterApiIdGetQueryKey({
+          path: { letter_api_id: loopApiId },
+        }),
+      });
       router.invalidate();
     },
   });

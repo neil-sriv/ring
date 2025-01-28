@@ -8,28 +8,19 @@ import {
   Tabs,
 } from "@chakra-ui/react";
 import { createFileRoute } from "@tanstack/react-router";
-import {
-  GroupLinked,
-  readGroupPartiesGroupGroupApiIdGet,
-  UserLinked,
-} from "../../../../client";
+import { GroupLinked, UserLinked } from "../../../../client";
 import GroupInformation from "../../../../components/Groups/GroupInformation";
 import GroupMembershipSettings from "../../../../components/Groups/GroupMembershipSettings";
 import GroupLoopSettings from "../../../../components/Groups/GroupLoopSettings";
+import { readGroupPartiesGroupGroupApiIdGetOptions } from "../../../../client/@tanstack/react-query.gen";
 
 export const Route = createFileRoute("/_layout/groups/$groupId/settings")({
   beforeLoad: async ({ context, params }): Promise<{ group?: GroupLinked }> => {
-    const { data: group } = await context.queryClient.ensureQueryData({
-      queryKey: ["group", params.groupId],
-      queryFn: async () => {
-        return await readGroupPartiesGroupGroupApiIdGet({
-          path: { group_api_id: params.groupId },
-        });
-      },
+    const group = await context.queryClient.ensureQueryData({
+      ...readGroupPartiesGroupGroupApiIdGetOptions({
+        path: { group_api_id: params.groupId },
+      }),
     });
-    if (!group) {
-      throw new Error("Failed to load group");
-    }
     const currentUser = context.queryClient.getQueryData<UserLinked>([
       "currentUser",
     ]);

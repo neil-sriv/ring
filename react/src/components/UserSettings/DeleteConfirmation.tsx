@@ -28,7 +28,6 @@ const DeleteConfirmation = ({ isOpen, onClose }: DeleteProps) => {
     handleSubmit,
     formState: { isSubmitting },
   } = useForm();
-  // const currentUser = queryClient.getQueryData<UserLinked>(["currentUser"]);
   const { logout } = useAuth();
 
   const mutation = useMutation({
@@ -54,7 +53,6 @@ const DeleteConfirmation = ({ isOpen, onClose }: DeleteProps) => {
   });
 
   const onSubmit = async () => {
-    // mutation.mutate(currentUser!.api_identifier);
     mutation.mutate();
   };
 

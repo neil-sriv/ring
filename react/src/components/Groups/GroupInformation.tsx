@@ -21,7 +21,10 @@ import {
 } from "../../client";
 import useCustomToast from "../../hooks/useCustomToast";
 import { useRouter } from "@tanstack/react-router";
-import { updateGroupPartiesGroupGroupApiIdPatchMutation } from "../../client/@tanstack/react-query.gen";
+import {
+  readGroupPartiesGroupGroupApiIdGetQueryKey,
+  updateGroupPartiesGroupGroupApiIdPatchMutation,
+} from "../../client/@tanstack/react-query.gen";
 import { AxiosError } from "axios";
 
 function GroupInformation({ groupId }: { groupId: string }) {
@@ -29,7 +32,11 @@ function GroupInformation({ groupId }: { groupId: string }) {
   const color = useColorModeValue("inherit", "ui.light");
   const showToast = useCustomToast();
   const [editMode, setEditMode] = useState(false);
-  const group = queryClient.getQueryData<GroupLinked>(["group", groupId]);
+  const group = queryClient.getQueryData<GroupLinked>(
+    readGroupPartiesGroupGroupApiIdGetQueryKey({
+      path: { group_api_id: groupId },
+    })
+  );
   if (group === undefined) {
     return null;
   }
@@ -62,9 +69,17 @@ function GroupInformation({ groupId }: { groupId: string }) {
       showToast("Something went wrong.", `${errDetail}`, "error");
     },
     onSettled: async () => {
-      queryClient.invalidateQueries({ queryKey: ["group", groupId] });
+      queryClient.invalidateQueries({
+        queryKey: readGroupPartiesGroupGroupApiIdGetQueryKey({
+          path: { group_api_id: groupId },
+        }),
+      });
       router.invalidate();
-      await queryClient.refetchQueries({ queryKey: ["group", groupId] });
+      await queryClient.refetchQueries({
+        queryKey: readGroupPartiesGroupGroupApiIdGetQueryKey({
+          path: { group_api_id: groupId },
+        }),
+      });
     },
   });
 

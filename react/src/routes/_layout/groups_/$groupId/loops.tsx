@@ -11,15 +11,15 @@ import {
   Highlight,
 } from "@chakra-ui/react";
 import { Link, createFileRoute } from "@tanstack/react-router";
-import {
-  listLettersLettersLettersGet,
-  PublicLetter,
-  readGroupPartiesGroupGroupApiIdGet,
-} from "../../../../client";
+import { PublicLetter } from "../../../../client";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { Suspense } from "react";
 import { ErrorBoundary } from "react-error-boundary";
 import LoopNav from "../../../../components/Loops/LoopNav";
+import {
+  listLettersLettersLettersGetOptions,
+  readGroupPartiesGroupGroupApiIdGetOptions,
+} from "../../../../client/@tanstack/react-query.gen";
 
 type LoopsSearchParams = {
   offset?: number;
@@ -43,18 +43,11 @@ export const Route = createFileRoute("/_layout/groups/$groupId/loops")({
     context,
     deps: { offset, limit },
   }): Promise<LoopsLoaderProps> => {
-    const { data: loops } = await context.queryClient.ensureQueryData({
-      queryKey: ["loops", params.groupId],
-      queryFn: async () => {
-        return await listLettersLettersLettersGet({
-          query: { group_api_id: params.groupId, skip: offset, limit: limit },
-        });
-      },
+    const loops = await context.queryClient.ensureQueryData({
+      ...listLettersLettersLettersGetOptions({
+        query: { group_api_id: params.groupId, skip: offset, limit: limit },
+      }),
     });
-
-    if (!loops) {
-      throw new Error("Failed to load loops");
-    }
 
     return {
       loops,
@@ -146,14 +139,10 @@ export function LoopsGrid({
 function LoopsContent() {
   const props = Route.useLoaderData();
   const groupId = Route.useParams().groupId;
-  const {
-    data: { data: group },
-  } = useSuspenseQuery({
-    queryKey: ["groups", groupId],
-    queryFn: () =>
-      readGroupPartiesGroupGroupApiIdGet({
-        path: { group_api_id: groupId },
-      }),
+  const { data: group } = useSuspenseQuery({
+    ...readGroupPartiesGroupGroupApiIdGetOptions({
+      path: { group_api_id: groupId },
+    }),
   });
   if (!group) {
     return <Box>Loading...</Box>;

@@ -25,19 +25,26 @@ import { ReplaceGroupDefaultQuestionsPartiesGroupGroupApiIdReplaceDefaultQuestio
 import useCustomToast from "../../hooks/useCustomToast";
 import { useRouter } from "@tanstack/react-router";
 import { FiPlus } from "react-icons/fi";
-import { replaceGroupDefaultQuestionsPartiesGroupGroupApiIdReplaceDefaultQuestionsPostMutation } from "../../client/@tanstack/react-query.gen";
+import {
+  readGroupPartiesGroupGroupApiIdGetQueryKey,
+  replaceGroupDefaultQuestionsPartiesGroupGroupApiIdReplaceDefaultQuestionsPostMutation,
+} from "../../client/@tanstack/react-query.gen";
 import { AxiosError } from "axios";
 
 type QuestionField = {
   question_text: string;
 };
 
-function GroupInformation({ groupId }: { groupId: string }) {
+function GroupLoopSettings({ groupId }: { groupId: string }) {
   const queryClient = useQueryClient();
   const color = useColorModeValue("inherit", "ui.light");
   const showToast = useCustomToast();
   const [editMode, setEditMode] = useState(false);
-  const group = queryClient.getQueryData<GroupLinked>(["group", groupId]);
+  const group = queryClient.getQueryData<GroupLinked>(
+    readGroupPartiesGroupGroupApiIdGetQueryKey({
+      path: { group_api_id: groupId },
+    })
+  );
 
   if (group === undefined) {
     return null;
@@ -86,12 +93,18 @@ function GroupInformation({ groupId }: { groupId: string }) {
         err.response?.data.detail || "no error detail, please contact support";
       showToast("Something went wrong.", `${errDetail}`, "error");
     },
-    onSettled: async (group) => {
-      queryClient.invalidateQueries({ queryKey: ["group", groupId] });
+    onSettled: async () => {
+      queryClient.invalidateQueries({
+        queryKey: readGroupPartiesGroupGroupApiIdGetQueryKey({
+          path: { group_api_id: groupId },
+        }),
+      });
       router.invalidate();
-      await queryClient.refetchQueries({ queryKey: ["group", groupId] });
-      if (!group) return;
-      reset({ questions: group?.default_questions });
+      await queryClient.refetchQueries({
+        queryKey: readGroupPartiesGroupGroupApiIdGetQueryKey({
+          path: { group_api_id: groupId },
+        }),
+      });
     },
   });
 
@@ -218,4 +231,4 @@ function GroupInformation({ groupId }: { groupId: string }) {
   );
 }
 
-export default GroupInformation;
+export default GroupLoopSettings;

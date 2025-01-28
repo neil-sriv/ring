@@ -19,9 +19,13 @@ import {
   type GroupLinked,
   type GroupUpdate,
   UpdateGroupPartiesGroupGroupApiIdPatchError,
+  UserLinked,
 } from "../../client";
 import useCustomToast from "../../hooks/useCustomToast";
-import { updateGroupPartiesGroupGroupApiIdPatchMutation } from "../../client/@tanstack/react-query.gen";
+import {
+  listGroupsPartiesGroupsGetQueryKey,
+  updateGroupPartiesGroupGroupApiIdPatchMutation,
+} from "../../client/@tanstack/react-query.gen";
 import { AxiosError } from "axios";
 
 interface EditGroupProps {
@@ -32,6 +36,7 @@ interface EditGroupProps {
 
 const EditGroup = ({ group, isOpen, onClose }: EditGroupProps) => {
   const queryClient = useQueryClient();
+  const currentUser = queryClient.getQueryData<UserLinked>(["currentUser"]);
   const showToast = useCustomToast();
   const {
     register,
@@ -56,7 +61,11 @@ const EditGroup = ({ group, isOpen, onClose }: EditGroupProps) => {
       showToast("Something went wrong.", `${errDetail}`, "error");
     },
     onSettled: () => {
-      queryClient.invalidateQueries({ queryKey: ["groups"] });
+      queryClient.invalidateQueries({
+        queryKey: listGroupsPartiesGroupsGetQueryKey({
+          query: { user_api_id: currentUser!.api_identifier },
+        }),
+      });
     },
   });
 

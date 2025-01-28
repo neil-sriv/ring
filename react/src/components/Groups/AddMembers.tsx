@@ -21,7 +21,10 @@ import {
   type GroupLinked,
 } from "../../client";
 import useCustomToast from "../../hooks/useCustomToast";
-import { addMembersPartiesGroupGroupApiIdAddMembersPostMutation } from "../../client/@tanstack/react-query.gen";
+import {
+  addMembersPartiesGroupGroupApiIdAddMembersPostMutation,
+  listGroupsPartiesGroupsGetQueryKey,
+} from "../../client/@tanstack/react-query.gen";
 import { AxiosError } from "axios";
 
 interface AddMembersProps {
@@ -62,7 +65,11 @@ const AddMembers = ({ group, isOpen, onClose }: AddMembersProps) => {
       showToast("Something went wrong.", `${errDetail}`, "error");
     },
     onSettled: () => {
-      queryClient.invalidateQueries({ queryKey: ["groups"] });
+      queryClient.invalidateQueries({
+        queryKey: listGroupsPartiesGroupsGetQueryKey({
+          query: { user_api_id: group.api_identifier },
+        }),
+      });
     },
   });
 

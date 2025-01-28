@@ -7,7 +7,7 @@ import {
   AlertDialogOverlay,
   Button,
 } from "@chakra-ui/react";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation } from "@tanstack/react-query";
 import React from "react";
 import { useForm } from "react-hook-form";
 
@@ -22,7 +22,7 @@ interface DeleteProps {
 }
 
 const Delete = ({ type, isOpen, onClose }: DeleteProps) => {
-  const queryClient = useQueryClient();
+  // const queryClient = useQueryClient();
   const showToast = useCustomToast();
   const cancelRef = React.useRef<HTMLButtonElement | null>(null);
   const {
@@ -61,9 +61,11 @@ const Delete = ({ type, isOpen, onClose }: DeleteProps) => {
       );
     },
     onSettled: () => {
-      queryClient.invalidateQueries({
-        queryKey: [type === "Group" ? "groups" : "users"],
-      });
+      // const queryKey =
+      //   type === "Group" ? readGroupPartiesGroupGroupApiIdGetQueryKey({path: {group_api_id: }}) : readUsersPartiesUsersGetQueryKey();
+      // queryClient.invalidateQueries({
+      //   queryKey: [type === "Group" ? "groups" : "users"],
+      // });
     },
   });
 

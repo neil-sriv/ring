@@ -21,7 +21,10 @@ import {
   UserLinked,
 } from "../../client";
 import useCustomToast from "../../hooks/useCustomToast";
-import { createGroupPartiesGroupPostMutation } from "../../client/@tanstack/react-query.gen";
+import {
+  createGroupPartiesGroupPostMutation,
+  listGroupsPartiesGroupsGetQueryKey,
+} from "../../client/@tanstack/react-query.gen";
 import { AxiosError } from "axios";
 
 interface AddGroupProps {
@@ -58,8 +61,14 @@ const AddGroup = ({ isOpen, onClose }: AddGroupProps) => {
         err.response?.data.detail || "no error detail, please contact support";
       showToast("Something went wrong.", `${errDetail}`, "error");
     },
-    onSettled: () => {
-      queryClient.invalidateQueries({ queryKey: ["groups"] });
+    onSettled: (data) => {
+      if (data) {
+        queryClient.invalidateQueries({
+          queryKey: listGroupsPartiesGroupsGetQueryKey({
+            query: { user_api_id: currentUser!.api_identifier },
+          }),
+        });
+      }
     },
   });
 

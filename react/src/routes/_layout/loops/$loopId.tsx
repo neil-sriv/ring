@@ -1,16 +1,16 @@
 import { Box, Container, Heading, Text } from "@chakra-ui/react";
 import { createFileRoute } from "@tanstack/react-router";
-import {
-  PublicLetter,
-  readGroupPartiesGroupGroupApiIdGet,
-  readLetterLettersLetterLetterApiIdGet,
-} from "../../../client";
+import { PublicLetter } from "../../../client";
 import { Suspense } from "react";
 import { ErrorBoundary } from "react-error-boundary";
 import PublishedLoop from "../../../components/Loops/PublishedLoop";
 import DraftLoop from "../../../components/Loops/DraftLoop";
 import QuestionNav from "../../../components/Question/QuestionNav";
 import { useSuspenseQuery } from "@tanstack/react-query";
+import {
+  readGroupPartiesGroupGroupApiIdGetOptions,
+  readLetterLettersLetterLetterApiIdGetOptions,
+} from "../../../client/@tanstack/react-query.gen";
 
 type IssueLoaderProps = {
   loop: PublicLetter;
@@ -18,19 +18,11 @@ type IssueLoaderProps = {
 
 export const Route = createFileRoute("/_layout/loops/$loopId")({
   loader: async ({ params, context }): Promise<IssueLoaderProps> => {
-    const { data: loop } = await context.queryClient.ensureQueryData({
-      queryKey: ["loop", params.loopId],
-      queryFn: async () => {
-        return await readLetterLettersLetterLetterApiIdGet({
-          path: { letter_api_id: params.loopId },
-        });
-      },
+    const loop = await context.queryClient.ensureQueryData({
+      ...readLetterLettersLetterLetterApiIdGetOptions({
+        path: { letter_api_id: params.loopId },
+      }),
     });
-
-    if (!loop) {
-      throw new Error("Failed to load loop");
-    }
-
     return {
       loop,
     };
@@ -40,32 +32,16 @@ export const Route = createFileRoute("/_layout/loops/$loopId")({
 
 function IssueContent() {
   const routeParams = Route.useParams();
-  const {
-    data: { data: loop },
-  } = useSuspenseQuery({
-    queryKey: ["loop", routeParams.loopId],
-    queryFn: async () => {
-      return await readLetterLettersLetterLetterApiIdGet({
-        path: { letter_api_id: routeParams.loopId },
-      });
-    },
+  const { data: loop } = useSuspenseQuery({
+    ...readLetterLettersLetterLetterApiIdGetOptions({
+      path: { letter_api_id: routeParams.loopId },
+    }),
   });
-  if (!loop) {
-    return null;
-  }
-  const {
-    data: { data: group },
-  } = useSuspenseQuery({
-    queryKey: ["group", loop.group.api_identifier],
-    queryFn: async () => {
-      return await readGroupPartiesGroupGroupApiIdGet({
-        path: { group_api_id: loop.group.api_identifier },
-      });
-    },
+  const { data: group } = useSuspenseQuery({
+    ...readGroupPartiesGroupGroupApiIdGetOptions({
+      path: { group_api_id: loop.group.api_identifier },
+    }),
   });
-  if (!group) {
-    return null;
-  }
   const localDueDate = new Date(loop.send_at);
 
   return (

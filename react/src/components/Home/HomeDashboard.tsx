@@ -1,18 +1,15 @@
 import { Box, Heading } from "@chakra-ui/react";
 import { useSuspenseQuery } from "@tanstack/react-query";
-import { listDashboardLettersLettersLettersDashboardGet } from "../../client";
 import { LoopsGrid } from "../../routes/_layout/groups_/$groupId/loops";
+import { listDashboardLettersLettersLettersDashboardGetOptions } from "../../client/@tanstack/react-query.gen";
 
 export function HomeDashboard() {
-  const { data } = useSuspenseQuery({
-    queryKey: ["dashboardIssues"],
-    queryFn: async () => {
-      return await listDashboardLettersLettersLettersDashboardGet();
-    },
+  const dashboardLoops = useSuspenseQuery({
+    ...listDashboardLettersLettersLettersDashboardGetOptions(),
   });
-  const recently_completed = data.data?.recently_completed ?? [];
-  const in_progress = data.data?.in_progress ?? [];
-  const upcoming = data.data?.upcoming ?? [];
+  const recently_completed = dashboardLoops.data.recently_completed;
+  const in_progress = dashboardLoops.data.in_progress;
+  const upcoming = dashboardLoops.data.upcoming;
   return (
     <Box p={4}>
       <Heading as="h1" mb={4}>

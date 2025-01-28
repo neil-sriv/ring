@@ -20,7 +20,10 @@ import { type SubmitHandler, useForm } from "react-hook-form";
 import { type UserLinked, UserUpdate } from "../../client";
 import useCustomToast from "../../hooks/useCustomToast";
 import { emailPattern } from "../../util/misc";
-import { updateUserPartiesUserIdPatchMutation } from "../../client/@tanstack/react-query.gen";
+import {
+  readUsersPartiesUsersGetQueryKey,
+  updateUserPartiesUserIdPatchMutation,
+} from "../../client/@tanstack/react-query.gen";
 
 interface EditUserProps {
   user: UserLinked;
@@ -59,7 +62,9 @@ const EditUser = ({ user, isOpen, onClose }: EditUserProps) => {
     //   showToast("Something went wrong.", `${errDetail}`, "error");
     // },
     onSettled: () => {
-      queryClient.invalidateQueries({ queryKey: ["users"] });
+      queryClient.invalidateQueries({
+        queryKey: readUsersPartiesUsersGetQueryKey(),
+      });
     },
   });
 

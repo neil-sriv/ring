@@ -5,6 +5,7 @@ import AddLetter from "./AddLoop";
 import { GroupLinked, PublicLetter, UserLinked } from "../../client";
 import { useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "@tanstack/react-router";
+import { listLettersLettersLettersGetQueryKey } from "../../client/@tanstack/react-query.gen";
 
 type LoopNavProps = {
   loops: PublicLetter[];
@@ -21,7 +22,9 @@ function LoopNav(props: LoopNavProps): JSX.Element {
 
   const onClick = (): void => {
     queryClient.invalidateQueries({
-      queryKey: ["loops", props.group.api_identifier],
+      queryKey: listLettersLettersLettersGetQueryKey({
+        query: { group_api_id: props.group.api_identifier },
+      }),
     });
     router.invalidate();
     enabled ? addLetterModal.onOpen() : null;
