@@ -4,7 +4,7 @@ import random
 from datetime import UTC, datetime, timedelta
 from typing import TYPE_CHECKING, Sequence
 
-from sqlalchemy import select
+from sqlalchemy import ColumnElement, select
 
 from ring.api_identifier import util as api_identifier_crud
 from ring.letters.constants import (
@@ -32,6 +32,24 @@ def get_letters(
     group = api_identifier_crud.get_model(db, Group, api_id=group_api_id)
     return db.scalars(
         select(Letter).filter(Letter.group == group).offset(skip).limit(limit)
+    ).all()
+
+
+def get_letters_for_user(
+    db: Session, user: User, filters: list[ColumnElement[bool]] | None = None
+) -> Sequence[Letter]:
+    """
+    Return all letters that a user is a participant in
+
+    :param db: Database session
+    :param user: User
+    :return: List of letters
+    """
+    query_filters = [User.id == user.id]
+    if filters:
+        query_filters.extend(filters)
+    return db.scalars(
+        select(Letter).join(Letter.participants).filter(*query_filters)
     ).all()
 
 

@@ -2,7 +2,7 @@ import type { CancelablePromise } from './core/CancelablePromise';
 import { OpenAPI } from './core/OpenAPI';
 import { request as __request } from './core/request';
 
-import type { Body_login_access_token_login_access_token_post,NewPassword,ResponseMessage,Token,AddMembers,GroupCreate,GroupLinked,GroupUpdate,ReplaceDefaultQuestions,ScheduleSendParam,UserCreate,UserLinked,UserUpdate,UserUpdatePassword,LetterCreate,LetterUpdate,PublicLetter,QuestionCreate,ResponseUnlinked,ScheduleLinked,Body_upload_image_questions_question__question_api_id__upload_image_post,QuestionLinked,ResponseUpsert,Body_upload_image_responses_response__response_api_id__upload_image_post,ResponseCreateBase,ResponseLinked,InviteCreate,InviteLinked } from './models';
+import type { Body_login_access_token_login_access_token_post,NewPassword,ResponseMessage,Token,AddMembers,GroupCreate,GroupLinked,GroupUpdate,ReplaceDefaultQuestions,ScheduleSendParam,UserCreate,UserLinked,UserUpdate,UserUpdatePassword,DashboardLetters,LetterCreate,LetterUpdate,PublicLetter,QuestionCreate,ResponseUnlinked,ScheduleLinked,Body_upload_image_questions_question__question_api_id__upload_image_post,QuestionLinked,ResponseUpsert,Body_upload_image_responses_response__response_api_id__upload_image_post,ResponseCreateBase,ResponseLinked,InviteCreate,InviteLinked } from './models';
 
 export type LoginData = {
         LoginAccessTokenLoginAccessTokenPost: {
@@ -754,6 +754,18 @@ letterApiId,
 			errors: {
 				422: `Validation Error`,
 			},
+		});
+	}
+
+	/**
+	 * List Dashboard Letters
+	 * @returns DashboardLetters Successful Response
+	 * @throws ApiError
+	 */
+	public static listDashboardLettersLettersLettersDashboardGet(): CancelablePromise<DashboardLetters> {
+				return __request(OpenAPI, {
+			method: 'GET',
+			url: '/letters/letters:dashboard',
 		});
 	}
 

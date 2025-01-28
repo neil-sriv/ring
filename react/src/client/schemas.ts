@@ -75,6 +75,32 @@ export const $Body_upload_image_responses_response__response_api_id__upload_imag
 	},
 } as const;
 
+export const $DashboardLetters = {
+	properties: {
+		upcoming: {
+	type: 'array',
+	contains: {
+		type: 'PublicLetter',
+	},
+	isRequired: true,
+},
+		in_progress: {
+	type: 'array',
+	contains: {
+		type: 'PublicLetter',
+	},
+	isRequired: true,
+},
+		recently_completed: {
+	type: 'array',
+	contains: {
+		type: 'PublicLetter',
+	},
+	isRequired: true,
+},
+	},
+} as const;
+
 export const $GroupCreate = {
 	properties: {
 		name: {

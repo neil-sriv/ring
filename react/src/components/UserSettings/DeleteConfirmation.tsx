@@ -40,6 +40,7 @@ const DeleteConfirmation = ({ isOpen, onClose }: DeleteProps) => {
         "success"
       );
       logout();
+      queryClient.clear();
       onClose();
     },
     onError: (err: ApiError) => {

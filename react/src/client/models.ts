@@ -27,6 +27,14 @@ export type Body_upload_image_responses_response__response_api_id__upload_image_
 
 
 
+export type DashboardLetters = {
+	upcoming: Array<PublicLetter>;
+	in_progress: Array<PublicLetter>;
+	recently_completed: Array<PublicLetter>;
+};
+
+
+
 export type GroupCreate = {
 	name: string;
 	admin_api_identifier: string;
