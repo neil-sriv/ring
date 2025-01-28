@@ -2,6 +2,8 @@ from __future__ import annotations
 
 from typing import Optional
 
+from pydantic import BaseModel
+
 from ring.letters.schemas.letter import Letter, LetterUnlinked
 from ring.letters.schemas.question import Question, QuestionUnlinked
 from ring.letters.schemas.response import Response, ResponseUnlinked
@@ -44,6 +46,12 @@ class LetterLinked(Letter):
 class PublicLetter(Letter):
     group: "GroupUnlinked"
     questions: list["PublicQuestion"]
+
+
+class DashboardLetters(BaseModel):
+    upcoming: list[PublicLetter]
+    in_progress: list[PublicLetter]
+    recently_completed: list[PublicLetter]
 
 
 class QuestionLinked(Question):

@@ -20,6 +20,7 @@ import Logo from "/assets/images/fastapi-logo.svg";
 import type { UserLinked } from "../../client";
 import useAuth from "../../hooks/useAuth";
 import SidebarItems from "./SidebarItems";
+import { Link } from "@tanstack/react-router";
 
 const Sidebar = () => {
   const queryClient = useQueryClient();
@@ -32,6 +33,7 @@ const Sidebar = () => {
 
   const handleLogout = async () => {
     logout();
+    queryClient.clear();
   };
 
   return (
@@ -95,8 +97,8 @@ const Sidebar = () => {
         >
           <Box>
             {/* <Image src={Logo} alt="Logo" w="180px" maxW="2xs" p={6} /> */}
-            <Heading as="h1" size="lg" textAlign="center" p={2}>
-              Ring
+            <Heading size="lg" textAlign="center" p={2}>
+              <Link to="/">Ring</Link>
             </Heading>
             <SidebarItems />
           </Box>

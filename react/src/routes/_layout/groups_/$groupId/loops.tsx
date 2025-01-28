@@ -8,6 +8,7 @@ import {
   LinkOverlay,
   SimpleGrid,
   Text,
+  Highlight,
 } from "@chakra-ui/react";
 import { Link, createFileRoute } from "@tanstack/react-router";
 import {
@@ -62,6 +63,7 @@ export const Route = createFileRoute("/_layout/groups/$groupId/loops")({
 
 type LoopCardProps = {
   loop: PublicLetter;
+  includeGroupName?: boolean;
 };
 
 function LoopCard(props: LoopCardProps): JSX.Element {
@@ -82,6 +84,20 @@ function LoopCard(props: LoopCardProps): JSX.Element {
             to="/loops/$loopId"
             params={{ loopId: props.loop.api_identifier }}
           >
+            {props.includeGroupName && (
+              <Heading size="md">
+                <Highlight
+                  query={props.loop.group.name}
+                  styles={{
+                    px: "0.5",
+                    bg: "orange.200",
+                    color: "orange.fg",
+                  }}
+                >
+                  {props.loop.group.name}
+                </Highlight>
+              </Heading>
+            )}
             <Heading size="md">Issue #{props.loop.number}</Heading>
             {props.loop.status === "SENT" ? (
               <Text>Published {sendDate.toLocaleDateString()}</Text>
@@ -97,14 +113,16 @@ function LoopCard(props: LoopCardProps): JSX.Element {
   );
 }
 
-function LoopsGrid({
+export function LoopsGrid({
   loops,
   heading,
   subheading,
+  includeGroupName = false,
 }: {
   loops: PublicLetter[];
   heading: string;
   subheading?: string;
+  includeGroupName?: boolean;
 }): JSX.Element {
   return (
     <Box paddingBottom="15px">
@@ -112,7 +130,11 @@ function LoopsGrid({
       {subheading && <Heading size="sm">{subheading}</Heading>}
       <SimpleGrid columns={[1, 4, 6]} gap={4}>
         {loops.map((loop) => (
-          <LoopCard key={loop.api_identifier} loop={loop} />
+          <LoopCard
+            key={loop.api_identifier}
+            loop={loop}
+            includeGroupName={includeGroupName}
+          />
         ))}
       </SimpleGrid>
     </Box>
