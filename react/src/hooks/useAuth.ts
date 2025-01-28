@@ -1,4 +1,4 @@
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useNavigate, useSearch } from "@tanstack/react-router";
 import { useState } from "react";
 
@@ -6,12 +6,15 @@ import {
   LoginAccessTokenLoginAccessTokenPostError,
   type UserLinked,
 } from "../client";
-import { loginAccessTokenLoginAccessTokenPostMutation } from "../client/@tanstack/react-query.gen";
+import {
+  loginAccessTokenLoginAccessTokenPostMutation,
+  readUserMePartiesMeGetOptions,
+} from "../client/@tanstack/react-query.gen";
 import { AxiosError } from "axios";
 
 export interface AuthContext {
   isAuthenticated?: boolean;
-  user: UserLinked | null | undefined;
+  user: UserLinked | undefined;
 }
 
 const isLoggedIn = () => {
@@ -22,10 +25,15 @@ const useAuth = () => {
   const search = useSearch({ strict: false });
   const [error, setError] = useState<string | null>(null);
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
 
   const loginMutation = useMutation({
     ...loginAccessTokenLoginAccessTokenPostMutation(),
-    onSuccess: () => {
+    onSuccess: (data) => {
+      localStorage.setItem("access_token", data.access_token);
+      queryClient.ensureQueryData({
+        ...readUserMePartiesMeGetOptions({}),
+      });
       // @ts-expect-error
       navigate({ to: search.path || "/groups" });
     },

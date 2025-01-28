@@ -25,7 +25,7 @@ const TanStackDevtools =
 
 interface RouterContext {
   queryClient: QueryClient;
-  auth: AuthContext;
+  auth: Partial<AuthContext>;
 }
 
 export const Route = createRootRouteWithContext<RouterContext>()({

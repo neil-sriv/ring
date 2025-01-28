@@ -24,6 +24,7 @@ import useCustomToast from "../../hooks/useCustomToast";
 import {
   createGroupPartiesGroupPostMutation,
   listGroupsPartiesGroupsGetQueryKey,
+  readUserMePartiesMeGetQueryKey,
 } from "../../client/@tanstack/react-query.gen";
 import { AxiosError } from "axios";
 
@@ -34,7 +35,9 @@ interface AddGroupProps {
 
 const AddGroup = ({ isOpen, onClose }: AddGroupProps) => {
   const queryClient = useQueryClient();
-  const currentUser = queryClient.getQueryData<UserLinked>(["currentUser"]);
+  const currentUser = queryClient.getQueryData<UserLinked>(
+    readUserMePartiesMeGetQueryKey()
+  );
   const showToast = useCustomToast();
   const {
     register,

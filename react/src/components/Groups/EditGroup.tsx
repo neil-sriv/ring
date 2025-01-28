@@ -24,6 +24,7 @@ import {
 import useCustomToast from "../../hooks/useCustomToast";
 import {
   listGroupsPartiesGroupsGetQueryKey,
+  readUserMePartiesMeGetQueryKey,
   updateGroupPartiesGroupGroupApiIdPatchMutation,
 } from "../../client/@tanstack/react-query.gen";
 import { AxiosError } from "axios";
@@ -36,7 +37,9 @@ interface EditGroupProps {
 
 const EditGroup = ({ group, isOpen, onClose }: EditGroupProps) => {
   const queryClient = useQueryClient();
-  const currentUser = queryClient.getQueryData<UserLinked>(["currentUser"]);
+  const currentUser = queryClient.getQueryData<UserLinked>(
+    readUserMePartiesMeGetQueryKey()
+  );
   const showToast = useCustomToast();
   const {
     register,

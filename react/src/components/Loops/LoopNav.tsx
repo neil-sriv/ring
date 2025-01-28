@@ -5,7 +5,10 @@ import AddLetter from "./AddLoop";
 import { GroupLinked, PublicLetter, UserLinked } from "../../client";
 import { useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "@tanstack/react-router";
-import { listLettersLettersLettersGetQueryKey } from "../../client/@tanstack/react-query.gen";
+import {
+  listLettersLettersLettersGetQueryKey,
+  readUserMePartiesMeGetQueryKey,
+} from "../../client/@tanstack/react-query.gen";
 
 type LoopNavProps = {
   loops: PublicLetter[];
@@ -18,7 +21,9 @@ function LoopNav(props: LoopNavProps): JSX.Element {
     props.loops.filter((loop) => loop.status === "UPCOMING").length === 0;
   const queryClient = useQueryClient();
   const router = useRouter();
-  const currentUser = queryClient.getQueryData<UserLinked>(["currentUser"]);
+  const currentUser = queryClient.getQueryData<UserLinked>(
+    readUserMePartiesMeGetQueryKey()
+  );
 
   const onClick = (): void => {
     queryClient.invalidateQueries({

@@ -9,10 +9,11 @@ import ReactDOM from "react-dom/client";
 import { routeTree } from "./routeTree.gen";
 
 import { StrictMode } from "react";
-import { readUserMePartiesMeGet } from "./client";
 import theme from "./theme";
 
 import { client } from "./client/client.gen";
+import { readUserMePartiesMeGetOptions } from "./client/@tanstack/react-query.gen";
+import { AxiosError } from "axios";
 
 client.setConfig({
   baseURL: import.meta.env.VITE_API_URL + "/api/v1",
@@ -35,17 +36,20 @@ declare module "@tanstack/react-router" {
 
 function App() {
   const resp = useQuery({
-    queryKey: ["currentUser"],
-    queryFn: () => {
-      const resp = readUserMePartiesMeGet().then((resp) => resp.data);
-      return resp;
-    },
+    ...readUserMePartiesMeGetOptions({}),
     retry: false,
     refetchInterval: 5000,
     enabled: localStorage.getItem("access_token") !== null,
   });
+  console.log(resp);
 
-  return resp.isLoading && !resp.isError && resp.data && false ? null : (
+  if (resp.isError && (resp.error as AxiosError).response?.status === 401) {
+    localStorage.removeItem("access_token");
+    window.location.href = "/login";
+    return null;
+  }
+
+  return (
     <RouterProvider
       router={router}
       context={{

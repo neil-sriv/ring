@@ -13,28 +13,32 @@ import {
   Text,
   Tr,
 } from "@chakra-ui/react";
-import { useQueryClient, useSuspenseQuery } from "@tanstack/react-query";
+import { useSuspenseQuery } from "@tanstack/react-query";
 import { Link, createFileRoute } from "@tanstack/react-router";
 import { Link as ChakraLink } from "@chakra-ui/react";
 
 import { Suspense } from "react";
 import { ErrorBoundary } from "react-error-boundary";
 import { UserLinked } from "../../client";
-// import ActionsMenu from "../../components/Common/ActionsMenu";
 import Navbar from "../../components/Common/Navbar";
 import ActionsMenu from "../../components/Common/ActionsMenu";
 import { listGroupsPartiesGroupsGetOptions } from "../../client/@tanstack/react-query.gen";
 
 export const Route = createFileRoute("/_layout/groups")({
   component: Groups,
+  loader: async ({ context }) => {
+    if (!context.auth.user) {
+      throw new Error("User not authenticated");
+    }
+    return context.auth.user;
+  },
 });
 
 function GroupTableBody() {
-  const queryClient = useQueryClient();
-  const currentUser = queryClient.getQueryData<UserLinked>(["currentUser"]);
+  const currentUser = Route.useLoaderData<UserLinked>();
   const { data: groups } = useSuspenseQuery({
     ...listGroupsPartiesGroupsGetOptions({
-      query: { user_api_id: currentUser!.api_identifier },
+      query: { user_api_id: currentUser?.api_identifier },
     }),
   });
 

@@ -14,7 +14,10 @@ import {
   S3Video,
   SingleUploadImage,
 } from "../Common/SingleUploadImage";
-import { readLetterLettersLetterLetterApiIdGetQueryKey } from "../../client/@tanstack/react-query.gen";
+import {
+  readLetterLettersLetterLetterApiIdGetQueryKey,
+  readUserMePartiesMeGetQueryKey,
+} from "../../client/@tanstack/react-query.gen";
 
 type ResponseBlockProps = {
   uploadFunction: (file: File) => Promise<void>;
@@ -75,7 +78,9 @@ function DraftQuestion({
   readOnly?: boolean;
 }): JSX.Element {
   const queryClient = useQueryClient();
-  const currentUser = queryClient.getQueryData<UserLinked>(["currentUser"]);
+  const currentUser = queryClient.getQueryData<UserLinked>(
+    readUserMePartiesMeGetQueryKey()
+  );
   if (!currentUser) {
     return <Box>loading...</Box>;
   }

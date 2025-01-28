@@ -14,6 +14,7 @@ import { useForm } from "react-hook-form";
 import { deleteUserPartiesUserIdDelete } from "../../client";
 import useAuth from "../../hooks/useAuth";
 import useCustomToast from "../../hooks/useCustomToast";
+import { readUserMePartiesMeGetQueryKey } from "../../client/@tanstack/react-query.gen";
 
 interface DeleteProps {
   isOpen: boolean;
@@ -48,7 +49,9 @@ const DeleteConfirmation = ({ isOpen, onClose }: DeleteProps) => {
       showToast("Something went wrong.", `${errDetail}`, "error");
     },
     onSettled: () => {
-      queryClient.invalidateQueries({ queryKey: ["currentUser"] });
+      queryClient.invalidateQueries({
+        queryKey: readUserMePartiesMeGetQueryKey(),
+      });
     },
   });
 

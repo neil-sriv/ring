@@ -23,6 +23,7 @@ import {
 import useCustomToast from "../../hooks/useCustomToast";
 import { emailPattern } from "../../util/misc";
 import {
+  readUserMePartiesMeGetQueryKey,
   readUsersPartiesUsersGetQueryKey,
   updateUserMePartiesMePatchMutation,
 } from "../../client/@tanstack/react-query.gen";
@@ -33,7 +34,9 @@ const UserInformation = () => {
   const color = useColorModeValue("inherit", "ui.light");
   const showToast = useCustomToast();
   const [editMode, setEditMode] = useState(false);
-  const currentUser = queryClient.getQueryData<UserLinked>(["currentUser"]);
+  const currentUser = queryClient.getQueryData<UserLinked>(
+    readUserMePartiesMeGetQueryKey()
+  );
   const {
     register,
     handleSubmit,
@@ -68,7 +71,9 @@ const UserInformation = () => {
       queryClient.invalidateQueries({
         queryKey: readUsersPartiesUsersGetQueryKey(),
       });
-      queryClient.invalidateQueries({ queryKey: ["currentUser"] });
+      queryClient.invalidateQueries({
+        queryKey: readUserMePartiesMeGetQueryKey(),
+      });
     },
   });
 

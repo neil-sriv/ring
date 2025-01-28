@@ -13,7 +13,7 @@ import {
   Thead,
   Tr,
 } from "@chakra-ui/react";
-import { useQueryClient, useSuspenseQuery } from "@tanstack/react-query";
+import { useSuspenseQuery } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
 
 import { Suspense } from "react";
@@ -24,11 +24,16 @@ import { readUsersPartiesUsersGetOptions } from "../../client/@tanstack/react-qu
 
 export const Route = createFileRoute("/_layout/admin")({
   component: Admin,
+  loader: async ({ context }) => {
+    if (!context.auth.user) {
+      throw new Error("User not authenticated");
+    }
+    return context.auth.user;
+  },
 });
 
 const MembersTableBody = () => {
-  const queryClient = useQueryClient();
-  const currentUser = queryClient.getQueryData<UserLinked>(["currentUser"]);
+  const currentUser = Route.useLoaderData<UserLinked>();
 
   const { data: users } = useSuspenseQuery({
     ...readUsersPartiesUsersGetOptions(),

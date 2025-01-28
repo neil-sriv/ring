@@ -5,6 +5,7 @@ import AddQuestion from "./AddQuestion";
 import { GroupLinked, PublicLetter, UserLinked } from "../../client";
 import EditLetter from "../Loops/EditLoop";
 import { useQueryClient } from "@tanstack/react-query";
+import { readUserMePartiesMeGetQueryKey } from "../../client/@tanstack/react-query.gen";
 
 type QuestionNavProps = {
   loop: PublicLetter;
@@ -15,7 +16,9 @@ function QuestionNav(props: QuestionNavProps): JSX.Element {
   const editLoopModal = useDisclosure();
   const addQuestionModal = useDisclosure();
   const queryClient = useQueryClient();
-  const currentUser = queryClient.getQueryData<UserLinked>(["currentUser"]);
+  const currentUser = queryClient.getQueryData<UserLinked>(
+    readUserMePartiesMeGetQueryKey()
+  );
 
   const onClickEdit = (): void => {
     editLoopModal.onOpen();

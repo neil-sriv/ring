@@ -23,6 +23,7 @@ import { useRouter } from "@tanstack/react-router";
 import {
   addQuestionLettersLetterLetterApiIdAddQuestionPostMutation,
   readLetterLettersLetterLetterApiIdGetQueryKey,
+  readUserMePartiesMeGetQueryKey,
 } from "../../client/@tanstack/react-query.gen";
 import { AxiosError } from "axios";
 
@@ -38,7 +39,9 @@ interface AddQuestionProps {
 
 const AddQuestion = ({ isOpen, onClose, loopApiId }: AddQuestionProps) => {
   const queryClient = useQueryClient();
-  const currentUser = queryClient.getQueryData<UserLinked>(["currentUser"]);
+  const currentUser = queryClient.getQueryData<UserLinked>(
+    readUserMePartiesMeGetQueryKey()
+  );
   const router = useRouter();
   const showToast = useCustomToast();
   const {

@@ -12,7 +12,10 @@ import { GroupLinked, UserLinked } from "../../../../client";
 import GroupInformation from "../../../../components/Groups/GroupInformation";
 import GroupMembershipSettings from "../../../../components/Groups/GroupMembershipSettings";
 import GroupLoopSettings from "../../../../components/Groups/GroupLoopSettings";
-import { readGroupPartiesGroupGroupApiIdGetOptions } from "../../../../client/@tanstack/react-query.gen";
+import {
+  readGroupPartiesGroupGroupApiIdGetOptions,
+  readUserMePartiesMeGetQueryKey,
+} from "../../../../client/@tanstack/react-query.gen";
 
 export const Route = createFileRoute("/_layout/groups/$groupId/settings")({
   beforeLoad: async ({ context, params }): Promise<{ group?: GroupLinked }> => {
@@ -22,7 +25,7 @@ export const Route = createFileRoute("/_layout/groups/$groupId/settings")({
       }),
     });
     const currentUser = context.queryClient.getQueryData<UserLinked>([
-      "currentUser",
+      readUserMePartiesMeGetQueryKey(),
     ]);
     if (currentUser?.api_identifier !== group.admin.api_identifier) {
       throw new Error("You are not authorized to view this page");
