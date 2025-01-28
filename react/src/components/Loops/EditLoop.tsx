@@ -17,12 +17,12 @@ import { type SubmitHandler, useForm } from "react-hook-form";
 
 import {
   EditLetterLettersLetterLetterApiIdEditLetterPostError,
-  type LetterUpdate,
   PublicLetter,
-  editLetterLettersLetterLetterApiIdEditLetterPost,
 } from "../../client";
 import useCustomToast from "../../hooks/useCustomToast";
 import { toISOLocal } from "../../util/misc";
+import { editLetterLettersLetterLetterApiIdEditLetterPostMutation } from "../../client/@tanstack/react-query.gen";
+import { AxiosError } from "axios";
 
 type LetterFormProps = {
   sendAt: Date | string;
@@ -52,20 +52,17 @@ const EditLetter = ({ isOpen, onClose, loop }: EditLetterProps) => {
   });
 
   const mutation = useMutation({
-    mutationFn: (data: LetterUpdate) =>
-      editLetterLettersLetterLetterApiIdEditLetterPost({
-        path: { letter_api_id: loop.api_identifier },
-        body: {
-          send_at: data.send_at,
-        },
-      }),
+    ...editLetterLettersLetterLetterApiIdEditLetterPostMutation(),
     onSuccess: () => {
       showToast("Success!", "Letter due date updated.", "success");
       reset();
       onClose();
     },
-    onError: (err: EditLetterLettersLetterLetterApiIdEditLetterPostError) => {
-      const errDetail = err.detail || "no error detail, please contact support";
+    onError: (
+      err: AxiosError<EditLetterLettersLetterLetterApiIdEditLetterPostError>
+    ) => {
+      const errDetail =
+        err.response?.data.detail || "no error detail, please contact support";
       showToast("Something went wrong.", `${errDetail}`, "error");
     },
     onSettled: () => {
@@ -77,8 +74,11 @@ const EditLetter = ({ isOpen, onClose, loop }: EditLetterProps) => {
 
   const onSubmit: SubmitHandler<LetterFormProps> = (data) => {
     mutation.mutate({
-      send_at:
-        data.sendAt instanceof Date ? toISOLocal(data.sendAt) : data.sendAt,
+      body: {
+        send_at:
+          data.sendAt instanceof Date ? toISOLocal(data.sendAt) : data.sendAt,
+      },
+      path: { letter_api_id: loop.api_identifier },
     });
   };
 

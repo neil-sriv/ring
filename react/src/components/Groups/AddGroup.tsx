@@ -16,12 +16,13 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { type SubmitHandler, useForm } from "react-hook-form";
 
 import {
-  createGroupPartiesGroupPost,
   CreateGroupPartiesGroupPostError,
   type GroupCreate,
   UserLinked,
 } from "../../client";
 import useCustomToast from "../../hooks/useCustomToast";
+import { createGroupPartiesGroupPostMutation } from "../../client/@tanstack/react-query.gen";
+import { AxiosError } from "axios";
 
 interface AddGroupProps {
   isOpen: boolean;
@@ -46,20 +47,15 @@ const AddGroup = ({ isOpen, onClose }: AddGroupProps) => {
   });
 
   const mutation = useMutation({
-    mutationFn: (data: GroupCreate) =>
-      createGroupPartiesGroupPost({
-        body: {
-          admin_api_identifier: currentUser!.api_identifier,
-          name: data.name,
-        },
-      }),
+    ...createGroupPartiesGroupPostMutation(),
     onSuccess: () => {
       showToast("Success!", "Group created successfully.", "success");
       reset();
       onClose();
     },
-    onError: (err: CreateGroupPartiesGroupPostError) => {
-      const errDetail = err.detail || "no error detail, please contact support";
+    onError: (err: AxiosError<CreateGroupPartiesGroupPostError>) => {
+      const errDetail =
+        err.response?.data.detail || "no error detail, please contact support";
       showToast("Something went wrong.", `${errDetail}`, "error");
     },
     onSettled: () => {
@@ -68,7 +64,12 @@ const AddGroup = ({ isOpen, onClose }: AddGroupProps) => {
   });
 
   const onSubmit: SubmitHandler<GroupCreate> = (data) => {
-    mutation.mutate(data);
+    mutation.mutate({
+      body: {
+        admin_api_identifier: currentUser!.api_identifier,
+        name: data.name,
+      },
+    });
   };
 
   return (

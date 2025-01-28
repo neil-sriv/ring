@@ -18,11 +18,12 @@ import { type SubmitHandler, useForm } from "react-hook-form";
 import {
   type UserLinked,
   type UserUpdate,
-  updateUserMePartiesMePatch,
   UpdateUserMePartiesMePatchError,
 } from "../../client";
 import useCustomToast from "../../hooks/useCustomToast";
 import { emailPattern } from "../../util/misc";
+import { updateUserMePartiesMePatchMutation } from "../../client/@tanstack/react-query.gen";
+import { AxiosError } from "axios";
 
 const UserInformation = () => {
   const queryClient = useQueryClient();
@@ -50,13 +51,13 @@ const UserInformation = () => {
   };
 
   const mutation = useMutation({
-    mutationFn: (data: UserUpdate) =>
-      updateUserMePartiesMePatch({ body: data }),
+    ...updateUserMePartiesMePatchMutation(),
     onSuccess: () => {
       showToast("Success!", "User updated successfully.", "success");
     },
-    onError: (err: UpdateUserMePartiesMePatchError) => {
-      const errDetail = err.detail || "no error detail, please contact support";
+    onError: (err: AxiosError<UpdateUserMePartiesMePatchError>) => {
+      const errDetail =
+        err.response?.data.detail || "no error detail, please contact support";
       showToast("Something went wrong.", `${errDetail}`, "error");
     },
     onSettled: () => {
@@ -67,7 +68,7 @@ const UserInformation = () => {
   });
 
   const onSubmit: SubmitHandler<UserUpdate> = async (data) => {
-    mutation.mutate(data);
+    mutation.mutate({ body: data });
   };
 
   const onCancel = () => {

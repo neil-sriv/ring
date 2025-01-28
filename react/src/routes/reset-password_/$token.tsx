@@ -13,13 +13,14 @@ import { createFileRoute, redirect, useNavigate } from "@tanstack/react-router";
 import { type SubmitHandler, useForm } from "react-hook-form";
 
 import {
-  resetPasswordResetPasswordTokenPost,
   ResetPasswordResetPasswordTokenPostError,
   type NewPassword,
 } from "../../client";
 import { isLoggedIn } from "../../hooks/useAuth";
 import useCustomToast from "../../hooks/useCustomToast";
 import { confirmPasswordRules, passwordRules } from "../../util/misc";
+import { resetPasswordResetPasswordTokenPostMutation } from "../../client/@tanstack/react-query.gen";
+import { AxiosError } from "axios";
 
 interface NewPasswordForm extends NewPassword {
   confirm_password: string;
@@ -54,29 +55,26 @@ function ResetPassword() {
   const navigate = useNavigate();
   const { token } = Route.useParams();
 
-  const resetPassword = async (data: NewPassword) => {
-    if (!token) return;
-    await resetPasswordResetPasswordTokenPost({
-      path: { token: token },
-      body: { new_password: data.new_password },
-    });
-  };
-
   const mutation = useMutation({
-    mutationFn: resetPassword,
+    ...resetPasswordResetPasswordTokenPostMutation(),
     onSuccess: () => {
       showToast("Success!", "Password updated.", "success");
       reset();
       navigate({ to: "/login" });
     },
-    onError: (err: ResetPasswordResetPasswordTokenPostError) => {
-      const errDetail = err.detail || "no error detail, please contact support";
+    onError: (err: AxiosError<ResetPasswordResetPasswordTokenPostError>) => {
+      const errDetail =
+        err.response?.data.detail || "no error detail, please contact support";
       showToast("Something went wrong.", `${errDetail}`, "error");
     },
   });
 
   const onSubmit: SubmitHandler<NewPasswordForm> = async (data) => {
-    mutation.mutate(data);
+    if (!token) return;
+    mutation.mutate({
+      path: { token: token },
+      body: data,
+    });
   };
 
   return (

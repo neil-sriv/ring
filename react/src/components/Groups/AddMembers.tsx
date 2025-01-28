@@ -17,12 +17,12 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { type SubmitHandler, useForm } from "react-hook-form";
 
 import {
-  addMembersPartiesGroupGroupApiIdAddMembersPost,
   AddMembersPartiesGroupGroupApiIdAddMembersPostError,
-  AddMembers as AddMembersType,
   type GroupLinked,
 } from "../../client";
 import useCustomToast from "../../hooks/useCustomToast";
+import { addMembersPartiesGroupGroupApiIdAddMembersPostMutation } from "../../client/@tanstack/react-query.gen";
+import { AxiosError } from "axios";
 
 interface AddMembersProps {
   group: GroupLinked;
@@ -48,20 +48,17 @@ const AddMembers = ({ group, isOpen, onClose }: AddMembersProps) => {
   });
 
   const mutation = useMutation({
-    mutationFn: (data: AddMembersType) =>
-      addMembersPartiesGroupGroupApiIdAddMembersPost({
-        path: {
-          group_api_id: group.api_identifier,
-        },
-        body: data,
-      }),
+    ...addMembersPartiesGroupGroupApiIdAddMembersPostMutation(),
     onSuccess: () => {
       showToast("Success!", "Group updated successfully.", "success");
       onClose();
     },
-    onError: (err: AddMembersPartiesGroupGroupApiIdAddMembersPostError) => {
+    onError: (
+      err: AxiosError<AddMembersPartiesGroupGroupApiIdAddMembersPostError>
+    ) => {
       console.log(err);
-      const errDetail = err.detail || "no error detail, please contact support";
+      const errDetail =
+        err.response?.data.detail || "no error detail, please contact support";
       showToast("Something went wrong.", `${errDetail}`, "error");
     },
     onSettled: () => {
@@ -73,7 +70,10 @@ const AddMembers = ({ group, isOpen, onClose }: AddMembersProps) => {
     const memberEmails = data.member_emails
       .split(",")
       .map((email) => email.trim());
-    mutation.mutate({ member_emails: memberEmails });
+    mutation.mutate({
+      body: { member_emails: memberEmails },
+      path: { group_api_id: group.api_identifier },
+    });
   };
 
   const onCancel = () => {

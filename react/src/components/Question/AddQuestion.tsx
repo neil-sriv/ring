@@ -15,13 +15,13 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { type SubmitHandler, useForm } from "react-hook-form";
 
 import {
-  addQuestionLettersLetterLetterApiIdAddQuestionPost,
   AddQuestionLettersLetterLetterApiIdAddQuestionPostError,
-  QuestionCreate,
   UserLinked,
 } from "../../client";
 import useCustomToast from "../../hooks/useCustomToast";
 import { useRouter } from "@tanstack/react-router";
+import { addQuestionLettersLetterLetterApiIdAddQuestionPostMutation } from "../../client/@tanstack/react-query.gen";
+import { AxiosError } from "axios";
 
 type QuestionFormProps = {
   questionText: string;
@@ -49,21 +49,17 @@ const AddQuestion = ({ isOpen, onClose, loopApiId }: AddQuestionProps) => {
   });
 
   const mutation = useMutation({
-    mutationFn: (data: QuestionCreate) =>
-      addQuestionLettersLetterLetterApiIdAddQuestionPost({
-        path: { letter_api_id: loopApiId },
-        body: {
-          question_text: data.question_text,
-          author_api_id: data.author_api_id,
-        },
-      }),
+    ...addQuestionLettersLetterLetterApiIdAddQuestionPostMutation(),
     onSuccess: () => {
       showToast("Success!", "New question created successfully.", "success");
       reset();
       onClose();
     },
-    onError: (err: AddQuestionLettersLetterLetterApiIdAddQuestionPostError) => {
-      const errDetail = err.detail || "no error detail, please contact support";
+    onError: (
+      err: AxiosError<AddQuestionLettersLetterLetterApiIdAddQuestionPostError>
+    ) => {
+      const errDetail =
+        err.response?.data.detail || "no error detail, please contact support";
       showToast("Something went wrong.", `${errDetail}`, "error");
     },
     onSettled: () => {
@@ -74,8 +70,11 @@ const AddQuestion = ({ isOpen, onClose, loopApiId }: AddQuestionProps) => {
 
   const onSubmit: SubmitHandler<QuestionFormProps> = (data) => {
     mutation.mutate({
-      question_text: data.questionText,
-      author_api_id: currentUser!.api_identifier,
+      body: {
+        question_text: data.questionText,
+        author_api_id: currentUser!.api_identifier,
+      },
+      path: { letter_api_id: loopApiId },
     });
   };
 

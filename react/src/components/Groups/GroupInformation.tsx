@@ -17,11 +17,12 @@ import { type SubmitHandler, useForm } from "react-hook-form";
 import {
   GroupLinked,
   GroupUpdate,
-  updateGroupPartiesGroupGroupApiIdPatch,
   UpdateGroupPartiesGroupGroupApiIdPatchError,
 } from "../../client";
 import useCustomToast from "../../hooks/useCustomToast";
 import { useRouter } from "@tanstack/react-router";
+import { updateGroupPartiesGroupGroupApiIdPatchMutation } from "../../client/@tanstack/react-query.gen";
+import { AxiosError } from "axios";
 
 function GroupInformation({ groupId }: { groupId: string }) {
   const queryClient = useQueryClient();
@@ -51,16 +52,13 @@ function GroupInformation({ groupId }: { groupId: string }) {
   };
 
   const mutation = useMutation({
-    mutationFn: (data: GroupUpdate) =>
-      updateGroupPartiesGroupGroupApiIdPatch({
-        path: { group_api_id: groupId },
-        body: data,
-      }),
+    ...updateGroupPartiesGroupGroupApiIdPatchMutation(),
     onSuccess: () => {
       showToast("Success!", "Group updated successfully.", "success");
     },
-    onError: (err: UpdateGroupPartiesGroupGroupApiIdPatchError) => {
-      const errDetail = err.detail || "no error detail, please contact support";
+    onError: (err: AxiosError<UpdateGroupPartiesGroupGroupApiIdPatchError>) => {
+      const errDetail =
+        err.response?.data.detail || "no error detail, please contact support";
       showToast("Something went wrong.", `${errDetail}`, "error");
     },
     onSettled: async () => {
@@ -71,7 +69,10 @@ function GroupInformation({ groupId }: { groupId: string }) {
   });
 
   const onSubmit: SubmitHandler<GroupUpdate> = async (data) => {
-    mutation.mutate(data);
+    mutation.mutate({
+      body: data,
+      path: { group_api_id: group.api_identifier },
+    });
   };
 
   const onCancel = () => {

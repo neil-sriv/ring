@@ -17,14 +17,10 @@ import {
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { type SubmitHandler, useForm } from "react-hook-form";
 
-import {
-  type UserLinked,
-  UpdateUserMePartiesMePatchError,
-  updateUserPartiesUserIdPatch,
-  UserUpdate,
-} from "../../client";
+import { type UserLinked, UserUpdate } from "../../client";
 import useCustomToast from "../../hooks/useCustomToast";
 import { emailPattern } from "../../util/misc";
+import { updateUserPartiesUserIdPatchMutation } from "../../client/@tanstack/react-query.gen";
 
 interface EditUserProps {
   user: UserLinked;
@@ -52,22 +48,23 @@ const EditUser = ({ user, isOpen, onClose }: EditUserProps) => {
   });
 
   const mutation = useMutation({
-    mutationFn: () => updateUserPartiesUserIdPatch(),
+    ...updateUserPartiesUserIdPatchMutation(),
     onSuccess: () => {
       showToast("Success!", "User updated successfully.", "success");
       onClose();
     },
-    onError: (err: UpdateUserMePartiesMePatchError) => {
-      const errDetail = err.detail || "no error detail, please contact support";
-      showToast("Something went wrong.", `${errDetail}`, "error");
-    },
+    // onError: (err: AxiosError<UpdateUserMePartiesMePatchError>) => {
+    //   const errDetail =
+    //     err.response?.data.detail || "no error detail, please contact support";
+    //   showToast("Something went wrong.", `${errDetail}`, "error");
+    // },
     onSettled: () => {
       queryClient.invalidateQueries({ queryKey: ["users"] });
     },
   });
 
   const onSubmit: SubmitHandler<UserUpdateForm> = async () => {
-    mutation.mutate();
+    mutation.mutate({});
   };
 
   const onCancel = () => {

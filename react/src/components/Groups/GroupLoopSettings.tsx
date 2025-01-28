@@ -20,12 +20,13 @@ import {
   useForm,
 } from "react-hook-form";
 
-import { GroupLinked, ReplaceDefaultQuestions } from "../../client";
-import { replaceGroupDefaultQuestionsPartiesGroupGroupApiIdReplaceDefaultQuestionsPost } from "../../client/sdk.gen";
+import { GroupLinked } from "../../client";
 import { ReplaceGroupDefaultQuestionsPartiesGroupGroupApiIdReplaceDefaultQuestionsPostError } from "../../client/types.gen";
 import useCustomToast from "../../hooks/useCustomToast";
 import { useRouter } from "@tanstack/react-router";
 import { FiPlus } from "react-icons/fi";
+import { replaceGroupDefaultQuestionsPartiesGroupGroupApiIdReplaceDefaultQuestionsPostMutation } from "../../client/@tanstack/react-query.gen";
+import { AxiosError } from "axios";
 
 type QuestionField = {
   question_text: string;
@@ -74,27 +75,23 @@ function GroupInformation({ groupId }: { groupId: string }) {
   };
 
   const mutation = useMutation({
-    mutationFn: (data: ReplaceDefaultQuestions) =>
-      replaceGroupDefaultQuestionsPartiesGroupGroupApiIdReplaceDefaultQuestionsPost(
-        {
-          path: { group_api_id: groupId },
-          body: data,
-        }
-      ),
+    ...replaceGroupDefaultQuestionsPartiesGroupGroupApiIdReplaceDefaultQuestionsPostMutation(),
     onSuccess: () => {
       showToast("Success!", "Loop settings updated successfully.", "success");
     },
     onError: (
-      err: ReplaceGroupDefaultQuestionsPartiesGroupGroupApiIdReplaceDefaultQuestionsPostError
+      err: AxiosError<ReplaceGroupDefaultQuestionsPartiesGroupGroupApiIdReplaceDefaultQuestionsPostError>
     ) => {
-      const errDetail = err.detail || "no error detail, please contact support";
+      const errDetail =
+        err.response?.data.detail || "no error detail, please contact support";
       showToast("Something went wrong.", `${errDetail}`, "error");
     },
     onSettled: async (group) => {
       queryClient.invalidateQueries({ queryKey: ["group", groupId] });
       router.invalidate();
       await queryClient.refetchQueries({ queryKey: ["group", groupId] });
-      reset({ questions: group?.data?.default_questions });
+      if (!group) return;
+      reset({ questions: group?.default_questions });
     },
   });
 
@@ -102,7 +99,10 @@ function GroupInformation({ groupId }: { groupId: string }) {
     data
   ) => {
     mutation.mutate({
-      questions: data.questions.map((question) => question.question_text),
+      body: {
+        questions: data.questions.map((question) => question.question_text),
+      },
+      path: { group_api_id: groupId },
     });
   };
 

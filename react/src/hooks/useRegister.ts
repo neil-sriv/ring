@@ -2,34 +2,25 @@ import { useMutation } from "@tanstack/react-query";
 import { useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
 
-import {
-  registerUserPartiesRegisterTokenPost,
-  RegisterUserPartiesRegisterTokenPostError,
-  UserCreate,
-} from "../client";
+import { RegisterUserPartiesRegisterTokenPostError } from "../client";
+import { registerUserPartiesRegisterTokenPostMutation } from "../client/@tanstack/react-query.gen";
+import { AxiosError } from "axios";
 
 const useRegister = () => {
   const [error, setError] = useState<string | null>(null);
   const navigate = useNavigate();
 
-  const register = async (data: {
-    body: UserCreate;
-    path: { token: string };
-  }) => {
-    return await registerUserPartiesRegisterTokenPost({
-      ...data,
-    });
-  };
-
   const registerMutation = useMutation({
-    mutationFn: register,
+    ...registerUserPartiesRegisterTokenPostMutation(),
     onSuccess: () => {
       navigate({ to: "/login" });
     },
-    onError: (err: RegisterUserPartiesRegisterTokenPostError) => {
-      // const errDetail = err.detail || "no error detail, please contact support";
-      // setError(errDetail);
-      console.log(err);
+    onError: (err: AxiosError<RegisterUserPartiesRegisterTokenPostError>) => {
+      const errDetail = err.response?.data.detail;
+      if (errDetail === undefined) {
+        return;
+      }
+      setError(errDetail[0].msg);
     },
   });
 

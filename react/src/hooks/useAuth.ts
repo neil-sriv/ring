@@ -2,13 +2,12 @@ import { useMutation } from "@tanstack/react-query";
 import { useNavigate, useSearch } from "@tanstack/react-router";
 import { useState } from "react";
 
-// import { AxiosError } from "axios";
 import {
-  loginAccessTokenLoginAccessTokenPost,
   LoginAccessTokenLoginAccessTokenPostError,
-  type BodyLoginAccessTokenLoginAccessTokenPost as AccessToken,
   type UserLinked,
 } from "../client";
+import { loginAccessTokenLoginAccessTokenPostMutation } from "../client/@tanstack/react-query.gen";
+import { AxiosError } from "axios";
 
 export interface AuthContext {
   isAuthenticated?: boolean;
@@ -24,26 +23,24 @@ const useAuth = () => {
   const [error, setError] = useState<string | null>(null);
   const navigate = useNavigate();
 
-  const login = async (data: AccessToken) => {
-    const response = await loginAccessTokenLoginAccessTokenPost({
-      body: data,
-    });
-    if (response.error) {
-      throw response.error;
-    }
-    localStorage.setItem("access_token", response.data.access_token);
-  };
-
   const loginMutation = useMutation({
-    mutationFn: login,
+    ...loginAccessTokenLoginAccessTokenPostMutation(),
     onSuccess: () => {
       // @ts-expect-error
       navigate({ to: search.path || "/groups" });
     },
-    onError: (err: LoginAccessTokenLoginAccessTokenPostError) => {
-      // const errDetail = err.detail || "no error detail, please contact support";
-      // setError(errDetail);
-      console.log(err);
+    onError: (err: AxiosError<LoginAccessTokenLoginAccessTokenPostError>) => {
+      const errDetail =
+        err.response?.data.detail || "no error detail, please contact support";
+      console.log(errDetail);
+    },
+    onSettled: (data, error) => {
+      if (error) {
+        throw error;
+      }
+      if (data) {
+        localStorage.setItem("access_token", data.access_token);
+      }
     },
   });
 
