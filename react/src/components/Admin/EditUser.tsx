@@ -54,6 +54,7 @@ const EditUser = ({ user, isOpen, onClose }: EditUserProps) => {
     ...updateUserPartiesUserIdPatchMutation(),
     onSuccess: () => {
       showToast("Success!", "User updated successfully.", "success");
+      reset();
       onClose();
     },
     // onError: (err: AxiosError<UpdateUserMePartiesMePatchError>) => {

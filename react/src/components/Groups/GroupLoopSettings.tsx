@@ -85,6 +85,7 @@ function GroupLoopSettings({ groupId }: { groupId: string }) {
     ...replaceGroupDefaultQuestionsPartiesGroupGroupApiIdReplaceDefaultQuestionsPostMutation(),
     onSuccess: () => {
       showToast("Success!", "Loop settings updated successfully.", "success");
+      reset();
     },
     onError: (
       err: AxiosError<ReplaceGroupDefaultQuestionsPartiesGroupGroupApiIdReplaceDefaultQuestionsPostError>

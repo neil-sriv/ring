@@ -56,6 +56,7 @@ const EditGroup = ({ group, isOpen, onClose }: EditGroupProps) => {
     ...updateGroupPartiesGroupGroupApiIdPatchMutation(),
     onSuccess: () => {
       showToast("Success!", "Group updated successfully.", "success");
+      reset();
       onClose();
     },
     onError: (err: AxiosError<UpdateGroupPartiesGroupGroupApiIdPatchError>) => {

@@ -60,18 +60,18 @@ const UserInformation = () => {
     ...updateUserMePartiesMePatchMutation(),
     onSuccess: () => {
       showToast("Success!", "User updated successfully.", "success");
+      reset();
     },
     onError: (err: AxiosError<UpdateUserMePartiesMePatchError>) => {
       const errDetail =
         err.response?.data.detail || "no error detail, please contact support";
       showToast("Something went wrong.", `${errDetail}`, "error");
     },
-    onSettled: () => {
-      // TODO: can we do just one call now?
+    onSettled: async () => {
       queryClient.invalidateQueries({
         queryKey: readUsersPartiesUsersGetQueryKey(),
       });
-      queryClient.invalidateQueries({
+      await queryClient.refetchQueries({
         queryKey: readUserMePartiesMeGetQueryKey(),
       });
     },

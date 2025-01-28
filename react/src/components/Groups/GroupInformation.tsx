@@ -62,6 +62,7 @@ function GroupInformation({ groupId }: { groupId: string }) {
     ...updateGroupPartiesGroupGroupApiIdPatchMutation(),
     onSuccess: () => {
       showToast("Success!", "Group updated successfully.", "success");
+      reset();
     },
     onError: (err: AxiosError<UpdateGroupPartiesGroupGroupApiIdPatchError>) => {
       const errDetail =
@@ -75,11 +76,6 @@ function GroupInformation({ groupId }: { groupId: string }) {
         }),
       });
       router.invalidate();
-      await queryClient.refetchQueries({
-        queryKey: readGroupPartiesGroupGroupApiIdGetQueryKey({
-          path: { group_api_id: groupId },
-        }),
-      });
     },
   });
 

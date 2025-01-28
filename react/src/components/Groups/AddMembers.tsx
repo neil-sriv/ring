@@ -54,6 +54,7 @@ const AddMembers = ({ group, isOpen, onClose }: AddMembersProps) => {
     ...addMembersPartiesGroupGroupApiIdAddMembersPostMutation(),
     onSuccess: () => {
       showToast("Success!", "Group updated successfully.", "success");
+      reset();
       onClose();
     },
     onError: (
