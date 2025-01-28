@@ -13,12 +13,13 @@ import { useMutation } from "@tanstack/react-query";
 import { type SubmitHandler, useForm } from "react-hook-form";
 
 import {
-  type ApiError,
   type UserUpdatePassword,
-  PartiesService,
+  UpdatePasswordMePartiesMePasswordPatchError,
 } from "../../client";
 import useCustomToast from "../../hooks/useCustomToast";
 import { confirmPasswordRules, passwordRules } from "../../util/misc";
+import { updatePasswordMePartiesMePasswordPatchMutation } from "../../client/@tanstack/react-query.gen";
+import { AxiosError } from "axios";
 
 interface UpdatePasswordForm extends UserUpdatePassword {
   confirm_password: string;
@@ -39,25 +40,22 @@ const ChangePassword = () => {
   });
 
   const mutation = useMutation({
-    mutationFn: (data: UpdatePasswordForm) =>
-      PartiesService.updatePasswordMePartiesMePasswordPatch({
-        requestBody: {
-          current_password: data.current_password,
-          new_password: data.new_password,
-        },
-      }),
+    ...updatePasswordMePartiesMePasswordPatchMutation(),
     onSuccess: () => {
       showToast("Success!", "Password updated.", "success");
       reset();
     },
-    onError: (err: ApiError) => {
-      const errDetail = (err.body as any)?.detail;
+    onError: (err: AxiosError<UpdatePasswordMePartiesMePasswordPatchError>) => {
+      const errDetail =
+        err.response?.data.detail || "no error detail, please contact support";
       showToast("Something went wrong.", `${errDetail}`, "error");
     },
   });
 
   const onSubmit: SubmitHandler<UpdatePasswordForm> = async (data) => {
-    mutation.mutate(data);
+    mutation.mutate({
+      body: data,
+    });
   };
 
   return (

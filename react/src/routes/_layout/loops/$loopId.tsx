@@ -1,12 +1,16 @@
 import { Box, Container, Heading, Text } from "@chakra-ui/react";
 import { createFileRoute } from "@tanstack/react-router";
-import { LettersService, PartiesService, PublicLetter } from "../../../client";
+import { PublicLetter } from "../../../client";
 import { Suspense } from "react";
 import { ErrorBoundary } from "react-error-boundary";
 import PublishedLoop from "../../../components/Loops/PublishedLoop";
 import DraftLoop from "../../../components/Loops/DraftLoop";
 import QuestionNav from "../../../components/Question/QuestionNav";
 import { useSuspenseQuery } from "@tanstack/react-query";
+import {
+  readGroupPartiesGroupGroupApiIdGetOptions,
+  readLetterLettersLetterLetterApiIdGetOptions,
+} from "../../../client/@tanstack/react-query.gen";
 
 type IssueLoaderProps = {
   loop: PublicLetter;
@@ -15,14 +19,10 @@ type IssueLoaderProps = {
 export const Route = createFileRoute("/_layout/loops/$loopId")({
   loader: async ({ params, context }): Promise<IssueLoaderProps> => {
     const loop = await context.queryClient.ensureQueryData({
-      queryKey: ["loop", params.loopId],
-      queryFn: async () => {
-        return await LettersService.readLetterLettersLetterLetterApiIdGet({
-          letterApiId: params.loopId,
-        });
-      },
+      ...readLetterLettersLetterLetterApiIdGetOptions({
+        path: { letter_api_id: params.loopId },
+      }),
     });
-
     return {
       loop,
     };
@@ -33,20 +33,14 @@ export const Route = createFileRoute("/_layout/loops/$loopId")({
 function IssueContent() {
   const routeParams = Route.useParams();
   const { data: loop } = useSuspenseQuery({
-    queryKey: ["loop", routeParams.loopId],
-    queryFn: async () => {
-      return await LettersService.readLetterLettersLetterLetterApiIdGet({
-        letterApiId: routeParams.loopId,
-      });
-    },
+    ...readLetterLettersLetterLetterApiIdGetOptions({
+      path: { letter_api_id: routeParams.loopId },
+    }),
   });
   const { data: group } = useSuspenseQuery({
-    queryKey: ["group", loop.group.api_identifier],
-    queryFn: async () => {
-      return await PartiesService.readGroupPartiesGroupGroupApiIdGet({
-        groupApiId: loop.group.api_identifier,
-      });
-    },
+    ...readGroupPartiesGroupGroupApiIdGetOptions({
+      path: { group_api_id: loop.group.api_identifier },
+    }),
   });
   const localDueDate = new Date(loop.send_at);
 

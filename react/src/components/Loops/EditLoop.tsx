@@ -16,13 +16,16 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { type SubmitHandler, useForm } from "react-hook-form";
 
 import {
-  type ApiError,
-  type LetterUpdate,
-  LettersService,
+  EditLetterLettersLetterLetterApiIdEditLetterPostError,
   PublicLetter,
 } from "../../client";
 import useCustomToast from "../../hooks/useCustomToast";
 import { toISOLocal } from "../../util/misc";
+import {
+  editLetterLettersLetterLetterApiIdEditLetterPostMutation,
+  readLetterLettersLetterLetterApiIdGetQueryKey,
+} from "../../client/@tanstack/react-query.gen";
+import { AxiosError } from "axios";
 
 type LetterFormProps = {
   sendAt: Date | string;
@@ -52,33 +55,35 @@ const EditLetter = ({ isOpen, onClose, loop }: EditLetterProps) => {
   });
 
   const mutation = useMutation({
-    mutationFn: (data: LetterUpdate) =>
-      LettersService.editLetterLettersLetterLetterApiIdEditLetterPost({
-        letterApiId: loop.api_identifier,
-        requestBody: {
-          send_at: data.send_at,
-        },
-      }),
+    ...editLetterLettersLetterLetterApiIdEditLetterPostMutation(),
     onSuccess: () => {
       showToast("Success!", "Letter due date updated.", "success");
       reset();
       onClose();
     },
-    onError: (err: ApiError) => {
-      const errDetail = (err.body as any)?.detail;
+    onError: (
+      err: AxiosError<EditLetterLettersLetterLetterApiIdEditLetterPostError>
+    ) => {
+      const errDetail =
+        err.response?.data.detail || "no error detail, please contact support";
       showToast("Something went wrong.", `${errDetail}`, "error");
     },
     onSettled: () => {
       queryClient.invalidateQueries({
-        queryKey: ["loop", loop.api_identifier],
+        queryKey: readLetterLettersLetterLetterApiIdGetQueryKey({
+          path: { letter_api_id: loop.api_identifier },
+        }),
       });
     },
   });
 
   const onSubmit: SubmitHandler<LetterFormProps> = (data) => {
     mutation.mutate({
-      send_at:
-        data.sendAt instanceof Date ? toISOLocal(data.sendAt) : data.sendAt,
+      body: {
+        send_at:
+          data.sendAt instanceof Date ? toISOLocal(data.sendAt) : data.sendAt,
+      },
+      path: { letter_api_id: loop.api_identifier },
     });
   };
 

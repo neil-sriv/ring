@@ -20,7 +20,7 @@ import {
 } from "@tanstack/react-router";
 import { type SubmitHandler, useForm } from "react-hook-form";
 
-import type { Body_login_access_token_login_access_token_post as AccessToken } from "../client";
+import type { BodyLoginAccessTokenLoginAccessTokenPost as AccessToken } from "../client";
 import useAuth from "../hooks/useAuth";
 import { emailPattern } from "../util/misc";
 
@@ -60,7 +60,9 @@ function Login() {
     resetError();
 
     try {
-      await loginMutation.mutateAsync(data);
+      await loginMutation.mutateAsync({
+        body: data,
+      });
     } catch {
       // error is handled by useAuth hook
     }

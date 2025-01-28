@@ -17,12 +17,15 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { type SubmitHandler, useForm } from "react-hook-form";
 
 import {
-  AddMembers as AddMembersType,
-  type ApiError,
+  AddMembersPartiesGroupGroupApiIdAddMembersPostError,
   type GroupLinked,
-  PartiesService,
 } from "../../client";
 import useCustomToast from "../../hooks/useCustomToast";
+import {
+  addMembersPartiesGroupGroupApiIdAddMembersPostMutation,
+  listGroupsPartiesGroupsGetQueryKey,
+} from "../../client/@tanstack/react-query.gen";
+import { AxiosError } from "axios";
 
 interface AddMembersProps {
   group: GroupLinked;
@@ -48,22 +51,26 @@ const AddMembers = ({ group, isOpen, onClose }: AddMembersProps) => {
   });
 
   const mutation = useMutation({
-    mutationFn: (data: AddMembersType) =>
-      PartiesService.addMembersPartiesGroupGroupApiIdAddMembersPost({
-        groupApiId: group.api_identifier,
-        requestBody: data,
-      }),
+    ...addMembersPartiesGroupGroupApiIdAddMembersPostMutation(),
     onSuccess: () => {
       showToast("Success!", "Group updated successfully.", "success");
+      reset();
       onClose();
     },
-    onError: (err: ApiError) => {
+    onError: (
+      err: AxiosError<AddMembersPartiesGroupGroupApiIdAddMembersPostError>
+    ) => {
       console.log(err);
-      const errDetail = (err.body as any)?.detail;
+      const errDetail =
+        err.response?.data.detail || "no error detail, please contact support";
       showToast("Something went wrong.", `${errDetail}`, "error");
     },
     onSettled: () => {
-      queryClient.invalidateQueries({ queryKey: ["groups"] });
+      queryClient.invalidateQueries({
+        queryKey: listGroupsPartiesGroupsGetQueryKey({
+          query: { user_api_id: group.api_identifier },
+        }),
+      });
     },
   });
 
@@ -71,7 +78,10 @@ const AddMembers = ({ group, isOpen, onClose }: AddMembersProps) => {
     const memberEmails = data.member_emails
       .split(",")
       .map((email) => email.trim());
-    mutation.mutate({ member_emails: memberEmails });
+    mutation.mutate({
+      body: { member_emails: memberEmails },
+      path: { group_api_id: group.api_identifier },
+    });
   };
 
   const onCancel = () => {

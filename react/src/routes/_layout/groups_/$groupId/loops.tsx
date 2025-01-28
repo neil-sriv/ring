@@ -11,15 +11,15 @@ import {
   Highlight,
 } from "@chakra-ui/react";
 import { Link, createFileRoute } from "@tanstack/react-router";
-import {
-  LettersService,
-  PartiesService,
-  PublicLetter,
-} from "../../../../client";
+import { PublicLetter } from "../../../../client";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { Suspense } from "react";
 import { ErrorBoundary } from "react-error-boundary";
 import LoopNav from "../../../../components/Loops/LoopNav";
+import {
+  listLettersLettersLettersGetOptions,
+  readGroupPartiesGroupGroupApiIdGetOptions,
+} from "../../../../client/@tanstack/react-query.gen";
 
 type LoopsSearchParams = {
   offset?: number;
@@ -44,14 +44,9 @@ export const Route = createFileRoute("/_layout/groups/$groupId/loops")({
     deps: { offset, limit },
   }): Promise<LoopsLoaderProps> => {
     const loops = await context.queryClient.ensureQueryData({
-      queryKey: ["loops", params.groupId],
-      queryFn: async () => {
-        return await LettersService.listLettersLettersLettersGet({
-          groupApiId: params.groupId,
-          skip: offset,
-          limit: limit,
-        });
-      },
+      ...listLettersLettersLettersGetOptions({
+        query: { group_api_id: params.groupId, skip: offset, limit: limit },
+      }),
     });
 
     return {
@@ -145,12 +140,13 @@ function LoopsContent() {
   const props = Route.useLoaderData();
   const groupId = Route.useParams().groupId;
   const { data: group } = useSuspenseQuery({
-    queryKey: ["groups", groupId],
-    queryFn: () =>
-      PartiesService.readGroupPartiesGroupGroupApiIdGet({
-        groupApiId: groupId,
-      }),
+    ...readGroupPartiesGroupGroupApiIdGetOptions({
+      path: { group_api_id: groupId },
+    }),
   });
+  if (!group) {
+    return <Box>Loading...</Box>;
+  }
   const publishedLoops = new Array<PublicLetter>();
   const inProgressLoops = new Array<PublicLetter>();
   const upcomingLoops = new Array<PublicLetter>();

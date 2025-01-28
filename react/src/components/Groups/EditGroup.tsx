@@ -16,12 +16,18 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { type SubmitHandler, useForm } from "react-hook-form";
 
 import {
-  type ApiError,
   type GroupLinked,
   type GroupUpdate,
-  PartiesService,
+  UpdateGroupPartiesGroupGroupApiIdPatchError,
+  UserLinked,
 } from "../../client";
 import useCustomToast from "../../hooks/useCustomToast";
+import {
+  listGroupsPartiesGroupsGetQueryKey,
+  readUserMePartiesMeGetQueryKey,
+  updateGroupPartiesGroupGroupApiIdPatchMutation,
+} from "../../client/@tanstack/react-query.gen";
+import { AxiosError } from "axios";
 
 interface EditGroupProps {
   group: GroupLinked;
@@ -31,6 +37,9 @@ interface EditGroupProps {
 
 const EditGroup = ({ group, isOpen, onClose }: EditGroupProps) => {
   const queryClient = useQueryClient();
+  const currentUser = queryClient.getQueryData<UserLinked>(
+    readUserMePartiesMeGetQueryKey()
+  );
   const showToast = useCustomToast();
   const {
     register,
@@ -44,26 +53,31 @@ const EditGroup = ({ group, isOpen, onClose }: EditGroupProps) => {
   });
 
   const mutation = useMutation({
-    mutationFn: (data: GroupUpdate) =>
-      PartiesService.updateGroupPartiesGroupGroupApiIdPatch({
-        groupApiId: group.api_identifier,
-        requestBody: data,
-      }),
+    ...updateGroupPartiesGroupGroupApiIdPatchMutation(),
     onSuccess: () => {
       showToast("Success!", "Group updated successfully.", "success");
+      reset();
       onClose();
     },
-    onError: (err: ApiError) => {
-      const errDetail = (err.body as any)?.detail;
+    onError: (err: AxiosError<UpdateGroupPartiesGroupGroupApiIdPatchError>) => {
+      const errDetail =
+        err.response?.data.detail || "no error detail, please contact support";
       showToast("Something went wrong.", `${errDetail}`, "error");
     },
     onSettled: () => {
-      queryClient.invalidateQueries({ queryKey: ["groups"] });
+      queryClient.invalidateQueries({
+        queryKey: listGroupsPartiesGroupsGetQueryKey({
+          query: { user_api_id: currentUser!.api_identifier },
+        }),
+      });
     },
   });
 
   const onSubmit: SubmitHandler<GroupUpdate> = async (data) => {
-    mutation.mutate(data);
+    mutation.mutate({
+      path: { group_api_id: group.api_identifier },
+      body: data,
+    });
   };
 
   const onCancel = () => {

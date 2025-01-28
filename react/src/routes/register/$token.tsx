@@ -20,11 +20,15 @@ import {
 } from "@tanstack/react-router";
 import { type SubmitHandler, useForm } from "react-hook-form";
 
-import { InvitesService, type UserCreate } from "../../client";
+import { type UserCreate } from "../../client";
 import { isLoggedIn } from "../../hooks/useAuth";
 import { emailPattern } from "../../util/misc";
 import useRegister from "../../hooks/useRegister";
 import { useQueryClient } from "@tanstack/react-query";
+import {
+  validateTokenInvitesTokenTokenGetOptions,
+  validateTokenInvitesTokenTokenGetQueryKey,
+} from "../../client/@tanstack/react-query.gen";
 
 export const Route = createFileRoute("/register/$token")({
   component: Register,
@@ -38,12 +42,9 @@ export const Route = createFileRoute("/register/$token")({
   loader: async ({ params, context }) => {
     await context.queryClient
       .ensureQueryData({
-        queryKey: ["token", params.token],
-        queryFn: async () => {
-          return await InvitesService.validateTokenInvitesTokenTokenGet({
-            token: params.token,
-          });
-        },
+        ...validateTokenInvitesTokenTokenGetOptions({
+          path: { token: params.token },
+        }),
       })
       .catch(() => {
         console.log("Invalid token");
@@ -55,7 +56,13 @@ function Register() {
   const { token } = Route.useParams();
   const queryClient = useQueryClient();
   const validToken =
-    queryClient.getQueryData(["token", token]) ?? false ? true : false;
+    queryClient.getQueryData(
+      validateTokenInvitesTokenTokenGetQueryKey({
+        path: { token: token },
+      })
+    ) ?? false
+      ? true
+      : false;
   if (!validToken) {
     return (
       <Center h="100vh">
@@ -86,8 +93,8 @@ function Register() {
     resetError();
 
     const formData = {
-      requestBody: data,
-      token: token,
+      body: data,
+      path: { token: token },
     };
 
     try {
