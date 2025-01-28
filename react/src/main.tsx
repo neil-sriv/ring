@@ -13,7 +13,6 @@ import theme from "./theme";
 
 import { client } from "./client/client.gen";
 import { readUserMePartiesMeGetOptions } from "./client/@tanstack/react-query.gen";
-import { AxiosError } from "axios";
 
 client.setConfig({
   baseURL: import.meta.env.VITE_API_URL + "/api/v1",
@@ -21,6 +20,17 @@ client.setConfig({
     return localStorage.getItem("access_token") || "";
   },
 });
+
+client.instance.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    if (error.response?.status === 401) {
+      localStorage.removeItem("access_token");
+      window.location.href = "/login";
+    }
+    return Promise.reject(error);
+  }
+);
 
 const queryClient = new QueryClient();
 
@@ -41,13 +51,6 @@ function App() {
     refetchInterval: 5000,
     enabled: localStorage.getItem("access_token") !== null,
   });
-  console.log(resp);
-
-  if (resp.isError && (resp.error as AxiosError).response?.status === 401) {
-    localStorage.removeItem("access_token");
-    window.location.href = "/login";
-    return null;
-  }
 
   return (
     <RouterProvider
