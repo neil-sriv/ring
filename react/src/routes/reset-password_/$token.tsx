@@ -12,7 +12,11 @@ import { useMutation } from "@tanstack/react-query";
 import { createFileRoute, redirect, useNavigate } from "@tanstack/react-router";
 import { type SubmitHandler, useForm } from "react-hook-form";
 
-import { type ApiError, LoginService, type NewPassword } from "../../client";
+import {
+  resetPasswordResetPasswordTokenPost,
+  ResetPasswordResetPasswordTokenPostError,
+  type NewPassword,
+} from "../../client";
 import { isLoggedIn } from "../../hooks/useAuth";
 import useCustomToast from "../../hooks/useCustomToast";
 import { confirmPasswordRules, passwordRules } from "../../util/misc";
@@ -52,9 +56,9 @@ function ResetPassword() {
 
   const resetPassword = async (data: NewPassword) => {
     if (!token) return;
-    await LoginService.resetPasswordResetPasswordTokenPost({
-      token: token,
-      requestBody: { new_password: data.new_password },
+    await resetPasswordResetPasswordTokenPost({
+      path: { token: token },
+      body: { new_password: data.new_password },
     });
   };
 
@@ -65,8 +69,9 @@ function ResetPassword() {
       reset();
       navigate({ to: "/login" });
     },
-    onError: (err: ApiError) => {
-      showToast("Something went wrong.", `${err.body.detail}`, "error");
+    onError: (err: ResetPasswordResetPasswordTokenPostError) => {
+      const errDetail = err.detail || "no error detail, please contact support";
+      showToast("Something went wrong.", `${errDetail}`, "error");
     },
   });
 

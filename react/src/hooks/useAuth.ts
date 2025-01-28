@@ -2,11 +2,11 @@ import { useMutation } from "@tanstack/react-query";
 import { useNavigate, useSearch } from "@tanstack/react-router";
 import { useState } from "react";
 
-import { AxiosError } from "axios";
+// import { AxiosError } from "axios";
 import {
-  type Body_login_access_token_login_access_token_post as AccessToken,
-  type ApiError,
-  LoginService,
+  loginAccessTokenLoginAccessTokenPost,
+  LoginAccessTokenLoginAccessTokenPostError,
+  type BodyLoginAccessTokenLoginAccessTokenPost as AccessToken,
   type UserLinked,
 } from "../client";
 
@@ -25,10 +25,13 @@ const useAuth = () => {
   const navigate = useNavigate();
 
   const login = async (data: AccessToken) => {
-    const response = await LoginService.loginAccessTokenLoginAccessTokenPost({
-      formData: data,
+    const response = await loginAccessTokenLoginAccessTokenPost({
+      body: data,
     });
-    localStorage.setItem("access_token", response.access_token);
+    if (response.error) {
+      throw response.error;
+    }
+    localStorage.setItem("access_token", response.data.access_token);
   };
 
   const loginMutation = useMutation({
@@ -37,18 +40,10 @@ const useAuth = () => {
       // @ts-expect-error
       navigate({ to: search.path || "/groups" });
     },
-    onError: (err: ApiError) => {
-      let errDetail = err.body.detail;
-
-      if (err instanceof AxiosError) {
-        errDetail = err.message;
-      }
-
-      if (Array.isArray(errDetail)) {
-        errDetail = "Something went wrong";
-      }
-
-      setError(errDetail);
+    onError: (err: LoginAccessTokenLoginAccessTokenPostError) => {
+      // const errDetail = err.detail || "no error detail, please contact support";
+      // setError(errDetail);
+      console.log(err);
     },
   });
 

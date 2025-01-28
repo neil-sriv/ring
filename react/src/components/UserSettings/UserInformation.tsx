@@ -16,10 +16,10 @@ import { useState } from "react";
 import { type SubmitHandler, useForm } from "react-hook-form";
 
 import {
-  type ApiError,
   type UserLinked,
   type UserUpdate,
-  PartiesService,
+  updateUserMePartiesMePatch,
+  UpdateUserMePartiesMePatchError,
 } from "../../client";
 import useCustomToast from "../../hooks/useCustomToast";
 import { emailPattern } from "../../util/misc";
@@ -51,12 +51,12 @@ const UserInformation = () => {
 
   const mutation = useMutation({
     mutationFn: (data: UserUpdate) =>
-      PartiesService.updateUserMePartiesMePatch({ requestBody: data }),
+      updateUserMePartiesMePatch({ body: data }),
     onSuccess: () => {
       showToast("Success!", "User updated successfully.", "success");
     },
-    onError: (err: ApiError) => {
-      const errDetail = (err.body as any)?.detail;
+    onError: (err: UpdateUserMePartiesMePatchError) => {
+      const errDetail = err.detail || "no error detail, please contact support";
       showToast("Something went wrong.", `${errDetail}`, "error");
     },
     onSettled: () => {

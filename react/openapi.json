@@ -12,7 +12,9 @@
   "paths": {
     "/login/access-token": {
       "post": {
-        "tags": ["login"],
+        "tags": [
+          "login"
+        ],
         "summary": "Login Access Token",
         "operationId": "login_access_token_login_access_token_post",
         "requestBody": {
@@ -51,7 +53,9 @@
     },
     "/login/test-token": {
       "post": {
-        "tags": ["login"],
+        "tags": [
+          "login"
+        ],
         "summary": "Test Token",
         "description": "Test access token",
         "operationId": "test_token_login_test_token_post",
@@ -73,7 +77,9 @@
     },
     "/reset-password:request/{email}": {
       "post": {
-        "tags": ["login"],
+        "tags": [
+          "login"
+        ],
         "summary": "Reset Password Request",
         "description": "Password Reset Request",
         "operationId": "reset_password_request_reset_password_request__email__post",
@@ -114,7 +120,9 @@
     },
     "/reset-password/{token}": {
       "post": {
-        "tags": ["login"],
+        "tags": [
+          "login"
+        ],
         "summary": "Reset Password",
         "description": "Reset password",
         "operationId": "reset_password_reset_password__token__post",
@@ -165,7 +173,9 @@
     },
     "/password-recovery-html-content/{email}": {
       "post": {
-        "tags": ["login"],
+        "tags": [
+          "login"
+        ],
         "summary": "Recover Password Html Content",
         "description": "HTML Content for Password Recovery",
         "operationId": "recover_password_html_content_password_recovery_html_content__email__post",
@@ -208,7 +218,9 @@
     },
     "/parties/me": {
       "get": {
-        "tags": ["parties"],
+        "tags": [
+          "parties"
+        ],
         "summary": "Read User Me",
         "operationId": "read_user_me_parties_me_get",
         "responses": {
@@ -230,7 +242,9 @@
         ]
       },
       "delete": {
-        "tags": ["parties"],
+        "tags": [
+          "parties"
+        ],
         "summary": "Delete User Me",
         "description": "Delete own user.",
         "operationId": "delete_user_me_parties_me_delete",
@@ -250,7 +264,9 @@
         "deprecated": true
       },
       "patch": {
-        "tags": ["parties"],
+        "tags": [
+          "parties"
+        ],
         "summary": "Update User Me",
         "description": "Update own user.",
         "operationId": "update_user_me_parties_me_patch",
@@ -295,7 +311,9 @@
     },
     "/parties/user": {
       "post": {
-        "tags": ["parties"],
+        "tags": [
+          "parties"
+        ],
         "summary": "Create User",
         "operationId": "create_user_parties_user_post",
         "requestBody": {
@@ -335,7 +353,9 @@
     },
     "/parties/register/{token}": {
       "post": {
-        "tags": ["parties"],
+        "tags": [
+          "parties"
+        ],
         "summary": "Register User",
         "operationId": "register_user_parties_register__token__post",
         "parameters": [
@@ -385,7 +405,9 @@
     },
     "/parties/users": {
       "get": {
-        "tags": ["parties"],
+        "tags": [
+          "parties"
+        ],
         "summary": "Read Users",
         "operationId": "read_users_parties_users_get",
         "security": [
@@ -445,7 +467,9 @@
     },
     "/parties/user/{user_api_id}": {
       "get": {
-        "tags": ["parties"],
+        "tags": [
+          "parties"
+        ],
         "summary": "Read User By Id",
         "operationId": "read_user_by_id_parties_user__user_api_id__get",
         "security": [
@@ -490,7 +514,9 @@
     },
     "/parties/me/password": {
       "patch": {
-        "tags": ["parties"],
+        "tags": [
+          "parties"
+        ],
         "summary": "Update Password Me",
         "description": "Update own password.",
         "operationId": "update_password_me_parties_me_password_patch",
@@ -535,7 +561,9 @@
     },
     "/parties/signup": {
       "post": {
-        "tags": ["parties"],
+        "tags": [
+          "parties"
+        ],
         "summary": "Signup",
         "description": "Create new user without the need to be logged in.",
         "operationId": "signup_parties_signup_post",
@@ -557,7 +585,9 @@
     },
     "/parties/{user_id}": {
       "delete": {
-        "tags": ["parties"],
+        "tags": [
+          "parties"
+        ],
         "summary": "Delete User",
         "description": "Delete a user.",
         "operationId": "delete_user_parties__user_id__delete",
@@ -577,7 +607,9 @@
         "deprecated": true
       },
       "patch": {
-        "tags": ["parties"],
+        "tags": [
+          "parties"
+        ],
         "summary": "Update User",
         "description": "Update a user.",
         "operationId": "update_user_parties__user_id__patch",
@@ -599,7 +631,9 @@
     },
     "/parties/group": {
       "post": {
-        "tags": ["parties"],
+        "tags": [
+          "parties"
+        ],
         "summary": "Create Group",
         "operationId": "create_group_parties_group_post",
         "requestBody": {
@@ -643,7 +677,9 @@
     },
     "/parties/groups/": {
       "get": {
-        "tags": ["parties"],
+        "tags": [
+          "parties"
+        ],
         "summary": "List Groups",
         "operationId": "list_groups_parties_groups__get",
         "security": [
@@ -712,7 +748,9 @@
     },
     "/parties/group/{group_api_id}": {
       "get": {
-        "tags": ["parties"],
+        "tags": [
+          "parties"
+        ],
         "summary": "Read Group",
         "operationId": "read_group_parties_group__group_api_id__get",
         "security": [
@@ -755,7 +793,9 @@
         }
       },
       "patch": {
-        "tags": ["parties"],
+        "tags": [
+          "parties"
+        ],
         "summary": "Update Group",
         "operationId": "update_group_parties_group__group_api_id__patch",
         "security": [
@@ -810,7 +850,9 @@
     },
     "/parties/group/{group_api_id}:add_member/{user_api_id}": {
       "post": {
-        "tags": ["parties"],
+        "tags": [
+          "parties"
+        ],
         "summary": "Add User To Group",
         "operationId": "add_user_to_group_parties_group__group_api_id__add_member__user_api_id__post",
         "security": [
@@ -864,7 +906,9 @@
     },
     "/parties/group/{group_api_id}:remove_member/{user_api_id}": {
       "post": {
-        "tags": ["parties"],
+        "tags": [
+          "parties"
+        ],
         "summary": "Remove User From Group",
         "operationId": "remove_user_from_group_parties_group__group_api_id__remove_member__user_api_id__post",
         "security": [
@@ -918,7 +962,9 @@
     },
     "/parties/group/{group_api_id}:schedule_send": {
       "post": {
-        "tags": ["parties"],
+        "tags": [
+          "parties"
+        ],
         "summary": "Schedule Send",
         "operationId": "schedule_send_parties_group__group_api_id__schedule_send_post",
         "security": [
@@ -973,7 +1019,9 @@
     },
     "/parties/group/{group_api_id}:add_members": {
       "post": {
-        "tags": ["parties"],
+        "tags": [
+          "parties"
+        ],
         "summary": "Add Members",
         "operationId": "add_members_parties_group__group_api_id__add_members_post",
         "security": [
@@ -1028,7 +1076,9 @@
     },
     "/parties/group/{group_api_id}:replace_default_questions": {
       "post": {
-        "tags": ["parties"],
+        "tags": [
+          "parties"
+        ],
         "summary": "Replace Group Default Questions",
         "operationId": "replace_group_default_questions_parties_group__group_api_id__replace_default_questions_post",
         "security": [
@@ -1083,7 +1133,9 @@
     },
     "/letters/letter": {
       "post": {
-        "tags": ["letters"],
+        "tags": [
+          "letters"
+        ],
         "summary": "Add Next Letter",
         "operationId": "add_next_letter_letters_letter_post",
         "requestBody": {
@@ -1127,7 +1179,9 @@
     },
     "/letters/letters/": {
       "get": {
-        "tags": ["letters"],
+        "tags": [
+          "letters"
+        ],
         "summary": "List Letters",
         "operationId": "list_letters_letters_letters__get",
         "security": [
@@ -1196,7 +1250,9 @@
     },
     "/letters/letter/{letter_api_id}": {
       "get": {
-        "tags": ["letters"],
+        "tags": [
+          "letters"
+        ],
         "summary": "Read Letter",
         "operationId": "read_letter_letters_letter__letter_api_id__get",
         "security": [
@@ -1241,7 +1297,9 @@
     },
     "/letters/letters:dashboard": {
       "get": {
-        "tags": ["letters"],
+        "tags": [
+          "letters"
+        ],
         "summary": "List Dashboard Letters",
         "operationId": "list_dashboard_letters_letters_letters_dashboard_get",
         "responses": {
@@ -1265,7 +1323,9 @@
     },
     "/letters/letter/{letter_api_id}:edit_letter": {
       "post": {
-        "tags": ["letters"],
+        "tags": [
+          "letters"
+        ],
         "summary": "Edit Letter",
         "operationId": "edit_letter_letters_letter__letter_api_id__edit_letter_post",
         "security": [
@@ -1320,7 +1380,9 @@
     },
     "/letters/letter/{letter_api_id}:add_question": {
       "post": {
-        "tags": ["letters"],
+        "tags": [
+          "letters"
+        ],
         "summary": "Add Question",
         "operationId": "add_question_letters_letter__letter_api_id__add_question_post",
         "security": [
@@ -1375,7 +1437,9 @@
     },
     "/letters/letter/{letter_api_id}:bulk_edit_responses": {
       "patch": {
-        "tags": ["letters"],
+        "tags": [
+          "letters"
+        ],
         "summary": "Bulk Edit Responses",
         "operationId": "bulk_edit_responses_letters_letter__letter_api_id__bulk_edit_responses_patch",
         "deprecated": true,
@@ -1435,7 +1499,9 @@
     },
     "/schedule/schedule/{group_api_id}": {
       "get": {
-        "tags": ["schedule"],
+        "tags": [
+          "schedule"
+        ],
         "summary": "Get Schedule For Group",
         "operationId": "get_schedule_for_group_schedule_schedule__group_api_id__get",
         "security": [
@@ -1480,7 +1546,9 @@
     },
     "/questions/question/{question_api_id}:upsert_response": {
       "post": {
-        "tags": ["questions"],
+        "tags": [
+          "questions"
+        ],
         "summary": "Upsert Response",
         "operationId": "upsert_response_questions_question__question_api_id__upsert_response_post",
         "security": [
@@ -1535,7 +1603,9 @@
     },
     "/questions/question/{question_api_id}:upload_image": {
       "post": {
-        "tags": ["questions"],
+        "tags": [
+          "questions"
+        ],
         "summary": "Upload Image",
         "operationId": "upload_image_questions_question__question_api_id__upload_image_post",
         "security": [
@@ -1590,7 +1660,9 @@
     },
     "/responses/response/{response_api_id}:edit_response": {
       "post": {
-        "tags": ["responses"],
+        "tags": [
+          "responses"
+        ],
         "summary": "Edit Response",
         "operationId": "edit_response_responses_response__response_api_id__edit_response_post",
         "security": [
@@ -1645,7 +1717,9 @@
     },
     "/responses/response/{response_api_id}:upload_image": {
       "post": {
-        "tags": ["responses"],
+        "tags": [
+          "responses"
+        ],
         "summary": "Upload Image",
         "operationId": "upload_image_responses_response__response_api_id__upload_image_post",
         "deprecated": true,
@@ -1701,7 +1775,9 @@
     },
     "/invites/": {
       "post": {
-        "tags": ["invites"],
+        "tags": [
+          "invites"
+        ],
         "summary": "Create Invite",
         "operationId": "create_invite_invites__post",
         "requestBody": {
@@ -1745,7 +1821,9 @@
     },
     "/invites/token/{token}": {
       "get": {
-        "tags": ["invites"],
+        "tags": [
+          "invites"
+        ],
         "summary": "Validate Token",
         "operationId": "validate_token_invites_token__token__get",
         "parameters": [
@@ -1829,7 +1907,9 @@
           }
         },
         "type": "object",
-        "required": ["member_emails"],
+        "required": [
+          "member_emails"
+        ],
         "title": "AddMembers"
       },
       "Body_login_access_token_login_access_token_post": {
@@ -1883,7 +1963,10 @@
           }
         },
         "type": "object",
-        "required": ["username", "password"],
+        "required": [
+          "username",
+          "password"
+        ],
         "title": "Body_login_access_token_login_access_token_post"
       },
       "Body_upload_image_questions_question__question_api_id__upload_image_post": {
@@ -1895,7 +1978,9 @@
           }
         },
         "type": "object",
-        "required": ["response_image"],
+        "required": [
+          "response_image"
+        ],
         "title": "Body_upload_image_questions_question__question_api_id__upload_image_post"
       },
       "Body_upload_image_responses_response__response_api_id__upload_image_post": {
@@ -1910,7 +1995,9 @@
           }
         },
         "type": "object",
-        "required": ["response_images"],
+        "required": [
+          "response_images"
+        ],
         "title": "Body_upload_image_responses_response__response_api_id__upload_image_post"
       },
       "DashboardLetters": {
@@ -1938,7 +2025,11 @@
           }
         },
         "type": "object",
-        "required": ["upcoming", "in_progress", "recently_completed"],
+        "required": [
+          "upcoming",
+          "in_progress",
+          "recently_completed"
+        ],
         "title": "DashboardLetters"
       },
       "GroupCreate": {
@@ -1953,7 +2044,10 @@
           }
         },
         "type": "object",
-        "required": ["name", "admin_api_identifier"],
+        "required": [
+          "name",
+          "admin_api_identifier"
+        ],
         "title": "GroupCreate"
       },
       "GroupLinked": {
@@ -2036,7 +2130,11 @@
           }
         },
         "type": "object",
-        "required": ["name", "api_identifier", "created_at"],
+        "required": [
+          "name",
+          "api_identifier",
+          "created_at"
+        ],
         "title": "GroupUnlinked"
       },
       "GroupUpdate": {
@@ -2080,7 +2178,10 @@
           }
         },
         "type": "object",
-        "required": ["s3_url", "media_type"],
+        "required": [
+          "s3_url",
+          "media_type"
+        ],
         "title": "Image"
       },
       "InviteCreate": {
@@ -2095,7 +2196,10 @@
           }
         },
         "type": "object",
-        "required": ["email", "group_api_id"],
+        "required": [
+          "email",
+          "group_api_id"
+        ],
         "title": "InviteCreate"
       },
       "InviteLinked": {
@@ -2155,12 +2259,19 @@
           }
         },
         "type": "object",
-        "required": ["group_api_identifier", "send_at"],
+        "required": [
+          "group_api_identifier",
+          "send_at"
+        ],
         "title": "LetterCreate"
       },
       "LetterStatus": {
         "type": "string",
-        "enum": ["UPCOMING", "IN_PROGRESS", "SENT"],
+        "enum": [
+          "UPCOMING",
+          "IN_PROGRESS",
+          "SENT"
+        ],
         "title": "LetterStatus"
       },
       "LetterUnlinked": {
@@ -2206,12 +2317,17 @@
           }
         },
         "type": "object",
-        "required": ["send_at"],
+        "required": [
+          "send_at"
+        ],
         "title": "LetterUpdate"
       },
       "MediaType": {
         "type": "string",
-        "enum": ["image", "video"],
+        "enum": [
+          "image",
+          "video"
+        ],
         "title": "MediaType"
       },
       "NewPassword": {
@@ -2222,7 +2338,9 @@
           }
         },
         "type": "object",
-        "required": ["new_password"],
+        "required": [
+          "new_password"
+        ],
         "title": "NewPassword"
       },
       "PublicLetter": {
@@ -2333,7 +2451,10 @@
           }
         },
         "type": "object",
-        "required": ["question_text", "author_api_id"],
+        "required": [
+          "question_text",
+          "author_api_id"
+        ],
         "title": "QuestionCreate"
       },
       "QuestionLinked": {
@@ -2389,7 +2510,11 @@
           }
         },
         "type": "object",
-        "required": ["question_text", "api_identifier", "created_at"],
+        "required": [
+          "question_text",
+          "api_identifier",
+          "created_at"
+        ],
         "title": "QuestionUnlinked"
       },
       "ReplaceDefaultQuestions": {
@@ -2403,7 +2528,9 @@
           }
         },
         "type": "object",
-        "required": ["questions"],
+        "required": [
+          "questions"
+        ],
         "title": "ReplaceDefaultQuestions"
       },
       "ResponseCreateBase": {
@@ -2414,7 +2541,9 @@
           }
         },
         "type": "object",
-        "required": ["response_text"],
+        "required": [
+          "response_text"
+        ],
         "title": "ResponseCreateBase"
       },
       "ResponseLinked": {
@@ -2466,7 +2595,9 @@
           }
         },
         "type": "object",
-        "required": ["message"],
+        "required": [
+          "message"
+        ],
         "title": "ResponseMessage"
       },
       "ResponseUnlinked": {
@@ -2486,7 +2617,11 @@
           }
         },
         "type": "object",
-        "required": ["response_text", "api_identifier", "created_at"],
+        "required": [
+          "response_text",
+          "api_identifier",
+          "created_at"
+        ],
         "title": "ResponseUnlinked"
       },
       "ResponseUpsert": {
@@ -2519,7 +2654,9 @@
           }
         },
         "type": "object",
-        "required": ["response_text"],
+        "required": [
+          "response_text"
+        ],
         "title": "ResponseUpsert"
       },
       "ResponseWithParticipant": {
@@ -2573,7 +2710,10 @@
           }
         },
         "type": "object",
-        "required": ["group", "tasks"],
+        "required": [
+          "group",
+          "tasks"
+        ],
         "title": "ScheduleLinked"
       },
       "ScheduleSendParam": {
@@ -2589,7 +2729,10 @@
           }
         },
         "type": "object",
-        "required": ["letter_api_id", "send_at"],
+        "required": [
+          "letter_api_id",
+          "send_at"
+        ],
         "title": "ScheduleSendParam"
       },
       "ScheduleUnlinked": {
@@ -2603,7 +2746,9 @@
           }
         },
         "type": "object",
-        "required": ["tasks"],
+        "required": [
+          "tasks"
+        ],
         "title": "ScheduleUnlinked"
       },
       "TaskUnlinked": {
@@ -2630,7 +2775,12 @@
           }
         },
         "type": "object",
-        "required": ["type", "status", "execute_at", "arguments"],
+        "required": [
+          "type",
+          "status",
+          "execute_at",
+          "arguments"
+        ],
         "title": "TaskUnlinked"
       },
       "Token": {
@@ -2645,7 +2795,10 @@
           }
         },
         "type": "object",
-        "required": ["access_token", "token_type"],
+        "required": [
+          "access_token",
+          "token_type"
+        ],
         "title": "Token"
       },
       "UserCreate": {
@@ -2664,7 +2817,11 @@
           }
         },
         "type": "object",
-        "required": ["email", "name", "password"],
+        "required": [
+          "email",
+          "name",
+          "password"
+        ],
         "title": "UserCreate"
       },
       "UserLinked": {
@@ -2697,7 +2854,13 @@
           }
         },
         "type": "object",
-        "required": ["email", "name", "api_identifier", "groups", "responses"],
+        "required": [
+          "email",
+          "name",
+          "api_identifier",
+          "groups",
+          "responses"
+        ],
         "title": "UserLinked"
       },
       "UserUnlinked": {
@@ -2716,7 +2879,11 @@
           }
         },
         "type": "object",
-        "required": ["email", "name", "api_identifier"],
+        "required": [
+          "email",
+          "name",
+          "api_identifier"
+        ],
         "title": "UserUnlinked"
       },
       "UserUpdate": {
@@ -2759,7 +2926,10 @@
           }
         },
         "type": "object",
-        "required": ["current_password", "new_password"],
+        "required": [
+          "current_password",
+          "new_password"
+        ],
         "title": "UserUpdatePassword"
       },
       "ValidationError": {
@@ -2788,7 +2958,11 @@
           }
         },
         "type": "object",
-        "required": ["loc", "msg", "type"],
+        "required": [
+          "loc",
+          "msg",
+          "type"
+        ],
         "title": "ValidationError"
       }
     },

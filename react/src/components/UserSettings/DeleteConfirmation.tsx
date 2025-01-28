@@ -11,7 +11,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import React from "react";
 import { useForm } from "react-hook-form";
 
-import { type ApiError, PartiesService } from "../../client";
+import { deleteUserPartiesUserIdDelete } from "../../client";
 import useAuth from "../../hooks/useAuth";
 import useCustomToast from "../../hooks/useCustomToast";
 
@@ -32,7 +32,7 @@ const DeleteConfirmation = ({ isOpen, onClose }: DeleteProps) => {
   const { logout } = useAuth();
 
   const mutation = useMutation({
-    mutationFn: () => PartiesService.deleteUserPartiesUserIdDelete(),
+    mutationFn: () => deleteUserPartiesUserIdDelete(),
     onSuccess: () => {
       showToast(
         "Success",
@@ -43,8 +43,9 @@ const DeleteConfirmation = ({ isOpen, onClose }: DeleteProps) => {
       queryClient.clear();
       onClose();
     },
-    onError: (err: ApiError) => {
-      const errDetail = (err.body as any)?.detail;
+    onError: (err: Error) => {
+      const errDetail =
+        err.message || "no error detail, please contact support";
       showToast("Something went wrong.", `${errDetail}`, "error");
     },
     onSettled: () => {

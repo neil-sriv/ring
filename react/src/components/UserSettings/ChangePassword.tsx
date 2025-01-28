@@ -13,9 +13,9 @@ import { useMutation } from "@tanstack/react-query";
 import { type SubmitHandler, useForm } from "react-hook-form";
 
 import {
-  type ApiError,
   type UserUpdatePassword,
-  PartiesService,
+  updatePasswordMePartiesMePasswordPatch,
+  UpdatePasswordMePartiesMePasswordPatchError,
 } from "../../client";
 import useCustomToast from "../../hooks/useCustomToast";
 import { confirmPasswordRules, passwordRules } from "../../util/misc";
@@ -40,8 +40,8 @@ const ChangePassword = () => {
 
   const mutation = useMutation({
     mutationFn: (data: UpdatePasswordForm) =>
-      PartiesService.updatePasswordMePartiesMePasswordPatch({
-        requestBody: {
+      updatePasswordMePartiesMePasswordPatch({
+        body: {
           current_password: data.current_password,
           new_password: data.new_password,
         },
@@ -50,8 +50,8 @@ const ChangePassword = () => {
       showToast("Success!", "Password updated.", "success");
       reset();
     },
-    onError: (err: ApiError) => {
-      const errDetail = (err.body as any)?.detail;
+    onError: (err: UpdatePasswordMePartiesMePasswordPatchError) => {
+      const errDetail = err.detail || "no error detail, please contact support";
       showToast("Something went wrong.", `${errDetail}`, "error");
     },
   });

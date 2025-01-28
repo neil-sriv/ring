@@ -15,8 +15,8 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { type SubmitHandler, useForm } from "react-hook-form";
 
 import {
-  type ApiError,
-  LettersService,
+  addQuestionLettersLetterLetterApiIdAddQuestionPost,
+  AddQuestionLettersLetterLetterApiIdAddQuestionPostError,
   QuestionCreate,
   UserLinked,
 } from "../../client";
@@ -50,9 +50,9 @@ const AddQuestion = ({ isOpen, onClose, loopApiId }: AddQuestionProps) => {
 
   const mutation = useMutation({
     mutationFn: (data: QuestionCreate) =>
-      LettersService.addQuestionLettersLetterLetterApiIdAddQuestionPost({
-        letterApiId: loopApiId,
-        requestBody: {
+      addQuestionLettersLetterLetterApiIdAddQuestionPost({
+        path: { letter_api_id: loopApiId },
+        body: {
           question_text: data.question_text,
           author_api_id: data.author_api_id,
         },
@@ -62,8 +62,8 @@ const AddQuestion = ({ isOpen, onClose, loopApiId }: AddQuestionProps) => {
       reset();
       onClose();
     },
-    onError: (err: ApiError) => {
-      const errDetail = (err.body as any)?.detail;
+    onError: (err: AddQuestionLettersLetterLetterApiIdAddQuestionPostError) => {
+      const errDetail = err.detail || "no error detail, please contact support";
       showToast("Something went wrong.", `${errDetail}`, "error");
     },
     onSettled: () => {

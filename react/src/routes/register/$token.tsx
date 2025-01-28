@@ -20,7 +20,10 @@ import {
 } from "@tanstack/react-router";
 import { type SubmitHandler, useForm } from "react-hook-form";
 
-import { InvitesService, type UserCreate } from "../../client";
+import {
+  validateTokenInvitesTokenTokenGet,
+  type UserCreate,
+} from "../../client";
 import { isLoggedIn } from "../../hooks/useAuth";
 import { emailPattern } from "../../util/misc";
 import useRegister from "../../hooks/useRegister";
@@ -40,8 +43,8 @@ export const Route = createFileRoute("/register/$token")({
       .ensureQueryData({
         queryKey: ["token", params.token],
         queryFn: async () => {
-          return await InvitesService.validateTokenInvitesTokenTokenGet({
-            token: params.token,
+          return await validateTokenInvitesTokenTokenGet({
+            path: { token: params.token },
           });
         },
       })
@@ -86,8 +89,8 @@ function Register() {
     resetError();
 
     const formData = {
-      requestBody: data,
-      token: token,
+      body: data,
+      path: { token: token },
     };
 
     try {

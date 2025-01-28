@@ -16,10 +16,10 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { type SubmitHandler, useForm } from "react-hook-form";
 
 import {
-  type ApiError,
   type GroupLinked,
   type GroupUpdate,
-  PartiesService,
+  updateGroupPartiesGroupGroupApiIdPatch,
+  UpdateGroupPartiesGroupGroupApiIdPatchError,
 } from "../../client";
 import useCustomToast from "../../hooks/useCustomToast";
 
@@ -45,16 +45,18 @@ const EditGroup = ({ group, isOpen, onClose }: EditGroupProps) => {
 
   const mutation = useMutation({
     mutationFn: (data: GroupUpdate) =>
-      PartiesService.updateGroupPartiesGroupGroupApiIdPatch({
-        groupApiId: group.api_identifier,
-        requestBody: data,
+      updateGroupPartiesGroupGroupApiIdPatch({
+        path: {
+          group_api_id: group.api_identifier,
+        },
+        body: data,
       }),
     onSuccess: () => {
       showToast("Success!", "Group updated successfully.", "success");
       onClose();
     },
-    onError: (err: ApiError) => {
-      const errDetail = (err.body as any)?.detail;
+    onError: (err: UpdateGroupPartiesGroupGroupApiIdPatchError) => {
+      const errDetail = err.detail || "no error detail, please contact support";
       showToast("Something went wrong.", `${errDetail}`, "error");
     },
     onSettled: () => {

@@ -17,8 +17,11 @@ import {
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { type SubmitHandler, useForm } from "react-hook-form";
 
-import { type UserCreate, PartiesService } from "../../client";
-import type { ApiError } from "../../client/core/ApiError";
+import {
+  CreateUserPartiesUserPostError,
+  type UserCreate,
+  createUserPartiesUserPost,
+} from "../../client";
 import useCustomToast from "../../hooks/useCustomToast";
 import { emailPattern } from "../../util/misc";
 
@@ -54,15 +57,14 @@ const AddUser = ({ isOpen, onClose }: AddUserProps) => {
   });
 
   const mutation = useMutation({
-    mutationFn: (data: UserCreate) =>
-      PartiesService.createUserPartiesUserPost({ requestBody: data }),
+    mutationFn: (data: UserCreate) => createUserPartiesUserPost({ body: data }),
     onSuccess: () => {
       showToast("Success!", "User created successfully.", "success");
       reset();
       onClose();
     },
-    onError: (err: ApiError) => {
-      const errDetail = (err.body as any)?.detail;
+    onError: (err: CreateUserPartiesUserPostError) => {
+      const errDetail = err.detail || "no error detail, please contact support";
       showToast("Something went wrong.", `${errDetail}`, "error");
     },
     onSettled: () => {

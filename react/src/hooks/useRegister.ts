@@ -2,17 +2,23 @@ import { useMutation } from "@tanstack/react-query";
 import { useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
 
-import { AxiosError } from "axios";
-import { type ApiError, PartiesData, PartiesService } from "../client";
+import {
+  registerUserPartiesRegisterTokenPost,
+  RegisterUserPartiesRegisterTokenPostError,
+  UserCreate,
+} from "../client";
 
 const useRegister = () => {
   const [error, setError] = useState<string | null>(null);
   const navigate = useNavigate();
 
-  const register = async (
-    data: PartiesData["RegisterUserPartiesRegisterTokenPost"]
-  ) => {
-    return await PartiesService.registerUserPartiesRegisterTokenPost(data);
+  const register = async (data: {
+    body: UserCreate;
+    path: { token: string };
+  }) => {
+    return await registerUserPartiesRegisterTokenPost({
+      ...data,
+    });
   };
 
   const registerMutation = useMutation({
@@ -20,18 +26,10 @@ const useRegister = () => {
     onSuccess: () => {
       navigate({ to: "/login" });
     },
-    onError: (err: ApiError) => {
-      let errDetail = err.body.detail;
-
-      if (err instanceof AxiosError) {
-        errDetail = err.message;
-      }
-
-      if (Array.isArray(errDetail)) {
-        errDetail = "Something went wrong";
-      }
-
-      setError(errDetail);
+    onError: (err: RegisterUserPartiesRegisterTokenPostError) => {
+      // const errDetail = err.detail || "no error detail, please contact support";
+      // setError(errDetail);
+      console.log(err);
     },
   });
 

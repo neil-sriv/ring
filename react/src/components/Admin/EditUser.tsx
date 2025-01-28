@@ -18,9 +18,9 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { type SubmitHandler, useForm } from "react-hook-form";
 
 import {
-  type ApiError,
   type UserLinked,
-  PartiesService,
+  UpdateUserMePartiesMePatchError,
+  updateUserPartiesUserIdPatch,
   UserUpdate,
 } from "../../client";
 import useCustomToast from "../../hooks/useCustomToast";
@@ -52,13 +52,13 @@ const EditUser = ({ user, isOpen, onClose }: EditUserProps) => {
   });
 
   const mutation = useMutation({
-    mutationFn: () => PartiesService.updateUserPartiesUserIdPatch(),
+    mutationFn: () => updateUserPartiesUserIdPatch(),
     onSuccess: () => {
       showToast("Success!", "User updated successfully.", "success");
       onClose();
     },
-    onError: (err: ApiError) => {
-      const errDetail = (err.body as any)?.detail;
+    onError: (err: UpdateUserMePartiesMePatchError) => {
+      const errDetail = err.detail || "no error detail, please contact support";
       showToast("Something went wrong.", `${errDetail}`, "error");
     },
     onSettled: () => {

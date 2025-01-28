@@ -2,7 +2,7 @@ import { Button, Flex, Icon, useDisclosure } from "@chakra-ui/react";
 import { FaPlus } from "react-icons/fa";
 
 import AddQuestion from "./AddQuestion";
-import { GroupLinked, PublicLetter, UserLinked } from "../../client/models";
+import { GroupLinked, PublicLetter, UserLinked } from "../../client";
 import EditLetter from "../Loops/EditLoop";
 import { useQueryClient } from "@tanstack/react-query";
 

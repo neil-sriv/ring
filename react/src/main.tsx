@@ -9,13 +9,17 @@ import ReactDOM from "react-dom/client";
 import { routeTree } from "./routeTree.gen";
 
 import { StrictMode } from "react";
-import { OpenAPI, PartiesService, UserLinked } from "./client";
+import { readUserMePartiesMeGet } from "./client";
 import theme from "./theme";
 
-OpenAPI.BASE = import.meta.env.VITE_API_URL + OpenAPI.BASE;
-OpenAPI.TOKEN = async () => {
-  return localStorage.getItem("access_token") || "";
-};
+import { client } from "./client/client.gen";
+
+client.setConfig({
+  baseURL: import.meta.env.VITE_API_URL + "/api/v1",
+  auth: async () => {
+    return localStorage.getItem("access_token") || "";
+  },
+});
 
 const queryClient = new QueryClient();
 
@@ -30,15 +34,18 @@ declare module "@tanstack/react-router" {
 }
 
 function App() {
-  const resp = useQuery<UserLinked | null, Error>({
+  const resp = useQuery({
     queryKey: ["currentUser"],
-    queryFn: PartiesService.readUserMePartiesMeGet,
+    queryFn: () => {
+      const resp = readUserMePartiesMeGet().then((resp) => resp.data);
+      return resp;
+    },
     retry: false,
     refetchInterval: 5000,
     enabled: localStorage.getItem("access_token") !== null,
   });
 
-  return resp.isLoading && !resp.isError && false ? null : (
+  return resp.isLoading && !resp.isError && resp.data && false ? null : (
     <RouterProvider
       router={router}
       context={{

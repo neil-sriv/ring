@@ -19,7 +19,7 @@ import { Link as ChakraLink } from "@chakra-ui/react";
 
 import { Suspense } from "react";
 import { ErrorBoundary } from "react-error-boundary";
-import { PartiesService, UserLinked } from "../../client";
+import { listGroupsPartiesGroupsGet, UserLinked } from "../../client";
 // import ActionsMenu from "../../components/Common/ActionsMenu";
 import Navbar from "../../components/Common/Navbar";
 import ActionsMenu from "../../components/Common/ActionsMenu";
@@ -31,13 +31,19 @@ export const Route = createFileRoute("/_layout/groups")({
 function GroupTableBody() {
   const queryClient = useQueryClient();
   const currentUser = queryClient.getQueryData<UserLinked>(["currentUser"]);
-  const { data: groups } = useSuspenseQuery({
+  const {
+    data: { data: groups },
+  } = useSuspenseQuery({
     queryKey: ["groups"],
     queryFn: () =>
-      PartiesService.listGroupsPartiesGroupsGet({
-        userApiId: currentUser!.api_identifier,
+      listGroupsPartiesGroupsGet({
+        query: { user_api_id: currentUser!.api_identifier },
       }),
   });
+
+  if (!groups) {
+    return null;
+  }
 
   return (
     <Tbody>

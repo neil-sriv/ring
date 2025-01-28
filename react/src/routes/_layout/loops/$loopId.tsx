@@ -1,6 +1,10 @@
 import { Box, Container, Heading, Text } from "@chakra-ui/react";
 import { createFileRoute } from "@tanstack/react-router";
-import { LettersService, PartiesService, PublicLetter } from "../../../client";
+import {
+  PublicLetter,
+  readGroupPartiesGroupGroupApiIdGet,
+  readLetterLettersLetterLetterApiIdGet,
+} from "../../../client";
 import { Suspense } from "react";
 import { ErrorBoundary } from "react-error-boundary";
 import PublishedLoop from "../../../components/Loops/PublishedLoop";
@@ -14,14 +18,18 @@ type IssueLoaderProps = {
 
 export const Route = createFileRoute("/_layout/loops/$loopId")({
   loader: async ({ params, context }): Promise<IssueLoaderProps> => {
-    const loop = await context.queryClient.ensureQueryData({
+    const { data: loop } = await context.queryClient.ensureQueryData({
       queryKey: ["loop", params.loopId],
       queryFn: async () => {
-        return await LettersService.readLetterLettersLetterLetterApiIdGet({
-          letterApiId: params.loopId,
+        return await readLetterLettersLetterLetterApiIdGet({
+          path: { letter_api_id: params.loopId },
         });
       },
     });
+
+    if (!loop) {
+      throw new Error("Failed to load loop");
+    }
 
     return {
       loop,
@@ -32,22 +40,32 @@ export const Route = createFileRoute("/_layout/loops/$loopId")({
 
 function IssueContent() {
   const routeParams = Route.useParams();
-  const { data: loop } = useSuspenseQuery({
+  const {
+    data: { data: loop },
+  } = useSuspenseQuery({
     queryKey: ["loop", routeParams.loopId],
     queryFn: async () => {
-      return await LettersService.readLetterLettersLetterLetterApiIdGet({
-        letterApiId: routeParams.loopId,
+      return await readLetterLettersLetterLetterApiIdGet({
+        path: { letter_api_id: routeParams.loopId },
       });
     },
   });
-  const { data: group } = useSuspenseQuery({
+  if (!loop) {
+    return null;
+  }
+  const {
+    data: { data: group },
+  } = useSuspenseQuery({
     queryKey: ["group", loop.group.api_identifier],
     queryFn: async () => {
-      return await PartiesService.readGroupPartiesGroupGroupApiIdGet({
-        groupApiId: loop.group.api_identifier,
+      return await readGroupPartiesGroupGroupApiIdGet({
+        path: { group_api_id: loop.group.api_identifier },
       });
     },
   });
+  if (!group) {
+    return null;
+  }
   const localDueDate = new Date(loop.send_at);
 
   return (

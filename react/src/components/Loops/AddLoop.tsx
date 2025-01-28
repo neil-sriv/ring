@@ -15,7 +15,11 @@ import {
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { type SubmitHandler, useForm } from "react-hook-form";
 
-import { type ApiError, type LetterCreate, LettersService } from "../../client";
+import {
+  addNextLetterLettersLetterPost,
+  AddNextLetterLettersLetterPostError,
+  type LetterCreate,
+} from "../../client";
 import useCustomToast from "../../hooks/useCustomToast";
 import { toISOLocal } from "../../util/misc";
 
@@ -53,8 +57,8 @@ const AddLetter = ({ isOpen, onClose, groupApiId }: AddLetterProps) => {
 
   const mutation = useMutation({
     mutationFn: (data: LetterCreate) =>
-      LettersService.addNextLetterLettersLetterPost({
-        requestBody: {
+      addNextLetterLettersLetterPost({
+        body: {
           group_api_identifier: data.group_api_identifier,
           send_at: data.send_at,
         },
@@ -64,8 +68,8 @@ const AddLetter = ({ isOpen, onClose, groupApiId }: AddLetterProps) => {
       reset();
       onClose();
     },
-    onError: (err: ApiError) => {
-      const errDetail = (err.body as any)?.detail;
+    onError: (err: AddNextLetterLettersLetterPostError) => {
+      const errDetail = err.detail || "no error detail, please contact support";
       showToast("Something went wrong.", `${errDetail}`, "error");
     },
     onSettled: () => {

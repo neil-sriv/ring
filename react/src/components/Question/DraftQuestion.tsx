@@ -1,8 +1,9 @@
 import { Box, Heading, Textarea } from "@chakra-ui/react";
 import {
   PublicQuestion,
-  QuestionsService,
   ResponseWithParticipant,
+  uploadImageQuestionsQuestionQuestionApiIdUploadImagePost,
+  upsertResponseQuestionsQuestionQuestionApiIdUpsertResponsePost,
   UserLinked,
 } from "../../client";
 import { useState } from "react";
@@ -81,26 +82,22 @@ function DraftQuestion({
   );
 
   const handleUpsert = async (responseText: string) => {
-    await QuestionsService.upsertResponseQuestionsQuestionQuestionApiIdUpsertResponsePost(
-      {
-        questionApiId: question.api_identifier,
-        requestBody: {
-          response_text: responseText,
-          participant_api_identifier: currentUser.api_identifier,
-        },
-      }
-    );
+    await upsertResponseQuestionsQuestionQuestionApiIdUpsertResponsePost({
+      path: { question_api_id: question.api_identifier },
+      body: {
+        response_text: responseText,
+        participant_api_identifier: currentUser.api_identifier,
+      },
+    });
   };
 
   const newHandleUpload = async (file: File) => {
-    await QuestionsService.uploadImageQuestionsQuestionQuestionApiIdUploadImagePost(
-      {
-        questionApiId: question.api_identifier,
-        formData: {
-          response_image: file,
-        },
-      }
-    );
+    await uploadImageQuestionsQuestionQuestionApiIdUploadImagePost({
+      path: { question_api_id: question.api_identifier },
+      body: {
+        response_image: file,
+      },
+    });
     queryClient.invalidateQueries({ queryKey: ["loop"] });
   };
 

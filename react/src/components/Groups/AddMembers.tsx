@@ -17,10 +17,10 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { type SubmitHandler, useForm } from "react-hook-form";
 
 import {
+  addMembersPartiesGroupGroupApiIdAddMembersPost,
+  AddMembersPartiesGroupGroupApiIdAddMembersPostError,
   AddMembers as AddMembersType,
-  type ApiError,
   type GroupLinked,
-  PartiesService,
 } from "../../client";
 import useCustomToast from "../../hooks/useCustomToast";
 
@@ -49,17 +49,19 @@ const AddMembers = ({ group, isOpen, onClose }: AddMembersProps) => {
 
   const mutation = useMutation({
     mutationFn: (data: AddMembersType) =>
-      PartiesService.addMembersPartiesGroupGroupApiIdAddMembersPost({
-        groupApiId: group.api_identifier,
-        requestBody: data,
+      addMembersPartiesGroupGroupApiIdAddMembersPost({
+        path: {
+          group_api_id: group.api_identifier,
+        },
+        body: data,
       }),
     onSuccess: () => {
       showToast("Success!", "Group updated successfully.", "success");
       onClose();
     },
-    onError: (err: ApiError) => {
+    onError: (err: AddMembersPartiesGroupGroupApiIdAddMembersPostError) => {
       console.log(err);
-      const errDetail = (err.body as any)?.detail;
+      const errDetail = err.detail || "no error detail, please contact support";
       showToast("Something went wrong.", `${errDetail}`, "error");
     },
     onSettled: () => {

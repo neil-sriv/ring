@@ -1898,6 +1898,11 @@
   resolved "https://registry.yarnpkg.com/@esbuild/win32-x64/-/win32-x64-0.21.5.tgz#acad351d582d157bb145535db2a6ff53dd514b5c"
   integrity sha512-tQd/1efJuzPC6rCFwEvLtci/xNFcTZknmXs98FYDfGE4wP9ClFV98nyKrzJKVPMhdDnjzLhdUyMX4PsQAPjwIw==
 
+"@hey-api/client-axios@^0.5.2":
+  version "0.5.2"
+  resolved "https://registry.yarnpkg.com/@hey-api/client-axios/-/client-axios-0.5.2.tgz#606f6d6c672bc4d2310a6e207cb3ef362caa9218"
+  integrity sha512-qgaNIjL3Vw2VWz5/J8BLUVkIA4Lb5f48syOtGfL6RK+9TS7Si0T44Z/53VWRhxmJdsrdQ6MCtfKyQEhD5yjh6w==
+
 "@hey-api/json-schema-ref-parser@1.0.1":
   version "1.0.1"
   resolved "https://registry.yarnpkg.com/@hey-api/json-schema-ref-parser/-/json-schema-ref-parser-1.0.1.tgz#0ae4668ca5b73964e71b5c5b7d99b6c9c30cda41"

@@ -17,7 +17,7 @@ import { useQueryClient, useSuspenseQuery } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
 
 import { Suspense } from "react";
-import { type UserLinked, PartiesService } from "../../client";
+import { readUsersPartiesUsersGet, type UserLinked } from "../../client";
 import ActionsMenu from "../../components/Common/ActionsMenu";
 import Navbar from "../../components/Common/Navbar";
 
@@ -29,10 +29,16 @@ const MembersTableBody = () => {
   const queryClient = useQueryClient();
   const currentUser = queryClient.getQueryData<UserLinked>(["currentUser"]);
 
-  const { data: users } = useSuspenseQuery({
+  const {
+    data: { data: users },
+  } = useSuspenseQuery({
     queryKey: ["users"],
-    queryFn: () => PartiesService.readUsersPartiesUsersGet({}),
+    queryFn: () => readUsersPartiesUsersGet({}),
   });
+
+  if (!users) {
+    return null;
+  }
 
   return (
     <Tbody>

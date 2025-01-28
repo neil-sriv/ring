@@ -12,9 +12,9 @@ import {
 } from "@chakra-ui/react";
 import { Link, createFileRoute } from "@tanstack/react-router";
 import {
-  LettersService,
-  PartiesService,
+  listLettersLettersLettersGet,
   PublicLetter,
+  readGroupPartiesGroupGroupApiIdGet,
 } from "../../../../client";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { Suspense } from "react";
@@ -43,16 +43,18 @@ export const Route = createFileRoute("/_layout/groups/$groupId/loops")({
     context,
     deps: { offset, limit },
   }): Promise<LoopsLoaderProps> => {
-    const loops = await context.queryClient.ensureQueryData({
+    const { data: loops } = await context.queryClient.ensureQueryData({
       queryKey: ["loops", params.groupId],
       queryFn: async () => {
-        return await LettersService.listLettersLettersLettersGet({
-          groupApiId: params.groupId,
-          skip: offset,
-          limit: limit,
+        return await listLettersLettersLettersGet({
+          query: { group_api_id: params.groupId, skip: offset, limit: limit },
         });
       },
     });
+
+    if (!loops) {
+      throw new Error("Failed to load loops");
+    }
 
     return {
       loops,
@@ -144,13 +146,18 @@ export function LoopsGrid({
 function LoopsContent() {
   const props = Route.useLoaderData();
   const groupId = Route.useParams().groupId;
-  const { data: group } = useSuspenseQuery({
+  const {
+    data: { data: group },
+  } = useSuspenseQuery({
     queryKey: ["groups", groupId],
     queryFn: () =>
-      PartiesService.readGroupPartiesGroupGroupApiIdGet({
-        groupApiId: groupId,
+      readGroupPartiesGroupGroupApiIdGet({
+        path: { group_api_id: groupId },
       }),
   });
+  if (!group) {
+    return <Box>Loading...</Box>;
+  }
   const publishedLoops = new Array<PublicLetter>();
   const inProgressLoops = new Array<PublicLetter>();
   const upcomingLoops = new Array<PublicLetter>();
