@@ -8,14 +8,11 @@ import {
   Tabs,
 } from "@chakra-ui/react";
 import { createFileRoute } from "@tanstack/react-router";
-import { GroupLinked, UserLinked } from "../../../../client";
+import { GroupLinked } from "../../../../client";
 import GroupInformation from "../../../../components/Groups/GroupInformation";
 import GroupMembershipSettings from "../../../../components/Groups/GroupMembershipSettings";
 import GroupLoopSettings from "../../../../components/Groups/GroupLoopSettings";
-import {
-  readGroupPartiesGroupGroupApiIdGetOptions,
-  readUserMePartiesMeGetQueryKey,
-} from "../../../../client/@tanstack/react-query.gen";
+import { readGroupPartiesGroupGroupApiIdGetOptions } from "../../../../client/@tanstack/react-query.gen";
 
 export const Route = createFileRoute("/_layout/groups/$groupId/settings")({
   beforeLoad: async ({ context, params }): Promise<{ group?: GroupLinked }> => {
@@ -24,9 +21,7 @@ export const Route = createFileRoute("/_layout/groups/$groupId/settings")({
         path: { group_api_id: params.groupId },
       }),
     });
-    const currentUser = context.queryClient.getQueryData<UserLinked>([
-      readUserMePartiesMeGetQueryKey(),
-    ]);
+    const currentUser = context.auth.user;
     if (currentUser?.api_identifier !== group.admin.api_identifier) {
       throw new Error("You are not authorized to view this page");
     }
