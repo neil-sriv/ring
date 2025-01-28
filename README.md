@@ -25,6 +25,33 @@ There are a few setup steps to get the project running locally.
 ring setup requirements
 ring setup local-ssl
 ```
+We'll need a `JWT_SIGNING_KEY` as well which can be generated with `openssl`
+```
+echo "JWT_SIGNING_KEY=$(openssl rand -hex 32)" >> .env
+```
+
+### `oh-my-zsh` set up
+**Highly** recommend to use `oh-my-zsh` with the `virtualenvwrapper` and `dotenv` plugins.
+
+
+Add a `.env` file with the following:
+```
+ENVIRONMENT=LOCAL
+API_PORT=8001
+CELERY_BROKER_URL=redis://redis:6379/0
+CELERY_RESULT_BACKEND=redis://redis:6379/0
+SQLALCHEMY_DATABASE_URI=postgresql://ring-postgres:ring-postgres@db:5432/ring
+JWT_SIGNING_ALGORITHM=HS256
+VITE_API_URL=https://localhost
+BACKEND_CORS_ORIGINS="https://localhost:5173 http://localhost:5173"
+```
+We'll need a `JWT_SIGNING_KEY` as well which can be generated with `openssl`
+```
+echo "JWT_SIGNING_KEY=$(openssl rand -hex 32)" >> .env
+```
+
+### `oh-my-zsh` set up
+**Highly** recommend to use `oh-my-zsh` with the `virtualenvwrapper` and `dotenv` plugins.
 
 
 Add a `.env` file with the following:
