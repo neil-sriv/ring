@@ -19,6 +19,8 @@ services:
       - ./localhost.key:/etc/nginx/certs/nginx-selfsigned.key:ro
       - ./react/dist/manifest.webmanifest:/usr/share/nginx/html/manifest.webmanifest:ro
       - ./react/dist/sw.js:/usr/share/nginx/html/serviceWorker.js:ro
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
 
   worker:
     command: "watchmedo auto-restart --directory=./ --pattern=*.py --recursive -- celery --app=ring.worker.celery_app worker --loglevel=debug"

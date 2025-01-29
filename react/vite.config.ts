@@ -31,7 +31,7 @@ const pwaOptions: Partial<VitePWAOptions> = {
     ],
   },
   devOptions: {
-    enabled: process.env.SW_DEV === "true",
+    enabled: true,
     /* when using generateSW the PWA plugin will switch to classic */
     type: "module",
     navigateFallback: "index.html",
@@ -65,6 +65,9 @@ if (reload) {
 
 // https://vitejs.dev/config/
 export default defineConfig({
+  server: {
+    allowedHosts: ["host.docker.internal"],
+  },
   plugins: [
     react(),
     TanStackRouterVite(),
