@@ -7,6 +7,9 @@ const pwaOptions: Partial<VitePWAOptions> = {
   mode: "development",
   base: "/",
   includeAssets: ["public/**/*"],
+  srcDir: "src",
+  filename: "sw.js",
+  strategies: "injectManifest",
   manifest: {
     name: process.env.ENVIRONMENT === "LOCAL" ? "Ring localhost" : "Ring",
     short_name: "Ring",

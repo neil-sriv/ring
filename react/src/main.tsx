@@ -13,6 +13,19 @@ import theme from "./theme";
 
 import { client } from "./client/client.gen";
 import { readUserMePartiesMeGetOptions } from "./client/@tanstack/react-query.gen";
+import { registerSW } from "virtual:pwa-register";
+
+/* PWA */
+const updateSW = registerSW({
+  onNeedRefresh() {
+    if (confirm("New version available. Reload?")) {
+      updateSW(true);
+    }
+  },
+  onOfflineReady() {
+    console.log("PWA is ready for offline use");
+  },
+});
 
 client.setConfig({
   baseURL: import.meta.env.VITE_API_URL + "/api/v1",
