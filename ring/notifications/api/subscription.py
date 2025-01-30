@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends
 
 from ring.dependencies import (
     AuthenticatedRequestDependencies,
@@ -10,7 +10,6 @@ from ring.lib.logger import logger
 from ring.notifications.crud.subscription import (
     create_subscription,
     get_subscription_by_endpoint,
-    get_subscriptions_for_user,
 )
 from ring.notifications.schemas.subscription import SubscriptionCreate
 from ring.ring_pydantic.core import ResponseMessage
@@ -28,21 +27,11 @@ def post_subscription(
     """
     Create a subscription for the given email.
     """
-    if get_subscriptions_for_user(
-        req_dep.db,
-        req_dep.current_user.api_identifier,
-    ):
-        logger.warning(
-            f"User {req_dep.current_user.api_identifier} already has a subscription"
-        )
     if get_subscription_by_endpoint(req_dep.db, subscription.endpoint):
         logger.warning(
             f"Subscription with endpoint {subscription.endpoint} already exists"
         )
-        raise HTTPException(
-            status_code=400, detail="Subscription already exists"
-        )
-        # return ResponseMessage(message="Subscription already exists")
+        return ResponseMessage(message="Subscription already exists")
     create_subscription(req_dep.db, subscription)
     req_dep.db.commit()
 

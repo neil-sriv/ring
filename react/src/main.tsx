@@ -26,14 +26,18 @@ const updateSW = registerSW({
     console.log("PWA is ready for offline use");
   },
 });
+/**/
 
+/* vite Config */
 client.setConfig({
   baseURL: import.meta.env.VITE_API_URL + "/api/v1",
   auth: async () => {
     return localStorage.getItem("access_token") || "";
   },
 });
+/**/
 
+/* vite response interceptor */
 client.instance.interceptors.response.use(
   (response) => response,
   (error) => {
@@ -44,6 +48,7 @@ client.instance.interceptors.response.use(
     return Promise.reject(error);
   }
 );
+/**/
 
 const queryClient = new QueryClient();
 

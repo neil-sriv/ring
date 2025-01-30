@@ -4,6 +4,21 @@ import {
 } from "../client";
 import { AxiosError } from "axios";
 
+const generateSubscription = async (): Promise<PushSubscription> => {
+  const registration = await navigator.serviceWorker.ready;
+  const existingSubscription = await registration.pushManager.getSubscription();
+  if (existingSubscription) {
+    console.log("Already subscribed to push notifications.");
+    return existingSubscription;
+  }
+  const subscription = await registration.pushManager.subscribe({
+    userVisibleOnly: true,
+    applicationServerKey: import.meta.env.VITE_VAPID_PUBLIC_KEY, // Ensure this is set in .env
+  });
+  console.log(subscription.toJSON());
+  return subscription;
+};
+
 export async function subscribeToPush(user_api_id: string): Promise<void> {
   if (!("serviceWorker" in navigator)) {
     console.error("Service Workers are not supported in this browser.");
@@ -16,13 +31,7 @@ export async function subscribeToPush(user_api_id: string): Promise<void> {
     console.warn("Push notifications permission denied.");
     return;
   }
-
-  const registration = await navigator.serviceWorker.ready;
-  const subscription = await registration.pushManager.subscribe({
-    userVisibleOnly: true,
-    applicationServerKey: import.meta.env.VITE_VAPID_PUBLIC_KEY, // Ensure this is set in .env
-  });
-  console.log(subscription.toJSON());
+  const subscription = await generateSubscription();
 
   const { endpoint, keys } = subscription.toJSON();
 

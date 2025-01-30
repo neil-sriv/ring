@@ -17,11 +17,12 @@ registerRoute(
 self.addEventListener("push", (event) => {
   if (event.data) {
     const notificationData = event.data.json();
+    console.log("Push event data:", notificationData);
     event.waitUntil(
       self.registration.showNotification(notificationData.title, {
         body: notificationData.body,
-        icon: "/assets/icon-192x192.png",
-        badge: "/assets/icon-192x192.png",
+        icon: "/assets/images/pwa-192x192.png",
+        badge: "/assets/images/pwa-192x192.png",
         data: notificationData.url,
       })
     );
@@ -34,4 +35,9 @@ self.addEventListener("notificationclick", (event) => {
   if (event.notification.data) {
     event.waitUntil(clients.openWindow(event.notification.data));
   }
+});
+
+// Handle onpushsubscriptionchange event
+self.addEventListener("pushsubscriptionchange", function (event) {
+  console.log("Push subscription expired. Resubscribing...");
 });
