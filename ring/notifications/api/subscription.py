@@ -1,6 +1,11 @@
-from fastapi import APIRouter
+from __future__ import annotations
 
-from ring.dependencies import AuthenticatedRequestDependencies
+from fastapi import APIRouter, Depends
+
+from ring.dependencies import (
+    AuthenticatedRequestDependencies,
+    get_request_dependencies,
+)
 from ring.lib.logger import logger
 from ring.notifications.crud.subscription import (
     create_subscription,
@@ -15,7 +20,9 @@ router = APIRouter()
 @router.post("/subscription", response_model=ResponseMessage)
 def post_subscription(
     subscription: SubscriptionCreate,
-    req_dep: AuthenticatedRequestDependencies,
+    req_dep: AuthenticatedRequestDependencies = Depends(
+        get_request_dependencies,
+    ),
 ) -> ResponseMessage:
     """
     Create a subscription for the given email.

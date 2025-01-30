@@ -1,8 +1,8 @@
 """add subscription table for notifications
 
-Revision ID: 051a3d150488
+Revision ID: eb62d542fc1a
 Revises: 76581aa06774
-Create Date: 2025-01-30 02:41:12.804510
+Create Date: 2025-01-30 03:30:22.841635
 
 """
 
@@ -13,7 +13,7 @@ from alembic import op
 from sqlalchemy.dialects import postgresql
 
 # revision identifiers, used by Alembic.
-revision: str = "051a3d150488"
+revision: str = "eb62d542fc1a"
 down_revision: Union[str, None] = "76581aa06774"
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
@@ -35,6 +35,12 @@ def upgrade() -> None:
             sa.DateTime(timezone=True),
             server_default=sa.text("now()"),
             nullable=False,
+        ),
+        sa.ForeignKeyConstraint(
+            ["user_id"],
+            ["user.id"],
+            name="subscription_user_id_fkey",
+            ondelete="CASCADE",
         ),
         sa.PrimaryKeyConstraint("id"),
     )

@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from sqlalchemy.orm import Session
 
 from ring.api_identifier.util import get_model
@@ -23,4 +25,5 @@ def get_subscriptions_for_user(
     db: Session, user_api_identifier: str
 ) -> list[Subscription]:
     db_user = get_model(db, User, user_api_identifier)
-    return db_user.notification_subscriptions
+    # return db_user.notification_subscriptions
+    return []

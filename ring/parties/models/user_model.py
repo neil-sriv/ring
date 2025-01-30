@@ -13,11 +13,12 @@ from ring.ring_pydantic.pydantic_model import PydanticModel
 from ring.sqlalchemy_base import Base
 
 if TYPE_CHECKING:
-    from ring.notifications.models.subscription import Subscription
+    # from ring.notifications.models.subscription import Subscription
     from ring.parties.models.group_model import Group
 
 
 class User(Base, APIIdentified, PydanticModel, CreatedAtMixin):
+    __allow_unmapped__ = True
     __tablename__ = "user"
 
     API_ID_PREFIX = "usr"
@@ -35,9 +36,12 @@ class User(Base, APIIdentified, PydanticModel, CreatedAtMixin):
     responses: Mapped[list["Response"]] = relationship(
         back_populates="participant",
     )
-    notification_subscriptions: Mapped[list["Subscription"]] = relationship(
-        back_populates="user",
-    )
+    # notification_subscriptions: Mapped[list["Subscription"]] = relationship(
+    #     "Subscription",
+    #     cascade="all, delete-orphan",
+    #     back_populates="user",
+    #     foreign_keys="[Subscription.user_id]",
+    # )
 
     def __init__(
         self,

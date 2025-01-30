@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from sqlalchemy import ForeignKey
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
@@ -28,10 +29,17 @@ class Subscription(Base, APIIdentified, PydanticModel, CreatedAtMixin):
         nullable=False,
     )
 
-    user_id: Mapped[int] = mapped_column(index=True, nullable=False)
+    user_id: Mapped[int] = mapped_column(
+        ForeignKey(
+            "user.id", name="subscription_user_id_fkey", ondelete="CASCADE"
+        ),
+        index=True,
+        nullable=False,
+    )
     user: Mapped["User"] = relationship(
         "User",
-        back_populates="notification_subscriptions",
+        # back_populates="notification_subscriptions",
+        foreign_keys=[user_id],
     )
 
     def __init__(
@@ -53,3 +61,10 @@ class Subscription(Base, APIIdentified, PydanticModel, CreatedAtMixin):
         user: User,
     ) -> Subscription:
         return cls(endpoint, keys, user)
+
+
+# User.notification_subscriptions = relationship(
+#     "Subscription",
+#     cascade="all, delete-orphan",
+#     back_populates="user",
+# )
