@@ -158,6 +158,8 @@ jmespath==1.0.1
     #   botocore
 kombu==5.3.4
     # via celery
+loguru==0.7.3
+    # via ring (pyproject.toml)
 mako==1.3.0
     # via alembic
 markupsafe==2.1.3
