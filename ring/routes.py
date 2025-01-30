@@ -2,6 +2,7 @@ from fastapi import APIRouter
 
 from ring.auth.api import authn
 from ring.letters.api import letter, question, response
+from ring.notifications.api import subscription
 from ring.parties.api import group, invite, user
 from ring.tasks.api import schedule
 
@@ -15,6 +16,11 @@ router.include_router(schedule.router, prefix="/schedule", tags=["schedule"])
 router.include_router(question.router, prefix="/questions", tags=["questions"])
 router.include_router(response.router, prefix="/responses", tags=["responses"])
 router.include_router(invite.router, prefix="/invites", tags=["invites"])
+router.include_router(
+    subscription.router,
+    prefix="/notifications",
+    tags=["notifications"],
+)
 
 
 @router.get("/")

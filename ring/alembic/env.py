@@ -16,6 +16,9 @@ from ring.letters.models.question_model import (
 from ring.letters.models.response_model import (
     Response,  # type: ignore # noqa: F401
 )
+from ring.notifications.models.subscription import (
+    Subscription,  # type: ignore # noqa: F401
+)
 from ring.parties.models.group_model import Group  # type: ignore # noqa: F401
 from ring.parties.models.invite_model import (
     Invite,  # type: ignore # noqa: F401  # type: ignore # noqa: F401
