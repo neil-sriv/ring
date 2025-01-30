@@ -35,3 +35,15 @@ def get_subscription_by_endpoint(
     return db.scalars(
         select(Subscription).where(Subscription.endpoint == endpoint)
     ).one_or_none()
+
+
+def serialize_subscription_info(
+    db_subscription: Subscription,
+) -> dict[str, str]:
+    return {
+        "endpoint": db_subscription.endpoint,
+        "keys": {
+            "p256dh": db_subscription.keys.get("p256dh", ""),
+            "auth": db_subscription.keys.get("auth", ""),
+        },
+    }  # type: ignore
