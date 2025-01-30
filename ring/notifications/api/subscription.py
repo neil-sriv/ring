@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException
 
 from ring.dependencies import (
     AuthenticatedRequestDependencies,
@@ -9,6 +9,7 @@ from ring.dependencies import (
 from ring.lib.logger import logger
 from ring.notifications.crud.subscription import (
     create_subscription,
+    get_subscription_by_endpoint,
     get_subscriptions_for_user,
 )
 from ring.notifications.schemas.subscription import SubscriptionCreate
@@ -33,6 +34,13 @@ def post_subscription(
     ):
         logger.warning(
             f"User {req_dep.current_user.api_identifier} already has a subscription"
+        )
+    if get_subscription_by_endpoint(req_dep.db, subscription.endpoint):
+        logger.warning(
+            f"Subscription with endpoint {subscription.endpoint} already exists"
+        )
+        raise HTTPException(
+            status_code=400, detail="Subscription already exists"
         )
         # return ResponseMessage(message="Subscription already exists")
     create_subscription(req_dep.db, subscription)

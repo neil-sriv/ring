@@ -164,7 +164,7 @@ const UserInformation = () => {
             mt={4}
             variant="outline"
             onClick={() => {
-              subscribeToPush();
+              subscribeToPush(currentUser!.api_identifier);
             }}
           >
             Enable Notifications
