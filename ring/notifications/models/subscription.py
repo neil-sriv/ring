@@ -63,8 +63,8 @@ class Subscription(Base, APIIdentified, PydanticModel, CreatedAtMixin):
         return cls(endpoint, keys, user)
 
 
-# User.notification_subscriptions = relationship(
-#     "Subscription",
-#     cascade="all, delete-orphan",
-#     back_populates="user",
-# )
+User.notification_subscriptions = relationship(
+    "Subscription",
+    cascade="all, delete-orphan",
+    back_populates="user",
+)

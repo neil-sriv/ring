@@ -25,5 +25,4 @@ def get_subscriptions_for_user(
     db: Session, user_api_identifier: str
 ) -> list[Subscription]:
     db_user = get_model(db, User, user_api_identifier)
-    # return db_user.notification_subscriptions
-    return []
+    return db_user.notification_subscriptions
