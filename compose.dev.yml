@@ -35,6 +35,7 @@ services:
     ports:
       - "8003:5555"
   db:
+    restart: unless-stopped
     container_name: ring-db
     image: postgres:16.1
     volumes:

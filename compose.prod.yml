@@ -52,6 +52,7 @@ services:
     platform: linux/amd64
 
   frontend:
+    restart: unless-stopped
     mem_limit: 300m
     container_name: ring-frontend
     image: prod-ring-frontend

@@ -1,5 +1,6 @@
 services:
   api:
+    restart: unless-stopped
     container_name: ring-api
     build: 
       context: ./ring
@@ -27,6 +28,7 @@ services:
       - default
 
   worker:
+    restart: unless-stopped
     container_name: ring-worker
     build:
       context: ./ring
@@ -41,6 +43,7 @@ services:
     networks:
       - default
   beat:
+    restart: unless-stopped
     container_name: ring-beat
     build:
       context: ./ring
@@ -56,6 +59,7 @@ services:
     networks:
       - default
   redis:
+    restart: unless-stopped
     image: redis:alpine
     expose:
       - 6379
