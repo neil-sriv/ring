@@ -36,8 +36,8 @@ def register_task(
     if not arguments:
         arguments = {}
     task = Task.create(schedule, task_type, execute_at, arguments)
-    schedule.tasks.append(task)
     db.add(task)
+    schedule.tasks.append(task)
     return task
 
 
