@@ -31,6 +31,7 @@ services:
       - JWT_SIGNING_ALGORITHM=HS256
       - sqlalchemy_database_uri=postgresql://ring:ring@test-db:5432/ring_test
       - environment=test
+      - VAPID_PRIVATE_KEY=private_key
     networks:
       - default
 

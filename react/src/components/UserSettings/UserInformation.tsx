@@ -28,6 +28,7 @@ import {
   updateUserMePartiesMePatchMutation,
 } from "../../client/@tanstack/react-query.gen";
 import { AxiosError } from "axios";
+import { subscribeToPush } from "../../util/notifications";
 
 const UserInformation = () => {
   const queryClient = useQueryClient();
@@ -157,6 +158,17 @@ const UserInformation = () => {
               </Button>
             )}
           </Flex>
+        </Box>
+        <Box>
+          <Button
+            mt={4}
+            variant="outline"
+            onClick={() => {
+              subscribeToPush(currentUser!.api_identifier);
+            }}
+          >
+            Enable Notifications
+          </Button>
         </Box>
       </Container>
     </>

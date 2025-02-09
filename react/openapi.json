@@ -1861,6 +1861,53 @@
         }
       }
     },
+    "/notifications/subscription": {
+      "post": {
+        "tags": [
+          "notifications"
+        ],
+        "summary": "Post Subscription",
+        "description": "Create a subscription for the given email.",
+        "operationId": "post_subscription_notifications_subscription_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SubscriptionCreate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResponseMessage"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ]
+      }
+    },
     "/": {
       "get": {
         "summary": "Root",
@@ -2750,6 +2797,42 @@
           "tasks"
         ],
         "title": "ScheduleUnlinked"
+      },
+      "SubscriptionCreate": {
+        "properties": {
+          "endpoint": {
+            "type": "string",
+            "title": "Endpoint"
+          },
+          "keys": {
+            "additionalProperties": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "boolean"
+                }
+              ]
+            },
+            "type": "object",
+            "title": "Keys"
+          },
+          "user_api_identifier": {
+            "type": "string",
+            "title": "User Api Identifier"
+          }
+        },
+        "type": "object",
+        "required": [
+          "endpoint",
+          "keys",
+          "user_api_identifier"
+        ],
+        "title": "SubscriptionCreate"
       },
       "TaskUnlinked": {
         "properties": {

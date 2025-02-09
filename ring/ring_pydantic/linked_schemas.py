@@ -7,6 +7,7 @@ from pydantic import BaseModel
 from ring.letters.schemas.letter import Letter, LetterUnlinked
 from ring.letters.schemas.question import Question, QuestionUnlinked
 from ring.letters.schemas.response import Response, ResponseUnlinked
+from ring.notifications.schemas.subscription import Subscription
 from ring.parties.schemas.group import Group, GroupUnlinked
 from ring.parties.schemas.invite import Invite
 from ring.parties.schemas.user import User, UserUnlinked
@@ -76,3 +77,7 @@ class ResponseWithParticipant(Response, WithImageMixin):
 class InviteLinked(Invite):
     inviter: "UserUnlinked"
     group: "GroupUnlinked"
+
+
+class SubscriptionLinked(Subscription):
+    user: "UserUnlinked"

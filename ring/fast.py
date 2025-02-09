@@ -1,9 +1,12 @@
-from fastapi import FastAPI, Request
+from typing import Awaitable, Callable, TypeVar
+
+from fastapi import FastAPI, Request, Response
 from fastapi.responses import JSONResponse
 from starlette.middleware.cors import CORSMiddleware
 
 from ring.api_identifier.util import IDNotFoundException
 from ring.config import get_config
+from ring.lib.logger import logger
 from ring.routes import router
 
 ring_config = get_config()
@@ -36,3 +39,14 @@ async def id_not_found_exception_handler(
             "api_ids": exc.api_ids,
         },
     )
+
+
+@app.middleware("http")
+async def log_requests(
+    request: Request,
+    call_next: Callable[[Request], Awaitable[Response]],
+) -> Response:
+    logger.info(f"Request: {request.method} {request.url}")
+    response = await call_next(request)
+    logger.info(f"Response: {response.status_code}")
+    return response

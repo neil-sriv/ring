@@ -194,6 +194,14 @@ export type ScheduleUnlinked = {
     tasks: Array<TaskUnlinked>;
 };
 
+export type SubscriptionCreate = {
+    endpoint: string;
+    keys: {
+        [key: string]: string | number | boolean;
+    };
+    user_api_identifier: string;
+};
+
 export type TaskUnlinked = {
     type: string;
     status: string;
@@ -1212,6 +1220,31 @@ export type ValidateTokenInvitesTokenTokenGetResponses = {
 };
 
 export type ValidateTokenInvitesTokenTokenGetResponse = ValidateTokenInvitesTokenTokenGetResponses[keyof ValidateTokenInvitesTokenTokenGetResponses];
+
+export type PostSubscriptionNotificationsSubscriptionPostData = {
+    body: SubscriptionCreate;
+    path?: never;
+    query?: never;
+    url: '/notifications/subscription';
+};
+
+export type PostSubscriptionNotificationsSubscriptionPostErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type PostSubscriptionNotificationsSubscriptionPostError = PostSubscriptionNotificationsSubscriptionPostErrors[keyof PostSubscriptionNotificationsSubscriptionPostErrors];
+
+export type PostSubscriptionNotificationsSubscriptionPostResponses = {
+    /**
+     * Successful Response
+     */
+    200: ResponseMessage;
+};
+
+export type PostSubscriptionNotificationsSubscriptionPostResponse = PostSubscriptionNotificationsSubscriptionPostResponses[keyof PostSubscriptionNotificationsSubscriptionPostResponses];
 
 export type RootGetData = {
     body?: never;

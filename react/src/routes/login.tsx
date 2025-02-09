@@ -32,7 +32,7 @@ export const Route = createFileRoute("/login")({
       localStorage.getItem("access_token") !== null
     ) {
       throw redirect({
-        to: "/groups",
+        to: "/",
       });
     }
   },

@@ -8,7 +8,6 @@ import {
   Flex,
   Heading,
   IconButton,
-  Image,
   Text,
   useColorModeValue,
   useDisclosure,
@@ -16,7 +15,6 @@ import {
 import { useQueryClient } from "@tanstack/react-query";
 import { FiLogOut, FiMenu } from "react-icons/fi";
 
-import Logo from "/assets/images/fastapi-logo.svg";
 import type { UserLinked } from "../../client";
 import useAuth from "../../hooks/useAuth";
 import SidebarItems from "./SidebarItems";
@@ -58,7 +56,10 @@ const Sidebar = () => {
           <DrawerBody py={8}>
             <Flex flexDir="column" justify="space-between">
               <Box>
-                <Image src={Logo} alt="logo" p={6} />
+                {/* <Image src={Logo} alt="logo" p={6} /> */}
+                <Heading size="lg" textAlign="center" p={2}>
+                  <Link to="/">Ring</Link>
+                </Heading>
                 <SidebarItems onClose={onClose} />
                 <Flex
                   as="button"

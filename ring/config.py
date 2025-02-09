@@ -15,6 +15,7 @@ class RingConfig(BaseSettings):
     sqlalchemy_database_uri: str
     JWT_SIGNING_KEY: str
     JWT_SIGNING_ALGORITHM: str
+    VAPID_PRIVATE_KEY: str
     root_path: str = "/api/v1"
     BUCKET_NAME: str = "rings3files"
     BACKEND_CORS_ORIGINS: Annotated[

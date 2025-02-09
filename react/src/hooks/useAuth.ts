@@ -35,7 +35,7 @@ const useAuth = () => {
         ...readUserMePartiesMeGetOptions({}),
       });
       // @ts-expect-error
-      navigate({ to: search.path || "/groups" });
+      navigate({ to: search.path || "/" });
     },
     onError: (err: AxiosError<LoginAccessTokenLoginAccessTokenPostError>) => {
       const errDetail =
