@@ -1,6 +1,4 @@
-from datetime import datetime
-
-from pydantic import BaseModel, ConfigDict
+from pydantic import AwareDatetime, BaseModel, ConfigDict
 
 
 class TaskBase(BaseModel):
@@ -16,7 +14,7 @@ class Task(TaskBase):
 
     type: str
     status: str
-    execute_at: datetime
+    execute_at: AwareDatetime
     arguments: dict[str, str]
 
 
