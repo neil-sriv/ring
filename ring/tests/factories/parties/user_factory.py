@@ -11,7 +11,6 @@ from ring.tests.factories.base_factory import BaseFactory, register_factory
 class UserFactory(BaseFactory[User]):
     class Meta:
         model = User
-        sqlalchemy_session_persistence = "flush"
 
     @post_generation
     def password(

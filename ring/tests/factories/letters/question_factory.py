@@ -9,9 +9,7 @@ class QuestionFactory(BaseFactory[Question]):
     class Meta:
         model = Question
 
-    question_text = factory.Faker(
-        "pystr_format", string_format="Question-{{random_int}}"
-    )
+    question_text = factory.Faker("sentence")
     letter = factory.SubFactory(
         "ring.tests.factories.letters.letter_factory.LetterFactory"
     )

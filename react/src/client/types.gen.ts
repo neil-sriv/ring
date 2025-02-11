@@ -1007,33 +1007,6 @@ export type AddQuestionLettersLetterLetterApiIdAddQuestionPostResponses = {
 
 export type AddQuestionLettersLetterLetterApiIdAddQuestionPostResponse = AddQuestionLettersLetterLetterApiIdAddQuestionPostResponses[keyof AddQuestionLettersLetterLetterApiIdAddQuestionPostResponses];
 
-export type BulkEditResponsesLettersLetterLetterApiIdBulkEditResponsesPatchData = {
-    body: Array<ResponseUnlinked>;
-    path: {
-        letter_api_id: string;
-    };
-    query?: never;
-    url: '/letters/letter/{letter_api_id}:bulk_edit_responses';
-};
-
-export type BulkEditResponsesLettersLetterLetterApiIdBulkEditResponsesPatchErrors = {
-    /**
-     * Validation Error
-     */
-    422: HttpValidationError;
-};
-
-export type BulkEditResponsesLettersLetterLetterApiIdBulkEditResponsesPatchError = BulkEditResponsesLettersLetterLetterApiIdBulkEditResponsesPatchErrors[keyof BulkEditResponsesLettersLetterLetterApiIdBulkEditResponsesPatchErrors];
-
-export type BulkEditResponsesLettersLetterLetterApiIdBulkEditResponsesPatchResponses = {
-    /**
-     * Successful Response
-     */
-    200: PublicLetter;
-};
-
-export type BulkEditResponsesLettersLetterLetterApiIdBulkEditResponsesPatchResponse = BulkEditResponsesLettersLetterLetterApiIdBulkEditResponsesPatchResponses[keyof BulkEditResponsesLettersLetterLetterApiIdBulkEditResponsesPatchResponses];
-
 export type GetScheduleForGroupScheduleScheduleGroupApiIdGetData = {
     body?: never;
     path: {

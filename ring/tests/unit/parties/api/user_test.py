@@ -15,7 +15,7 @@ from ring.tests.lib.utils import (
     assert_pydantic_model_json_dump_equivalent_to_response_dict,
     assert_pydantic_models_json_dump_in_response_dict,
 )
-from ring.tests.unit.parties.conftest import TClientForUser
+from ring.tests.unit.conftest import TClientForUser
 
 
 class TestUserAPI:

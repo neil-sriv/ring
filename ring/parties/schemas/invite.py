@@ -1,8 +1,6 @@
 from __future__ import annotations
 
-from datetime import datetime
-
-from pydantic import BaseModel, ConfigDict, field_validator
+from pydantic import AwareDatetime, BaseModel, ConfigDict, field_validator
 
 from ring.parties.schemas.one_time_token import WithTokenMixin
 
@@ -24,7 +22,7 @@ class Invite(InviteBase, WithTokenMixin):
     model_config = ConfigDict(from_attributes=True)
 
     api_identifier: str
-    created_at: datetime
+    created_at: AwareDatetime
 
 
 class InviteUnlinked(Invite):

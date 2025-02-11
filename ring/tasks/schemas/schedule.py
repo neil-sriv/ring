@@ -1,8 +1,6 @@
 from __future__ import annotations
 
-from datetime import datetime
-
-from pydantic import BaseModel, ConfigDict
+from pydantic import AwareDatetime, BaseModel, ConfigDict
 
 from ring.tasks.schemas.task import TaskUnlinked
 
@@ -21,4 +19,4 @@ class ScheduleUnlinked(Schedule):
 
 class ScheduleSendParam(BaseModel):
     letter_api_id: str
-    send_at: datetime
+    send_at: AwareDatetime

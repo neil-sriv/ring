@@ -17,11 +17,10 @@ from ring.dependencies import (
 )
 from ring.letters.constants import LetterStatus
 from ring.letters.crud import letter as letter_crud
-from ring.letters.crud import response as response_crud
 from ring.letters.models.letter_model import Letter
 from ring.letters.schemas.letter import LetterCreate, LetterUpdate
 from ring.letters.schemas.question import QuestionCreate
-from ring.letters.schemas.response import ResponseUnlinked
+from ring.lib.logger import logger
 from ring.parties.models.user_model import User
 from ring.ring_pydantic import PublicLetter as LetterSchema
 from ring.ring_pydantic.linked_schemas import DashboardLetters
@@ -177,33 +176,4 @@ async def add_question(
     )
     req_dep.db.refresh(db_letter)
     req_dep.db.commit()
-    return db_letter
-
-
-@router.patch(
-    "/letter/{letter_api_id}:bulk_edit_responses",
-    response_model=LetterSchema,
-    deprecated=True,
-)
-async def bulk_edit_responses(
-    letter_api_id: str,
-    updated_responses: Sequence[ResponseUnlinked],
-    req_dep: AuthenticatedRequestDependencies = Depends(
-        get_request_dependencies,
-    ),
-) -> Letter:
-    db_letter = api_identifier_crud.get_model(
-        req_dep.db,
-        Letter,
-        api_id=letter_api_id,
-    )
-    db_responses = response_crud.get_responses(
-        req_dep.db,
-        db_letter,
-        [resp.api_identifier for resp in updated_responses],
-    )
-    response_map = {resp.api_identifier: resp for resp in db_responses}
-    response_crud.edit_responses(response_map, updated_responses)
-    req_dep.db.commit()
-    req_dep.db.refresh(db_letter)
     return db_letter
