@@ -7,15 +7,13 @@ from dev_util.dev import dev_group
 
 
 @dev_group("run")
-@click.pass_context
-def run(ctx: click.Context) -> None:
+def run() -> None:
     pass
 
 
 @compose_exec("script", run, "api")
 @click.option("--script", type=str, required=True)
 def run_script(
-    ctx: click.Context,
     script: str,
     *args: list[Any],
     **kwargs: dict[Any, Any],
@@ -31,7 +29,6 @@ def run_script(
 
 @compose_exec("shell", run, "api")
 def run_shell(
-    ctx: click.Context,
     *args: list[Any],
     **kwargs: dict[Any, Any],
 ) -> list[str]:

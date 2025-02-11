@@ -1,22 +1,23 @@
 from typing import Any
 
-import click
-
 from dev_util.compose import compose_exec
-from dev_util.dev import cmd_run, dev_group
+from dev_util.dev import UNLIMITED_ARGS_SETTINGS, cmd_run, dev_group
 
 GH_ECR_URI_BASE = "ghcr.io"
 
 
 @dev_group("test")
-@click.pass_context
-def test(ctx: click.Context) -> None:
+def test() -> None:
+    pass
+
+
+@test.group("python", context_settings=UNLIMITED_ARGS_SETTINGS)
+def python() -> None:
     pass
 
 
 @cmd_run("image", test)
 def image(
-    ctx: click.Context,
     *args: list[Any],
     **kwargs: dict[Any, Any],
 ) -> list[list[str]]:
@@ -38,14 +39,13 @@ def image(
 
 @compose_exec(
     "run",
-    test,
+    python,
     service="test-runner",
     profile="test",
     cmd="run",
     opts=["--rm"],
 )
-def run(
-    ctx: click.Context,
+def py_run(
     *args: list[Any],
     **kwargs: dict[Any, Any],
 ) -> list[str]:
@@ -58,14 +58,13 @@ def run(
 
 @compose_exec(
     "server",
-    test,
+    python,
     service="test-runner",
     profile="test",
     cmd="run",
     opts=["--rm"],
 )
-def server(
-    ctx: click.Context,
+def py_server(
     *args: list[Any],
     **kwargs: dict[Any, Any],
 ) -> list[str]:
@@ -76,4 +75,28 @@ def server(
         "ring/tests/pytest.ini",
         "--color=yes",
         "--code-highlight=yes",
+    ]
+
+
+@test.group("fe", context_settings=UNLIMITED_ARGS_SETTINGS)
+def fe() -> None:
+    pass
+
+
+@compose_exec(
+    "run",
+    fe,
+    service="fe-test-runner",
+    profile="test",
+    cmd="run",
+    opts=["--rm"],
+)
+def fe_run(
+    *args: list[Any],
+    **kwargs: dict[Any, Any],
+) -> list[str]:
+    return [
+        "pytest",
+        "-c",
+        "ring/tests/pytest.ini",
     ]

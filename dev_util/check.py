@@ -6,15 +6,13 @@ from dev_util.dev import cmd_run, dev_group
 
 
 @dev_group("check")
-@click.pass_context
-def check(ctx: click.Context) -> None:
+def check() -> None:
     pass
 
 
 @cmd_run("lint", check)
 @click.option("--fix", is_flag=True, default=False)
 def lint(
-    ctx: click.Context,
     fix: bool,
     *args: list[Any],
     **kwargs: dict[Any, Any],

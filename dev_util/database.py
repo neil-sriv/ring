@@ -13,14 +13,12 @@ PROD_POSTGRES_URI = "postgresql://ringpostgres:ringpostgres@ring-postgres.c9gw8w
 
 
 @dev_group("db")
-@click.pass_context
-def db(ctx: click.Context) -> None:
+def db() -> None:
     pass
 
 
 @cmd_run("pgcli", db)
 def db_pgcli(
-    ctx: click.Context,
     *args: list[Any],
     **kwargs: dict[Any, Any],
 ) -> list[str]:
@@ -30,7 +28,6 @@ def db_pgcli(
 
 @compose_exec("upgrade", db, "api", "ring")
 def db_upgrade(
-    ctx: click.Context,
     *args: list[Any],
     **kwargs: dict[Any, Any],
 ) -> list[str]:
@@ -40,7 +37,6 @@ def db_upgrade(
 @compose_exec("generate", db, "api", "ring")
 @click.argument("message")
 def db_generate(
-    ctx: click.Context,
     message: str,
     *args: list[Any],
     **kwargs: dict[Any, Any],
@@ -50,7 +46,6 @@ def db_generate(
 
 @compose_exec("alembic", db, "api", "ring")
 def db_alembic(
-    ctx: click.Context,
     *args: list[Any],
     **kwargs: dict[Any, Any],
 ) -> list[str]:

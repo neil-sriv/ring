@@ -13,8 +13,7 @@ IMAGE_TAG_NAMES = [
 
 
 @dev_group("docker")
-@click.pass_context
-def docker(ctx: click.Context) -> None:
+def docker() -> None:
     pass
 
 
