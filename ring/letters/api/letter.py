@@ -20,6 +20,7 @@ from ring.letters.crud import letter as letter_crud
 from ring.letters.models.letter_model import Letter
 from ring.letters.schemas.letter import LetterCreate, LetterUpdate
 from ring.letters.schemas.question import QuestionCreate
+from ring.lib.logger import logger
 from ring.parties.models.user_model import User
 from ring.ring_pydantic import PublicLetter as LetterSchema
 from ring.ring_pydantic.linked_schemas import DashboardLetters

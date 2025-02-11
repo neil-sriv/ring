@@ -215,11 +215,15 @@ class TestLetterAPI:
             group=letter.group, status=LetterStatus.IN_PROGRESS
         )
         db_session.commit()
-        input = {"send_at": in_progress_letter.send_at.isoformat()}
+        input = {
+            "send_at": (
+                in_progress_letter.send_at - timedelta(days=1)
+            ).isoformat()
+        }
 
         with pytest.raises(AssertionError):
             authenticated_client.post(
-                "/letters/letter/{letter.api_identifier}:edit_letter",
+                f"/letters/letter/{letter.api_identifier}:edit_letter",
                 json=input,
             )
 
