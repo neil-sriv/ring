@@ -1,8 +1,6 @@
 from __future__ import annotations
 
-from datetime import datetime
-
-from pydantic import BaseModel, ConfigDict
+from pydantic import AwareDatetime, BaseModel, ConfigDict
 
 
 class QuestionBase(BaseModel):
@@ -17,7 +15,7 @@ class Question(QuestionBase):
     model_config = ConfigDict(from_attributes=True)
 
     api_identifier: str
-    created_at: datetime
+    created_at: AwareDatetime
 
 
 class QuestionUnlinked(Question):

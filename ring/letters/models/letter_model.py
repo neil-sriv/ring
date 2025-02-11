@@ -20,7 +20,7 @@ from ring.api_identifier.api_identified_model import APIIdentified
 from ring.created_at import CreatedAtMixin
 from ring.letters.constants import LetterStatus
 from ring.letters.models.question_model import Question
-from ring.ring_pydantic.linked_schemas import LetterLinked
+from ring.ring_pydantic.linked_schemas import PublicLetter
 from ring.ring_pydantic.pydantic_model import PydanticModel
 from ring.sqlalchemy_base import Base
 
@@ -40,7 +40,7 @@ class Letter(Base, APIIdentified, PydanticModel, CreatedAtMixin):
     __tablename__ = "letter"
 
     API_ID_PREFIX = "lttr"
-    PYDANTIC_MODEL = LetterLinked
+    PYDANTIC_MODEL = PublicLetter
 
     id: Mapped[int] = mapped_column(primary_key=True, index=True)
     number: Mapped[int] = mapped_column()

@@ -1,9 +1,8 @@
 from __future__ import annotations
 
-from datetime import datetime
 from typing import Optional
 
-from pydantic import BaseModel, ConfigDict
+from pydantic import AwareDatetime, BaseModel, ConfigDict
 
 
 class ResponseBase(BaseModel):
@@ -28,7 +27,7 @@ class Response(ResponseBase):
     model_config = ConfigDict(from_attributes=True)
 
     api_identifier: str
-    created_at: datetime
+    created_at: AwareDatetime
 
 
 class ResponseUnlinked(Response):
