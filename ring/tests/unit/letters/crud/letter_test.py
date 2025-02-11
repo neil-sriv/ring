@@ -1,5 +1,4 @@
 from datetime import UTC, datetime, timedelta
-from pprint import pprint
 
 import sqlalchemy
 from faker import Faker
@@ -37,6 +36,18 @@ class TestLetterCrud:
             letter_crud.get_letters(db_session, group.api_identifier)
             == letters
         )
+
+    def test_get_letters_for_user(self, db_session: Session) -> None:
+        user = UserFactory.create()
+        admin = UserFactory.create()
+        groups = [
+            GroupFactory.create(admin=admin, members=[admin, user])
+            for _ in range(3)
+        ]
+        letters = [LetterFactory.create(group=g) for g in groups]
+        db_session.commit()
+
+        assert letter_crud.get_letters_for_user(db_session, user) == letters
 
     def test_create_letter(self, db_session: Session, faker: Faker) -> None:
         group = GroupFactory.create()
@@ -343,3 +354,44 @@ class TestLetterCrud:
 
         assert postpend == [postpend_letter]
         assert promote == [promoted_letter]
+
+    def test_collect_future_letters_no_letters(
+        self, db_session: Session
+    ) -> None:
+        curr_time = datetime.now(tz=UTC)
+        g = GroupFactory.create()
+        LetterFactory.create(
+            group=g,
+            status=LetterStatus.SENT,
+            send_at=curr_time - timedelta(days=3),
+        )
+        db_session.commit()
+
+        postpend, promote = letter_crud.collect_future_letters(
+            db_session, curr_time + timedelta(days=7)
+        )
+        db_session.commit()
+
+        assert postpend == []
+        assert promote == []
+
+    def test_promote_and_create_new_letters(self, db_session: Session) -> None:
+        # TODO(#110): Implement celery task testing
+        pass
+
+    def test_postpend_upcoming_letters(self, db_session: Session) -> None:
+        # TODO(#110): Implement celery task testing
+        pass
+
+    def test_add_participants(self, db_session: Session) -> None:
+        new_participants = [UserFactory.create() for _ in range(4)]
+        letter = LetterFactory.create()
+        db_session.commit()
+
+        before_participants = letter.participants
+        letter_crud.add_participants(db_session, letter, new_participants)
+        db_session.commit()
+
+        assert set(letter.participants) == set(
+            before_participants + new_participants
+        )
