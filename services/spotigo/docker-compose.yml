@@ -1,0 +1,26 @@
+services:
+  spotigo:
+    container_name: ring-spotigo
+    build:
+      context: ./spotigo
+      dockerfile: ./Dockerfile
+    command: air -c /app/.air.toml
+    env_file:
+      - ./.env
+    volumes:
+      - ./spotigo:/app
+    ports:
+      - "8005:8080"
+    expose:
+      - 8080
+    networks:
+      - default
+      - ring-bridge
+
+
+networks:
+  default:
+    name: spotigo-network
+    external: false
+  ring-bridge:
+    name: ring-network
