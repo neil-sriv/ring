@@ -967,6 +967,7 @@
         ],
         "summary": "Schedule Send",
         "operationId": "schedule_send_parties_group__group_api_id__schedule_send_post",
+        "deprecated": true,
         "security": [
           {
             "OAuth2PasswordBearer": []
@@ -1407,68 +1408,6 @@
             "application/json": {
               "schema": {
                 "$ref": "#/components/schemas/QuestionCreate"
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/PublicLetter"
-                }
-              }
-            }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/letters/letter/{letter_api_id}:bulk_edit_responses": {
-      "patch": {
-        "tags": [
-          "letters"
-        ],
-        "summary": "Bulk Edit Responses",
-        "operationId": "bulk_edit_responses_letters_letter__letter_api_id__bulk_edit_responses_patch",
-        "deprecated": true,
-        "security": [
-          {
-            "OAuth2PasswordBearer": []
-          }
-        ],
-        "parameters": [
-          {
-            "name": "letter_api_id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "title": "Letter Api Id"
-            }
-          }
-        ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "type": "array",
-                "items": {
-                  "$ref": "#/components/schemas/ResponseUnlinked"
-                },
-                "title": "Updated Responses"
               }
             }
           }
