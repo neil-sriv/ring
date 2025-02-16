@@ -1,19 +1,15 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
-
 from sqlalchemy import ForeignKey
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from ring.api_identifier.api_identified_model import APIIdentified
 from ring.created_at import CreatedAtMixin
+from ring.parties.models.user_model import User
 from ring.ring_pydantic.linked_schemas import SubscriptionLinked
 from ring.ring_pydantic.pydantic_model import PydanticModel
 from ring.sqlalchemy_base import Base
-
-if TYPE_CHECKING:
-    from ring.parties.models.user_model import User
 
 
 class Subscription(Base, APIIdentified, PydanticModel, CreatedAtMixin):
@@ -65,3 +61,8 @@ class Subscription(Base, APIIdentified, PydanticModel, CreatedAtMixin):
         user: User,
     ) -> Subscription:
         return cls(endpoint, keys, user)
+
+
+User.notification_subscriptions = relationship(
+    "Subscription", back_populates="user", cascade="all, delete-orphan"
+)

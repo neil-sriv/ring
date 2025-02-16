@@ -37,9 +37,7 @@ class User(Base, APIIdentified, PydanticModel, CreatedAtMixin):
         back_populates="participant",
     )
 
-    notification_subscriptions = relationship(
-        "Subscription", back_populates="user", cascade="all, delete-orphan"
-    )
+    notification_subscriptions: list[Subscription]
 
     def __init__(
         self,
