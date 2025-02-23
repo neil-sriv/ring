@@ -4,6 +4,7 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
+    "preinstall": "npx only-allow pnpm",
     "dev": "vite",
     "build": "tsc && vite build",
     "lint": "biome check --apply-unsafe --no-errors-on-unmatched --files-ignore-unknown=true ./",
@@ -31,6 +32,7 @@
     "url-regex-safe": "^4.0.0",
     "web-push": "^3.6.7",
     "workbox-build": "^7.3.0",
+    "workbox-precaching": "^7.3.0",
     "workbox-sw": "^7.3.0",
     "workbox-window": "^7.3.0"
   },
