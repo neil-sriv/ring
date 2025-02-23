@@ -4,7 +4,7 @@ import { PublicLetter } from "../../client";
 
 function PublishedLoop({ loop }: { loop: PublicLetter }) {
   return (
-    <Container>
+    <Container maxW="full">
       {loop.questions
         .sort(
           (a, b) =>
