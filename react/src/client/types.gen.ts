@@ -110,6 +110,8 @@ export type PublicLetter = {
     created_at: string;
     group: GroupUnlinked;
     questions: Array<PublicQuestion>;
+    responders: Array<UserUnlinked>;
+    participants: Array<UserUnlinked>;
 };
 
 export type PublicQuestion = {

@@ -36,7 +36,7 @@ function LoopNav(props: LoopNavProps): JSX.Element {
   };
   return (
     <>
-      <Flex py={8} gap={4}>
+      <Flex>
         {props.group.admin.api_identifier === currentUser?.api_identifier && (
           <Button
             variant="primary"
