@@ -3,6 +3,7 @@ import {
   Card,
   CardHeader,
   Container,
+  Flex,
   Heading,
   LinkBox,
   LinkOverlay,
@@ -131,7 +132,7 @@ export function LoopsGrid({
         <Heading size="md">{heading}</Heading>
         {subheading && <Heading size="sm">{subheading}</Heading>}
       </Box>
-      <Grid 
+      <Grid
         templateColumns="repeat(auto-fill, minmax(200px, 1fr))"
         gap={4}
         alignItems="stretch"
@@ -173,54 +174,61 @@ function LoopsContent() {
     }
   });
   return (
-    <Container maxW="container.lg" py={4}>
-      <Heading size="lg" textAlign={{ base: "center", md: "left" }} pt={12}>
-        {group!.name}
-      </Heading>
-      <LoopNav loops={props.loops} group={group} />
-      <Container maxW="container.lg" py={4}>
-        {inProgressLoops.length > 0 && (
-          <LoopsGrid
-            loops={inProgressLoops}
-            heading="In Progress"
-            subheading="Add your response now!"
-          />
-        )}
+    <Flex justify="center" w="100%">
+      <Box maxW="1200px" w="100%" px={4}>
+        <VStack spacing={8} align="center" w="100%">
+          <Heading as="h1" textAlign="center">
+            {group!.name}
+          </Heading>
+          <Box w="100%">
+            <LoopNav loops={props.loops} group={group} />
+          </Box>
 
-        {upcomingLoops.length > 0 && (
-          <LoopsGrid
-            loops={upcomingLoops}
-            heading="Upcoming Issues"
-            subheading="You can add questions to the upcoming issues before they are available for responses."
-          />
-        )}
+          {inProgressLoops.length > 0 && (
+            <LoopsGrid
+              loops={inProgressLoops}
+              heading="In Progress"
+              subheading="Add your response now!"
+            />
+          )}
 
-        {publishedLoops.length > 0 && (
-          <LoopsGrid
-            loops={publishedLoops.sort((a, b) => a.number - b.number)}
-            heading="Published Issues"
-          />
-        )}
-      </Container>
-    </Container>
+          {upcomingLoops.length > 0 && (
+            <LoopsGrid
+              loops={upcomingLoops}
+              heading="Upcoming Issues"
+              subheading="You can add questions to the upcoming issues before they are available for responses."
+            />
+          )}
+
+          {publishedLoops.length > 0 && (
+            <LoopsGrid
+              loops={publishedLoops.sort((a, b) => a.number - b.number)}
+              heading="Published Issues"
+            />
+          )}
+        </VStack>
+      </Box>
+    </Flex>
   );
 }
 
 function Loops() {
   return (
-    <Box>
-      <ErrorBoundary
-        fallbackRender={({ error }) => (
-          <Box>
-            <Heading>Error</Heading>
-            <Text>{error.message}</Text>
-          </Box>
-        )}
-      >
-        <Suspense fallback={<Box>Loading...</Box>}>
-          <LoopsContent />
-        </Suspense>
-      </ErrorBoundary>
-    </Box>
+    <Container maxW="full">
+      <Box pt={12} m={4}>
+        <ErrorBoundary
+          fallbackRender={({ error }) => (
+            <Box>
+              <Heading>Error</Heading>
+              <Text>{error.message}</Text>
+            </Box>
+          )}
+        >
+          <Suspense fallback={<Box>Loading...</Box>}>
+            <LoopsContent />
+          </Suspense>
+        </ErrorBoundary>
+      </Box >
+    </Container >
   );
 }
