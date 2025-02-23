@@ -5,7 +5,7 @@ This is a clone of LetterLoop as a fun side project.
 ### Requirements
 - Orbstack or Docker Installed
 - node v18 or greater
-- yarn
+- pnpm
 - oh-my-zsh (recommended)
 
 #### uv
@@ -55,8 +55,8 @@ API accessible and `localhost/api/v1/docs`
 ### Running the client
 ```
 cd react
-yarn
-yarn run dev
+pnpm
+pnpm run dev
 ```
 Accessible at `localhost:5173`
 

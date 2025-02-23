@@ -20,7 +20,7 @@ def fe_install(
     *args: list[Any],
     **kwargs: dict[Any, Any],
 ) -> list[str]:
-    return ["yarn"]
+    return ["pnpm"]
 
 
 @cmd_run("dev", fe, cwd=FE_DIR)
@@ -29,7 +29,7 @@ def fe_dev(
     *args: list[Any],
     **kwargs: dict[Any, Any],
 ) -> list[str]:
-    return ["yarn", "run", "dev"]
+    return ["pnpm", "run", "dev"]
 
 
 @cmd_run("build", fe, cwd=FE_DIR)
@@ -38,7 +38,7 @@ def fe_build(
     *args: list[Any],
     **kwargs: dict[Any, Any],
 ) -> list[str]:
-    return ["yarn", "run", "build"]
+    return ["pnpm", "run", "build"]
 
 
 @cmd_run("regen", fe, cwd=FE_DIR)
@@ -50,5 +50,5 @@ def fe_regen(
     return (
         ["node", "modify-openapi-operationids.js"]
         + ["&&"]
-        + ["yarn", "run", "generate-client"]
+        + ["pnpm", "run", "generate-client"]
     )
