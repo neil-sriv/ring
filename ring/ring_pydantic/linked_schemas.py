@@ -48,6 +48,7 @@ class PublicLetter(Letter):
     group: "GroupUnlinked"
     questions: list["PublicQuestion"]
     responders: list["UserUnlinked"]
+    participants: list["UserUnlinked"]
 
 
 class DashboardLetters(BaseModel):

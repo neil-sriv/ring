@@ -2368,6 +2368,13 @@
             },
             "type": "array",
             "title": "Responders"
+          },
+          "participants": {
+            "items": {
+              "$ref": "#/components/schemas/UserUnlinked"
+            },
+            "type": "array",
+            "title": "Participants"
           }
         },
         "type": "object",
@@ -2379,7 +2386,8 @@
           "created_at",
           "group",
           "questions",
-          "responders"
+          "responders",
+          "participants"
         ],
         "title": "PublicLetter"
       },

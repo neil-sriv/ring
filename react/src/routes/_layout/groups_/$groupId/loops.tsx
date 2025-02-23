@@ -102,7 +102,7 @@ function LoopCard(props: LoopCardProps): JSX.Element {
                   <Text>Due {sendDate.toLocaleString()}</Text>
                   {props.loop.status === "IN_PROGRESS" && (
                     <Text fontSize="sm" color="gray.600">
-                      {props.loop.responders.length} responders
+                      {props.loop.responders.length} responders / {props.loop.participants.length} participants
                     </Text>
                   )}
                 </>

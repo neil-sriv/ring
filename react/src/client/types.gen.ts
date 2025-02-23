@@ -111,6 +111,7 @@ export type PublicLetter = {
     group: GroupUnlinked;
     questions: Array<PublicQuestion>;
     responders: Array<UserUnlinked>;
+    participants: Array<UserUnlinked>;
 };
 
 export type PublicQuestion = {
