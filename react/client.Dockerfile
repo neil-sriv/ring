@@ -1,5 +1,8 @@
 # Stage 0, "build-stage", based on Node.js, to build and compile the frontend
-FROM node:22 as build-stage
+FROM node:22-slim AS build-stage
+ENV PNPM_HOME="/pnpm"
+ENV PATH="$PNPM_HOME:$PATH"
+RUN corepack enable
 
 WORKDIR /app
 
@@ -9,11 +12,11 @@ COPY ./ /app/
 
 RUN rm -rf node_modules
 
-RUN yarn
+RUN pnpm install
 
 ARG VITE_API_URL=${VITE_API_URL}
 
-RUN yarn build
+RUN pnpm run build
 
 # FROM base as runner
 # WORKDIR /app
