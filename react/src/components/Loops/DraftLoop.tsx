@@ -4,7 +4,7 @@ import DraftQuestion from "../Question/DraftQuestion";
 
 function DraftLoop({ loop }: { loop: PublicLetter }) {
   return (
-    <Container>
+    <Container maxW="full">
       {loop.questions
         .sort(
           (a, b) =>
