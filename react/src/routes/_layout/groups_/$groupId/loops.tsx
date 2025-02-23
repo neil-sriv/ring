@@ -6,9 +6,10 @@ import {
   Heading,
   LinkBox,
   LinkOverlay,
-  SimpleGrid,
+  Grid,
   Text,
   Highlight,
+  VStack
 } from "@chakra-ui/react";
 import { Link, createFileRoute } from "@tanstack/react-router";
 import { PublicLetter } from "../../../../client";
@@ -64,14 +65,12 @@ type LoopCardProps = {
 function LoopCard(props: LoopCardProps): JSX.Element {
   const sendDate = new Date(props.loop.send_at);
   return (
-    <LinkBox as="div">
+    <LinkBox height="100%">
       <Card
-        w="150px"
-        h="150px"
-        flexGrow="1"
         border="1px solid"
         boxShadow="lg"
         bgColor={props.loop.status === "SENT" ? "ui.dim" : "ui.main"}
+        height="100%"
       >
         <CardHeader>
           <LinkOverlay
@@ -79,28 +78,35 @@ function LoopCard(props: LoopCardProps): JSX.Element {
             to="/loops/$loopId"
             params={{ loopId: props.loop.api_identifier }}
           >
-            {props.includeGroupName && (
-              <Heading size="md">
-                <Highlight
-                  query={props.loop.group.name}
-                  styles={{
-                    px: "0.5",
-                    bg: "orange.200",
-                    color: "orange.fg",
-                  }}
-                >
-                  {props.loop.group.name}
-                </Highlight>
-              </Heading>
-            )}
-            <Heading size="md">Issue #{props.loop.number}</Heading>
-            {props.loop.status === "SENT" ? (
-              <Text>Published {sendDate.toLocaleDateString()}</Text>
-            ) : (
-              <>
-                <Text>Due {sendDate.toLocaleString()}</Text>
-              </>
-            )}
+            <VStack align="stretch" spacing={2}>
+              {props.includeGroupName && (
+                <Heading size="md">
+                  <Highlight
+                    query={props.loop.group.name}
+                    styles={{
+                      px: "0.5",
+                      bg: "orange.200",
+                      color: "orange.fg",
+                    }}
+                  >
+                    {props.loop.group.name}
+                  </Highlight>
+                </Heading>
+              )}
+              <Heading size="md">Issue #{props.loop.number}</Heading>
+              {props.loop.status === "SENT" ? (
+                <Text>Published {sendDate.toLocaleDateString()}</Text>
+              ) : (
+                <>
+                  <Text>Due {sendDate.toLocaleString()}</Text>
+                  {props.loop.status === "IN_PROGRESS" && (
+                    <Text fontSize="sm" color="gray.600">
+                      {props.loop.responders.length} responders
+                    </Text>
+                  )}
+                </>
+              )}
+            </VStack>
           </LinkOverlay>
         </CardHeader>
       </Card>
@@ -120,10 +126,17 @@ export function LoopsGrid({
   includeGroupName?: boolean;
 }): JSX.Element {
   return (
-    <Box paddingBottom="15px">
-      <Heading size="md">{heading}</Heading>
-      {subheading && <Heading size="sm">{subheading}</Heading>}
-      <SimpleGrid columns={[1, 4, 6]} gap={4}>
+    <VStack w="100%" spacing={4} align="center">
+      <Box textAlign="center" w="100%">
+        <Heading size="md">{heading}</Heading>
+        {subheading && <Heading size="sm">{subheading}</Heading>}
+      </Box>
+      <Grid 
+        templateColumns="repeat(auto-fill, minmax(200px, 1fr))"
+        gap={4}
+        alignItems="stretch"
+        w="100%"
+      >
         {loops.map((loop) => (
           <LoopCard
             key={loop.api_identifier}
@@ -131,8 +144,8 @@ export function LoopsGrid({
             includeGroupName={includeGroupName}
           />
         ))}
-      </SimpleGrid>
-    </Box>
+      </Grid>
+    </VStack>
   );
 }
 
