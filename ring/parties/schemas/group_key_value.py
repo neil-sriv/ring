@@ -4,17 +4,23 @@ from __future__ import annotations
 
 from typing import Any, Literal
 
-from pydantic import BaseModel, ConfigDict, Field, model_validator
+from pydantic import BaseModel, Field, model_validator
 
 
-class SingleGroupKeyValueBase(BaseModel):
+class GroupKeyValueBase(BaseModel):
     """Base schema for group key-value operations."""
 
     key: str = Field(..., description="The key")
     value: Any = Field(..., description="The value")
 
 
-class SingleGroupKeyValueUpdate(SingleGroupKeyValueBase):
+class GroupKeyValueResponse(BaseModel):
+    """Schema for group key-value responses."""
+
+    key_values: dict[str, Any] = Field(..., description="The key-values")
+
+
+class SingleGroupKeyValueUpdate(GroupKeyValueBase):
     """Schema for updating a group key-value pair."""
 
     operation: Literal["set", "delete"] = Field(
@@ -43,9 +49,3 @@ class BulkGroupKeyValueUpdate(BaseModel):
         description="List of updates to perform",
         min_length=1,
     )
-
-
-class GroupKeyValue(SingleGroupKeyValueBase):
-    """Schema for group key-value responses."""
-
-    model_config = ConfigDict(from_attributes=True)

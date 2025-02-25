@@ -5,22 +5,10 @@ import sqlalchemy
 from ring.parties.crud.group_key_value import (
     delete_value,
     get_all_values,
-    get_group_key_value,
     get_value,
     set_value,
 )
 from ring.tests.factories.parties.group_factory import GroupFactory
-
-
-def test_get_group_key_value(db_session):
-    """Test getting a group's key-value store."""
-    group = GroupFactory.create()
-    db_session.add(group)
-    db_session.commit()
-
-    kv = get_group_key_value(db_session, group)
-    assert kv is not None
-    assert kv.group_id == group.id
 
 
 def test_get_value(db_session):
