@@ -14,7 +14,7 @@ class GroupKeyValueBase(BaseModel):
     value: Any = Field(..., description="The value")
 
 
-class GroupKeyValueResponse(BaseModel):
+class GroupKeyValue(BaseModel):
     """Schema for group key-value responses."""
 
     key_values: dict[str, Any] = Field(..., description="The key-values")
@@ -28,17 +28,8 @@ class SingleGroupKeyValueUpdate(GroupKeyValueBase):
     )
     value: Any | None = Field(
         None,
-        description=(
-            "The value to set. Required for 'set' operation, ignored for 'delete'"
-        ),
+        description=("The value to set. Ignored for 'delete'"),
     )
-
-    @model_validator(mode="after")
-    def validate_value_for_operation(self) -> "GroupKeyValueUpdate":
-        """Validate that value is present for set operations."""
-        if self.operation == "set" and self.value is None:
-            raise ValueError("value is required for 'set' operation")
-        return self
 
 
 class BulkGroupKeyValueUpdate(BaseModel):

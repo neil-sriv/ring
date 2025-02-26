@@ -11,13 +11,14 @@ from ring.parties.crud.group_key_value import (
     delete_value,
     get_all_values,
     get_value,
+    set_all_values,
     set_value,
 )
 from ring.parties.models.group_model import Group
 from ring.parties.schemas.group_key_value import (
     BulkGroupKeyValueUpdate,
+    GroupKeyValue,
     GroupKeyValueBase,
-    GroupKeyValueResponse,
     SingleGroupKeyValueUpdate,
 )
 
@@ -30,14 +31,14 @@ async def read_group_key_values(
     req_dep: AuthenticatedRequestDependencies = Depends(
         get_request_dependencies,
     ),
-) -> GroupKeyValueResponse:
+) -> GroupKeyValue:
     db_group = get_model(req_dep.db, Group, api_id=group_api_id)
     if req_dep.current_user not in db_group.members:
         raise HTTPException(
             status.HTTP_404_NOT_FOUND,
             "Group not found",
         )
-    return GroupKeyValueResponse(
+    return GroupKeyValue(
         key_values=get_all_values(req_dep.db, db_group),
     )
 
@@ -98,7 +99,7 @@ async def bulk_update_group_key_values(
     req_dep: AuthenticatedRequestDependencies = Depends(
         get_request_dependencies,
     ),
-) -> GroupKeyValueResponse:
+) -> GroupKeyValue:
     db_group = get_model(req_dep.db, Group, api_id=group_api_id)
     if req_dep.current_user not in db_group.members:
         raise HTTPException(
@@ -111,6 +112,25 @@ async def bulk_update_group_key_values(
         elif update.operation == "delete":
             delete_value(req_dep.db, db_group, update.key)
     req_dep.db.commit()
-    return GroupKeyValueResponse(
-        key_values=get_all_values(req_dep.db, db_group)
-    )
+    return GroupKeyValue(key_values=get_all_values(req_dep.db, db_group))
+
+
+@router.put(
+    "/group/{group_api_id}/key-value",
+)
+async def full_replace_group_key_values(
+    group_api_id: str,
+    updates: GroupKeyValue,
+    req_dep: AuthenticatedRequestDependencies = Depends(
+        get_request_dependencies,
+    ),
+) -> GroupKeyValue:
+    db_group = get_model(req_dep.db, Group, api_id=group_api_id)
+    if req_dep.current_user not in db_group.members:
+        raise HTTPException(
+            status.HTTP_404_NOT_FOUND,
+            "Group not found",
+        )
+    set_all_values(req_dep.db, db_group, updates.key_values)
+    req_dep.db.commit()
+    return GroupKeyValue(key_values=get_all_values(req_dep.db, db_group))

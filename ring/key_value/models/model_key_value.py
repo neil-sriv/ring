@@ -21,6 +21,10 @@ class ModelKeyValue(AbstractConcreteBase, Base):
         nullable=False,
     )
 
+    def set_all_values(self, key_values: Dict[str, Any]) -> None:
+        """Set all key-value pairs."""
+        self.key_values = key_values
+
     def get_value(self, key: str) -> Optional[Any]:
         """Get a value from the key-value store."""
         return self.key_values.get(key)

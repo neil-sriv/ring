@@ -43,6 +43,18 @@ export type GroupCreate = {
 };
 
 /**
+ * Schema for group key-value responses.
+ */
+export type GroupKeyValue = {
+    /**
+     * The key-values
+     */
+    key_values: {
+        [key: string]: unknown;
+    };
+};
+
+/**
  * Base schema for group key-value operations.
  */
 export type GroupKeyValueBase = {
@@ -54,18 +66,6 @@ export type GroupKeyValueBase = {
      * The value
      */
     value: unknown;
-};
-
-/**
- * Schema for group key-value responses.
- */
-export type GroupKeyValueResponse = {
-    /**
-     * The key-values
-     */
-    key_values: {
-        [key: string]: unknown;
-    };
 };
 
 export type GroupLinked = {
@@ -241,7 +241,7 @@ export type SingleGroupKeyValueUpdate = {
      */
     key: string;
     /**
-     * The value to set. Required for 'set' operation, ignored for 'delete'
+     * The value to set. Ignored for 'delete'
      */
     value?: unknown | null;
     /**
@@ -934,10 +934,37 @@ export type ReadGroupKeyValuesPartiesGroupGroupApiIdKeyValueGetResponses = {
     /**
      * Successful Response
      */
-    200: GroupKeyValueResponse;
+    200: GroupKeyValue;
 };
 
 export type ReadGroupKeyValuesPartiesGroupGroupApiIdKeyValueGetResponse = ReadGroupKeyValuesPartiesGroupGroupApiIdKeyValueGetResponses[keyof ReadGroupKeyValuesPartiesGroupGroupApiIdKeyValueGetResponses];
+
+export type FullReplaceGroupKeyValuesPartiesGroupGroupApiIdKeyValuePutData = {
+    body: GroupKeyValue;
+    path: {
+        group_api_id: string;
+    };
+    query?: never;
+    url: '/parties/group/{group_api_id}/key-value';
+};
+
+export type FullReplaceGroupKeyValuesPartiesGroupGroupApiIdKeyValuePutErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type FullReplaceGroupKeyValuesPartiesGroupGroupApiIdKeyValuePutError = FullReplaceGroupKeyValuesPartiesGroupGroupApiIdKeyValuePutErrors[keyof FullReplaceGroupKeyValuesPartiesGroupGroupApiIdKeyValuePutErrors];
+
+export type FullReplaceGroupKeyValuesPartiesGroupGroupApiIdKeyValuePutResponses = {
+    /**
+     * Successful Response
+     */
+    200: GroupKeyValue;
+};
+
+export type FullReplaceGroupKeyValuesPartiesGroupGroupApiIdKeyValuePutResponse = FullReplaceGroupKeyValuesPartiesGroupGroupApiIdKeyValuePutResponses[keyof FullReplaceGroupKeyValuesPartiesGroupGroupApiIdKeyValuePutResponses];
 
 export type ReadGroupKeyValuePartiesGroupGroupApiIdKeyValueKeyGetData = {
     body?: never;
@@ -1016,7 +1043,7 @@ export type BulkUpdateGroupKeyValuesPartiesGroupGroupApiIdKeyValueBulkUpdatePost
     /**
      * Successful Response
      */
-    200: GroupKeyValueResponse;
+    200: GroupKeyValue;
 };
 
 export type BulkUpdateGroupKeyValuesPartiesGroupGroupApiIdKeyValueBulkUpdatePostResponse = BulkUpdateGroupKeyValuesPartiesGroupGroupApiIdKeyValueBulkUpdatePostResponses[keyof BulkUpdateGroupKeyValuesPartiesGroupGroupApiIdKeyValueBulkUpdatePostResponses];

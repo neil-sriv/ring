@@ -1161,7 +1161,62 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/GroupKeyValueResponse"
+                  "$ref": "#/components/schemas/GroupKeyValue"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "parties"
+        ],
+        "summary": "Full Replace Group Key Values",
+        "operationId": "full_replace_group_key_values_parties_group__group_api_id__key_value_put",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "group_api_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Group Api Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GroupKeyValue"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GroupKeyValue"
                 }
               }
             }
@@ -1331,7 +1386,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/GroupKeyValueResponse"
+                  "$ref": "#/components/schemas/GroupKeyValue"
                 }
               }
             }
@@ -2272,6 +2327,21 @@
         ],
         "title": "GroupCreate"
       },
+      "GroupKeyValue": {
+        "properties": {
+          "key_values": {
+            "type": "object",
+            "title": "Key Values",
+            "description": "The key-values"
+          }
+        },
+        "type": "object",
+        "required": [
+          "key_values"
+        ],
+        "title": "GroupKeyValue",
+        "description": "Schema for group key-value responses."
+      },
       "GroupKeyValueBase": {
         "properties": {
           "key": {
@@ -2291,21 +2361,6 @@
         ],
         "title": "GroupKeyValueBase",
         "description": "Base schema for group key-value operations."
-      },
-      "GroupKeyValueResponse": {
-        "properties": {
-          "key_values": {
-            "type": "object",
-            "title": "Key Values",
-            "description": "The key-values"
-          }
-        },
-        "type": "object",
-        "required": [
-          "key_values"
-        ],
-        "title": "GroupKeyValueResponse",
-        "description": "Schema for group key-value responses."
       },
       "GroupLinked": {
         "properties": {
@@ -3039,7 +3094,7 @@
               }
             ],
             "title": "Value",
-            "description": "The value to set. Required for 'set' operation, ignored for 'delete'"
+            "description": "The value to set. Ignored for 'delete'"
           },
           "operation": {
             "type": "string",

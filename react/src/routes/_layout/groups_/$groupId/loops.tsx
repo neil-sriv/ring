@@ -1,5 +1,4 @@
 import {
-  Box,
   Container,
   Heading,
   Tab,
@@ -7,7 +6,6 @@ import {
   TabPanel,
   TabPanels,
   Tabs,
-  VStack,
   Spinner
 } from "@chakra-ui/react";
 import { createFileRoute } from "@tanstack/react-router";
@@ -77,10 +75,11 @@ function LoopsContentLoader() {
     {
       title: "Key Values",
       component: () => (
-        <GroupKeyValuesTable 
-          keyValues={{ 
-            key_values: keyValues?.key_values || {} 
-          }} 
+        <GroupKeyValuesTable
+          keyValues={{
+            key_values: keyValues?.key_values || {}
+          }}
+          groupApiId={groupId}
         />
       )
     }

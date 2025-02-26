@@ -28,17 +28,23 @@ def set_value(db: Session, group: Group, key: str, value: Any) -> None:
     """Set a value in a group's key-value store."""
     kv = _get_group_key_value(db, group)
     kv.set_value(key, value)
-    db.commit()
 
 
 def delete_value(db: Session, group: Group, key: str) -> None:
     """Delete a value from a group's key-value store."""
     kv = _get_group_key_value(db, group)
     kv.delete_value(key)
-    db.commit()
 
 
 def get_all_values(db: Session, group: Group) -> dict[str, Any]:
     """Get all values from a group's key-value store."""
     kv = _get_group_key_value(db, group)
     return kv.get_all_values()
+
+
+def set_all_values(
+    db: Session, group: Group, key_values: dict[str, Any]
+) -> None:
+    """Set all key-value pairs in a group's key-value store."""
+    kv = _get_group_key_value(db, group)
+    kv.set_all_values(key_values)

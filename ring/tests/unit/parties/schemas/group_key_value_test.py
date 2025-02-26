@@ -5,18 +5,19 @@ from pydantic import ValidationError
 
 from ring.parties.schemas.group_key_value import (
     BulkGroupKeyValueUpdate,
-    SingleGroupKeyValueBase,
+    GroupKeyValue,
+    GroupKeyValueBase,
     SingleGroupKeyValueUpdate,
 )
 
 
-class TestSingleGroupKeyValueBase:
-    """Tests for SingleGroupKeyValueBase schema."""
+class TestGroupKeyValueBase:
+    """Tests for GroupKeyValueBase schema."""
 
     def test_valid_data(self):
         """Test schema with valid data."""
         # Test simple types
-        kv = SingleGroupKeyValueBase(key="test_key", value="test_value")
+        kv = GroupKeyValueBase(key="test_key", value="test_value")
         assert kv.key == "test_key"
         assert kv.value == "test_value"
 
@@ -25,19 +26,34 @@ class TestSingleGroupKeyValueBase:
             "nested": {"value": 42},
             "list": [1, 2, {"nested": "value"}],
         }
-        kv = SingleGroupKeyValueBase(key="complex_key", value=complex_value)
+        kv = GroupKeyValueBase(key="complex_key", value=complex_value)
         assert kv.key == "complex_key"
         assert kv.value == complex_value
 
     def test_missing_fields(self):
         """Test schema validation with missing fields."""
         with pytest.raises(ValidationError) as exc_info:
-            SingleGroupKeyValueBase(key="test_key")
+            GroupKeyValueBase(key="test_key")
         assert "value" in str(exc_info.value)
 
         with pytest.raises(ValidationError) as exc_info:
-            SingleGroupKeyValueBase(value="test_value")
+            GroupKeyValueBase(value="test_value")
         assert "key" in str(exc_info.value)
+
+
+class TestGroupKeyvalue:
+    """Tests for GroupKeyValue schema."""
+
+    def test_valid_data(self):
+        """Test schema with valid data."""
+        kv = GroupKeyValue(key_values={"test_key": "test_value"})
+        assert kv.key_values == {"test_key": "test_value"}
+
+    def test_nested_objects(self):
+        """Test schema with nested objects."""
+        nested_value = {"nested": {"value": 42}}
+        kv = GroupKeyValue(key_values={"test_key": nested_value})
+        assert kv.key_values == {"test_key": nested_value}
 
 
 class TestSingleGroupKeyValueUpdate:
@@ -66,12 +82,6 @@ class TestSingleGroupKeyValueUpdate:
         assert update.key == "test_key"
         assert update.operation == "delete"
         assert update.value is None
-
-    def test_set_operation_without_value(self):
-        """Test set operation validation when value is missing."""
-        with pytest.raises(ValidationError) as exc_info:
-            SingleGroupKeyValueUpdate(key="test_key", operation="set")
-        assert "value is required for 'set' operation" in str(exc_info.value)
 
     def test_invalid_operation(self):
         """Test schema with invalid operation."""
@@ -109,17 +119,3 @@ class TestBulkGroupKeyValueUpdate:
         with pytest.raises(ValidationError) as exc_info:
             BulkGroupKeyValueUpdate(updates=[])
         assert "updates" in str(exc_info.value)
-
-    def test_invalid_update_in_bulk(self):
-        """Test bulk schema with invalid update."""
-        with pytest.raises(ValidationError) as exc_info:
-            BulkGroupKeyValueUpdate(
-                updates=[
-                    SingleGroupKeyValueUpdate(
-                        key="key1", value="value1", operation="set"
-                    ),
-                    # Invalid update - set operation without value
-                    SingleGroupKeyValueUpdate(key="key2", operation="set"),
-                ]
-            )
-        assert "value is required for 'set' operation" in str(exc_info.value)
