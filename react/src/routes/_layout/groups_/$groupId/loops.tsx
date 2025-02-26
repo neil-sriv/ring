@@ -19,7 +19,7 @@ import {
 } from "../../../../client/@tanstack/react-query.gen";
 import { useGroupKeyValues } from "../../../../hooks/useGroupKeyValues";
 import { GroupKeyValuesTable } from "../../../../components/GroupKeyValues/GroupKeyValuesTable";
-import { LoopsGrid } from "../../../../components/Loops/LoopsGrid";
+import { LoopsTab } from "../../../../components/Loops/LoopsTab";
 import { Suspense } from "react";
 
 type LoopsSearchParams = {
@@ -69,39 +69,10 @@ function LoopsContentLoader() {
 
   const { data: keyValues } = useGroupKeyValues(groupId);
 
-  const publishedLoops = props.loops.filter(loop => loop.status === "SENT");
-  const inProgressLoops = props.loops.filter(loop => loop.status === "IN_PROGRESS");
-  const upcomingLoops = props.loops.filter(loop => loop.status !== "SENT" && loop.status !== "IN_PROGRESS");
-
   const tabsConfig = [
     {
       title: "Loops",
-      component: () => (
-        <VStack spacing={8} w="100%">
-          {inProgressLoops.length > 0 && (
-            <LoopsGrid
-              loops={inProgressLoops}
-              heading="In Progress"
-              subheading="Add your response now!"
-            />
-          )}
-
-          {upcomingLoops.length > 0 && (
-            <LoopsGrid
-              loops={upcomingLoops}
-              heading="Upcoming Issues"
-              subheading="You can add questions to the upcoming issues before they are available for responses."
-            />
-          )}
-
-          {publishedLoops.length > 0 && (
-            <LoopsGrid
-              loops={publishedLoops.sort((a, b) => a.number - b.number)}
-              heading="Published Issues"
-            />
-          )}
-        </VStack>
-      )
+      component: () => <LoopsTab loops={props.loops} group={group} />
     },
     {
       title: "Key Values",
