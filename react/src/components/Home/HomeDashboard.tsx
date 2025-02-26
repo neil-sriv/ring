@@ -1,6 +1,6 @@
 import { Box, Flex, Heading, VStack } from "@chakra-ui/react";
 import { useSuspenseQuery } from "@tanstack/react-query";
-import { LoopsGrid } from "../../routes/_layout/groups_/$groupId/loops";
+import { LoopsGrid } from "../Loops/LoopsGrid";
 import { listDashboardLettersLettersLettersDashboardGetOptions } from "../../client/@tanstack/react-query.gen";
 
 export function HomeDashboard() {
