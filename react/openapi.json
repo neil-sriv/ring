@@ -1132,6 +1132,223 @@
         }
       }
     },
+    "/parties/group/{group_api_id}/key-value": {
+      "get": {
+        "tags": [
+          "parties"
+        ],
+        "summary": "Read Group Key Values",
+        "operationId": "read_group_key_values_parties_group__group_api_id__key_value_get",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "group_api_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Group Api Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GroupKeyValueResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/parties/group/{group_api_id}/key-value/{key}": {
+      "get": {
+        "tags": [
+          "parties"
+        ],
+        "summary": "Read Group Key Value",
+        "operationId": "read_group_key_value_parties_group__group_api_id__key_value__key__get",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "group_api_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Group Api Id"
+            }
+          },
+          {
+            "name": "key",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Key"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GroupKeyValueBase"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/parties/group/{group_api_id}/key-value:update": {
+      "post": {
+        "tags": [
+          "parties"
+        ],
+        "summary": "Upsert Group Key Value",
+        "operationId": "upsert_group_key_value_parties_group__group_api_id__key_value_update_post",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "group_api_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Group Api Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SingleGroupKeyValueUpdate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GroupKeyValueBase"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/parties/group/{group_api_id}/key-value:bulk-update": {
+      "post": {
+        "tags": [
+          "parties"
+        ],
+        "summary": "Bulk Update Group Key Values",
+        "operationId": "bulk_update_group_key_values_parties_group__group_api_id__key_value_bulk_update_post",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "group_api_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Group Api Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/BulkGroupKeyValueUpdate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GroupKeyValueResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/letters/letter": {
       "post": {
         "tags": [
@@ -1986,6 +2203,25 @@
         ],
         "title": "Body_upload_image_responses_response__response_api_id__upload_image_post"
       },
+      "BulkGroupKeyValueUpdate": {
+        "properties": {
+          "updates": {
+            "items": {
+              "$ref": "#/components/schemas/SingleGroupKeyValueUpdate"
+            },
+            "type": "array",
+            "minItems": 1,
+            "title": "Updates",
+            "description": "List of updates to perform"
+          }
+        },
+        "type": "object",
+        "required": [
+          "updates"
+        ],
+        "title": "BulkGroupKeyValueUpdate",
+        "description": "Schema for bulk updating multiple key-value pairs."
+      },
       "DashboardLetters": {
         "properties": {
           "upcoming": {
@@ -2035,6 +2271,41 @@
           "admin_api_identifier"
         ],
         "title": "GroupCreate"
+      },
+      "GroupKeyValueBase": {
+        "properties": {
+          "key": {
+            "type": "string",
+            "title": "Key",
+            "description": "The key"
+          },
+          "value": {
+            "title": "Value",
+            "description": "The value"
+          }
+        },
+        "type": "object",
+        "required": [
+          "key",
+          "value"
+        ],
+        "title": "GroupKeyValueBase",
+        "description": "Base schema for group key-value operations."
+      },
+      "GroupKeyValueResponse": {
+        "properties": {
+          "key_values": {
+            "type": "object",
+            "title": "Key Values",
+            "description": "The key-values"
+          }
+        },
+        "type": "object",
+        "required": [
+          "key_values"
+        ],
+        "title": "GroupKeyValueResponse",
+        "description": "Schema for group key-value responses."
       },
       "GroupLinked": {
         "properties": {
@@ -2752,6 +3023,41 @@
           "tasks"
         ],
         "title": "ScheduleUnlinked"
+      },
+      "SingleGroupKeyValueUpdate": {
+        "properties": {
+          "key": {
+            "type": "string",
+            "title": "Key",
+            "description": "The key"
+          },
+          "value": {
+            "anyOf": [
+              {},
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Value",
+            "description": "The value to set. Required for 'set' operation, ignored for 'delete'"
+          },
+          "operation": {
+            "type": "string",
+            "enum": [
+              "set",
+              "delete"
+            ],
+            "title": "Operation",
+            "description": "The operation to perform"
+          }
+        },
+        "type": "object",
+        "required": [
+          "key",
+          "operation"
+        ],
+        "title": "SingleGroupKeyValueUpdate",
+        "description": "Schema for updating a group key-value pair."
       },
       "SubscriptionCreate": {
         "properties": {
