@@ -21,6 +21,16 @@ export type BodyUploadImageResponsesResponseResponseApiIdUploadImagePost = {
     response_images: Array<Blob | File>;
 };
 
+/**
+ * Schema for bulk updating multiple key-value pairs.
+ */
+export type BulkGroupKeyValueUpdate = {
+    /**
+     * List of updates to perform
+     */
+    updates: Array<SingleGroupKeyValueUpdate>;
+};
+
 export type DashboardLetters = {
     upcoming: Array<PublicLetter>;
     in_progress: Array<PublicLetter>;
@@ -30,6 +40,32 @@ export type DashboardLetters = {
 export type GroupCreate = {
     name: string;
     admin_api_identifier: string;
+};
+
+/**
+ * Schema for group key-value responses.
+ */
+export type GroupKeyValue = {
+    /**
+     * The key-values
+     */
+    key_values: {
+        [key: string]: unknown;
+    };
+};
+
+/**
+ * Base schema for group key-value operations.
+ */
+export type GroupKeyValueBase = {
+    /**
+     * The key
+     */
+    key: string;
+    /**
+     * The value
+     */
+    value: unknown;
 };
 
 export type GroupLinked = {
@@ -194,6 +230,24 @@ export type ScheduleSendParam = {
 
 export type ScheduleUnlinked = {
     tasks: Array<TaskUnlinked>;
+};
+
+/**
+ * Schema for updating a group key-value pair.
+ */
+export type SingleGroupKeyValueUpdate = {
+    /**
+     * The key
+     */
+    key: string;
+    /**
+     * The value to set. Ignored for 'delete'
+     */
+    value?: unknown | null;
+    /**
+     * The operation to perform
+     */
+    operation: 'set' | 'delete';
 };
 
 export type SubscriptionCreate = {
@@ -857,6 +911,142 @@ export type ReplaceGroupDefaultQuestionsPartiesGroupGroupApiIdReplaceDefaultQues
 };
 
 export type ReplaceGroupDefaultQuestionsPartiesGroupGroupApiIdReplaceDefaultQuestionsPostResponse = ReplaceGroupDefaultQuestionsPartiesGroupGroupApiIdReplaceDefaultQuestionsPostResponses[keyof ReplaceGroupDefaultQuestionsPartiesGroupGroupApiIdReplaceDefaultQuestionsPostResponses];
+
+export type ReadGroupKeyValuesPartiesGroupGroupApiIdKeyValueGetData = {
+    body?: never;
+    path: {
+        group_api_id: string;
+    };
+    query?: never;
+    url: '/parties/group/{group_api_id}/key-value';
+};
+
+export type ReadGroupKeyValuesPartiesGroupGroupApiIdKeyValueGetErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type ReadGroupKeyValuesPartiesGroupGroupApiIdKeyValueGetError = ReadGroupKeyValuesPartiesGroupGroupApiIdKeyValueGetErrors[keyof ReadGroupKeyValuesPartiesGroupGroupApiIdKeyValueGetErrors];
+
+export type ReadGroupKeyValuesPartiesGroupGroupApiIdKeyValueGetResponses = {
+    /**
+     * Successful Response
+     */
+    200: GroupKeyValue;
+};
+
+export type ReadGroupKeyValuesPartiesGroupGroupApiIdKeyValueGetResponse = ReadGroupKeyValuesPartiesGroupGroupApiIdKeyValueGetResponses[keyof ReadGroupKeyValuesPartiesGroupGroupApiIdKeyValueGetResponses];
+
+export type FullReplaceGroupKeyValuesPartiesGroupGroupApiIdKeyValuePutData = {
+    body: GroupKeyValue;
+    path: {
+        group_api_id: string;
+    };
+    query?: never;
+    url: '/parties/group/{group_api_id}/key-value';
+};
+
+export type FullReplaceGroupKeyValuesPartiesGroupGroupApiIdKeyValuePutErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type FullReplaceGroupKeyValuesPartiesGroupGroupApiIdKeyValuePutError = FullReplaceGroupKeyValuesPartiesGroupGroupApiIdKeyValuePutErrors[keyof FullReplaceGroupKeyValuesPartiesGroupGroupApiIdKeyValuePutErrors];
+
+export type FullReplaceGroupKeyValuesPartiesGroupGroupApiIdKeyValuePutResponses = {
+    /**
+     * Successful Response
+     */
+    200: GroupKeyValue;
+};
+
+export type FullReplaceGroupKeyValuesPartiesGroupGroupApiIdKeyValuePutResponse = FullReplaceGroupKeyValuesPartiesGroupGroupApiIdKeyValuePutResponses[keyof FullReplaceGroupKeyValuesPartiesGroupGroupApiIdKeyValuePutResponses];
+
+export type ReadGroupKeyValuePartiesGroupGroupApiIdKeyValueKeyGetData = {
+    body?: never;
+    path: {
+        group_api_id: string;
+        key: string;
+    };
+    query?: never;
+    url: '/parties/group/{group_api_id}/key-value/{key}';
+};
+
+export type ReadGroupKeyValuePartiesGroupGroupApiIdKeyValueKeyGetErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type ReadGroupKeyValuePartiesGroupGroupApiIdKeyValueKeyGetError = ReadGroupKeyValuePartiesGroupGroupApiIdKeyValueKeyGetErrors[keyof ReadGroupKeyValuePartiesGroupGroupApiIdKeyValueKeyGetErrors];
+
+export type ReadGroupKeyValuePartiesGroupGroupApiIdKeyValueKeyGetResponses = {
+    /**
+     * Successful Response
+     */
+    200: GroupKeyValueBase;
+};
+
+export type ReadGroupKeyValuePartiesGroupGroupApiIdKeyValueKeyGetResponse = ReadGroupKeyValuePartiesGroupGroupApiIdKeyValueKeyGetResponses[keyof ReadGroupKeyValuePartiesGroupGroupApiIdKeyValueKeyGetResponses];
+
+export type UpsertGroupKeyValuePartiesGroupGroupApiIdKeyValueUpdatePostData = {
+    body: SingleGroupKeyValueUpdate;
+    path: {
+        group_api_id: string;
+    };
+    query?: never;
+    url: '/parties/group/{group_api_id}/key-value:update';
+};
+
+export type UpsertGroupKeyValuePartiesGroupGroupApiIdKeyValueUpdatePostErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type UpsertGroupKeyValuePartiesGroupGroupApiIdKeyValueUpdatePostError = UpsertGroupKeyValuePartiesGroupGroupApiIdKeyValueUpdatePostErrors[keyof UpsertGroupKeyValuePartiesGroupGroupApiIdKeyValueUpdatePostErrors];
+
+export type UpsertGroupKeyValuePartiesGroupGroupApiIdKeyValueUpdatePostResponses = {
+    /**
+     * Successful Response
+     */
+    200: GroupKeyValueBase;
+};
+
+export type UpsertGroupKeyValuePartiesGroupGroupApiIdKeyValueUpdatePostResponse = UpsertGroupKeyValuePartiesGroupGroupApiIdKeyValueUpdatePostResponses[keyof UpsertGroupKeyValuePartiesGroupGroupApiIdKeyValueUpdatePostResponses];
+
+export type BulkUpdateGroupKeyValuesPartiesGroupGroupApiIdKeyValueBulkUpdatePostData = {
+    body: BulkGroupKeyValueUpdate;
+    path: {
+        group_api_id: string;
+    };
+    query?: never;
+    url: '/parties/group/{group_api_id}/key-value:bulk-update';
+};
+
+export type BulkUpdateGroupKeyValuesPartiesGroupGroupApiIdKeyValueBulkUpdatePostErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type BulkUpdateGroupKeyValuesPartiesGroupGroupApiIdKeyValueBulkUpdatePostError = BulkUpdateGroupKeyValuesPartiesGroupGroupApiIdKeyValueBulkUpdatePostErrors[keyof BulkUpdateGroupKeyValuesPartiesGroupGroupApiIdKeyValueBulkUpdatePostErrors];
+
+export type BulkUpdateGroupKeyValuesPartiesGroupGroupApiIdKeyValueBulkUpdatePostResponses = {
+    /**
+     * Successful Response
+     */
+    200: GroupKeyValue;
+};
+
+export type BulkUpdateGroupKeyValuesPartiesGroupGroupApiIdKeyValueBulkUpdatePostResponse = BulkUpdateGroupKeyValuesPartiesGroupGroupApiIdKeyValueBulkUpdatePostResponses[keyof BulkUpdateGroupKeyValuesPartiesGroupGroupApiIdKeyValueBulkUpdatePostResponses];
 
 export type AddNextLetterLettersLetterPostData = {
     body: LetterCreate;

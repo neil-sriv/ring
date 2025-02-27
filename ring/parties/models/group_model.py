@@ -11,6 +11,7 @@ from ring.created_at import CreatedAtMixin
 from ring.letters.constants import LetterStatus
 from ring.letters.models.default_question_model import DefaultQuestion
 from ring.letters.models.letter_model import Letter
+from ring.parties.models.group_key_value import GroupKeyValue
 from ring.parties.models.user_group_assocation import user_group_association
 from ring.ring_pydantic.linked_schemas import GroupLinked
 from ring.ring_pydantic.pydantic_model import PydanticModel
@@ -45,6 +46,9 @@ class Group(Base, PydanticModel, APIIdentified, CreatedAtMixin):
     default_questions: Mapped[list["DefaultQuestion"]] = relationship(
         back_populates="group", cascade="all, delete-orphan"
     )
+    key_values: Mapped["GroupKeyValue"] = relationship(
+        back_populates="group", cascade="all, delete-orphan"
+    )
 
     def __init__(self, name: str, admin: User) -> None:
         APIIdentified.__init__(self)
@@ -52,6 +56,7 @@ class Group(Base, PydanticModel, APIIdentified, CreatedAtMixin):
         self.name = name
         self.members = [admin]
         self.admin = admin
+        self.key_values = GroupKeyValue.create(self)
 
     @classmethod
     def create(cls, name: str, admin: User) -> Group:
