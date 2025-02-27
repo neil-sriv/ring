@@ -13,6 +13,12 @@ registerRoute(
   })
 );
 
+// Clear cache on activate
+caches.keys().then(function (names) {
+  for (let name of names)
+    caches.delete(name);
+});
+
 // Push notification event listener
 self.addEventListener("push", (event) => {
   if (event.data) {
