@@ -12,11 +12,10 @@ services:
   nginx:
     mem_limit: 300m
     volumes:
+      - ./react/dist:/usr/share/nginx/html:ro
       - ./prod.nginx.conf:/etc/nginx/conf.d/default.conf:ro
       - ./etc/letsencrypt:/etc/letsencrypt:ro
       - ./certbot/www:/var/www/certbot
-      - ./react/dist/manifest.webmanifest:/usr/share/nginx/html/manifest.webmanifest:ro
-      - ./react/dist/sw.js:/usr/share/nginx/html/serviceWorker.js:ro
   certbot:
     container_name: certbot
     image: certbot/certbot:latest
