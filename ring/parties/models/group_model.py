@@ -31,6 +31,7 @@ class Group(Base, PydanticModel, APIIdentified, CreatedAtMixin):
     id: Mapped[int] = mapped_column(primary_key=True, index=True)
     name: Mapped[str] = mapped_column(unique=True, index=True)
     api_identifier: Mapped[str] = mapped_column(unique=True, index=True)
+    cycle_length: Mapped[int] = mapped_column(default=30)
 
     admin_id: Mapped[int] = mapped_column(ForeignKey("user.id"))
     _admin = relationship("User", foreign_keys=[admin_id])
