@@ -2377,6 +2377,10 @@
             "format": "date-time",
             "title": "Created At"
           },
+          "cycle_length": {
+            "type": "integer",
+            "title": "Cycle Length"
+          },
           "members": {
             "items": {
               "$ref": "#/components/schemas/UserUnlinked"
@@ -2417,6 +2421,7 @@
           "name",
           "api_identifier",
           "created_at",
+          "cycle_length",
           "members",
           "letters",
           "schedule",
@@ -2439,13 +2444,18 @@
             "type": "string",
             "format": "date-time",
             "title": "Created At"
+          },
+          "cycle_length": {
+            "type": "integer",
+            "title": "Cycle Length"
           }
         },
         "type": "object",
         "required": [
           "name",
           "api_identifier",
-          "created_at"
+          "created_at",
+          "cycle_length"
         ],
         "title": "GroupUnlinked"
       },
@@ -2461,6 +2471,17 @@
               }
             ],
             "title": "Name"
+          },
+          "cycle_length": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Cycle Length"
           }
         },
         "type": "object",

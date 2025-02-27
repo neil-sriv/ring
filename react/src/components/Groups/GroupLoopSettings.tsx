@@ -5,6 +5,7 @@ import {
   Flex,
   FormControl,
   FormLabel,
+  FormErrorMessage,
   Heading,
   Input,
   List,
@@ -21,18 +22,27 @@ import {
 } from "react-hook-form";
 
 import { GroupLinked } from "../../client";
-import { ReplaceGroupDefaultQuestionsPartiesGroupGroupApiIdReplaceDefaultQuestionsPostError } from "../../client/types.gen";
+import { 
+  ReplaceGroupDefaultQuestionsPartiesGroupGroupApiIdReplaceDefaultQuestionsPostError,
+  UpdateGroupPartiesGroupGroupApiIdPatchError,
+} from "../../client/types.gen";
 import useCustomToast from "../../hooks/useCustomToast";
 import { useRouter } from "@tanstack/react-router";
 import { FiPlus } from "react-icons/fi";
 import {
   readGroupPartiesGroupGroupApiIdGetQueryKey,
   replaceGroupDefaultQuestionsPartiesGroupGroupApiIdReplaceDefaultQuestionsPostMutation,
+  updateGroupPartiesGroupGroupApiIdPatchMutation,
 } from "../../client/@tanstack/react-query.gen";
 import { AxiosError } from "axios";
 
 type QuestionField = {
   question_text: string;
+};
+
+type FormData = {
+  questions: QuestionField[];
+  cycle_length: number;
 };
 
 function GroupLoopSettings({ groupId }: { groupId: string }) {
@@ -57,13 +67,14 @@ function GroupLoopSettings({ groupId }: { groupId: string }) {
     control,
     register,
     formState: { isSubmitting, isDirty, errors },
-  } = useForm<{ questions: QuestionField[] }>({
+  } = useForm<FormData>({
     mode: "onBlur",
     criteriaMode: "all",
     defaultValues: {
       questions: group.default_questions.map((question) => ({
         question_text: question.question_text,
       })),
+      cycle_length: group.cycle_length,
     },
   });
 
@@ -81,11 +92,10 @@ function GroupLoopSettings({ groupId }: { groupId: string }) {
     setEditMode(!editMode);
   };
 
-  const mutation = useMutation({
+  const defaultQuestionsMutation = useMutation({
     ...replaceGroupDefaultQuestionsPartiesGroupGroupApiIdReplaceDefaultQuestionsPostMutation(),
     onSuccess: () => {
       showToast("Success!", "Loop settings updated successfully.", "success");
-      reset();
     },
     onError: (
       err: AxiosError<ReplaceGroupDefaultQuestionsPartiesGroupGroupApiIdReplaceDefaultQuestionsPostError>
@@ -109,15 +119,47 @@ function GroupLoopSettings({ groupId }: { groupId: string }) {
     },
   });
 
-  const onSubmit: SubmitHandler<{ questions: QuestionField[] }> = async (
-    data
-  ) => {
-    mutation.mutate({
+  const cycleUpdateMutation = useMutation({
+    ...updateGroupPartiesGroupGroupApiIdPatchMutation(),
+    onSuccess: () => {
+      showToast("Success!", "Cycle length updated successfully.", "success");
+    },
+    onError: (err: AxiosError<UpdateGroupPartiesGroupGroupApiIdPatchError>) => {
+      const errDetail =
+        err.response?.data.detail || "no error detail, please contact support";
+      showToast("Something went wrong.", `${errDetail}`, "error");
+    },
+    onSettled: async () => {
+      queryClient.invalidateQueries({
+        queryKey: readGroupPartiesGroupGroupApiIdGetQueryKey({
+          path: { group_api_id: groupId },
+        }),
+      });
+      router.invalidate();
+      await queryClient.refetchQueries({
+        queryKey: readGroupPartiesGroupGroupApiIdGetQueryKey({
+          path: { group_api_id: groupId },
+        }),
+      });
+    },
+  });
+
+  const onSubmit: SubmitHandler<FormData> = async (data) => {
+    if (data.cycle_length !== group.cycle_length) {
+      cycleUpdateMutation.mutate({
+        body: { cycle_length: data.cycle_length },
+        path: { group_api_id: groupId },
+      });
+    }
+
+    defaultQuestionsMutation.mutate({
       body: {
         questions: data.questions.map((question) => question.question_text),
       },
       path: { group_api_id: groupId },
     });
+
+    toggleEditMode();
   };
 
   const onCancel = () => {
@@ -136,27 +178,33 @@ function GroupLoopSettings({ groupId }: { groupId: string }) {
           as="form"
           onSubmit={handleSubmit(onSubmit)}
         >
-          {/* <FormControl>
-            <FormLabel color={color} htmlFor="cycle">
-              Loop Cycle
+          <FormControl isInvalid={!!errors.cycle_length}>
+            <FormLabel color={color} htmlFor="cycle_length">
+              Loop Cycle (days)
             </FormLabel>
             {editMode ? (
               <Input
-                id="cycle"
-                {...register("cycle", { valueAsNumber: true })}
+                id="cycle_length"
+                {...register("cycle_length", {
+                  valueAsNumber: true,
+                  required: "Cycle length is required",
+                  min: {
+                    value: 1,
+                    message: "Cycle length must be greater than 0",
+                  },
+                })}
                 type="number"
                 size="md"
               />
             ) : (
-              <Text
-                size="md"
-                py={2}
-                color={!group.cycle ? "ui.dim" : "inherit"}
-              >
-                {group.cycle ?? "Not set"}
+              <Text size="md" py={2} color={color}>
+                {group.cycle_length} days
               </Text>
             )}
-          </FormControl> */}
+            <FormErrorMessage>
+              {errors.cycle_length && errors.cycle_length.message}
+            </FormErrorMessage>
+          </FormControl>
           <FormControl mt={4}>
             <FormLabel color={color} htmlFor="defaultQuestions">
               Default Questions
@@ -213,8 +261,8 @@ function GroupLoopSettings({ groupId }: { groupId: string }) {
           <Flex mt={4} gap={3}>
             <Button
               variant="primary"
-              onClick={toggleEditMode}
-              type={editMode ? "button" : "submit"}
+              onClick={editMode ? undefined : toggleEditMode}
+              type={editMode ? "submit" : "button"}
               isLoading={editMode ? isSubmitting : false}
               isDisabled={editMode ? !isDirty : false}
             >
