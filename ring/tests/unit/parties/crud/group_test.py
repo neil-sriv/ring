@@ -173,3 +173,22 @@ class TestGroupCrud:
         db_session.commit()
 
         assert all(user in group.members for user in users + members)
+
+    def test_update_cycle_length(self, db_session: Session) -> None:
+        group = GroupFactory.create()
+        db_session.commit()
+
+        # Test updating to a valid cycle length
+        updated_group = group_crud.update_cycle_length(db_session, group, 60)
+        db_session.commit()
+
+        assert updated_group == group
+        assert updated_group.cycle_length == 60
+
+    def test_get_cycle_length(self, db_session: Session) -> None:
+        group = GroupFactory.create()
+        group.cycle_length = 45
+        db_session.commit()
+
+        cycle_length = group_crud.get_cycle_length(db_session, group)
+        assert cycle_length == 45

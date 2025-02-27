@@ -13,6 +13,7 @@ class GroupCreate(GroupBase):
 
 class GroupUpdate(BaseModel):
     name: str | None = None
+    cycle_length: int | None = None
 
 
 class AddMembers(BaseModel):
@@ -28,6 +29,7 @@ class Group(GroupBase):
 
     api_identifier: str
     created_at: AwareDatetime
+    cycle_length: int
 
 
 class GroupUnlinked(Group):

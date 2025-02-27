@@ -72,6 +72,7 @@ export type GroupLinked = {
     name: string;
     api_identifier: string;
     created_at: string;
+    cycle_length: number;
     members: Array<UserUnlinked>;
     letters: Array<LetterUnlinked>;
     schedule: ScheduleUnlinked | null;
@@ -83,10 +84,12 @@ export type GroupUnlinked = {
     name: string;
     api_identifier: string;
     created_at: string;
+    cycle_length: number;
 };
 
 export type GroupUpdate = {
     name?: string | null;
+    cycle_length?: number | null;
 };
 
 export type HttpValidationError = {

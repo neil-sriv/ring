@@ -285,3 +285,83 @@ class TestGroupApi:
         assert response.status_code == 400
         data = response.json()
         assert data == {"detail": "User is not a member of the group"}
+
+    def test_update_group_cycle_length(
+        self,
+        authenticated_client: TestClient,
+        db_session: Session,
+        current_user: User,
+    ):
+        group = GroupFactory.create(admin=current_user)
+        db_session.commit()
+
+        # Test updating cycle length
+        response = authenticated_client.patch(
+            f"/parties/group/{group.api_identifier}",
+            json={"cycle_length": 60},
+        )
+
+        assert response.status_code == 200
+        data = response.json()
+        assert_pydantic_model_json_dump_equivalent_to_response_dict(
+            group,
+            data,
+        )
+        assert group.cycle_length == 60
+
+    def test_update_group_cycle_length_invalid(
+        self,
+        authenticated_client: TestClient,
+        db_session: Session,
+        current_user: User,
+    ):
+        group = GroupFactory.create(admin=current_user)
+        db_session.commit()
+        original_cycle_length = group.cycle_length
+
+        # Test updating with invalid cycle length
+        response = authenticated_client.patch(
+            f"/parties/group/{group.api_identifier}",
+            json={"cycle_length": 0},
+        )
+
+        assert response.status_code == 400
+        assert response.json() == {
+            "detail": "Cycle length must be greater than 0"
+        }
+        assert group.cycle_length == original_cycle_length
+
+        # Test updating with negative cycle length
+        response = authenticated_client.patch(
+            f"/parties/group/{group.api_identifier}",
+            json={"cycle_length": -1},
+        )
+
+        assert response.status_code == 400
+        assert response.json() == {
+            "detail": "Cycle length must be greater than 0"
+        }
+        assert group.cycle_length == original_cycle_length
+
+    def test_update_group_cycle_length_not_admin(
+        self,
+        authenticated_client: TestClient,
+        db_session: Session,
+        current_user: User,
+    ):
+        other_admin = UserFactory.create()
+        group = GroupFactory.create(admin=other_admin)
+        group.members.append(current_user)
+        db_session.commit()
+        original_cycle_length = group.cycle_length
+
+        response = authenticated_client.patch(
+            f"/parties/group/{group.api_identifier}",
+            json={"cycle_length": 60},
+        )
+
+        assert response.status_code == 403
+        assert response.json() == {
+            "detail": "Only the group admin can update the group information"
+        }
+        assert group.cycle_length == original_cycle_length

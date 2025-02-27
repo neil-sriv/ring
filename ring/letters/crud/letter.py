@@ -283,7 +283,7 @@ def promote_and_create_new_letters(
         create_letter_with_questions(
             self.session,
             letter.group.api_identifier,
-            letter.send_at + timedelta(days=30),
+            letter.send_at + timedelta(days=letter.group.cycle_length),
         )
     self.session.commit()
 
@@ -297,7 +297,7 @@ def postpend_upcoming_letters(self: CeleryTask, letter_ids: list[int]) -> None:
         create_letter_with_questions(
             self.session,
             letter.group.api_identifier,
-            letter.send_at + timedelta(days=30),
+            letter.send_at + timedelta(days=letter.group.cycle_length),
         )
     self.session.commit()
 

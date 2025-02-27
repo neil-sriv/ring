@@ -46,6 +46,15 @@ def create_group(db: Session, admin_api_id: str, name: str) -> Group:
     return db_group
 
 
+def update_cycle_length(db: Session, group: Group, cycle_length: int) -> Group:
+    group.cycle_length = cycle_length
+    return group
+
+
+def get_cycle_length(db: Session, group: Group) -> int:
+    return group.cycle_length
+
+
 def add_member(db: Session, group_api_id: str, user_api_id: str) -> Group:
     db_group = api_identifier_crud.get_model(db, Group, api_id=group_api_id)
     db_user = api_identifier_crud.get_model(db, User, api_id=user_api_id)
