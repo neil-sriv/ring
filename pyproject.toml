@@ -58,6 +58,7 @@ dependencies = [
     "psycopg2-binary>=2.9.10",
     "pywebpush>=2.0.3",
     "loguru>=0.7.3",
+    "sqlalchemy-json>=0.7.0",
 ]
 
 [project.optional-dependencies]
