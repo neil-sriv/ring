@@ -358,6 +358,9 @@ sqlalchemy==2.0.36
     # via
     #   ring (pyproject.toml)
     #   alembic
+    #   sqlalchemy-json
+sqlalchemy-json==0.7.0
+    # via ring (pyproject.toml)
 sqlparse==0.5.3
     # via
     #   pgcli

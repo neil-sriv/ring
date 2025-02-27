@@ -37,6 +37,7 @@ def run_script(db: Session) -> None:
     from ring.lib.logger import logger
     from ring.lib.util import get_all_subclasses
     from ring.notifications.models.subscription import Subscription
+    from ring.parties.models.group_key_value import GroupKeyValue
     from ring.parties.models.group_model import Group
     from ring.parties.models.invite_model import Invite
     from ring.parties.models.user_model import User
