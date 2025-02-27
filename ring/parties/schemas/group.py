@@ -13,6 +13,7 @@ class GroupCreate(GroupBase):
 
 class GroupUpdate(BaseModel):
     name: str | None = None
+    cycle_length: int | None = None
 
 
 class AddMembers(BaseModel):

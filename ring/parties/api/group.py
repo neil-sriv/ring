@@ -180,8 +180,8 @@ def update_group(
         get_request_dependencies,
     ),
 ) -> Group:
-    if not group.name:
-        raise HTTPException(status.HTTP_400_BAD_REQUEST, "No name provided")
+    if not group.name and group.cycle_length is None:
+        raise HTTPException(status.HTTP_400_BAD_REQUEST, "No updates provided")
     db_group = api_identifier_crud.get_model(
         req_dep.db, Group, api_id=group_api_id
     )
@@ -190,7 +190,17 @@ def update_group(
             status.HTTP_403_FORBIDDEN,
             "Only the group admin can update the group information",
         )
-    db_group.name = group.name
+    if group.name:
+        db_group.name = group.name
+    if group.cycle_length is not None:
+        if group.cycle_length <= 0:
+            raise HTTPException(
+                status.HTTP_400_BAD_REQUEST,
+                "Cycle length must be greater than 0",
+            )
+        group_crud.update_cycle_length(
+            req_dep.db, db_group, group.cycle_length
+        )
     req_dep.db.commit()
     return db_group
 

@@ -25,6 +25,7 @@ class TestGroupModel:
         assert group.api_identifier.startswith(Group.API_ID_PREFIX)
         assert group.id is not None
         assert group.created_at is not None
+        assert group.cycle_length == 30  # Default value
 
         db_group = db_session.scalars(
             sqlalchemy.select(Group).filter(Group.name == name)
