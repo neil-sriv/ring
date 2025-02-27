@@ -18,7 +18,9 @@ class TestGroupKeyValue:
 
         # Verify the value was stored
         loaded_kv = db_session.scalars(
-            sqlalchemy.select(GroupKeyValue).where(GroupKeyValue.group_id == group.id)
+            sqlalchemy.select(GroupKeyValue).where(
+                GroupKeyValue.group_id == group.id
+            )
         ).one()
         assert loaded_kv is not None
         assert loaded_kv.get_value("test_key") == "test_value"
