@@ -1,0 +1,43 @@
+[build-system]
+requires = [
+    "setuptools >= 65",
+    "wheel >= 0.38"
+]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["llm"]
+namespaces = false
+
+[tool.ruff]
+line-length = 79
+
+[tool.ruff.lint]
+select  = [
+    # isort
+    "I001",
+]
+
+[project]
+name = "llm"
+version = "0.1.0"
+description = "LLM Service"
+requires-python = ">=3.12"
+dependencies = [
+    "pydantic ~= 2.5",
+    "fastapi[all] ~= 0.104",
+    "python-dotenv ~= 1.0",
+    "loguru ~= 0.7.3",
+    "ruff ~= 0.3.0",
+    "uvicorn ~= 0.27.0",
+    "python-jose[cryptography] ~= 3.3",
+    "pyjwt ~= 2.8",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.3.4",
+    "pytest-pretty>=1.2.0",
+    "pytest-xdist>=3.6.1",
+]
