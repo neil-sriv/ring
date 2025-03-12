@@ -92,7 +92,9 @@ def _find_and_execute_task(
     try:
         execute_fn(db, task, **kwargs)
     except Exception as e:
+        db.rollback()
         task.status = TaskStatus.FAILED
+        db.commit()
         task.message = str(e)
         print(f"Failed to execute task {task_id}: {e}")
         raise e

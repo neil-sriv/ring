@@ -23,7 +23,7 @@ export function GroupKeyValuesTable({
   const addKey = useMutation({
     ...fullReplaceGroupKeyValuesPartiesGroupGroupApiIdKeyValuePutMutation(),
     onSuccess: () => {
-      showToast("Success!", "Letter due date updated.", "success");
+      showToast("Success!", "Key value updated.", "success");
     },
     onError: (
       err: AxiosError<FullReplaceGroupKeyValuesPartiesGroupGroupApiIdKeyValuePutError>
