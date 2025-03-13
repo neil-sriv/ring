@@ -1,8 +1,8 @@
 from fastapi import APIRouter
 
-from llm.auth.router import router as auth_router
-from llm.completions.router import router as completions_router
-from llm.rag.router import router as rag_router
+from llm.auth.api.router import router as auth_router
+from llm.completions.api.router import router as completions_router
+from llm.rag.api.router import router as rag_router
 
 router = APIRouter()
 
