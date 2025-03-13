@@ -1,6 +1,7 @@
 from typing import Awaitable, Callable
 
 from fastapi import Depends, FastAPI, Request, Response
+from openai import AsyncOpenAI
 
 from llm.config import get_config
 from llm.lib.logger import logger
