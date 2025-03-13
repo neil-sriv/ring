@@ -15,7 +15,7 @@ services:
     expose:
       - "${LLM_PORT:-8005}"
     env_file:
-      - ../.env
+      - ./.llm.env
     networks:
       - ring-network
 

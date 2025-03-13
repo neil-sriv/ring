@@ -5,7 +5,7 @@ from pydantic_settings import BaseSettings
 
 
 class LLMConfig(BaseSettings):
-    environment: str
+    environment: str = "development"
     root_path: str = "/api/v1"
 
 
