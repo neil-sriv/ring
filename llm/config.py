@@ -12,4 +12,4 @@ class LLMConfig(BaseSettings):
 @lru_cache
 def get_config() -> LLMConfig:
     load_dotenv()
-    return LLMConfig()  # type: ignore 
+    return LLMConfig()  # type: ignore

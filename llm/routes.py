@@ -7,5 +7,7 @@ from llm.rag.api.router import router as rag_router
 router = APIRouter()
 
 router.include_router(auth_router, prefix="/auth", tags=["auth"])
-router.include_router(completions_router, prefix="/completions", tags=["completions"])
-router.include_router(rag_router, prefix="/rag", tags=["rag"]) 
+router.include_router(
+    completions_router, prefix="/completions", tags=["completions"]
+)
+router.include_router(rag_router, prefix="/rag", tags=["rag"])

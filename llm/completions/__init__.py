@@ -1,1 +1,1 @@
-"""Completions module for LLM service.""" 
+"""Completions module for LLM service."""

@@ -1,1 +1,1 @@
-"""Retrieval Augmented Generation (RAG) module for LLM service.""" 
+"""Retrieval Augmented Generation (RAG) module for LLM service."""
