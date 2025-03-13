@@ -1,17 +1,9 @@
-from fastapi import APIRouter, Depends, Request
-
-from llm.dependencies import (
-    AuthenticatedRequestDependencies,
-    get_authenticated_request_dependencies,
-)
+from fastapi import APIRouter
 
 router = APIRouter()
 
+
 @router.get("/status")
-async def auth_status(
-    req_dep: AuthenticatedRequestDependencies = Depends(
-        get_authenticated_request_dependencies
-    ),
-):
+async def auth_status():
     """Check authentication status"""
     return {"status": "authenticated", "message": "API key is valid"}

@@ -26,15 +26,15 @@ async def get_request_dependencies() -> RequestDependenciesBase:
     return RequestDependenciesBase()
 
 
-async def get_authenticated_request_dependencies(
-    api_key: str = Depends(get_api_key),
-) -> AuthenticatedRequestDependencies:
-    """Get dependencies for authenticated requests"""
-    return AuthenticatedRequestDependencies(api_key=api_key)
+# async def get_authenticated_request_dependencies(
+#     api_key: str = Depends(get_api_key),
+# ) -> AuthenticatedRequestDependencies:
+#     """Get dependencies for authenticated requests"""
+#     return AuthenticatedRequestDependencies(api_key=api_key)
 
 
-async def get_unauthenticated_request_dependencies() -> (
-    RequestDependenciesBase
-):
-    """Get dependencies for unauthenticated requests"""
-    return RequestDependenciesBase()
+# async def get_unauthenticated_request_dependencies() -> (
+#     RequestDependenciesBase
+# ):
+#     """Get dependencies for unauthenticated requests"""
+#     return RequestDependenciesBase()
