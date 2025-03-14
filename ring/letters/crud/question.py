@@ -8,6 +8,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Sequence
 
+from llm_service import CompletionRequest, CompletionsApi
 from sqlalchemy import select
 
 from ring.api_identifier import util as api_identifier_crud
@@ -130,3 +131,22 @@ def delete_question(
 
     # Delete the question
     db.delete(question)
+
+
+def generate_question(prompt: str) -> str:
+    """
+    Generate a question using LLM service.
+
+    :param prompt: Prompt to generate the question
+    :return: Generated question text
+    """
+    # Initialize LLM service
+    api_instance = CompletionsApi()
+
+    # Generate question using LLM
+    completion_request = CompletionRequest(prompt=prompt)
+    response = api_instance.generate_completion_completions_generate_post(
+        completion_request
+    )
+
+    return response.text
