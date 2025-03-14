@@ -1,0 +1,24 @@
+services:
+  llm:
+    restart: unless-stopped
+    container_name: ring-llm
+    build:
+      context: .
+      dockerfile: llm.Dockerfile
+    command: "uvicorn llm.fast:app --proxy-headers --host 0.0.0.0 --port ${LLM_PORT:-8005} --reload"
+    volumes:
+      - .:/src/llm
+    environment:
+      - PYTHONPATH=.
+    ports:
+      - "${LLM_PORT:-8005}:${LLM_PORT:-8005}"
+    expose:
+      - "${LLM_PORT:-8005}"
+    env_file:
+      - ./.llm.env
+    networks:
+      - ring-network
+
+networks:
+  ring-network:
+    external: true 
