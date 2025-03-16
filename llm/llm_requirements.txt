@@ -12,15 +12,11 @@ certifi==2025.1.31
     # via
     #   httpcore
     #   httpx
-cffi==1.17.1
-    # via cryptography
 click==8.1.8
     # via
     #   rich-toolkit
     #   typer
     #   uvicorn
-cryptography==44.0.2
-    # via python-jose
 distro==1.9.0
     # via openai
 dnspython==2.7.0
@@ -64,7 +60,7 @@ markupsafe==3.0.2
     # via jinja2
 mdurl==0.1.2
     # via markdown-it-py
-openai==1.66.3
+openai==1.68.2
     # via llm (pyproject.toml)
 orjson==3.10.15
     # via fastapi
@@ -72,11 +68,8 @@ pyasn1==0.4.8
     # via
     #   python-jose
     #   rsa
-pycparser==2.22
-    # via cffi
 pydantic==2.10.6
     # via
-    #   llm (pyproject.toml)
     #   fastapi
     #   openai
     #   pydantic-extra-types
@@ -93,7 +86,6 @@ pyjwt==2.10.1
     # via llm (pyproject.toml)
 python-dotenv==1.0.1
     # via
-    #   llm (pyproject.toml)
     #   pydantic-settings
     #   uvicorn
 python-jose==3.4.0
@@ -112,7 +104,7 @@ rich-toolkit==0.13.2
     # via fastapi-cli
 rsa==4.9
     # via python-jose
-ruff==0.3.7
+ruff==0.11.2
     # via llm (pyproject.toml)
 shellingham==1.5.4
     # via typer
@@ -142,7 +134,6 @@ ujson==5.10.0
     # via fastapi
 uvicorn==0.27.1
     # via
-    #   llm (pyproject.toml)
     #   fastapi
     #   fastapi-cli
 uvloop==0.21.0
