@@ -8,10 +8,11 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Sequence
 
-from llm_service import CompletionRequest, CompletionsApi
+from llm_service import ApiClient, CompletionRequest, CompletionsApi
 from sqlalchemy import select
 
 from ring.api_identifier import util as api_identifier_crud
+from ring.config import get_llm_config
 from ring.letters.models.letter_model import Letter
 from ring.letters.models.question_model import Question
 from ring.letters.models.response_model import Response
@@ -141,10 +142,31 @@ def generate_question(prompt: str) -> str:
     :return: Generated question text
     """
     # Initialize LLM service
-    api_instance = CompletionsApi()
+    api_client = ApiClient(configuration=get_llm_config().config)
+    api_instance = CompletionsApi(api_client=api_client)
+
+    def _compile_existing_questions(letter: Letter) -> str:
+        return "\n".join([q.question_text for q in letter.questions])
+
+    # generate system prompt
+    system_prompt = f"""
+    You are a helpful assistant that generates questions for a private newsletter service used by a group of friends. 
+    The newsletter is sent to the group on a regular basis, and the questions are used to generate the newsletter.
+    The questions should be short and to the point, and should be easy and fun to answer.
+
+    These are the existing questions for this letter:
+    {_compile_existing_questions(letter)}
+    """
+
+    if prompt is not None:
+        additional_instructions = f"""
+        You have been given a prompt that will be used to generate the question from the user.
+        {prompt}
+        """
+        system_prompt += additional_instructions
 
     # Generate question using LLM
-    completion_request = CompletionRequest(prompt=prompt)
+    completion_request = CompletionRequest(prompt=system_prompt)
     response = api_instance.generate_completion_completions_generate_post(
         completion_request
     )

@@ -24,9 +24,14 @@ from ring.fastapp.dependencies import (
 )
 from ring.letters.constants import LetterStatus
 from ring.letters.crud import letter as letter_crud
+from ring.letters.crud import question as question_crud
 from ring.letters.models.letter_model import Letter
 from ring.letters.schemas.letter import LetterCreate, LetterUpdate
-from ring.letters.schemas.question import QuestionCreate
+from ring.letters.schemas.question import (
+    GenerateQuestionRequest,
+    GenerateQuestionResponse,
+    QuestionCreate,
+)
 from ring.lib.logger import logger
 from ring.parties.models.user_model import User
 from ring.ring_pydantic import PublicLetter as LetterSchema
@@ -267,3 +272,22 @@ async def add_question(
     req_dep.db.refresh(db_letter)
     req_dep.db.commit()
     return db_letter
+
+
+@router.post(
+    "/letter/{letter_api_id}:generate_question",
+    response_model=GenerateQuestionResponse,
+)
+async def generate_question(
+    letter_api_id: str,
+    request: GenerateQuestionRequest,
+    req_dep: AuthenticatedRequestDependencies = Depends(
+        get_request_dependencies,
+    ),
+) -> GenerateQuestionResponse:
+    """Generate a question using LLM without saving it."""
+    db_letter = api_identifier_crud.get_model(
+        req_dep.db, Letter, api_id=letter_api_id
+    )
+    generated_text = question_crud.generate_question(db_letter, request.prompt)
+    return GenerateQuestionResponse(generated_text=generated_text)
