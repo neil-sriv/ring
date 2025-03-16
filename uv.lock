@@ -958,7 +958,7 @@ wheels = [
 [[package]]
 name = "llm-service"
 version = "1.0.0"
-source = { directory = "llm/client/_gen" }
+source = { directory = "ring/packages/service_clients/llm_service" }
 dependencies = [
     { name = "pydantic" },
     { name = "python-dateutil" },
@@ -1868,7 +1868,7 @@ requires-dist = [
     { name = "ipython", specifier = "~=8.20" },
     { name = "ipython-autoimport" },
     { name = "ipython-autotime" },
-    { name = "llm-service", directory = "llm/client/_gen" },
+    { name = "llm-service", directory = "ring/packages/service_clients/llm_service" },
     { name = "loguru", specifier = ">=0.7.3" },
     { name = "mypy-boto3-ses", specifier = "~=1.34" },
     { name = "pgcli", specifier = "~=4.0" },

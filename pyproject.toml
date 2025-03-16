@@ -25,7 +25,8 @@ required-imports = ["from __future__ import annotations"]
 "ring/alembic/versions/**.py" = ["F401"]
 
 [tool.uv.sources]
-llm-service = { path = "llm/client/_gen" }
+llm-service = { path = "ring/packages/service_clients/llm_service" }
+
 
 [project]
 name = "ring"

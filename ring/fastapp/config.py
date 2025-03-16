@@ -11,7 +11,8 @@ from functools import lru_cache
 from typing import Annotated
 
 from dotenv import load_dotenv
-from pydantic import AnyUrl, BeforeValidator
+from llm_service import Configuration
+from pydantic import AnyUrl, BeforeValidator, computed_field
 from pydantic_settings import BaseSettings
 
 
@@ -71,4 +72,27 @@ def get_config() -> RingConfig:
         RingConfig: The application configuration
     """
     load_dotenv()
-    return RingConfig()  # type: ignore
+    return RingConfig()
+
+
+def _llm_client_config(llm_config: LLMConfig) -> Configuration:
+    config = Configuration(
+        host="http://ring-llm:8006",
+        api_key={"APIKeyHeader": llm_config.llm_service_api_key},
+    )
+    return config
+
+
+class LLMConfig(BaseSettings):
+    llm_service_api_key: str
+
+    @computed_field
+    @property
+    def config(self) -> Configuration:
+        return _llm_client_config(self)
+
+
+@lru_cache
+def get_llm_config() -> LLMConfig:
+    load_dotenv()
+    return LLMConfig()

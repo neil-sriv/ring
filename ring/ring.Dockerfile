@@ -7,5 +7,5 @@ ENV PYTHONUNBUFFERED 1
 
 RUN pip install --upgrade pip
 RUN pip install uv
-COPY ./requirements.txt ./
-RUN uv pip install -r requirements.txt --system --no-cache
+COPY ./ ./ring
+RUN uv pip install -r ring/requirements.txt --system --no-cache

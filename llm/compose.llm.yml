@@ -5,15 +5,15 @@ services:
     build:
       context: .
       dockerfile: llm.Dockerfile
-    command: "uvicorn llm.fast:app --proxy-headers --host 0.0.0.0 --port ${LLM_PORT:-8005} --reload"
+    command: "uvicorn llm.fast:app --proxy-headers --host 0.0.0.0 --port ${LLM_PORT:-8006} --reload"
     volumes:
       - .:/src/llm
     environment:
       - PYTHONPATH=.
     ports:
-      - "${LLM_PORT:-8005}:${LLM_PORT:-8005}"
+      - "${LLM_PORT:-8006}:${LLM_PORT:-8006}"
     expose:
-      - "${LLM_PORT:-8005}"
+      - "${LLM_PORT:-8006}"
     env_file:
       - ./.llm.env
     networks:
