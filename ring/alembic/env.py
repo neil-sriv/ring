@@ -60,16 +60,17 @@ target_metadata = Base.metadata
 
 
 def run_migrations_offline() -> None:
-    """Run migrations in 'offline' mode.
+    """Run migrations in 'offline' mode without requiring a database connection.
 
-    This configures the context with just a URL
-    and not an Engine, though an Engine is acceptable
-    here as well.  By skipping the Engine creation
-    we don't even need a DBAPI to be available.
+    Configures the migration context with just a URL and executes migrations
+    without requiring an actual database connection. Useful for generating
+    SQL scripts that can be run later.
 
-    Calls to context.execute() here emit the given string to the
-    script output.
-
+    :param: None
+    :type: None
+    :raises alembic.util.CommandError: If the configuration is invalid
+    :return: None
+    :rtype: None
     """
     url = config.get_main_option("sqlalchemy.url")
     context.configure(
@@ -84,11 +85,18 @@ def run_migrations_offline() -> None:
 
 
 def run_migrations_online() -> None:
-    """Run migrations in 'online' mode.
+    """Run migrations in 'online' mode with an active database connection.
 
-    In this scenario we need to create an Engine
-    and associate a connection with the context.
+    Creates a SQLAlchemy Engine instance and executes migrations using
+    an active database connection. This is the default mode for running
+    migrations in a development or production environment.
 
+    :param: None
+    :type: None
+    :raises sqlalchemy.exc.SQLAlchemyError: If database connection fails
+    :raises alembic.util.CommandError: If the configuration is invalid
+    :return: None
+    :rtype: None
     """
     connectable = engine_from_config(
         config.get_section(config.config_ini_section, {}),
