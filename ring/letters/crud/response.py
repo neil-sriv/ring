@@ -1,3 +1,9 @@
+"""CRUD operations for response management.
+
+This module provides functions for managing responses to questions in letters,
+including text responses and image attachments using AWS S3 for storage.
+"""
+
 from __future__ import annotations
 
 import hashlib
@@ -27,11 +33,15 @@ if TYPE_CHECKING:
 def get_response(db: Session, response_api_id: str) -> Response:
     """Retrieve a specific response by its API identifier.
 
-    :param db: Database session
-    :param response_api_id: API identifier of the response
-    :return: Response object
-    :rtype: Response
-    :raises IDNotFoundException: If response with given API ID is not found
+    Args:
+        db (Session): Database session
+        response_api_id (str): API identifier of the response
+
+    Returns:
+        Response: Response object
+
+    Raises:
+        IDNotFoundException: If response with given API ID is not found
     """
     return api_identifier_crud.get_model(db, Response, api_id=response_api_id)
 
@@ -41,13 +51,17 @@ def get_responses(
 ) -> list[Response]:
     """Retrieve multiple responses for a letter by their API identifiers.
 
-    :param db: Database session
-    :param letter: Letter the responses belong to
-    :param response_api_ids: List of response API identifiers
-    :return: List of responses
-    :rtype: list[Response]
-    :raises AssertionError: If any response doesn't belong to the given letter
-    :raises IDNotFoundException: If any response with given API ID is not found
+    Args:
+        db (Session): Database session
+        letter (Letter): Letter the responses belong to
+        response_api_ids (list[str]): List of response API identifiers
+
+    Returns:
+        list[Response]: List of responses
+
+    Raises:
+        AssertionError: If any response doesn't belong to the given letter
+        IDNotFoundException: If any response with given API ID is not found
     """
     responses = api_identifier_crud.get_models(db, Response, response_api_ids)
     assert all(
@@ -62,10 +76,12 @@ def edit_responses(
 ) -> list[Response]:
     """Update multiple responses with new text content.
 
-    :param response_map: Dictionary mapping API IDs to Response objects
-    :param updated_responses: Sequence of response updates
-    :return: List of updated responses
-    :rtype: list[Response]
+    Args:
+        response_map (dict[str, Response]): Dictionary mapping API IDs to Response objects
+        updated_responses (Sequence[ResponseUpdate]): Sequence of response updates
+
+    Returns:
+        list[Response]: List of updated responses
     """
     for updated_resp in updated_responses:
         db_response = response_map[updated_resp.api_identifier]
@@ -80,11 +96,13 @@ def add_image_to_response(
 ) -> Response:
     """Associate an image with a response.
 
-    :param db: Database session
-    :param response: Response to add the image to
-    :param image: Image to associate with the response
-    :return: Updated response
-    :rtype: Response
+    Args:
+        db (Session): Database session
+        response (Response): Response to add the image to
+        image (Image): Image to associate with the response
+
+    Returns:
+        Response: Updated response
     """
     assoc = ImageResponseAssociation(image=image, response=response)
     response.image_associations.append(assoc)
@@ -99,11 +117,13 @@ async def a_upload_image(
 ) -> Response:
     """Upload images to S3 and associate them with a response.
 
-    :param db: Database session
-    :param response: Response to add the images to
-    :param response_images: List of image files to upload
-    :return: Updated response with associated images
-    :rtype: Response
+    Args:
+        db (Session): Database session
+        response (Response): Response to add the images to
+        response_images (list[UploadFile]): List of image files to upload
+
+    Returns:
+        Response: Updated response with associated images
     """
     s3_file_prefix = f"{response.question.letter.group.api_identifier}/{response.question.letter.api_identifier}/{response.api_identifier}/"
     # upload image to S3

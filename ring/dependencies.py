@@ -31,7 +31,7 @@ class RequestDependenciesBase:
     authenticated or not.
 
     Attributes:
-        db: SQLAlchemy database session
+        db (Session): SQLAlchemy database session
     """
     db: Session
 
@@ -43,8 +43,8 @@ class AuthenticatedRequestDependencies(RequestDependenciesBase):
     This class extends the base dependencies to include the authenticated user.
 
     Attributes:
-        db: SQLAlchemy database session
-        current_user: The authenticated user making the request
+        db (Session): SQLAlchemy database session
+        current_user (User): The authenticated user making the request
     """
     current_user: User
 
@@ -55,8 +55,8 @@ async def get_current_user(
     """Get the current authenticated user from a JWT token.
 
     Args:
-        token: JWT token from the Authorization header
-        db: Database session
+        token (str): JWT token from the Authorization header
+        db (Session): Database session
 
     Returns:
         User: The authenticated user
@@ -84,8 +84,8 @@ async def get_request_dependencies(
     This dependency combines a database session with an authenticated user.
 
     Args:
-        db: Database session
-        current_user: The authenticated user
+        db (Session): Database session
+        current_user (User): The authenticated user
 
     Returns:
         AuthenticatedRequestDependencies: Combined dependencies
@@ -101,7 +101,7 @@ async def get_unauthenticated_request_dependencies(
     This dependency provides a database session without requiring authentication.
 
     Args:
-        db: Database session
+        db (Session): Database session
 
     Returns:
         RequestDependenciesBase: Basic request dependencies

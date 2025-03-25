@@ -24,12 +24,9 @@ def upgrade() -> None:
     Implements the forward migration by applying schema changes and data
     transformations to reach this version from the previous version.
 
-    :param: None
-    :type: None
-    :raises sqlalchemy.exc.SQLAlchemyError: If the migration fails
-    :raises alembic.util.CommandError: If the migration configuration is invalid
-    :return: None
-    :rtype: None
+    Raises:
+        sqlalchemy.exc.SQLAlchemyError: If the migration fails
+        alembic.util.CommandError: If the migration configuration is invalid
     """
     ${upgrades if upgrades else "pass"}
 
@@ -40,11 +37,8 @@ def downgrade() -> None:
     Implements the reverse migration by reverting schema changes and data
     transformations to return to the previous version.
 
-    :param: None
-    :type: None
-    :raises sqlalchemy.exc.SQLAlchemyError: If the migration fails
-    :raises alembic.util.CommandError: If the migration configuration is invalid
-    :return: None
-    :rtype: None
+    Raises:
+        sqlalchemy.exc.SQLAlchemyError: If the migration fails
+        alembic.util.CommandError: If the migration configuration is invalid
     """
     ${downgrades if downgrades else "pass"}

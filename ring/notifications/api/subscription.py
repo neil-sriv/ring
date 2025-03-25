@@ -36,13 +36,15 @@ def post_subscription(
     notifications. If a subscription with the same endpoint already exists,
     returns a message indicating this instead of creating a duplicate.
 
-    :param subscription: Subscription details including endpoint and keys
-    :type subscription: SubscriptionCreate
-    :param req_dep: Request dependencies including database session
-    :type req_dep: AuthenticatedRequestDependencies
-    :return: Message indicating success or existing subscription
-    :rtype: ResponseMessage
-    :raises HTTPException: If user is not authenticated
+    Args:
+        subscription (SubscriptionCreate): Subscription details including endpoint and keys
+        req_dep (AuthenticatedRequestDependencies): Request dependencies including database session
+
+    Returns:
+        ResponseMessage: Message indicating success or existing subscription
+
+    Raises:
+        HTTPException: If user is not authenticated
     """
     if get_subscription_by_endpoint(req_dep.db, subscription.endpoint):
         logger.warning(

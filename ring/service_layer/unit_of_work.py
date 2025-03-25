@@ -19,7 +19,7 @@ class AbstractUnitOfWork(abc.ABC):
     proper transaction handling.
 
     Attributes:
-        products: Repository for accessing domain objects
+        products (repository.AbstractRepository): Repository for accessing domain objects
     """
 
     products: repository.AbstractRepository
@@ -28,7 +28,7 @@ class AbstractUnitOfWork(abc.ABC):
         """Enter the context manager.
 
         Returns:
-            AbstractUnitOfWork: The UnitOfWork instance
+            AbstractUnitOfWork: The UnitOfWork instance for use in a with statement
         """
         return self
 
@@ -36,16 +36,25 @@ class AbstractUnitOfWork(abc.ABC):
         """Exit the context manager, rolling back if necessary.
 
         Args:
-            *args: Exception information if an error occurred
+            *args: Exception information if an error occurred during the transaction
         """
         self.rollback()
 
     def commit(self):
-        """Commit the current transaction."""
+        """Commit the current transaction.
+
+        This method commits all changes made during the current transaction.
+        After a successful commit, the transaction is closed and a new one
+        is started.
+        """
         self._commit()
 
     def collect_new_events(self):
         """Collect and yield new domain events from products.
+
+        This method iterates through all products that have been accessed
+        during the current transaction and yields any domain events that
+        have been generated.
 
         Yields:
             Event: Domain events that occurred during the transaction
@@ -58,7 +67,8 @@ class AbstractUnitOfWork(abc.ABC):
     def _commit(self):
         """Commit the current transaction.
 
-        This method must be implemented by concrete classes.
+        This method must be implemented by concrete classes to handle
+        the actual database commit operation.
 
         Raises:
             NotImplementedError: If not implemented by subclass
@@ -69,7 +79,8 @@ class AbstractUnitOfWork(abc.ABC):
     def rollback(self):
         """Rollback the current transaction.
 
-        This method must be implemented by concrete classes.
+        This method must be implemented by concrete classes to handle
+        the actual database rollback operation.
 
         Raises:
             NotImplementedError: If not implemented by subclass

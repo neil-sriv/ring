@@ -41,20 +41,20 @@ router.include_router(
 
 
 @router.get("/")
-async def root():
+async def root() -> dict[str, str]:
     """Root endpoint for health checks.
 
     Returns:
-        dict: Simple health check response
+        dict[str, str]: Simple health check response
     """
     return {"message": "Hello World!"}
 
 
 @router.get("/hello")
-async def hello():
+async def hello() -> dict[str, str]:
     """Test endpoint.
 
     Returns:
-        dict: Simple test response
+        dict[str, str]: Simple test response
     """
     return {"message": "Hello World!"}

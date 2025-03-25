@@ -1,3 +1,9 @@
+"""SQLAlchemy models for one-time use tokens.
+
+This module defines models for managing one-time use tokens used in features
+like group invitations and password resets, with built-in expiration tracking.
+"""
+
 from __future__ import annotations
 
 from datetime import UTC, datetime, timedelta
@@ -21,8 +27,8 @@ class TokenType(StrEnum):
     """Enumeration of possible one-time token types.
 
     Attributes:
-        INVITE: Token used for group invitations
-        PASSWORD_RESET: Token used for password reset requests
+        INVITE (str): Token used for group invitations
+        PASSWORD_RESET (str): Token used for password reset requests
     """
 
     INVITE = "invite"
@@ -66,12 +72,10 @@ class OneTimeToken(Base, CreatedAtMixin):
     ) -> None:
         """Initialize a new one-time token.
 
-        :param token: The token string
-        :type token: str
-        :param type: Type of token (invite or password reset)
-        :type type: TokenType
-        :param email: Associated email address, defaults to None
-        :type email: str | None
+        Args:
+            token (str): The token string
+            type (TokenType): Type of token (invite or password reset)
+            email (str | None, optional): Associated email address. Defaults to None.
         """
         self.token = token
         self.type = type
@@ -89,14 +93,13 @@ class OneTimeToken(Base, CreatedAtMixin):
     ) -> OneTimeToken:
         """Create a new one-time token instance.
 
-        :param token: The token string
-        :type token: str
-        :param type: Type of token (invite or password reset)
-        :type type: TokenType
-        :param email: Associated email address, defaults to None
-        :type email: str | None
-        :return: New token instance
-        :rtype: OneTimeToken
+        Args:
+            token (str): The token string
+            type (TokenType): Type of token (invite or password reset)
+            email (str | None, optional): Associated email address. Defaults to None.
+
+        Returns:
+            OneTimeToken: New token instance
         """
         return cls(token, type, email)
 
@@ -104,8 +107,8 @@ class OneTimeToken(Base, CreatedAtMixin):
     def is_expired(self) -> bool:
         """Check if the token has expired.
 
-        :return: True if the token has expired, False otherwise
-        :rtype: bool
+        Returns:
+            bool: True if the token has expired, False otherwise
         """
         return self.created_at + timedelta(seconds=self.ttl) < datetime.now(
             UTC
@@ -115,8 +118,8 @@ class OneTimeToken(Base, CreatedAtMixin):
     def is_expired(cls) -> ColumnElement[bool]:
         """SQLAlchemy expression for checking token expiration.
 
-        :return: SQL expression for token expiration check
-        :rtype: ColumnElement[bool]
+        Returns:
+            ColumnElement[bool]: SQL expression for token expiration check
         """
         return func.trunc(
             extract("epoch", cls.created_at)

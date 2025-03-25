@@ -1,3 +1,9 @@
+"""CRUD operations for group management.
+
+This module provides functions for managing groups in the database, including
+creation, member management, and letter scheduling.
+"""
+
 from __future__ import annotations
 
 from datetime import datetime
@@ -25,16 +31,14 @@ def get_groups(
 ) -> Sequence[Group]:
     """Get all groups that a user is a member of.
 
-    :param db: Database session
-    :type db: Session
-    :param user_api_id: API identifier of the user
-    :type user_api_id: str
-    :param skip: Number of records to skip, defaults to 0
-    :type skip: int, optional
-    :param limit: Maximum number of records to return, defaults to 100
-    :type limit: int, optional
-    :return: List of groups
-    :rtype: Sequence[Group]
+    Args:
+        db (Session): Database session
+        user_api_id (str): API identifier of the user
+        skip (int, optional): Number of records to skip. Defaults to 0.
+        limit (int, optional): Maximum number of records to return. Defaults to 100.
+
+    Returns:
+        Sequence[Group]: List of groups
     """
     user = api_identifier_crud.get_model(db, User, api_id=user_api_id)
     return db.scalars(
@@ -50,14 +54,13 @@ def get_groups(
 def create_group(db: Session, admin_api_id: str, name: str) -> Group:
     """Create a new group with the specified admin and name.
 
-    :param db: Database session
-    :type db: Session
-    :param admin_api_id: API identifier of the admin user
-    :type admin_api_id: str
-    :param name: Name of the group
-    :type name: str
-    :return: Created group
-    :rtype: Group
+    Args:
+        db (Session): Database session
+        admin_api_id (str): API identifier of the admin user
+        name (str): Name of the group
+
+    Returns:
+        Group: Created group
     """
     admin_user = api_identifier_crud.get_model(
         db,
@@ -73,14 +76,13 @@ def create_group(db: Session, admin_api_id: str, name: str) -> Group:
 def update_cycle_length(db: Session, group: Group, cycle_length: int) -> Group:
     """Update the cycle length of a group.
 
-    :param db: Database session
-    :type db: Session
-    :param group: Group to update
-    :type group: Group
-    :param cycle_length: New cycle length in days
-    :type cycle_length: int
-    :return: Updated group
-    :rtype: Group
+    Args:
+        db (Session): Database session
+        group (Group): Group to update
+        cycle_length (int): New cycle length in days
+
+    Returns:
+        Group: Updated group
     """
     group.cycle_length = cycle_length
     return group
@@ -89,12 +91,12 @@ def update_cycle_length(db: Session, group: Group, cycle_length: int) -> Group:
 def get_cycle_length(db: Session, group: Group) -> int:
     """Get the cycle length of a group.
 
-    :param db: Database session
-    :type db: Session
-    :param group: Group to query
-    :type group: Group
-    :return: Cycle length in days
-    :rtype: int
+    Args:
+        db (Session): Database session
+        group (Group): Group to query
+
+    Returns:
+        int: Cycle length in days
     """
     return group.cycle_length
 
@@ -102,14 +104,13 @@ def get_cycle_length(db: Session, group: Group) -> int:
 def add_member(db: Session, group_api_id: str, user_api_id: str) -> Group:
     """Add a user to a group and its active letters.
 
-    :param db: Database session
-    :type db: Session
-    :param group_api_id: API identifier of the group
-    :type group_api_id: str
-    :param user_api_id: API identifier of the user to add
-    :type user_api_id: str
-    :return: Updated group
-    :rtype: Group
+    Args:
+        db (Session): Database session
+        group_api_id (str): API identifier of the group
+        user_api_id (str): API identifier of the user to add
+
+    Returns:
+        Group: Updated group
     """
     db_group = api_identifier_crud.get_model(db, Group, api_id=group_api_id)
     db_user = api_identifier_crud.get_model(db, User, api_id=user_api_id)
@@ -124,15 +125,16 @@ def add_member(db: Session, group_api_id: str, user_api_id: str) -> Group:
 def remove_member(db: Session, group_api_id: str, user_api_id: str) -> Group:
     """Remove a user from a group.
 
-    :param db: Database session
-    :type db: Session
-    :param group_api_id: API identifier of the group
-    :type group_api_id: str
-    :param user_api_id: API identifier of the user to remove
-    :type user_api_id: str
-    :return: Updated group
-    :rtype: Group
-    :raises ValueError: If the user is not a member of the group
+    Args:
+        db (Session): Database session
+        group_api_id (str): API identifier of the group
+        user_api_id (str): API identifier of the user to remove
+
+    Returns:
+        Group: Updated group
+
+    Raises:
+        ValueError: If the user is not a member of the group
     """
     db_group = api_identifier_crud.get_model(db, Group, api_id=group_api_id)
     db_user = api_identifier_crud.get_model(db, User, api_id=user_api_id)
@@ -147,13 +149,15 @@ def remove_member(db: Session, group_api_id: str, user_api_id: str) -> Group:
 def get_letter_by_api_id(group: Group, api_id: str) -> Letter:
     """Get a letter from a group by its API identifier.
 
-    :param group: Group containing the letter
-    :type group: Group
-    :param api_id: API identifier of the letter
-    :type api_id: str
-    :return: Found letter
-    :rtype: Letter
-    :raises ValueError: If no letter with the given API ID is found
+    Args:
+        group (Group): Group containing the letter
+        api_id (str): API identifier of the letter
+
+    Returns:
+        Letter: Found letter
+
+    Raises:
+        ValueError: If no letter with the given API ID is found
     """
     letter = next(
         filter(
@@ -172,16 +176,14 @@ def schedule_send(
 ) -> Group:
     """Schedule a letter to be sent at a specific time.
 
-    :param db: Database session
-    :type db: Session
-    :param group_api_id: API identifier of the group
-    :type group_api_id: str
-    :param letter_api_id: API identifier of the letter
-    :type letter_api_id: str
-    :param send_at: When to send the letter
-    :type send_at: datetime
-    :return: Updated group
-    :rtype: Group
+    Args:
+        db (Session): Database session
+        group_api_id (str): API identifier of the group
+        letter_api_id (str): API identifier of the letter
+        send_at (datetime): When to send the letter
+
+    Returns:
+        Group: Updated group
     """
     db_group = api_identifier_crud.get_model(db, Group, api_id=group_api_id)
     db_letter = get_letter_by_api_id(db_group, letter_api_id)
@@ -198,13 +200,13 @@ def schedule_send(
 def add_members(db: Session, group: Group, members: Sequence[User]) -> None:
     """Add multiple users to a group.
 
-    :param db: Database session
-    :type db: Session
-    :param group: Group to add members to
-    :type group: Group
-    :param members: Users to add
-    :type members: Sequence[User]
+    Args:
+        db (Session): Database session
+        group (Group): Group to add members to
+        members (Sequence[User]): Users to add to the group
     """
-    for member in members:
-        if member not in group.members:
-            group.members.append(member)
+    group.members.extend(members)
+    if group.in_progress_letter:
+        group.in_progress_letter.participants.extend(members)
+    if group.upcoming_letter:
+        group.upcoming_letter.participants.extend(members)

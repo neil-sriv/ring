@@ -1,3 +1,10 @@
+"""Alembic environment configuration for database migrations.
+
+This module configures the Alembic environment for running database migrations,
+including both online and offline modes. It sets up the SQLAlchemy connection
+and configures the migration context with the application's metadata.
+"""
+
 from logging.config import fileConfig
 
 from alembic import context
@@ -66,11 +73,8 @@ def run_migrations_offline() -> None:
     without requiring an actual database connection. Useful for generating
     SQL scripts that can be run later.
 
-    :param: None
-    :type: None
-    :raises alembic.util.CommandError: If the configuration is invalid
-    :return: None
-    :rtype: None
+    Raises:
+        alembic.util.CommandError: If the configuration is invalid
     """
     url = config.get_main_option("sqlalchemy.url")
     context.configure(
@@ -91,12 +95,9 @@ def run_migrations_online() -> None:
     an active database connection. This is the default mode for running
     migrations in a development or production environment.
 
-    :param: None
-    :type: None
-    :raises sqlalchemy.exc.SQLAlchemyError: If database connection fails
-    :raises alembic.util.CommandError: If the configuration is invalid
-    :return: None
-    :rtype: None
+    Raises:
+        sqlalchemy.exc.SQLAlchemyError: If database connection fails
+        alembic.util.CommandError: If the configuration is invalid
     """
     connectable = engine_from_config(
         config.get_section(config.config_ini_section, {}),

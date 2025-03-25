@@ -65,7 +65,7 @@ def db_session(func: Callable[..., T]) -> Callable[..., T]:
     as its first argument. It ensures the session is properly closed after use.
 
     Args:
-        func: Function to wrap with database session management
+        func (Callable[..., T]): Function to wrap with database session management
 
     Returns:
         Callable[..., T]: Wrapped function that automatically manages db sessions
@@ -81,8 +81,8 @@ def db_session(func: Callable[..., T]) -> Callable[..., T]:
         """Wrapper function that manages the database session.
 
         Args:
-            *args: Positional arguments to pass to the wrapped function
-            **kwargs: Keyword arguments to pass to the wrapped function
+            *args (Any): Positional arguments to pass to the wrapped function
+            **kwargs (Any): Keyword arguments to pass to the wrapped function
 
         Returns:
             T: Return value from the wrapped function

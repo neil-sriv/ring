@@ -1,3 +1,9 @@
+"""SQLAlchemy model for group invitations.
+
+This module defines the Invite model for managing invitations to join groups,
+including one-time tokens for secure registration and tracking of inviters.
+"""
+
 from __future__ import annotations
 
 from sqlalchemy import ForeignKey
@@ -81,14 +87,11 @@ class Invite(Base, APIIdentified, PydanticModel, CreatedAtMixin):
     ) -> None:
         """Initialize a new invite.
 
-        :param email: Email address of the invitee
-        :type email: str
-        :param token: One-time token for the invite
-        :type token: OneTimeToken
-        :param inviter: User sending the invite
-        :type inviter: User
-        :param group: Group to invite the user to
-        :type group: Group
+        Args:
+            email (str): Email address of the invitee
+            token (OneTimeToken): One-time token for the invite
+            inviter (User): User sending the invite
+            group (Group): Group to invite the user to
         """
         APIIdentified.__init__(self)
         self.email = email
@@ -102,15 +105,13 @@ class Invite(Base, APIIdentified, PydanticModel, CreatedAtMixin):
     ) -> Invite:
         """Create a new invite instance.
 
-        :param email: Email address of the invitee
-        :type email: str
-        :param token: One-time token for the invite
-        :type token: OneTimeToken
-        :param inviter: User sending the invite
-        :type inviter: User
-        :param group: Group to invite the user to
-        :type group: Group
-        :return: New invite instance
-        :rtype: Invite
+        Args:
+            email (str): Email address of the invitee
+            token (OneTimeToken): One-time token for the invite
+            inviter (User): User sending the invite
+            group (Group): Group to invite the user to
+
+        Returns:
+            Invite: New invite instance
         """
         return cls(email, token, inviter, group)

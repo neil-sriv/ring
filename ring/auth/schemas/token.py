@@ -1,3 +1,9 @@
+"""Authentication token schemas.
+
+This module defines Pydantic models for authentication tokens and their payload data,
+including the structure of JWT tokens and the data they contain.
+"""
+
 from pydantic import BaseModel
 
 
@@ -6,10 +12,9 @@ class Token(BaseModel):
 
     Represents the structure of an authentication token response.
 
-    :param access_token: The JWT access token string
-    :type access_token: str
-    :param token_type: The type of token (e.g., "bearer")
-    :type token_type: str
+    Attributes:
+        access_token (str): The JWT access token string
+        token_type (str): The type of token (e.g., "bearer")
     """
     access_token: str
     token_type: str
@@ -20,7 +25,7 @@ class TokenData(BaseModel):
 
     Represents the data embedded within a JWT token.
 
-    :param email: The email address of the authenticated user, defaults to None
-    :type email: str | None
+    Attributes:
+        email (str | None): The email address of the authenticated user. Defaults to None.
     """
     email: str | None = None

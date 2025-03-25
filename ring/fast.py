@@ -40,8 +40,8 @@ async def id_not_found_exception_handler(
     """Handle exceptions when API identifiers are not found.
 
     Args:
-        request: The incoming HTTP request
-        exc: The exception containing details about missing identifiers
+        request (Request): The incoming HTTP request
+        exc (IDNotFoundException): The exception containing details about missing identifiers
 
     Returns:
         JSONResponse: A 404 response with details about the missing identifiers
@@ -67,8 +67,8 @@ async def log_requests(
     and the status code for each response.
 
     Args:
-        request: The incoming HTTP request
-        call_next: Function to call the next middleware or route handler
+        request (Request): The incoming HTTP request
+        call_next (Callable[[Request], Awaitable[Response]]): Function to call the next middleware or route handler
 
     Returns:
         Response: The HTTP response

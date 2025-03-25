@@ -203,30 +203,29 @@ ASYNC_TASK_TO_EXECUTE_MAPPING: dict[
 
 @register_task_factory(name="execute_tasks")
 def execute_tasks_async(self: CeleryTask, task_ids: list[int]) -> None:
-    """Celery task for executing multiple tasks asynchronously.
+    """Execute a list of tasks asynchronously.
 
     Args:
         self: Celery task instance
         task_ids: List of task IDs to execute
     """
     execute_tasks(self.session, task_ids)
+    self.session.commit()
 
 
 def execute_tasks(db: Session, task_ids: list[int]) -> None:
-    """Execute multiple tasks in sequence.
-
-    Marks tasks as in progress and schedules their asynchronous execution.
+    """Execute a list of tasks synchronously.
 
     Args:
         db: Database session
         task_ids: List of task IDs to execute
+
+    Raises:
+        Exception: Any error that occurred during task execution
     """
-    tasks = db.query(Task).filter(Task.id.in_(task_ids)).all()
-    for task in tasks:
-        task.status = TaskStatus.IN_PROGRESS
-    db.flush()
-    for task in tasks:
-        task_type = TaskType(task.type)
-        task_to_execute = ASYNC_TASK_TO_EXECUTE_MAPPING[task_type]
-        task_to_execute.delay(task.id, **task.arguments)  # type: ignore
-    db.commit()
+    for task_id in task_ids:
+        task = db.query(Task).filter(Task.id == task_id).one()
+        task_type = task.type
+        if task_type not in ASYNC_TASK_TO_EXECUTE_MAPPING:
+            raise ValueError(f"Unknown task type: {task_type}")
+        ASYNC_TASK_TO_EXECUTE_MAPPING[task_type](self, task_id)

@@ -1,3 +1,9 @@
+"""SQLAlchemy model for group key-value storage.
+
+This module defines the GroupKeyValue model for storing arbitrary metadata
+associated with groups using PostgreSQL's JSONB type.
+"""
+
 from __future__ import annotations
 
 from sqlalchemy import ForeignKey, Integer
@@ -38,8 +44,8 @@ class GroupKeyValue(ModelKeyValue):
     def __init__(self, group: Group) -> None:
         """Initialize a new group key-value store.
 
-        :param group: The group to associate with this key-value store
-        :type group: Group
+        Args:
+            group (Group): The group to associate with this key-value store
         """
         self.group = group
         self.key_values = dict()
@@ -48,10 +54,11 @@ class GroupKeyValue(ModelKeyValue):
     def create(cls, group: Group) -> GroupKeyValue:
         """Create a new group key-value store instance.
 
-        :param group: The group to associate with this key-value store
-        :type group: Group
-        :return: New group key-value store instance
-        :rtype: GroupKeyValue
+        Args:
+            group (Group): The group to associate with this key-value store
+
+        Returns:
+            GroupKeyValue: New group key-value store instance
         """
         kv = cls(group)
         return kv

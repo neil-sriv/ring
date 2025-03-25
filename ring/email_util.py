@@ -27,9 +27,9 @@ class EmailDraft:
     to encapsulate email data in a type-safe way.
 
     Attributes:
-        destination: AWS SES destination configuration (To, CC, BCC addresses)
-        message: AWS SES message configuration (subject and body content)
-        source: Sender email address (defaults to Ring system email)
+        destination (DestinationTypeDef): AWS SES destination configuration (To, CC, BCC addresses)
+        message (MessageTypeDef): AWS SES message configuration (subject and body content)
+        source (str): Sender email address (defaults to Ring system email)
     """
     destination: DestinationTypeDef
     message: MessageTypeDef
@@ -48,10 +48,10 @@ def construct_email_draft(
     immutable EmailDraft object without side effects.
 
     Args:
-        recipients: List of recipient email addresses
-        subject: Email subject line
-        body_html: HTML version of the email body
-        body_text: Optional plain text version (defaults to HTML content)
+        recipients (list[str]): List of recipient email addresses
+        subject (str): Email subject line
+        body_html (str): HTML version of the email body
+        body_text (str | None, optional): Plain text version. Defaults to HTML content.
 
     Returns:
         EmailDraft: A configured email draft ready to be sent
@@ -95,7 +95,7 @@ def send_email(draft: EmailDraft) -> Optional[str]:
     with proper error handling and logging.
 
     Args:
-        draft: The email draft to send
+        draft (EmailDraft): The email draft to send
 
     Returns:
         Optional[str]: The AWS SES message ID if successful, None if sending failed

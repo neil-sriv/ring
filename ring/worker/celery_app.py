@@ -18,10 +18,14 @@ from ring.worker.celery_imports import CELERY_IMPORTS
 
 
 def celerybeat_schedule() -> dict:
-    """Define the Celery beat schedule.
+    """Define the Celery beat schedule for periodic tasks.
+
+    This function configures the schedule for periodic tasks that should be
+    executed by Celery beat. Currently includes:
+    - poll_schedule: Runs on a cron schedule to check for pending tasks
 
     Returns:
-        dict: Schedule configuration for periodic tasks
+        dict: Schedule configuration mapping task names to their execution schedules
     """
     return {
         "poll_schedule": {

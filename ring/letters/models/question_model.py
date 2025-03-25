@@ -1,3 +1,10 @@
+"""SQLAlchemy model for question management.
+
+This module defines the Question model, which represents a text prompt that can be
+answered by letter participants. Each question belongs to a letter and can have
+multiple responses from different users.
+"""
+
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
@@ -24,18 +31,13 @@ class Question(Base, APIIdentified, PydanticModel, CreatedAtMixin):
     A question is a text prompt that can be answered by letter participants.
     Each question belongs to a letter and can have multiple responses.
 
-    :param id: Primary key identifier
-    :type id: Mapped[int]
-    :param api_identifier: Unique API identifier for the question
-    :type api_identifier: Mapped[str]
-    :param responses: List of responses to this question
-    :type responses: Mapped[list[Response]]
-    :param question_text: The actual text content of the question
-    :type question_text: Mapped[str]
-    :param author: User who authored the question, optional
-    :type author: Mapped[User | None]
-    :param letter: Letter to which this question belongs
-    :type letter: Mapped[Letter]
+    Attributes:
+        id (Mapped[int]): Primary key identifier
+        api_identifier (Mapped[str]): Unique API identifier for the question
+        responses (Mapped[list[Response]]): List of responses to this question
+        question_text (Mapped[str]): The actual text content of the question
+        author (Mapped[User | None]): User who authored the question, optional
+        letter (Mapped[Letter]): Letter to which this question belongs
     """
 
     __tablename__ = "question"
@@ -67,14 +69,10 @@ class Question(Base, APIIdentified, PydanticModel, CreatedAtMixin):
     ) -> None:
         """Initialize a new Question instance.
 
-        :param letter: Letter to which this question belongs
-        :type letter: Letter
-        :param question_text: The actual text content of the question
-        :type question_text: str
-        :param author: User who authored the question, defaults to None
-        :type author: User | None
-        :return: None
-        :rtype: None
+        Args:
+            letter (Letter): Letter to which this question belongs
+            question_text (str): The actual text content of the question
+            author (User | None): User who authored the question
         """
         APIIdentified.__init__(self)
         self.letter = letter
@@ -89,14 +87,13 @@ class Question(Base, APIIdentified, PydanticModel, CreatedAtMixin):
 
         Factory method to create a new question with the given parameters.
 
-        :param letter: Letter to which this question belongs
-        :type letter: Letter
-        :param question_text: The actual text content of the question
-        :type question_text: str
-        :param author: User who authored the question, defaults to None
-        :type author: User | None
-        :return: New Question instance
-        :rtype: Question
+        Args:
+            letter (Letter): Letter to which this question belongs
+            question_text (str): The actual text content of the question
+            author (User | None, optional): User who authored the question. Defaults to None.
+
+        Returns:
+            Question: New Question instance
         """
         question = cls(letter, question_text, author)
         return question
@@ -105,8 +102,8 @@ class Question(Base, APIIdentified, PydanticModel, CreatedAtMixin):
     def responders(self) -> list[User]:
         """Get list of users who have responded to this question.
 
-        :return: List of users who have submitted responses
-        :rtype: list[User]
+        Returns:
+            list[User]: List of users who have submitted responses
         """
         respondents = {response.participant for response in self.responses}
         return list(respondents)

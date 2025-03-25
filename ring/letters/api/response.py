@@ -1,3 +1,10 @@
+"""Response API endpoints.
+
+This module provides FastAPI endpoints for managing responses, including editing
+response text and uploading images. Note that the image upload endpoint is
+deprecated in favor of the question-level image upload endpoint.
+"""
+
 from __future__ import annotations
 
 from fastapi import APIRouter, Depends, UploadFile
@@ -35,15 +42,16 @@ async def edit_response(
 ) -> Response:
     """Update the text content of a response.
 
-    :param response_api_id: API identifier of the response to edit
-    :type response_api_id: str
-    :param response: Updated response content
-    :type response: ResponseCreateBase
-    :param req_dep: Request dependencies including database session and auth
-    :type req_dep: AuthenticatedRequestDependencies
-    :raises IDNotFoundException: If response with given API ID is not found
-    :return: Updated response
-    :rtype: Response
+    Args:
+        response_api_id (str): API identifier of the response to edit
+        response (ResponseCreateBase): Updated response content
+        req_dep (AuthenticatedRequestDependencies): Request dependencies including database session and auth
+
+    Returns:
+        Response: Updated response
+
+    Raises:
+        IDNotFoundException: If response with given API ID is not found
     """
     update_response = api_identifier_crud.get_model(
         req_dep.db, Response, api_id=response_api_id
@@ -73,15 +81,16 @@ async def upload_image(
 
     This endpoint is deprecated. Use the question-level image upload endpoint instead.
 
-    :param response_api_id: API identifier of the response
-    :type response_api_id: str
-    :param response_images: List of image files to upload
-    :type response_images: list[UploadFile]
-    :param req_dep: Request dependencies including database session and auth
-    :type req_dep: AuthenticatedRequestDependencies
-    :raises IDNotFoundException: If response with given API ID is not found
-    :return: Updated response with attached images
-    :rtype: Response
+    Args:
+        response_api_id (str): API identifier of the response
+        response_images (list[UploadFile]): List of image files to upload
+        req_dep (AuthenticatedRequestDependencies): Request dependencies including database session and auth
+
+    Returns:
+        Response: Updated response with attached images
+
+    Raises:
+        IDNotFoundException: If response with given API ID is not found
     """
     update_response = api_identifier_crud.get_model(
         req_dep.db, Response, api_id=response_api_id

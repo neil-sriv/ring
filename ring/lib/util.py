@@ -17,15 +17,15 @@ class RegistrationDict(Mapping[_KT, _VT], Generic[_KT, _VT]):
     This class implements the Mapping protocol and can be used to maintain
     a registry of items with type safety through generics.
 
-    :param name: Identifier for this registration dictionary
-    :type name: str
+    Args:
+        name (str): Identifier for this registration dictionary
     """
 
     def __init__(self, name: str) -> None:
         """Initialize a new registration dictionary.
 
-        :param name: Identifier for this registration dictionary
-        :type name: str
+        Args:
+            name (str): Identifier for this registration dictionary
         """
         self.name = name
         self.dict: dict = {}  # type: ignore
@@ -37,15 +37,15 @@ class RegistrationList(Sequence[_KT], Generic[_KT]):
     This class implements the Sequence protocol and provides type-safe
     registration of items through generics.
 
-    :param name: Identifier for this registration list
-    :type name: str
+    Args:
+        name (str): Identifier for this registration list
     """
 
     def __init__(self, name: str) -> None:
         """Initialize a new registration list.
 
-        :param name: Identifier for this registration list
-        :type name: str
+        Args:
+            name (str): Identifier for this registration list
         """
         self.name = name
         self.list: list[_KT] = []  # type: ignore
@@ -53,8 +53,8 @@ class RegistrationList(Sequence[_KT], Generic[_KT]):
     def append(self, item: _KT) -> None:
         """Add an item to the end of the list.
 
-        :param item: Item to append
-        :type item: _KT
+        Args:
+            item (_KT): Item to append
         """
         self.list.append(item)
 
@@ -67,19 +67,22 @@ class RegistrationList(Sequence[_KT], Generic[_KT]):
     def __getitem__(self, index: int | slice):  # type: ignore
         """Get an item or slice of items from the list.
 
-        :param index: Integer index or slice object
-        :type index: int | slice
-        :return: Single item or list of items
-        :rtype: _KT | list[_KT]
-        :raises IndexError: If index is out of range
+        Args:
+            index (int | slice): Integer index or slice object
+
+        Returns:
+            _KT | list[_KT]: Single item or list of items
+
+        Raises:
+            IndexError: If index is out of range
         """
         return self.list[index]
 
     def __len__(self) -> int:
         """Get the number of items in the list.
 
-        :return: Length of the list
-        :rtype: int
+        Returns:
+            int: Length of the list
         """
         return len(self.list)
 
@@ -90,10 +93,11 @@ T = TypeVar("T")
 def get_all_subclasses(class_: type[T]) -> list[type[T]]:
     """Recursively get all subclasses of a class.
 
-    :param class_: Class to get subclasses for
-    :type class_: type[T]
-    :return: List of all subclasses including nested subclasses
-    :rtype: list[type[T]]
+    Args:
+        class_ (type[T]): Class to get subclasses for
+
+    Returns:
+        list[type[T]]: List of all subclasses including nested subclasses
     """
     classes = [class_]
     for subclass in class_.__subclasses__():

@@ -1,3 +1,9 @@
+"""Question schemas for API operations.
+
+This module defines Pydantic models for question-related operations, including
+creation and data transfer between the API and database.
+"""
+
 from __future__ import annotations
 
 from pydantic import AwareDatetime, BaseModel, ConfigDict
@@ -6,8 +12,8 @@ from pydantic import AwareDatetime, BaseModel, ConfigDict
 class QuestionBase(BaseModel):
     """Base schema for question-related operations.
 
-    :param question_text: The text content of the question
-    :type question_text: str
+    Attributes:
+        question_text (str): The text content of the question
     """
     question_text: str
 
@@ -15,10 +21,9 @@ class QuestionBase(BaseModel):
 class QuestionCreate(QuestionBase):
     """Schema for creating a new question.
 
-    :param question_text: The text content of the question
-    :type question_text: str
-    :param author_api_id: API identifier of the question's author, optional
-    :type author_api_id: str | None
+    Attributes:
+        question_text (str): The text content of the question
+        author_api_id (str | None): API identifier of the question's author, optional
     """
     author_api_id: str | None
 
@@ -26,12 +31,10 @@ class QuestionCreate(QuestionBase):
 class Question(QuestionBase):
     """Schema representing a question in the system.
 
-    :param question_text: The text content of the question
-    :type question_text: str
-    :param api_identifier: Unique API identifier for the question
-    :type api_identifier: str
-    :param created_at: Timestamp when the question was created
-    :type created_at: AwareDatetime
+    Attributes:
+        question_text (str): The text content of the question
+        api_identifier (str): Unique API identifier for the question
+        created_at (AwareDatetime): Timestamp when the question was created
     """
     model_config = ConfigDict(from_attributes=True)
 

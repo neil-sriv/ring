@@ -179,7 +179,10 @@ def poll_schedule_task(self: CeleryTask) -> dict[str, str]:
         self: Celery task instance
 
     Returns:
-        dict[str, str]: Status report including task and letter IDs processed
+        dict[str, str]: A dictionary containing:
+            - 'tasks_processed': Comma-separated list of processed task IDs
+            - 'letters_postpended': Comma-separated list of postpended letter IDs
+            - 'letters_promoted': Comma-separated list of promoted letter IDs
     """
     from ring.letters.crud.letter import (
         collect_future_letters,

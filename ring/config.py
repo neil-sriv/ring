@@ -17,7 +17,7 @@ def parse_cors(origins: str) -> list[str]:
     """Parse CORS origins from a space-separated string.
 
     Args:
-        origins: Space-separated string of allowed origins
+        origins (str): Space-separated string of allowed origins
 
     Returns:
         list[str]: List of cleaned origin URLs
@@ -33,14 +33,14 @@ class RingConfig(BaseSettings):
     environment variables.
 
     Attributes:
-        environment: Current environment (e.g., "development", "production")
-        sqlalchemy_database_uri: Database connection string
-        JWT_SIGNING_KEY: Key used for signing JWTs
-        JWT_SIGNING_ALGORITHM: Algorithm used for JWT signing
-        VAPID_PRIVATE_KEY: Private key for VAPID web push notifications
-        root_path: Base path for API routes (default: "/api/v1")
-        BUCKET_NAME: S3 bucket name for file storage (default: "rings3files")
-        BACKEND_CORS_ORIGINS: List of allowed CORS origins
+        environment (str): Current environment (e.g., "development", "production")
+        sqlalchemy_database_uri (str): Database connection string
+        JWT_SIGNING_KEY (str): Key used for signing JWTs
+        JWT_SIGNING_ALGORITHM (str): Algorithm used for JWT signing
+        VAPID_PRIVATE_KEY (str): Private key for VAPID web push notifications
+        root_path (str): Base path for API routes (default: "/api/v1")
+        BUCKET_NAME (str): S3 bucket name for file storage (default: "rings3files")
+        BACKEND_CORS_ORIGINS (list[AnyUrl] | str): List of allowed CORS origins
     """
     environment: str
     sqlalchemy_database_uri: str

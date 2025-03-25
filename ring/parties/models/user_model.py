@@ -1,3 +1,9 @@
+"""SQLAlchemy model for user management.
+
+This module defines the User model for managing user accounts in the Ring system,
+including authentication, group memberships, and associated data.
+"""
+
 from __future__ import annotations
 
 from typing import TYPE_CHECKING, Optional
@@ -64,12 +70,10 @@ class User(Base, APIIdentified, PydanticModel, CreatedAtMixin):
     ) -> None:
         """Initialize a new user.
 
-        :param email: User's email address
-        :type email: str
-        :param name: User's display name, optional
-        :type name: Optional[str]
-        :param hashed_password: Pre-hashed password
-        :type hashed_password: str
+        Args:
+            email (str): User's email address
+            name (Optional[str]): User's display name
+            hashed_password (str): Pre-hashed password
         """
         APIIdentified.__init__(self)
         self.email = email
@@ -85,13 +89,12 @@ class User(Base, APIIdentified, PydanticModel, CreatedAtMixin):
     ) -> User:
         """Create a new user instance.
 
-        :param email: User's email address
-        :type email: str
-        :param name: User's display name, optional
-        :type name: Optional[str]
-        :param hashed_password: Pre-hashed password
-        :type hashed_password: str
-        :return: New user instance
-        :rtype: User
+        Args:
+            email (str): User's email address
+            name (Optional[str]): User's display name
+            hashed_password (str): Pre-hashed password
+
+        Returns:
+            User: New user instance
         """
         return cls(email, name, hashed_password)

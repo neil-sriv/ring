@@ -1,3 +1,10 @@
+"""Web push notification subscription model.
+
+This module provides the SQLAlchemy model for managing web push notification
+subscriptions, including the endpoint URL and encryption keys required for
+sending push notifications through the Web Push protocol.
+"""
+
 from __future__ import annotations
 
 from sqlalchemy import ForeignKey
@@ -22,7 +29,7 @@ class Subscription(Base, APIIdentified, PydanticModel, CreatedAtMixin):
     Attributes:
         id (int): Primary key
         endpoint (str): Push notification endpoint URL
-        keys (dict): Dictionary containing encryption keys and auth info
+        keys (dict[str, str | float | bool]): Dictionary containing encryption keys and auth info
         user_id (int): Foreign key to the associated user
         user (User): Relationship to the user model
         api_identifier (str): Unique API identifier with 'sbscrp' prefix
@@ -66,12 +73,10 @@ class Subscription(Base, APIIdentified, PydanticModel, CreatedAtMixin):
     ) -> None:
         """Initialize a new subscription.
 
-        :param endpoint: Push notification endpoint URL
-        :type endpoint: str
-        :param keys: Dictionary containing encryption keys and auth info
-        :type keys: dict[str, str | float | bool]
-        :param user: User to associate the subscription with
-        :type user: User
+        Args:
+            endpoint (str): Push notification endpoint URL
+            keys (dict[str, str | float | bool]): Dictionary containing encryption keys and auth info
+            user (User): User to associate the subscription with
         """
         APIIdentified.__init__(self)
         self.endpoint = endpoint
@@ -87,14 +92,13 @@ class Subscription(Base, APIIdentified, PydanticModel, CreatedAtMixin):
     ) -> Subscription:
         """Create a new subscription instance.
 
-        :param endpoint: Push notification endpoint URL
-        :type endpoint: str
-        :param keys: Dictionary containing encryption keys and auth info
-        :type keys: dict[str, str | float | bool]
-        :param user: User to associate the subscription with
-        :type user: User
-        :return: New subscription instance
-        :rtype: Subscription
+        Args:
+            endpoint (str): Push notification endpoint URL
+            keys (dict[str, str | float | bool]): Dictionary containing encryption keys and auth info
+            user (User): User to associate the subscription with
+
+        Returns:
+            Subscription: New subscription instance
         """
         return cls(endpoint, keys, user)
 

@@ -25,8 +25,8 @@ def verify_password(plain_password: str, hashed_password: str) -> bool:
     """Verify a password against its hash.
 
     Args:
-        plain_password: The password to verify
-        hashed_password: The hashed password to verify against
+        plain_password (str): The password to verify
+        hashed_password (str): The hashed password to verify against
 
     Returns:
         bool: True if the password matches the hash, False otherwise
@@ -38,7 +38,7 @@ def get_password_hash(password: str) -> str:
     """Generate a secure hash of a password.
 
     Args:
-        password: The password to hash
+        password (str): The password to hash
 
     Returns:
         str: The hashed password using bcrypt
@@ -52,8 +52,8 @@ def create_access_token(
     """Create a JWT access token.
 
     Args:
-        data: Data to encode in the token
-        expires_ttl: Time to live in seconds (default: 1 week)
+        data (dict[str, str | datetime]): Data to encode in the token
+        expires_ttl (int, optional): Time to live in seconds. Defaults to 1 week.
 
     Returns:
         str: The encoded JWT token
@@ -79,7 +79,7 @@ def decode_token(token: str) -> str:
     """Decode and validate a JWT token.
 
     Args:
-        token: The JWT token to decode
+        token (str): The JWT token to decode
 
     Returns:
         str: The email address from the token's subject claim

@@ -20,11 +20,12 @@ def send_push_notification(
 ) -> None:
     """Send a web push notification to a specific subscription.
 
-    :param subscription_info: Subscription to send notification to
-    :type subscription_info: Subscription
-    :param payload: Data to send in the notification
-    :type payload: dict[str, str]
-    :raises WebPushException: If sending the notification fails
+    Args:
+        subscription_info (Subscription): Subscription to send notification to
+        payload (dict[str, str]): Data to send in the notification
+
+    Raises:
+        WebPushException: If sending the notification fails
     """
     try:
         # Perform web push
@@ -44,11 +45,12 @@ def send_push_notification_to_user(
 ) -> None:
     """Send a web push notification to a user's most recent subscription.
 
-    :param user: User to send notification to
-    :type user: User
-    :param payload: Data to send in the notification
-    :type payload: dict[str, str]
-    :raises IndexError: If user has no subscriptions
+    Args:
+        user (User): User to send notification to
+        payload (dict[str, str]): Data to send in the notification
+
+    Raises:
+        IndexError: If user has no subscriptions
     """
     newest_subscription = user.notification_subscriptions[-1]
     send_push_notification(newest_subscription, payload)

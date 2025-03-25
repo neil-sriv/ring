@@ -1,4 +1,8 @@
-"""CRUD operations for user management."""
+"""CRUD operations for user management.
+
+This module provides functions for managing users in the database, including
+authentication, creation, and retrieval operations.
+"""
 
 from __future__ import annotations
 
@@ -20,14 +24,13 @@ def authenticate_user(
 ) -> Optional[User]:
     """Authenticate a user with email and password.
 
-    :param db: Database session
-    :type db: Session
-    :param email: User's email address
-    :type email: str
-    :param password: User's password
-    :type password: str
-    :return: Authenticated user or None if authentication fails
-    :rtype: Optional[User]
+    Args:
+        db (Session): Database session
+        email (str): User's email address
+        password (str): User's password
+
+    Returns:
+        Optional[User]: Authenticated user or None if authentication fails
     """
     user = get_user_by_email(db, email)
     if not user:
@@ -40,12 +43,12 @@ def authenticate_user(
 def _verify_password(password: str, password_hash: str) -> bool:
     """Verify a password against its hash.
 
-    :param password: Plain text password
-    :type password: str
-    :param password_hash: Hashed password
-    :type password_hash: str
-    :return: True if password matches hash, False otherwise
-    :rtype: bool
+    Args:
+        password (str): Plain text password
+        password_hash (str): Hashed password
+
+    Returns:
+        bool: True if password matches hash, False otherwise
     """
     return verify_password(password, password_hash)
 
@@ -53,12 +56,12 @@ def _verify_password(password: str, password_hash: str) -> bool:
 def get_user_by_email(db: Session, email: str) -> Optional[User]:
     """Get a user by their email address.
 
-    :param db: Database session
-    :type db: Session
-    :param email: Email address to look up
-    :type email: str
-    :return: Found user or None
-    :rtype: Optional[User]
+    Args:
+        db (Session): Database session
+        email (str): Email address to look up
+
+    Returns:
+        Optional[User]: Found user or None
     """
     return db.scalars(select(User).filter(User.email == email)).one_or_none()
 
@@ -66,14 +69,13 @@ def get_user_by_email(db: Session, email: str) -> Optional[User]:
 def get_users(db: Session, skip: int = 0, limit: int = 100) -> Sequence[User]:
     """Get a list of users with pagination.
 
-    :param db: Database session
-    :type db: Session
-    :param skip: Number of records to skip, defaults to 0
-    :type skip: int, optional
-    :param limit: Maximum number of records to return, defaults to 100
-    :type limit: int, optional
-    :return: List of users
-    :rtype: Sequence[User]
+    Args:
+        db (Session): Database session
+        skip (int, optional): Number of records to skip. Defaults to 0.
+        limit (int, optional): Maximum number of records to return. Defaults to 100.
+
+    Returns:
+        Sequence[User]: List of users
     """
     return db.scalars(select(User).offset(skip).limit(limit)).all()
 
@@ -86,16 +88,14 @@ def create_user(
 ) -> User:
     """Create a new user.
 
-    :param db: Database session
-    :type db: Session
-    :param email: User's email address
-    :type email: str
-    :param name: User's display name
-    :type name: str
-    :param password: User's password (will be hashed)
-    :type password: str
-    :return: Created user
-    :rtype: User
+    Args:
+        db (Session): Database session
+        email (str): User's email address
+        name (str): User's display name
+        password (str): User's password (will be hashed)
+
+    Returns:
+        User: Created user
     """
     hashed_password = get_password_hash(password)
     db_user = User.create(email, name, hashed_password)

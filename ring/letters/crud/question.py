@@ -1,3 +1,9 @@
+"""CRUD operations for question management.
+
+This module provides functions for managing questions and responses in letters,
+including validation of user responses and response editing.
+"""
+
 from __future__ import annotations
 
 from typing import TYPE_CHECKING, Sequence
@@ -19,22 +25,24 @@ def get_questions(
 ) -> Sequence[Question]:
     """Retrieve questions for a specific letter with pagination.
 
-    :param db: Database session
-    :param letter_api_id: API identifier of the letter
-    :param skip: Number of records to skip, defaults to 0
-    :param limit: Maximum number of records to return, defaults to 100
-    :return: Sequence of questions
-    :rtype: Sequence[Question]
-    :raises IDNotFoundException: If letter with given API ID is not found
+    Args:
+        db (Session): Database session
+        letter_api_id (str): API identifier of the letter
+        skip (int, optional): Number of records to skip. Defaults to 0.
+        limit (int, optional): Maximum number of records to return. Defaults to 100.
+
+    Returns:
+        Sequence[Question]: List of questions
+
+    Raises:
+        IDNotFoundException: If letter with given API ID is not found
     """
     letter = api_identifier_crud.get_model(db, Letter, api_id=letter_api_id)
     return db.scalars(
         select(Question)
         .filter(Question.letter == letter)
         .offset(skip)
-        .limit(
-            limit,
-        )
+        .limit(limit)
     ).all()
 
 
@@ -44,9 +52,12 @@ def _validate_response(
 ) -> None:
     """Validate that a user can respond to a question.
 
-    :param question: Question to validate response for
-    :param user: User attempting to respond
-    :raises ValueError: If user is not a participant or has already responded
+    Args:
+        question (Question): Question to validate response for
+        user (User): User attempting to respond
+
+    Raises:
+        ValueError: If user is not a participant or has already responded
     """
     if user not in question.letter.participants:
         raise ValueError("User is not a participant in the letter.")
@@ -62,13 +73,17 @@ def add_response(
 ) -> Response:
     """Add a new response to a question.
 
-    :param db: Database session
-    :param question: Question to respond to
-    :param user: User creating the response
-    :param response_text: Text content of the response
-    :return: Newly created response
-    :rtype: Response
-    :raises ValueError: If user is not a participant or has already responded
+    Args:
+        db (Session): Database session
+        question (Question): Question to respond to
+        user (User): User creating the response
+        response_text (str): Text content of the response
+
+    Returns:
+        Response: Newly created response
+
+    Raises:
+        ValueError: If user is not a participant or has already responded
     """
     _validate_response(question, user)
     response = Response.create(user, question, response_text)
@@ -84,11 +99,13 @@ def edit_response(
 ) -> Response:
     """Update the text content of a response.
 
-    :param db: Database session
-    :param response: Response to update
-    :param response_text: New text content for the response
-    :return: Updated response
-    :rtype: Response
+    Args:
+        db (Session): Database session
+        response (Response): Response to update
+        response_text (str): New text content for the response
+
+    Returns:
+        Response: Updated response
     """
     response.response_text = response_text
     db.add(response)

@@ -23,11 +23,14 @@ from ring.tasks.crud import schedule as schedule_crud
 def _autoreload() -> str:
     """Configure IPython extensions for development.
 
-    Enables autoreload, pretty printing, and auto-import extensions
-    in the IPython shell.
+    This function enables several IPython extensions that enhance the development
+    experience:
+    - autoreload: Automatically reloads modules when they change
+    - pprintpp: Provides pretty printing for better output formatting
+    - ipython_autoimport: Automatically imports commonly used modules
 
     Returns:
-        str: Confirmation message
+        str: Confirmation message indicating autoreload is enabled
     """
     for extension in ["autoreload", "pprintpp", "ipython_autoimport"]:
         get_ipython().run_line_magic("load_ext", extension)  # type: ignore # noqa: F821

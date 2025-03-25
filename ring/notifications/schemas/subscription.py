@@ -1,3 +1,9 @@
+"""Pydantic schemas for web push notification subscriptions.
+
+This module provides Pydantic models for validating and serializing web push
+notification subscription data.
+"""
+
 from __future__ import annotations
 
 from pydantic import BaseModel, ConfigDict
@@ -6,10 +12,9 @@ from pydantic import BaseModel, ConfigDict
 class SubscriptionBase(BaseModel):
     """Base schema for web push notification subscriptions.
 
-    :param endpoint: Push notification endpoint URL
-    :type endpoint: str
-    :param keys: Dictionary containing encryption keys and auth info
-    :type keys: dict[str, str | float | bool]
+    Attributes:
+        endpoint (str): Push notification endpoint URL
+        keys (dict[str, str | float | bool]): Dictionary containing encryption keys and auth info
     """
     endpoint: str
     keys: dict[str, str | float | bool]
@@ -20,12 +25,10 @@ class SubscriptionCreate(SubscriptionBase):
 
     Inherits endpoint and keys from SubscriptionBase and adds user identification.
 
-    :param endpoint: Push notification endpoint URL
-    :type endpoint: str
-    :param keys: Dictionary containing encryption keys and auth info
-    :type keys: dict[str, str | float | bool]
-    :param user_api_identifier: API identifier of the user to subscribe
-    :type user_api_identifier: str
+    Attributes:
+        endpoint (str): Push notification endpoint URL
+        keys (dict[str, str | float | bool]): Dictionary containing encryption keys and auth info
+        user_api_identifier (str): API identifier of the user to subscribe
     """
     user_api_identifier: str
 
@@ -35,12 +38,10 @@ class Subscription(SubscriptionBase):
 
     Inherits endpoint and keys from SubscriptionBase and adds system fields.
 
-    :param endpoint: Push notification endpoint URL
-    :type endpoint: str
-    :param keys: Dictionary containing encryption keys and auth info
-    :type keys: dict[str, str | float | bool]
-    :param api_identifier: Unique API identifier for the subscription
-    :type api_identifier: str
+    Attributes:
+        endpoint (str): Push notification endpoint URL
+        keys (dict[str, str | float | bool]): Dictionary containing encryption keys and auth info
+        api_identifier (str): Unique API identifier for the subscription
     """
     model_config = ConfigDict(from_attributes=True)
 

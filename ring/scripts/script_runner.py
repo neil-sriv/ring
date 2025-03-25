@@ -15,7 +15,12 @@ import click
 
 @click.group()
 def script():
-    """Ring script runner CLI tool."""
+    """Ring script runner CLI tool.
+
+    This command group provides functionality for running Ring scripts with
+    proper dependency injection and configuration. It supports running scripts
+    with optional JSON arguments.
+    """
     pass
 
 

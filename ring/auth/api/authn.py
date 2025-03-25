@@ -1,3 +1,10 @@
+"""Authentication API endpoints.
+
+This module provides FastAPI endpoints for user authentication, including login,
+password reset, and token validation. It handles user credentials, JWT tokens,
+and password recovery workflows.
+"""
+
 from __future__ import annotations
 
 from http import HTTPStatus
@@ -38,13 +45,15 @@ async def login_access_token(
 
     Validates user credentials and generates a JWT access token for authenticated sessions.
 
-    :param form_data: OAuth2 password request form containing username and password
-    :type form_data: OAuth2PasswordRequestForm
-    :param req_dep: Request dependencies including database session
-    :type req_dep: RequestDependenciesBase
-    :raises HTTPException: 400 if credentials are invalid
-    :return: JWT access token with bearer type
-    :rtype: Token
+    Args:
+        form_data (OAuth2PasswordRequestForm): OAuth2 password request form containing username and password
+        req_dep (RequestDependenciesBase): Request dependencies including database session
+
+    Returns:
+        Token: JWT access token with bearer type
+
+    Raises:
+        HTTPException: 400 if credentials are invalid
     """
     user = user_crud.authenticate_user(
         req_dep.db,
@@ -68,9 +77,8 @@ def test_token() -> None:
 
     This endpoint is deprecated and will be removed in future versions.
 
-    :raises NotImplementedError: Always raises this error as the endpoint is deprecated
-    :return: None
-    :rtype: None
+    Raises:
+        NotImplementedError: Always raises this error as the endpoint is deprecated
     """
     raise NotImplementedError()
 
@@ -86,13 +94,15 @@ def reset_password_request(
 
     Generates a one-time token and sends a password reset email to the user.
 
-    :param email: User's email address
-    :type email: str
-    :param req_dep: Request dependencies including database session
-    :type req_dep: RequestDependenciesBase
-    :raises HTTPException: 400 if user with email doesn't exist
-    :return: Confirmation message of email sent
-    :rtype: ResponseMessage
+    Args:
+        email (str): User's email address
+        req_dep (RequestDependenciesBase): Request dependencies including database session
+
+    Returns:
+        ResponseMessage: Confirmation message of email sent
+
+    Raises:
+        HTTPException: 400 if user with email doesn't exist
     """
     db_user = user_crud.get_user_by_email(req_dep.db, email)
     if not db_user:
@@ -119,15 +129,16 @@ def reset_password(
 
     Validates the reset token and updates the user's password if token is valid.
 
-    :param token: Password reset token
-    :type token: str
-    :param new_password_data: New password data
-    :type new_password_data: NewPassword
-    :param req_dep: Request dependencies including database session
-    :type req_dep: RequestDependenciesBase
-    :raises HTTPException: 400 if token is invalid, expired, or already used
-    :return: Confirmation message of password update
-    :rtype: ResponseMessage
+    Args:
+        token (str): Password reset token
+        new_password_data (NewPassword): New password data
+        req_dep (RequestDependenciesBase): Request dependencies including database session
+
+    Returns:
+        ResponseMessage: Confirmation message of password update
+
+    Raises:
+        HTTPException: 400 if token is invalid, expired, or already used
     """
     ott = get_ott_by_token(req_dep.db, token)
     if not ott:
@@ -154,10 +165,10 @@ def recover_password_html_content(email: str) -> None:
 
     This endpoint is deprecated and will be removed in future versions.
 
-    :param email: User's email address
-    :type email: str
-    :raises NotImplementedError: Always raises this error as the endpoint is deprecated
-    :return: None
-    :rtype: None
+    Args:
+        email (str): User's email address
+
+    Raises:
+        NotImplementedError: Always raises this error as the endpoint is deprecated
     """
     raise NotImplementedError()

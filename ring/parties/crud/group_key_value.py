@@ -1,4 +1,8 @@
-"""CRUD operations for group key-value store."""
+"""CRUD operations for group key-value store.
+
+This module provides functions for managing a key-value store associated with
+each group, allowing for flexible storage of group-specific settings and data.
+"""
 
 from typing import Any, Optional
 
@@ -12,13 +16,15 @@ from ring.parties.models.group_model import Group
 def _get_group_key_value(db: Session, group: Group) -> GroupKeyValue:
     """Get the key-value store for a group.
 
-    :param db: Database session
-    :type db: Session
-    :param group: Group to get key-value store for
-    :type group: Group
-    :return: Group's key-value store
-    :rtype: GroupKeyValue
-    :raises sqlalchemy.exc.NoResultFound: If no key-value store exists for the group
+    Args:
+        db (Session): Database session
+        group (Group): Group to get key-value store for
+
+    Returns:
+        GroupKeyValue: Group's key-value store
+
+    Raises:
+        sqlalchemy.exc.NoResultFound: If no key-value store exists for the group
     """
     return db.scalars(
         select(GroupKeyValue).where(GroupKeyValue.group_id == group.id)
@@ -28,14 +34,13 @@ def _get_group_key_value(db: Session, group: Group) -> GroupKeyValue:
 def get_value(db: Session, group: Group, key: str) -> Any:
     """Get a value from a group's key-value store.
 
-    :param db: Database session
-    :type db: Session
-    :param group: Group to get value from
-    :type group: Group
-    :param key: Key to retrieve
-    :type key: str
-    :return: Value associated with the key, or None if not found
-    :rtype: Any
+    Args:
+        db (Session): Database session
+        group (Group): Group to get value from
+        key (str): Key to retrieve
+
+    Returns:
+        Any: Value associated with the key, or None if not found
     """
     kv = _get_group_key_value(db, group)
     if kv is None:
@@ -46,14 +51,11 @@ def get_value(db: Session, group: Group, key: str) -> Any:
 def set_value(db: Session, group: Group, key: str, value: Any) -> None:
     """Set a value in a group's key-value store.
 
-    :param db: Database session
-    :type db: Session
-    :param group: Group to set value for
-    :type group: Group
-    :param key: Key to set
-    :type key: str
-    :param value: Value to store
-    :type value: Any
+    Args:
+        db (Session): Database session
+        group (Group): Group to set value for
+        key (str): Key to set
+        value (Any): Value to store
     """
     kv = _get_group_key_value(db, group)
     kv.set_value(key, value)
@@ -62,12 +64,10 @@ def set_value(db: Session, group: Group, key: str, value: Any) -> None:
 def delete_value(db: Session, group: Group, key: str) -> None:
     """Delete a value from a group's key-value store.
 
-    :param db: Database session
-    :type db: Session
-    :param group: Group to delete value from
-    :type group: Group
-    :param key: Key to delete
-    :type key: str
+    Args:
+        db (Session): Database session
+        group (Group): Group to delete value from
+        key (str): Key to delete
     """
     kv = _get_group_key_value(db, group)
     kv.delete_value(key)
@@ -76,12 +76,12 @@ def delete_value(db: Session, group: Group, key: str) -> None:
 def get_all_values(db: Session, group: Group) -> dict[str, Any]:
     """Get all values from a group's key-value store.
 
-    :param db: Database session
-    :type db: Session
-    :param group: Group to get values from
-    :type group: Group
-    :return: Dictionary of all key-value pairs
-    :rtype: dict[str, Any]
+    Args:
+        db (Session): Database session
+        group (Group): Group to get values from
+
+    Returns:
+        dict[str, Any]: Dictionary of all key-value pairs
     """
     kv = _get_group_key_value(db, group)
     return kv.get_all_values()
@@ -92,12 +92,10 @@ def set_all_values(
 ) -> None:
     """Set all key-value pairs in a group's key-value store.
 
-    :param db: Database session
-    :type db: Session
-    :param group: Group to set values for
-    :type group: Group
-    :param key_values: Dictionary of key-value pairs to set
-    :type key_values: dict[str, Any]
+    Args:
+        db (Session): Database session
+        group (Group): Group to set values for
+        key_values (dict[str, Any]): Dictionary of key-value pairs to set
     """
     kv = _get_group_key_value(db, group)
     kv.set_all_values(key_values)

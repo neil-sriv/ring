@@ -1,3 +1,9 @@
+"""Letter schemas for API operations.
+
+This module defines Pydantic models for letter-related operations, including
+creation, updates, and data transfer between the API and database.
+"""
+
 from __future__ import annotations
 
 from pydantic import AwareDatetime, BaseModel, ConfigDict
@@ -16,10 +22,9 @@ class LetterBase(BaseModel):
 class LetterCreate(LetterBase):
     """Schema for creating a new letter.
 
-    :param group_api_identifier: API identifier of the group to create the letter for
-    :type group_api_identifier: str
-    :param send_at: Scheduled time to send the letter
-    :type send_at: AwareDatetime
+    Attributes:
+        group_api_identifier (str): API identifier of the group to create the letter for
+        send_at (AwareDatetime): Scheduled time to send the letter
     """
     group_api_identifier: str
     send_at: AwareDatetime
@@ -28,8 +33,8 @@ class LetterCreate(LetterBase):
 class LetterUpdate(LetterBase):
     """Schema for updating an existing letter.
 
-    :param send_at: New scheduled time to send the letter
-    :type send_at: AwareDatetime
+    Attributes:
+        send_at (AwareDatetime): New scheduled time to send the letter
     """
     send_at: AwareDatetime
 
@@ -37,16 +42,12 @@ class LetterUpdate(LetterBase):
 class Letter(LetterBase):
     """Schema representing a letter in the system.
 
-    :param api_identifier: Unique API identifier for the letter
-    :type api_identifier: str
-    :param number: Sequential number of the letter within its group
-    :type number: int
-    :param status: Current status of the letter
-    :type status: LetterStatus
-    :param send_at: Scheduled time to send the letter
-    :type send_at: AwareDatetime
-    :param created_at: Timestamp when the letter was created
-    :type created_at: AwareDatetime
+    Attributes:
+        api_identifier (str): Unique API identifier for the letter
+        number (int): Sequential number of the letter within its group
+        status (LetterStatus): Current status of the letter
+        send_at (AwareDatetime): Scheduled time to send the letter
+        created_at (AwareDatetime): Timestamp when the letter was created
     """
     model_config = ConfigDict(from_attributes=True)
 

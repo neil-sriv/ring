@@ -1,3 +1,9 @@
+"""Default question schemas for API operations.
+
+This module defines Pydantic models for default question-related operations,
+including data transfer between the API and database.
+"""
+
 from __future__ import annotations
 
 from pydantic import BaseModel, ConfigDict
@@ -6,8 +12,8 @@ from pydantic import BaseModel, ConfigDict
 class DefaultQuestionBase(BaseModel):
     """Base schema for default question-related operations.
 
-    :param question: The text content of the default question
-    :type question: str
+    Attributes:
+        question (str): The text content of the default question
     """
     question: str
 
@@ -15,10 +21,9 @@ class DefaultQuestionBase(BaseModel):
 class DefaultQuestion(DefaultQuestionBase):
     """Schema representing a default question in the system.
 
-    :param question: The text content of the default question
-    :type question: str
-    :param api_identifier: Unique API identifier for the default question
-    :type api_identifier: str
+    Attributes:
+        question (str): The text content of the default question
+        api_identifier (str): Unique API identifier for the default question
     """
     model_config = ConfigDict(from_attributes=True)
 

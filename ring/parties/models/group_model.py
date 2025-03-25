@@ -1,3 +1,9 @@
+"""SQLAlchemy model for group management.
+
+This module defines the Group model for managing user groups in the Ring system,
+including membership, letters, and scheduling.
+"""
+
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
@@ -74,10 +80,9 @@ class Group(Base, PydanticModel, APIIdentified, CreatedAtMixin):
     def __init__(self, name: str, admin: User) -> None:
         """Initialize a new group.
 
-        :param name: Group name
-        :type name: str
-        :param admin: User who will be the group admin
-        :type admin: User
+        Args:
+            name (str): Group name
+            admin (User): User who will be the group admin
         """
         APIIdentified.__init__(self)
         self.schedule = Schedule.create(self)
@@ -90,12 +95,12 @@ class Group(Base, PydanticModel, APIIdentified, CreatedAtMixin):
     def create(cls, name: str, admin: User) -> Group:
         """Create a new group instance.
 
-        :param name: Group name
-        :type name: str
-        :param admin: User who will be the group admin
-        :type admin: User
-        :return: New group instance
-        :rtype: Group
+        Args:
+            name (str): Group name
+            admin (User): User who will be the group admin
+
+        Returns:
+            Group: New group instance
         """
         return cls(name, admin)
 
@@ -103,8 +108,8 @@ class Group(Base, PydanticModel, APIIdentified, CreatedAtMixin):
     def admin(self) -> User:  # type: ignore
         """Get the group's admin user.
 
-        :return: Admin user
-        :rtype: User
+        Returns:
+            User: Admin user
         """
         return self._admin
 
@@ -112,9 +117,11 @@ class Group(Base, PydanticModel, APIIdentified, CreatedAtMixin):
     def admin(self, admin: User) -> None:
         """Set the group's admin user.
 
-        :param admin: New admin user
-        :type admin: User
-        :raises ValueError: If admin is not a member of the group
+        Args:
+            admin (User): New admin user
+
+        Raises:
+            ValueError: If admin is not a member of the group
         """
         if admin in self.members:
             self._admin = admin
@@ -125,9 +132,11 @@ class Group(Base, PydanticModel, APIIdentified, CreatedAtMixin):
     def in_progress_letter(self) -> Letter | None:
         """Get the group's currently active letter.
 
-        :return: Active letter or None if no letter is in progress
-        :rtype: Letter | None
-        :raises AssertionError: If more than one letter is in progress
+        Returns:
+            Letter | None: Active letter or None if no letter is in progress
+
+        Raises:
+            AssertionError: If more than one letter is in progress
         """
         upcoming = [
             letter
@@ -141,9 +150,11 @@ class Group(Base, PydanticModel, APIIdentified, CreatedAtMixin):
     def upcoming_letter(self) -> Letter | None:
         """Get the group's next scheduled letter.
 
-        :return: Upcoming letter or None if no letter is scheduled
-        :rtype: Letter | None
-        :raises AssertionError: If more than one letter is upcoming
+        Returns:
+            Letter | None: Upcoming letter or None if no letter is scheduled
+
+        Raises:
+            AssertionError: If more than one letter is upcoming
         """
         upcoming = [
             letter

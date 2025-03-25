@@ -1,3 +1,9 @@
+"""Question API endpoints.
+
+This module provides FastAPI endpoints for managing question responses, including
+creating, updating, and uploading images for responses.
+"""
+
 from __future__ import annotations
 
 from fastapi import APIRouter, Depends, UploadFile
@@ -35,15 +41,16 @@ async def upsert_response(
     If a response already exists (identified by api_identifier or participant),
     updates it. Otherwise, creates a new response.
 
-    :param question_api_id: API identifier of the question
-    :type question_api_id: str
-    :param response: Response creation/update parameters
-    :type response: ResponseUpsert
-    :param req_dep: Request dependencies including database session and auth
-    :type req_dep: AuthenticatedRequestDependencies
-    :raises IDNotFoundException: If question or response with given API ID is not found
-    :return: Updated question with the new/updated response
-    :rtype: Question
+    Args:
+        question_api_id (str): API identifier of the question
+        response (ResponseUpsert): Response creation/update parameters
+        req_dep (AuthenticatedRequestDependencies): Request dependencies including database session and auth
+
+    Returns:
+        Question: Updated question with the new/updated response
+
+    Raises:
+        IDNotFoundException: If question or response with given API ID is not found
     """
     print(response)
     db_question = api_identifier_crud.get_model(
@@ -99,15 +106,16 @@ async def upload_image(
     Creates a new response if one doesn't exist for the current user,
     then attaches the uploaded image to it.
 
-    :param question_api_id: API identifier of the question
-    :type question_api_id: str
-    :param response_image: Image file to upload
-    :type response_image: UploadFile
-    :param req_dep: Request dependencies including database session and auth
-    :type req_dep: AuthenticatedRequestDependencies
-    :raises IDNotFoundException: If question with given API ID is not found
-    :return: Updated question with the response containing the new image
-    :rtype: Question
+    Args:
+        question_api_id (str): API identifier of the question
+        response_image (UploadFile): Image file to upload
+        req_dep (AuthenticatedRequestDependencies): Request dependencies including database session and auth
+
+    Returns:
+        Question: Updated question with the response containing the new image
+
+    Raises:
+        IDNotFoundException: If question with given API ID is not found
     """
     db_question = api_identifier_crud.get_model(
         req_dep.db, Question, api_id=question_api_id

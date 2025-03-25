@@ -1,3 +1,10 @@
+"""Letter API endpoints.
+
+This module provides FastAPI endpoints for managing letters, including creation,
+retrieval, updates, and dashboard views. It handles letter scheduling, question
+management, and user access control.
+"""
+
 from __future__ import annotations
 
 import itertools
@@ -40,13 +47,15 @@ async def add_next_letter(
     Creates a new letter with default questions if there are no letters
     currently in progress or upcoming for the group.
 
-    :param letter: Letter creation parameters
-    :type letter: LetterCreate
-    :param req_dep: Request dependencies including database session and auth
-    :type req_dep: AuthenticatedRequestDependencies
-    :raises ValueError: If there is already a letter in progress or upcoming
-    :return: Newly created letter
-    :rtype: Letter
+    Args:
+        letter (LetterCreate): Letter creation parameters
+        req_dep (AuthenticatedRequestDependencies): Request dependencies including database session and auth
+
+    Returns:
+        Letter: Newly created letter
+
+    Raises:
+        ValueError: If there is already a letter in progress or upcoming
     """
     group_letters = letter_crud.get_letters(
         req_dep.db, group_api_id=letter.group_api_identifier
@@ -81,16 +90,14 @@ async def list_letters(
 
     Retrieves a paginated list of letters belonging to the specified group.
 
-    :param group_api_id: API identifier of the group
-    :type group_api_id: str
-    :param skip: Number of records to skip for pagination, defaults to 0
-    :type skip: int
-    :param limit: Maximum number of records to return, defaults to 100
-    :type limit: int
-    :param req_dep: Request dependencies including database session and auth
-    :type req_dep: AuthenticatedRequestDependencies
-    :return: List of letters
-    :rtype: Sequence[Letter]
+    Args:
+        group_api_id (str): API identifier of the group
+        skip (int, optional): Number of records to skip for pagination. Defaults to 0.
+        limit (int, optional): Maximum number of records to return. Defaults to 100.
+        req_dep (AuthenticatedRequestDependencies): Request dependencies including database session and auth
+
+    Returns:
+        Sequence[Letter]: List of letters
     """
     letters = letter_crud.get_letters(
         req_dep.db, group_api_id=group_api_id, skip=skip, limit=limit
@@ -107,13 +114,15 @@ async def read_letter(
 ) -> Letter:
     """Retrieve a specific letter by its API identifier.
 
-    :param letter_api_id: API identifier of the letter
-    :type letter_api_id: str
-    :param req_dep: Request dependencies including database session and auth
-    :type req_dep: AuthenticatedRequestDependencies
-    :raises IDNotFoundException: If letter with given API ID is not found
-    :return: The requested letter
-    :rtype: Letter
+    Args:
+        letter_api_id (str): API identifier of the letter
+        req_dep (AuthenticatedRequestDependencies): Request dependencies including database session and auth
+
+    Returns:
+        Letter: The requested letter
+
+    Raises:
+        IDNotFoundException: If letter with given API ID is not found
     """
     db_letter = api_identifier_crud.get_model(
         req_dep.db,
@@ -134,10 +143,11 @@ async def list_dashboard_letters(
     Retrieves letters that are upcoming, in progress, or recently completed
     (within the last 8 days) for the current user.
 
-    :param req_dep: Request dependencies including database session and auth
-    :type req_dep: AuthenticatedRequestDependencies
-    :return: Dictionary containing categorized letters
-    :rtype: dict[str, list[Letter]]
+    Args:
+        req_dep (AuthenticatedRequestDependencies): Request dependencies including database session and auth
+
+    Returns:
+        dict[str, list[Letter]]: Dictionary containing categorized letters
     """
     time = datetime.now(tz=UTC) - timedelta(days=8)
     filters: list[ColumnElement[bool]] = [
@@ -180,16 +190,17 @@ async def edit_letter(
     Updates the send time of a letter. For upcoming letters, ensures the new
     send time is after any in-progress letter's send time.
 
-    :param letter_api_id: API identifier of the letter to edit
-    :type letter_api_id: str
-    :param letter: Updated letter details
-    :type letter: LetterUpdate
-    :param req_dep: Request dependencies including database session and auth
-    :type req_dep: AuthenticatedRequestDependencies
-    :raises AssertionError: If new send time violates timing constraints
-    :raises IDNotFoundException: If letter with given API ID is not found
-    :return: Updated letter
-    :rtype: Letter
+    Args:
+        letter_api_id (str): API identifier of the letter to edit
+        letter (LetterUpdate): Updated letter details
+        req_dep (AuthenticatedRequestDependencies): Request dependencies including database session and auth
+
+    Returns:
+        Letter: Updated letter
+
+    Raises:
+        AssertionError: If new send time violates timing constraints
+        IDNotFoundException: If letter with given API ID is not found
     """
     db_letter = api_identifier_crud.get_model(
         req_dep.db,
