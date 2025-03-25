@@ -1,3 +1,10 @@
+"""Migration script to upsert users and groups from a JSON configuration file.
+
+This script reads a users.json file containing group and user configurations,
+then creates or updates groups and their members in the Ring database. For each group,
+it ensures the admin user exists and creates any new member users that don't already exist.
+"""
+
 import json
 import os
 from pprint import pp
@@ -15,6 +22,22 @@ from ring.sqlalchemy_base import Session
 
 @script_di()
 def run_script(db: Session, dry_run: bool = True) -> None:
+    """Upsert users and groups from a JSON configuration file.
+
+    This function reads a users.json file from the same directory as this script,
+    which should contain a list of groups with their admins and members. For each group:
+    1. Verifies the admin user exists
+    2. Creates the group if it doesn't exist
+    3. Creates any new member users that don't already exist in the group
+    4. Adds the new users to the group
+
+    Args:
+        db (Session): SQLAlchemy database session
+        dry_run (bool, optional): If True, rolls back all changes. Defaults to True.
+
+    Raises:
+        AssertionError: If an admin user specified in the JSON file is not found
+    """
     with open(os.path.join(os.path.dirname(__file__), "users.json")) as f:
         groups_dict: list[dict[str, Any]] = json.load(f)["groups"]
     groups: Sequence[Group] = db.scalars(
