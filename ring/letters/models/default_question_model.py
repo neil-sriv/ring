@@ -14,6 +14,19 @@ if TYPE_CHECKING:
 
 
 class DefaultQuestion(Base, APIIdentified, CreatedAtMixin):
+    """SQLAlchemy model representing a default question template for a group.
+
+    Default questions are predefined question templates that can be used
+    when creating new letters for a group.
+
+    :param id: Primary key identifier
+    :type id: Mapped[int]
+    :param question_text: The text content of the default question
+    :type question_text: Mapped[str]
+    :param group: Group to which this default question belongs
+    :type group: Mapped[Group]
+    """
+
     __tablename__ = "default_question"
 
     API_ID_PREFIX = "dfqstn"
@@ -30,11 +43,31 @@ class DefaultQuestion(Base, APIIdentified, CreatedAtMixin):
         question_text: str,
         group: Group,
     ) -> None:
+        """Initialize a new DefaultQuestion instance.
+
+        :param question_text: The text content of the default question
+        :type question_text: str
+        :param group: Group to which this default question belongs
+        :type group: Group
+        :return: None
+        :rtype: None
+        """
         APIIdentified.__init__(self)
         self.question_text = question_text
         self.group = group
 
     @classmethod
     def create(cls, question_text: str, group: Group) -> DefaultQuestion:
+        """Create a new DefaultQuestion instance.
+
+        Factory method to create a new default question with the given parameters.
+
+        :param question_text: The text content of the default question
+        :type question_text: str
+        :param group: Group to which this default question belongs
+        :type group: Group
+        :return: New DefaultQuestion instance
+        :rtype: DefaultQuestion
+        """
         default_question = cls(question_text, group)
         return default_question

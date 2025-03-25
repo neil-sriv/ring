@@ -19,6 +19,25 @@ if TYPE_CHECKING:
 
 
 class Question(Base, APIIdentified, PydanticModel, CreatedAtMixin):
+    """SQLAlchemy model representing a question within a letter.
+
+    A question is a text prompt that can be answered by letter participants.
+    Each question belongs to a letter and can have multiple responses.
+
+    :param id: Primary key identifier
+    :type id: Mapped[int]
+    :param api_identifier: Unique API identifier for the question
+    :type api_identifier: Mapped[str]
+    :param responses: List of responses to this question
+    :type responses: Mapped[list[Response]]
+    :param question_text: The actual text content of the question
+    :type question_text: Mapped[str]
+    :param author: User who authored the question, optional
+    :type author: Mapped[User | None]
+    :param letter: Letter to which this question belongs
+    :type letter: Mapped[Letter]
+    """
+
     __tablename__ = "question"
 
     API_ID_PREFIX = "qstn"
@@ -46,6 +65,17 @@ class Question(Base, APIIdentified, PydanticModel, CreatedAtMixin):
         question_text: str,
         author: User | None,
     ) -> None:
+        """Initialize a new Question instance.
+
+        :param letter: Letter to which this question belongs
+        :type letter: Letter
+        :param question_text: The actual text content of the question
+        :type question_text: str
+        :param author: User who authored the question, defaults to None
+        :type author: User | None
+        :return: None
+        :rtype: None
+        """
         APIIdentified.__init__(self)
         self.letter = letter
         self.question_text = question_text
@@ -55,10 +85,28 @@ class Question(Base, APIIdentified, PydanticModel, CreatedAtMixin):
     def create(
         cls, letter: Letter, question_text: str, author: User | None = None
     ) -> Question:
+        """Create a new Question instance.
+
+        Factory method to create a new question with the given parameters.
+
+        :param letter: Letter to which this question belongs
+        :type letter: Letter
+        :param question_text: The actual text content of the question
+        :type question_text: str
+        :param author: User who authored the question, defaults to None
+        :type author: User | None
+        :return: New Question instance
+        :rtype: Question
+        """
         question = cls(letter, question_text, author)
         return question
 
     @hybrid_property
     def responders(self) -> list[User]:
+        """Get list of users who have responded to this question.
+
+        :return: List of users who have submitted responses
+        :rtype: list[User]
+        """
         respondents = {response.participant for response in self.responses}
         return list(respondents)

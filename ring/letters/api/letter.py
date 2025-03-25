@@ -35,6 +35,19 @@ async def add_next_letter(
         get_request_dependencies,
     ),
 ) -> Letter:
+    """Create a new letter for a group.
+
+    Creates a new letter with default questions if there are no letters
+    currently in progress or upcoming for the group.
+
+    :param letter: Letter creation parameters
+    :type letter: LetterCreate
+    :param req_dep: Request dependencies including database session and auth
+    :type req_dep: AuthenticatedRequestDependencies
+    :raises ValueError: If there is already a letter in progress or upcoming
+    :return: Newly created letter
+    :rtype: Letter
+    """
     group_letters = letter_crud.get_letters(
         req_dep.db, group_api_id=letter.group_api_identifier
     )
@@ -64,6 +77,21 @@ async def list_letters(
         get_request_dependencies,
     ),
 ) -> Sequence[Letter]:
+    """List letters for a specific group.
+
+    Retrieves a paginated list of letters belonging to the specified group.
+
+    :param group_api_id: API identifier of the group
+    :type group_api_id: str
+    :param skip: Number of records to skip for pagination, defaults to 0
+    :type skip: int
+    :param limit: Maximum number of records to return, defaults to 100
+    :type limit: int
+    :param req_dep: Request dependencies including database session and auth
+    :type req_dep: AuthenticatedRequestDependencies
+    :return: List of letters
+    :rtype: Sequence[Letter]
+    """
     letters = letter_crud.get_letters(
         req_dep.db, group_api_id=group_api_id, skip=skip, limit=limit
     )
@@ -77,6 +105,16 @@ async def read_letter(
         get_request_dependencies,
     ),
 ) -> Letter:
+    """Retrieve a specific letter by its API identifier.
+
+    :param letter_api_id: API identifier of the letter
+    :type letter_api_id: str
+    :param req_dep: Request dependencies including database session and auth
+    :type req_dep: AuthenticatedRequestDependencies
+    :raises IDNotFoundException: If letter with given API ID is not found
+    :return: The requested letter
+    :rtype: Letter
+    """
     db_letter = api_identifier_crud.get_model(
         req_dep.db,
         Letter,
@@ -91,6 +129,16 @@ async def list_dashboard_letters(
         get_request_dependencies,
     ),
 ) -> dict[str, list[Letter]]:
+    """List letters for the dashboard view.
+
+    Retrieves letters that are upcoming, in progress, or recently completed
+    (within the last 8 days) for the current user.
+
+    :param req_dep: Request dependencies including database session and auth
+    :type req_dep: AuthenticatedRequestDependencies
+    :return: Dictionary containing categorized letters
+    :rtype: dict[str, list[Letter]]
+    """
     time = datetime.now(tz=UTC) - timedelta(days=8)
     filters: list[ColumnElement[bool]] = [
         or_(
@@ -127,6 +175,22 @@ async def edit_letter(
         get_request_dependencies,
     ),
 ) -> Letter:
+    """Update a letter's details.
+
+    Updates the send time of a letter. For upcoming letters, ensures the new
+    send time is after any in-progress letter's send time.
+
+    :param letter_api_id: API identifier of the letter to edit
+    :type letter_api_id: str
+    :param letter: Updated letter details
+    :type letter: LetterUpdate
+    :param req_dep: Request dependencies including database session and auth
+    :type req_dep: AuthenticatedRequestDependencies
+    :raises AssertionError: If new send time violates timing constraints
+    :raises IDNotFoundException: If letter with given API ID is not found
+    :return: Updated letter
+    :rtype: Letter
+    """
     db_letter = api_identifier_crud.get_model(
         req_dep.db,
         Letter,
@@ -157,6 +221,21 @@ async def add_question(
         get_request_dependencies,
     ),
 ) -> Letter:
+    """Add a new question to a letter.
+
+    Creates and adds a new question to the specified letter. The question can
+    optionally be associated with an author.
+
+    :param letter_api_id: API identifier of the letter
+    :type letter_api_id: str
+    :param question: Question creation parameters
+    :type question: QuestionCreate
+    :param req_dep: Request dependencies including database session and auth
+    :type req_dep: AuthenticatedRequestDependencies
+    :raises IDNotFoundException: If letter or author with given API ID is not found
+    :return: Updated letter with the new question
+    :rtype: Letter
+    """
     db_letter = api_identifier_crud.get_model(
         req_dep.db,
         Letter,

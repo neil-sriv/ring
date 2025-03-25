@@ -18,6 +18,21 @@ if TYPE_CHECKING:
 
 
 class ImageResponseAssociation(Base):
+    """Association table model linking responses to images.
+
+    Represents a many-to-many relationship between responses and images,
+    allowing responses to have multiple associated images.
+
+    :param image_id: Foreign key to the image table
+    :type image_id: Mapped[int]
+    :param response_id: Foreign key to the response table
+    :type response_id: Mapped[int]
+    :param image: Related Image instance
+    :type image: Mapped[Image]
+    :param response: Related Response instance
+    :type response: Mapped[Response]
+    """
+
     __tablename__ = "image_response_assocation"
 
     image_id: Mapped[int] = mapped_column(
@@ -36,6 +51,25 @@ class ImageResponseAssociation(Base):
 
 
 class Response(Base, APIIdentified, PydanticModel, CreatedAtMixin):
+    """SQLAlchemy model representing a response to a question.
+
+    A response is created when a participant answers a question in a letter.
+    Each response can have associated text content and images.
+
+    :param id: Primary key identifier
+    :type id: Mapped[int]
+    :param api_identifier: Unique API identifier for the response
+    :type api_identifier: Mapped[str]
+    :param participant: User who provided the response
+    :type participant: Mapped[User]
+    :param question: Question being answered
+    :type question: Mapped[Question]
+    :param response_text: Text content of the response
+    :type response_text: Mapped[str]
+    :param image_associations: List of associated images through junction table
+    :type image_associations: Mapped[List[ImageResponseAssociation]]
+    """
+
     __tablename__ = "response"
 
     API_ID_PREFIX = "rspn"
@@ -69,6 +103,17 @@ class Response(Base, APIIdentified, PydanticModel, CreatedAtMixin):
         question: Question,
         response_text: str,
     ) -> None:
+        """Initialize a new Response instance.
+
+        :param participant: User who provided the response
+        :type participant: User
+        :param question: Question being answered
+        :type question: Question
+        :param response_text: Text content of the response
+        :type response_text: str
+        :return: None
+        :rtype: None
+        """
         APIIdentified.__init__(self)
         self.participant = participant
         self.question = question
@@ -81,5 +126,18 @@ class Response(Base, APIIdentified, PydanticModel, CreatedAtMixin):
         question: Question,
         response_text: str,
     ) -> Response:
+        """Create a new Response instance.
+
+        Factory method to create a new response with the given parameters.
+
+        :param participant: User who provided the response
+        :type participant: User
+        :param question: Question being answered
+        :type question: Question
+        :param response_text: Text content of the response
+        :type response_text: str
+        :return: New Response instance
+        :rtype: Response
+        """
         response = cls(participant, question, response_text)
         return response

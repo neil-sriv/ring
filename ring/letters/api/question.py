@@ -30,6 +30,21 @@ async def upsert_response(
         get_request_dependencies,
     ),
 ) -> Question:
+    """Create or update a response to a question.
+
+    If a response already exists (identified by api_identifier or participant),
+    updates it. Otherwise, creates a new response.
+
+    :param question_api_id: API identifier of the question
+    :type question_api_id: str
+    :param response: Response creation/update parameters
+    :type response: ResponseUpsert
+    :param req_dep: Request dependencies including database session and auth
+    :type req_dep: AuthenticatedRequestDependencies
+    :raises IDNotFoundException: If question or response with given API ID is not found
+    :return: Updated question with the new/updated response
+    :rtype: Question
+    """
     print(response)
     db_question = api_identifier_crud.get_model(
         req_dep.db, Question, api_id=question_api_id
@@ -79,6 +94,21 @@ async def upload_image(
         get_request_dependencies,
     ),
 ) -> Question:
+    """Upload an image as part of a response to a question.
+
+    Creates a new response if one doesn't exist for the current user,
+    then attaches the uploaded image to it.
+
+    :param question_api_id: API identifier of the question
+    :type question_api_id: str
+    :param response_image: Image file to upload
+    :type response_image: UploadFile
+    :param req_dep: Request dependencies including database session and auth
+    :type req_dep: AuthenticatedRequestDependencies
+    :raises IDNotFoundException: If question with given API ID is not found
+    :return: Updated question with the response containing the new image
+    :rtype: Question
+    """
     db_question = api_identifier_crud.get_model(
         req_dep.db, Question, api_id=question_api_id
     )
