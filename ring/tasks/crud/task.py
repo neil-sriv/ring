@@ -1,3 +1,11 @@
+"""CRUD operations and task execution handlers for Ring's task system.
+
+This module provides functions for executing different types of tasks in Ring,
+particularly focusing on email-related tasks like sending letters and reminders.
+It includes both synchronous execution functions and their asynchronous Celery
+task wrappers.
+"""
+
 from __future__ import annotations
 
 from datetime import timedelta
@@ -28,6 +36,21 @@ def execute_reminder_email_task(
     task: ReminderEmailTask,
     letter_status: LetterStatus = LetterStatus.UPCOMING,
 ) -> None:
+    """Execute a reminder email task.
+
+    Sends a reminder email to participants about an upcoming or in-progress letter.
+    The timing of the reminder depends on the letter's status:
+    - For upcoming letters: 8 days before send date
+    - For in-progress letters: 1 day before send date
+
+    Args:
+        db: Database session
+        task: The reminder email task to execute
+        letter_status: Status of the letter to send reminder for (default: UPCOMING)
+
+    Raises:
+        AssertionError: If letter timing doesn't match task execution time
+    """
     group = task.schedule.group
     letter_to_send = (
         group.in_progress_letter
@@ -58,6 +81,18 @@ def execute_reminder_email_task(
 
 
 def execute_send_email_task(db: Session, task: SendEmailTask) -> None:
+    """Execute a send email task.
+
+    Sends a letter email to all participants and marks the letter as sent
+    upon successful delivery.
+
+    Args:
+        db: Database session
+        task: The send email task to execute
+
+    Raises:
+        AssertionError: If no in-progress letter is found
+    """
     group = task.schedule.group
     letter_to_send = group.in_progress_letter
     assert letter_to_send
@@ -88,6 +123,21 @@ def _find_and_execute_task(
     execute_fn: Callable[[Session, Task], None],
     **kwargs: Any,
 ) -> Task:
+    """Find and execute a task with error handling.
+
+    Args:
+        db: Database session
+        task_id: ID of the task to execute
+        task_class: Class of the task (e.g., SendEmailTask)
+        execute_fn: Function to execute the task
+        **kwargs: Additional arguments for the execute function
+
+    Returns:
+        Task: The executed task
+
+    Raises:
+        Exception: Any error that occurred during task execution
+    """
     task = db.query(task_class).filter(task_class.id == task_id).one()
     try:
         execute_fn(db, task, **kwargs)
@@ -109,6 +159,13 @@ def _find_and_execute_task(
 def async_send_email_task(
     self: CeleryTask, task_id: int, **kwargs: Any
 ) -> None:
+    """Celery task for executing send email tasks asynchronously.
+
+    Args:
+        self: Celery task instance
+        task_id: ID of the task to execute
+        **kwargs: Additional arguments for the execute function
+    """
     _find_and_execute_task(
         self.session, task_id, SendEmailTask, execute_send_email_task, **kwargs
     )
@@ -119,6 +176,13 @@ def async_send_email_task(
 def async_reminder_email_task(
     self: CeleryTask, task_id: int, **kwargs: Any
 ) -> None:
+    """Celery task for executing reminder email tasks asynchronously.
+
+    Args:
+        self: Celery task instance
+        task_id: ID of the task to execute
+        **kwargs: Additional arguments for the execute function
+    """
     _find_and_execute_task(
         self.session,
         task_id,
@@ -139,10 +203,24 @@ ASYNC_TASK_TO_EXECUTE_MAPPING: dict[
 
 @register_task_factory(name="execute_tasks")
 def execute_tasks_async(self: CeleryTask, task_ids: list[int]) -> None:
+    """Celery task for executing multiple tasks asynchronously.
+
+    Args:
+        self: Celery task instance
+        task_ids: List of task IDs to execute
+    """
     execute_tasks(self.session, task_ids)
 
 
 def execute_tasks(db: Session, task_ids: list[int]) -> None:
+    """Execute multiple tasks in sequence.
+
+    Marks tasks as in progress and schedules their asynchronous execution.
+
+    Args:
+        db: Database session
+        task_ids: List of task IDs to execute
+    """
     tasks = db.query(Task).filter(Task.id.in_(task_ids)).all()
     for task in tasks:
         task.status = TaskStatus.IN_PROGRESS
