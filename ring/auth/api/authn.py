@@ -34,6 +34,18 @@ async def login_access_token(
         get_unauthenticated_request_dependencies
     ),
 ) -> Token:
+    """Authenticate user and generate access token.
+
+    Validates user credentials and generates a JWT access token for authenticated sessions.
+
+    :param form_data: OAuth2 password request form containing username and password
+    :type form_data: OAuth2PasswordRequestForm
+    :param req_dep: Request dependencies including database session
+    :type req_dep: RequestDependenciesBase
+    :raises HTTPException: 400 if credentials are invalid
+    :return: JWT access token with bearer type
+    :rtype: Token
+    """
     user = user_crud.authenticate_user(
         req_dep.db,
         form_data.username,
@@ -52,8 +64,13 @@ async def login_access_token(
 
 @router.post("/login/test-token", deprecated=True)
 def test_token() -> None:
-    """
-    Test access token
+    """Test endpoint for validating access tokens.
+
+    This endpoint is deprecated and will be removed in future versions.
+
+    :raises NotImplementedError: Always raises this error as the endpoint is deprecated
+    :return: None
+    :rtype: None
     """
     raise NotImplementedError()
 
@@ -65,8 +82,17 @@ def reset_password_request(
         get_unauthenticated_request_dependencies
     ),
 ) -> ResponseMessage:
-    """
-    Password Reset Request
+    """Initiate password reset process for a user.
+
+    Generates a one-time token and sends a password reset email to the user.
+
+    :param email: User's email address
+    :type email: str
+    :param req_dep: Request dependencies including database session
+    :type req_dep: RequestDependenciesBase
+    :raises HTTPException: 400 if user with email doesn't exist
+    :return: Confirmation message of email sent
+    :rtype: ResponseMessage
     """
     db_user = user_crud.get_user_by_email(req_dep.db, email)
     if not db_user:
@@ -89,8 +115,19 @@ def reset_password(
         get_unauthenticated_request_dependencies
     ),
 ) -> ResponseMessage:
-    """
-    Reset password
+    """Reset user's password using a valid reset token.
+
+    Validates the reset token and updates the user's password if token is valid.
+
+    :param token: Password reset token
+    :type token: str
+    :param new_password_data: New password data
+    :type new_password_data: NewPassword
+    :param req_dep: Request dependencies including database session
+    :type req_dep: RequestDependenciesBase
+    :raises HTTPException: 400 if token is invalid, expired, or already used
+    :return: Confirmation message of password update
+    :rtype: ResponseMessage
     """
     ott = get_ott_by_token(req_dep.db, token)
     if not ott:
@@ -113,7 +150,14 @@ def reset_password(
 
 @router.post("/password-recovery-html-content/{email}", deprecated=True)
 def recover_password_html_content(email: str) -> None:
-    """
-    HTML Content for Password Recovery
+    """Generate HTML content for password recovery email.
+
+    This endpoint is deprecated and will be removed in future versions.
+
+    :param email: User's email address
+    :type email: str
+    :raises NotImplementedError: Always raises this error as the endpoint is deprecated
+    :return: None
+    :rtype: None
     """
     raise NotImplementedError()
