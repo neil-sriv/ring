@@ -1,3 +1,10 @@
+"""SQLAlchemy models for S3-stored files.
+
+This module defines models for files stored in S3, including a base S3File model
+and specialized types like Image. It handles the mapping between database records
+and S3 storage locations.
+"""
+
 from __future__ import annotations
 
 from enum import StrEnum
@@ -14,6 +21,17 @@ if TYPE_CHECKING:
 
 
 class S3File(Base):
+    """Base model for files stored in S3.
+
+    This model represents a file stored in S3 and provides functionality to
+    generate qualified URLs for accessing the file through CloudFront.
+
+    Attributes:
+        id (int): Primary key
+        type (str): Polymorphic discriminator for file type
+        s3_url (str): S3 key/path for the file
+    """
+
     __tablename__ = "s3_file"
 
     id: Mapped[int] = mapped_column(primary_key=True, index=True)
@@ -28,15 +46,37 @@ class S3File(Base):
 
     @hybrid_property
     def qualified_s3_url(self) -> str:
+        """Generate a CloudFront URL for the file.
+
+        Returns:
+            str: Full CloudFront URL for accessing the file
+        """
         return "https://du32exnxihxuf.cloudfront.net/" + self.s3_url
 
 
 class MediaType(StrEnum):
+    """Enumeration of supported media types.
+
+    Attributes:
+        IMAGE: Image files (e.g., jpg, png)
+        VIDEO: Video files
+    """
     IMAGE = "image"
     VIDEO = "video"
 
 
 class Image(S3File):
+    """Model for image files stored in S3.
+
+    This model represents an image file stored in S3 and maintains relationships
+    with responses that use this image.
+
+    Attributes:
+        id (int): Primary key, also foreign key to S3File
+        media_type (str): Type of media (image/video)
+        parent_associations (ImageResponseAssociation): Relationships to responses using this image
+    """
+
     __tablename__ = "image"
 
     id: Mapped[int] = mapped_column(
@@ -59,6 +99,12 @@ class Image(S3File):
         s3_url: str,
         media_type: MediaType = MediaType.IMAGE,
     ) -> None:
+        """Initialize a new image record.
+
+        Args:
+            s3_url (str): S3 key/path for the image
+            media_type (MediaType, optional): Type of media. Defaults to MediaType.IMAGE.
+        """
         self.s3_url = s3_url
         self.media_type = media_type
 
@@ -68,4 +114,16 @@ class Image(S3File):
         s3_url: str,
         media_type: MediaType = MediaType.IMAGE,
     ) -> Image:
+        """Create a new image instance.
+
+        Factory method to create a new Image instance with the given S3 URL
+        and media type.
+
+        Args:
+            s3_url (str): S3 key/path for the image
+            media_type (MediaType, optional): Type of media. Defaults to MediaType.IMAGE.
+
+        Returns:
+            Image: New image instance
+        """
         return Image(s3_url=s3_url, media_type=media_type)
