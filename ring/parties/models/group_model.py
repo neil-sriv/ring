@@ -23,6 +23,26 @@ if TYPE_CHECKING:
 
 
 class Group(Base, PydanticModel, APIIdentified, CreatedAtMixin):
+    """SQLAlchemy model representing a group of users.
+
+    This model represents a group that users can join, with an admin user,
+    scheduled letters, default questions, and associated metadata.
+
+    Attributes:
+        id (int): Primary key
+        name (str): Unique group name
+        api_identifier (str): Unique API identifier with 'grp' prefix
+        cycle_length (int): Number of days between letters, defaults to 30
+        admin_id (int): Foreign key to the admin user
+        admin (User): Admin user relationship
+        members (list[User]): Group members
+        letters (list[Letter]): Letters associated with the group
+        schedule (Schedule): Group's task schedule
+        default_questions (list[DefaultQuestion]): Default questions for letters
+        key_values (GroupKeyValue): Additional group metadata
+        created_at (datetime): Timestamp of group creation
+    """
+
     __tablename__ = "group"
 
     API_ID_PREFIX = "grp"
@@ -52,6 +72,13 @@ class Group(Base, PydanticModel, APIIdentified, CreatedAtMixin):
     )
 
     def __init__(self, name: str, admin: User) -> None:
+        """Initialize a new group.
+
+        :param name: Group name
+        :type name: str
+        :param admin: User who will be the group admin
+        :type admin: User
+        """
         APIIdentified.__init__(self)
         self.schedule = Schedule.create(self)
         self.name = name
@@ -61,14 +88,34 @@ class Group(Base, PydanticModel, APIIdentified, CreatedAtMixin):
 
     @classmethod
     def create(cls, name: str, admin: User) -> Group:
+        """Create a new group instance.
+
+        :param name: Group name
+        :type name: str
+        :param admin: User who will be the group admin
+        :type admin: User
+        :return: New group instance
+        :rtype: Group
+        """
         return cls(name, admin)
 
     @hybrid_property
     def admin(self) -> User:  # type: ignore
+        """Get the group's admin user.
+
+        :return: Admin user
+        :rtype: User
+        """
         return self._admin
 
     @admin.setter  # type: ignore
     def admin(self, admin: User) -> None:
+        """Set the group's admin user.
+
+        :param admin: New admin user
+        :type admin: User
+        :raises ValueError: If admin is not a member of the group
+        """
         if admin in self.members:
             self._admin = admin
         else:
@@ -76,6 +123,12 @@ class Group(Base, PydanticModel, APIIdentified, CreatedAtMixin):
 
     @hybrid_property
     def in_progress_letter(self) -> Letter | None:
+        """Get the group's currently active letter.
+
+        :return: Active letter or None if no letter is in progress
+        :rtype: Letter | None
+        :raises AssertionError: If more than one letter is in progress
+        """
         upcoming = [
             letter
             for letter in self.letters
@@ -86,6 +139,12 @@ class Group(Base, PydanticModel, APIIdentified, CreatedAtMixin):
 
     @hybrid_property
     def upcoming_letter(self) -> Letter | None:
+        """Get the group's next scheduled letter.
+
+        :return: Upcoming letter or None if no letter is scheduled
+        :rtype: Letter | None
+        :raises AssertionError: If more than one letter is upcoming
+        """
         upcoming = [
             letter
             for letter in self.letters

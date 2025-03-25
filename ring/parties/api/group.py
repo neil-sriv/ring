@@ -39,6 +39,18 @@ async def create_group(
         get_request_dependencies,
     ),
 ) -> Group:
+    """Create a new group.
+
+    Args:
+        group (GroupCreate): Group creation parameters
+        req_dep (AuthenticatedRequestDependencies): Request dependencies
+
+    Returns:
+        Group: Created group
+
+    Raises:
+        HTTPException: If group creation fails
+    """
     db_group = group_crud.create_group(
         db=req_dep.db, admin_api_id=group.admin_api_identifier, name=group.name
     )
@@ -55,6 +67,17 @@ async def list_groups(
         get_request_dependencies,
     ),
 ) -> Sequence[Group]:
+    """List all groups a user is a member of.
+
+    Args:
+        user_api_id (str): API identifier of the user
+        skip (int, optional): Number of records to skip. Defaults to 0.
+        limit (int, optional): Maximum number of records to return. Defaults to 100.
+        req_dep (AuthenticatedRequestDependencies): Request dependencies
+
+    Returns:
+        Sequence[Group]: List of groups
+    """
     groups = group_crud.get_groups(
         req_dep.db,
         user_api_id=user_api_id,
@@ -71,6 +94,18 @@ async def read_group(
         get_request_dependencies,
     ),
 ) -> Group:
+    """Get details of a specific group.
+
+    Args:
+        group_api_id (str): API identifier of the group
+        req_dep (AuthenticatedRequestDependencies): Request dependencies
+
+    Returns:
+        Group: Group details
+
+    Raises:
+        HTTPException: If group not found or user is not a member
+    """
     db_group = api_identifier_crud.get_model(
         req_dep.db,
         Group,
@@ -95,6 +130,19 @@ async def add_user_to_group(
         get_request_dependencies,
     ),
 ) -> Group:
+    """Add a user to a group.
+
+    Args:
+        group_api_id (str): API identifier of the group
+        user_api_id (str): API identifier of the user to add
+        req_dep (AuthenticatedRequestDependencies): Request dependencies
+
+    Returns:
+        Group: Updated group
+
+    Raises:
+        HTTPException: If group or user not found
+    """
     group = group_crud.add_member(
         req_dep.db, group_api_id=group_api_id, user_api_id=user_api_id
     )
@@ -113,6 +161,19 @@ async def remove_user_from_group(
         get_request_dependencies,
     ),
 ) -> Group:
+    """Remove a user from a group.
+
+    Args:
+        group_api_id (str): API identifier of the group
+        user_api_id (str): API identifier of the user to remove
+        req_dep (AuthenticatedRequestDependencies): Request dependencies
+
+    Returns:
+        Group: Updated group
+
+    Raises:
+        HTTPException: If group not found, user not authorized, or invalid operation
+    """
     db_group = api_identifier_crud.get_model(
         req_dep.db, Group, api_id=group_api_id
     )
@@ -158,6 +219,19 @@ async def schedule_send(
         get_request_dependencies,
     ),
 ) -> Group:
+    """Schedule a letter to be sent.
+
+    Args:
+        group_api_id (str): API identifier of the group
+        schedule_param (ScheduleSendParam): Schedule parameters
+        req_dep (AuthenticatedRequestDependencies): Request dependencies
+
+    Returns:
+        Group: Updated group
+
+    Note:
+        This endpoint is deprecated.
+    """
     utc_send_at = schedule_param.send_at.astimezone(tz=timezone.utc)
     group = group_crud.schedule_send(
         req_dep.db,
@@ -180,6 +254,19 @@ def update_group(
         get_request_dependencies,
     ),
 ) -> Group:
+    """Update group information.
+
+    Args:
+        group_api_id (str): API identifier of the group
+        group (GroupUpdate): Group update parameters
+        req_dep (AuthenticatedRequestDependencies): Request dependencies
+
+    Returns:
+        Group: Updated group
+
+    Raises:
+        HTTPException: If no updates provided, user not authorized, or invalid cycle length
+    """
     if not group.name and group.cycle_length is None:
         raise HTTPException(status.HTTP_400_BAD_REQUEST, "No updates provided")
     db_group = api_identifier_crud.get_model(
@@ -216,6 +303,21 @@ def add_members(
         get_request_dependencies,
     ),
 ) -> Group:
+    """Add multiple members to a group.
+
+    Args:
+        group_api_id (str): API identifier of the group
+        add_members (AddMembers): List of email addresses to invite
+        req_dep (AuthenticatedRequestDependencies): Request dependencies
+
+    Returns:
+        Group: Updated group
+
+    Note:
+        - Existing users will be added directly to the group
+        - Non-registered users will receive email invitations
+        - New members are automatically added to in-progress and upcoming letters
+    """
     db_group = api_identifier_crud.get_model(
         req_dep.db, Group, api_id=group_api_id
     )
@@ -247,7 +349,6 @@ def add_members(
             invite_crud.email_user_invites.delay([invite.id])
             for invite in invites
         ]
-
     return db_group
 
 
@@ -262,13 +363,26 @@ def replace_group_default_questions(
         get_request_dependencies,
     ),
 ) -> Group:
+    """Replace a group's default questions.
+
+    Args:
+        group_api_id (str): API identifier of the group
+        default_questions (ReplaceDefaultQuestions): New list of default questions
+        req_dep (AuthenticatedRequestDependencies): Request dependencies
+
+    Returns:
+        Group: Updated group
+
+    Raises:
+        HTTPException: If group not found or user not authorized
+    """
     db_group = api_identifier_crud.get_model(
         req_dep.db, Group, api_id=group_api_id
     )
     if req_dep.current_user != db_group.admin:
         raise HTTPException(
             status.HTTP_403_FORBIDDEN,
-            "Only the group admin can replace default questions",
+            "Only the group admin can update the default questions",
         )
     replace_default_questions(
         req_dep.db, db_group, default_questions.questions

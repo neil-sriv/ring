@@ -18,6 +18,23 @@ if TYPE_CHECKING:
 
 
 class User(Base, APIIdentified, PydanticModel, CreatedAtMixin):
+    """SQLAlchemy model representing a user in the system.
+
+    This model represents a user account with authentication details,
+    group memberships, and associated responses and notifications.
+
+    Attributes:
+        id (int): Primary key
+        name (Optional[str]): User's display name
+        email (str): User's unique email address
+        hashed_password (str): Securely hashed password
+        api_identifier (str): Unique API identifier with 'usr' prefix
+        groups (list[Group]): Groups the user is a member of
+        responses (list[Response]): User's responses to questions
+        notification_subscriptions (list[Subscription]): Web push subscriptions
+        created_at (datetime): Timestamp of user creation
+    """
+
     __allow_unmapped__ = True
     __tablename__ = "user"
 
@@ -45,6 +62,15 @@ class User(Base, APIIdentified, PydanticModel, CreatedAtMixin):
         name: Optional[str],
         hashed_password: str,
     ) -> None:
+        """Initialize a new user.
+
+        :param email: User's email address
+        :type email: str
+        :param name: User's display name, optional
+        :type name: Optional[str]
+        :param hashed_password: Pre-hashed password
+        :type hashed_password: str
+        """
         APIIdentified.__init__(self)
         self.email = email
         self.name = name
@@ -57,4 +83,15 @@ class User(Base, APIIdentified, PydanticModel, CreatedAtMixin):
         name: Optional[str],
         hashed_password: str,
     ) -> User:
+        """Create a new user instance.
+
+        :param email: User's email address
+        :type email: str
+        :param name: User's display name, optional
+        :type name: Optional[str]
+        :param hashed_password: Pre-hashed password
+        :type hashed_password: str
+        :return: New user instance
+        :rtype: User
+        """
         return cls(email, name, hashed_password)
