@@ -301,7 +301,7 @@ class TestLetterCrud:
             days=1
         )
         assert reminder_email_task_2.execute_at == new_send_at - timedelta(
-            days=1
+            days=8
         )
 
     def test_add_question(self, db_session: Session, faker: Faker) -> None:
@@ -317,13 +317,27 @@ class TestLetterCrud:
             db_session (Session): Database session
             faker (Faker): Faker instance for generating test data
         """
-        letter = LetterFactory.create()
+        group = GroupFactory.create()
+        letter = LetterFactory.create(group=group)
+        author = UserFactory.create()
         db_session.commit()
 
         question_text = faker.sentence()
-        question = letter_crud.add_question(db_session, letter, question_text)
+        question = letter_crud.add_question(
+            db_session, letter, question_text, author=author
+        )
         db_session.commit()
 
+        assert any(
+            [q.question_text == question_text for q in letter.questions]
+        )
+
+        db_question = db_session.scalars(
+            sqlalchemy.select(Question).filter(
+                Question.question_text == question_text
+            )
+        ).one()
+        assert db_question.author == author
         assert question.letter == letter
         assert question.question_text == question_text
 
@@ -339,12 +353,15 @@ class TestLetterCrud:
         Args:
             db_session (Session): Database session
         """
-        letter = LetterFactory.create()
+        group = GroupFactory.create()
+        letter = LetterFactory.create(group=group)
         db_session.commit()
 
         questions = letter_crud.add_default_questions(db_session, letter)
         db_session.commit()
 
+        assert len(letter.questions) == len(DEFAULT_QUESTIONS)
+        assert all(q.author is None for q in letter.questions)
         assert all(q.letter == letter for q in questions)
         assert all(q.question_text in DEFAULT_QUESTIONS for q in questions)
 
@@ -360,12 +377,23 @@ class TestLetterCrud:
         Args:
             db_session (Session): Database session
         """
-        letter = LetterFactory.create()
+        group = GroupFactory.create()
+        letter = LetterFactory.create(group=group)
         db_session.commit()
 
         questions = letter_crud.add_random_questions(db_session, letter)
         db_session.commit()
 
+        assert len(letter.questions) == 3
+        assert all(q.author is None for q in letter.questions)
+        assert all(q.letter == letter for q in questions)
+        assert all(q.question_text in QUESTION_BANK for q in questions)
+
+        letter_crud.add_random_questions(db_session, letter, num_questions=5)
+        db_session.commit()
+
+        assert len(letter.questions) == 8
+        assert all(q.author is None for q in letter.questions)
         assert all(q.letter == letter for q in questions)
         assert all(q.question_text in QUESTION_BANK for q in questions)
 
@@ -381,26 +409,64 @@ class TestLetterCrud:
         Args:
             db_session (Session): Database session
         """
-        letter = LetterFactory.create()
-        questions = [QuestionFactory.create(letter=letter) for _ in range(3)]
+        group = GroupFactory.create()
+        members = [UserFactory.create() for _ in range(4)]
+        for member in members:
+            group.members.append(member)
+        letter = LetterFactory.create(group=group)
+        db_session.commit()
+
+        questions = [
+            QuestionFactory.create(
+                letter=letter,
+                question_text=f"Question {i}",
+                author=UserFactory.create(),
+            )
+            for i in range(3)
+        ] + [
+            QuestionFactory.create(
+                letter=letter,
+                question_text=f"Question 4",
+                author=None,
+            )
+        ]
+        db_session.commit()
+
+        db_responses = [
+            ResponseFactory.create(
+                question=questions[0],
+                participant=group.members[0],
+            ),
+            ResponseFactory.create(
+                question=questions[1],
+                participant=group.members[1],
+            ),
+            ResponseFactory.create(
+                question=questions[1],
+                participant=group.members[2],
+            ),
+            ResponseFactory.create(
+                question=questions[3],
+                participant=group.members[3],
+            ),
+        ]
+
         db_session.commit()
 
         letter_dict = letter_crud.compile_letter_dict(letter)
-
-        assert letter_dict["id"] == letter.id
-        assert letter_dict["api_identifier"] == letter.api_identifier
-        assert letter_dict["send_at"] == letter.send_at
-        assert letter_dict["status"] == letter.status
-        assert letter_dict["number"] == letter.number
-        assert letter_dict["questions"] == [
-            {
-                "id": q.id,
-                "api_identifier": q.api_identifier,
-                "question_text": q.question_text,
-                "responses": [],
-            }
-            for q in questions
-        ]
+        assert len(letter_dict) == 4
+        for question, responses in letter_dict.items():
+            assert question in [
+                f"{q.author.name}: {q.question_text}"
+                if q.author is not None
+                else q.question_text
+                for q in questions
+            ]
+            for response, _ in responses:
+                assert response in [
+                    f"{r.participant.name}: {r.response_text}"
+                    for r in db_responses
+                ]
 
     def test_collect_future_letters(self, db_session: Session) -> None:
         """Test collecting future letters.
@@ -414,22 +480,39 @@ class TestLetterCrud:
         Args:
             db_session (Session): Database session
         """
-        group = GroupFactory.create()
-        past_letter = LetterFactory.create(
-            group=group,
-            send_at=datetime.now(tz=UTC) - timedelta(days=1),
+        curr_time = datetime.now(tz=UTC)
+        postpend_letter = LetterFactory.create(
+            status=LetterStatus.IN_PROGRESS,
+            send_at=curr_time + timedelta(days=6),
         )
-        future_letter = LetterFactory.create(
-            group=group,
-            send_at=datetime.now(tz=UTC) + timedelta(days=1),
+        promoted_letter = LetterFactory.create(
+            status=LetterStatus.UPCOMING,
+            send_at=curr_time + timedelta(days=6),
+        )
+        g = GroupFactory.create()
+        LetterFactory.create(
+            group=g,
+            status=LetterStatus.IN_PROGRESS,
+            send_at=curr_time + timedelta(days=1),
+        )
+        LetterFactory.create(
+            group=g,
+            status=LetterStatus.UPCOMING,
+            send_at=curr_time + timedelta(days=20),
+        )
+        LetterFactory.create(
+            status=LetterStatus.SENT,
+            send_at=curr_time - timedelta(days=3),
         )
         db_session.commit()
 
-        future_letters = letter_crud.collect_future_letters(db_session)
+        postpend, promote = letter_crud.collect_future_letters(
+            db_session, curr_time + timedelta(days=7)
+        )
+        db_session.commit()
 
-        assert past_letter not in future_letters
-        assert future_letter in future_letters
-        assert len(future_letters) == 1
+        assert postpend == [postpend_letter]
+        assert promote == [promoted_letter]
 
     def test_collect_future_letters_no_letters(
         self, db_session: Session
@@ -444,17 +527,22 @@ class TestLetterCrud:
         Args:
             db_session (Session): Database session
         """
-        group = GroupFactory.create()
-        past_letter = LetterFactory.create(
-            group=group,
-            send_at=datetime.now(tz=UTC) - timedelta(days=1),
+        curr_time = datetime.now(tz=UTC)
+        g = GroupFactory.create()
+        LetterFactory.create(
+            group=g,
+            status=LetterStatus.SENT,
+            send_at=curr_time - timedelta(days=3),
         )
         db_session.commit()
 
-        future_letters = letter_crud.collect_future_letters(db_session)
+        postpend, promote = letter_crud.collect_future_letters(
+            db_session, curr_time + timedelta(days=7)
+        )
+        db_session.commit()
 
-        assert past_letter not in future_letters
-        assert len(future_letters) == 0
+        assert postpend == []
+        assert promote == []
 
     def test_promote_and_create_new_letters(self, db_session: Session) -> None:
         """Test promoting and creating new letters.
@@ -496,11 +584,14 @@ class TestLetterCrud:
         Args:
             db_session (Session): Database session
         """
+        new_participants = [UserFactory.create() for _ in range(4)]
         letter = LetterFactory.create()
-        new_participant = UserFactory.create()
         db_session.commit()
 
-        letter_crud.add_participants(db_session, letter, [new_participant])
+        before_participants = letter.participants
+        letter_crud.add_participants(db_session, letter, new_participants)
         db_session.commit()
 
-        assert new_participant in letter.participants
+        assert set(letter.participants) == set(
+            before_participants + new_participants
+        )
