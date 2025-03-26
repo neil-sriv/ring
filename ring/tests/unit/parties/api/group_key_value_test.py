@@ -1,3 +1,10 @@
+"""Tests for the group key-value API endpoints.
+
+This module contains tests for all group key-value related API endpoints,
+including reading, setting, updating, and deleting key-value pairs for groups.
+It verifies both successful operations and error cases.
+"""
+
 from fastapi.testclient import TestClient
 from sqlalchemy.orm import Session
 
@@ -11,12 +18,30 @@ from ring.tests.factories.parties.group_factory import GroupFactory
 
 
 class TestGroupKeyValueApi:
+    """Test suite for group key-value API endpoints.
+
+    This class contains tests for all group key-value related API operations,
+    including CRUD operations and bulk updates.
+    """
+
     def test_read_all_values(
         self,
         authenticated_client: TestClient,
         db_session: Session,
         current_user: User,
     ):
+        """Test reading all key-value pairs for a group.
+
+        This test verifies that:
+        1. All key-value pairs can be retrieved for a group
+        2. The response contains the correct key-value data
+        3. The data matches what was previously set
+
+        Args:
+            authenticated_client (TestClient): Authenticated test client
+            db_session (Session): Database session
+            current_user (User): Currently authenticated user
+        """
         group = GroupFactory.create(admin=current_user)
         db_session.add(group)
         db_session.flush()
@@ -34,6 +59,18 @@ class TestGroupKeyValueApi:
         db_session: Session,
         current_user: User,
     ):
+        """Test reading a specific key-value pair for a group.
+
+        This test verifies that:
+        1. A specific key-value pair can be retrieved
+        2. The response contains the correct key and value
+        3. The data matches what was previously set
+
+        Args:
+            authenticated_client (TestClient): Authenticated test client
+            db_session (Session): Database session
+            current_user (User): Currently authenticated user
+        """
         group = GroupFactory.create(admin=current_user)
         db_session.add(group)
         db_session.flush()
@@ -51,6 +88,19 @@ class TestGroupKeyValueApi:
         current_user: User,
         db_session: Session,
     ):
+        """Test updating a key-value pair for a group.
+
+        This test verifies that:
+        1. A key-value pair can be set initially
+        2. The same key can be updated with a new value
+        3. The response contains the correct updated data
+        4. The database reflects the changes
+
+        Args:
+            authenticated_client (TestClient): Authenticated test client
+            current_user (User): Currently authenticated user
+            db_session (Session): Database session
+        """
         group = GroupFactory.create(admin=current_user)
         db_session.add(group)
         db_session.commit()
@@ -86,6 +136,18 @@ class TestGroupKeyValueApi:
         current_user: User,
         db_session: Session,
     ):
+        """Test deleting a key-value pair from a group.
+
+        This test verifies that:
+        1. An existing key-value pair can be deleted
+        2. The response indicates successful deletion
+        3. The key-value pair is removed from the database
+
+        Args:
+            authenticated_client (TestClient): Authenticated test client
+            current_user (User): Currently authenticated user
+            db_session (Session): Database session
+        """
         group = GroupFactory.create(admin=current_user)
         db_session.add(group)
         db_session.flush()
@@ -109,6 +171,18 @@ class TestGroupKeyValueApi:
         current_user: User,
         db_session: Session,
     ):
+        """Test deleting a non-existent key-value pair.
+
+        This test verifies that:
+        1. Deleting a non-existent key-value pair succeeds
+        2. The response indicates successful deletion
+        3. The database state remains unchanged
+
+        Args:
+            authenticated_client (TestClient): Authenticated test client
+            current_user (User): Currently authenticated user
+            db_session (Session): Database session
+        """
         group = GroupFactory.create(admin=current_user)
         db_session.add(group)
         db_session.commit()
@@ -130,6 +204,18 @@ class TestGroupKeyValueApi:
         current_user: User,
         db_session: Session,
     ):
+        """Test updating with an invalid operation.
+
+        This test verifies that:
+        1. Using an invalid operation fails
+        2. The response contains the correct error message
+        3. The database state remains unchanged
+
+        Args:
+            authenticated_client (TestClient): Authenticated test client
+            current_user (User): Currently authenticated user
+            db_session (Session): Database session
+        """
         group = GroupFactory.create(admin=current_user)
         db_session.add(group)
         db_session.flush()
@@ -153,6 +239,18 @@ class TestGroupKeyValueApi:
         current_user: User,
         db_session: Session,
     ):
+        """Test performing bulk updates on key-value pairs.
+
+        This test verifies that:
+        1. Multiple key-value operations can be performed in one request
+        2. The response contains the correct updated data
+        3. The database reflects all changes correctly
+
+        Args:
+            authenticated_client (TestClient): Authenticated test client
+            current_user (User): Currently authenticated user
+            db_session (Session): Database session
+        """
         group = GroupFactory.create(admin=current_user)
         db_session.add(group)
         db_session.flush()

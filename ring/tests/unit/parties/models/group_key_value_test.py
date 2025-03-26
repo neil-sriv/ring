@@ -1,3 +1,10 @@
+"""Tests for the group key-value model.
+
+This module contains tests for the group key-value model's functionality,
+including basic operations, complex data types, and data persistence.
+It verifies both model attributes and data manipulation operations.
+"""
+
 import sqlalchemy
 from sqlalchemy.orm import Session
 
@@ -6,10 +13,24 @@ from ring.tests.factories.parties.group_factory import GroupFactory
 
 
 class TestGroupKeyValue:
-    """Tests for the GroupKeyValue model."""
+    """Test suite for the group key-value model.
+
+    This class contains tests for all group key-value model functionality,
+    including basic operations, complex data types, and data persistence.
+    """
 
     def test_basic_operations(self, db_session: Session):
-        """Test basic group key-value operations."""
+        """Test basic group key-value operations.
+
+        This test verifies that:
+        1. A key-value pair can be set
+        2. The value can be retrieved
+        3. The data is properly stored in the database
+        4. The data can be loaded from the database
+
+        Args:
+            db_session (Session): Database session
+        """
         # Create a new key-value entry
         group = GroupFactory.create()
         group.key_values.set_value("test_key", "test_value")
@@ -26,7 +47,18 @@ class TestGroupKeyValue:
         assert loaded_kv.get_value("test_key") == "test_value"
 
     def test_complex_types(self, db_session: Session):
-        """Test storing complex data types in group key-value store."""
+        """Test storing complex data types in group key-value store.
+
+        This test verifies that:
+        1. Dictionaries can be stored and retrieved
+        2. Lists can be stored and retrieved
+        3. Boolean values can be stored and retrieved
+        4. Nested complex types are handled correctly
+        5. All data types are properly persisted
+
+        Args:
+            db_session (Session): Database session
+        """
         group = GroupFactory.create()
         db_session.add(group)
         db_session.commit()
@@ -60,7 +92,17 @@ class TestGroupKeyValue:
         assert loaded_kv.get_value("bool_key") is True
 
     def test_delete(self, db_session: Session):
-        """Test deleting values from group key-value store."""
+        """Test deleting values from group key-value store.
+
+        This test verifies that:
+        1. A specific key-value pair can be deleted
+        2. Other key-value pairs remain unchanged
+        3. The deletion is properly persisted
+        4. The deleted value returns None when retrieved
+
+        Args:
+            db_session (Session): Database session
+        """
         group = GroupFactory.create()
         group.key_values.set_value("key1", "value1")
         group.key_values.set_value("key2", "value2")
@@ -87,7 +129,17 @@ class TestGroupKeyValue:
         assert reloaded_kv.get_value("key2") == "value2"
 
     def test_nested_mutation(self, db_session: Session):
-        """Test that nested mutations in the JSONB field are tracked correctly."""
+        """Test that nested mutations in the JSONB field are tracked correctly.
+
+        This test verifies that:
+        1. Nested data structures can be modified
+        2. Changes to nested structures are tracked
+        3. Changes are properly persisted
+        4. The modified data can be retrieved correctly
+
+        Args:
+            db_session (Session): Database session
+        """
         group = GroupFactory.create()
         group.key_values.set_value(
             "nested", {"level1": {"level2": ["a", "b", "c"]}}
