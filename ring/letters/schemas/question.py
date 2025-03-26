@@ -15,6 +15,7 @@ class QuestionBase(BaseModel):
     Attributes:
         question_text (str): The text content of the question
     """
+
     question_text: str
 
 
@@ -25,6 +26,7 @@ class QuestionCreate(QuestionBase):
         question_text (str): The text content of the question
         author_api_id (str | None): API identifier of the question's author, optional
     """
+
     author_api_id: str | None
 
 
@@ -36,6 +38,7 @@ class Question(QuestionBase):
         api_identifier (str): Unique API identifier for the question
         created_at (AwareDatetime): Timestamp when the question was created
     """
+
     model_config = ConfigDict(from_attributes=True)
 
     api_identifier: str
@@ -47,4 +50,5 @@ class QuestionUnlinked(Question):
 
     Inherits all fields from Question but excludes relationship data.
     """
+
     pass

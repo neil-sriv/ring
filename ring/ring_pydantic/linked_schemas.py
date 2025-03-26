@@ -32,6 +32,7 @@ class UserLinked(User):
         groups (list[GroupUnlinked]): Groups the user is a member of
         responses (list[ResponseUnlinked]): User's responses to questions
     """
+
     groups: list["GroupUnlinked"]
     responses: list["ResponseUnlinked"]
 
@@ -48,6 +49,7 @@ class GroupLinked(Group):
         admin (UserUnlinked): The group administrator
         default_questions (list[QuestionUnlinked]): Default questions for group letters
     """
+
     members: list["UserUnlinked"]
     letters: list["LetterUnlinked"]
     schedule: Optional["ScheduleUnlinked"]
@@ -64,6 +66,7 @@ class ScheduleLinked(Schedule):
         group (GroupUnlinked): The group this schedule belongs to
         tasks (list[TaskUnlinked]): Tasks in the schedule
     """
+
     group: "GroupUnlinked"
     tasks: list["TaskUnlinked"]
 
@@ -82,6 +85,7 @@ class LetterLinked(Letter):
         group (GroupUnlinked): Group the letter belongs to
         questions (list[QuestionLinked]): Questions in the letter
     """
+
     participants: list["UserUnlinked"]
     group: "GroupUnlinked"
     questions: list["QuestionLinked"]
@@ -99,6 +103,7 @@ class PublicLetter(Letter):
         responders (list[UserUnlinked]): Users who have responded
         participants (list[UserUnlinked]): All participants in the letter
     """
+
     group: "GroupUnlinked"
     questions: list["PublicQuestion"]
     responders: list["UserUnlinked"]
@@ -115,6 +120,7 @@ class DashboardLetters(BaseModel):
         in_progress (list[PublicLetter]): Currently active letters
         recently_completed (list[PublicLetter]): Recently finished letters
     """
+
     upcoming: list[PublicLetter]
     in_progress: list[PublicLetter]
     recently_completed: list[PublicLetter]
@@ -129,6 +135,7 @@ class QuestionLinked(Question):
         letter (LetterUnlinked): Letter containing this question
         responses (list[ResponseUnlinked]): Responses to this question
     """
+
     letter: "LetterUnlinked"
     responses: list["ResponseUnlinked"]
 
@@ -142,6 +149,7 @@ class PublicQuestion(Question):
         responses (list[ResponseWithParticipant]): Public responses with participant info
         author (Optional[UserUnlinked]): Question author, if available
     """
+
     responses: list["ResponseWithParticipant"]
     author: Optional["UserUnlinked"]
 
@@ -156,6 +164,7 @@ class ResponseLinked(Response, WithImageMixin):
         question (QuestionUnlinked): Question this response is for
         participant (UserUnlinked): User who provided the response
     """
+
     question: "QuestionUnlinked"
     participant: "UserUnlinked"
 
@@ -169,6 +178,7 @@ class ResponseWithParticipant(Response, WithImageMixin):
     Attributes:
         participant (UserUnlinked): User who provided the response
     """
+
     participant: "UserUnlinked"
 
 
@@ -181,6 +191,7 @@ class InviteLinked(Invite):
         inviter (UserUnlinked): User who created the invite
         group (GroupUnlinked): Group the invite is for
     """
+
     inviter: "UserUnlinked"
     group: "GroupUnlinked"
 
@@ -193,4 +204,5 @@ class SubscriptionLinked(Subscription):
     Attributes:
         user (UserUnlinked): User who owns the subscription
     """
+
     user: "UserUnlinked"

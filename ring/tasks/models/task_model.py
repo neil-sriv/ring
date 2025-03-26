@@ -23,13 +23,14 @@ if TYPE_CHECKING:
 
 class TaskStatus(StrEnum):
     """Enumeration of possible task statuses.
-    
+
     Attributes:
         PENDING: Task is waiting to be executed
         IN_PROGRESS: Task is currently being executed
         COMPLETED: Task has finished successfully
         FAILED: Task execution failed
     """
+
     PENDING = "pending"
     IN_PROGRESS = "in_progress"
     COMPLETED = "completed"
@@ -38,12 +39,13 @@ class TaskStatus(StrEnum):
 
 class TaskType(StrEnum):
     """Enumeration of supported task types.
-    
+
     Attributes:
         GENERIC: Base task type for general purposes
         SEND_EMAIL: Task for sending emails
         REMINDER_EMAIL: Task for sending reminder emails
     """
+
     GENERIC = "generic"
     SEND_EMAIL = "send_email"
     REMINDER_EMAIL = "reminder_email"
@@ -51,7 +53,7 @@ class TaskType(StrEnum):
 
 class Task(Base):
     """Base model for all asynchronous tasks in Ring.
-    
+
     This model uses SQLAlchemy's polymorphic inheritance to support different types
     of tasks while maintaining a common interface. Each task is associated with a
     schedule and contains execution details like timing and status.
@@ -66,6 +68,7 @@ class Task(Base):
         arguments: JSON-encoded arguments for task execution
         message: Optional message or error details
     """
+
     __tablename__ = "task"
 
     id: Mapped[int] = mapped_column(primary_key=True, index=True)
@@ -141,10 +144,11 @@ class Task(Base):
 
 class ReminderEmailTask(Task):
     """Task model for sending reminder emails.
-    
+
     This specialized task type handles the sending of reminder emails to users.
     It inherits all attributes from the base Task model.
     """
+
     __mapper_args__ = {
         "polymorphic_identity": TaskType.REMINDER_EMAIL,
     }
@@ -152,10 +156,11 @@ class ReminderEmailTask(Task):
 
 class SendEmailTask(Task):
     """Task model for sending regular emails.
-    
+
     This specialized task type handles the sending of regular emails.
     It inherits all attributes from the base Task model.
     """
+
     __mapper_args__ = {
         "polymorphic_identity": TaskType.SEND_EMAIL,
     }

@@ -16,6 +16,7 @@ class Token(BaseModel):
         access_token (str): The JWT access token string
         token_type (str): The type of token (e.g., "bearer")
     """
+
     access_token: str
     token_type: str
 
@@ -28,4 +29,5 @@ class TokenData(BaseModel):
     Attributes:
         email (str | None): The email address of the authenticated user. Defaults to None.
     """
+
     email: str | None = None

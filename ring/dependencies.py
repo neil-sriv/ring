@@ -33,6 +33,7 @@ class RequestDependenciesBase:
     Attributes:
         db (Session): SQLAlchemy database session
     """
+
     db: Session
 
 
@@ -46,6 +47,7 @@ class AuthenticatedRequestDependencies(RequestDependenciesBase):
         db (Session): SQLAlchemy database session
         current_user (User): The authenticated user making the request
     """
+
     current_user: User
 
 

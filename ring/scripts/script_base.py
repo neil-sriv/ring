@@ -19,6 +19,7 @@ def script_di() -> Callable[[Callable[..., T]], Callable[..., T]]:
     Returns:
         Callable: A decorator that can be applied to script functions
     """
+
     def decorator(f: Callable[..., T]) -> Callable[..., T]:
         """Wrap a script function with database session management.
 
@@ -28,6 +29,7 @@ def script_di() -> Callable[[Callable[..., T]], Callable[..., T]]:
         Returns:
             Callable[..., T]: The wrapped function with database session management
         """
+
         @db_session
         @functools.wraps(f)
         def inner(db: Session, *args: Any, **kwargs: Any) -> T:

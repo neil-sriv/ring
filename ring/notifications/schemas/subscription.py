@@ -16,6 +16,7 @@ class SubscriptionBase(BaseModel):
         endpoint (str): Push notification endpoint URL
         keys (dict[str, str | float | bool]): Dictionary containing encryption keys and auth info
     """
+
     endpoint: str
     keys: dict[str, str | float | bool]
 
@@ -30,6 +31,7 @@ class SubscriptionCreate(SubscriptionBase):
         keys (dict[str, str | float | bool]): Dictionary containing encryption keys and auth info
         user_api_identifier (str): API identifier of the user to subscribe
     """
+
     user_api_identifier: str
 
 
@@ -43,6 +45,7 @@ class Subscription(SubscriptionBase):
         keys (dict[str, str | float | bool]): Dictionary containing encryption keys and auth info
         api_identifier (str): Unique API identifier for the subscription
     """
+
     model_config = ConfigDict(from_attributes=True)
 
     api_identifier: str

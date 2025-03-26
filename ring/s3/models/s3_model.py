@@ -61,6 +61,7 @@ class MediaType(StrEnum):
         IMAGE: Image files (e.g., jpg, png)
         VIDEO: Video files
     """
+
     IMAGE = "image"
     VIDEO = "video"
 

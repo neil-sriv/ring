@@ -120,6 +120,7 @@ def register_task_factory(*dec_args: Any, **dec_kwargs: Any) -> Any:
     Returns:
         Callable: Decorator for registering Celery tasks
     """
+
     def decorator(f):
         @celery.task(
             *dec_args,

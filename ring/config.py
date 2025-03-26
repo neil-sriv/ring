@@ -42,6 +42,7 @@ class RingConfig(BaseSettings):
         BUCKET_NAME (str): S3 bucket name for file storage (default: "rings3files")
         BACKEND_CORS_ORIGINS (list[AnyUrl] | str): List of allowed CORS origins
     """
+
     environment: str
     sqlalchemy_database_uri: str
     JWT_SIGNING_KEY: str

@@ -24,6 +24,7 @@ class Base(DeclarativeBase):
     All database models should inherit from this class to ensure they use
     the same declarative base and metadata.
     """
+
     pass
 
 
@@ -77,6 +78,7 @@ def db_session(func: Callable[..., T]) -> Callable[..., T]:
             return db.query(User).get(user_id)
         ```
     """
+
     def wrapper(*args: Any, **kwargs: Any) -> T:
         """Wrapper function that manages the database session.
 

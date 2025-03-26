@@ -15,6 +15,7 @@ class DefaultQuestionBase(BaseModel):
     Attributes:
         question (str): The text content of the default question
     """
+
     question: str
 
 
@@ -25,6 +26,7 @@ class DefaultQuestion(DefaultQuestionBase):
         question (str): The text content of the default question
         api_identifier (str): Unique API identifier for the default question
     """
+
     model_config = ConfigDict(from_attributes=True)
 
     api_identifier: str
@@ -35,4 +37,5 @@ class DefaultQuestionUnlinked(DefaultQuestion):
 
     Inherits all fields from DefaultQuestion but excludes relationship data.
     """
+
     pass

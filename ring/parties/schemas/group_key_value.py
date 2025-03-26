@@ -38,8 +38,8 @@ class GroupKeyValue(BaseModel):
     """
 
     key_values: dict[str, Any] = Field(
-        ..., 
-        description="Dictionary containing all key-value pairs for the group"
+        ...,
+        description="Dictionary containing all key-value pairs for the group",
     )
 
 
@@ -59,16 +59,16 @@ class SingleGroupKeyValueUpdate(GroupKeyValueBase):
     """
 
     operation: Literal["set", "delete"] = Field(
-        ..., 
-        description="Operation to perform: 'set' to update/create, 'delete' to remove"
+        ...,
+        description="Operation to perform: 'set' to update/create, 'delete' to remove",
     )
     value: Any | None = Field(
         None,
         description="Value to set (required for 'set' operation, ignored for 'delete')",
     )
 
-    @model_validator(mode='after')
-    def validate_value_for_operation(self) -> 'SingleGroupKeyValueUpdate':
+    @model_validator(mode="after")
+    def validate_value_for_operation(self) -> "SingleGroupKeyValueUpdate":
         """Validate that value is provided for 'set' operations.
 
         Returns:

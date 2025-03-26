@@ -35,6 +35,7 @@ class Schedule(Base, PydanticModel):
         group: Relationship to the Group model
         tasks: List of tasks associated with this schedule
     """
+
     __tablename__ = "schedule"
 
     PYDANTIC_MODEL = ScheduleLinked

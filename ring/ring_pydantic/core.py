@@ -13,4 +13,5 @@ class ResponseMessage(BaseModel):
     Attributes:
         message (str): The response message text
     """
+
     message: str

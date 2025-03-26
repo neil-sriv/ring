@@ -20,6 +20,7 @@ class Image(BaseModel):
         s3_url (str): S3 key/path for the image
         media_type (MediaType): Type of media (image/video)
     """
+
     s3_url: str
     media_type: MediaType
 
@@ -34,6 +35,7 @@ class WithImageMixin:
         image_associations (list[Any]): List of image associations (excluded from serialization)
         images (list[Image]): Computed property that returns the list of associated images
     """
+
     image_associations: list[Any] = Field(exclude=True)
 
     @computed_field

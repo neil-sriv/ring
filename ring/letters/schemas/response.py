@@ -17,6 +17,7 @@ class ResponseBase(BaseModel):
     Attributes:
         response_text (str): The text content of the response
     """
+
     response_text: str
 
 
@@ -25,6 +26,7 @@ class ResponseCreateBase(ResponseBase):
 
     Inherits response_text field from ResponseBase.
     """
+
     pass
 
 
@@ -36,6 +38,7 @@ class ResponseUpsert(ResponseCreateBase):
         participant_api_identifier (Optional[str]): API identifier of the participant, optional
         api_identifier (Optional[str]): API identifier of an existing response, optional
     """
+
     participant_api_identifier: Optional[str] = None
     api_identifier: Optional[str] = None
 
@@ -48,6 +51,7 @@ class ResponseCreate(ResponseCreateBase):
         question_api_identifier (str): API identifier of the question being answered
         participant_api_identifier (str): API identifier of the participant
     """
+
     question_api_identifier: str
     participant_api_identifier: str
 
@@ -60,6 +64,7 @@ class Response(ResponseBase):
         api_identifier (str): Unique API identifier for the response
         created_at (AwareDatetime): Timestamp when the response was created
     """
+
     model_config = ConfigDict(from_attributes=True)
 
     api_identifier: str
@@ -71,4 +76,5 @@ class ResponseUnlinked(Response):
 
     Inherits all fields from Response but excludes relationship data.
     """
+
     pass

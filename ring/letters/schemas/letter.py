@@ -16,6 +16,7 @@ class LetterBase(BaseModel):
 
     Base class for all letter schemas, providing common functionality.
     """
+
     pass
 
 
@@ -26,6 +27,7 @@ class LetterCreate(LetterBase):
         group_api_identifier (str): API identifier of the group to create the letter for
         send_at (AwareDatetime): Scheduled time to send the letter
     """
+
     group_api_identifier: str
     send_at: AwareDatetime
 
@@ -36,6 +38,7 @@ class LetterUpdate(LetterBase):
     Attributes:
         send_at (AwareDatetime): New scheduled time to send the letter
     """
+
     send_at: AwareDatetime
 
 
@@ -49,6 +52,7 @@ class Letter(LetterBase):
         send_at (AwareDatetime): Scheduled time to send the letter
         created_at (AwareDatetime): Timestamp when the letter was created
     """
+
     model_config = ConfigDict(from_attributes=True)
 
     api_identifier: str
@@ -63,4 +67,5 @@ class LetterUnlinked(Letter):
 
     Inherits all fields from Letter but excludes relationship data.
     """
+
     pass

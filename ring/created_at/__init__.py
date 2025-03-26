@@ -22,6 +22,7 @@ class CreatedAtMixin:
         created_at (Mapped[datetime]): DateTime column with timezone support,
             non-nullable, indexed, defaults to current timestamp
     """
+
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),
         nullable=False,

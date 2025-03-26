@@ -31,6 +31,7 @@ class EmailDraft:
         message (MessageTypeDef): AWS SES message configuration (subject and body content)
         source (str): Sender email address (defaults to Ring system email)
     """
+
     destination: DestinationTypeDef
     message: MessageTypeDef
     source: str = "ring@neilsriv.tech"

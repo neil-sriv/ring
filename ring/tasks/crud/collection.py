@@ -32,6 +32,7 @@ class CollectionEvent(Generic[T]):
         collection_fn: Function that collects models from the database
         operation_fn: Function that processes the collected models
     """
+
     model_class: type[T]
     collection_fn: Callable[..., Sequence[T]]
     operation_fn: Callable[[CeleryTask, list[int]], None]
