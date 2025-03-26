@@ -321,9 +321,7 @@ class TestLetterCrud:
         db_session.commit()
 
         question_text = faker.sentence()
-        question = letter_crud.add_question(
-            db_session, letter, question_text
-        )
+        question = letter_crud.add_question(db_session, letter, question_text)
         db_session.commit()
 
         assert question.letter == letter

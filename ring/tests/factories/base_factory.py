@@ -29,6 +29,7 @@ class BaseFactoryMeta(FactoryMetaClass):
         bases (list[Type]): Base classes
         attrs (dict): Class attributes
     """
+
     def __new__(mcs, class_name, bases: list[Type], attrs):
         orig_bases = attrs.get("__orig_bases__", [])
         for t in orig_bases:
@@ -53,6 +54,7 @@ class BaseFactory(
     Attributes:
         Meta: Factory configuration (abstract = True)
     """
+
     class Meta:  # type: ignore
         abstract = True
 

@@ -55,6 +55,7 @@ def get_client_for_user(
     Yields:
         TClientForUser: Function that creates an authenticated client for a specific user
     """
+
     def _method(user: User):
         unauthenticated_client.app.dependency_overrides[get_current_user] = (
             lambda: user
