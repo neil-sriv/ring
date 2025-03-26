@@ -328,19 +328,26 @@ def compile_letter_dict(
         Returns:
             str: Formatted question text with optional author
         """
-        if question.author:
-            return f"{question.question_text} - {question.author.name}"
-        return question.question_text
+        return (
+            f"{question.author.name}: {question.question_text}"
+            if question.author
+            else question.question_text
+        )
 
     return {
         construct_question_text(question): [
             (
-                response.author.name,
-                response.response_text.split("\n"),
+                f"{response.participant.name}: {response.response_text}",
+                [
+                    assoc.image.qualified_s3_url
+                    for assoc in response.image_associations
+                ],
             )
             for response in question.responses
         ]
-        for question in letter.questions
+        for question in sorted(
+            letter.questions, key=lambda q: q.created_at, reverse=True
+        )
     }
 
 
@@ -350,30 +357,43 @@ def collect_future_letters(
 ) -> tuple[Sequence[Letter], Sequence[Letter]]:
     """Collect letters that need to be promoted or postpended.
 
+    This function collects letters that need to be promoted or postpended based on
+    the time threshold for recent letters and only if the group does not already
+    have a letter in the same status.
+
     Args:
         db (Session): Database session
         recent_time (datetime): Time threshold for recent letters
 
     Returns:
         tuple[Sequence[Letter], Sequence[Letter]]: Tuple containing:
-            - Letters to be promoted to IN_PROGRESS
             - Letters to be postpended
+            - Letters to be promoted to IN_PROGRESS
     """
     letters_to_promote = db.scalars(
-        select(Letter).filter(
+        select(Letter)
+        .where(
             Letter.status == LetterStatus.UPCOMING,
             Letter.send_at <= recent_time,
         )
+        .order_by(Letter.send_at)
     ).all()
 
     letters_to_postpend = db.scalars(
-        select(Letter).filter(
+        select(Letter)
+        .where(
             Letter.status == LetterStatus.IN_PROGRESS,
             Letter.send_at <= recent_time,
         )
+        .order_by(Letter.send_at)
     ).all()
-
-    return letters_to_promote, letters_to_postpend
+    letters_to_promote = [
+        l for l in letters_to_promote if not l.group.in_progress_letter
+    ]
+    letters_to_postpend = [
+        l for l in letters_to_postpend if not l.group.upcoming_letter
+    ]
+    return letters_to_postpend, letters_to_promote
 
 
 @register_task_factory(name="promote_and_create_new_letters")
@@ -390,7 +410,7 @@ def promote_and_create_new_letters(
         letter_ids (list[int]): IDs of letters to promote
     """
     letters = self.session.scalars(
-        select(Letter).filter(Letter.id.in_(letter_ids))
+        select(Letter).where(Letter.id.in_(letter_ids))
     ).all()
     for letter in letters:
         letter.status = LetterStatus.IN_PROGRESS
@@ -407,17 +427,22 @@ def postpend_upcoming_letters(self: CeleryTask, letter_ids: list[int]) -> None:
     """Move letters to SENT status.
 
     This task is triggered when letters need to be moved from IN_PROGRESS to
-    SENT status.
+    SENT status. It also creates a new upcoming letter for the affected groups.
 
     Args:
         self (CeleryTask): Celery task instance
         letter_ids (list[int]): IDs of letters to postpend
     """
     letters = self.session.scalars(
-        select(Letter).filter(Letter.id.in_(letter_ids))
+        select(Letter).where(Letter.id.in_(letter_ids))
     ).all()
     for letter in letters:
         letter.status = LetterStatus.SENT
+        create_letter_with_questions(
+            self.session,
+            letter.group.api_identifier,
+            letter.send_at + timedelta(days=letter.group.cycle_length),
+        )
     self.session.commit()
 
 
