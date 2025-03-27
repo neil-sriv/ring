@@ -1,3 +1,9 @@
+"""Utility functions for API identifier management.
+
+This module provides functions and exception classes for working with API identifiers,
+including retrieving models by their API identifiers and handling related errors.
+"""
+
 from __future__ import annotations
 
 from typing import TYPE_CHECKING, Optional, Sequence, TypeVar
@@ -12,15 +18,41 @@ if TYPE_CHECKING:
 
 
 class APIIdentifierException(HTTPException):
+    """Base exception class for API identifier related errors.
+
+    Attributes:
+        model_cls (type[APIIdentified]): The model class that triggered the exception
+        message (Optional[str]): Optional custom error message
+    """
+
     def __init__(
         self, model_cls: type[APIIdentified], message: Optional[str] = None
     ):
+        """Initialize an APIIdentifierException.
+
+        Args:
+            model_cls (type[APIIdentified]): The model class that triggered the exception
+            message (Optional[str], optional): Custom error message. Defaults to None.
+        """
         super().__init__(404, detail=message)
         self.model_cls = model_cls
 
 
 class IDNotFoundException(APIIdentifierException):
+    """Exception raised when API identifiers cannot be found in the database.
+
+    Attributes:
+        model_cls (type[APIIdentified]): The model class that was queried
+        api_ids (list[str]): List of API identifiers that were not found
+    """
+
     def __init__(self, model_cls: type[APIIdentified], api_ids: list[str]):
+        """Initialize an IDNotFoundException.
+
+        Args:
+            model_cls (type[APIIdentified]): The model class that was queried
+            api_ids (list[str]): List of API identifiers that were not found
+        """
         self.api_ids = api_ids
         super().__init__(
             model_cls,
@@ -32,6 +64,19 @@ API_CLS = TypeVar("API_CLS", bound=APIIdentified)
 
 
 def get_model(db: Session, model_cls: type[API_CLS], api_id: str) -> API_CLS:
+    """Retrieve a single model instance by its API identifier.
+
+    Args:
+        db (Session): SQLAlchemy database session
+        model_cls (type[API_CLS]): The model class to query
+        api_id (str): The API identifier to look up
+
+    Returns:
+        API_CLS: The model instance matching the API identifier
+
+    Raises:
+        IDNotFoundException: If the API identifier is not found
+    """
     try:
         return (
             db.query(model_cls)
@@ -45,6 +90,19 @@ def get_model(db: Session, model_cls: type[API_CLS], api_id: str) -> API_CLS:
 def get_models(
     db: Session, model_cls: type[API_CLS], api_ids: list[str]
 ) -> Sequence[API_CLS]:
+    """Retrieve multiple model instances by their API identifiers.
+
+    Args:
+        db (Session): SQLAlchemy database session
+        model_cls (type[API_CLS]): The model class to query
+        api_ids (list[str]): List of API identifiers to look up
+
+    Returns:
+        Sequence[API_CLS]: Sequence of model instances matching the API identifiers
+
+    Raises:
+        IDNotFoundException: If any API identifier is not found
+    """
     try:
         models = (
             db.query(model_cls)

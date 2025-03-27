@@ -1,9 +1,25 @@
+"""Utilities for constructing letter send email tasks.
+
+This module provides functions for creating email drafts that contain letter content,
+including questions and responses with optional images. The emails are formatted
+in both HTML and plain text versions.
+"""
+
 from ring.email_util import EmailDraft, construct_email_draft
 
 
 def construct_question_html(
     question: str, responses: list[tuple[str, list[str]]]
 ) -> str:
+    """Construct HTML for a question and its responses.
+
+    Args:
+        question: The question text
+        responses: List of tuples containing (response text, list of image URLs)
+
+    Returns:
+        str: HTML string containing the formatted question and responses
+    """
     return f"""
     <h2>{question}</h2>
     <ul>
@@ -13,6 +29,14 @@ def construct_question_html(
 
 
 def construct_response_html(response: tuple[str, list[str]]) -> str:
+    """Construct HTML for a single response with optional images.
+
+    Args:
+        response: Tuple containing (response text, list of image URLs)
+
+    Returns:
+        str: HTML string containing the formatted response and images
+    """
     image_htmls = "".join(
         [
             f'<img src="{url}" alt="Image" style="display:block; width:auto; height:auto; max-width:50%;"/>'
@@ -28,6 +52,15 @@ def construct_response_html(response: tuple[str, list[str]]) -> str:
 def construct_question_text(
     question: str, responses: list[tuple[str, list[str]]]
 ) -> str:
+    """Construct plain text version of a question and its responses.
+
+    Args:
+        question: The question text
+        responses: List of tuples containing (response text, list of image URLs)
+
+    Returns:
+        str: Plain text string containing the question and responses
+    """
     return (
         f"{question}:\n"
         + "\n".join([response[0] for response in responses])
@@ -42,6 +75,23 @@ def construct_send_letter_email(
     letter_api_id: str,
     letter_dict: dict[str, list[tuple[str, list[str]]]],
 ) -> EmailDraft:
+    """Construct an email draft containing a complete letter.
+
+    Creates an email draft with all questions and responses from a letter,
+    formatted in both HTML and plain text versions. The HTML version includes
+    images and proper formatting, while the plain text version serves as a
+    fallback for non-HTML email clients.
+
+    Args:
+        recipients: List of email addresses to send to
+        letter_number: The sequential number of this letter
+        group_name: Name of the group
+        letter_api_id: API identifier of the letter
+        letter_dict: Dictionary mapping questions to lists of responses
+
+    Returns:
+        EmailDraft: A draft email ready to be sent
+    """
     question_text = "".join(
         construct_question_text(q, r) for q, r in letter_dict.items()
     )

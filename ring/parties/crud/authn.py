@@ -5,11 +5,27 @@ from ring.worker.celery_app import CeleryTask, register_task_factory
 
 
 def reset_user_password(db_user: User, new_password: str) -> None:
+    """Reset a user's password with a new hashed password.
+
+    Args:
+        db_user (User): User whose password needs to be reset
+        new_password (str): New password to set (will be hashed)
+    """
     db_user.hashed_password = get_password_hash(new_password)
 
 
 @register_task_factory(name="email_password_reset")
 def email_password_reset(self: CeleryTask, email: str, token: str) -> None:
+    """Send a password reset email to a user.
+
+    This is a Celery task that constructs and sends a password reset email
+    containing a reset token.
+
+    Args:
+        self (CeleryTask): Celery task instance
+        email (str): Recipient's email address
+        token (str): Password reset token
+    """
     email_draft = construct_password_reset_email(email, token)
     send_email(email_draft)
 
@@ -18,6 +34,17 @@ def construct_password_reset_email(
     recipient: str,
     token: str,
 ) -> EmailDraft:
+    """Construct an email draft for password reset.
+
+    Creates an HTML email containing a link with a password reset token.
+
+    Args:
+        recipient (str): Email address of the recipient
+        token (str): Password reset token to include in the reset link
+
+    Returns:
+        EmailDraft: Email draft ready to be sent
+    """
     BODY_HTML = """
     <html>
     <head></head>

@@ -1,3 +1,9 @@
+"""CRUD operations for letter management.
+
+This module provides functions for managing letters in the Ring system, including
+creation, scheduling, question management, and task scheduling for reminders.
+"""
+
 from __future__ import annotations
 
 import random
@@ -29,6 +35,20 @@ if TYPE_CHECKING:
 def get_letters(
     db: Session, group_api_id: str, skip: int = 0, limit: int = 100
 ) -> Sequence[Letter]:
+    """Retrieve letters for a specific group with pagination.
+
+    Args:
+        db (Session): Database session
+        group_api_id (str): API identifier of the group
+        skip (int, optional): Number of records to skip. Defaults to 0.
+        limit (int, optional): Maximum number of records to return. Defaults to 100.
+
+    Returns:
+        Sequence[Letter]: List of letters
+
+    Raises:
+        IDNotFoundException: If group with given API ID is not found
+    """
     group = api_identifier_crud.get_model(db, Group, api_id=group_api_id)
     return db.scalars(
         select(Letter).filter(Letter.group == group).offset(skip).limit(limit)
@@ -38,12 +58,15 @@ def get_letters(
 def get_letters_for_user(
     db: Session, user: User, filters: list[ColumnElement[bool]] | None = None
 ) -> Sequence[Letter]:
-    """
-    Return all letters that a user is a participant in
+    """Return all letters that a user is a participant in.
 
-    :param db: Database session
-    :param user: User
-    :return: List of letters
+    Args:
+        db (Session): Database session
+        user (User): User to get letters for
+        filters (list[ColumnElement[bool]] | None, optional): Additional filters to apply. Defaults to None.
+
+    Returns:
+        Sequence[Letter]: List of letters
     """
     query_filters = [User.id == user.id]
     if filters:
@@ -60,6 +83,21 @@ def create_letter(
     number: int | None = None,
     letter_status: LetterStatus = LetterStatus.UPCOMING,
 ) -> Letter:
+    """Create a new letter for a group.
+
+    Args:
+        db (Session): Database session
+        group_api_id (str): API identifier of the group
+        send_at (datetime): When the letter should be sent
+        number (int | None, optional): Sequential number for the letter. Defaults to None.
+        letter_status (LetterStatus, optional): Status of the letter. Defaults to UPCOMING.
+
+    Returns:
+        Letter: Newly created letter
+
+    Raises:
+        IDNotFoundException: If group with given API ID is not found
+    """
     group = api_identifier_crud.get_model(
         db,
         Group,
@@ -80,6 +118,21 @@ def create_letter_with_questions(
     number: int | None = None,
     letter_status: LetterStatus = LetterStatus.UPCOMING,
 ) -> Letter:
+    """Create a new letter with default and random questions.
+
+    Args:
+        db (Session): Database session
+        group_api_id (str): API identifier of the group
+        send_at (datetime): When the letter should be sent
+        number (int | None, optional): Sequential number for the letter. Defaults to None.
+        letter_status (LetterStatus, optional): Status of the letter. Defaults to UPCOMING.
+
+    Returns:
+        Letter: Newly created letter with questions
+
+    Raises:
+        IDNotFoundException: If group with given API ID is not found
+    """
     letter = create_letter(db, group_api_id, send_at, number, letter_status)
     add_random_questions(db, letter)
     group = api_identifier_crud.get_model(db, Group, api_id=group_api_id)
@@ -98,6 +151,16 @@ def edit_letter(
     letter: Letter,
     send_at: datetime,
 ) -> Letter:
+    """Update a letter's send time and associated tasks.
+
+    Args:
+        db (Session): Database session
+        letter (Letter): Letter to update
+        send_at (datetime): New time to send the letter
+
+    Returns:
+        Letter: Updated letter
+    """
     upsert_letter_tasks(db, letter, send_at)
     letter.send_at = send_at
     db.flush()
@@ -107,6 +170,17 @@ def edit_letter(
 def upsert_letter_tasks(
     db: Session, letter: Letter, send_at: datetime
 ) -> None:
+    """Create or update tasks associated with a letter.
+
+    Creates or updates tasks for:
+    - Sending the letter email
+    - Sending reminder emails (8 days and 1 day before)
+
+    Args:
+        db (Session): Database session
+        letter (Letter): Letter to create/update tasks for
+        send_at (datetime): When the letter should be sent
+    """
     # send email
     send_email_task = schedule_crud.update_task(
         db,
@@ -179,48 +253,81 @@ def upsert_letter_tasks(
 def add_question(
     db: Session, letter: Letter, question_text: str, author: User | None = None
 ) -> Question:
-    question = Question.create(letter, question_text, author)
-    db.add(question)
-    letter.questions.append(question)
-    return question
+    """Add a question to a letter.
+
+    Args:
+        db (Session): Database session
+        letter (Letter): Letter to add question to
+        question_text (str): Text of the question
+        author (User | None, optional): Author of the question. Defaults to None.
+
+    Returns:
+        Question: Created question
+    """
+    db_question = Question.create(letter, question_text, author=author)
+    db.add(db_question)
+    return db_question
 
 
 def add_default_questions(db: Session, letter: Letter) -> Sequence[Question]:
-    questions = [
-        Question.create(
-            letter,
-            text,
-            author=None,
-        )
-        for text in DEFAULT_QUESTIONS
-    ]
-    db.add_all(questions)
-    letter.questions.extend(questions)
+    """Add default questions to a letter.
+
+    Args:
+        db (Session): Database session
+        letter (Letter): Letter to add questions to
+
+    Returns:
+        Sequence[Question]: List of created questions
+    """
+    questions = []
+    for question_text in DEFAULT_QUESTIONS:
+        question = add_question(db, letter, question_text)
+        questions.append(question)
     return questions
 
 
 def add_random_questions(
     db: Session, letter: Letter, num_questions: int = 3
 ) -> Sequence[Question]:
-    questions: list[Question] = []
-    texts = random.sample(QUESTION_BANK, num_questions)
-    for text in texts:
-        # idx = randint(0, len(DEFAULT_QUESTIONS) - 1)
-        question = Question.create(
-            letter,
-            text,
-            author=None,
-        )
+    """Add random questions from the question bank to a letter.
+
+    Args:
+        db (Session): Database session
+        letter (Letter): Letter to add questions to
+        num_questions (int, optional): Number of questions to add. Defaults to 3.
+
+    Returns:
+        Sequence[Question]: List of created questions
+    """
+    questions = []
+    for question_text in random.sample(QUESTION_BANK, num_questions):
+        question = add_question(db, letter, question_text)
         questions.append(question)
-    db.add_all(questions)
-    letter.questions.extend(questions)
     return questions
 
 
 def compile_letter_dict(
     letter: Letter,
 ) -> dict[str, list[tuple[str, list[str]]]]:
+    """Compile a letter's questions and responses into a dictionary format.
+
+    Args:
+        letter (Letter): Letter to compile
+
+    Returns:
+        dict[str, list[tuple[str, list[str]]]]: Dictionary mapping question text to
+            list of tuples containing (author name, list of responses)
+    """
+
     def construct_question_text(question: Question) -> str:
+        """Construct the display text for a question.
+
+        Args:
+            question (Question): Question to format
+
+        Returns:
+            str: Formatted question text with optional author
+        """
         return (
             f"{question.author.name}: {question.question_text}"
             if question.author
@@ -228,17 +335,17 @@ def compile_letter_dict(
         )
 
     return {
-        construct_question_text(q): [
+        construct_question_text(question): [
             (
-                f"{resp.participant.name}: {resp.response_text}",
+                f"{response.participant.name}: {response.response_text}",
                 [
                     assoc.image.qualified_s3_url
-                    for assoc in resp.image_associations
+                    for assoc in response.image_associations
                 ],
             )
-            for resp in q.responses
+            for response in question.responses
         ]
-        for q in sorted(
+        for question in sorted(
             letter.questions, key=lambda q: q.created_at, reverse=True
         )
     }
@@ -248,36 +355,63 @@ def collect_future_letters(
     db: Session,
     recent_time: datetime,
 ) -> tuple[Sequence[Letter], Sequence[Letter]]:
-    letters = db.scalars(
+    """Collect letters that need to be promoted or postpended.
+
+    This function collects letters that need to be promoted or postpended based on
+    the time threshold for recent letters and only if the group does not already
+    have a letter in the same status.
+
+    Args:
+        db (Session): Database session
+        recent_time (datetime): Time threshold for recent letters
+
+    Returns:
+        tuple[Sequence[Letter], Sequence[Letter]]: Tuple containing:
+            - Letters to be postpended
+            - Letters to be promoted to IN_PROGRESS
+    """
+    letters_to_promote = db.scalars(
         select(Letter)
         .where(
-            Letter.send_at < recent_time,
-            Letter.status.in_(
-                [LetterStatus.IN_PROGRESS, LetterStatus.UPCOMING]
-            ),
+            Letter.status == LetterStatus.UPCOMING,
+            Letter.send_at <= recent_time,
         )
         .order_by(Letter.send_at)
     ).all()
-    letters_to_be_postpended: list[Letter] = []
-    letters_to_be_promoted: list[Letter] = []
-    for letter in letters:
-        if letter.status == LetterStatus.IN_PROGRESS:
-            if not letter.group.upcoming_letter:
-                letters_to_be_postpended.append(letter)
-        else:
-            if not letter.group.in_progress_letter:
-                letters_to_be_promoted.append(letter)
 
-    return letters_to_be_postpended, letters_to_be_promoted
+    letters_to_postpend = db.scalars(
+        select(Letter)
+        .where(
+            Letter.status == LetterStatus.IN_PROGRESS,
+            Letter.send_at <= recent_time,
+        )
+        .order_by(Letter.send_at)
+    ).all()
+    letters_to_promote = [
+        l for l in letters_to_promote if not l.group.in_progress_letter
+    ]
+    letters_to_postpend = [
+        l for l in letters_to_postpend if not l.group.upcoming_letter
+    ]
+    return letters_to_postpend, letters_to_promote
 
 
 @register_task_factory(name="promote_and_create_new_letters")
 def promote_and_create_new_letters(
     self: CeleryTask, letter_ids: list[int]
 ) -> None:
-    letters = (
-        self.session.query(Letter).filter(Letter.id.in_(letter_ids)).all()
-    )
+    """Promote letters to IN_PROGRESS and create new upcoming letters.
+
+    This task is triggered when letters need to be promoted from UPCOMING to
+    IN_PROGRESS status. It also creates new upcoming letters for the affected groups.
+
+    Args:
+        self (CeleryTask): Celery task instance
+        letter_ids (list[int]): IDs of letters to promote
+    """
+    letters = self.session.scalars(
+        select(Letter).where(Letter.id.in_(letter_ids))
+    ).all()
     for letter in letters:
         letter.status = LetterStatus.IN_PROGRESS
         create_letter_with_questions(
@@ -290,10 +424,20 @@ def promote_and_create_new_letters(
 
 @register_task_factory(name="postpend_upcoming_letters")
 def postpend_upcoming_letters(self: CeleryTask, letter_ids: list[int]) -> None:
-    letters = (
-        self.session.query(Letter).filter(Letter.id.in_(letter_ids)).all()
-    )
+    """Move letters to SENT status.
+
+    This task is triggered when letters need to be moved from IN_PROGRESS to
+    SENT status. It also creates a new upcoming letter for the affected groups.
+
+    Args:
+        self (CeleryTask): Celery task instance
+        letter_ids (list[int]): IDs of letters to postpend
+    """
+    letters = self.session.scalars(
+        select(Letter).where(Letter.id.in_(letter_ids))
+    ).all()
     for letter in letters:
+        letter.status = LetterStatus.SENT
         create_letter_with_questions(
             self.session,
             letter.group.api_identifier,
@@ -305,5 +449,11 @@ def postpend_upcoming_letters(self: CeleryTask, letter_ids: list[int]) -> None:
 def add_participants(
     db: Session, letter: Letter, participants: list[User]
 ) -> None:
-    for participant in participants:
-        letter.participants.append(participant)
+    """Add participants to a letter.
+
+    Args:
+        db (Session): Database session
+        letter (Letter): Letter to add participants to
+        participants (list[User]): Users to add as participants
+    """
+    letter.participants.extend(participants)

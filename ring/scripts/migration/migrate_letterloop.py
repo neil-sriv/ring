@@ -1,3 +1,10 @@
+"""Migration script to import legacy Letterloop text files into the Ring database.
+
+This script processes text files containing historical Letterloop issues and imports them
+into the Ring database. It parses questions, answers, and user information from the
+text files and creates the corresponding database records.
+"""
+
 from datetime import datetime
 from pathlib import Path
 from pprint import pp
@@ -22,6 +29,23 @@ def run_script(
     user_admin_email: str,
     dry_run: bool = True,
 ) -> None:
+    """Import a legacy Letterloop text file into the Ring database.
+
+    This function reads a text file containing a historical Letterloop issue and imports
+    it into the Ring database. It processes questions, answers, and user information
+    from the text file and creates the corresponding database records.
+
+    Args:
+        db (Session): SQLAlchemy database session
+        group_name (str): Name of the group the letter belongs to
+        issue_number (int): Issue number of the letter to import
+        user_admin_email (str): Email of the admin user for the group
+        dry_run (bool, optional): If True, rolls back all changes. Defaults to True.
+
+    Raises:
+        ValueError: If the specified text file is not found
+        AssertionError: If the specified admin user is not found
+    """
     issue_file_path = Path(
         f"/src/ring/scripts/migration/{group_name}/{issue_number}.txt"
     )
@@ -49,6 +73,18 @@ def run_script(
 
 
 def _get_group(db: Session, name: str) -> Group:
+    """Retrieve a group by name from the database.
+
+    Args:
+        db (Session): SQLAlchemy database session
+        name (str): Name of the group to retrieve
+
+    Returns:
+        Group: The retrieved group
+
+    Raises:
+        AssertionError: If the group doesn't exist
+    """
     group = db.scalars(select(Group).where(Group.name == name)).one_or_none()
     assert group is not None, f"Group doesn't exist: {name}"
     return group
@@ -57,6 +93,16 @@ def _get_group(db: Session, name: str) -> Group:
 def _create_letter(
     db: Session, group: Group, sent_at: datetime | None = None
 ) -> Letter:
+    """Create a new letter record in the database.
+
+    Args:
+        db (Session): SQLAlchemy database session
+        group (Group): Group the letter belongs to
+        sent_at (datetime | None, optional): When the letter was sent. Defaults to None.
+
+    Returns:
+        Letter: The created letter record
+    """
     letter = letter_crud.create_letter(
         db,
         group.api_identifier,
@@ -69,6 +115,19 @@ def _create_letter(
 
 
 def _parse_issue(db: Session, issue_lines: list[str], user: User) -> Letter:
+    """Parse a legacy Letterloop text file and create database records.
+
+    This function processes the lines from a legacy Letterloop text file and creates
+    the corresponding database records for the letter, questions, and responses.
+
+    Args:
+        db (Session): SQLAlchemy database session
+        issue_lines (list[str]): Lines from the text file to parse
+        user (User): Admin user for the group
+
+    Returns:
+        Letter: The created letter record
+    """
     group = _get_group(db, issue_lines[0].strip())
     m, d = issue_lines[2].strip().split(" ")[-2:]
     d = d[:-2]

@@ -1,3 +1,9 @@
+"""Interactive shell for Ring development.
+
+This module provides an enhanced IPython shell for Ring development with
+auto-imports, auto-reloading, and access to common Ring components.
+"""
+
 # ruff: noqa: F401
 # pyright: reportUnusedImport=false
 # flake8: noqa: F401
@@ -14,7 +20,18 @@ from ring.sqlalchemy_base import Session
 from ring.tasks.crud import schedule as schedule_crud
 
 
-def _autoreload():
+def _autoreload() -> str:
+    """Configure IPython extensions for development.
+
+    This function enables several IPython extensions that enhance the development
+    experience:
+    - autoreload: Automatically reloads modules when they change
+    - pprintpp: Provides pretty printing for better output formatting
+    - ipython_autoimport: Automatically imports commonly used modules
+
+    Returns:
+        str: Confirmation message indicating autoreload is enabled
+    """
     for extension in ["autoreload", "pprintpp", "ipython_autoimport"]:
         get_ipython().run_line_magic("load_ext", extension)  # type: ignore # noqa: F821
     get_ipython().run_line_magic("autoreload", "2")  # type: ignore  # noqa: F821
@@ -23,6 +40,18 @@ def _autoreload():
 
 @script_di()
 def run_script(db: Session) -> None:
+    """Launch an enhanced IPython shell for Ring development.
+
+    This function sets up an IPython shell with:
+    - Auto-reloading of modules
+    - Pre-imported Ring models and utilities
+    - Database session
+    - SQLAlchemy integration
+    - Configured logging
+
+    Args:
+        db (Session): Database session provided by script_di
+    """
     # import ring.postgres_models
     import click
     import sqlalchemy

@@ -1,3 +1,9 @@
+"""FastAPI application entry point for Ring.
+
+This module sets up the FastAPI application with CORS middleware, exception handlers,
+and request logging. It serves as the main entry point for the Ring API service.
+"""
+
 from typing import Awaitable, Callable, TypeVar
 
 from fastapi import FastAPI, Request, Response
@@ -31,6 +37,15 @@ app.include_router(router)
 async def id_not_found_exception_handler(
     request: Request, exc: IDNotFoundException
 ) -> JSONResponse:
+    """Handle exceptions when API identifiers are not found.
+
+    Args:
+        request (Request): The incoming HTTP request
+        exc (IDNotFoundException): The exception containing details about missing identifiers
+
+    Returns:
+        JSONResponse: A 404 response with details about the missing identifiers
+    """
     return JSONResponse(
         status_code=404,
         content={
@@ -46,6 +61,18 @@ async def log_requests(
     request: Request,
     call_next: Callable[[Request], Awaitable[Response]],
 ) -> Response:
+    """Log HTTP request and response details.
+
+    This middleware logs the HTTP method and URL for each request,
+    and the status code for each response.
+
+    Args:
+        request (Request): The incoming HTTP request
+        call_next (Callable[[Request], Awaitable[Response]]): Function to call the next middleware or route handler
+
+    Returns:
+        Response: The HTTP response
+    """
     logger.info(f"Request: {request.method} {request.url}")
     response = await call_next(request)
     logger.info(f"Response: {response.status_code}")

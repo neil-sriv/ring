@@ -2,17 +2,27 @@ from enum import StrEnum
 
 
 class LetterStatus(StrEnum):
+    """Enumeration of possible letter statuses.
+    Represents the different states a letter can be in within the system:
+    - UPCOMING: Letter is scheduled but not yet active
+    - IN_PROGRESS: Letter is currently active and accepting responses
+    - SENT: Letter has been completed and sent
+    """
+
     UPCOMING = "UPCOMING"
     IN_PROGRESS = "IN_PROGRESS"
     SENT = "SENT"
 
 
+#  Default questions that are automatically added to new letters
 DEFAULT_QUESTIONS = [
     "📸 Photo Wall",
     "🌤️ One Good Thing",
     "💭 On Your Mind",
     "👀 Check it Out",
 ]
+
+#  Default questions that are automatically added to new letters
 QUESTION_BANK = [
     "What's a moment in your life that felt like a crossroads?",
     "If you could alter one decision you made in your early 20s, what would it be?",

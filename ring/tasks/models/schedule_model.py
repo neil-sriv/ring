@@ -1,3 +1,10 @@
+"""SQLAlchemy model for Ring's task scheduling system.
+
+This module defines the Schedule model which manages task scheduling for groups.
+Each group can have one schedule that contains multiple tasks of different types.
+The Schedule model provides methods to access and manage these tasks efficiently.
+"""
+
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
@@ -16,6 +23,19 @@ if TYPE_CHECKING:
 
 
 class Schedule(Base, PydanticModel):
+    """Schedule model for managing group tasks.
+
+    This model represents a schedule associated with a group, managing various types
+    of tasks like email sending and reminders. Each group can have only one schedule,
+    enforced by a unique constraint on group_id.
+
+    Attributes:
+        id: Unique identifier for the schedule
+        group_id: Foreign key to the associated group
+        group: Relationship to the Group model
+        tasks: List of tasks associated with this schedule
+    """
+
     __tablename__ = "schedule"
 
     PYDANTIC_MODEL = ScheduleLinked
@@ -37,12 +57,28 @@ class Schedule(Base, PydanticModel):
 
     @classmethod
     def create(cls, group: Group) -> Schedule:
+        """Create a new schedule for a group.
+
+        Args:
+            group: The group to create a schedule for
+
+        Returns:
+            Schedule: A new Schedule instance
+
+        Raises:
+            ValueError: If the group already has a schedule
+        """
         if group.schedule:
             raise ValueError("Group already has a schedule")
         return cls(group=group)
 
     @hybrid_property
     def send_email_tasks(self) -> list[Task]:
+        """Get all pending email send tasks.
+
+        Returns:
+            list[Task]: List of pending tasks of type SEND_EMAIL
+        """
         return [
             task
             for task in self.tasks
@@ -52,6 +88,11 @@ class Schedule(Base, PydanticModel):
 
     @hybrid_property
     def reminder_email_tasks(self) -> list[Task]:
+        """Get all pending reminder email tasks.
+
+        Returns:
+            list[Task]: List of pending tasks of type REMINDER_EMAIL
+        """
         return [
             task
             for task in self.tasks

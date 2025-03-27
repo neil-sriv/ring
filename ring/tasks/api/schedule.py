@@ -1,3 +1,10 @@
+"""API endpoints for managing task schedules.
+
+This module provides FastAPI route handlers for retrieving and managing schedules
+associated with groups. It includes endpoints for viewing task schedules and their
+associated tasks.
+"""
+
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
@@ -29,4 +36,16 @@ async def get_schedule_for_group(
         get_request_dependencies,
     ),
 ) -> Schedule:
+    """Get a group's schedule by its API identifier.
+
+    Args:
+        group_api_id: API identifier of the group
+        req_dep: Request dependencies including database session
+
+    Returns:
+        Schedule: The group's schedule with its associated tasks
+
+    Raises:
+        HTTPException: If the group is not found or user lacks permission
+    """
     return schedule_crud.get_schedule_for_group(req_dep.db, group_api_id)

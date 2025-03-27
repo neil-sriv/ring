@@ -1,3 +1,10 @@
+"""Alembic environment configuration for database migrations.
+
+This module configures the Alembic environment for running database migrations,
+including both online and offline modes. It sets up the SQLAlchemy connection
+and configures the migration context with the application's metadata.
+"""
+
 from logging.config import fileConfig
 
 from alembic import context
@@ -60,16 +67,14 @@ target_metadata = Base.metadata
 
 
 def run_migrations_offline() -> None:
-    """Run migrations in 'offline' mode.
+    """Run migrations in 'offline' mode without requiring a database connection.
 
-    This configures the context with just a URL
-    and not an Engine, though an Engine is acceptable
-    here as well.  By skipping the Engine creation
-    we don't even need a DBAPI to be available.
+    Configures the migration context with just a URL and executes migrations
+    without requiring an actual database connection. Useful for generating
+    SQL scripts that can be run later.
 
-    Calls to context.execute() here emit the given string to the
-    script output.
-
+    Raises:
+        alembic.util.CommandError: If the configuration is invalid
     """
     url = config.get_main_option("sqlalchemy.url")
     context.configure(
@@ -84,11 +89,15 @@ def run_migrations_offline() -> None:
 
 
 def run_migrations_online() -> None:
-    """Run migrations in 'online' mode.
+    """Run migrations in 'online' mode with an active database connection.
 
-    In this scenario we need to create an Engine
-    and associate a connection with the context.
+    Creates a SQLAlchemy Engine instance and executes migrations using
+    an active database connection. This is the default mode for running
+    migrations in a development or production environment.
 
+    Raises:
+        sqlalchemy.exc.SQLAlchemyError: If database connection fails
+        alembic.util.CommandError: If the configuration is invalid
     """
     connectable = engine_from_config(
         config.get_section(config.config_ini_section, {}),

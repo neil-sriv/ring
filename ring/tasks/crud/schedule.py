@@ -1,3 +1,10 @@
+"""CRUD operations and scheduling utilities for Ring's task system.
+
+This module provides functions for managing schedules and their associated tasks,
+including task registration, updates, and polling for pending tasks. It also
+handles the periodic scheduling of letter-related operations.
+"""
+
 from __future__ import annotations
 
 import datetime
@@ -22,6 +29,18 @@ if TYPE_CHECKING:
 
 
 def get_schedule_for_group(db: Session, group_api_id: str) -> Schedule:
+    """Get a group's schedule by the group's API identifier.
+
+    Args:
+        db: Database session
+        group_api_id: API identifier of the group
+
+    Returns:
+        Schedule: The group's schedule
+
+    Raises:
+        NoResultFound: If no group is found with the given API ID
+    """
     group = api_identifier_crud.get_model(db, Group, api_id=group_api_id)
     return group.schedule
 
@@ -33,6 +52,18 @@ def register_task(
     execute_at: datetime.datetime,
     arguments: dict[str, str] | None = None,
 ) -> Task:
+    """Register a new task with a schedule.
+
+    Args:
+        db: Database session
+        schedule: Schedule to register the task with
+        task_type: Type of task to register
+        execute_at: When the task should be executed
+        arguments: Optional arguments for task execution
+
+    Returns:
+        Task: The newly created task
+    """
     if not arguments:
         arguments = {}
     task = Task.create(schedule, task_type, execute_at, arguments)
@@ -47,6 +78,14 @@ def unregister_task(
     task_type: TaskType,
     execute_at: datetime.datetime,
 ):
+    """Remove a pending task from a schedule.
+
+    Args:
+        db: Database session
+        schedule: Schedule to remove the task from
+        task_type: Type of task to remove
+        execute_at: Execution time of the task to remove
+    """
     task = db.scalars(
         sqlalchemy.select(Task).where(
             Task.schedule_id == schedule.id,
@@ -68,6 +107,19 @@ def update_task(
     new_execute_at: datetime.datetime,
     arguments: dict[str, str] | None = None,
 ) -> Task | None:
+    """Update a pending task's execution time and arguments.
+
+    Args:
+        db: Database session
+        schedule: Schedule containing the task
+        task_type: Type of task to update
+        execute_at: Current execution time of the task
+        new_execute_at: New execution time for the task
+        arguments: Optional new arguments for task execution
+
+    Returns:
+        Task | None: The updated task, or None if no matching task is found
+    """
     task = db.scalars(
         sqlalchemy.select(Task).where(
             Task.schedule_id == schedule.id,
@@ -90,6 +142,18 @@ def collect_pending_tasks(
     db: Session,
     recent_time: datetime.datetime,
 ) -> Sequence[Task]:
+    """Collect all pending tasks that should be executed by a given time.
+
+    Tasks are ordered by schedule ID, type, and execution time to ensure
+    consistent processing order.
+
+    Args:
+        db: Database session
+        recent_time: Collect tasks scheduled up to this time
+
+    Returns:
+        Sequence[Task]: List of pending tasks to execute
+    """
     tasks = db.scalars(
         select(Task)
         .where(
@@ -104,6 +168,22 @@ def collect_pending_tasks(
 
 @register_task_factory(name="poll_schedule")
 def poll_schedule_task(self: CeleryTask) -> dict[str, str]:
+    """Celery task for polling schedules and executing pending tasks.
+
+    This task:
+    1. Collects and executes pending tasks
+    2. Identifies letters that need to be postpended or promoted
+    3. Schedules letter-related operations asynchronously
+
+    Args:
+        self: Celery task instance
+
+    Returns:
+        dict[str, str]: A dictionary containing:
+            - 'tasks_processed': Comma-separated list of processed task IDs
+            - 'letters_postpended': Comma-separated list of postpended letter IDs
+            - 'letters_promoted': Comma-separated list of promoted letter IDs
+    """
     from ring.letters.crud.letter import (
         collect_future_letters,
         postpend_upcoming_letters,

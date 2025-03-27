@@ -1,3 +1,9 @@
+"""SQLAlchemy model for group management.
+
+This module defines the Group model for managing user groups in the Ring system,
+including membership, letters, and scheduling.
+"""
+
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
@@ -23,6 +29,26 @@ if TYPE_CHECKING:
 
 
 class Group(Base, PydanticModel, APIIdentified, CreatedAtMixin):
+    """SQLAlchemy model representing a group of users.
+
+    This model represents a group that users can join, with an admin user,
+    scheduled letters, default questions, and associated metadata.
+
+    Attributes:
+        id (int): Primary key
+        name (str): Unique group name
+        api_identifier (str): Unique API identifier with 'grp' prefix
+        cycle_length (int): Number of days between letters, defaults to 30
+        admin_id (int): Foreign key to the admin user
+        admin (User): Admin user relationship
+        members (list[User]): Group members
+        letters (list[Letter]): Letters associated with the group
+        schedule (Schedule): Group's task schedule
+        default_questions (list[DefaultQuestion]): Default questions for letters
+        key_values (GroupKeyValue): Additional group metadata
+        created_at (datetime): Timestamp of group creation
+    """
+
     __tablename__ = "group"
 
     API_ID_PREFIX = "grp"
@@ -52,6 +78,12 @@ class Group(Base, PydanticModel, APIIdentified, CreatedAtMixin):
     )
 
     def __init__(self, name: str, admin: User) -> None:
+        """Initialize a new group.
+
+        Args:
+            name (str): Group name
+            admin (User): User who will be the group admin
+        """
         APIIdentified.__init__(self)
         self.schedule = Schedule.create(self)
         self.name = name
@@ -61,14 +93,36 @@ class Group(Base, PydanticModel, APIIdentified, CreatedAtMixin):
 
     @classmethod
     def create(cls, name: str, admin: User) -> Group:
+        """Create a new group instance.
+
+        Args:
+            name (str): Group name
+            admin (User): User who will be the group admin
+
+        Returns:
+            Group: New group instance
+        """
         return cls(name, admin)
 
     @hybrid_property
     def admin(self) -> User:  # type: ignore
+        """Get the group's admin user.
+
+        Returns:
+            User: Admin user
+        """
         return self._admin
 
     @admin.setter  # type: ignore
     def admin(self, admin: User) -> None:
+        """Set the group's admin user.
+
+        Args:
+            admin (User): New admin user
+
+        Raises:
+            ValueError: If admin is not a member of the group
+        """
         if admin in self.members:
             self._admin = admin
         else:
@@ -76,6 +130,14 @@ class Group(Base, PydanticModel, APIIdentified, CreatedAtMixin):
 
     @hybrid_property
     def in_progress_letter(self) -> Letter | None:
+        """Get the group's currently active letter.
+
+        Returns:
+            Letter | None: Active letter or None if no letter is in progress
+
+        Raises:
+            AssertionError: If more than one letter is in progress
+        """
         upcoming = [
             letter
             for letter in self.letters
@@ -86,6 +148,14 @@ class Group(Base, PydanticModel, APIIdentified, CreatedAtMixin):
 
     @hybrid_property
     def upcoming_letter(self) -> Letter | None:
+        """Get the group's next scheduled letter.
+
+        Returns:
+            Letter | None: Upcoming letter or None if no letter is scheduled
+
+        Raises:
+            AssertionError: If more than one letter is upcoming
+        """
         upcoming = [
             letter
             for letter in self.letters

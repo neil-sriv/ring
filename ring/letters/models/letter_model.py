@@ -1,3 +1,10 @@
+"""SQLAlchemy model for letter management.
+
+This module defines the Letter model, which represents a collection of questions
+sent to a group of participants at a specific time. It includes functionality for
+tracking status, participants, and associated responses.
+"""
+
 from __future__ import annotations
 
 from datetime import datetime
@@ -37,6 +44,22 @@ letter_to_user_assocation = Table(
 
 
 class Letter(Base, APIIdentified, PydanticModel, CreatedAtMixin):
+    """SQLAlchemy model representing a letter in the system.
+
+    A letter is a collection of questions sent to a group of participants at a specific time.
+    It tracks the status, participants, and associated responses.
+
+    Attributes:
+        id (Mapped[int]): Primary key identifier
+        number (Mapped[int]): Sequential number of the letter within its group
+        api_identifier (Mapped[str]): Unique API identifier for the letter
+        status (Mapped[str]): Current status of the letter
+        send_at (Mapped[datetime]): Scheduled send time of the letter
+        participants (Mapped[list[User]]): List of users participating in the letter
+        group (Mapped[Group]): Group to which the letter belongs
+        questions (Mapped[list[Question]]): List of questions in the letter
+    """
+
     __tablename__ = "letter"
 
     API_ID_PREFIX = "lttr"
@@ -63,6 +86,11 @@ class Letter(Base, APIIdentified, PydanticModel, CreatedAtMixin):
 
     @declared_attr  # type: ignore
     def __table_args__(cls) -> tuple[Constraint]:
+        """Define table constraints.
+
+        Returns:
+            tuple[Constraint]: Tuple of table constraints
+        """
         return (
             UniqueConstraint(
                 "group_id",
@@ -78,6 +106,14 @@ class Letter(Base, APIIdentified, PydanticModel, CreatedAtMixin):
         status: LetterStatus,
         number: int | None = None,
     ) -> None:
+        """Initialize a new Letter instance.
+
+        Args:
+            group (Group): Group to which the letter belongs
+            send_at (datetime): Scheduled send time of the letter
+            status (LetterStatus): Initial status of the letter
+            number (int | None, optional): Letter number. Defaults to None.
+        """
         APIIdentified.__init__(self)
         self.number = number if number else len(group.letters) + 1
         self.group = group
@@ -93,11 +129,29 @@ class Letter(Base, APIIdentified, PydanticModel, CreatedAtMixin):
         letter_status: LetterStatus,
         number: int | None = None,
     ) -> Letter:
+        """Create a new Letter instance.
+
+        Factory method to create a new letter with the given parameters.
+
+        Args:
+            group (Group): Group to which the letter belongs
+            send_at (datetime): Scheduled send time of the letter
+            letter_status (LetterStatus): Initial status of the letter
+            number (int | None, optional): Letter number. Defaults to None.
+
+        Returns:
+            Letter: New Letter instance
+        """
         letter = cls(group, send_at, letter_status, number=number)
         return letter
 
     @hybrid_property
     def responders(self) -> list[User]:
+        """Get list of users who have responded to any question in the letter.
+
+        Returns:
+            list[User]: List of users who have submitted responses
+        """
         respondents = {
             response.participant
             for question in self.questions

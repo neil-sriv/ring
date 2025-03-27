@@ -32,6 +32,18 @@ async def read_group_key_values(
         get_request_dependencies,
     ),
 ) -> GroupKeyValue:
+    """Get all key-value pairs for a group.
+
+    Args:
+        group_api_id (str): API identifier of the group
+        req_dep (AuthenticatedRequestDependencies): Request dependencies
+
+    Returns:
+        GroupKeyValue: Dictionary of all key-value pairs
+
+    Raises:
+        HTTPException: If group not found or user is not a member
+    """
     db_group = get_model(req_dep.db, Group, api_id=group_api_id)
     if req_dep.current_user not in db_group.members:
         raise HTTPException(
@@ -53,6 +65,19 @@ async def read_group_key_value(
         get_request_dependencies,
     ),
 ) -> GroupKeyValueBase:
+    """Get a specific key-value pair for a group.
+
+    Args:
+        group_api_id (str): API identifier of the group
+        key (str): Key to retrieve
+        req_dep (AuthenticatedRequestDependencies): Request dependencies
+
+    Returns:
+        GroupKeyValueBase: Key-value pair
+
+    Raises:
+        HTTPException: If group not found or user is not a member
+    """
     db_group = get_model(req_dep.db, Group, api_id=group_api_id)
     if req_dep.current_user not in db_group.members:
         raise HTTPException(
@@ -73,6 +98,19 @@ async def upsert_group_key_value(
         get_request_dependencies,
     ),
 ) -> GroupKeyValueBase:
+    """Update or delete a single key-value pair for a group.
+
+    Args:
+        group_api_id (str): API identifier of the group
+        update (SingleGroupKeyValueUpdate): Update operation details
+        req_dep (AuthenticatedRequestDependencies): Request dependencies
+
+    Returns:
+        GroupKeyValueBase: Updated key-value pair
+
+    Raises:
+        HTTPException: If group not found or user is not a member
+    """
     db_group = get_model(req_dep.db, Group, api_id=group_api_id)
     if req_dep.current_user not in db_group.members:
         raise HTTPException(
@@ -100,6 +138,19 @@ async def bulk_update_group_key_values(
         get_request_dependencies,
     ),
 ) -> GroupKeyValue:
+    """Update or delete multiple key-value pairs for a group.
+
+    Args:
+        group_api_id (str): API identifier of the group
+        updates (BulkGroupKeyValueUpdate): List of update operations
+        req_dep (AuthenticatedRequestDependencies): Request dependencies
+
+    Returns:
+        GroupKeyValue: All key-value pairs after updates
+
+    Raises:
+        HTTPException: If group not found or user is not a member
+    """
     db_group = get_model(req_dep.db, Group, api_id=group_api_id)
     if req_dep.current_user not in db_group.members:
         raise HTTPException(
@@ -125,6 +176,19 @@ async def full_replace_group_key_values(
         get_request_dependencies,
     ),
 ) -> GroupKeyValue:
+    """Replace all key-value pairs for a group.
+
+    Args:
+        group_api_id (str): API identifier of the group
+        updates (GroupKeyValue): New key-value pairs
+        req_dep (AuthenticatedRequestDependencies): Request dependencies
+
+    Returns:
+        GroupKeyValue: Updated key-value pairs
+
+    Raises:
+        HTTPException: If group not found or user is not a member
+    """
     db_group = get_model(req_dep.db, Group, api_id=group_api_id)
     if req_dep.current_user not in db_group.members:
         raise HTTPException(

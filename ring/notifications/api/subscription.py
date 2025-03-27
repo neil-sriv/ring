@@ -1,3 +1,9 @@
+"""API endpoints for managing web push notification subscriptions.
+
+This module provides endpoints for creating and managing web push notification
+subscriptions, allowing users to receive notifications through their browsers.
+"""
+
 from __future__ import annotations
 
 from fastapi import APIRouter, Depends
@@ -24,8 +30,21 @@ def post_subscription(
         get_request_dependencies,
     ),
 ) -> ResponseMessage:
-    """
-    Create a subscription for the given email.
+    """Create a new web push notification subscription.
+
+    Creates a subscription for the authenticated user to receive web push
+    notifications. If a subscription with the same endpoint already exists,
+    returns a message indicating this instead of creating a duplicate.
+
+    Args:
+        subscription (SubscriptionCreate): Subscription details including endpoint and keys
+        req_dep (AuthenticatedRequestDependencies): Request dependencies including database session
+
+    Returns:
+        ResponseMessage: Message indicating success or existing subscription
+
+    Raises:
+        HTTPException: If user is not authenticated
     """
     if get_subscription_by_endpoint(req_dep.db, subscription.endpoint):
         logger.warning(

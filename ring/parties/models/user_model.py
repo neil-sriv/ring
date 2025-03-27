@@ -1,3 +1,9 @@
+"""SQLAlchemy model for user management.
+
+This module defines the User model for managing user accounts in the Ring system,
+including authentication, group memberships, and associated data.
+"""
+
 from __future__ import annotations
 
 from typing import TYPE_CHECKING, Optional
@@ -18,6 +24,23 @@ if TYPE_CHECKING:
 
 
 class User(Base, APIIdentified, PydanticModel, CreatedAtMixin):
+    """SQLAlchemy model representing a user in the system.
+
+    This model represents a user account with authentication details,
+    group memberships, and associated responses and notifications.
+
+    Attributes:
+        id (int): Primary key
+        name (Optional[str]): User's display name
+        email (str): User's unique email address
+        hashed_password (str): Securely hashed password
+        api_identifier (str): Unique API identifier with 'usr' prefix
+        groups (list[Group]): Groups the user is a member of
+        responses (list[Response]): User's responses to questions
+        notification_subscriptions (list[Subscription]): Web push subscriptions
+        created_at (datetime): Timestamp of user creation
+    """
+
     __allow_unmapped__ = True
     __tablename__ = "user"
 
@@ -45,6 +68,13 @@ class User(Base, APIIdentified, PydanticModel, CreatedAtMixin):
         name: Optional[str],
         hashed_password: str,
     ) -> None:
+        """Initialize a new user.
+
+        Args:
+            email (str): User's email address
+            name (Optional[str]): User's display name
+            hashed_password (str): Pre-hashed password
+        """
         APIIdentified.__init__(self)
         self.email = email
         self.name = name
@@ -57,4 +87,14 @@ class User(Base, APIIdentified, PydanticModel, CreatedAtMixin):
         name: Optional[str],
         hashed_password: str,
     ) -> User:
+        """Create a new user instance.
+
+        Args:
+            email (str): User's email address
+            name (Optional[str]): User's display name
+            hashed_password (str): Pre-hashed password
+
+        Returns:
+            User: New user instance
+        """
         return cls(email, name, hashed_password)

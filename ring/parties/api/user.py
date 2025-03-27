@@ -42,6 +42,14 @@ async def read_user_me(
         get_request_dependencies,
     ),
 ) -> User:
+    """Get the current authenticated user's information.
+
+    Args:
+        req_dep (AuthenticatedRequestDependencies): Request dependencies
+
+    Returns:
+        User: Current user's information
+    """
     return req_dep.current_user
 
 
@@ -54,6 +62,21 @@ async def create_user(
         get_unauthenticated_request_dependencies,
     ),
 ) -> User:
+    """Create a new user (deprecated).
+
+    Args:
+        user (UserCreate): User creation parameters
+        req_dep (RequestDependenciesBase): Request dependencies
+
+    Returns:
+        User: Created user
+
+    Raises:
+        HTTPException: If email is already registered
+
+    Note:
+        This endpoint is deprecated. Use /register/{token} instead.
+    """
     db_user = user_crud.get_user_by_email(req_dep.db, email=user.email)
     if db_user:
         raise HTTPException(status_code=400, detail="Email already registered")
@@ -75,6 +98,19 @@ async def register_user(
         get_unauthenticated_request_dependencies,
     ),
 ) -> User:
+    """Register a new user with an invite token.
+
+    Args:
+        token (str): Invite token
+        user (UserCreate): User creation parameters
+        req_dep (RequestDependenciesBase): Request dependencies
+
+    Returns:
+        User: Created user
+
+    Raises:
+        HTTPException: If token is invalid, expired, already used, or email mismatch
+    """
     try:
         db_invite = invite_crud.get_invite_by_token(req_dep.db, token)
     except (TokenAlreadyUsedError, TokenExpiredError):
@@ -109,6 +145,16 @@ async def read_users(
         get_request_dependencies,
     ),
 ) -> Sequence[User]:
+    """Get a list of users with pagination.
+
+    Args:
+        skip (int, optional): Number of records to skip. Defaults to 0.
+        limit (int, optional): Maximum number of records to return. Defaults to 100.
+        req_dep (AuthenticatedRequestDependencies): Request dependencies
+
+    Returns:
+        Sequence[User]: List of users
+    """
     users = user_crud.get_users(req_dep.db, skip=skip, limit=limit)
     return users
 
@@ -120,6 +166,18 @@ async def read_user_by_id(
         get_request_dependencies,
     ),
 ) -> User:
+    """Get a user by their API identifier.
+
+    Args:
+        user_api_id (str): API identifier of the user
+        req_dep (AuthenticatedRequestDependencies): Request dependencies
+
+    Returns:
+        User: User information
+
+    Raises:
+        HTTPException: If user not found
+    """
     db_user = api_identifier_crud.get_model(
         req_dep.db,
         User,
@@ -138,8 +196,17 @@ def update_user_me(
         get_request_dependencies,
     ),
 ) -> User:
-    """
-    Update own user.
+    """Update current user's information.
+
+    Args:
+        current_user_update_data (UserUpdate): User update parameters
+        req_dep (AuthenticatedRequestDependencies): Request dependencies
+
+    Returns:
+        User: Updated user information
+
+    Raises:
+        HTTPException: If new email is already registered by another user
     """
     if current_user_update_data.email:
         db_user = user_crud.get_user_by_email(
@@ -165,8 +232,17 @@ def update_password_me(
         get_request_dependencies,
     ),
 ) -> ResponseMessage:
-    """
-    Update own password.
+    """Update current user's password.
+
+    Args:
+        update_password_data (UserUpdatePassword): Password update parameters
+        req_dep (AuthenticatedRequestDependencies): Request dependencies
+
+    Returns:
+        ResponseMessage: Success message
+
+    Raises:
+        HTTPException: If current password is incorrect or new password is same as current
     """
     if not user_crud._verify_password(
         update_password_data.current_password,
@@ -192,31 +268,39 @@ def update_password_me(
 
 @router.delete("/me", deprecated=True)
 def delete_user_me() -> None:
-    """
-    Delete own user.
+    """Delete current user (deprecated).
+
+    Note:
+        This endpoint is not implemented and is deprecated.
     """
     raise NotImplementedError()
 
 
 @router.post("/signup", deprecated=True)
 def signup() -> None:
-    """
-    Create new user without the need to be logged in.
+    """Sign up a new user without invitation (deprecated).
+
+    Note:
+        This endpoint is not implemented and is deprecated.
     """
     raise NotImplementedError()
 
 
 @router.patch("/{user_id}", deprecated=True)
 def update_user() -> None:
-    """
-    Update a user.
+    """Update any user (deprecated).
+
+    Note:
+        This endpoint is not implemented and is deprecated.
     """
     raise NotImplementedError()
 
 
 @router.delete("/{user_id}", deprecated=True)
 def delete_user() -> None:
-    """
-    Delete a user.
+    """Delete any user (deprecated).
+
+    Note:
+        This endpoint is not implemented and is deprecated.
     """
     raise NotImplementedError()

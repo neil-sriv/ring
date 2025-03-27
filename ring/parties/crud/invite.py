@@ -1,3 +1,9 @@
+"""CRUD operations for managing group invitations.
+
+This module provides functions for creating and managing invitations to join groups,
+including email notifications and token validation.
+"""
+
 from __future__ import annotations
 
 from typing import TYPE_CHECKING, Sequence
@@ -25,6 +31,18 @@ def get_invites(
     skip: int = 0,
     limit: int = 100,
 ) -> Sequence[Invite]:
+    """Get all invites sent by a user.
+
+    Args:
+        db (Session): Database session
+        inviter_api_id (str): API identifier of the inviter
+        expired (bool, optional): Whether to get expired invites. Defaults to False.
+        skip (int, optional): Number of records to skip. Defaults to 0.
+        limit (int, optional): Maximum number of records to return. Defaults to 100.
+
+    Returns:
+        Sequence[Invite]: List of invites
+    """
     inviter = api_identifier_crud.get_model(db, User, api_id=inviter_api_id)
     return db.scalars(
         select(Invite)
@@ -41,6 +59,16 @@ def get_invites(
 def get_invite_by_email(
     db: Session, email: str, expired: bool = False
 ) -> Invite | None:
+    """Get an invite by email address.
+
+    Args:
+        db (Session): Database session
+        email (str): Email address to look up
+        expired (bool, optional): Whether to include expired invites. Defaults to False.
+
+    Returns:
+        Invite | None: Found invite or None
+    """
     return db.scalar(
         select(Invite)
         .join(Invite.one_time_token)
@@ -52,6 +80,15 @@ def get_invite_by_email(
 
 
 def get_invite_by_token(db: Session, token: str) -> Invite | None:
+    """Get an invite by its token string.
+
+    Args:
+        db (Session): Database session
+        token (str): Token string to look up
+
+    Returns:
+        Invite | None: Found invite or None
+    """
     invite = db.scalar(
         select(Invite)
         .join(Invite.one_time_token)
@@ -69,6 +106,17 @@ def get_invite_by_token(db: Session, token: str) -> Invite | None:
 def invite_users(
     db: Session, group: Group, inviter: User, emails: Sequence[str]
 ) -> list[Invite]:
+    """Invite multiple users to a group.
+
+    Args:
+        db (Session): Database session
+        group (Group): Group to invite users to
+        inviter (User): User sending the invites
+        emails (Sequence[str]): Email addresses to invite
+
+    Returns:
+        list[Invite]: List of created invites (excludes existing users/invites)
+    """
     invites: list[Invite] = []
     for email in emails:
         existing_invite = get_invite_by_email(db, email)
@@ -86,7 +134,17 @@ def create_invite(
     inviter: User,
     group: Group,
 ) -> Invite:
-    # generate token
+    """Create a new invite.
+
+    Args:
+        db (Session): Database session
+        email (str): Email address to invite
+        inviter (User): User sending the invite
+        group (Group): Group to invite to
+
+    Returns:
+        Invite: Created invite
+    """
     one_time_token = generate_token(TokenType.INVITE, email, token=None)
     db_invite = Invite.create(email, one_time_token, inviter, group)
     db.add(db_invite)
@@ -95,6 +153,12 @@ def create_invite(
 
 @register_task_factory(name="email_user_invites")
 def email_user_invites(self: CeleryTask, invite_ids: list[int]) -> None:
+    """Send invitation emails to users.
+
+    Args:
+        self (CeleryTask): Celery task instance
+        invite_ids (list[int]): List of invite IDs to send emails for
+    """
     invites = self.session.scalars(
         select(Invite).filter(Invite.id.in_(invite_ids))
     ).all()
@@ -113,6 +177,16 @@ def construct_invite_email(
     group: Group,
     token: str,
 ) -> EmailDraft:
+    """Construct an email draft for a group invitation.
+
+    Args:
+        recipient (str): Email address to send to
+        group (Group): Group being invited to
+        token (str): One-time token for registration
+
+    Returns:
+        EmailDraft: Email draft ready to send
+    """
     BODY_HTML = """
     <html>
     <head></head>

@@ -1,3 +1,9 @@
+"""Question API endpoints.
+
+This module provides FastAPI endpoints for managing question responses, including
+creating, updating, and uploading images for responses.
+"""
+
 from __future__ import annotations
 
 from fastapi import APIRouter, Depends, UploadFile
@@ -30,6 +36,22 @@ async def upsert_response(
         get_request_dependencies,
     ),
 ) -> Question:
+    """Create or update a response to a question.
+
+    If a response already exists (identified by api_identifier or participant),
+    updates it. Otherwise, creates a new response.
+
+    Args:
+        question_api_id (str): API identifier of the question
+        response (ResponseUpsert): Response creation/update parameters
+        req_dep (AuthenticatedRequestDependencies): Request dependencies including database session and auth
+
+    Returns:
+        Question: Updated question with the new/updated response
+
+    Raises:
+        IDNotFoundException: If question or response with given API ID is not found
+    """
     print(response)
     db_question = api_identifier_crud.get_model(
         req_dep.db, Question, api_id=question_api_id
@@ -79,6 +101,22 @@ async def upload_image(
         get_request_dependencies,
     ),
 ) -> Question:
+    """Upload an image as part of a response to a question.
+
+    Creates a new response if one doesn't exist for the current user,
+    then attaches the uploaded image to it.
+
+    Args:
+        question_api_id (str): API identifier of the question
+        response_image (UploadFile): Image file to upload
+        req_dep (AuthenticatedRequestDependencies): Request dependencies including database session and auth
+
+    Returns:
+        Question: Updated question with the response containing the new image
+
+    Raises:
+        IDNotFoundException: If question with given API ID is not found
+    """
     db_question = api_identifier_crud.get_model(
         req_dep.db, Question, api_id=question_api_id
     )
