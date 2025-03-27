@@ -1,3 +1,10 @@
+"""Tests for the group model.
+
+This module contains tests for the group model's functionality,
+including model creation, relationships, and default values.
+It verifies both model attributes and relationships with other models.
+"""
+
 import sqlalchemy
 from faker import Faker
 from sqlalchemy.orm import Session
@@ -12,7 +19,27 @@ from ring.tests.factories.parties.user_factory import UserFactory
 
 
 class TestGroupModel:
+    """Test suite for the group model.
+
+    This class contains tests for all group model functionality,
+    including model creation, relationships, and default values.
+    """
+
     def test_group_model(self, db_session: Session, faker: Faker):
+        """Test basic group model creation and attributes.
+
+        This test verifies that:
+        1. A group can be created with a name and admin
+        2. The group has the correct name and admin
+        3. The admin is added as a member
+        4. The group has the correct API identifier prefix
+        5. The group has default values for cycle length
+        6. The group is properly stored in the database
+
+        Args:
+            db_session (Session): Database session
+            faker (Faker): Faker instance for generating test data
+        """
         name = faker.pystr_format(string_format="Group-{{random_int}}")
         admin_user = UserFactory.create()
         group = Group.create(name=name, admin=admin_user)
@@ -33,6 +60,19 @@ class TestGroupModel:
         assert db_group == group
 
     def test_group_model_letters(self, db_session: Session, faker: Faker):
+        """Test group model's relationship with letters.
+
+        This test verifies that:
+        1. A new group has no letters
+        2. Letters can be added to the group
+        3. The group can access its letters
+        4. The group can access in-progress and upcoming letters
+        5. The letters are properly associated with the group
+
+        Args:
+            db_session (Session): Database session
+            faker (Faker): Faker instance for generating test data
+        """
         name = faker.pystr_format(string_format="Group-{{random_int}}")
         admin_user = UserFactory.create()
         group = Group.create(name=name, admin=admin_user)
@@ -52,6 +92,17 @@ class TestGroupModel:
         assert group.upcoming_letter in letters
 
     def test_group_model_schedule(self, db_session: Session, faker: Faker):
+        """Test group model's relationship with schedule.
+
+        This test verifies that:
+        1. A group has a schedule
+        2. The schedule is properly associated with the group
+        3. The schedule has a valid ID
+
+        Args:
+            db_session (Session): Database session
+            faker (Faker): Faker instance for generating test data
+        """
         name = faker.pystr_format(string_format="Group-{{random_int}}")
         admin_user = UserFactory.create()
         group = Group.create(name=name, admin=admin_user)
@@ -64,6 +115,18 @@ class TestGroupModel:
     def test_group_model_default_questions(
         self, db_session: Session, faker: Faker
     ):
+        """Test group model's relationship with default questions.
+
+        This test verifies that:
+        1. A new group has no default questions
+        2. Default questions can be added to the group
+        3. The group can access its default questions
+        4. The questions are properly associated with the group
+
+        Args:
+            db_session (Session): Database session
+            faker (Faker): Faker instance for generating test data
+        """
         name = faker.pystr_format(string_format="Group-{{random_int}}")
         admin_user = UserFactory.create()
         group = Group.create(name=name, admin=admin_user)

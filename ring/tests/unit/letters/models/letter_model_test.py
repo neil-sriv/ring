@@ -1,3 +1,10 @@
+"""Tests for the letter model.
+
+This module contains tests for the Letter model, including model creation,
+numbering, and responder tracking. It verifies both basic model attributes
+and complex relationships with groups, questions, and responses.
+"""
+
 from datetime import UTC
 
 from faker import Faker
@@ -13,7 +20,27 @@ from ring.tests.factories.parties.user_factory import UserFactory
 
 
 class TestLetterModel:
+    """Test suite for the Letter model.
+
+    This class contains tests for all letter model operations,
+    including creation, numbering, and responder tracking.
+    """
+
     def test_letter_model(self, db_session: Session, faker: Faker) -> None:
+        """Test basic letter model creation and attributes.
+
+        This test verifies that:
+        1. A letter can be created with valid group and send time
+        2. The letter is associated with the correct group
+        3. The letter has the correct status and send time
+        4. The letter is associated with all group members
+        5. The letter has the correct number based on group history
+        6. The letter has the required metadata fields
+
+        Args:
+            db_session (Session): Database session
+            faker (Faker): Faker instance for generating test data
+        """
         members = [UserFactory.create() for _ in range(3)]
         group = GroupFactory.create(admin=members[0])
         for member in members:
@@ -47,6 +74,18 @@ class TestLetterModel:
     def test_letter_model_number(
         self, db_session: Session, faker: Faker
     ) -> None:
+        """Test letter numbering within a group.
+
+        This test verifies that:
+        1. The first letter in a group has number 1
+        2. Letters can be created with explicit numbers
+        3. The number is stored correctly
+        4. The numbering system works with existing letters
+
+        Args:
+            db_session (Session): Database session
+            faker (Faker): Faker instance for generating test data
+        """
         group = GroupFactory.create()
         initial_letter = LetterFactory.create(group=group)
         db_session.commit()
@@ -66,6 +105,19 @@ class TestLetterModel:
     def test_letter_model_responders(
         self, db_session: Session, faker: Faker
     ) -> None:
+        """Test tracking of letter responders.
+
+        This test verifies that:
+        1. A new letter has no responders
+        2. Responders are tracked when they answer questions
+        3. The responders list is updated correctly
+        4. The responders list is sorted by API identifier
+        5. Multiple responses from the same user are handled correctly
+
+        Args:
+            db_session (Session): Database session
+            faker (Faker): Faker instance for generating test data
+        """
         members = [UserFactory.create() for _ in range(4)]
         group = GroupFactory.create(admin=members[0])
         for member in members:
