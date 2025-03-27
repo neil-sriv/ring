@@ -424,7 +424,7 @@ class TestUserAPI:
         """
         resp = authenticated_client.get("/parties/user/invalid_id")
         assert resp.status_code == 404
-        data = response.json()
+        data = resp.json()
         assert_api_model_not_found(data, User, ["invalid_id"])
 
     def test_update_user_me_name(
