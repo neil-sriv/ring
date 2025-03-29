@@ -8,7 +8,7 @@ import json
 
 from pywebpush import WebPushException, webpush  # type: ignore
 
-from ring.config import get_config
+from ring.fastapp.config import get_config
 from ring.lib.logger import logger
 from ring.notifications.crud.subscription import serialize_subscription_info
 from ring.notifications.models.subscription import Subscription

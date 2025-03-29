@@ -10,7 +10,7 @@ from typing import Any, Callable, Iterator, TypeVar
 from sqlalchemy import create_engine
 from sqlalchemy.orm import DeclarativeBase, Session, sessionmaker
 
-from ring.config import get_config
+from ring.fastapp.config import get_config
 
 engine = create_engine(
     get_config().cockroach_database_uri,

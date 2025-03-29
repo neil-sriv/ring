@@ -14,8 +14,8 @@ from typing import TYPE_CHECKING, Sequence
 from fastapi import UploadFile
 
 from ring.api_identifier import util as api_identifier_crud
-from ring.config import get_config
-from ring.dependencies import (
+from ring.fastapp.config import get_config
+from ring.fastapp.dependencies import (
     a_get_s3_client_dependencies,
 )
 from ring.letters.models.letter_model import Letter

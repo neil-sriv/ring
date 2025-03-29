@@ -7,7 +7,7 @@ services:
       dockerfile: ring.Dockerfile
       target: ring
       # image: email_circle-api
-    command: "uvicorn ring.fast:app --proxy-headers"
+    command: "uvicorn ring.fastapp.fast:app --proxy-headers"
     volumes:
       - ./ring:/src/ring
     environment:

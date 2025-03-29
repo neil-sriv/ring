@@ -14,39 +14,9 @@ from ring.alembic.alembic_helpers import (
     cockroach_compare_type,
     include_object,
 )
-from ring.config import get_config
-from ring.letters.models.default_question_model import (
-    DefaultQuestion,  # type: ignore # noqa: F401  # type: ignore # noqa: F401
-)
-from ring.letters.models.letter_model import (
-    Letter,  # type: ignore # noqa: F401
-)
-from ring.letters.models.question_model import (
-    Question,  # type: ignore # noqa: F401
-)
-from ring.letters.models.response_model import (
-    Response,  # type: ignore # noqa: F401
-)
-from ring.notifications.models.subscription import (
-    Subscription,  # type: ignore # noqa: F401
-)
-from ring.parties.models.group_key_value import (
-    GroupKeyValue,  # type: ignore # noqa: F401
-)
-from ring.parties.models.group_model import Group  # type: ignore # noqa: F401
-from ring.parties.models.invite_model import (
-    Invite,  # type: ignore # noqa: F401  # type: ignore # noqa: F401
-)
-from ring.parties.models.one_time_token_model import (
-    OneTimeToken,  # type: ignore # noqa: F401
-)
-from ring.parties.models.user_model import User  # type: ignore # noqa: F401
-from ring.s3.models.s3_model import Image, S3File  # type: ignore # noqa: F401
+from ring.fastapp.config import get_config
+from ring.models import *  # noqa: F403
 from ring.sqlalchemy_base import Base
-from ring.tasks.models.schedule_model import (
-    Schedule,  # type: ignore # noqa: F401
-)
-from ring.tasks.models.task_model import Task  # type: ignore # noqa: F401
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.
@@ -63,8 +33,6 @@ logging.getLogger("alembic").setLevel(logging.DEBUG)
 
 # add your model's MetaData object here
 # for 'autogenerate' support
-# from myapp import mymodel
-# target_metadata = mymodel.Base.metadata
 target_metadata = Base.metadata
 
 # other values from the config, defined by the needs of env.py,

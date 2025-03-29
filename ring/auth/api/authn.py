@@ -14,7 +14,7 @@ from fastapi.security import OAuth2PasswordRequestForm
 
 from ring.api_identifier.util import get_model
 from ring.auth.schemas.token import Token
-from ring.dependencies import (
+from ring.fastapp.dependencies import (
     RequestDependenciesBase,
     get_request_dependencies,
     get_unauthenticated_request_dependencies,

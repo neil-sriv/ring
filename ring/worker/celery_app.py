@@ -12,7 +12,7 @@ from celery import Celery
 from celery.schedules import crontab
 from sqlalchemy.orm import Session
 
-from ring.config import RingConfig, get_config
+from ring.fastapp.config import RingConfig, get_config
 from ring.sqlalchemy_base import SessionLocal
 from ring.worker.celery_imports import CELERY_IMPORTS
 

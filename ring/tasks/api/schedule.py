@@ -11,7 +11,7 @@ from typing import TYPE_CHECKING
 
 from fastapi import APIRouter, Depends
 
-from ring.dependencies import (
+from ring.fastapp.dependencies import (
     AuthenticatedRequestDependencies,
     get_request_dependencies,
 )

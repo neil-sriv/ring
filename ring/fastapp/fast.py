@@ -11,9 +11,9 @@ from fastapi.responses import JSONResponse
 from starlette.middleware.cors import CORSMiddleware
 
 from ring.api_identifier.util import IDNotFoundException
-from ring.config import get_config
+from ring.fastapp.config import get_config
+from ring.fastapp.routes import router
 from ring.lib.logger import logger
-from ring.routes import router
 
 ring_config = get_config()
 app = FastAPI(root_path=ring_config.root_path)

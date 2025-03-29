@@ -13,7 +13,7 @@ from jose import JWTError, jwt
 from pwdlib import PasswordHash
 from pwdlib.hashers.bcrypt import BcryptHasher
 
-from ring.config import get_config
+from ring.fastapp.config import get_config
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="login/access-token")
 password_hash = PasswordHash([BcryptHasher()])

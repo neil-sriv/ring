@@ -8,7 +8,7 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from ring.api_identifier import (
     util as api_identifier_crud,
 )
-from ring.dependencies import (
+from ring.fastapp.dependencies import (
     AuthenticatedRequestDependencies,
     get_request_dependencies,
 )
