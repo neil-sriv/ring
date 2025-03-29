@@ -245,6 +245,7 @@ pydantic==2.5.2
     # via
     #   ring (pyproject.toml)
     #   fastapi
+    #   llm-service
     #   pydantic-extra-types
     #   pydantic-settings
 pydantic-core==2.14.5
@@ -266,6 +267,7 @@ python-dateutil==2.8.2
     # via
     #   botocore
     #   celery
+    #   llm-service
     #   pendulum
     #   time-machine
 python-dotenv==1.0.0
@@ -318,7 +320,10 @@ sqlalchemy==2.0.25
     # via
     #   ring (pyproject.toml)
     #   alembic
+    #   sqlalchemy-cockroachdb
     #   sqlalchemy-json
+sqlalchemy-cockroachdb==2.0.2
+    # via ring (pyproject.toml)
 sqlalchemy-json==0.7.0
     # via ring (pyproject.toml)
 sqlparse==0.4.4
@@ -347,6 +352,7 @@ typing-extensions==4.9.0
     # via
     #   alembic
     #   fastapi
+    #   llm-service
     #   psycopg
     #   pydantic
     #   pydantic-core
@@ -360,6 +366,7 @@ ujson==5.9.0
 urllib3==2.0.7
     # via
     #   botocore
+    #   llm-service
     #   requests
 uvicorn==0.24.0.post1
     # via fastapi

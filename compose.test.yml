@@ -3,7 +3,7 @@ services:
     container_name: ring-test-db
     image: postgres:16.1
     ports:
-      - 8005:5432
+      - 8006:5432
     environment:
       - POSTGRES_USER=ring
       - POSTGRES_PASSWORD=ring

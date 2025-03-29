@@ -1886,6 +1886,7 @@ dependencies = [
     { name = "ruff" },
     { name = "shortuuid" },
     { name = "sqlalchemy", extra = ["asyncio"] },
+    { name = "sqlalchemy-cockroachdb" },
     { name = "sqlalchemy-json" },
     { name = "watchdog" },
 ]
@@ -1936,6 +1937,7 @@ requires-dist = [
     { name = "shortuuid", specifier = "~=1.0" },
     { name = "sqlalchemy", specifier = "~=2.0" },
     { name = "sqlalchemy", extras = ["asyncio"], specifier = "~=2.0" },
+    { name = "sqlalchemy-cockroachdb", specifier = ">=2.0.2" },
     { name = "sqlalchemy-json", specifier = ">=0.7.0" },
     { name = "watchdog", specifier = "~=4.0" },
 ]
@@ -2099,6 +2101,18 @@ wheels = [
 [package.optional-dependencies]
 asyncio = [
     { name = "greenlet" },
+]
+
+[[package]]
+name = "sqlalchemy-cockroachdb"
+version = "2.0.2"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "sqlalchemy" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/f2/48/300113edbe1e2d2ad74efbc9b2865acb404019f37cc79e9878a47c984a08/sqlalchemy-cockroachdb-2.0.2.tar.gz", hash = "sha256:119756eb905855d6a11345b99cfe853031a3fe598a9c4bf35a8ddac9f89fe8cc", size = 27781 }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/db/31/26d9d5f59183f28ea79aaf713a6984bedbb96d1f4b7388ec68b98dbe27ea/sqlalchemy_cockroachdb-2.0.2-py3-none-any.whl", hash = "sha256:0d5d50e805b024cb2ccd85423a5c1a367d1a56a5cd0ea47765233fd47665070d", size = 21432 },
 ]
 
 [[package]]
