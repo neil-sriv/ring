@@ -47,8 +47,8 @@ from ring.tasks.models.task_model import Task  # type: ignore # noqa: F401
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.
 config = context.config
-config.set_main_option("sqlalchemy.url", get_config().sqlalchemy_database_uri)
-
+# config.set_main_option("sqlalchemy.url", get_config().sqlalchemy_database_uri)
+config.set_main_option("sqlalchemy.url", get_config().cockroach_database_uri)
 # Interpret the config file for Python logging.
 # This line sets up loggers basically.
 if config.config_file_name is not None:
