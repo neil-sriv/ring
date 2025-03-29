@@ -12,25 +12,35 @@ from starlette.middleware.cors import CORSMiddleware
 
 from ring.api_identifier.util import IDNotFoundException
 from ring.fastapp.config import get_config
+from ring.fastapp.init_app_modules import init_app_modules
 from ring.fastapp.routes import router
 from ring.lib.logger import logger
 
-ring_config = get_config()
-app = FastAPI(root_path=ring_config.root_path)
 
-if ring_config.BACKEND_CORS_ORIGINS:
-    app.add_middleware(
-        CORSMiddleware,
-        allow_origins=[
-            str(origin).strip("/")
-            for origin in ring_config.BACKEND_CORS_ORIGINS
-        ],
-        allow_credentials=True,
-        allow_methods=["*"],
-        allow_headers=["*"],
-    )
+def create_app() -> FastAPI:
+    ring_config = get_config()
+    app = FastAPI(root_path=ring_config.root_path)
 
-app.include_router(router)
+    init_app_modules()
+
+    if ring_config.BACKEND_CORS_ORIGINS:
+        app.add_middleware(
+            CORSMiddleware,
+            allow_origins=[
+                str(origin).strip("/")
+                for origin in ring_config.BACKEND_CORS_ORIGINS
+            ],
+            allow_credentials=True,
+            allow_methods=["*"],
+            allow_headers=["*"],
+        )
+
+    app.include_router(router)
+
+    return app
+
+
+app = create_app()
 
 
 @app.exception_handler(IDNotFoundException)
