@@ -1,4 +1,4 @@
-import { Outlet, createRootRouteWithContext } from "@tanstack/react-router";
+import { Outlet, createRootRouteWithContext, redirect } from "@tanstack/react-router";
 import React, { Suspense } from "react";
 
 import NotFound from "../components/Common/NotFound";
@@ -38,4 +38,17 @@ export const Route = createRootRouteWithContext<RouterContext>()({
     </>
   ),
   notFoundComponent: () => <NotFound />,
+  beforeLoad: () => {
+    // If maintenance mode is enabled and we're not already on the maintenance page,
+    // redirect to maintenance
+    if (
+      import.meta.env.VITE_MAINTENANCE_MODE &&
+      window.location.pathname !== "/maintenance"
+    ) {
+      throw redirect({
+        to: "/maintenance",
+      });
+    }
+    return {};
+  },
 });
