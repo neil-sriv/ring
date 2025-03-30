@@ -15,7 +15,7 @@ RUN rm -rf node_modules
 RUN pnpm install
 
 ARG VITE_API_URL=${VITE_API_URL}
-
+ARG VITE_MAINTENANCE_MODE=${VITE_MAINTENANCE_MODE}
 RUN pnpm run build
 
 # FROM base as runner
