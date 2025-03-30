@@ -4,6 +4,7 @@ import React, { Suspense } from "react";
 import NotFound from "../components/Common/NotFound";
 import { QueryClient } from "@tanstack/react-query";
 import { AuthContext } from "../hooks/useAuth";
+import { isMaintenanceMode } from "../util/env";
 
 const loadDevtools = () =>
   Promise.all([
@@ -41,10 +42,7 @@ export const Route = createRootRouteWithContext<RouterContext>()({
   beforeLoad: () => {
     // If maintenance mode is enabled and we're not already on the maintenance page,
     // redirect to maintenance
-    if (
-      import.meta.env.VITE_MAINTENANCE_MODE &&
-      window.location.pathname !== "/maintenance"
-    ) {
+    if (isMaintenanceMode() && window.location.pathname !== "/maintenance") {
       throw redirect({
         to: "/maintenance",
       });
