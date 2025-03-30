@@ -61,6 +61,7 @@ services:
       dockerfile: client.Dockerfile
       args:
         - VITE_API_URL=${VITE_API_URL}
+        - VITE_MAINTENANCE_MODE=${VITE_MAINTENANCE_MODE}
     platform: linux/amd64
     networks:
       - default
