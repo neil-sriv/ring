@@ -56,7 +56,7 @@ services:
     container_name: ring-cockroach
     restart: unless-stopped
     profiles: [ "dev" ]
-    command: start-single-node --insecure
+    command: start-single-node
     ports:
       - 26257:26257
       - 8007:8080
