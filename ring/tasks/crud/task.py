@@ -231,4 +231,3 @@ def execute_tasks(db: Session, task_ids: list[int]) -> None:
         task_type = TaskType(task.type)
         task_to_execute = ASYNC_TASK_TO_EXECUTE_MAPPING[task_type]
         task_to_execute.delay(task.id, **task.arguments)  # type: ignore
-    db.commit()
