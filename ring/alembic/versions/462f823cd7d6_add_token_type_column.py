@@ -24,14 +24,14 @@ def upgrade() -> None:
     op.add_column(
         "one_time_token", sa.Column("type", sa.String(), nullable=True)
     )
-    
+
     # Commit the transaction to ensure the column exists
     op.execute("COMMIT")
     op.execute("BEGIN")
-    
+
     # Now update the column
     op.execute("UPDATE one_time_token SET type = 'invite'")
-    
+
     # Finally make it non-nullable
     op.alter_column(
         "one_time_token", "type", existing_type=sa.VARCHAR(), nullable=False

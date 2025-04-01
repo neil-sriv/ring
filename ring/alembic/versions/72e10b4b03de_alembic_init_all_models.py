@@ -204,7 +204,9 @@ def downgrade() -> None:
             op.f("ix_response_api_identifier"), table_name="response"
         )
         op.drop_table("response", if_exists=True)
-    if op.get_bind().dialect.has_table(op.get_bind(), "question_to_user_association"):
+    if op.get_bind().dialect.has_table(
+        op.get_bind(), "question_to_user_association"
+    ):
         op.drop_table("question_to_user_association", if_exists=True)
     if op.get_bind().dialect.has_table(op.get_bind(), "task"):
         op.drop_index(op.f("ix_task_type"), table_name="task", if_exists=True)
