@@ -174,3 +174,6 @@ localhost.key
 certbot/conf/
 
 etc/
+
+local.sql
+backup.sql

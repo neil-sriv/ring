@@ -13,7 +13,7 @@ from sqlalchemy.orm import DeclarativeBase, Session, sessionmaker
 from ring.config import get_config
 
 engine = create_engine(
-    get_config().sqlalchemy_database_uri,
+    get_config().cockroach_database_uri,
 )
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 

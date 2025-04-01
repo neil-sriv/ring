@@ -3,33 +3,49 @@ services:
     container_name: ring-test-db
     image: postgres:16.1
     ports:
-      - 8005:5432
+      - 8006:5432
     environment:
       - POSTGRES_USER=ring
       - POSTGRES_PASSWORD=ring
       - POSTGRES_DB=ring_test
-    profiles: ["test"]
+    profiles: [ "test" ]
     networks:
       - default
-  
+  test-cockroach:
+    image: cockroachdb/cockroach:latest
+    container_name: ring-test-cockroach
+    restart: unless-stopped
+    profiles: [ "test" ]
+    command: start-single-node
+    ports:
+      - 8008:8080
+    environment:
+      - COCKROACH_USER=ringcockroach
+      - COCKROACH_PASSWORD=ringcockroach
+      - COCKROACH_DATABASE=test
+    networks:
+      - default
   test-runner:
     image: ring-test-runner
     container_name: ring-test-runner
-    command: ["pytest", "-c", "ring/tests/pytest.ini"]
-    build: 
+    command: [ "pytest", "-c", "ring/tests/pytest.ini" ]
+    build:
       context: ./ring
       dockerfile: tests/test.Dockerfile
       target: ring
     depends_on:
-      - test-db
+      # - test-db
+      - test-cockroach
     volumes:
       - ./ring:/src/ring
-    profiles: ["test"]
+    profiles: [ "test" ]
     environment:
       - PYTHONPATH=.
       - JWT_SIGNING_KEY=secret
       - JWT_SIGNING_ALGORITHM=HS256
-      - sqlalchemy_database_uri=postgresql://ring:ring@test-db:5432/ring_test
+      # - sqlalchemy_database_uri=postgresql://ring:ring@test-db:5432/ring_test
+      - sqlalchemy_database_uri=blank
+      - cockroach_database_uri=cockroachdb://ringcockroach:ringcockroach@test-cockroach:26257/test
       - environment=test
       - VAPID_PRIVATE_KEY=private_key
     networks:

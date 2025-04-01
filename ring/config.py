@@ -45,6 +45,7 @@ class RingConfig(BaseSettings):
 
     environment: str
     sqlalchemy_database_uri: str
+    cockroach_database_uri: str
     JWT_SIGNING_KEY: str
     JWT_SIGNING_ALGORITHM: str
     VAPID_PRIVATE_KEY: str

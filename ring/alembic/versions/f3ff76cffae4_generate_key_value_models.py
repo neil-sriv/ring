@@ -10,11 +10,8 @@ from typing import Sequence, Union
 
 import sqlalchemy as sa
 from alembic import op
+from sqlalchemy import text
 from sqlalchemy.dialects import postgresql
-from sqlalchemy.orm import Session
-
-from ring.parties.models.group_key_value import GroupKeyValue
-from ring.parties.models.group_model import Group
 
 # revision identifiers, used by Alembic.
 revision: str = "f3ff76cffae4"
@@ -48,12 +45,21 @@ def upgrade() -> None:
         unique=False,
     )
 
-    session = Session(bind=op.get_bind())
-    groups = session.scalars(sa.select(Group)).all()
+    # Get all group IDs and insert key-value entries
+    connection = op.get_bind()
+    groups = connection.execute(text('SELECT id FROM "group"')).fetchall()
+
     for group in groups:
-        kv = GroupKeyValue.create(group)
-        session.add(kv)
-    session.commit()
+        group_id = group[0]
+        connection.execute(
+            text(
+                """
+                INSERT INTO group_key_value (group_id, key_values)
+                VALUES (:group_id, '{}'::jsonb)
+                """
+            ),
+            {"group_id": group_id},
+        )
     # ### end Alembic commands ###
 
 

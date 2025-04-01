@@ -63,6 +63,7 @@ dependencies = [
     "loguru>=0.7.3",
     "sqlalchemy-json>=0.7.0",
     "llm-service",
+    "sqlalchemy-cockroachdb>=2.0.2",
 ]
 
 [project.optional-dependencies]

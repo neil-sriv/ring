@@ -15,12 +15,15 @@ from sqlalchemy.orm import (
     sessionmaker,
 )
 
+from ring.config import get_config
 from ring.fast import app
 from ring.sqlalchemy_base import Base, get_db
 from ring.tests.factories.base_factory import ALL_FACTORIES, BaseFactory
 
 # Create a new SQLAlchemy engine instance
-engine = create_engine("postgresql://ring:ring@test-db:5432/ring_test")
+# engine = create_engine("postgresql://ring:ring@test-db:5432/ring_test")
+config = get_config()
+engine = create_engine(config.cockroach_database_uri)
 
 # Create a configured "Session" class
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
