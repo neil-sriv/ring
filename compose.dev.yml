@@ -27,12 +27,6 @@ services:
     command: "watchmedo auto-restart --directory=./ --pattern=*.py --recursive -- celery --app=ring.worker.celery_app beat --loglevel=debug"
     env_file:
       - ./.env
-  flower:
-    command: "celery --app=ring.worker.celery_app flower"
-    env_file:
-      - ./.env
-    ports:
-      - "8003:5555"
   db:
     restart: unless-stopped
     container_name: ring-db

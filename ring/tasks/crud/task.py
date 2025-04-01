@@ -223,9 +223,11 @@ def execute_tasks(db: Session, task_ids: list[int]) -> None:
     Raises:
         Exception: Any error that occurred during task execution
     """
-    for task_id in task_ids:
-        task = db.query(Task).filter(Task.id == task_id).one()
-        task_type = task.type
-        if task_type not in ASYNC_TASK_TO_EXECUTE_MAPPING:
-            raise ValueError(f"Unknown task type: {task_type}")
-        ASYNC_TASK_TO_EXECUTE_MAPPING[task_type](self, task_id)
+    tasks = db.query(Task).filter(Task.id.in_(task_ids)).all()
+    for task in tasks:
+        task.status = TaskStatus.IN_PROGRESS
+    db.flush()
+    for task in tasks:
+        task_type = TaskType(task.type)
+        task_to_execute = ASYNC_TASK_TO_EXECUTE_MAPPING[task_type]
+        task_to_execute.delay(task.id, **task.arguments)  # type: ignore

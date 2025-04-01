@@ -8,6 +8,8 @@ services:
     env_file:
       - ./.env
     platform: linux/amd64
+    volumes:
+      - $HOME/.postgresql/root.crt:/root/.postgresql/root.crt
 
   nginx:
     mem_limit: 300m
@@ -34,20 +36,16 @@ services:
       - ./.env
     mem_limit: 150m
     platform: linux/amd64
+    volumes:
+      - $HOME/.postgresql/root.crt:/root/.postgresql/root.crt
   beat:
     mem_limit: 150m
     image: prod-ring-beat
     env_file:
       - ./.env
     platform: linux/amd64
-  flower:
-    mem_limit: 100m
-    image: prod-ring-flower
-    env_file:
-      - ./.env
-    ports:
-      - "8003:5555"
-    platform: linux/amd64
+    volumes:
+      - $HOME/.postgresql/root.crt:/root/.postgresql/root.crt
 
   frontend:
     restart: unless-stopped
