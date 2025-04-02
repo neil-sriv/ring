@@ -167,6 +167,7 @@ sql_app.db
 *.pem
 
 .DS_STORE
+.DS_Store
 
 localhost.crt
 localhost.key
