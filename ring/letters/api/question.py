@@ -6,7 +6,7 @@ creating, updating, and uploading images for responses.
 
 from __future__ import annotations
 
-from fastapi import APIRouter, Depends, UploadFile
+from fastapi import APIRouter, Depends, HTTPException, UploadFile, status
 
 from ring.api_identifier import (
     util as api_identifier_crud,
@@ -139,3 +139,53 @@ async def upload_image(
     )
     req_dep.db.commit()
     return db_question
+
+
+@router.delete(
+    "/question/{question_api_id}",
+    status_code=status.HTTP_204_NO_CONTENT,
+    response_model=None,
+)
+async def delete_question(
+    question_api_id: str,
+    req_dep: AuthenticatedRequestDependencies = Depends(
+        get_request_dependencies,
+    ),
+) -> None:
+    """Delete a question.
+
+    Only the question author or group admin can delete a question.
+    Questions with responses cannot be deleted.
+    
+    Args:
+        question_api_id (str): API identifier of the question to delete
+        req_dep (AuthenticatedRequestDependencies): Request dependencies including database session and auth
+
+    Raises:
+        HTTPException: If question not found, user not authorized, or question has responses
+    """
+    db_question = api_identifier_crud.get_model(
+        req_dep.db, Question, api_id=question_api_id
+    )
+
+    # Check if user is authorized to delete the question
+    if (
+        req_dep.current_user != db_question.author
+        and req_dep.current_user != db_question.letter.group.admin
+    ):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Only the question author or group admin can delete a question",
+        )
+
+    try:
+        question_crud.delete_question(
+            req_dep.db,
+            db_question,
+        )
+        req_dep.db.commit()
+    except ValueError as e:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=str(e),
+        )
