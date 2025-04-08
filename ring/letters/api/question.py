@@ -164,6 +164,7 @@ async def delete_question(
     Raises:
         HTTPException: If question not found, user not authorized, or question has responses
     """
+    raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="test")
     db_question = api_identifier_crud.get_model(
         req_dep.db, Question, api_id=question_api_id
     )
