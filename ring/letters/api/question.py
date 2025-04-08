@@ -156,7 +156,7 @@ async def delete_question(
 
     Only the question author or group admin can delete a question.
     Questions with responses cannot be deleted.
-    
+
     Args:
         question_api_id (str): API identifier of the question to delete
         req_dep (AuthenticatedRequestDependencies): Request dependencies including database session and auth
@@ -164,7 +164,6 @@ async def delete_question(
     Raises:
         HTTPException: If question not found, user not authorized, or question has responses
     """
-    raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="test")
     db_question = api_identifier_crud.get_model(
         req_dep.db, Question, api_id=question_api_id
     )
@@ -177,6 +176,13 @@ async def delete_question(
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Only the question author or group admin can delete a question",
+        )
+
+    # Check if the loop is in the UPCOMING status
+    if db_question.letter.status != "UPCOMING":
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Cannot delete a question from a loop that is in progress",
         )
 
     try:
