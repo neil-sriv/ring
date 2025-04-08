@@ -2,7 +2,7 @@ import { Container } from "@chakra-ui/react";
 import { PublicLetter } from "../../client";
 import DraftQuestion from "../Question/DraftQuestion";
 
-function DraftLoop({ loop }: { loop: PublicLetter }) {
+function DraftLoop({ loop, isGroupAdmin }: { loop: PublicLetter, isGroupAdmin: boolean }) {
   return (
     <Container maxW="full">
       {loop.questions
@@ -17,6 +17,7 @@ function DraftLoop({ loop }: { loop: PublicLetter }) {
               key={question.api_identifier}
               readOnly={loop.status === "UPCOMING"}
               loopApiId={loop.api_identifier}
+              isGroupAdmin={isGroupAdmin}
             />
           );
         })}
