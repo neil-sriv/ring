@@ -110,3 +110,23 @@ def edit_response(
     response.response_text = response_text
     db.add(response)
     return response
+
+
+def delete_question(
+    db: Session,
+    question: Question,
+) -> None:
+    """Delete a question.
+
+    Args:
+        db (Session): Database session
+        question (Question): Question to delete
+
+    Raises:
+        ValueError: If the question has responses and cannot be deleted
+    """
+    if question.responses:
+        raise ValueError("Cannot delete a question that has responses")
+
+    # Delete the question
+    db.delete(question)

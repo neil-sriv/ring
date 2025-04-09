@@ -1,13 +1,14 @@
-import { Box, Heading, Textarea } from "@chakra-ui/react";
+import { Box, Heading, Textarea, Button, useDisclosure, Modal, ModalOverlay, ModalContent, ModalHeader, ModalBody, ModalFooter, ModalCloseButton, Flex } from "@chakra-ui/react";
 import {
   PublicQuestion,
   ResponseWithParticipant,
   uploadImageQuestionsQuestionQuestionApiIdUploadImagePost,
   upsertResponseQuestionsQuestionQuestionApiIdUpsertResponsePost,
   UserLinked,
+  DeleteQuestionQuestionsQuestionQuestionApiIdDeleteError,
 } from "../../client";
 import { useState } from "react";
-import { useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import useCustomToast from "../../hooks/useCustomToast";
 import {
   S3Image,
@@ -15,9 +16,12 @@ import {
   SingleUploadImage,
 } from "../Common/SingleUploadImage";
 import {
+  deleteQuestionQuestionsQuestionQuestionApiIdDeleteMutation,
   readLetterLettersLetterLetterApiIdGetQueryKey,
   readUserMePartiesMeGetQueryKey,
 } from "../../client/@tanstack/react-query.gen";
+import { FaTrash } from "react-icons/fa";
+import { AxiosError } from "axios";
 
 type ResponseBlockProps = {
   uploadFunction: (file: File) => Promise<void>;
@@ -72,15 +76,20 @@ function DraftQuestion({
   question,
   loopApiId,
   readOnly = false,
+  isGroupAdmin = false,
 }: {
   question: PublicQuestion;
   loopApiId: string;
   readOnly?: boolean;
+  isGroupAdmin?: boolean;
 }): JSX.Element {
   const queryClient = useQueryClient();
   const currentUser = queryClient.getQueryData<UserLinked>(
     readUserMePartiesMeGetQueryKey()
   );
+  const showToast = useCustomToast();
+  const deleteModal = useDisclosure();
+
   if (!currentUser) {
     return <Box>loading...</Box>;
   }
@@ -88,6 +97,33 @@ function DraftQuestion({
     (response) =>
       response.participant.api_identifier === currentUser.api_identifier
   );
+
+  const isAuthor = question.author?.api_identifier === currentUser.api_identifier;
+  const canDelete = isAuthor || isGroupAdmin;
+
+  const deleteMutation = useMutation({
+    ...deleteQuestionQuestionsQuestionQuestionApiIdDeleteMutation(),
+    onSuccess: () => {
+      showToast("Success!", "Question deleted successfully.", "success");
+      queryClient.invalidateQueries({
+        queryKey: readLetterLettersLetterLetterApiIdGetQueryKey({
+          path: { letter_api_id: loopApiId },
+        }),
+      });
+    },
+    onError: (error: AxiosError<DeleteQuestionQuestionsQuestionQuestionApiIdDeleteError>) => {
+      const errDetail =
+        error.response?.data.detail || "no error detail, please contact support";
+      showToast("Something went wrong.", `${errDetail}`, "error");
+    }
+  });
+
+  const handleDelete = async () => {
+    await deleteMutation.mutateAsync({
+      path: { question_api_id: question.api_identifier },
+    });
+    deleteModal.onClose();
+  };
 
   const handleUpsert = async (responseText: string) => {
     await upsertResponseQuestionsQuestionQuestionApiIdUpsertResponsePost({
@@ -115,13 +151,26 @@ function DraftQuestion({
 
   return (
     <Box my="20px">
-      {question.author == null ? (
-        <Heading size="md">{question.question_text}</Heading>
-      ) : (
-        <Heading size="md">
-          {question.author.name} asked: {question.question_text}
-        </Heading>
-      )}
+      <Flex justify="space-between" align="center">
+        {question.author == null ? (
+          <Heading size="md">{question.question_text}</Heading>
+        ) : (
+          <Heading size="md">
+            {question.author.name} asked: {question.question_text}
+          </Heading>
+        )}
+        {canDelete && readOnly && (
+          <Button
+            variant="ghost"
+            colorScheme="red"
+            size="sm"
+            onClick={deleteModal.onOpen}
+            leftIcon={<FaTrash />}
+          >
+            Delete
+          </Button>
+        )}
+      </Flex>
       <ResponseBlock
         questionApiId={question.api_identifier}
         response={response}
@@ -130,6 +179,29 @@ function DraftQuestion({
         key={question.api_identifier}
         readOnly={readOnly}
       />
+
+      <Modal isOpen={deleteModal.isOpen} onClose={deleteModal.onClose}>
+        <ModalOverlay />
+        <ModalContent>
+          <ModalHeader>Delete Question</ModalHeader>
+          <ModalCloseButton />
+          <ModalBody>
+            Are you sure you want to delete this question? This action cannot be undone.
+          </ModalBody>
+          <ModalFooter>
+            <Button variant="ghost" mr={3} onClick={deleteModal.onClose}>
+              Cancel
+            </Button>
+            <Button
+              colorScheme="red"
+              onClick={handleDelete}
+              isLoading={deleteMutation.isPending}
+            >
+              Delete
+            </Button>
+          </ModalFooter>
+        </ModalContent>
+      </Modal>
     </Box>
   );
 }

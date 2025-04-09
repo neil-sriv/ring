@@ -50,7 +50,7 @@ services:
     container_name: ring-cockroach
     restart: unless-stopped
     profiles: [ "dev" ]
-    command: start-single-node
+    command: start-single-node --certs-dir=/root/.cockroach-certs
     ports:
       - 26257:26257
       - 8007:8080
@@ -60,6 +60,7 @@ services:
       - COCKROACH_DATABASE=ring
     volumes:
       - cockroach-data:/cockroach/cockroach-data
+      - ./certs:/root/.cockroach-certs
     networks:
       - default
 

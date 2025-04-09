@@ -1,15 +1,16 @@
 import { Box, Container, Flex, Heading, Text, VStack } from "@chakra-ui/react";
 import { Link, createFileRoute } from "@tanstack/react-router";
-import { PublicLetter } from "../../../client";
+import { PublicLetter, UserLinked } from "../../../client";
 import { Suspense } from "react";
 import { ErrorBoundary } from "react-error-boundary";
 import PublishedLoop from "../../../components/Loops/PublishedLoop";
 import DraftLoop from "../../../components/Loops/DraftLoop";
 import QuestionNav from "../../../components/Question/QuestionNav";
-import { useSuspenseQuery } from "@tanstack/react-query";
+import { useQueryClient, useSuspenseQuery } from "@tanstack/react-query";
 import {
   readGroupPartiesGroupGroupApiIdGetOptions,
   readLetterLettersLetterLetterApiIdGetOptions,
+  readUserMePartiesMeGetQueryKey,
 } from "../../../client/@tanstack/react-query.gen";
 
 type IssueLoaderProps = {
@@ -42,6 +43,10 @@ function IssueContent() {
       path: { group_api_id: loop.group.api_identifier },
     }),
   });
+  const queryClient = useQueryClient();
+  const currentUser = queryClient.getQueryData<UserLinked>(
+    readUserMePartiesMeGetQueryKey()
+  );
   const localDueDate = new Date(loop.send_at);
 
   return (
@@ -79,7 +84,7 @@ function IssueContent() {
           {loop.status === "SENT" ? (
             <PublishedLoop loop={loop} />
           ) : (
-            <DraftLoop loop={loop} />
+            <DraftLoop loop={loop} isGroupAdmin={group.admin.api_identifier === currentUser?.api_identifier} />
           )}
         </VStack>
       </Box>
