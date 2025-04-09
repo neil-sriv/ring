@@ -32,6 +32,7 @@ class LetterFactory(BaseFactory[Letter]):
         "ring.tests.factories.parties.group_factory.GroupFactory"
     )
 
+
 @register_factory
 class UpcomingLetterFactory(LetterFactory):
     status = LetterStatus.UPCOMING

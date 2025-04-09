@@ -37,7 +37,9 @@ class TestQuestionAPI:
             authenticated_client (TestClient): FastAPI test client
             db_session (Session): Database session
         """
-        question = QuestionFactory.create(author=current_user, letter=UpcomingLetterFactory.create())
+        question = QuestionFactory.create(
+            author=current_user, letter=UpcomingLetterFactory.create()
+        )
         db_session.commit()
 
         response = authenticated_client.delete(
@@ -135,7 +137,8 @@ class TestQuestionAPI:
             db_session (Session): Database session
         """
         question = QuestionFactory.create(
-            author=current_user, letter=UpcomingLetterFactory.create(),
+            author=current_user,
+            letter=UpcomingLetterFactory.create(),
         )
         response = ResponseFactory.create(question=question)
         db_session.commit()
@@ -189,9 +192,7 @@ class TestQuestionAPI:
             current_user (User): The authenticated user
             db_session (Session): Database session
         """
-        question = QuestionFactory.create(
-            author=current_user
-        )
+        question = QuestionFactory.create(author=current_user)
         db_session.commit()
 
         response = authenticated_client.delete(

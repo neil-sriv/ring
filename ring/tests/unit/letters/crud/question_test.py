@@ -37,7 +37,10 @@ class TestQuestionCrud:
         db_session.commit()
 
         # Verify question is deleted
-        assert db_session.query(Question).filter_by(id=question.id).one_or_none() is None
+        assert (
+            db_session.query(Question).filter_by(id=question.id).one_or_none()
+            is None
+        )
 
     def test_delete_question_with_responses(self, db_session: Session) -> None:
         """Test attempting to delete a question that has responses.

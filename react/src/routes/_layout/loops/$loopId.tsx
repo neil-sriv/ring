@@ -10,7 +10,6 @@ import { useQueryClient, useSuspenseQuery } from "@tanstack/react-query";
 import {
   readGroupPartiesGroupGroupApiIdGetOptions,
   readLetterLettersLetterLetterApiIdGetOptions,
-  readUserMePartiesMeGetOptions,
   readUserMePartiesMeGetQueryKey,
 } from "../../../client/@tanstack/react-query.gen";
 
