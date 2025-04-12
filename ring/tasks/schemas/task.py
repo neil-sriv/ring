@@ -4,6 +4,7 @@ This module defines the Pydantic models used for validating and serializing task
 in API requests and responses. It includes models for creating tasks and representing
 task data with different levels of detail.
 """
+from __future__ import annotations
 
 from pydantic import AwareDatetime, BaseModel, ConfigDict
 

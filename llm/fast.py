@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from typing import Awaitable, Callable
 
 from fastapi import Depends, FastAPI, Request, Response

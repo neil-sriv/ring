@@ -3,6 +3,7 @@
 This module provides decorators and base functions for creating database-aware
 scripts that can be run through the script runner.
 """
+from __future__ import annotations
 
 import functools
 from typing import Any, Callable

@@ -4,6 +4,7 @@ This module contains tests for all group-related database operations,
 including group creation, member management, and group settings.
 It verifies both successful operations and error cases.
 """
+from __future__ import annotations
 
 import pytest
 import sqlalchemy

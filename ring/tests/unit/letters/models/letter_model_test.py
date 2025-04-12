@@ -4,6 +4,7 @@ This module contains tests for the Letter model, including model creation,
 numbering, and responder tracking. It verifies both basic model attributes
 and complex relationships with groups, questions, and responses.
 """
+from __future__ import annotations
 
 from datetime import UTC
 

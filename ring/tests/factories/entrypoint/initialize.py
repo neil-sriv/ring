@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from ring.tests.factories.entrypoint.hydrate_registries import (
     hydrate_all_registries,
 )

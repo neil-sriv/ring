@@ -3,6 +3,7 @@
 This module contains tests for all question-related CRUD operations,
 including deletion and validation of deletion rules.
 """
+from __future__ import annotations
 
 import pytest
 from sqlalchemy.orm import Session

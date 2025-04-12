@@ -4,6 +4,7 @@ This module provides a mixin class that automatically adds and manages a creatio
 timestamp column for database models. The timestamp is set to the current time when
 a record is created and cannot be modified afterwards.
 """
+from __future__ import annotations
 
 from datetime import datetime
 

@@ -4,6 +4,7 @@ This module contains tests for all letter-related API endpoints,
 including letter creation, retrieval, editing, and dashboard views.
 It verifies both successful operations and error cases.
 """
+from __future__ import annotations
 
 from datetime import UTC, datetime, timedelta
 

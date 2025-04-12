@@ -2,6 +2,7 @@
 
 This script retrieves and displays all users from the database using SQLAlchemy.
 """
+from __future__ import annotations
 
 from sqlalchemy import select
 

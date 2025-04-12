@@ -4,6 +4,7 @@ This module provides unit test-specific fixtures for authentication and
 client management. It extends the base test configuration with user-specific
 test clients and authentication helpers.
 """
+from __future__ import annotations
 
 from typing import Callable, Generator
 

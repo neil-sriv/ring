@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import click
 
 from dev_util.dev import dev_command, dev_group, subprocess_run

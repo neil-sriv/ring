@@ -3,6 +3,7 @@
 This module defines Pydantic models for authentication tokens and their payload data,
 including the structure of JWT tokens and the data they contain.
 """
+from __future__ import annotations
 
 from pydantic import BaseModel
 

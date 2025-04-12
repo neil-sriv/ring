@@ -4,6 +4,7 @@ This module contains tests for the group model's functionality,
 including model creation, relationships, and default values.
 It verifies both model attributes and relationships with other models.
 """
+from __future__ import annotations
 
 import sqlalchemy
 from faker import Faker

@@ -4,6 +4,7 @@ This module contains tests for all user-related API endpoints, including
 user creation, registration, authentication, and profile management.
 It verifies both successful operations and error cases.
 """
+from __future__ import annotations
 
 import pytest
 import sqlalchemy

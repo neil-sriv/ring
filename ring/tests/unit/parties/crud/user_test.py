@@ -4,6 +4,7 @@ This module contains tests for all user-related database operations,
 including user creation, authentication, and retrieval.
 It verifies both successful operations and error cases.
 """
+from __future__ import annotations
 
 from faker import Faker
 from sqlalchemy.orm import Session

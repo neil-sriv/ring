@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from sqlalchemy import JSON, DateTime
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.dialects.postgresql import TIMESTAMP as PG_TIMESTAMP

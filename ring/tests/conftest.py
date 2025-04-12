@@ -3,6 +3,7 @@
 This module provides core test fixtures for database sessions, logging,
 and HTTP clients. It sets up the test environment and manages test resources.
 """
+from __future__ import annotations
 
 import logging
 from typing import Generator
