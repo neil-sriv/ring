@@ -19,15 +19,22 @@ router = APIRouter()
 async def generate_completion(request: CompletionRequest):
     """Stub endpoint for text completion generation"""
     llm = get_llm(LLMType.OPENAI)
-    completion = await llm.client.completions.create(
+    completion = await llm.client.chat.completions.create(
         model=llm.model,
-        prompt=request.prompt,
+        messages=[
+            {
+                "role": "user",
+                "content": request.prompt,
+            }
+        ],
         max_tokens=request.max_tokens,
+        response_format=request.output_schema,
     )
     logger.info(f"Completion: {completion}")
     return CompletionResponse(
-        text=completion.choices[0].text,
-        usage=completion.usage.model_dump(),
+        completion=completion,
+        text=completion.choices[0].message.content,
+        usage=completion.usage,
     )
 
 

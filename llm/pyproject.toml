@@ -13,6 +13,7 @@ dependencies = [
     "python-jose>=3.3.0",
     "ruff>=0.8.0",
     "ipython>=8.29.0",
+    "jambo>=0.1.0.post3",
 ]
 
 [dependency-groups]

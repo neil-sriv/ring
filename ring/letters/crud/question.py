@@ -134,7 +134,7 @@ def delete_question(
     db.delete(question)
 
 
-def generate_question(prompt: str) -> str:
+def generate_question(prompt: str, letter: Letter | None = None) -> str:
     """
     Generate a question using LLM service.
 
@@ -154,9 +154,13 @@ def generate_question(prompt: str) -> str:
     The newsletter is sent to the group on a regular basis, and the questions are used to generate the newsletter.
     The questions should be short and to the point, and should be easy and fun to answer.
 
-    These are the existing questions for this letter:
-    {_compile_existing_questions(letter)}
     """
+
+    if letter is not None:
+        system_prompt += f"""
+        These are the existing questions for this letter:
+        {_compile_existing_questions(letter)}
+        """
 
     if prompt is not None:
         additional_instructions = f"""

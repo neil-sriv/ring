@@ -11,6 +11,10 @@ anyio==4.8.0
     #   watchfiles
 asttokens==3.0.0
     # via stack-data
+attrs==25.3.0
+    # via
+    #   jsonschema
+    #   referencing
 cachetools==5.5.2
     # via google-auth
 certifi==2025.1.31
@@ -70,12 +74,18 @@ ipython-pygments-lexers==1.1.1
     # via ipython
 itsdangerous==2.2.0
     # via fastapi
+jambo==0.1.0.post3
+    # via llm (pyproject.toml)
 jedi==0.19.2
     # via ipython
 jinja2==3.1.6
     # via fastapi
 jiter==0.9.0
     # via openai
+jsonschema==4.23.0
+    # via jambo
+jsonschema-specifications==2025.4.1
+    # via jsonschema
 loguru==0.7.3
     # via llm (pyproject.toml)
 markdown-it-py==3.0.0
@@ -111,6 +121,7 @@ pydantic==2.10.6
     # via
     #   fastapi
     #   google-genai
+    #   jambo
     #   openai
     #   pydantic-extra-types
     #   pydantic-settings
@@ -139,6 +150,10 @@ pyyaml==6.0.2
     # via
     #   fastapi
     #   uvicorn
+referencing==0.36.2
+    # via
+    #   jsonschema
+    #   jsonschema-specifications
 requests==2.32.3
     # via google-genai
 rich==13.9.4
@@ -147,6 +162,10 @@ rich==13.9.4
     #   typer
 rich-toolkit==0.13.2
     # via fastapi-cli
+rpds-py==0.24.0
+    # via
+    #   jsonschema
+    #   referencing
 rsa==4.9
     # via
     #   google-auth
@@ -182,6 +201,7 @@ typing-extensions==4.12.2
     #   pydantic
     #   pydantic-core
     #   pydantic-extra-types
+    #   referencing
     #   rich-toolkit
     #   typer
 ujson==5.10.0
