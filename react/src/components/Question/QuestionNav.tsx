@@ -1,11 +1,12 @@
 import { Button, Flex, Icon, useDisclosure } from "@chakra-ui/react";
 import { FaPlus } from "react-icons/fa";
 
-import AddQuestion from "./AddQuestion";
-import { GroupLinked, PublicLetter, UserLinked } from "../../client";
-import EditLetter from "../Loops/EditLoop";
 import { useQueryClient } from "@tanstack/react-query";
+import { GroupLinked, PublicLetter, UserLinked } from "../../client";
 import { readUserMePartiesMeGetQueryKey } from "../../client/@tanstack/react-query.gen";
+import EditLetter from "../Loops/EditLoop";
+import AddQuestion from "./AddQuestion";
+import GenerateQuestion from "./GenerateQuestion";
 
 type QuestionNavProps = {
   loop: PublicLetter;
@@ -15,6 +16,7 @@ type QuestionNavProps = {
 function QuestionNav(props: QuestionNavProps): JSX.Element {
   const editLoopModal = useDisclosure();
   const addQuestionModal = useDisclosure();
+  const generateQuestionModal = useDisclosure();
   const queryClient = useQueryClient();
   const currentUser = queryClient.getQueryData<UserLinked>(
     readUserMePartiesMeGetQueryKey()
@@ -27,9 +29,13 @@ function QuestionNav(props: QuestionNavProps): JSX.Element {
   const onClickAddQuestion = (): void => {
     addQuestionModal.onOpen();
   };
+
+  const onClickGenerateQuestion = (): void => {
+    generateQuestionModal.onOpen();
+  };
   return (
     <>
-      <Flex >
+      <Flex gap={4} wrap="wrap">
         {props.group.admin.api_identifier === currentUser?.api_identifier && (
           <Button
             variant="primary"
@@ -39,6 +45,10 @@ function QuestionNav(props: QuestionNavProps): JSX.Element {
             isDisabled={
               props.group.admin.api_identifier !== currentUser?.api_identifier
             }
+            whiteSpace="normal"
+            textAlign="left"
+            height="auto"
+            py={2}
           >
             Edit Loop
           </Button>
@@ -49,12 +59,31 @@ function QuestionNav(props: QuestionNavProps): JSX.Element {
             gap={1}
             fontSize={{ base: "sm", md: "inherit" }}
             onClick={() => onClickAddQuestion()}
+            whiteSpace="normal"
+            textAlign="left"
+            height="auto"
+            py={2}
           >
             <Icon as={FaPlus} />{" "}
-            {/* {enabled ? "Add new question" : "Loop in progress"} */}
             Add new question
           </Button>
         )}
+        {props.loop.status === "UPCOMING" && (
+          <Button
+            variant="primary"
+            gap={1}
+            fontSize={{ base: "sm", md: "inherit" }}
+            onClick={() => onClickGenerateQuestion()}
+            whiteSpace="normal"
+            textAlign="left"
+            height="auto"
+            py={2}
+          >
+            <Icon as={FaPlus} />{" "}
+            Ask ChatGPT to generate a question.
+          </Button>
+        )}
+
         <EditLetter
           isOpen={editLoopModal.isOpen}
           onClose={editLoopModal.onClose}
@@ -63,6 +92,11 @@ function QuestionNav(props: QuestionNavProps): JSX.Element {
         <AddQuestion
           isOpen={addQuestionModal.isOpen}
           onClose={addQuestionModal.onClose}
+          loopApiId={props.loop.api_identifier}
+        />
+        <GenerateQuestion
+          isOpen={generateQuestionModal.isOpen}
+          onClose={generateQuestionModal.onClose}
           loopApiId={props.loop.api_identifier}
         />
       </Flex>

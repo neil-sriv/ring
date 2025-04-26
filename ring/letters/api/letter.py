@@ -289,5 +289,5 @@ async def generate_question(
     db_letter = api_identifier_crud.get_model(
         req_dep.db, Letter, api_id=letter_api_id
     )
-    generated_text = question_crud.generate_question(db_letter, request.prompt)
+    generated_text = question_crud.generate_question(request.prompt, db_letter)
     return GenerateQuestionResponse(generated_text=generated_text)

@@ -202,16 +202,16 @@ async def delete_question(
         )
 
 
-@router.post(
-    "/question:generate",
-    response_model=GenerateQuestionResponse,
-)
-async def generate_question(
-    request: GenerateQuestionRequest,
-    req_dep: AuthenticatedRequestDependencies = Depends(
-        get_request_dependencies,
-    ),
-) -> GenerateQuestionResponse:
-    """Generate a question using LLM without saving it."""
-    generated_text = question_crud.generate_question(request.prompt)
-    return GenerateQuestionResponse(generated_text=generated_text)
+# @router.post(
+#     "/question:generate",
+#     response_model=GenerateQuestionResponse,
+# )
+# async def generate_question(
+#     request: GenerateQuestionRequest,
+#     req_dep: AuthenticatedRequestDependencies = Depends(
+#         get_request_dependencies,
+#     ),
+# ) -> GenerateQuestionResponse:
+#     """Generate a question using LLM without saving it."""
+#     generated_text = question_crud.generate_question(request.prompt, letter)
+#     return GenerateQuestionResponse(generated_text=generated_text)

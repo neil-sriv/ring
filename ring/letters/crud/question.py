@@ -149,6 +149,7 @@ def generate_question(prompt: str, letter: Letter | None = None) -> str:
     api_instance = CompletionsApi(api_client=api_client)
 
     def _compile_existing_questions(letter: Letter) -> str:
+        logger.warning(f"Letter: {letter}")
         return "\n".join([q.question_text for q in letter.questions])
 
     # generate system prompt
