@@ -247,7 +247,7 @@ async def schedule_send(
     "/group/{group_api_id}",
     response_model=GroupSchema,
 )
-def update_group(
+async def update_group(
     group_api_id: str,
     group: GroupUpdate,
     req_dep: AuthenticatedRequestDependencies = Depends(
@@ -296,7 +296,7 @@ def update_group(
     "/group/{group_api_id}:add_members",
     response_model=GroupSchema,
 )
-def add_members(
+async def add_members(
     group_api_id: str,
     add_members: AddMembers,
     req_dep: AuthenticatedRequestDependencies = Depends(
@@ -356,7 +356,7 @@ def add_members(
     "/group/{group_api_id}:replace_default_questions",
     response_model=GroupSchema,
 )
-def replace_group_default_questions(
+async def replace_group_default_questions(
     group_api_id: str,
     default_questions: ReplaceDefaultQuestions,
     req_dep: AuthenticatedRequestDependencies = Depends(

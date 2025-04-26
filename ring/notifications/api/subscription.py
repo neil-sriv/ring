@@ -24,7 +24,7 @@ router = APIRouter()
 
 
 @router.post("/subscription", response_model=ResponseMessage)
-def post_subscription(
+async def post_subscription(
     subscription: SubscriptionCreate,
     req_dep: AuthenticatedRequestDependencies = Depends(
         get_request_dependencies,

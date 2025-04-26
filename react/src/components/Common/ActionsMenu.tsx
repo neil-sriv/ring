@@ -7,7 +7,7 @@ import {
   useDisclosure,
 } from "@chakra-ui/react";
 import { BsThreeDotsVertical } from "react-icons/bs";
-import { FiEdit, FiSettings, FiTrash } from "react-icons/fi";
+import { FiEdit, FiSettings, FiTrash, FiUser } from "react-icons/fi";
 
 import type { GroupLinked, UserLinked } from "../../client";
 import EditUser from "../Admin/EditUser";
@@ -15,6 +15,7 @@ import Delete from "./DeleteAlert";
 import EditGroup from "../Groups/EditGroup";
 import AddMembers from "../Groups/AddMembers";
 import { useNavigate } from "@tanstack/react-router";
+import ImpersonateUser from "../Admin/ImpersonateUser";
 
 interface ActionsMenuProps {
   type: string;
@@ -26,6 +27,7 @@ const ActionsMenu = ({ type, value, disabled }: ActionsMenuProps) => {
   const editUserModal = useDisclosure();
   const deleteModal = useDisclosure();
   const addMembersModal = useDisclosure();
+  const impersonateUserModal = useDisclosure();
   const navigate = useNavigate();
 
   return (
@@ -44,6 +46,15 @@ const ActionsMenu = ({ type, value, disabled }: ActionsMenuProps) => {
           >
             Edit {type}
           </MenuItem>
+          {type === "User" && (
+            <MenuItem
+              onClick={impersonateUserModal.onOpen}
+              icon={<FiUser fontSize="16px" />}
+              color="ui.danger"
+            >
+              Impersonate User
+            </MenuItem>
+          )}
           <MenuItem
             onClick={deleteModal.onOpen}
             icon={<FiTrash fontSize="16px" />}
@@ -74,11 +85,16 @@ const ActionsMenu = ({ type, value, disabled }: ActionsMenuProps) => {
           )}
         </MenuList>
         {type === "User" ? (
-          <EditUser
-            user={value as UserLinked}
-            isOpen={editUserModal.isOpen}
-            onClose={editUserModal.onClose}
-          />
+          <>
+            <EditUser
+              user={value as UserLinked}
+              isOpen={editUserModal.isOpen}
+              onClose={editUserModal.onClose} />
+            <ImpersonateUser
+              user={value as UserLinked}
+              isOpen={impersonateUserModal.isOpen}
+              onClose={impersonateUserModal.onClose} />
+          </>
         ) : (
           <>
             <EditGroup

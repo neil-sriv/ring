@@ -687,6 +687,33 @@ export type LoginAccessTokenLoginAccessTokenPostResponses = {
 
 export type LoginAccessTokenLoginAccessTokenPostResponse = LoginAccessTokenLoginAccessTokenPostResponses[keyof LoginAccessTokenLoginAccessTokenPostResponses];
 
+export type ImpersonateUserTokenImpersonateUserTokenPostData = {
+    body?: never;
+    path?: never;
+    query: {
+        user_api_id: string;
+    };
+    url: '/impersonate-user-token';
+};
+
+export type ImpersonateUserTokenImpersonateUserTokenPostErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type ImpersonateUserTokenImpersonateUserTokenPostError = ImpersonateUserTokenImpersonateUserTokenPostErrors[keyof ImpersonateUserTokenImpersonateUserTokenPostErrors];
+
+export type ImpersonateUserTokenImpersonateUserTokenPostResponses = {
+    /**
+     * Successful Response
+     */
+    200: Token;
+};
+
+export type ImpersonateUserTokenImpersonateUserTokenPostResponse = ImpersonateUserTokenImpersonateUserTokenPostResponses[keyof ImpersonateUserTokenImpersonateUserTokenPostResponses];
+
 export type TestTokenLoginTestTokenPostData = {
     body?: never;
     path?: never;
@@ -973,32 +1000,32 @@ export type UpdatePasswordMePartiesMePasswordPatchResponses = {
 
 export type UpdatePasswordMePartiesMePasswordPatchResponse = UpdatePasswordMePartiesMePasswordPatchResponses[keyof UpdatePasswordMePartiesMePasswordPatchResponses];
 
-export type UpdateUserAdminPartiesUserIdAdminPatchData = {
+export type UpdateUserAdminPartiesUserApiIdAdminPatchData = {
     body?: never;
     path: {
-        user_id: number;
+        user_api_id: string;
     };
     query?: never;
-    url: '/parties/{user_id}/admin';
+    url: '/parties/{user_api_id}/admin';
 };
 
-export type UpdateUserAdminPartiesUserIdAdminPatchErrors = {
+export type UpdateUserAdminPartiesUserApiIdAdminPatchErrors = {
     /**
      * Validation Error
      */
     422: HttpValidationError;
 };
 
-export type UpdateUserAdminPartiesUserIdAdminPatchError = UpdateUserAdminPartiesUserIdAdminPatchErrors[keyof UpdateUserAdminPartiesUserIdAdminPatchErrors];
+export type UpdateUserAdminPartiesUserApiIdAdminPatchError = UpdateUserAdminPartiesUserApiIdAdminPatchErrors[keyof UpdateUserAdminPartiesUserApiIdAdminPatchErrors];
 
-export type UpdateUserAdminPartiesUserIdAdminPatchResponses = {
+export type UpdateUserAdminPartiesUserApiIdAdminPatchResponses = {
     /**
      * Successful Response
      */
     200: ResponseMessage;
 };
 
-export type UpdateUserAdminPartiesUserIdAdminPatchResponse = UpdateUserAdminPartiesUserIdAdminPatchResponses[keyof UpdateUserAdminPartiesUserIdAdminPatchResponses];
+export type UpdateUserAdminPartiesUserApiIdAdminPatchResponse = UpdateUserAdminPartiesUserApiIdAdminPatchResponses[keyof UpdateUserAdminPartiesUserApiIdAdminPatchResponses];
 
 export type SignupPartiesSignupPostData = {
     body?: never;
