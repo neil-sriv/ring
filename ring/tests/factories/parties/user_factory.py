@@ -24,3 +24,10 @@ class UserFactory(BaseFactory[User]):
 
     # Temporary value until post generation function is called
     hashed_password = Faker("password")
+
+
+@register_factory
+class AdminFactory(UserFactory):
+    @post_generation
+    def admin(obj, create: bool, extracted: str | None, **kwargs: Any) -> None:
+        obj.admin = True
