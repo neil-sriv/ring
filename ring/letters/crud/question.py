@@ -12,7 +12,7 @@ from llm_service import ApiClient, CompletionRequest, CompletionsApi
 from sqlalchemy import select
 
 from ring.api_identifier import util as api_identifier_crud
-from ring.config import get_llm_config
+from ring.fastapp.config import get_llm_config
 from ring.letters.models.letter_model import Letter
 from ring.letters.models.question_model import Question
 from ring.letters.models.response_model import Response
