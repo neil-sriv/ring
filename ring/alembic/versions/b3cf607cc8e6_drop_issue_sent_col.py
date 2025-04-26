@@ -5,6 +5,7 @@ Revises: 5236e7636275
 Create Date: 2024-07-26 05:11:55.083010
 
 """
+
 from __future__ import annotations
 
 from typing import Sequence, Union

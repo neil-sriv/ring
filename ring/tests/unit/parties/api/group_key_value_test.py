@@ -4,6 +4,7 @@ This module contains tests for all group key-value related API endpoints,
 including reading, setting, updating, and deleting key-value pairs for groups.
 It verifies both successful operations and error cases.
 """
+
 from __future__ import annotations
 
 from fastapi.testclient import TestClient

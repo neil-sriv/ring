@@ -3,6 +3,7 @@
 This module provides a command-line interface for running Python scripts
 with the Ring framework's dependencies and configuration.
 """
+
 from __future__ import annotations
 
 import importlib.util

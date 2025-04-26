@@ -3,6 +3,7 @@
 This module defines Pydantic models for image data and a mixin class for models
 that can have associated images.
 """
+
 from __future__ import annotations
 
 from typing import Any

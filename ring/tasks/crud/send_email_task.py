@@ -4,6 +4,7 @@ This module provides functions for creating email drafts that contain letter con
 including questions and responses with optional images. The emails are formatted
 in both HTML and plain text versions.
 """
+
 from __future__ import annotations
 
 from ring.email_util import EmailDraft, construct_email_draft

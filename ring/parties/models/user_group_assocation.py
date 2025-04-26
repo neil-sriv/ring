@@ -3,6 +3,7 @@
 This module defines the association table that represents the membership of users in groups,
 allowing each user to be a member of multiple groups and each group to have multiple members.
 """
+
 from __future__ import annotations
 
 from sqlalchemy import Column, ForeignKey, Integer, Table

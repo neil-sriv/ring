@@ -5,6 +5,8 @@ different parts of the application. It organizes routes by feature area and
 provides appropriate URL prefixes and tags for API documentation.
 """
 
+from __future__ import annotations
+
 from fastapi import APIRouter
 
 from ring.auth.api import authn

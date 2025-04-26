@@ -4,6 +4,8 @@ This module sets up the FastAPI application with CORS middleware, exception hand
 and request logging. It serves as the main entry point for the Ring API service.
 """
 
+from __future__ import annotations
+
 from typing import Awaitable, Callable, TypeVar
 
 from fastapi import FastAPI, Request, Response

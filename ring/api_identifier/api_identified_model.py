@@ -4,6 +4,7 @@ This module provides the APIIdentified mixin class that enables models to have
 unique, prefixed API identifiers. It automatically generates and manages these
 identifiers using UUIDs.
 """
+
 from __future__ import annotations
 
 from typing import Optional

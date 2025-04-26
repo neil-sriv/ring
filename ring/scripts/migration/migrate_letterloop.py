@@ -4,6 +4,7 @@ This script processes text files containing historical Letterloop issues and imp
 into the Ring database. It parses questions, answers, and user information from the
 text files and creates the corresponding database records.
 """
+
 from __future__ import annotations
 
 from datetime import datetime

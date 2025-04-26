@@ -4,6 +4,7 @@ This module provides utilities for password hashing, JWT token generation and
 validation, and OAuth2 authentication. It uses bcrypt for password hashing
 and JWT for token-based authentication.
 """
+
 from __future__ import annotations
 
 from datetime import UTC, datetime, timedelta

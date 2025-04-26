@@ -4,6 +4,7 @@ This module defines the list of Python modules containing Celery tasks that shou
 automatically imported and registered with the Celery worker. This ensures all Ring's
 asynchronous tasks are properly discovered and available for execution.
 """
+
 from __future__ import annotations
 
 CELERY_IMPORTS = [

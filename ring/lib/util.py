@@ -3,6 +3,7 @@
 This module provides generic container classes for registration patterns and
 utility functions for working with Python types and class hierarchies.
 """
+
 from __future__ import annotations
 
 from collections.abc import Mapping, Sequence

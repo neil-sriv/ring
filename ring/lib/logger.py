@@ -7,6 +7,7 @@ This module configures loguru for application-wide logging with two handlers:
 The logger can be imported and used throughout the application as:
     from ring.lib.logger import logger
 """
+
 from __future__ import annotations
 
 import sys

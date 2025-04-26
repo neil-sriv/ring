@@ -4,6 +4,7 @@ This module sets up SQLAlchemy with the database engine and session management.
 It provides the base model class for all database models and utilities for
 managing database sessions.
 """
+
 from __future__ import annotations
 
 from typing import Any, Callable, Iterator, TypeVar
