@@ -77,6 +77,7 @@ class User(UserBase):
     api_identifier: str
     admin: bool
 
+
 class UserUnlinked(User):
     """Schema for users without linked relationships.
 

@@ -53,6 +53,7 @@ def dev_group(
         name: The name of the group.
         invoke_without_command: Whether to invoke the group without a command.
     """
+
     def decorator(f: Callable[..., None]) -> click.Group:
         @dev.group(
             name=name,
@@ -78,6 +79,7 @@ def dev_command(
         name: The name of the command.
         group: The group of the command.
     """
+
     def decorator(f: Callable[..., None]) -> click.Command:
         @group.command(name=name, context_settings=UNLIMITED_ARGS_SETTINGS)
         @functools.wraps(f)
