@@ -52,3 +52,11 @@ class QuestionUnlinked(Question):
     """
 
     pass
+
+
+class GenerateQuestionRequest(BaseModel):
+    prompt: str
+
+
+class GenerateQuestionResponse(BaseModel):
+    generated_text: str

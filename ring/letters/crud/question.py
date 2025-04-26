@@ -6,14 +6,19 @@ including validation of user responses and response editing.
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Sequence
+import json
+from typing import TYPE_CHECKING, Optional, Sequence
 
+from llm_service import ApiClient, CompletionRequest, CompletionsApi
+from pydantic import BaseModel
 from sqlalchemy import select
 
 from ring.api_identifier import util as api_identifier_crud
+from ring.fastapp.config import get_llm_config
 from ring.letters.models.letter_model import Letter
 from ring.letters.models.question_model import Question
 from ring.letters.models.response_model import Response
+from ring.lib.logger import logger
 from ring.parties.models.user_model import User
 
 if TYPE_CHECKING:
@@ -130,3 +135,58 @@ def delete_question(
 
     # Delete the question
     db.delete(question)
+
+
+def generate_question(prompt: str, letter: Letter | None = None) -> str:
+    """
+    Generate a question using LLM service.
+
+    :param prompt: Prompt to generate the question
+    :return: Generated question text
+    """
+    # Initialize LLM service
+    api_client = ApiClient(configuration=get_llm_config().config)
+    api_instance = CompletionsApi(api_client=api_client)
+
+    def _compile_existing_questions(letter: Letter) -> str:
+        logger.warning(f"Letter: {letter}")
+        return "\n".join([q.question_text for q in letter.questions])
+
+    # generate system prompt
+    system_prompt = f"""
+    You are a helpful assistant that generates questions for a private newsletter service used by a group of friends. 
+    The newsletter is sent to the group on a regular basis, and the questions are used to generate the newsletter.
+    The questions should be short and to the point, and should be easy and fun to answer.
+
+    """
+
+    if letter is not None:
+        system_prompt += f"""
+        These are the existing questions for this letter:
+        {_compile_existing_questions(letter)}
+        """
+
+    if prompt is not None:
+        additional_instructions = f"""
+        You have been given a prompt that will be used to generate the question from the user.
+        {prompt}
+        """
+        system_prompt += additional_instructions
+
+    class OutputFormat(BaseModel):
+        question_text: str
+        # extra_information: Optional[str]
+
+    # Generate question using LLM
+    completion_request = CompletionRequest(
+        prompt=system_prompt,
+        output_schema_definition=json.dumps(OutputFormat.model_json_schema()),
+    )
+    logger.info(f"Completion Request: {completion_request}")
+    response = api_instance.generate_completion_completions_generate_post(
+        completion_request
+    )
+    logger.info(f"LLM Response: {response}")
+    output = OutputFormat.model_validate_json(response.output_schema)
+
+    return output.question_text

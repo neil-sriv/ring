@@ -25,7 +25,14 @@ required-imports = ["from __future__ import annotations"]
 "ring/alembic/versions/**.py" = ["F401"]
 
 [tool.uv.sources]
-llm-service = { path = "llm/client/_gen" }
+llm-service = { path = "ring/packages/service_clients/llm_service" }
+llm = { workspace = true }
+
+[tool.uv.workspace]
+members = [
+    "llm"
+]
+
 
 [project]
 name = "ring"
@@ -67,13 +74,14 @@ dependencies = [
     "sqlalchemy-cockroachdb>=2.0.2",
 ]
 
-[project.optional-dependencies]
+[dependency-groups]
 dev = [
     "pytest-factoryboy>=2.7.0",
     "pytest>=8.3.4",
     "psycopg-binary",
     "pytest-pretty>=1.2.0",
     "pytest-xdist>=3.6.1",
+    "llm",
 ]
 
 [project.scripts]

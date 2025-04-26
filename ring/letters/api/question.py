@@ -19,6 +19,10 @@ from ring.letters.crud import question as question_crud
 from ring.letters.crud.response import a_upload_image
 from ring.letters.models.question_model import Question
 from ring.letters.models.response_model import Response
+from ring.letters.schemas.question import (
+    GenerateQuestionRequest,
+    GenerateQuestionResponse,
+)
 from ring.letters.schemas.response import ResponseUpsert
 from ring.ring_pydantic.linked_schemas import QuestionLinked
 
@@ -196,3 +200,18 @@ async def delete_question(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=str(e),
         )
+
+
+# @router.post(
+#     "/question:generate",
+#     response_model=GenerateQuestionResponse,
+# )
+# async def generate_question(
+#     request: GenerateQuestionRequest,
+#     req_dep: AuthenticatedRequestDependencies = Depends(
+#         get_request_dependencies,
+#     ),
+# ) -> GenerateQuestionResponse:
+#     """Generate a question using LLM without saving it."""
+#     generated_text = question_crud.generate_question(request.prompt, letter)
+#     return GenerateQuestionResponse(generated_text=generated_text)

@@ -1829,6 +1829,64 @@
         }
       }
     },
+    "/letters/letter/{letter_api_id}:generate_question": {
+      "post": {
+        "tags": [
+          "letters"
+        ],
+        "summary": "Generate Question",
+        "description": "Generate a question using LLM without saving it.",
+        "operationId": "generate_question_letters_letter__letter_api_id__generate_question_post",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "letter_api_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Letter Api Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GenerateQuestionRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GenerateQuestionResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/schedule/schedule/{group_api_id}": {
       "get": {
         "tags": [
@@ -2032,6 +2090,53 @@
             }
           }
         }
+      }
+    },
+    "/questions/question:generate": {
+      "post": {
+        "tags": [
+          "questions"
+        ],
+        "summary": "Generate Question",
+        "description": "Generate a question using LLM without saving it.",
+        "operationId": "generate_question_questions_question_generate_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GenerateQuestionRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GenerateQuestionResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ]
       }
     },
     "/responses/response/{response_api_id}:edit_response": {
@@ -2288,6 +2393,53 @@
         ]
       }
     },
+    "/llm/completion": {
+      "post": {
+        "tags": [
+          "llm"
+        ],
+        "summary": "Generate Completion",
+        "description": "Generate a completion for the given request.\n\nGenerates a completion for the given request.\n\nArgs:\n    completion_request (CompletionRequest): Completion request details\n    req_dep (AuthenticatedRequestDependencies): Request dependencies including database session\n\nReturns:\n    CompletionResponse: Completion response details\n\nRaises:\n    HTTPException: If user is not authenticated",
+        "operationId": "generate_completion_llm_completion_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CompletionRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CompletionResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ]
+      }
+    },
     "/": {
       "get": {
         "summary": "Root",
@@ -2461,6 +2613,32 @@
         "title": "BulkGroupKeyValueUpdate",
         "description": "Schema for bulk updating multiple key-value pairs.\n\nThis model allows multiple key-value operations to be performed in a single request.\nEach update in the list can be either a 'set' or 'delete' operation.\n\nAttributes:\n    updates (list[SingleGroupKeyValueUpdate]): List of update operations to perform\n\nNote:\n    At least one update operation must be provided"
       },
+      "CompletionRequest": {
+        "properties": {
+          "prompt": {
+            "type": "string",
+            "title": "Prompt"
+          }
+        },
+        "type": "object",
+        "required": [
+          "prompt"
+        ],
+        "title": "CompletionRequest"
+      },
+      "CompletionResponse": {
+        "properties": {
+          "text": {
+            "type": "string",
+            "title": "Text"
+          }
+        },
+        "type": "object",
+        "required": [
+          "text"
+        ],
+        "title": "CompletionResponse"
+      },
       "DashboardLetters": {
         "properties": {
           "upcoming": {
@@ -2493,6 +2671,32 @@
         ],
         "title": "DashboardLetters",
         "description": "Model for the letters dashboard view.\n\nGroups letters by their status for dashboard display.\n\nAttributes:\n    upcoming (list[PublicLetter]): Letters scheduled for the future\n    in_progress (list[PublicLetter]): Currently active letters\n    recently_completed (list[PublicLetter]): Recently finished letters"
+      },
+      "GenerateQuestionRequest": {
+        "properties": {
+          "prompt": {
+            "type": "string",
+            "title": "Prompt"
+          }
+        },
+        "type": "object",
+        "required": [
+          "prompt"
+        ],
+        "title": "GenerateQuestionRequest"
+      },
+      "GenerateQuestionResponse": {
+        "properties": {
+          "generated_text": {
+            "type": "string",
+            "title": "Generated Text"
+          }
+        },
+        "type": "object",
+        "required": [
+          "generated_text"
+        ],
+        "title": "GenerateQuestionResponse"
       },
       "GroupCreate": {
         "properties": {

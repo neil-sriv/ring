@@ -1,36 +1,53 @@
 from __future__ import annotations
 
-from fastapi import APIRouter
+import json
 
-from llm.ai_client.ai_client import ai_client
+from fastapi import APIRouter
+from jambo.schema_converter import SchemaConverter
+
+from llm.ai_client.ai_client import (
+    LLMType,
+    get_llm,
+)
 from llm.completions.schemas.completions import (
     CompletionRequest,
     CompletionResponse,
+    Default,
 )
 from llm.lib.logger import logger
 
 router = APIRouter()
 
 
-def _get_model(prompt: str) -> str:
-    model = "llama3.2"
-    logger.info(f"Model: {model}")
-    return model
-
-
 @router.post("/generate", response_model=CompletionResponse)
 async def generate_completion(request: CompletionRequest):
     """Stub endpoint for text completion generation"""
-    model = _get_model(request.prompt)
-    completion = await ai_client.completions.create(
-        model=model,
-        prompt=request.prompt,
+    llm = get_llm(LLMType.GEMINI)
+    if request.output_schema_definition is not None:
+        output_schema = SchemaConverter.build(
+            json.loads(request.output_schema_definition)
+        )
+    else:
+        output_schema = Default
+    logger.info(f"Output schema: {output_schema.model_json_schema()}")
+    completion = await llm.client.beta.chat.completions.parse(
+        model=llm.model,
+        messages=[
+            {
+                "role": "user",
+                "content": request.prompt,
+            }
+        ],
         max_tokens=request.max_tokens,
+        max_completion_tokens=request.max_tokens,
+        response_format=output_schema,
     )
     logger.info(f"Completion: {completion}")
     return CompletionResponse(
-        text=completion.choices[0].text,
-        usage=completion.usage.model_dump(),
+        # completion=completion,
+        text=completion.choices[0].message.content,
+        usage=completion.usage,
+        output_schema=completion.choices[0].message.parsed.model_dump_json(),
     )
 
 
@@ -38,13 +55,19 @@ async def generate_completion(request: CompletionRequest):
 async def test_completion():
     """Test endpoint that returns a simple Hello World completion"""
     prompt = "Say exactly 'Hello World' and nothing else"
-    model = _get_model(prompt)
-    completion = await ai_client.completions.create(
-        model=model,
-        prompt=prompt,
+    llm = get_llm(LLMType.GEMINI)
+    completion = await llm.client.chat.completions.create(
+        model=llm.model,
+        messages=[
+            {
+                "role": "user",
+                "content": prompt,
+            }
+        ],
         max_tokens=2,
     )
     return CompletionResponse(
-        text=completion.choices[0].text,
-        usage=completion.usage.model_dump(),
+        # completion=completion,
+        text=completion.choices[0].message.content,
+        usage=completion.usage,
     )

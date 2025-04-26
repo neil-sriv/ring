@@ -4,23 +4,33 @@ annotated-types==0.7.0
     # via pydantic
 anyio==4.8.0
     # via
+    #   google-genai
     #   httpx
     #   openai
     #   starlette
     #   watchfiles
+asttokens==3.0.0
+    # via stack-data
+attrs==25.3.0
+    # via
+    #   jsonschema
+    #   referencing
+cachetools==5.5.2
+    # via google-auth
 certifi==2025.1.31
     # via
     #   httpcore
     #   httpx
-cffi==1.17.1
-    # via cryptography
+    #   requests
+charset-normalizer==3.4.1
+    # via requests
 click==8.1.8
     # via
     #   rich-toolkit
     #   typer
     #   uvicorn
-cryptography==44.0.2
-    # via python-jose
+decorator==5.2.1
+    # via ipython
 distro==1.9.0
     # via openai
 dnspython==2.7.0
@@ -29,10 +39,16 @@ ecdsa==0.19.0
     # via python-jose
 email-validator==2.2.0
     # via fastapi
+executing==2.2.0
+    # via stack-data
 fastapi==0.115.11
     # via llm (pyproject.toml)
 fastapi-cli==0.0.7
     # via fastapi
+google-auth==2.38.0
+    # via google-genai
+google-genai==1.8.0
+    # via llm (pyproject.toml)
 h11==0.14.0
     # via
     #   httpcore
@@ -44,40 +60,68 @@ httptools==0.6.4
 httpx==0.28.1
     # via
     #   fastapi
+    #   google-genai
     #   openai
 idna==3.10
     # via
     #   anyio
     #   email-validator
     #   httpx
+    #   requests
+ipython==9.0.2
+    # via llm (pyproject.toml)
+ipython-pygments-lexers==1.1.1
+    # via ipython
 itsdangerous==2.2.0
     # via fastapi
+jambo==0.1.0.post3
+    # via llm (pyproject.toml)
+jedi==0.19.2
+    # via ipython
 jinja2==3.1.6
     # via fastapi
 jiter==0.9.0
     # via openai
+jsonschema==4.23.0
+    # via jambo
+jsonschema-specifications==2025.4.1
+    # via jsonschema
 loguru==0.7.3
     # via llm (pyproject.toml)
 markdown-it-py==3.0.0
     # via rich
 markupsafe==3.0.2
     # via jinja2
+matplotlib-inline==0.1.7
+    # via ipython
 mdurl==0.1.2
     # via markdown-it-py
-openai==1.66.3
+openai==1.68.2
     # via llm (pyproject.toml)
 orjson==3.10.15
     # via fastapi
+parso==0.8.4
+    # via jedi
+pexpect==4.9.0
+    # via ipython
+prompt-toolkit==3.0.50
+    # via ipython
+ptyprocess==0.7.0
+    # via pexpect
+pure-eval==0.2.3
+    # via stack-data
 pyasn1==0.4.8
     # via
+    #   pyasn1-modules
     #   python-jose
     #   rsa
-pycparser==2.22
-    # via cffi
+pyasn1-modules==0.4.1
+    # via google-auth
 pydantic==2.10.6
     # via
-    #   llm (pyproject.toml)
     #   fastapi
+    #   google-genai
+    #   jambo
     #   openai
     #   pydantic-extra-types
     #   pydantic-settings
@@ -88,12 +132,14 @@ pydantic-extra-types==2.10.3
 pydantic-settings==2.8.1
     # via fastapi
 pygments==2.19.1
-    # via rich
+    # via
+    #   ipython
+    #   ipython-pygments-lexers
+    #   rich
 pyjwt==2.10.1
     # via llm (pyproject.toml)
 python-dotenv==1.0.1
     # via
-    #   llm (pyproject.toml)
     #   pydantic-settings
     #   uvicorn
 python-jose==3.4.0
@@ -104,15 +150,27 @@ pyyaml==6.0.2
     # via
     #   fastapi
     #   uvicorn
+referencing==0.36.2
+    # via
+    #   jsonschema
+    #   jsonschema-specifications
+requests==2.32.3
+    # via google-genai
 rich==13.9.4
     # via
     #   rich-toolkit
     #   typer
 rich-toolkit==0.13.2
     # via fastapi-cli
+rpds-py==0.24.0
+    # via
+    #   jsonschema
+    #   referencing
 rsa==4.9
-    # via python-jose
-ruff==0.3.7
+    # via
+    #   google-auth
+    #   python-jose
+ruff==0.11.2
     # via llm (pyproject.toml)
 shellingham==1.5.4
     # via typer
@@ -122,32 +180,45 @@ sniffio==1.3.1
     # via
     #   anyio
     #   openai
+stack-data==0.6.3
+    # via ipython
 starlette==0.46.1
     # via fastapi
 tqdm==4.67.1
     # via openai
+traitlets==5.14.3
+    # via
+    #   ipython
+    #   matplotlib-inline
 typer==0.15.2
     # via fastapi-cli
 typing-extensions==4.12.2
     # via
     #   anyio
     #   fastapi
+    #   google-genai
     #   openai
     #   pydantic
     #   pydantic-core
     #   pydantic-extra-types
+    #   referencing
     #   rich-toolkit
     #   typer
 ujson==5.10.0
     # via fastapi
+urllib3==2.3.0
+    # via requests
 uvicorn==0.27.1
     # via
-    #   llm (pyproject.toml)
     #   fastapi
     #   fastapi-cli
 uvloop==0.21.0
     # via uvicorn
 watchfiles==1.0.4
     # via uvicorn
+wcwidth==0.2.13
+    # via prompt-toolkit
 websockets==15.0.1
-    # via uvicorn
+    # via
+    #   google-genai
+    #   uvicorn
