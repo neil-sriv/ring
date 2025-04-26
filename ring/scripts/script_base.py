@@ -41,13 +41,11 @@ def script_di() -> Callable[[Callable[..., T]], Callable[..., T]]:
 
 
 @script_di()
-def run_script(db: Session) -> None:
+def run_script(db: Session, dry_run: bool = True) -> None:
     """Base script function to be overridden by actual scripts.
 
     Args:
         db (Session): Database session provided by the decorator
-
-    Raises:
-        NotImplementedError: This base function must be overridden
+        dry_run (bool): Whether to perform a dry run
     """
     raise NotImplementedError()
