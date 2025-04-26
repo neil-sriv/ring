@@ -9,7 +9,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from sqlalchemy import ForeignKey, Text
+from sqlalchemy import ForeignKey, String, Text
 from sqlalchemy.ext.hybrid import hybrid_property
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
@@ -52,7 +52,7 @@ class Question(Base, APIIdentified, PydanticModel, CreatedAtMixin):
         back_populates="question", cascade="all"
     )
 
-    question_text: Mapped[str] = mapped_column(Text)
+    question_text: Mapped[str] = mapped_column(String)
     author_id: Mapped[int] = mapped_column(
         ForeignKey("user.id"), nullable=True, default=None
     )

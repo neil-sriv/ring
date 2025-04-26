@@ -10,6 +10,10 @@ from logging.config import fileConfig
 from alembic import context
 from sqlalchemy import engine_from_config, pool
 
+from ring.alembic.alembic_helpers import (
+    cockroach_compare_type,
+    include_object,
+)
 from ring.config import get_config
 from ring.letters.models.default_question_model import (
     DefaultQuestion,  # type: ignore # noqa: F401  # type: ignore # noqa: F401
@@ -53,6 +57,10 @@ config.set_main_option("sqlalchemy.url", get_config().cockroach_database_uri)
 if config.config_file_name is not None:
     fileConfig(config.config_file_name)
 
+import logging
+
+logging.getLogger("alembic").setLevel(logging.DEBUG)
+
 # add your model's MetaData object here
 # for 'autogenerate' support
 # from myapp import mymodel
@@ -81,6 +89,8 @@ def run_migrations_offline() -> None:
         target_metadata=target_metadata,
         literal_binds=True,
         dialect_opts={"paramstyle": "named"},
+        compare_type=cockroach_compare_type,
+        include_object=include_object,
     )
 
     with context.begin_transaction():
@@ -106,7 +116,10 @@ def run_migrations_online() -> None:
 
     with connectable.connect() as connection:
         context.configure(
-            connection=connection, target_metadata=target_metadata
+            connection=connection,
+            target_metadata=target_metadata,
+            compare_type=cockroach_compare_type,
+            include_object=include_object,
         )
 
         with context.begin_transaction():

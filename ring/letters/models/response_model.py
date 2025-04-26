@@ -9,7 +9,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, List
 
-from sqlalchemy import ForeignKey, Integer, Text, UniqueConstraint
+from sqlalchemy import ForeignKey, Integer, String, Text, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from ring.api_identifier.api_identified_model import APIIdentified
@@ -82,7 +82,7 @@ class Response(Base, APIIdentified, PydanticModel, CreatedAtMixin):
     question_id: Mapped[int] = mapped_column(ForeignKey("question.id"))
     question: Mapped["Question"] = relationship(back_populates="responses")
 
-    response_text: Mapped[str] = mapped_column(Text)
+    response_text: Mapped[str] = mapped_column(String)
     # images: Mapped[List["Image"]] = relationship(
     #     secondary=ImageResponseAssociation.__table__,
     # )
