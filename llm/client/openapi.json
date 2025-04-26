@@ -1,7 +1,7 @@
 {
     "openapi": "3.1.0",
     "info": {
-        "title": "LLM Service",
+        "title": "FastAPI",
         "version": "0.1.0"
     },
     "servers": [
@@ -169,11 +169,16 @@
                         "type": "integer",
                         "title": "Max Tokens",
                         "default": 100
+                    },
+                    "output_schema_definition": {
+                        "type": "string",
+                        "title": "Output Schema Definition"
                     }
                 },
                 "type": "object",
                 "required": [
-                    "prompt"
+                    "prompt",
+                    "output_schema_definition"
                 ],
                 "title": "CompletionRequest"
             },
@@ -183,15 +188,15 @@
                         "type": "string",
                         "title": "Text"
                     },
-                    "usage": {
-                        "type": "object",
-                        "title": "Usage"
+                    "output_schema": {
+                        "type": "string",
+                        "title": "Output Schema"
                     }
                 },
                 "type": "object",
                 "required": [
                     "text",
-                    "usage"
+                    "output_schema"
                 ],
                 "title": "CompletionResponse"
             },

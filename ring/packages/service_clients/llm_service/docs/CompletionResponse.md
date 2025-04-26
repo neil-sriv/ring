@@ -6,7 +6,7 @@
 Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
 **text** | **str** |  | 
-**usage** | **object** |  | 
+**output_schema** | **str** |  | 
 
 ## Example
 

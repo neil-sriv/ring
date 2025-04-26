@@ -1,12 +1,12 @@
 [tool.poetry]
 name = "llm_service"
 version = "1.0.0"
-description = "LLM Service"
+description = "FastAPI"
 authors = ["OpenAPI Generator Community <team@openapitools.org>"]
 license = "NoLicense"
 readme = "README.md"
 repository = "https://github.com/GIT_USER_ID/GIT_REPO_ID"
-keywords = ["OpenAPI", "OpenAPI-Generator", "LLM Service"]
+keywords = ["OpenAPI", "OpenAPI-Generator", "FastAPI"]
 include = ["llm_service/py.typed"]
 
 [tool.poetry.dependencies]

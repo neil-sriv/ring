@@ -6,9 +6,11 @@ including validation of user responses and response editing.
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Sequence
+import json
+from typing import TYPE_CHECKING, Optional, Sequence
 
 from llm_service import ApiClient, CompletionRequest, CompletionsApi
+from pydantic import BaseModel
 from sqlalchemy import select
 
 from ring.api_identifier import util as api_identifier_crud
@@ -16,6 +18,7 @@ from ring.fastapp.config import get_llm_config
 from ring.letters.models.letter_model import Letter
 from ring.letters.models.question_model import Question
 from ring.letters.models.response_model import Response
+from ring.lib.logger import logger
 from ring.parties.models.user_model import User
 
 if TYPE_CHECKING:
@@ -169,10 +172,20 @@ def generate_question(prompt: str, letter: Letter | None = None) -> str:
         """
         system_prompt += additional_instructions
 
+    class OutputFormat(BaseModel):
+        question_text: str
+        # extra_information: Optional[str]
+
     # Generate question using LLM
-    completion_request = CompletionRequest(prompt=system_prompt)
+    completion_request = CompletionRequest(
+        prompt=system_prompt,
+        output_schema_definition=json.dumps(OutputFormat.model_json_schema()),
+    )
+    logger.info(f"Completion Request: {completion_request}")
     response = api_instance.generate_completion_completions_generate_post(
         completion_request
     )
+    logger.info(f"LLM Response: {response}")
+    output = OutputFormat.model_validate_json(response.output_schema)
 
-    return response.text
+    return output.question_text
