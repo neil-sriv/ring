@@ -2,12 +2,14 @@ import {
     Box,
     Button,
     Container,
+    Flex,
     FormControl,
     FormLabel,
     Heading,
+    Text,
     Textarea,
     useToast,
-    VStack,
+    VStack
 } from "@chakra-ui/react";
 import { useMutation } from "@tanstack/react-query";
 import { AxiosError } from "axios";
@@ -15,8 +17,15 @@ import { useState } from "react";
 import { GenerateCompletionLlmCompletionPostError, GenerateCompletionLlmCompletionPostResponse } from "../../client";
 import { generateCompletionLlmCompletionPostMutation } from "../../client/@tanstack/react-query.gen";
 
+interface Message {
+    role: "user" | "assistant";
+    content: string;
+    timestamp: Date;
+}
+
 export function LLMPlayground(): JSX.Element {
     const [message, setMessage] = useState("");
+    const [messages, setMessages] = useState<Message[]>([]);
     const toast = useToast();
 
     const { mutate: sendMessage, isPending } = useMutation({
@@ -26,19 +35,26 @@ export function LLMPlayground(): JSX.Element {
             },
         }),
         onSuccess: (data: GenerateCompletionLlmCompletionPostResponse) => {
-            // toast({
-            //     title: "Success",
-            //     description: "Message sent successfully",
-            //     status: "success",
-            //     duration: 3000,
-            //     isClosable: true,
-            // });
-            setMessage(data.text);
+            // Add user message to history
+            setMessages(prev => [...prev, {
+                role: "user",
+                content: message,
+                timestamp: new Date(),
+            }]);
+
+            // Add assistant response to history
+            setMessages(prev => [...prev, {
+                role: "assistant",
+                content: data.text,
+                timestamp: new Date(),
+            }]);
+
+            setMessage("");
         },
         onError: (error: AxiosError<GenerateCompletionLlmCompletionPostError>) => {
             toast({
                 title: "Error",
-                description: error instanceof Error ? error.message : "Failed to send message",
+                description: error.response?.data.detail?.[0].msg || "Failed to send message",
                 status: "error",
                 duration: 3000,
                 isClosable: true,
@@ -61,7 +77,40 @@ export function LLMPlayground(): JSX.Element {
         <Container maxW="container.md" py={8}>
             <VStack spacing={6} align="stretch">
                 <Heading size="lg">LLM Playground</Heading>
+                <Text>
+                    This is a playground for talking to LLMs. I don't have chat history or memory, so it's not very useful yet.
+                </Text>
 
+                {/* Message History */}
+                <Box
+                    flex="1"
+                    overflowY="auto"
+                    maxH="60vh"
+                    borderWidth="1px"
+                    borderRadius="md"
+                    p={4}
+                >
+                    <VStack spacing={4} align="stretch">
+                        {messages.map((msg, index) => (
+                            <Flex key={index} justify={msg.role === "user" ? "flex-end" : "flex-start"}>
+                                <Box
+                                    maxW="70%"
+                                    bg={msg.role === "user" ? "blue.500" : "gray.100"}
+                                    color={msg.role === "user" ? "white" : "black"}
+                                    p={3}
+                                    borderRadius="lg"
+                                >
+                                    <Text>{msg.content}</Text>
+                                    <Text fontSize="xs" color={msg.role === "user" ? "whiteAlpha.700" : "gray.500"}>
+                                        {msg.timestamp.toLocaleTimeString()}
+                                    </Text>
+                                </Box>
+                            </Flex>
+                        ))}
+                    </VStack>
+                </Box>
+
+                {/* Message Input */}
                 <Box as="form" onSubmit={handleSubmit}>
                     <FormControl isRequired>
                         <FormLabel>Message</FormLabel>
@@ -70,7 +119,7 @@ export function LLMPlayground(): JSX.Element {
                             onChange={(e) => setMessage(e.target.value)}
                             placeholder="Type your message here..."
                             size="lg"
-                            rows={4}
+                            rows={3}
                         />
                     </FormControl>
 
