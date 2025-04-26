@@ -1053,6 +1053,7 @@ source = { virtual = "llm" }
 dependencies = [
     { name = "fastapi", extra = ["all"] },
     { name = "google-genai" },
+    { name = "ipython" },
     { name = "loguru" },
     { name = "openai" },
     { name = "pyjwt" },
@@ -1060,15 +1061,11 @@ dependencies = [
     { name = "ruff" },
 ]
 
-[package.dev-dependencies]
-dev = [
-    { name = "ipython" },
-]
-
 [package.metadata]
 requires-dist = [
     { name = "fastapi", extras = ["all"], specifier = ">=0.115.5" },
     { name = "google-genai", specifier = ">=1.8.0" },
+    { name = "ipython", specifier = ">=8.29.0" },
     { name = "loguru", specifier = ">=0.7.3" },
     { name = "openai", specifier = ">=1.68.2" },
     { name = "pyjwt", specifier = ">=2.10.0" },
@@ -1077,7 +1074,7 @@ requires-dist = [
 ]
 
 [package.metadata.requires-dev]
-dev = [{ name = "ipython", specifier = ">=8.29.0" }]
+dev = []
 
 [[package]]
 name = "llm-service"
