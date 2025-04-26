@@ -38,8 +38,8 @@ async def generate_completion(request: CompletionRequest):
                 "content": request.prompt,
             }
         ],
-        max_tokens=request.max_tokens,
-        max_completion_tokens=request.max_tokens,
+        # max_tokens=request.max_tokens,
+        # max_completion_tokens=request.max_tokens,
         response_format=output_schema,
     )
     logger.info(f"Completion: {completion}")

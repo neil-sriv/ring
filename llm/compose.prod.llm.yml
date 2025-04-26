@@ -2,10 +2,12 @@ services:
   llm:
     image: prod-ring-llm
     command: "uvicorn llm.fast:app --proxy-headers --host 0.0.0.0 --port ${LLM_PORT:-8006}"
+    profiles:
+      - prod
     mem_limit: 300m
     platform: linux/amd64
     volumes: []
 
 networks:
   ring-network:
-    external: true 
+    external: true
