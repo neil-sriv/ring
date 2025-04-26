@@ -5,6 +5,7 @@ user creation, registration, authentication, and profile management.
 It verifies both successful operations and error cases.
 """
 
+import pytest
 import sqlalchemy
 from faker import Faker
 from fastapi.testclient import TestClient
@@ -586,3 +587,42 @@ class TestUserAPI:
             resp.json()["detail"]
             == "New password must be different from the current password"
         )
+
+    @pytest.mark.admin(True)
+    def test_update_user_admin(
+        self,
+        authenticated_client: TestClient,
+        db_session: Session,
+    ) -> None:
+        """Test updating a user's admin status.
+
+        This test verifies that:
+        1. A user can be updated to admin status
+        2. The response contains the updated user data
+        3. The database is updated with the new admin status
+        4. The change is reflected in the user object
+
+        Args:
+            authenticated_client (TestClient): Authenticated test client
+            db_session (Session): Database session
+        """
+        user = UserFactory.create()
+        db_session.commit()
+
+        resp = authenticated_client.patch(
+            f"/parties/{user.api_identifier}/admin"
+        )
+        assert resp.status_code == 200
+        data = resp.json()
+        assert data["message"] == "User admin status updated successfully"
+        assert user.admin
+
+        resp = authenticated_client.patch(
+            f"/parties/{user.api_identifier}/admin"
+        )
+        assert resp.status_code == 400
+        assert resp.json()["detail"] == "User is already an admin"
+
+        resp = authenticated_client.patch(f"/parties/invalid_id/admin")
+        assert resp.status_code == 404
+        assert resp.json()["detail"] == "Model ids not found"

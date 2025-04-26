@@ -266,6 +266,41 @@ def update_password_me(
     return ResponseMessage(message="Password updated successfully")
 
 
+@router.patch("/{user_api_id}/admin", response_model=ResponseMessage)
+def update_user_admin(
+    user_api_id: str,
+    req_dep: AuthenticatedRequestDependencies = Depends(
+        get_request_dependencies
+    ),
+) -> ResponseMessage:
+    """Update a user's admin status.
+
+    Args:
+        user_api_id (str): API identifier of the user to update
+        req_dep (AuthenticatedRequestDependencies): Request dependencies
+
+    Returns:
+        ResponseMessage: Success message
+
+    Raises:
+        HTTPException: If user is not an admin
+    """
+    if not req_dep.current_user.admin:
+        raise HTTPException(status_code=403, detail="Unauthorized")
+    user = api_identifier_crud.get_model(
+        req_dep.db,
+        User,
+        api_id=user_api_id,
+    )
+    if user is None:
+        raise HTTPException(status_code=404, detail="User not found")
+    if user.admin:
+        raise HTTPException(status_code=400, detail="User is already an admin")
+    user_crud.make_user_admin(req_dep.db, user)
+    req_dep.db.commit()
+    return ResponseMessage(message="User admin status updated successfully")
+
+
 @router.delete("/me", deprecated=True)
 def delete_user_me() -> None:
     """Delete current user (deprecated).

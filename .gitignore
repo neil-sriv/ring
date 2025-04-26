@@ -178,3 +178,5 @@ etc/
 
 local.sql
 backup.sql
+
+certs/client.ringcockroach.*

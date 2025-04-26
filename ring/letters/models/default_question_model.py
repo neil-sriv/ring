@@ -8,7 +8,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from sqlalchemy import ForeignKey, Text
+from sqlalchemy import ForeignKey, Index, String, Text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from ring.api_identifier.api_identified_model import APIIdentified
@@ -38,7 +38,7 @@ class DefaultQuestion(Base, APIIdentified, CreatedAtMixin):
 
     id: Mapped[int] = mapped_column(primary_key=True, index=True)
 
-    question_text: Mapped[str] = mapped_column(Text)
+    question_text: Mapped[str] = mapped_column(String)
     group_id: Mapped[int] = mapped_column(ForeignKey("group.id"))
     group: Mapped["Group"] = relationship(back_populates="default_questions")
 

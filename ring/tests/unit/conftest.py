@@ -13,14 +13,16 @@ from sqlalchemy.orm import Session
 
 from ring.dependencies import get_current_user
 from ring.parties.models.user_model import User
-from ring.tests.factories.parties.user_factory import UserFactory
+from ring.tests.factories.parties.user_factory import AdminFactory, UserFactory
 
 TClientForUser = Callable[[User], TestClient]
 
 
 @pytest.fixture(scope="function")
 def authenticated_client(
-    get_client_for_user: TClientForUser, db_session: Session
+    request: pytest.FixtureRequest,
+    get_client_for_user: TClientForUser,
+    db_session: Session,
 ) -> Generator[TestClient, None, None]:
     """Create a test client with an authenticated user.
 
@@ -34,7 +36,11 @@ def authenticated_client(
     Yields:
         TestClient: FastAPI test client instance with authentication
     """
-    user = UserFactory.create()
+    marker = request.node.get_closest_marker("admin")
+    if marker:
+        user = AdminFactory.create()
+    else:
+        user = UserFactory.create()
     db_session.commit()
 
     yield get_client_for_user(user)

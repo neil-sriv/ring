@@ -135,3 +135,23 @@ class TestUserCrud:
         assert user.email == email
         assert user.name == name
         assert user_crud.authenticate_user(db_session, user.email, password)
+
+    def test_make_user_admin(self, db_session: Session) -> None:
+        """Test making a user an admin.
+
+        This test verifies that:
+        1. A user can be made an admin
+        2. The user's admin status is updated
+        3. The database is updated with the new admin status
+        4. The change is reflected in the user object
+
+        Args:
+            db_session (Session): Database session
+        """
+        user = UserFactory.create()
+        db_session.commit()
+
+        user_crud.make_user_admin(db_session, user)
+        db_session.commit()
+
+        assert user.admin

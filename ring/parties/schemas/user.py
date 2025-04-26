@@ -75,6 +75,7 @@ class User(UserBase):
     model_config = ConfigDict(from_attributes=True)
 
     api_identifier: str
+    admin: bool
 
 
 class UserUnlinked(User):

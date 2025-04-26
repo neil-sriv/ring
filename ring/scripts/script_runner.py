@@ -10,6 +10,8 @@ import pathlib
 
 import click
 
+from ring.lib.logger import logger
+
 # import asyncio
 
 
@@ -37,6 +39,27 @@ def run_script(script: pathlib.Path, json_args: str):
     Raises:
         click.ClickException: If the script file is invalid or cannot be loaded
     """
+    import ring
+    from ring.letters.models.default_question_model import DefaultQuestion
+    from ring.letters.models.letter_model import Letter
+    from ring.letters.models.question_model import Question
+    from ring.letters.models.response_model import Response
+    from ring.lib.logger import logger
+    from ring.lib.util import get_all_subclasses
+    from ring.notifications.models.subscription import Subscription
+    from ring.parties.models.group_key_value import GroupKeyValue
+    from ring.parties.models.group_model import Group
+    from ring.parties.models.invite_model import Invite
+    from ring.parties.models.user_model import User
+    from ring.sqlalchemy_base import Base
+    from ring.tasks.crud import (
+        task as task_crud,
+    )
+    from ring.tasks.models.schedule_model import Schedule
+    from ring.tasks.models.task_model import Task
+
+    logger.level("DEBUG")
+    logger.debug("Debug logging enabled")
     file_name = script.name
     spec = importlib.util.spec_from_file_location(file_name, script)
     if spec is None:

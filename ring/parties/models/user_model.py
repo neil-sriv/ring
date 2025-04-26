@@ -52,6 +52,9 @@ class User(Base, APIIdentified, PydanticModel, CreatedAtMixin):
     email: Mapped[str] = mapped_column(unique=True, index=True)
     hashed_password: Mapped[str] = mapped_column()
     api_identifier: Mapped[str] = mapped_column(unique=True, index=True)
+    admin: Mapped[bool] = mapped_column(
+        default=False, server_default="false", nullable=False
+    )
 
     groups: Mapped[list["Group"]] = relationship(
         secondary=user_group_association, back_populates="members"

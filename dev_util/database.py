@@ -10,6 +10,11 @@ LOCAL_POSTGRES_URI = (
     "postgresql://ring-postgres:ring-postgres@localhost:8004/ring"
 )
 PROD_POSTGRES_URI = "postgresql://ringpostgres:ringpostgres@ring-postgres.c9gw8w2m4ayu.us-east-1.rds.amazonaws.com:5432/ring"
+LOCAL_COCKROACH_URI = "postgresql://root@127.0.0.1:26257/ring"
+COCKROACH_CERT_DIR = "/root/.cockroach-certs"
+COCKROACH_CONNECTION_STRING = f"{LOCAL_COCKROACH_URI}?sslcert={COCKROACH_CERT_DIR}/client.root.crt&sslkey={COCKROACH_CERT_DIR}/client.root.key&sslmode=verify-full&sslrootcert={COCKROACH_CERT_DIR}/ca.crt"
+
+COCKROACH_CONNECTION_STRING = "postgresql://root@127.0.0.1:26257/ring?sslcert=%2Froot%2F.cockroach-certs%2Fclient.root.crt&sslkey=%2Froot%2F.cockroach-certs%2Fclient.root.key&sslmode=verify-full&sslrootcert=%2Froot%2F.cockroach-certs%2Fca.crt"
 
 
 @dev_group("db")
@@ -24,8 +29,47 @@ def db_pgcli(
     *args: list[Any],
     **kwargs: dict[Any, Any],
 ) -> list[str]:
+    """
+    Run pgcli on the local database.
+    """
     os.getenv("")
     return ["pgcli", LOCAL_POSTGRES_URI]
+
+
+"""
+docker compose -f compose.core.yml -f compose.dev.yml --profile dev exec -it cockroach ./cockroach sql -d ring --url "postgresql://root@127.0.0.1:26257/ring?sslcert=%2Froot%2F.cockroach-certs%2Fclient.root.crt&sslkey=%2Froot%2F.cockroach-certs%2Fclient.root.key&sslmode=verify-full&sslrootcert=%2Froot%2F.cockroach-certs%2Fca.crt"
+"""
+
+
+# @compose_exec("cockroach", db, "cockroach", "./cockroach", "exec", ["-it"])
+@cmd_run("cockroach", db)
+def db_cockroach(
+    ctx: click.Context,
+    *args: list[Any],
+    **kwargs: dict[Any, Any],
+) -> list[str]:
+    """
+    Run cockroach on the local database.
+    """
+    return [
+        "docker",
+        "compose",
+        "-f",
+        "compose.core.yml",
+        "-f",
+        "compose.dev.yml",
+        "--profile",
+        "dev",
+        "exec",
+        "-it",
+        "cockroach",
+        "./cockroach",
+        "sql",
+        "-d",
+        "ring",
+        "--url",
+        COCKROACH_CONNECTION_STRING,
+    ]
 
 
 @compose_exec("upgrade", db, "api", "ring")

@@ -615,6 +615,7 @@ export type UserLinked = {
     email: string;
     name: string;
     api_identifier: string;
+    admin: boolean;
     groups: Array<GroupUnlinked>;
     responses: Array<ResponseUnlinked>;
 };
@@ -628,6 +629,7 @@ export type UserUnlinked = {
     email: string;
     name: string;
     api_identifier: string;
+    admin: boolean;
 };
 
 /**
@@ -970,6 +972,33 @@ export type UpdatePasswordMePartiesMePasswordPatchResponses = {
 };
 
 export type UpdatePasswordMePartiesMePasswordPatchResponse = UpdatePasswordMePartiesMePasswordPatchResponses[keyof UpdatePasswordMePartiesMePasswordPatchResponses];
+
+export type UpdateUserAdminPartiesUserIdAdminPatchData = {
+    body?: never;
+    path: {
+        user_id: number;
+    };
+    query?: never;
+    url: '/parties/{user_id}/admin';
+};
+
+export type UpdateUserAdminPartiesUserIdAdminPatchErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type UpdateUserAdminPartiesUserIdAdminPatchError = UpdateUserAdminPartiesUserIdAdminPatchErrors[keyof UpdateUserAdminPartiesUserIdAdminPatchErrors];
+
+export type UpdateUserAdminPartiesUserIdAdminPatchResponses = {
+    /**
+     * Successful Response
+     */
+    200: ResponseMessage;
+};
+
+export type UpdateUserAdminPartiesUserIdAdminPatchResponse = UpdateUserAdminPartiesUserIdAdminPatchResponses[keyof UpdateUserAdminPartiesUserIdAdminPatchResponses];
 
 export type SignupPartiesSignupPostData = {
     body?: never;

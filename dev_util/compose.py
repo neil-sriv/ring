@@ -68,6 +68,19 @@ def compose_exec(
     opts: list[str] | None = None,
     **kwargs: Any,
 ) -> Callable[[Callable[..., list[str]]], click.Command]:
+    """
+    Decorator for running commands in a service.
+
+    Args:
+        name: The name of the command.
+        group: The group of the command.
+        service: The service to run the command in.
+        directory: The directory to run the command in.
+        cmd: The command to run.
+        opts: The options to pass to the command.
+        **kwargs: Additional arguments to pass to the command.
+    """
+
     def decorator(f: Callable[..., list[str]]) -> click.Command:
         @compose_run(name, group, **kwargs)
         @click.option(

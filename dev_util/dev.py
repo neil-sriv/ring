@@ -24,6 +24,13 @@ def subprocess_run(
     cmd: list[str],
     **kwargs: Any,
 ) -> subprocess.CompletedProcess[str]:
+    """
+    Run a command and return the output.
+
+    Args:
+        cmd: The command to run.
+        **kwargs: Additional arguments to pass to the command.
+    """
     print(" ".join(cmd))
     return subprocess.run(cmd, check=True, text=True, **kwargs)
 
@@ -39,6 +46,14 @@ def dev(ctx: click.Context):
 def dev_group(
     name: str, invoke_without_command: bool = False
 ) -> Callable[[Callable[..., None]], click.Group]:
+    """
+    Decorator for creating a group in the dev command.
+
+    Args:
+        name: The name of the group.
+        invoke_without_command: Whether to invoke the group without a command.
+    """
+
     def decorator(f: Callable[..., None]) -> click.Group:
         @dev.group(
             name=name,
@@ -57,6 +72,14 @@ def dev_group(
 def dev_command(
     name: str, group: click.Group
 ) -> Callable[[Callable[..., None]], click.Command]:
+    """
+    Decorator for creating a command in a group.
+
+    Args:
+        name: The name of the command.
+        group: The group of the command.
+    """
+
     def decorator(f: Callable[..., None]) -> click.Command:
         @group.command(name=name, context_settings=UNLIMITED_ARGS_SETTINGS)
         @functools.wraps(f)
@@ -73,6 +96,15 @@ def cmd_run(
     group: click.Group,
     cwd: Path | None = ROOT_DIR,
 ) -> Callable[[Callable[..., list[str] | list[list[str]]]], click.Command]:
+    """
+    Decorator for running commands.
+
+    Args:
+        name: The name of the command.
+        group: The group of the command.
+        cwd: The current working directory of the command.
+    """
+
     def decorator(
         f: Callable[..., list[str] | list[list[str]]],
     ) -> click.Command:
