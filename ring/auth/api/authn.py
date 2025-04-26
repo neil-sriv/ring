@@ -72,7 +72,7 @@ async def login_access_token(
 
 
 @router.post("/login/test-token", deprecated=True)
-def test_token() -> None:
+async def test_token() -> None:
     """Test endpoint for validating access tokens.
 
     This endpoint is deprecated and will be removed in future versions.
@@ -84,7 +84,7 @@ def test_token() -> None:
 
 
 @router.post("/reset-password:request/{email}", response_model=ResponseMessage)
-def reset_password_request(
+async def reset_password_request(
     email: str,
     req_dep: RequestDependenciesBase = Depends(
         get_unauthenticated_request_dependencies
@@ -118,7 +118,7 @@ def reset_password_request(
 
 
 @router.post("/reset-password/{token}", response_model=ResponseMessage)
-def reset_password(
+async def reset_password(
     token: str,
     new_password_data: NewPassword,
     req_dep: RequestDependenciesBase = Depends(
@@ -160,7 +160,7 @@ def reset_password(
 
 
 @router.post("/password-recovery-html-content/{email}", deprecated=True)
-def recover_password_html_content(email: str) -> None:
+async def recover_password_html_content(email: str) -> None:
     """Generate HTML content for password recovery email.
 
     This endpoint is deprecated and will be removed in future versions.

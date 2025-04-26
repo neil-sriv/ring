@@ -190,7 +190,7 @@ async def read_user_by_id(
     "/me",
     response_model=UserSchema,
 )
-def update_user_me(
+async def update_user_me(
     current_user_update_data: UserUpdate,
     req_dep: AuthenticatedRequestDependencies = Depends(
         get_request_dependencies,
@@ -226,7 +226,7 @@ def update_user_me(
 
 
 @router.patch("/me/password", response_model=ResponseMessage)
-def update_password_me(
+async def update_password_me(
     update_password_data: UserUpdatePassword,
     req_dep: AuthenticatedRequestDependencies = Depends(
         get_request_dependencies,
@@ -267,7 +267,7 @@ def update_password_me(
 
 
 @router.patch("/{user_api_id}/admin", response_model=ResponseMessage)
-def update_user_admin(
+async def update_user_admin(
     user_api_id: str,
     req_dep: AuthenticatedRequestDependencies = Depends(
         get_request_dependencies
@@ -302,7 +302,7 @@ def update_user_admin(
 
 
 @router.delete("/me", deprecated=True)
-def delete_user_me() -> None:
+async def delete_user_me() -> None:
     """Delete current user (deprecated).
 
     Note:
@@ -312,7 +312,7 @@ def delete_user_me() -> None:
 
 
 @router.post("/signup", deprecated=True)
-def signup() -> None:
+async def signup() -> None:
     """Sign up a new user without invitation (deprecated).
 
     Note:
@@ -322,7 +322,7 @@ def signup() -> None:
 
 
 @router.patch("/{user_id}", deprecated=True)
-def update_user() -> None:
+async def update_user() -> None:
     """Update any user (deprecated).
 
     Note:
@@ -332,7 +332,7 @@ def update_user() -> None:
 
 
 @router.delete("/{user_id}", deprecated=True)
-def delete_user() -> None:
+async def delete_user() -> None:
     """Delete any user (deprecated).
 
     Note:
