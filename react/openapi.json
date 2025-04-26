@@ -565,6 +565,54 @@
         ]
       }
     },
+    "/parties/{user_id}/admin": {
+      "patch": {
+        "tags": [
+          "parties"
+        ],
+        "summary": "Update User Admin",
+        "description": "Update a user's admin status.\n\nArgs:\n    user_id (int): ID of the user to update\n    req_dep (AuthenticatedRequestDependencies): Request dependencies\n\nReturns:\n    ResponseMessage: Success message\n\nRaises:\n    HTTPException: If user is not an admin",
+        "operationId": "update_user_admin_parties__user_id__admin_patch",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "user_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "User Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResponseMessage"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/parties/signup": {
       "post": {
         "tags": [
@@ -3384,6 +3432,10 @@
             "type": "string",
             "title": "Api Identifier"
           },
+          "admin": {
+            "type": "boolean",
+            "title": "Admin"
+          },
           "groups": {
             "items": {
               "$ref": "#/components/schemas/GroupUnlinked"
@@ -3404,6 +3456,7 @@
           "email",
           "name",
           "api_identifier",
+          "admin",
           "groups",
           "responses"
         ],
@@ -3423,13 +3476,18 @@
           "api_identifier": {
             "type": "string",
             "title": "Api Identifier"
+          },
+          "admin": {
+            "type": "boolean",
+            "title": "Admin"
           }
         },
         "type": "object",
         "required": [
           "email",
           "name",
-          "api_identifier"
+          "api_identifier",
+          "admin"
         ],
         "title": "UserUnlinked",
         "description": "Schema for users without linked relationships.\n\nInherits all fields from User but excludes relationship data."
