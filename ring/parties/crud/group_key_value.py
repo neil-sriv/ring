@@ -4,6 +4,8 @@ This module provides functions for managing a key-value store associated with
 each group, allowing for flexible storage of group-specific settings and data.
 """
 
+from __future__ import annotations
+
 from typing import Any, Optional
 
 from sqlalchemy import select

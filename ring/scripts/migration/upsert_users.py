@@ -5,6 +5,8 @@ then creates or updates groups and their members in the Ring database. For each 
 it ensures the admin user exists and creates any new member users that don't already exist.
 """
 
+from __future__ import annotations
+
 import json
 import os
 from pprint import pp

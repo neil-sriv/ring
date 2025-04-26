@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from ring.email_util import CHARSET, EmailDraft, send_email
 from ring.parties.models.user_model import User
 from ring.security import get_password_hash

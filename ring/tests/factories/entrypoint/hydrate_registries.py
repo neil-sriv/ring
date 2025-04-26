@@ -1,3 +1,6 @@
+from __future__ import annotations
+
+
 def hydrate_factories_registry():
     from ring.tests.factories.letters.default_question_factory import (
         DefaultQuestionFactory,

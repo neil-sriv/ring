@@ -5,6 +5,8 @@ group creation, member management, and group settings. It verifies both
 successful operations and error cases.
 """
 
+from __future__ import annotations
+
 import sqlalchemy
 from fastapi.testclient import TestClient
 from sqlalchemy.orm import Session

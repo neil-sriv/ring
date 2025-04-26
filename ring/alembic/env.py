@@ -5,6 +5,8 @@ including both online and offline modes. It sets up the SQLAlchemy connection
 and configures the migration context with the application's metadata.
 """
 
+from __future__ import annotations
+
 from logging.config import fileConfig
 
 from alembic import context

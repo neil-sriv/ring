@@ -5,6 +5,8 @@ which notify users about upcoming deadlines for adding questions or responding
 to letters in Ring.
 """
 
+from __future__ import annotations
+
 from ring.email_util import EmailDraft, construct_email_draft
 from ring.letters.constants import LetterStatus
 

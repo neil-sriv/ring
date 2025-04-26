@@ -5,6 +5,8 @@ in API requests and responses. It includes models for creating tasks and represe
 task data with different levels of detail.
 """
 
+from __future__ import annotations
+
 from pydantic import AwareDatetime, BaseModel, ConfigDict
 
 

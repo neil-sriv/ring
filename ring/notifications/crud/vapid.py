@@ -4,6 +4,8 @@ This module provides functions for sending web push notifications using VAPID
 (Voluntary Application Server Identification) authentication.
 """
 
+from __future__ import annotations
+
 import json
 
 from pywebpush import WebPushException, webpush  # type: ignore

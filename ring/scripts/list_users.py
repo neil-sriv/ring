@@ -3,6 +3,8 @@
 This script retrieves and displays all users from the database using SQLAlchemy.
 """
 
+from __future__ import annotations
+
 from sqlalchemy import select
 
 from ring.parties.models.user_model import User

@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from pprint import pprint
 from typing import Any, Sequence
 

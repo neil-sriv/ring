@@ -4,6 +4,8 @@ This script provides a way to run raw SQL queries against the database and
 display the results in a formatted manner using pprintpp.
 """
 
+from __future__ import annotations
+
 from pprintpp import pprint  # type: ignore
 from sqlalchemy import text
 

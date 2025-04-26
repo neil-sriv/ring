@@ -5,6 +5,8 @@ into the Ring database. It parses questions, answers, and user information from 
 text files and creates the corresponding database records.
 """
 
+from __future__ import annotations
+
 from datetime import datetime
 from pathlib import Path
 from pprint import pp

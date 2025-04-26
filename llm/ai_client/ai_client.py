@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from openai import AsyncOpenAI
 
 from llm.config import get_config

@@ -5,6 +5,8 @@ validation, and OAuth2 authentication. It uses bcrypt for password hashing
 and JWT for token-based authentication.
 """
 
+from __future__ import annotations
+
 from datetime import UTC, datetime, timedelta
 
 from fastapi import HTTPException, status

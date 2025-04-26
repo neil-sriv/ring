@@ -1,3 +1,6 @@
+from __future__ import annotations
+
+
 def import_all_sqla_models() -> None:
     """Import all SQLAlchemy models."""
     from ring.key_value.models.model_key_value import ModelKeyValue

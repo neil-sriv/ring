@@ -4,6 +4,8 @@ This module provides functions for managing one-time tokens used in features
 like group invitations and password resets, including validation and expiration.
 """
 
+from __future__ import annotations
+
 from secrets import token_urlsafe
 
 from sqlalchemy import select

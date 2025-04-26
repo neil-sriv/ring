@@ -5,6 +5,8 @@ BaseSettings. It loads configuration from environment variables and provides typ
 access to settings like database URIs, JWT keys, and CORS origins.
 """
 
+from __future__ import annotations
+
 from functools import lru_cache
 from typing import Annotated
 

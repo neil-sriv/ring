@@ -1,5 +1,7 @@
 """Tests for group key-value CRUD operations."""
 
+from __future__ import annotations
+
 import sqlalchemy
 
 from ring.parties.crud.group_key_value import (

@@ -4,6 +4,8 @@ This module provides a base class that enables SQLAlchemy models to be easily
 converted to Pydantic models for API responses.
 """
 
+from __future__ import annotations
+
 import json
 
 from pydantic import BaseModel

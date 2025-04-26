@@ -5,6 +5,8 @@ It uses a functional approach with immutable data structures (dataclasses) for
 email drafts and provides type-safe interfaces for email operations.
 """
 
+from __future__ import annotations
+
 from dataclasses import dataclass
 from typing import Optional
 

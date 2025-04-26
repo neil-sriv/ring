@@ -4,6 +4,8 @@ This module provides functions for managing default questions that are automatic
 added to new letters in a group, including adding, retrieving, and replacing questions.
 """
 
+from __future__ import annotations
+
 from typing import Sequence
 
 import sqlalchemy

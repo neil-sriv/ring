@@ -5,6 +5,8 @@ It provides the base model class for all database models and utilities for
 managing database sessions.
 """
 
+from __future__ import annotations
+
 from typing import Any, Callable, Iterator, TypeVar
 
 from sqlalchemy import create_engine

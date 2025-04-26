@@ -5,6 +5,8 @@ automatically imported and registered with the Celery worker. This ensures all R
 asynchronous tasks are properly discovered and available for execution.
 """
 
+from __future__ import annotations
+
 CELERY_IMPORTS = [
     "ring.tasks.crud.task",
     "ring.tasks.crud.schedule",

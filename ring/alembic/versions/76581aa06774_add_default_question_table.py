@@ -6,6 +6,8 @@ Create Date: 2024-10-20 06:54:21.737885
 
 """
 
+from __future__ import annotations
+
 from typing import Sequence, Union
 from uuid import uuid4
 

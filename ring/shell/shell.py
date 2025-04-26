@@ -7,6 +7,7 @@ auto-imports, auto-reloading, and access to common Ring components.
 # ruff: noqa: F401
 # pyright: reportUnusedImport=false
 # flake8: noqa: F401
+from __future__ import annotations
 
 from typing import Any
 

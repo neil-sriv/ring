@@ -6,6 +6,8 @@ It verifies both basic operations and complex workflows involving
 questions, responses, and scheduled tasks.
 """
 
+from __future__ import annotations
+
 from datetime import UTC, datetime, timedelta
 
 import sqlalchemy

@@ -5,6 +5,8 @@ including basic operations, complex data types, and data persistence.
 It verifies both model attributes and data manipulation operations.
 """
 
+from __future__ import annotations
+
 import sqlalchemy
 from sqlalchemy.orm import Session
 

@@ -5,6 +5,8 @@ configuration, task base classes, and task registration utilities.
 """
 
 # type: ignore
+from __future__ import annotations
+
 import os
 from typing import Any
 

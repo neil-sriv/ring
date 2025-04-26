@@ -5,6 +5,8 @@ including group creation, member management, and group settings.
 It verifies both successful operations and error cases.
 """
 
+from __future__ import annotations
+
 import pytest
 import sqlalchemy
 from faker import Faker

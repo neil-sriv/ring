@@ -5,6 +5,8 @@ timestamp column for database models. The timestamp is set to the current time w
 a record is created and cannot be modified afterwards.
 """
 
+from __future__ import annotations
+
 from datetime import datetime
 
 from sqlalchemy import DateTime, func

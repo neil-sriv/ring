@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import factory
 
 from ring.letters.models.question_model import Question
