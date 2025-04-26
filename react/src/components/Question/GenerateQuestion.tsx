@@ -51,7 +51,7 @@ const GenerateQuestion = ({ isOpen, onClose, loopApiId }: GenerateQuestionProps)
         register,
         handleSubmit,
         reset,
-        formState: { errors, isSubmitting },
+        formState: { errors },
     } = useForm<QuestionFormProps>({
         mode: "onBlur",
         criteriaMode: "all",

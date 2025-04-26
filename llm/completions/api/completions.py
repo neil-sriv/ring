@@ -1,11 +1,9 @@
 from __future__ import annotations
 
 import json
-from typing import Union
 
 from fastapi import APIRouter
 from jambo.schema_converter import SchemaConverter
-from pydantic import TypeAdapter
 
 from llm.ai_client.ai_client import (
     LLMType,
@@ -15,7 +13,6 @@ from llm.completions.schemas.completions import (
     CompletionRequest,
     CompletionResponse,
     Default,
-    Refusal,
 )
 from llm.lib.logger import logger
 
@@ -25,7 +22,7 @@ router = APIRouter()
 @router.post("/generate", response_model=CompletionResponse)
 async def generate_completion(request: CompletionRequest):
     """Stub endpoint for text completion generation"""
-    llm = get_llm(LLMType.OPENAI)
+    llm = get_llm(LLMType.GEMINI)
     if request.output_schema_definition is not None:
         output_schema = SchemaConverter.build(
             json.loads(request.output_schema_definition)
