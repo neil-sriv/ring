@@ -10,7 +10,7 @@ from pydantic import BaseModel, computed_field
 
 class CompletionRequest(BaseModel):
     prompt: str
-    max_tokens: int = 100
+    max_tokens: int = 1000
     output_schema_definition: str
 
     # @computed_field

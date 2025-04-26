@@ -1,24 +1,25 @@
 import {
   Container,
   Heading,
+  Spinner,
   Tab,
   TabList,
   TabPanel,
   TabPanels,
-  Tabs,
-  Spinner
+  Tabs
 } from "@chakra-ui/react";
-import { createFileRoute } from "@tanstack/react-router";
-import { PublicLetter } from "../../../../client";
 import { useSuspenseQuery } from "@tanstack/react-query";
+import { createFileRoute } from "@tanstack/react-router";
+import { Suspense } from "react";
+import { PublicLetter } from "../../../../client";
 import {
   listLettersLettersLettersGetOptions,
   readGroupPartiesGroupGroupApiIdGetOptions,
 } from "../../../../client/@tanstack/react-query.gen";
-import { useGroupKeyValues } from "../../../../hooks/useGroupKeyValues";
 import { GroupKeyValuesTable } from "../../../../components/GroupKeyValues/GroupKeyValuesTable";
+import { LLMPlayground } from "../../../../components/LLMPlayground/LLMPlayground";
 import { LoopsTab } from "../../../../components/Loops/LoopsTab";
-import { Suspense } from "react";
+import { useGroupKeyValues } from "../../../../hooks/useGroupKeyValues";
 
 type LoopsSearchParams = {
   offset?: number;
@@ -82,6 +83,10 @@ function LoopsContentLoader() {
           groupApiId={groupId}
         />
       )
+    },
+    {
+      title: "LLM Playground",
+      component: () => <LLMPlayground />
     }
   ];
 

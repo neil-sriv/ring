@@ -46,6 +46,14 @@ export type BulkGroupKeyValueUpdate = {
     updates: Array<SingleGroupKeyValueUpdate>;
 };
 
+export type CompletionRequest = {
+    prompt: string;
+};
+
+export type CompletionResponse = {
+    text: string;
+};
+
 /**
  * Model for the letters dashboard view.
  *
@@ -60,6 +68,14 @@ export type DashboardLetters = {
     upcoming: Array<PublicLetter>;
     in_progress: Array<PublicLetter>;
     recently_completed: Array<PublicLetter>;
+};
+
+export type GenerateQuestionRequest = {
+    prompt: string;
+};
+
+export type GenerateQuestionResponse = {
+    generated_text: string;
 };
 
 /**
@@ -1607,6 +1623,33 @@ export type AddQuestionLettersLetterLetterApiIdAddQuestionPostResponses = {
 
 export type AddQuestionLettersLetterLetterApiIdAddQuestionPostResponse = AddQuestionLettersLetterLetterApiIdAddQuestionPostResponses[keyof AddQuestionLettersLetterLetterApiIdAddQuestionPostResponses];
 
+export type GenerateQuestionLettersLetterLetterApiIdGenerateQuestionPostData = {
+    body: GenerateQuestionRequest;
+    path: {
+        letter_api_id: string;
+    };
+    query?: never;
+    url: '/letters/letter/{letter_api_id}:generate_question';
+};
+
+export type GenerateQuestionLettersLetterLetterApiIdGenerateQuestionPostErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type GenerateQuestionLettersLetterLetterApiIdGenerateQuestionPostError = GenerateQuestionLettersLetterLetterApiIdGenerateQuestionPostErrors[keyof GenerateQuestionLettersLetterLetterApiIdGenerateQuestionPostErrors];
+
+export type GenerateQuestionLettersLetterLetterApiIdGenerateQuestionPostResponses = {
+    /**
+     * Successful Response
+     */
+    200: GenerateQuestionResponse;
+};
+
+export type GenerateQuestionLettersLetterLetterApiIdGenerateQuestionPostResponse = GenerateQuestionLettersLetterLetterApiIdGenerateQuestionPostResponses[keyof GenerateQuestionLettersLetterLetterApiIdGenerateQuestionPostResponses];
+
 export type GetScheduleForGroupScheduleScheduleGroupApiIdGetData = {
     body?: never;
     path: {
@@ -1714,6 +1757,31 @@ export type DeleteQuestionQuestionsQuestionQuestionApiIdDeleteResponses = {
 };
 
 export type DeleteQuestionQuestionsQuestionQuestionApiIdDeleteResponse = DeleteQuestionQuestionsQuestionQuestionApiIdDeleteResponses[keyof DeleteQuestionQuestionsQuestionQuestionApiIdDeleteResponses];
+
+export type GenerateQuestionQuestionsQuestionGeneratePostData = {
+    body: GenerateQuestionRequest;
+    path?: never;
+    query?: never;
+    url: '/questions/question:generate';
+};
+
+export type GenerateQuestionQuestionsQuestionGeneratePostErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type GenerateQuestionQuestionsQuestionGeneratePostError = GenerateQuestionQuestionsQuestionGeneratePostErrors[keyof GenerateQuestionQuestionsQuestionGeneratePostErrors];
+
+export type GenerateQuestionQuestionsQuestionGeneratePostResponses = {
+    /**
+     * Successful Response
+     */
+    200: GenerateQuestionResponse;
+};
+
+export type GenerateQuestionQuestionsQuestionGeneratePostResponse = GenerateQuestionQuestionsQuestionGeneratePostResponses[keyof GenerateQuestionQuestionsQuestionGeneratePostResponses];
 
 export type EditResponseResponsesResponseResponseApiIdEditResponsePostData = {
     body: ResponseCreateBase;
@@ -1845,6 +1913,31 @@ export type PostSubscriptionNotificationsSubscriptionPostResponses = {
 };
 
 export type PostSubscriptionNotificationsSubscriptionPostResponse = PostSubscriptionNotificationsSubscriptionPostResponses[keyof PostSubscriptionNotificationsSubscriptionPostResponses];
+
+export type GenerateCompletionLlmCompletionPostData = {
+    body: CompletionRequest;
+    path?: never;
+    query?: never;
+    url: '/llm/completion';
+};
+
+export type GenerateCompletionLlmCompletionPostErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type GenerateCompletionLlmCompletionPostError = GenerateCompletionLlmCompletionPostErrors[keyof GenerateCompletionLlmCompletionPostErrors];
+
+export type GenerateCompletionLlmCompletionPostResponses = {
+    /**
+     * Successful Response
+     */
+    200: CompletionResponse;
+};
+
+export type GenerateCompletionLlmCompletionPostResponse = GenerateCompletionLlmCompletionPostResponses[keyof GenerateCompletionLlmCompletionPostResponses];
 
 export type RootGetData = {
     body?: never;

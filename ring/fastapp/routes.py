@@ -11,6 +11,7 @@ from fastapi import APIRouter
 
 from ring.auth.api import authn
 from ring.letters.api import letter, question, response
+from ring.llm.api import completion
 from ring.notifications.api import subscription
 from ring.parties.api import group, group_key_value, invite, user
 from ring.tasks.api import schedule
@@ -40,6 +41,8 @@ router.include_router(
     prefix="/notifications",
     tags=["notifications"],
 )
+
+router.include_router(completion.router, prefix="/llm", tags=["llm"])
 
 
 @router.get("/")

@@ -25,7 +25,7 @@ router = APIRouter()
 @router.post("/generate", response_model=CompletionResponse)
 async def generate_completion(request: CompletionRequest):
     """Stub endpoint for text completion generation"""
-    llm = get_llm(LLMType.GEMINI)
+    llm = get_llm(LLMType.OPENAI)
     if request.output_schema_definition is not None:
         output_schema = SchemaConverter.build(
             json.loads(request.output_schema_definition)
@@ -42,6 +42,7 @@ async def generate_completion(request: CompletionRequest):
             }
         ],
         max_tokens=request.max_tokens,
+        max_completion_tokens=request.max_tokens,
         response_format=output_schema,
     )
     logger.info(f"Completion: {completion}")
