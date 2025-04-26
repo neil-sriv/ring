@@ -15,8 +15,8 @@ from sqlalchemy.orm import (
     sessionmaker,
 )
 
-from ring.config import get_config
-from ring.fast import app
+from ring.fastapp.config import get_config
+from ring.fastapp.fast import app
 from ring.sqlalchemy_base import Base, get_db
 from ring.tests.factories.base_factory import ALL_FACTORIES, BaseFactory
 

@@ -5,7 +5,7 @@ from typing import Sequence
 from fastapi import APIRouter, Depends, HTTPException
 
 from ring.api_identifier import util as api_identifier_crud
-from ring.dependencies import (
+from ring.fastapp.dependencies import (
     AuthenticatedRequestDependencies,
     RequestDependenciesBase,
     get_request_dependencies,

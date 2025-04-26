@@ -11,7 +11,7 @@ import pytest
 from fastapi.testclient import TestClient
 from sqlalchemy.orm import Session
 
-from ring.dependencies import get_current_user
+from ring.fastapp.dependencies import get_current_user
 from ring.parties.models.user_model import User
 from ring.tests.factories.parties.user_factory import AdminFactory, UserFactory
 
