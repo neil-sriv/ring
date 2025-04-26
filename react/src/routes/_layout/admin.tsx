@@ -34,7 +34,6 @@ export const Route = createFileRoute("/_layout/admin")({
 
 const MembersTableBody = () => {
   const currentUser = Route.useLoaderData<UserLinked>();
-  console.log(currentUser);
 
   const { data: users } = useSuspenseQuery({
     ...readUsersPartiesUsersGetOptions(),

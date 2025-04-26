@@ -1,6 +1,5 @@
 import {
     Button,
-    Flex,
     FormControl,
     FormErrorMessage,
     FormLabel,
@@ -45,7 +44,7 @@ const ImpersonateUser = ({ user, isOpen, onClose }: ImpersonateUserProps) => {
         register,
         handleSubmit,
         reset,
-        formState: { errors, isSubmitting, isDirty },
+        formState: { errors, isSubmitting },
     } = useForm<UserImpersonateForm>({
         mode: "onBlur",
         criteriaMode: "all",
