@@ -52,6 +52,53 @@
         }
       }
     },
+    "/impersonate-user-token": {
+      "post": {
+        "tags": [
+          "login"
+        ],
+        "summary": "Impersonate User Token",
+        "operationId": "impersonate_user_token_impersonate_user_token_post",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "user_api_id",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "User Api Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Token"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/login/test-token": {
       "post": {
         "tags": [
@@ -565,14 +612,14 @@
         ]
       }
     },
-    "/parties/{user_id}/admin": {
+    "/parties/{user_api_id}/admin": {
       "patch": {
         "tags": [
           "parties"
         ],
         "summary": "Update User Admin",
-        "description": "Update a user's admin status.\n\nArgs:\n    user_id (int): ID of the user to update\n    req_dep (AuthenticatedRequestDependencies): Request dependencies\n\nReturns:\n    ResponseMessage: Success message\n\nRaises:\n    HTTPException: If user is not an admin",
-        "operationId": "update_user_admin_parties__user_id__admin_patch",
+        "description": "Update a user's admin status.\n\nArgs:\n    user_api_id (str): API identifier of the user to update\n    req_dep (AuthenticatedRequestDependencies): Request dependencies\n\nReturns:\n    ResponseMessage: Success message\n\nRaises:\n    HTTPException: If user is not an admin",
+        "operationId": "update_user_admin_parties__user_api_id__admin_patch",
         "security": [
           {
             "OAuth2PasswordBearer": []
@@ -580,12 +627,12 @@
         ],
         "parameters": [
           {
-            "name": "user_id",
+            "name": "user_api_id",
             "in": "path",
             "required": true,
             "schema": {
-              "type": "integer",
-              "title": "User Id"
+              "type": "string",
+              "title": "User Api Id"
             }
           }
         ],

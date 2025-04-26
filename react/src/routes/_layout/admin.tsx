@@ -34,6 +34,7 @@ export const Route = createFileRoute("/_layout/admin")({
 
 const MembersTableBody = () => {
   const currentUser = Route.useLoaderData<UserLinked>();
+  console.log(currentUser);
 
   const { data: users } = useSuspenseQuery({
     ...readUsersPartiesUsersGetOptions(),
@@ -72,11 +73,6 @@ const MembersTableBody = () => {
             <ActionsMenu
               type="User"
               value={user}
-              disabled={
-                currentUser?.api_identifier === user.api_identifier
-                  ? true
-                  : false
-              }
             />
           </Td>
         </Tr>

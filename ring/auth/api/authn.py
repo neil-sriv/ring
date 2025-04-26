@@ -12,9 +12,11 @@ from http import HTTPStatus
 from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordRequestForm
 
+from ring.api_identifier.util import get_model
 from ring.auth.schemas.token import Token
 from ring.dependencies import (
     RequestDependenciesBase,
+    get_request_dependencies,
     get_unauthenticated_request_dependencies,
 )
 from ring.parties.crud import user as user_crud
@@ -27,6 +29,7 @@ from ring.parties.crud.one_time_token import (
     validate_and_use_token,
 )
 from ring.parties.models.one_time_token_model import TokenType
+from ring.parties.models.user_model import User
 from ring.parties.schemas.user import NewPassword
 from ring.ring_pydantic.core import ResponseMessage
 from ring.security import create_access_token
@@ -65,6 +68,26 @@ async def login_access_token(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Incorrect username or password",
         )
+    return Token(
+        access_token=create_access_token(data={"sub": user.email}),
+        token_type="bearer",
+    )
+
+
+@router.post("/impersonate-user-token")
+async def impersonate_user_token(
+    user_api_id: str,
+    req_dep: RequestDependenciesBase = Depends(get_request_dependencies),
+) -> Token:
+    if not req_dep.current_user.admin:
+        raise HTTPException(status_code=403, detail="Unauthorized")
+    user = get_model(
+        req_dep.db,
+        User,
+        api_id=user_api_id,
+    )
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
     return Token(
         access_token=create_access_token(data={"sub": user.email}),
         token_type="bearer",
