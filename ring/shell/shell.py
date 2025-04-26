@@ -11,6 +11,7 @@ auto-imports, auto-reloading, and access to common Ring components.
 from typing import Any
 
 from ring.api_identifier import util as api_identifier_crud
+from ring.fastapp.init_app_modules import init_app_modules
 from ring.letters.crud import letter as letter_crud
 from ring.letters.crud import question as question_crud
 from ring.parties.crud import group as group_crud
@@ -52,30 +53,17 @@ def run_script(db: Session) -> None:
     Args:
         db (Session): Database session provided by script_di
     """
-    # import ring.postgres_models
     import click
     import sqlalchemy
-    from IPython import embed  # type: ignore  # type: ignore
+    from IPython import embed
     from traitlets.config import Config
 
     import ring
-    from ring.letters.models.default_question_model import DefaultQuestion
-    from ring.letters.models.letter_model import Letter
-    from ring.letters.models.question_model import Question
-    from ring.letters.models.response_model import Response
     from ring.lib.logger import logger
     from ring.lib.util import get_all_subclasses
-    from ring.notifications.models.subscription import Subscription
-    from ring.parties.models.group_key_value import GroupKeyValue
-    from ring.parties.models.group_model import Group
-    from ring.parties.models.invite_model import Invite
-    from ring.parties.models.user_model import User
     from ring.sqlalchemy_base import Base
-    from ring.tasks.crud import (
-        task as task_crud,
-    )
-    from ring.tasks.models.schedule_model import Schedule
-    from ring.tasks.models.task_model import Task
+
+    init_app_modules()
 
     click.echo("Configuring IPython...")
     c = Config()
@@ -83,7 +71,7 @@ def run_script(db: Session) -> None:
         "ring": ring,
         "db": db,
         "ar": _autoreload,
-        "sqlalchemy": sqlalchemy,
+        "sa": sqlalchemy,
     }
     context.update({cls.__name__: cls for cls in get_all_subclasses(Base)})  # type: ignore
     c.InteractiveShellEmbed = c.TerminalInteractiveShell
