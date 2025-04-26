@@ -11,6 +11,7 @@ IMAGE_TAG_NAMES = [
     "ring-frontend",
     "ring-api",
     "ring-beat",
+    "ring-llm",
 ]
 
 

@@ -21,11 +21,9 @@ services:
   certbot:
     container_name: certbot
     image: certbot/certbot:latest
-    profiles: ["certbot"]
+    profiles: [ "certbot" ]
     command: >-
-             certonly --reinstall --webroot --webroot-path=/var/www/certbot
-             --email neilsriv.cs@gmail.com --agree-tos --no-eff-email
-             -d ring.neilsriv.tech
+      certonly --reinstall --webroot --webroot-path=/var/www/certbot --email neilsriv.cs@gmail.com --agree-tos --no-eff-email -d ring.neilsriv.tech
     volumes:
       - ./etc/letsencrypt:/etc/letsencrypt
       - ./certbot/www:/var/www/certbot
@@ -34,7 +32,7 @@ services:
     image: prod-ring-worker
     env_file:
       - ./.env
-    mem_limit: 150m
+    mem_limit: 250m
     platform: linux/amd64
     volumes:
       - $HOME/.postgresql/root.crt:/root/.postgresql/root.crt
@@ -63,7 +61,6 @@ services:
     platform: linux/amd64
     networks:
       - default
-      
 
 volumes:
   pgdata:
