@@ -266,6 +266,32 @@ def update_password_me(
     return ResponseMessage(message="Password updated successfully")
 
 
+@router.patch("/{user_id}/admin", response_model=ResponseMessage)
+def update_user_admin(
+    user_id: int,
+    req_dep: AuthenticatedRequestDependencies = Depends(
+        get_request_dependencies
+    ),
+) -> ResponseMessage:
+    """Update a user's admin status.
+
+    Args:
+        user_id (int): ID of the user to update
+        req_dep (AuthenticatedRequestDependencies): Request dependencies
+
+    Returns:
+        ResponseMessage: Success message
+
+    Raises:
+        HTTPException: If user is not an admin
+    """
+    if not req_dep.current_user.admin:
+        raise HTTPException(status_code=403, detail="Unauthorized")
+    user_crud.make_user_admin(req_dep.db, user_id)
+    req_dep.db.commit()
+    return ResponseMessage(message="User admin status updated successfully")
+
+
 @router.delete("/me", deprecated=True)
 def delete_user_me() -> None:
     """Delete current user (deprecated).

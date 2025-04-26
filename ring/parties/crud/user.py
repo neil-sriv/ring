@@ -101,3 +101,13 @@ def create_user(
     db_user = User.create(email, name, hashed_password)
     db.add(db_user)
     return db_user
+
+
+def make_user_admin(db: Session, user: User) -> None:
+    """Make a user an admin.
+
+    Args:
+        db (Session): Database session
+        user (User): User to make admin
+    """
+    user.admin = True
