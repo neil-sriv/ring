@@ -53,7 +53,8 @@ const MembersTableBody = () => {
           </Td>
           <Td>{user.email}</Td>
           {/* <Td>{user.is_superuser ? "Superuser" : "User"}</Td> */}
-          <Td>{false ? "Superuser" : "User"}</Td>
+          {/* <Td>{false ? "Superuser" : "User"}</Td> */}
+          <Td>{user.api_identifier}</Td>
           <Td>
             <Flex gap={2}>
               <Box
@@ -107,7 +108,7 @@ function Admin() {
             <Tr>
               <Th width="20%">Full name</Th>
               <Th width="50%">Email</Th>
-              <Th width="10%">Role</Th>
+              <Th width="10%">API ID</Th>
               <Th width="10%">Status</Th>
               <Th width="10%">Actions</Th>
             </Tr>
