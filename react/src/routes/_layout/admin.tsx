@@ -25,8 +25,8 @@ import { readUsersPartiesUsersGetOptions } from "../../client/@tanstack/react-qu
 export const Route = createFileRoute("/_layout/admin")({
   component: Admin,
   loader: async ({ context }) => {
-    if (!context.auth.user) {
-      throw new Error("User not authenticated");
+    if (!context.auth.user?.admin) {
+      throw new Error("User is not an admin");
     }
     return context.auth.user;
   },

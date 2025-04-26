@@ -50,6 +50,7 @@ async def read_user_me(
     Returns:
         User: Current user's information
     """
+    print(req_dep.current_user.__dict__)
     return req_dep.current_user
 
 
