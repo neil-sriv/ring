@@ -47,8 +47,10 @@ celery = Celery(
 
 celery.conf.update(
     result_expires=3600,
-    concrrency=1,
+    concurrency=1,
+    worker_concurrency=1,
     worker_max_memory_per_child=120000,  # 120MB
+    worker_pool="threads",
 )
 
 
