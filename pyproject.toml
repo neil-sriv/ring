@@ -72,6 +72,7 @@ dependencies = [
     "sqlalchemy-json>=0.7.0",
     "llm-service",
     "sqlalchemy-cockroachdb>=2.0.2",
+    "apscheduler>=3.11.0",
 ]
 
 [dependency-groups]
@@ -81,7 +82,6 @@ dev = [
     "psycopg-binary",
     "pytest-pretty>=1.2.0",
     "pytest-xdist>=3.6.1",
-    "llm",
 ]
 
 [project.scripts]
