@@ -18,6 +18,8 @@ anyio==3.7.1
     #   httpx
     #   starlette
     #   watchfiles
+apscheduler==3.11.0
+    # via ring (pyproject.toml)
 argon2-cffi==23.1.0
     # via pwdlib
 argon2-cffi-bindings==21.2.0
@@ -351,6 +353,8 @@ tzdata==2023.3
     # via
     #   celery
     #   pendulum
+tzlocal==5.3.1
+    # via apscheduler
 ujson==5.9.0
     # via fastapi
 urllib3==2.3.0
