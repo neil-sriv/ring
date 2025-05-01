@@ -43,13 +43,8 @@ def get_db() -> Iterator[Session]:
         Session: A SQLAlchemy database session
 
     Example:
-        ```python
         db = next(get_db())
-        try:
-            # use db session
-        finally:
-            db.close()
-        ```
+        # use db session
     """
     db = SessionLocal()
     try:
