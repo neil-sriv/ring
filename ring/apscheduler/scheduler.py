@@ -127,7 +127,7 @@ def test_job(*args: Any, db: Session, **kwargs: Any) -> str:
     return "Hello, World!"
 
 
-@interval_job_factory("test_interval_job", seconds=5)
-def test_interval_job(*args: Any, **kwargs: Any) -> str:
-    logger.info("Hello, World!")
-    return "Hello, World!"
+# @interval_job_factory("test_interval_job", seconds=5)
+# def test_interval_job(*args: Any, **kwargs: Any) -> str:
+#     logger.info("Hello, World!")
+#     return "Hello, World!"

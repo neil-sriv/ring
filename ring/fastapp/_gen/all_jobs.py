@@ -15,6 +15,8 @@ def schedule_all_interval_jobs() -> None:
     from ring.apscheduler.schedule import INTERVAL_JOB_SCHEDULE_REGISTRY
     from ring.apscheduler.scheduler import scheduler
 
+    scheduler.remove_all_jobs()
+
     for job_name, job_info in INTERVAL_JOB_SCHEDULE_REGISTRY.items():
         kwargs_if_not_none = {
             k: v for k, v in asdict(job_info).items() if v is not None
