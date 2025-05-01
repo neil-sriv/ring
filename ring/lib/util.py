@@ -30,7 +30,46 @@ class RegistrationDict(Mapping[_KT, _VT], Generic[_KT, _VT]):
             name (str): Identifier for this registration dictionary
         """
         self.name = name
-        self.dict: dict = {}  # type: ignore
+        self.dict: dict[_KT, _VT] = {}  # type: ignore
+
+    def __getitem__(self, key: _KT) -> _VT:
+        """Get an item from the dictionary.
+
+        Args:
+            key (_KT): Key to look up
+
+        Returns:
+            _VT: Value associated with the key
+
+        Raises:
+            KeyError: If key is not found
+        """
+        return self.dict[key]
+
+    def __setitem__(self, key: _KT, value: _VT) -> None:
+        """Set an item in the dictionary.
+
+        Args:
+            key (_KT): Key to set
+            value (_VT): Value to associate with the key
+        """
+        self.dict[key] = value
+
+    def __iter__(self):
+        """Get an iterator over the dictionary keys.
+
+        Returns:
+            Iterator[_KT]: Iterator over dictionary keys
+        """
+        return iter(self.dict)
+
+    def __len__(self) -> int:
+        """Get the number of items in the dictionary.
+
+        Returns:
+            int: Number of key-value pairs
+        """
+        return len(self.dict)
 
 
 class RegistrationList(Sequence[_KT], Generic[_KT]):
