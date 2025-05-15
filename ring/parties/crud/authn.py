@@ -22,7 +22,7 @@ def reset_user_password(db_user: User, new_password: str) -> None:
 def email_password_reset(db: Session, email: str, token: str) -> None:
     """Send a password reset email to a user.
 
-    This is a Celery task that constructs and sends a password reset email
+    This is a job that constructs and sends a password reset email
     containing a reset token.
 
     Args:
