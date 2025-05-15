@@ -26,7 +26,13 @@ def include_object(object_, name, type_, reflected, compare_to):
         as these are typically managed by application-level triggers or ORM.
     """
 
+    if type_ == "table":
+        if name == "apscheduler_jobs":
+            return False
+
     if type_ == "index":
+        if name == "ix_apscheduler_jobs_next_run_time":
+            return False
         if compare_to is not None:
             # Compare both column names and uniqueness
             same_columns = getattr(object_, "column_names", None) == getattr(

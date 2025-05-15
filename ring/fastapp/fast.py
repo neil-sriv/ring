@@ -6,22 +6,32 @@ and request logging. It serves as the main entry point for the Ring API service.
 
 from __future__ import annotations
 
-from typing import Awaitable, Callable, TypeVar
+from contextlib import asynccontextmanager
+from typing import Awaitable, Callable
 
 from fastapi import FastAPI, Request, Response
 from fastapi.responses import JSONResponse
 from starlette.middleware.cors import CORSMiddleware
 
 from ring.api_identifier.util import IDNotFoundException
+from ring.apscheduler.scheduler import scheduler
 from ring.fastapp.config import get_config
 from ring.fastapp.init_app_modules import init_app_modules
 from ring.fastapp.routes import router
 from ring.lib.logger import logger
+from ring.tasks.crud.schedule import poll_schedule_task
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    scheduler.start()
+    yield
+    scheduler.shutdown()
 
 
 def create_app() -> FastAPI:
     ring_config = get_config()
-    app = FastAPI(root_path=ring_config.root_path)
+    app = FastAPI(root_path=ring_config.root_path, lifespan=lifespan)
 
     init_app_modules()
 
@@ -43,6 +53,11 @@ def create_app() -> FastAPI:
 
 
 app = create_app()
+
+
+# @app.on_event("startup")
+# async def startup_event():
+#     scheduler.start()
 
 
 @app.exception_handler(IDNotFoundException)

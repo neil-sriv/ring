@@ -17,7 +17,9 @@ from ring.alembic.alembic_helpers import (
     include_object,
 )
 from ring.fastapp.config import get_config
-from ring.models import *  # noqa: F403
+from ring.fastapp.init_app_modules import init_app_modules
+
+init_app_modules()
 from ring.sqlalchemy_base import Base
 
 # this is the Alembic Config object, which provides

@@ -9,20 +9,18 @@ from __future__ import annotations
 
 import datetime
 import time
-from typing import TYPE_CHECKING, Sequence
+from typing import TYPE_CHECKING, Any, Sequence
 
 import sqlalchemy
 from sqlalchemy import or_, select
 
 from ring.api_identifier import util as api_identifier_crud
+from ring.apscheduler.scheduler import interval_job_factory, scheduler
+from ring.lib.logger import logger
 from ring.parties.models.group_model import Group
 from ring.tasks.crud import task as task_crud
 from ring.tasks.models.schedule_model import Schedule
 from ring.tasks.models.task_model import Task, TaskStatus, TaskType
-from ring.worker.celery_app import (  # type: ignore
-    CeleryTask,
-    register_task_factory,
-)
 
 if TYPE_CHECKING:
     from sqlalchemy.orm import Session
@@ -166,8 +164,13 @@ def collect_pending_tasks(
     return tasks
 
 
-@register_task_factory(name="poll_schedule")
-def poll_schedule_task(self: CeleryTask) -> dict[str, str]:
+# class PollScheduleJob(Job):
+#     def run(self, *args: Any, db: Session, **kwargs: Any) -> dict[str, str]:
+#         return poll_schedule_task(db)
+
+
+@interval_job_factory("poll_schedule_task", minutes=1)
+def poll_schedule_task(db: Session) -> dict[str, str]:
     """Celery task for polling schedules and executing pending tasks.
 
     This task:
@@ -176,7 +179,7 @@ def poll_schedule_task(self: CeleryTask) -> dict[str, str]:
     3. Schedules letter-related operations asynchronously
 
     Args:
-        self: Celery task instance
+        db: Database session
 
     Returns:
         dict[str, str]: A dictionary containing:
@@ -194,24 +197,29 @@ def poll_schedule_task(self: CeleryTask) -> dict[str, str]:
     time.sleep(5)
 
     curr_time = datetime.datetime.now(datetime.UTC)
-    tasks = schedule_crud.collect_pending_tasks(self.session, curr_time)
+    tasks = schedule_crud.collect_pending_tasks(db, curr_time)
     if tasks:
-        task_crud.execute_tasks_async.delay(
-            [task.id for task in tasks],
+        scheduler.add_job(
+            task_crud.execute_tasks_async,
+            args=[[task.id for task in tasks]],
         )
 
     postpend, promote = collect_future_letters(
-        self.session, curr_time + datetime.timedelta(days=7)
+        db, curr_time + datetime.timedelta(days=7)
     )
     if postpend:
-        postpend_upcoming_letters.delay(
-            [letter.id for letter in postpend],
+        scheduler.add_job(
+            postpend_upcoming_letters,
+            args=[[letter.id for letter in postpend]],
         )
     if promote:
-        promote_and_create_new_letters.delay(
-            [letter.id for letter in promote],
+        scheduler.add_job(
+            promote_and_create_new_letters,
+            args=[[letter.id for letter in promote]],
         )
-
+    logger.info(
+        f"task ids: {[task.id for task in tasks]}, postpend letter ids: {[letter.id for letter in postpend]}, promote letter ids: {[letter.id for letter in promote]}"
+    )
     return {
         "status": "success",
         "message": f"task ids: {[task.id for task in tasks]}, postpend letter ids: {[letter.id for letter in postpend]}, promote letter ids: {[letter.id for letter in promote]}",

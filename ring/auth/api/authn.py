@@ -13,6 +13,7 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordRequestForm
 
 from ring.api_identifier.util import get_model
+from ring.apscheduler.scheduler import scheduler
 from ring.auth.schemas.token import Token
 from ring.fastapp.dependencies import (
     RequestDependenciesBase,
@@ -135,7 +136,10 @@ async def reset_password_request(
         )
     ott = generate_token(TokenType.PASSWORD_RESET, email)
     req_dep.db.add(ott)
-    email_password_reset.delay(email, ott.token)
+    scheduler.add_job(
+        email_password_reset,
+        args=[email, ott.token],
+    )
     req_dep.db.commit()
     return ResponseMessage(message="Password recovery email sent")
 

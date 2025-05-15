@@ -13,6 +13,7 @@ from typing import Any, Callable
 
 from sqlalchemy.orm import Session
 
+from ring.apscheduler.scheduler import job_factory, scheduler
 from ring.email_util import send_email
 from ring.letters.constants import LetterStatus
 from ring.letters.crud import letter as letter_crud
@@ -24,10 +25,6 @@ from ring.tasks.models.task_model import (
     Task,
     TaskStatus,
     TaskType,
-)
-from ring.worker.celery_app import (  # type: ignore
-    CeleryTask,
-    register_task_factory,
 )
 
 
@@ -155,10 +152,8 @@ def _find_and_execute_task(
     return task
 
 
-@register_task_factory(name="send_email_task")
-def async_send_email_task(
-    self: CeleryTask, task_id: int, **kwargs: Any
-) -> None:
+@job_factory("send_email_task")
+def async_send_email_task(db: Session, task_id: int, **kwargs: Any) -> None:
     """Celery task for executing send email tasks asynchronously.
 
     Args:
@@ -167,14 +162,14 @@ def async_send_email_task(
         **kwargs: Additional arguments for the execute function
     """
     _find_and_execute_task(
-        self.session, task_id, SendEmailTask, execute_send_email_task, **kwargs
+        db, task_id, SendEmailTask, execute_send_email_task, **kwargs
     )
-    self.session.commit()
+    db.commit()
 
 
-@register_task_factory(name="reminder_email_task")
+@job_factory("reminder_email_task")
 def async_reminder_email_task(
-    self: CeleryTask, task_id: int, **kwargs: Any
+    db: Session, task_id: int, **kwargs: Any
 ) -> None:
     """Celery task for executing reminder email tasks asynchronously.
 
@@ -184,33 +179,33 @@ def async_reminder_email_task(
         **kwargs: Additional arguments for the execute function
     """
     _find_and_execute_task(
-        self.session,
+        db,
         task_id,
         ReminderEmailTask,
         execute_reminder_email_task,
         **kwargs,
     )
-    self.session.commit()
+    db.commit()
 
 
 ASYNC_TASK_TO_EXECUTE_MAPPING: dict[
-    TaskType, Callable[[CeleryTask, int], None]
+    TaskType, Callable[[Session, int], None]
 ] = {
     TaskType.SEND_EMAIL: async_send_email_task,
     TaskType.REMINDER_EMAIL: async_reminder_email_task,
 }
 
 
-@register_task_factory(name="execute_tasks")
-def execute_tasks_async(self: CeleryTask, task_ids: list[int]) -> None:
+@job_factory("execute_tasks")
+def execute_tasks_async(db: Session, task_ids: list[int]) -> None:
     """Execute a list of tasks asynchronously.
 
     Args:
-        self: Celery task instance
+        db: Database session
         task_ids: List of task IDs to execute
     """
-    execute_tasks(self.session, task_ids)
-    self.session.commit()
+    execute_tasks(db, task_ids)
+    db.commit()
 
 
 def execute_tasks(db: Session, task_ids: list[int]) -> None:
@@ -230,4 +225,8 @@ def execute_tasks(db: Session, task_ids: list[int]) -> None:
     for task in tasks:
         task_type = TaskType(task.type)
         task_to_execute = ASYNC_TASK_TO_EXECUTE_MAPPING[task_type]
-        task_to_execute.delay(task.id, **task.arguments)  # type: ignore
+        scheduler.add_job(
+            task_to_execute,
+            args=[task.id],
+            kwargs=task.arguments,
+        )

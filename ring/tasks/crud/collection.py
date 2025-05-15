@@ -12,7 +12,8 @@ from dataclasses import dataclass
 from typing import TYPE_CHECKING, Callable, Generic, Sequence, TypeVar
 
 from ring.sqlalchemy_base import Base
-from ring.worker.celery_app import CeleryTask
+
+# from ring.worker.celery_app import CeleryTask
 
 if TYPE_CHECKING:
     from sqlalchemy.orm import Session
@@ -35,13 +36,13 @@ class CollectionEvent(Generic[T]):
 
     model_class: type[T]
     collection_fn: Callable[..., Sequence[T]]
-    operation_fn: Callable[[CeleryTask, list[int]], None]
+    # operation_fn: Callable[[CeleryTask, list[int]], None]
 
 
 def register_collection_event(
     model_class: type[T],
     collection_fn: Callable[..., Sequence[T]],
-    operation_fn: Callable[[CeleryTask, list[int]], None],
+    # operation_fn: Callable[[CeleryTask, list[int]], None],
 ) -> CollectionEvent[T]:
     """Register a new collection event.
 
