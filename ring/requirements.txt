@@ -8,8 +8,6 @@ aiosignal==1.3.2
     # via aiohttp
 alembic==1.13.1
     # via ring (pyproject.toml)
-amqp==5.2.0
-    # via kombu
 annotated-types==0.6.0
     # via pydantic
 anyio==3.7.1
@@ -32,8 +30,6 @@ bcrypt==4.1.2
     # via pwdlib
 beautifulsoup4==4.12.3
     # via bs4
-billiard==4.2.0
-    # via celery
 boto3==1.34.14
     # via ring (pyproject.toml)
 boto3-stubs==1.34.141
@@ -46,8 +42,6 @@ botocore==1.34.162
 botocore-stubs==1.34.141
     # via boto3-stubs
 bs4==0.0.2
-    # via ring (pyproject.toml)
-celery==5.3.6
     # via ring (pyproject.toml)
 certifi==2023.11.17
     # via
@@ -67,19 +61,9 @@ cli-helpers==2.3.0
 click==8.1.7
     # via
     #   ring (pyproject.toml)
-    #   celery
-    #   click-didyoumean
-    #   click-plugins
-    #   click-repl
     #   pgcli
     #   pgspecial
     #   uvicorn
-click-didyoumean==0.3.0
-    # via celery
-click-plugins==1.1.1
-    # via celery
-click-repl==0.3.0
-    # via celery
 configobj==5.0.8
     # via
     #   cli-helpers
@@ -162,8 +146,6 @@ jmespath==1.0.1
     # via
     #   boto3
     #   botocore
-kombu==5.3.4
-    # via celery
 ring/packages/service_clients/llm_service
     # via ring (pyproject.toml)
 loguru==0.7.3
@@ -230,7 +212,6 @@ pre-commit==4.0.1
     # via ring (pyproject.toml)
 prompt-toolkit==3.0.43
     # via
-    #   click-repl
     #   ipython
     #   pgcli
 propcache==0.2.1
@@ -297,7 +278,6 @@ pytest-xdist==3.6.1
 python-dateutil==2.8.2
     # via
     #   botocore
-    #   celery
     #   llm-service
     #   pendulum
     #   time-machine
@@ -389,7 +369,6 @@ typing-extensions==4.9.0
     #   sqlalchemy
 tzdata==2023.3
     # via
-    #   celery
     #   faker
     #   pendulum
 tzlocal==5.3.1
@@ -405,11 +384,6 @@ uvicorn==0.24.0.post1
     # via fastapi
 uvloop==0.19.0
     # via uvicorn
-vine==5.1.0
-    # via
-    #   amqp
-    #   celery
-    #   kombu
 virtualenv==20.28.0
     # via pre-commit
 watchdog==4.0.0
