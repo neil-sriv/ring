@@ -11,6 +11,7 @@ from typing import TYPE_CHECKING, Sequence
 from sqlalchemy import select
 
 from ring.api_identifier import util as api_identifier_crud
+from ring.apscheduler.scheduler import job_factory
 from ring.email_util import CHARSET, EmailDraft, send_email
 from ring.parties.crud.one_time_token import generate_token, validate_token
 from ring.parties.crud.user import get_user_by_email
@@ -18,7 +19,6 @@ from ring.parties.models.group_model import Group
 from ring.parties.models.invite_model import Invite
 from ring.parties.models.one_time_token_model import OneTimeToken, TokenType
 from ring.parties.models.user_model import User
-from ring.worker.celery_app import CeleryTask, register_task_factory
 
 if TYPE_CHECKING:
     from sqlalchemy.orm import Session
@@ -151,15 +151,15 @@ def create_invite(
     return db_invite
 
 
-@register_task_factory(name="email_user_invites")
-def email_user_invites(self: CeleryTask, invite_ids: list[int]) -> None:
+@job_factory("email_user_invites")
+def email_user_invites(db: Session, invite_ids: list[int]) -> None:
     """Send invitation emails to users.
 
     Args:
-        self (CeleryTask): Celery task instance
+        db (Session): Database session
         invite_ids (list[int]): List of invite IDs to send emails for
     """
-    invites = self.session.scalars(
+    invites = db.scalars(
         select(Invite).filter(Invite.id.in_(invite_ids))
     ).all()
     email_drafts = [
@@ -168,7 +168,7 @@ def email_user_invites(self: CeleryTask, invite_ids: list[int]) -> None:
     ]
     for draft in email_drafts:
         send_email(draft)
-    self.session.commit()
+    db.commit()
     return None
 
 

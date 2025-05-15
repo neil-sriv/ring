@@ -8,11 +8,12 @@ from __future__ import annotations
 
 import random
 from datetime import UTC, datetime, timedelta
-from typing import TYPE_CHECKING, Sequence
+from typing import TYPE_CHECKING, Any, Sequence
 
 from sqlalchemy import ColumnElement, select
 
 from ring.api_identifier import util as api_identifier_crud
+from ring.apscheduler.scheduler import job_factory
 from ring.letters.constants import (
     DEFAULT_QUESTIONS,
     QUESTION_BANK,
@@ -20,16 +21,14 @@ from ring.letters.constants import (
 )
 from ring.letters.models.letter_model import Letter
 from ring.letters.models.question_model import Question
+from ring.lib.logger import logger
 from ring.parties.models.group_model import Group
 from ring.parties.models.user_model import User
 from ring.tasks.crud import schedule as schedule_crud
 from ring.tasks.models.task_model import TaskType
-from ring.worker.celery_app import register_task_factory
 
 if TYPE_CHECKING:
     from sqlalchemy.orm import Session
-
-    from ring.worker.celery_app import CeleryTask
 
 
 def get_letters(
@@ -396,54 +395,49 @@ def collect_future_letters(
     return letters_to_postpend, letters_to_promote
 
 
-@register_task_factory(name="promote_and_create_new_letters")
-def promote_and_create_new_letters(
-    self: CeleryTask, letter_ids: list[int]
-) -> None:
+@job_factory("promote_and_create_new_letters")
+def promote_and_create_new_letters(db: Session, letter_ids: list[int]) -> None:
     """Promote letters to IN_PROGRESS and create new upcoming letters.
 
     This task is triggered when letters need to be promoted from UPCOMING to
     IN_PROGRESS status. It also creates new upcoming letters for the affected groups.
 
     Args:
-        self (CeleryTask): Celery task instance
+        db (Session): Database session
         letter_ids (list[int]): IDs of letters to promote
     """
-    letters = self.session.scalars(
-        select(Letter).where(Letter.id.in_(letter_ids))
-    ).all()
+    logger.info(f"Promoting letters: {letter_ids}")
+    letters = db.scalars(select(Letter).where(Letter.id.in_(letter_ids))).all()
     for letter in letters:
         letter.status = LetterStatus.IN_PROGRESS
         create_letter_with_questions(
-            self.session,
+            db,
             letter.group.api_identifier,
             letter.send_at + timedelta(days=letter.group.cycle_length),
         )
-    self.session.commit()
+    db.commit()
 
 
-@register_task_factory(name="postpend_upcoming_letters")
-def postpend_upcoming_letters(self: CeleryTask, letter_ids: list[int]) -> None:
+@job_factory("postpend_upcoming_letters")
+def postpend_upcoming_letters(db: Session, letter_ids: list[int]) -> None:
     """Move letters to SENT status.
 
     This task is triggered when letters need to be moved from IN_PROGRESS to
     SENT status. It also creates a new upcoming letter for the affected groups.
 
     Args:
-        self (CeleryTask): Celery task instance
+        db (Session): Database session
         letter_ids (list[int]): IDs of letters to postpend
     """
-    letters = self.session.scalars(
-        select(Letter).where(Letter.id.in_(letter_ids))
-    ).all()
+    letters = db.scalars(select(Letter).where(Letter.id.in_(letter_ids))).all()
     for letter in letters:
         letter.status = LetterStatus.SENT
         create_letter_with_questions(
-            self.session,
+            db,
             letter.group.api_identifier,
             letter.send_at + timedelta(days=letter.group.cycle_length),
         )
-    self.session.commit()
+    db.commit()
 
 
 def add_participants(

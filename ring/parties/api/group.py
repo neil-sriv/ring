@@ -8,6 +8,7 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from ring.api_identifier import (
     util as api_identifier_crud,
 )
+from ring.apscheduler.scheduler import scheduler
 from ring.fastapp.dependencies import (
     AuthenticatedRequestDependencies,
     get_request_dependencies,
@@ -345,10 +346,10 @@ async def add_members(
     req_dep.db.commit()
 
     if invites:
-        [
-            invite_crud.email_user_invites.delay([invite.id])
-            for invite in invites
-        ]
+        scheduler.add_job(
+            invite_crud.email_user_invites,
+            args=[[invite.id for invite in invites]],
+        )
     return db_group
 
 

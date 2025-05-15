@@ -86,10 +86,10 @@ def job_factory(
     ) -> Callable[..., JOB_RETURN_TYPE]:
         @wraps(func)
         def wrapper(*args: Any, **kwargs: Any) -> JOB_RETURN_TYPE:
-            logger.info(f"Running job {name}: {args} {kwargs}")
+            logger.info(f"Running job {name}: {[args]} {[kwargs]}")
             db = next(get_db())
             try:
-                return func(*args, db=db, **kwargs)
+                return func(db, *args, **kwargs)
             finally:
                 db.close()
 
@@ -101,9 +101,7 @@ def job_factory(
 
 def interval_job_factory(
     name: str,
-    seconds: int | None = None,
-    minutes: int | None = None,
-    hours: int | None = None,
+    **kwargs: Any,
 ) -> Callable[
     [Callable[..., JOB_RETURN_TYPE]], Callable[..., JOB_RETURN_TYPE]
 ]:
@@ -116,7 +114,7 @@ def interval_job_factory(
             return func(*args, **kwargs)
 
         wrapper.name = name
-        register_interval_job_schedule(name, wrapper, seconds, minutes, hours)
+        register_interval_job_schedule(name, wrapper, **kwargs)
         return wrapper
 
     return decorator

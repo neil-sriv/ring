@@ -1,9 +1,11 @@
 from __future__ import annotations
 
+from sqlalchemy.orm import Session
+
+from ring.apscheduler.scheduler import job_factory
 from ring.email_util import CHARSET, EmailDraft, send_email
 from ring.parties.models.user_model import User
 from ring.security import get_password_hash
-from ring.worker.celery_app import CeleryTask, register_task_factory
 
 
 def reset_user_password(db_user: User, new_password: str) -> None:
@@ -16,15 +18,15 @@ def reset_user_password(db_user: User, new_password: str) -> None:
     db_user.hashed_password = get_password_hash(new_password)
 
 
-@register_task_factory(name="email_password_reset")
-def email_password_reset(self: CeleryTask, email: str, token: str) -> None:
+@job_factory("email_password_reset")
+def email_password_reset(db: Session, email: str, token: str) -> None:
     """Send a password reset email to a user.
 
     This is a Celery task that constructs and sends a password reset email
     containing a reset token.
 
     Args:
-        self (CeleryTask): Celery task instance
+        db (Session): Database session
         email (str): Recipient's email address
         token (str): Password reset token
     """

@@ -15,17 +15,13 @@ INTERVAL_JOB_SCHEDULE_REGISTRY: RegistrationDict[str, IntervalJobSchedule] = (
 @dataclass
 class IntervalJobSchedule:
     job: Callable[..., Any]
-    seconds: int | None = None
-    minutes: int | None = None
-    hours: int | None = None
+    kwargs: dict[str, Any]
 
 
 def register_interval_job_schedule(
     name: str,
     job: Callable[..., Any],
-    seconds: int | None = None,
-    minutes: int | None = None,
-    hours: int | None = None,
+    **kwargs: Any,
 ) -> None:
     """Register a job schedule.
 
@@ -38,7 +34,5 @@ def register_interval_job_schedule(
     """
     INTERVAL_JOB_SCHEDULE_REGISTRY[name] = IntervalJobSchedule(
         job=job,
-        seconds=seconds,
-        minutes=minutes,
-        hours=hours,
+        kwargs=kwargs,
     )
