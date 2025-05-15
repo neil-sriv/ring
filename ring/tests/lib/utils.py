@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-from pprint import pprint
 from typing import Any, Sequence
 
 from ring.ring_pydantic.pydantic_model import PydanticModel
@@ -21,8 +20,6 @@ def assert_pydantic_models_json_dump_in_response_dict(
 def assert_pydantic_model_json_dump_equivalent_to_response_dict(
     model: PydanticModel, data: dict[str, Any]
 ) -> None:
-    pprint(model.to_pydantic().model_dump(mode="json"))
-    pprint(data)
     assert model.to_pydantic().model_dump(mode="json") == data
 
 

@@ -4,6 +4,8 @@ from sqlalchemy import JSON, DateTime
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.dialects.postgresql import TIMESTAMP as PG_TIMESTAMP
 
+from ring.lib.logger import logger
+
 
 def include_object(object_, name, type_, reflected, compare_to):
     """Filter objects to include in Alembic migrations.
@@ -43,8 +45,8 @@ def include_object(object_, name, type_, reflected, compare_to):
             )
 
             if same_columns and same_unique:
-                print(
-                    f"[Alembic] Suppressing NULLS ordering diff for index {name}"
+                logger.info(
+                    "Suppressing NULLS ordering diff for index {}".format(name)
                 )
                 return False  # skip migration
 
@@ -75,8 +77,10 @@ def cockroach_compare_type(
     ):
         # If model expects timezone, and DB reflection lost timezone info, ignore
         if getattr(metadata_type, "timezone", False):
-            print(
-                f"[Alembic] Ignoring TIMESTAMP timezone mismatch on column: {inspected_column.name}"
+            logger.info(
+                "Ignoring TIMESTAMP timezone mismatch on column: {}".format(
+                    inspected_column.name
+                )
             )
             return False  # Tell Alembic: "no real diff"
 
@@ -84,8 +88,10 @@ def cockroach_compare_type(
     if isinstance(inspected_type, (JSON, JSONB)) and isinstance(
         metadata_type, JSONB
     ):
-        print(
-            f"[Alembic] Suppressing false JSON vs JSONB mismatch on {inspected_column.name}"
+        logger.info(
+            "Suppressing false JSON vs JSONB mismatch on {}".format(
+                inspected_column.name
+            )
         )
         return False  # treat JSON and JSONB as compatible
     # Otherwise, fall back to Alembic default

@@ -407,7 +407,6 @@ class TestUserAPI:
         resp = authenticated_client.get(f"/parties/user/{user.api_identifier}")
         assert resp.status_code == 200
         data = resp.json()
-        print(data)
         assert_pydantic_model_json_dump_equivalent_to_response_dict(user, data)
 
     def test_read_user_by_id_not_found(

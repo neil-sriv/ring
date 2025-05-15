@@ -93,7 +93,7 @@ def unregister_task(
         )
     ).one_or_none()
     if task:
-        print("deleting task:", task)
+        logger.info("deleting task: {}".format(task))
         db.delete(task)
 
 
@@ -126,7 +126,7 @@ def update_task(
             Task.execute_at == execute_at,
         )
     ).one_or_none()
-    print("found task:", task)
+    logger.info("found task: {}".format(task))
     if not task:
         return None
     task.execute_at = new_execute_at
@@ -218,7 +218,11 @@ def poll_schedule_task(db: Session) -> dict[str, str]:
             args=[[letter.id for letter in promote]],
         )
     logger.info(
-        f"task ids: {[task.id for task in tasks]}, postpend letter ids: {[letter.id for letter in postpend]}, promote letter ids: {[letter.id for letter in promote]}"
+        "task ids: {}, postpend letter ids: {}, promote letter ids: {}".format(
+            [task.id for task in tasks],
+            [letter.id for letter in postpend],
+            [letter.id for letter in promote],
+        )
     )
     return {
         "status": "success",

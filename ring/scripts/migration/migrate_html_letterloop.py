@@ -27,6 +27,7 @@ from ring.parties.models.user_model import User
 from ring.sqlalchemy_base import Session
 from ring.scripts.script_base import script_di
 from bs4 import BeautifulSoup, PageElement, Tag
+from ring.lib.logger import logger
 
 
 @script_di()
@@ -167,7 +168,7 @@ def _parse_issue(db: Session, soup: BeautifulSoup, user: User) -> Letter:
     current_user = None
     current_answer = None
 
-    print(group.name, issue_number, sent_at)
+    logger.info("{} {} {}".format(group.name, issue_number, sent_at))
     for question_stack in question_stacks:
         actual_stack = [question_stack]
         if question_stack.contents[0].string == "✨ Questions":
@@ -203,7 +204,7 @@ def _parse_question(
         )
     else:
         question_text: str = question_stack.contents[0].string
-    print(author_name, question_text)
+    logger.info("{} {}".format(author_name, question_text))
 
     author_user = (
         None
@@ -278,8 +279,7 @@ def _parse_question(
                 elif curr_str:
                     response_text += curr_str
                 idx += 1
-        print([author])
-        # print([m.name for m in letter.group.members])
+        logger.info([author])
         [current_user] = [
             m for m in letter.group.members if m.name == author.strip()
         ]
@@ -327,4 +327,4 @@ async def upload(db: Session, response: Response, url: str):
         url (str): URL of the image to upload
     """
     upload_result = await upload_image(db, response, url)
-    print(upload_result)
+    logger.info(upload_result)

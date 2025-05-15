@@ -14,6 +14,7 @@ from typing import Any, Sequence
 
 import sqlalchemy
 
+from ring.lib.logger import logger
 from ring.parties.crud import group as group_crud
 from ring.parties.crud import user as user_crud
 from ring.parties.models.group_model import Group
@@ -76,7 +77,9 @@ def run_script(db: Session, dry_run: bool = True) -> None:
             db.add(u)
         db.flush()
         for new_user in new_users:
-            print(f"\tNew user {new_user.name} added to group {g.name}")
+            logger.info(
+                "New user {} added to group {}".format(new_user.name, g.name)
+            )
 
     for group in groups:
         pp(str(group))

@@ -7,6 +7,7 @@ from __future__ import annotations
 
 from sqlalchemy import select
 
+from ring.lib.logger import logger
 from ring.parties.models.user_model import User
 from ring.scripts.script_base import script_di
 from ring.sqlalchemy_base import Session
@@ -23,4 +24,4 @@ def run_script(db: Session) -> None:
         db (Session): Database session provided by script_di
     """
     users = db.scalars(select(User)).all()
-    print(users)
+    logger.info(users)
