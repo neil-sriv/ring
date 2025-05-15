@@ -24,6 +24,7 @@ from ring.letters.schemas.question import (
     GenerateQuestionResponse,
 )
 from ring.letters.schemas.response import ResponseUpsert
+from ring.lib.logger import logger
 from ring.ring_pydantic.linked_schemas import QuestionLinked
 
 router = APIRouter()
@@ -56,7 +57,7 @@ async def upsert_response(
     Raises:
         IDNotFoundException: If question or response with given API ID is not found
     """
-    print(response)
+    logger.info(response)
     db_question = api_identifier_crud.get_model(
         req_dep.db, Question, api_id=question_api_id
     )

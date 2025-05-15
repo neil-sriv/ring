@@ -19,7 +19,6 @@ from ring.fastapp.config import get_config
 from ring.fastapp.init_app_modules import init_app_modules
 from ring.fastapp.routes import router
 from ring.lib.logger import logger
-from ring.tasks.crud.schedule import poll_schedule_task
 
 
 @asynccontextmanager

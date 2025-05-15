@@ -17,6 +17,7 @@ import ring.letters.crud.letter as letter_crud
 import ring.letters.crud.question as question_crud
 from ring.letters.constants import LetterStatus
 from ring.letters.models.letter_model import Letter
+from ring.lib.logger import logger
 from ring.parties.models.group_model import Group
 from ring.parties.models.user_model import User
 from ring.scripts.script_base import script_di
@@ -162,7 +163,7 @@ def _parse_issue(db: Session, issue_lines: list[str], user: User) -> Letter:
                 question_text,
                 author_user,
             )
-            print(current_question)
+            logger.info(current_question)
             db.add(current_question)
         elif (
             ":" in line and (member_name := line.split(":")[0]) in member_names

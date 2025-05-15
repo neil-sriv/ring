@@ -16,6 +16,7 @@ from ring.apscheduler.scheduler import job_factory, scheduler
 from ring.email_util import send_email
 from ring.letters.constants import LetterStatus
 from ring.letters.crud import letter as letter_crud
+from ring.lib.logger import logger
 from ring.tasks.crud.reminder_email_task import construct_reminder_email
 from ring.tasks.crud.send_email_task import construct_send_letter_email
 from ring.tasks.models.task_model import (
@@ -67,10 +68,11 @@ def execute_reminder_email_task(
         )
     )
     if message_id:
-        print("Message ID:", message_id)
-        print(
-            "Sent reminder email to %s",
-            [u.email for u in letter_to_send.participants],
+        logger.info("Message ID:" + message_id)
+        logger.info(
+            "Sent reminder email to {}".format(
+                [u.email for u in letter_to_send.participants]
+            )
         )
 
     db.commit()
@@ -103,10 +105,11 @@ def execute_send_email_task(db: Session, task: SendEmailTask) -> None:
     )
     if message_id:
         letter_to_send.status = LetterStatus.SENT
-        print("Message ID:", message_id)
-        print(
-            "Sent letter email to %s",
-            [u.email for u in letter_to_send.participants],
+        logger.info("Message ID:" + message_id)
+        logger.info(
+            "Sent letter email to {}".format(
+                [u.email for u in letter_to_send.participants]
+            )
         )
 
     db.commit()
@@ -142,12 +145,12 @@ def _find_and_execute_task(
         task.status = TaskStatus.FAILED
         db.commit()
         task.message = str(e)
-        print(f"Failed to execute task {task_id}: {e}")
+        logger.info("Failed to execute task {}: {}".format(task_id, e))
         raise e
     else:
         task.message = ""
         task.status = TaskStatus.COMPLETED
-        print(f"Task {task_id} executed successfully")
+        logger.info("Task {} executed successfully".format(task_id))
     return task
 
 

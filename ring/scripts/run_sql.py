@@ -6,9 +6,9 @@ display the results in a formatted manner using pprintpp.
 
 from __future__ import annotations
 
-from pprintpp import pprint  # type: ignore
 from sqlalchemy import text
 
+from ring.lib.logger import logger
 from ring.scripts.script_base import script_di
 from ring.sqlalchemy_base import Session
 
@@ -30,7 +30,7 @@ def run_script(db: Session, query: str) -> None:
         SQL injection protection. However, care should still be taken with the
         queries being executed.
     """
-    print(f"Running query: {query}")
+    logger.info("Running query: {}".format(query))
     results = db.execute(text(query))
-    pprint(results.keys())
-    pprint(results.fetchall())
+    logger.info(results.keys())
+    logger.info(results.fetchall())

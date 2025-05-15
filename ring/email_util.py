@@ -17,6 +17,8 @@ from mypy_boto3_ses.type_defs import (
     MessageTypeDef,
 )
 
+from ring.lib.logger import logger
+
 # The character encoding for the email.
 CHARSET = "UTF-8"
 
@@ -107,9 +109,9 @@ def send_email(draft: EmailDraft) -> Optional[str]:
         ```python
         draft = construct_email_draft(...)
         if message_id := send_email(draft):
-            print(f"Email sent successfully with ID: {message_id}")
+            logger.info("Email sent successfully with ID: {}", message_id)
         else:
-            print("Failed to send email")
+            logger.info("Failed to send email")
         ```
     """
     ses_client: SESClient = boto3.Session().client(
@@ -122,8 +124,8 @@ def send_email(draft: EmailDraft) -> Optional[str]:
             Message=draft.message,
         )
     except BotocoreClientError as e:
-        print(e.response["Error"]["Message"])
+        logger.info(e.response["Error"]["Message"])
         return None
     else:
-        print(f"Email sent! Message ID: {response['MessageId']}")
+        logger.info("Email sent! Message ID: {}".format(response["MessageId"]))
         return response["MessageId"]
