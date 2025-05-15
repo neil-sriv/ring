@@ -171,7 +171,7 @@ def collect_pending_tasks(
 
 @interval_job_factory("poll_schedule_task", minutes=1)
 def poll_schedule_task(db: Session) -> dict[str, str]:
-    """Celery task for polling schedules and executing pending tasks.
+    """Job for polling schedules and executing pending tasks.
 
     This task:
     1. Collects and executes pending tasks

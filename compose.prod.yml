@@ -28,23 +28,6 @@ services:
       - ./etc/letsencrypt:/etc/letsencrypt
       - ./certbot/www:/var/www/certbot
 
-  worker:
-    image: prod-ring-worker
-    env_file:
-      - ./.env
-    mem_limit: 250m
-    platform: linux/amd64
-    volumes:
-      - $HOME/.postgresql/root.crt:/root/.postgresql/root.crt
-  beat:
-    mem_limit: 150m
-    image: prod-ring-beat
-    env_file:
-      - ./.env
-    platform: linux/amd64
-    volumes:
-      - $HOME/.postgresql/root.crt:/root/.postgresql/root.crt
-
   frontend:
     restart: unless-stopped
     mem_limit: 300m

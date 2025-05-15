@@ -19,14 +19,6 @@ services:
       - ./localhost.key:/etc/nginx/certs/nginx-selfsigned.key:ro
       - ./react/dist:/usr/share/nginx/html
 
-  worker:
-    command: "watchmedo auto-restart --directory=./ --pattern=*.py --recursive -- celery --app=ring.worker.celery_app worker --loglevel=debug"
-    env_file:
-      - ./.env
-  beat:
-    command: "watchmedo auto-restart --directory=./ --pattern=*.py --recursive -- celery --app=ring.worker.celery_app beat --loglevel=debug"
-    env_file:
-      - ./.env
   db:
     restart: unless-stopped
     container_name: ring-db

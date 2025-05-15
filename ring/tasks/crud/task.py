@@ -2,8 +2,7 @@
 
 This module provides functions for executing different types of tasks in Ring,
 particularly focusing on email-related tasks like sending letters and reminders.
-It includes both synchronous execution functions and their asynchronous Celery
-task wrappers.
+It includes both synchronous execution functions and their asynchronous job wrappers.
 """
 
 from __future__ import annotations
@@ -154,10 +153,10 @@ def _find_and_execute_task(
 
 @job_factory("send_email_task")
 def async_send_email_task(db: Session, task_id: int, **kwargs: Any) -> None:
-    """Celery task for executing send email tasks asynchronously.
+    """Job for executing send email tasks asynchronously.
 
     Args:
-        self: Celery task instance
+        db: Database session
         task_id: ID of the task to execute
         **kwargs: Additional arguments for the execute function
     """
@@ -171,10 +170,10 @@ def async_send_email_task(db: Session, task_id: int, **kwargs: Any) -> None:
 def async_reminder_email_task(
     db: Session, task_id: int, **kwargs: Any
 ) -> None:
-    """Celery task for executing reminder email tasks asynchronously.
+    """Job for executing reminder email tasks asynchronously.
 
     Args:
-        self: Celery task instance
+        db: Database session
         task_id: ID of the task to execute
         **kwargs: Additional arguments for the execute function
     """
