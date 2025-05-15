@@ -7,10 +7,8 @@ from dev_util.dev import dev_command, dev_group, subprocess_run
 ECR_URI_BASE = "public.ecr.aws/z2k1e8p1/"
 
 IMAGE_TAG_NAMES = [
-    "ring-worker",
     "ring-frontend",
     "ring-api",
-    "ring-beat",
     "ring-llm",
 ]
 

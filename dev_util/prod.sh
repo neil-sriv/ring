@@ -1,6 +1,6 @@
 #!/bin/bash
 
-declare -a images=("ring-worker" "ring-api" "ring-frontend" "ring-beat")
+declare -a images=("ring-api" "ring-frontend")
 
 for i in "${images[@]}"
 do
