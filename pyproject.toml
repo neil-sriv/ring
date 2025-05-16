@@ -72,6 +72,7 @@ dependencies = [
     "llm-service",
     "sqlalchemy-cockroachdb>=2.0.2",
     "apscheduler>=3.11.0",
+    "pgvector>=0.4.1",
 ]
 
 [dependency-groups]
