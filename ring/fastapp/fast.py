@@ -11,6 +11,7 @@ from typing import Awaitable, Callable
 
 from fastapi import FastAPI, Request, Response
 from fastapi.responses import JSONResponse
+from sentence_transformers import SentenceTransformer
 from starlette.middleware.cors import CORSMiddleware
 
 from ring.api_identifier.util import IDNotFoundException
@@ -53,6 +54,7 @@ def create_app() -> FastAPI:
 
 app = create_app()
 
+embedding_model = SentenceTransformer("all-MiniLM-L6-v2")
 
 # @app.on_event("startup")
 # async def startup_event():
