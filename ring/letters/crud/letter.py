@@ -13,7 +13,7 @@ from typing import TYPE_CHECKING, Any, Sequence
 from sqlalchemy import ColumnElement, select
 
 from ring.api_identifier import util as api_identifier_crud
-from ring.apscheduler.scheduler import job_factory
+from ring.async_scheduler.scheduler import job_factory
 from ring.letters.constants import (
     DEFAULT_QUESTIONS,
     QUESTION_BANK,

@@ -24,6 +24,7 @@ def import_all_sqla_models() -> None:
     )
     from ring.parties.models.user_model import User
     from ring.s3.models.s3_model import Image, S3File
+    from ring.search.models.hybrid_search import HybridSearchDocument
     from ring.tasks.models.schedule_model import Schedule
     from ring.tasks.models.task_model import (
         ReminderEmailTask,

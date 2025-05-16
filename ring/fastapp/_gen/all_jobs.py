@@ -8,8 +8,8 @@ def import_all_jobs() -> None:
 
 def schedule_all_interval_jobs() -> None:
     """Schedule all interval jobs."""
-    from ring.apscheduler.schedule import INTERVAL_JOB_SCHEDULE_REGISTRY
-    from ring.apscheduler.scheduler import scheduler
+    from ring.async_scheduler.schedule import INTERVAL_JOB_SCHEDULE_REGISTRY
+    from ring.async_scheduler.scheduler import scheduler
 
     scheduler.remove_all_jobs()
 

@@ -10,7 +10,7 @@ from apscheduler.jobstores.sqlalchemy import SQLAlchemyJobStore
 from apscheduler.schedulers.background import BackgroundScheduler
 from sqlalchemy.orm import Session
 
-from ring.apscheduler.schedule import register_interval_job_schedule
+from ring.async_scheduler.schedule import register_interval_job_schedule
 from ring.fastapp.config import RingConfig, get_config
 from ring.lib.logger import logger
 from ring.sqlalchemy_base import Base, SessionLocal, get_db

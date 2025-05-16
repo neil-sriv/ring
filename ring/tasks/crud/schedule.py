@@ -15,7 +15,7 @@ import sqlalchemy
 from sqlalchemy import or_, select
 
 from ring.api_identifier import util as api_identifier_crud
-from ring.apscheduler.scheduler import interval_job_factory, scheduler
+from ring.async_scheduler.scheduler import interval_job_factory, scheduler
 from ring.lib.logger import logger
 from ring.parties.models.group_model import Group
 from ring.tasks.crud import task as task_crud
