@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from pgvector.sqlalchemy import Vector
-from sqlalchemy import func, select
+from sqlalchemy import func, literal_column, select
 from sqlalchemy.dialects.postgresql import TSVECTOR
 from sqlalchemy.orm import Mapped, Session, mapped_column
 
@@ -24,6 +24,7 @@ class HybridSearchDocument(Base, CreatedAtMixin):
     #     include_in_update=False,
     #     write_only=False,
     # )
+    text_tsv_expr_literal = literal_column("text_tsv", type_=TSVECTOR)
     text_embedding_384: Mapped[Vector] = mapped_column(
         Vector(dim=384), nullable=False
     )
