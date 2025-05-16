@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 from pgvector.sqlalchemy import Vector
-from sqlalchemy import Index
 from sqlalchemy.dialects.postgresql import TSVECTOR
 from sqlalchemy.orm import Mapped, mapped_column
 
@@ -15,7 +14,8 @@ class HybridSearchDocument(Base, CreatedAtMixin):
     id: Mapped[int] = mapped_column(primary_key=True)
 
     raw_text: Mapped[str] = mapped_column(nullable=False)
-    text_tsv: Mapped[str] = mapped_column(TSVECTOR, nullable=False)
+    # use a computed column instead
+    # text_tsv: Mapped[str] = mapped_column(TSVECTOR, nullable=False)
     text_embedding_384: Mapped[Vector] = mapped_column(
         Vector(dim=384), nullable=False
     )
@@ -33,3 +33,17 @@ class HybridSearchDocument(Base, CreatedAtMixin):
     #     text_embedding_384,
     # ),
     # )
+
+    def __init__(self, raw_text: str, text_embedding_384: Vector):
+        self.raw_text = raw_text
+        self.text_embedding_384 = text_embedding_384
+
+    @classmethod
+    def create(
+        cls, raw_text: str, text_embedding_384: Vector
+    ) -> HybridSearchDocument:
+        hybrid_search_document = cls(
+            raw_text=raw_text,
+            text_embedding_384=text_embedding_384,
+        )
+        return hybrid_search_document
