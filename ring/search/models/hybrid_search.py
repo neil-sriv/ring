@@ -1,8 +1,9 @@
 from __future__ import annotations
 
 from pgvector.sqlalchemy import Vector
+from sqlalchemy import func, select
 from sqlalchemy.dialects.postgresql import TSVECTOR
-from sqlalchemy.orm import Mapped, mapped_column
+from sqlalchemy.orm import Mapped, Session, mapped_column
 
 from ring.created_at import CreatedAtMixin
 from ring.sqlalchemy_base import Base
@@ -15,7 +16,14 @@ class HybridSearchDocument(Base, CreatedAtMixin):
 
     raw_text: Mapped[str] = mapped_column(nullable=False)
     # use a computed column instead
-    # text_tsv: Mapped[str] = mapped_column(TSVECTOR, nullable=False)
+    # _text_tsv: Mapped[str] = mapped_column(
+    #     "text_tsv",
+    #     TSVECTOR,
+    #     nullable=False,
+    #     include_in_insert=False,
+    #     include_in_update=False,
+    #     write_only=False,
+    # )
     text_embedding_384: Mapped[Vector] = mapped_column(
         Vector(dim=384), nullable=False
     )
@@ -34,6 +42,8 @@ class HybridSearchDocument(Base, CreatedAtMixin):
     # ),
     # )
 
+    text_tsv_expr = func.to_tsvector("english", raw_text).label("text_tsv")
+
     def __init__(self, raw_text: str, text_embedding_384: Vector):
         self.raw_text = raw_text
         self.text_embedding_384 = text_embedding_384
@@ -47,3 +57,27 @@ class HybridSearchDocument(Base, CreatedAtMixin):
             text_embedding_384=text_embedding_384,
         )
         return hybrid_search_document
+
+    # @property
+    # def text_tsv(self) -> str:
+    #     return getattr(self, "_text_tsv", None)
+
+    @property
+    def text_tsv(self):
+        raise AttributeError(
+            "text_tsv is a computed column. Use `load_text_tsv(session)` to fetch it."
+        )
+
+    def load_text_tsv(self, session: Session) -> str:
+        """Fetches the computed column value directly from the DB."""
+        result = session.execute(
+            select(HybridSearchDocument.text_tsv_expr).where(
+                HybridSearchDocument.id == self.id
+            )
+        )
+        return result.scalar_one_or_none()
+
+    # @classmethod
+    # def text_tsv_column(cls):
+    #     # A selectable expression for use in `select()` queries
+    #     return func.to_tsvector("english", cls.raw_text).label("text_tsv")
