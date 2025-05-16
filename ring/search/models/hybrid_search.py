@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from pgvector.sqlalchemy import Vector
-from sqlalchemy import func, literal_column, select
+from sqlalchemy import literal_column, select
 from sqlalchemy.dialects.postgresql import TSVECTOR
 from sqlalchemy.orm import Mapped, Session, mapped_column
 
@@ -24,6 +24,7 @@ class HybridSearchDocument(Base, CreatedAtMixin):
     #     include_in_update=False,
     #     write_only=False,
     # )
+    # this is a literal column that is not mapped or included in the insert/update
     text_tsv_expr_literal = literal_column("text_tsv", type_=TSVECTOR)
     text_embedding_384: Mapped[Vector] = mapped_column(
         Vector(dim=384), nullable=False
@@ -31,19 +32,6 @@ class HybridSearchDocument(Base, CreatedAtMixin):
     # text_embedding_1536: Mapped[Vector] = mapped_column(
     #     Vector(dimensions=1536), nullable=False
     # )
-
-    # Add indices
-    # __table_args__ = (
-    # Inverted index will be added in alembic migration
-    # Index("content_search_inverted_idx", text_tsv),
-    # Vector index will be added in alembic migration
-    # Index(
-    #     "embedding_vector_idx",
-    #     text_embedding_384,
-    # ),
-    # )
-
-    text_tsv_expr = func.to_tsvector("english", raw_text).label("text_tsv")
 
     def __init__(self, raw_text: str, text_embedding_384: Vector):
         self.raw_text = raw_text
@@ -59,10 +47,6 @@ class HybridSearchDocument(Base, CreatedAtMixin):
         )
         return hybrid_search_document
 
-    # @property
-    # def text_tsv(self) -> str:
-    #     return getattr(self, "_text_tsv", None)
-
     @property
     def text_tsv(self):
         raise AttributeError(
@@ -70,15 +54,10 @@ class HybridSearchDocument(Base, CreatedAtMixin):
         )
 
     def load_text_tsv(self, session: Session) -> str:
-        """Fetches the computed column value directly from the DB."""
+        """Fetch the computed TSVECTOR column from the database."""
         result = session.execute(
-            select(HybridSearchDocument.text_tsv_expr).where(
+            select(HybridSearchDocument.text_tsv_expr_literal).where(
                 HybridSearchDocument.id == self.id
             )
         )
         return result.scalar_one_or_none()
-
-    # @classmethod
-    # def text_tsv_column(cls):
-    #     # A selectable expression for use in `select()` queries
-    #     return func.to_tsvector("english", cls.raw_text).label("text_tsv")
