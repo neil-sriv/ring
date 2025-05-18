@@ -18,23 +18,17 @@ import pprint
 import re  # noqa: F401
 from typing import Any, ClassVar, Dict, List, Optional, Set
 
-from pydantic import BaseModel, ConfigDict, StrictInt, StrictStr
+from pydantic import BaseModel, ConfigDict, StrictStr
 from typing_extensions import Self
 
 
-class CompletionRequest(BaseModel):
+class EmbeddingRequest(BaseModel):
     """
-    CompletionRequest
+    EmbeddingRequest
     """  # noqa: E501
 
-    prompt: StrictStr
-    max_tokens: Optional[StrictInt] = 1000
-    output_schema_definition: StrictStr
-    __properties: ClassVar[List[str]] = [
-        "prompt",
-        "max_tokens",
-        "output_schema_definition",
-    ]
+    text: StrictStr
+    __properties: ClassVar[List[str]] = ["text"]
 
     model_config = ConfigDict(
         populate_by_name=True,
@@ -53,7 +47,7 @@ class CompletionRequest(BaseModel):
 
     @classmethod
     def from_json(cls, json_str: str) -> Optional[Self]:
-        """Create an instance of CompletionRequest from a JSON string"""
+        """Create an instance of EmbeddingRequest from a JSON string"""
         return cls.from_dict(json.loads(json_str))
 
     def to_dict(self) -> Dict[str, Any]:
@@ -77,22 +71,12 @@ class CompletionRequest(BaseModel):
 
     @classmethod
     def from_dict(cls, obj: Optional[Dict[str, Any]]) -> Optional[Self]:
-        """Create an instance of CompletionRequest from a dict"""
+        """Create an instance of EmbeddingRequest from a dict"""
         if obj is None:
             return None
 
         if not isinstance(obj, dict):
             return cls.model_validate(obj)
 
-        _obj = cls.model_validate(
-            {
-                "prompt": obj.get("prompt"),
-                "max_tokens": obj.get("max_tokens")
-                if obj.get("max_tokens") is not None
-                else 1000,
-                "output_schema_definition": obj.get(
-                    "output_schema_definition"
-                ),
-            }
-        )
+        _obj = cls.model_validate({"text": obj.get("text")})
         return _obj

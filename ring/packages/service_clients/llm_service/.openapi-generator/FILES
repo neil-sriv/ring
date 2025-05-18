@@ -7,6 +7,9 @@ docs/AuthApi.md
 docs/CompletionRequest.md
 docs/CompletionResponse.md
 docs/CompletionsApi.md
+docs/EmbeddingRequest.md
+docs/EmbeddingResponse.md
+docs/EmbeddingsApi.md
 docs/HTTPValidationError.md
 docs/RAGRequest.md
 docs/RAGResponse.md
@@ -18,6 +21,7 @@ llm_service/__init__.py
 llm_service/api/__init__.py
 llm_service/api/auth_api.py
 llm_service/api/completions_api.py
+llm_service/api/embeddings_api.py
 llm_service/api/rag_api.py
 llm_service/api_client.py
 llm_service/api_response.py
@@ -26,6 +30,8 @@ llm_service/exceptions.py
 llm_service/models/__init__.py
 llm_service/models/completion_request.py
 llm_service/models/completion_response.py
+llm_service/models/embedding_request.py
+llm_service/models/embedding_response.py
 llm_service/models/http_validation_error.py
 llm_service/models/rag_request.py
 llm_service/models/rag_response.py
@@ -39,4 +45,7 @@ setup.cfg
 setup.py
 test-requirements.txt
 test/__init__.py
+test/test_embedding_request.py
+test/test_embedding_response.py
+test/test_embeddings_api.py
 tox.ini

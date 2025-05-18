@@ -2,7 +2,7 @@
     "openapi": "3.1.0",
     "info": {
         "title": "FastAPI",
-        "version": "0.1.0"
+        "version": "0.2.0"
     },
     "servers": [
         {
@@ -155,6 +155,80 @@
                     }
                 ]
             }
+        },
+        "/embeddings/embed": {
+            "post": {
+                "tags": [
+                    "embeddings"
+                ],
+                "summary": "Embed",
+                "description": "Stub endpoint for text completion generation",
+                "operationId": "embed_embeddings_embed_post",
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/EmbeddingRequest"
+                            }
+                        }
+                    },
+                    "required": true
+                },
+                "responses": {
+                    "200": {
+                        "description": "Successful Response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/EmbeddingResponse"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPValidationError"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "APIKeyHeader": []
+                    }
+                ]
+            }
+        },
+        "/embeddings/test": {
+            "post": {
+                "tags": [
+                    "embeddings"
+                ],
+                "summary": "Test Completion",
+                "description": "Test endpoint that returns an embedding for a test text",
+                "operationId": "test_completion_embeddings_test_post",
+                "responses": {
+                    "200": {
+                        "description": "Successful Response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/EmbeddingResponse"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "APIKeyHeader": []
+                    }
+                ]
+            }
         }
     },
     "components": {
@@ -168,7 +242,7 @@
                     "max_tokens": {
                         "type": "integer",
                         "title": "Max Tokens",
-                        "default": 100
+                        "default": 1000
                     },
                     "output_schema_definition": {
                         "type": "string",
@@ -199,6 +273,35 @@
                     "output_schema"
                 ],
                 "title": "CompletionResponse"
+            },
+            "EmbeddingRequest": {
+                "properties": {
+                    "text": {
+                        "type": "string",
+                        "title": "Text"
+                    }
+                },
+                "type": "object",
+                "required": [
+                    "text"
+                ],
+                "title": "EmbeddingRequest"
+            },
+            "EmbeddingResponse": {
+                "properties": {
+                    "embedding": {
+                        "items": {
+                            "type": "number"
+                        },
+                        "type": "array",
+                        "title": "Embedding"
+                    }
+                },
+                "type": "object",
+                "required": [
+                    "embedding"
+                ],
+                "title": "EmbeddingResponse"
             },
             "HTTPValidationError": {
                 "properties": {
