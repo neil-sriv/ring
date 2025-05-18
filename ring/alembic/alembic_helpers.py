@@ -32,12 +32,18 @@ def include_object(object_, name, type_, reflected, compare_to):
         if name == "apscheduler_jobs":
             return False
 
+    if type_ == "column":
+        if name == "text_tsv":
+            return False
+
     if type_ == "index":
         if name == "ix_apscheduler_jobs_next_run_time":
             return False
         if name == "content_search_inverted_idx":
             return False
         if name == "embedding_vector_idx":
+            return False
+        if name == "embedding_768_vector_idx":
             return False
         if compare_to is not None:
             # Compare both column names and uniqueness

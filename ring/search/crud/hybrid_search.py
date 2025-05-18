@@ -34,7 +34,7 @@ def create_hybrid_search_document(
     text_embedding = _generate_text_embedding(raw_text)
     db_hybrid_search_document = HybridSearchDocument.create(
         raw_text=raw_text,
-        text_embedding_384=text_embedding,
+        text_embedding_768=text_embedding,
     )
     db.add(db_hybrid_search_document)
     return db_hybrid_search_document
@@ -47,11 +47,11 @@ def semantic_search_hybrid_search_document(
     return (
         db.query(HybridSearchDocument)
         .filter(
-            HybridSearchDocument.text_embedding_384.l2_distance(text_embedding)
+            HybridSearchDocument.text_embedding_768.l2_distance(text_embedding)
             < 0.5
         )
         .order_by(
-            HybridSearchDocument.text_embedding_384.l2_distance(text_embedding)
+            HybridSearchDocument.text_embedding_768.l2_distance(text_embedding)
         )
         .limit(limit)
         .all()

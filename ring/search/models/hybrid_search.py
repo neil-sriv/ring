@@ -26,24 +26,21 @@ class HybridSearchDocument(Base, CreatedAtMixin):
     # )
     # this is a literal column that is not mapped or included in the insert/update
     text_tsv_expr_literal = literal_column("text_tsv", type_=TSVECTOR)
-    text_embedding_384: Mapped[Vector] = mapped_column(
-        Vector(dim=384), nullable=False
+    text_embedding_768: Mapped[Vector] = mapped_column(
+        Vector(dim=768), nullable=False
     )
-    # text_embedding_1536: Mapped[Vector] = mapped_column(
-    #     Vector(dimensions=1536), nullable=False
-    # )
 
-    def __init__(self, raw_text: str, text_embedding_384: Vector):
+    def __init__(self, raw_text: str, text_embedding_768: Vector):
         self.raw_text = raw_text
-        self.text_embedding_384 = text_embedding_384
+        self.text_embedding_768 = text_embedding_768
 
     @classmethod
     def create(
-        cls, raw_text: str, text_embedding_384: Vector
+        cls, raw_text: str, text_embedding_768: Vector
     ) -> HybridSearchDocument:
         hybrid_search_document = cls(
             raw_text=raw_text,
-            text_embedding_384=text_embedding_384,
+            text_embedding_768=text_embedding_768,
         )
         return hybrid_search_document
 
