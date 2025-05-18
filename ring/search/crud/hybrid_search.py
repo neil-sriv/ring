@@ -5,7 +5,7 @@ from llm_service import (
     EmbeddingRequest,
     EmbeddingsApi,
 )
-from sqlalchemy import func
+from sqlalchemy import func, or_
 from sqlalchemy.orm import Session
 
 from ring.fastapp.config import get_llm_config
@@ -69,6 +69,35 @@ def keyword_search_hybrid_search_document(
             func.ts_rank(
                 HybridSearchDocument.text_tsv_expr_literal, tsquery
             ).desc()
+        )
+        .limit(limit)
+        .all()
+    )
+
+
+def dual_search_hybrid_search_document(
+    db: Session, query: str, limit: int = 10
+) -> list[HybridSearchDocument]:
+    text_embedding = _generate_text_embedding(query)
+    tsquery = func.plainto_tsquery("english", query)
+    return (
+        db.query(HybridSearchDocument)
+        .filter(
+            or_(
+                HybridSearchDocument.text_embedding_768.l2_distance(
+                    text_embedding
+                )
+                < 0.5,
+                HybridSearchDocument.text_tsv_expr_literal.op("@@")(tsquery),
+            )
+        )
+        .order_by(
+            HybridSearchDocument.text_embedding_768.l2_distance(
+                text_embedding
+            ),
+            func.ts_rank(
+                HybridSearchDocument.text_tsv_expr_literal, tsquery
+            ).desc(),
         )
         .limit(limit)
         .all()

@@ -14,6 +14,7 @@ from ring.letters.api import letter, question, response
 from ring.llm.api import completion
 from ring.notifications.api import subscription
 from ring.parties.api import group, group_key_value, invite, user
+from ring.search.api import search
 from ring.tasks.api import schedule
 
 router = APIRouter()
@@ -43,6 +44,8 @@ router.include_router(
 )
 
 router.include_router(completion.router, prefix="/llm", tags=["llm"])
+
+router.include_router(search.router, prefix="/search", tags=["search"])
 
 
 @router.get("/")
