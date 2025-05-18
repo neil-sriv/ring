@@ -1,16 +1,37 @@
 from __future__ import annotations
 
+from llm_service import (
+    ApiClient,
+    EmbeddingRequest,
+    EmbeddingsApi,
+)
 from sqlalchemy import func
 from sqlalchemy.orm import Session
 
-from ring.fastapp.fast import embedding_model
+from ring.fastapp.config import get_llm_config
 from ring.search.models.hybrid_search import HybridSearchDocument
+
+
+def _generate_text_embedding(text: str) -> list[float | int]:
+    """
+    Generate a text embedding using LLM service.
+
+    :param text: Text to generate the embedding for
+    :return: Text embedding
+    """
+    api_client = ApiClient(configuration=get_llm_config().config)
+    api_instance = EmbeddingsApi(api_client=api_client)
+    embedding_request = EmbeddingRequest(text=text)
+    embedding_response = api_instance.embed_embeddings_embed_post(
+        embedding_request
+    )
+    return embedding_response.embedding
 
 
 def create_hybrid_search_document(
     db: Session, raw_text: str
 ) -> HybridSearchDocument:
-    text_embedding = embedding_model.encode(raw_text).tolist()
+    text_embedding = _generate_text_embedding(raw_text)
     db_hybrid_search_document = HybridSearchDocument.create(
         raw_text=raw_text,
         text_embedding_384=text_embedding,
@@ -22,7 +43,7 @@ def create_hybrid_search_document(
 def semantic_search_hybrid_search_document(
     db: Session, query: str, limit: int = 10
 ) -> list[HybridSearchDocument]:
-    text_embedding = embedding_model.encode(query).tolist()
+    text_embedding = _generate_text_embedding(query)
     return (
         db.query(HybridSearchDocument)
         .filter(
