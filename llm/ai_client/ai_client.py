@@ -29,33 +29,69 @@ class LLMClient(BaseModel):
 
 
 @lru_cache
-def get_llm(llm_type: LLMType) -> LLMClient:
+def get_model_config(
+    llm_type: LLMType,
+    env: Literal["development", "production"],
+    field: Literal["embeddings", "completions", "base_url"],
+) -> str:
+    return MODEL_MAPPING[llm_type][env][field]
+
+
+MODEL_MAPPING = {
+    LLMType.OPENAI: {
+        "development": {
+            "base_url": llm_config.ollama_base_url,
+            "completions": "llama3.2",
+            "embeddings": "nomic-embed-text",
+        },
+        "production": {
+            "base_url": llm_config.openai_base_url,
+            "completions": "llama3.2-70b",
+            # "embeddings": "text-embedding-3-small",
+        },
+    },
+    LLMType.GEMINI: {
+        "development": {
+            "base_url": llm_config.ollama_base_url,
+            "completions": "gemma3:1b",
+            "embeddings": "nomic-embed-text",
+        },
+        "production": {
+            "base_url": llm_config.gemini_base_url,
+            "completions": "models/gemini-2.0-flash",
+            "embeddings": "gemini-embedding-exp-03-07",
+        },
+    },
+}
+
+
+@lru_cache
+def get_llm(
+    llm_type: LLMType,
+    use_case: Literal["embeddings", "completions"],
+) -> LLMClient:
     if llm_type == LLMType.OPENAI:
         client = AsyncOpenAI(
             api_key=llm_config.openai_api_key,
-            base_url=llm_config.ollama_base_url
-            if llm_config.environment == "development"
-            else llm_config.openai_base_url,
+            base_url=get_model_config(
+                llm_type, llm_config.environment, "base_url"
+            ),
         )
         return LLMClient(
             client=client,
-            model="llama3.2"
-            if llm_config.environment == "development"
-            else "llama3.2-70b",
+            model=get_model_config(llm_type, llm_config.environment, use_case),
             environment=llm_config.environment,
         )
     elif llm_type == LLMType.GEMINI:
         client = AsyncOpenAI(
             api_key=llm_config.gemini_api_key,
-            base_url=llm_config.ollama_base_url
-            if llm_config.environment == "development"
-            else llm_config.gemini_base_url,
+            base_url=get_model_config(
+                llm_type, llm_config.environment, "base_url"
+            ),
         )
         return LLMClient(
             client=client,
-            model="gemma3:1b"
-            if llm_config.environment == "development"
-            else "models/gemini-2.0-flash",
+            model=get_model_config(llm_type, llm_config.environment, use_case),
             environment=llm_config.environment,
         )
     else:
