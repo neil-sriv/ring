@@ -24,7 +24,6 @@ async def embed(request: EmbeddingRequest):
         model=llm.model,
         input=request.text,
     )
-    # logger.info(f"Embedding: {embedding}")
     return EmbeddingResponse(
         embedding=embedding.data[0].embedding,
     )

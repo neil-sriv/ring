@@ -59,7 +59,7 @@ MODEL_MAPPING = {
         "production": {
             "base_url": llm_config.gemini_base_url,
             "completions": "models/gemini-2.0-flash",
-            "embeddings": "gemini-embedding-exp-03-07",
+            "embeddings": "models/text-embedding-004",
         },
     },
 }
