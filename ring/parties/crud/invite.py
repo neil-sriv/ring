@@ -11,7 +11,7 @@ from typing import TYPE_CHECKING, Sequence
 from sqlalchemy import select
 
 from ring.api_identifier import util as api_identifier_crud
-from ring.apscheduler.scheduler import job_factory
+from ring.async_scheduler.scheduler import job_factory
 from ring.email_util import CHARSET, EmailDraft, send_email
 from ring.parties.crud.one_time_token import generate_token, validate_token
 from ring.parties.crud.user import get_user_by_email

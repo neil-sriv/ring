@@ -12,7 +12,7 @@ from typing import Any, Callable
 
 from sqlalchemy.orm import Session
 
-from ring.apscheduler.scheduler import job_factory, scheduler
+from ring.async_scheduler.scheduler import job_factory, scheduler
 from ring.email_util import send_email
 from ring.letters.constants import LetterStatus
 from ring.letters.crud import letter as letter_crud

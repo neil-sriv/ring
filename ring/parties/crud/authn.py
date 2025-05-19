@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from sqlalchemy.orm import Session
 
-from ring.apscheduler.scheduler import job_factory
+from ring.async_scheduler.scheduler import job_factory
 from ring.email_util import CHARSET, EmailDraft, send_email
 from ring.parties.models.user_model import User
 from ring.security import get_password_hash

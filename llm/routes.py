@@ -4,6 +4,7 @@ from fastapi import APIRouter
 
 from llm.auth.api.auth import router as auth_router
 from llm.completions.api.completions import router as completions_router
+from llm.embeddings.api.embeddings import router as embeddings_router
 from llm.rag.api.rag import router as rag_router
 
 router = APIRouter()
@@ -13,3 +14,6 @@ router.include_router(
     completions_router, prefix="/completions", tags=["completions"]
 )
 router.include_router(rag_router, prefix="/rag", tags=["rag"])
+router.include_router(
+    embeddings_router, prefix="/embeddings", tags=["embeddings"]
+)

@@ -11,7 +11,9 @@ from llm.security.security import get_api_key
 
 llm_config = get_config()
 app = FastAPI(
-    root_path=llm_config.root_path, dependencies=[Depends(get_api_key)]
+    root_path=llm_config.root_path,
+    dependencies=[Depends(get_api_key)],
+    version="0.2.0",
 )
 
 app.include_router(router)

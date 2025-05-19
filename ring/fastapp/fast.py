@@ -14,7 +14,7 @@ from fastapi.responses import JSONResponse
 from starlette.middleware.cors import CORSMiddleware
 
 from ring.api_identifier.util import IDNotFoundException
-from ring.apscheduler.scheduler import scheduler
+from ring.async_scheduler.scheduler import scheduler
 from ring.fastapp.config import get_config
 from ring.fastapp.init_app_modules import init_app_modules
 from ring.fastapp.routes import router

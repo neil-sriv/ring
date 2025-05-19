@@ -69,9 +69,9 @@ dependencies = [
     "pywebpush>=2.0.3",
     "loguru>=0.7.3",
     "sqlalchemy-json>=0.7.0",
-    "llm-service",
     "sqlalchemy-cockroachdb>=2.0.2",
     "apscheduler>=3.11.0",
+    "pgvector>=0.4.1",
 ]
 
 [dependency-groups]
@@ -81,6 +81,9 @@ dev = [
     "psycopg-binary",
     "pytest-pretty>=1.2.0",
     "pytest-xdist>=3.6.1",
+]
+ai = [
+    "llm-service",
 ]
 
 [project.scripts]

@@ -22,7 +22,7 @@ router = APIRouter()
 @router.post("/generate", response_model=CompletionResponse)
 async def generate_completion(request: CompletionRequest):
     """Stub endpoint for text completion generation"""
-    llm = get_llm(LLMType.GEMINI)
+    llm = get_llm(LLMType.GEMINI, "completions")
     if request.output_schema_definition is not None:
         output_schema = SchemaConverter.build(
             json.loads(request.output_schema_definition)
@@ -55,7 +55,7 @@ async def generate_completion(request: CompletionRequest):
 async def test_completion():
     """Test endpoint that returns a simple Hello World completion"""
     prompt = "Say exactly 'Hello World' and nothing else"
-    llm = get_llm(LLMType.GEMINI)
+    llm = get_llm(LLMType.GEMINI, "completions")
     completion = await llm.client.chat.completions.create(
         model=llm.model,
         messages=[

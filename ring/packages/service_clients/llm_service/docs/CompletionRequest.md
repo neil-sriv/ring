@@ -6,7 +6,7 @@
 Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
 **prompt** | **str** |  | 
-**max_tokens** | **int** |  | [optional] [default to 100]
+**max_tokens** | **int** |  | [optional] [default to 1000]
 **output_schema_definition** | **str** |  | 
 
 ## Example

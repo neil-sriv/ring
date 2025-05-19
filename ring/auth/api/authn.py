@@ -13,7 +13,7 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordRequestForm
 
 from ring.api_identifier.util import get_model
-from ring.apscheduler.scheduler import scheduler
+from ring.async_scheduler.scheduler import scheduler
 from ring.auth.schemas.token import Token
 from ring.fastapp.dependencies import (
     RequestDependenciesBase,
