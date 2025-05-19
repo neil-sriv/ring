@@ -7,22 +7,29 @@ from ring.fastapp.dependencies import get_db
 from ring.search.crud.hybrid_search import (
     dual_search_hybrid_search_document,
     keyword_search_hybrid_search_document,
+    search,
     semantic_search_hybrid_search_document,
 )
-from ring.search.schemas.search import SearchResponse, SearchResult
+from ring.search.schemas.search import (
+    RawSearchResponse,
+    RawSearchResult,
+    SearchResponse,
+    SearchResult,
+    SearchType,
+)
 
 router = APIRouter(prefix="/search", tags=["search"])
 
 
-@router.get("/letters", response_model=SearchResponse)
-async def search_letters(
+@router.get("/raw-search", response_model=RawSearchResponse)
+async def raw_search(
     query: str,
-    search_type: str = "dual",  # Options: "semantic", "keyword", "dual"
+    search_type: SearchType = SearchType.DUAL,
     limit: int = 10,
     db: Session = Depends(get_db),
-) -> SearchResponse:
+) -> RawSearchResponse:
     """
-    Search through letter content using various search methods.
+    Search the search table for a given query.
 
     Args:
         query: The search query string
@@ -39,9 +46,9 @@ async def search_letters(
         )
 
     search_functions = {
-        "semantic": semantic_search_hybrid_search_document,
-        "keyword": keyword_search_hybrid_search_document,
-        "dual": dual_search_hybrid_search_document,
+        SearchType.SEMANTIC: semantic_search_hybrid_search_document,
+        SearchType.KEYWORD: keyword_search_hybrid_search_document,
+        SearchType.DUAL: dual_search_hybrid_search_document,
     }
 
     if search_type not in search_functions:
@@ -53,7 +60,24 @@ async def search_letters(
     search_func = search_functions[search_type]
     results = search_func(db=db, query=query, limit=limit)
 
+    return RawSearchResponse(
+        results=[RawSearchResult.model_validate(result) for result in results],
+        total=len(results),
+    )
+
+
+@router.get("/search", response_model=SearchResponse)
+async def perform_search(
+    query: str,
+    search_type: SearchType = SearchType.DUAL,
+    limit: int = 10,
+    db: Session = Depends(get_db),
+) -> SearchResponse:
+    results = search(db=db, query=query, limit=limit)
     return SearchResponse(
-        results=[SearchResult.model_validate(result) for result in results],
+        results=[
+            SearchResult(model_api_identifier=result.api_identifier)
+            for result in results
+        ],
         total=len(results),
     )
