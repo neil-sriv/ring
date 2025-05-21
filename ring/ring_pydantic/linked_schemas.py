@@ -146,7 +146,16 @@ class QuestionLinked(Question):
     """
 
     letter: "LetterUnlinked"
+    group: "GroupUnlinked"
     responses: list["ResponseUnlinked"]
+
+    @model_validator(mode="before")
+    @classmethod
+    def set_group(cls, obj: Any) -> "QuestionLinked":
+        if isinstance(obj, BaseModel):
+            return obj
+        obj.group = obj.letter.group
+        return obj
 
 
 class PublicQuestion(Question):

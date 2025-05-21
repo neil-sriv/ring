@@ -368,6 +368,7 @@ export type QuestionLinked = {
     api_identifier: string;
     created_at: string;
     letter: LetterUnlinked;
+    group: GroupUnlinked;
     responses: Array<ResponseUnlinked>;
 };
 

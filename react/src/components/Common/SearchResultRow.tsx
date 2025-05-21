@@ -1,6 +1,6 @@
 import { Badge, Flex, Td, Text, Tr } from "@chakra-ui/react";
 import { Link } from "@tanstack/react-router";
-import { type GroupLinked, type PublicLetter, type QuestionLinked, type ResponseLinked, type SearchResult, type UserLinked } from "../../client";
+import { LetterUnlinked, type GroupLinked, type PublicLetter, type QuestionLinked, type ResponseLinked, type SearchResult, type UserLinked } from "../../client";
 
 interface SearchResultRowProps {
     result: SearchResult;
@@ -88,7 +88,7 @@ function GroupSearchResultRow({ result }: { result: SearchResult }) {
 
 function QuestionSearchResultRow({ result }: { result: SearchResult }) {
     const model = result.model as QuestionLinked;
-    const letter = model.letter as PublicLetter;
+    const letter = model.letter as LetterUnlinked;
 
     return (
         <Tr _hover={{ bg: "gray.200" }} cursor="pointer">
@@ -102,7 +102,7 @@ function QuestionSearchResultRow({ result }: { result: SearchResult }) {
                         <Flex gap={2} align="center">
                             <Badge colorScheme="orange">Question</Badge>
                             <Text fontWeight="medium">
-                                {letter.group.name} - Letter {letter.number}
+                                {model.group.name} - Letter {letter.number}
                             </Text>
                         </Flex>
                         <Text fontSize="sm" color="gray.600" noOfLines={2}>

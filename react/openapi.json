@@ -3310,6 +3310,9 @@
           "letter": {
             "$ref": "#/components/schemas/LetterUnlinked"
           },
+          "group": {
+            "$ref": "#/components/schemas/GroupUnlinked"
+          },
           "responses": {
             "items": {
               "$ref": "#/components/schemas/ResponseUnlinked"
@@ -3324,6 +3327,7 @@
           "api_identifier",
           "created_at",
           "letter",
+          "group",
           "responses"
         ],
         "title": "QuestionLinked",
