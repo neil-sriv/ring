@@ -251,6 +251,27 @@ export type LetterCreate = {
 };
 
 /**
+ * Letter model with linked relationships.
+ *
+ * Extends the base Letter model to include participants, group, and questions.
+ *
+ * Attributes:
+ * participants (list[UserUnlinked]): Users participating in the letter
+ * group (GroupUnlinked): Group the letter belongs to
+ * questions (list[QuestionLinked]): Questions in the letter
+ */
+export type LetterLinked = {
+    api_identifier: string;
+    number: number;
+    status: LetterStatus;
+    send_at: string;
+    created_at: string;
+    participants: Array<UserUnlinked>;
+    group: GroupUnlinked;
+    questions: Array<QuestionLinked>;
+};
+
+/**
  * Enumeration of possible letter statuses.
  * Represents the different states a letter can be in within the system:
  * - UPCOMING: Letter is scheduled but not yet active
@@ -380,6 +401,15 @@ export type QuestionUnlinked = {
     question_text: string;
     api_identifier: string;
     created_at: string;
+};
+
+export type RawSearchResponse = {
+    results: Array<RawSearchResult>;
+    total: number;
+};
+
+export type RawSearchResult = {
+    raw_text: string;
 };
 
 /**
@@ -528,6 +558,23 @@ export type ScheduleUnlinked = {
     tasks: Array<TaskUnlinked>;
 };
 
+export type SearchResponse = {
+    results: Array<SearchResult>;
+    total: number;
+};
+
+/**
+ * Search result model that can hold different types of models based on type field.
+ *
+ * Attributes:
+ * model (Any): The model instance
+ */
+export type SearchResult = {
+    model: UserLinked | GroupLinked | QuestionLinked | LetterLinked | ResponseLinked | UnknownSearchResult;
+};
+
+export type SearchType = 'semantic' | 'keyword' | 'dual';
+
 /**
  * Schema for updating a single group key-value pair.
  *
@@ -602,6 +649,17 @@ export type TaskUnlinked = {
 export type Token = {
     access_token: string;
     token_type: string;
+};
+
+/**
+ * Search result model for unknown types.
+ *
+ * Attributes:
+ * type (str): Type of the model
+ * model (Any): The model instance
+ */
+export type UnknownSearchResult = {
+    model: unknown;
 };
 
 /**
@@ -1758,31 +1816,6 @@ export type DeleteQuestionQuestionsQuestionQuestionApiIdDeleteResponses = {
 
 export type DeleteQuestionQuestionsQuestionQuestionApiIdDeleteResponse = DeleteQuestionQuestionsQuestionQuestionApiIdDeleteResponses[keyof DeleteQuestionQuestionsQuestionQuestionApiIdDeleteResponses];
 
-export type GenerateQuestionQuestionsQuestionGeneratePostData = {
-    body: GenerateQuestionRequest;
-    path?: never;
-    query?: never;
-    url: '/questions/question:generate';
-};
-
-export type GenerateQuestionQuestionsQuestionGeneratePostErrors = {
-    /**
-     * Validation Error
-     */
-    422: HttpValidationError;
-};
-
-export type GenerateQuestionQuestionsQuestionGeneratePostError = GenerateQuestionQuestionsQuestionGeneratePostErrors[keyof GenerateQuestionQuestionsQuestionGeneratePostErrors];
-
-export type GenerateQuestionQuestionsQuestionGeneratePostResponses = {
-    /**
-     * Successful Response
-     */
-    200: GenerateQuestionResponse;
-};
-
-export type GenerateQuestionQuestionsQuestionGeneratePostResponse = GenerateQuestionQuestionsQuestionGeneratePostResponses[keyof GenerateQuestionQuestionsQuestionGeneratePostResponses];
-
 export type EditResponseResponsesResponseResponseApiIdEditResponsePostData = {
     body: ResponseCreateBase;
     path: {
@@ -1938,6 +1971,64 @@ export type GenerateCompletionLlmCompletionPostResponses = {
 };
 
 export type GenerateCompletionLlmCompletionPostResponse = GenerateCompletionLlmCompletionPostResponses[keyof GenerateCompletionLlmCompletionPostResponses];
+
+export type RawSearchSearchSearchRawSearchGetData = {
+    body?: never;
+    path?: never;
+    query: {
+        query: string;
+        search_type?: SearchType;
+        limit?: number;
+    };
+    url: '/search/search/raw-search';
+};
+
+export type RawSearchSearchSearchRawSearchGetErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type RawSearchSearchSearchRawSearchGetError = RawSearchSearchSearchRawSearchGetErrors[keyof RawSearchSearchSearchRawSearchGetErrors];
+
+export type RawSearchSearchSearchRawSearchGetResponses = {
+    /**
+     * Successful Response
+     */
+    200: RawSearchResponse;
+};
+
+export type RawSearchSearchSearchRawSearchGetResponse = RawSearchSearchSearchRawSearchGetResponses[keyof RawSearchSearchSearchRawSearchGetResponses];
+
+export type PerformSearchSearchSearchSearchGetData = {
+    body?: never;
+    path?: never;
+    query: {
+        query: string;
+        search_type?: SearchType;
+        limit?: number;
+    };
+    url: '/search/search/search';
+};
+
+export type PerformSearchSearchSearchSearchGetErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type PerformSearchSearchSearchSearchGetError = PerformSearchSearchSearchSearchGetErrors[keyof PerformSearchSearchSearchSearchGetErrors];
+
+export type PerformSearchSearchSearchSearchGetResponses = {
+    /**
+     * Successful Response
+     */
+    200: SearchResponse;
+};
+
+export type PerformSearchSearchSearchSearchGetResponse = PerformSearchSearchSearchSearchGetResponses[keyof PerformSearchSearchSearchSearchGetResponses];
 
 export type RootGetData = {
     body?: never;
