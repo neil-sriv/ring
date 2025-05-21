@@ -182,6 +182,8 @@ class ResponseLinked(Response, WithImageMixin):
     @model_validator(mode="before")
     @classmethod
     def set_letter_and_group(cls, obj: Any) -> "ResponseLinked":
+        if isinstance(obj, BaseModel):
+            return obj
         obj.letter = obj.question.letter
         obj.group = obj.question.letter.group
         return obj
@@ -249,8 +251,8 @@ class SearchResult(BaseModel):
         UserLinked
         | GroupLinked
         | QuestionLinked
-        | LetterLinked
         | ResponseLinked
+        | PublicLetter
         # | UnknownSearchResult
     )
     type: str
@@ -266,7 +268,7 @@ class SearchResult(BaseModel):
             return UnknownSearchResult(model=model)
 
         # Convert SQLAlchemy model to Pydantic model using PYDANTIC_MODEL
-        pydantic_model = model.PYDANTIC_MODEL.from_orm(model)
+        pydantic_model = model.PYDANTIC_MODEL.model_validate(model)
         return cls(model=pydantic_model, type=model.PYDANTIC_MODEL.__name__)
 
 
