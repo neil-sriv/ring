@@ -9,11 +9,20 @@ from __future__ import annotations
 
 from typing import Any, Literal, Optional, Union
 
-from pydantic import BaseModel
+from pydantic import (
+    BaseModel,
+    Field,
+    ValidationInfo,
+    computed_field,
+    field_validator,
+    model_validator,
+    validator,
+)
 
 from ring.letters.schemas.letter import Letter, LetterUnlinked
 from ring.letters.schemas.question import Question, QuestionUnlinked
 from ring.letters.schemas.response import Response, ResponseUnlinked
+from ring.lib.logger import logger
 from ring.notifications.schemas.subscription import Subscription
 from ring.parties.schemas.group import Group, GroupUnlinked
 from ring.parties.schemas.invite import Invite
@@ -167,6 +176,15 @@ class ResponseLinked(Response, WithImageMixin):
 
     question: "QuestionUnlinked"
     participant: "UserUnlinked"
+    letter: "LetterUnlinked"
+    group: "GroupUnlinked"
+
+    @model_validator(mode="before")
+    @classmethod
+    def set_letter_and_group(cls, obj: Any) -> "ResponseLinked":
+        obj.letter = obj.question.letter
+        obj.group = obj.question.letter.group
+        return obj
 
 
 class ResponseWithParticipant(Response, WithImageMixin):

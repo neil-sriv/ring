@@ -447,6 +447,8 @@ export type ResponseLinked = {
     created_at: string;
     question: QuestionUnlinked;
     participant: UserUnlinked;
+    letter: LetterUnlinked;
+    group: GroupUnlinked;
     /**
      * Get the list of images associated with this model.
      *

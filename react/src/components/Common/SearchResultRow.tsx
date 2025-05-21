@@ -1,4 +1,5 @@
 import { Badge, Flex, Td, Text, Tr } from "@chakra-ui/react";
+import { Link } from "@tanstack/react-router";
 import { type ResponseLinked, type SearchResult } from "../../client";
 
 interface SearchResultRowProps {
@@ -11,23 +12,29 @@ function ResponseSearchResultRow({ result }: { result: SearchResult }) {
     return (
         <Tr _hover={{ bg: "gray.200" }} cursor="pointer">
             <Td>
-                <Flex direction="column" gap={2}>
-                    <Flex gap={2} align="center">
-                        <Badge colorScheme="blue">Response</Badge>
-                        <Text fontWeight="medium">
-                            Group A - Letter 1
+                <Link
+                    to="/loops/$loopId"
+                    params={{ loopId: model.letter.api_identifier }}
+                    style={{ textDecoration: "none" }}
+                >
+                    <Flex direction="column" gap={2}>
+                        <Flex gap={2} align="center">
+                            <Badge colorScheme="blue">Response</Badge>
+                            <Text fontWeight="medium">
+                                {model.group.name} - Letter {model.letter.number}
+                            </Text>
+                        </Flex>
+                        <Flex gap={2} align="center">
+                            <Text fontWeight="medium">Q: {model.question.question_text}</Text>
+                        </Flex>
+                        <Flex gap={2} align="center">
+                            <Text fontWeight="medium">by {model.participant.name}</Text>
+                        </Flex>
+                        <Text fontSize="sm" color="gray.600" noOfLines={2}>
+                            {model.response_text}
                         </Text>
                     </Flex>
-                    <Flex gap={2} align="center">
-                        <Text fontWeight="medium">Q: {model.question.question_text}</Text>
-                    </Flex>
-                    <Flex gap={2} align="center">
-                        <Text fontWeight="medium">by {model.participant.name}</Text>
-                    </Flex>
-                    <Text fontSize="sm" color="gray.600" noOfLines={2}>
-                        {model.response_text}
-                    </Text>
-                </Flex>
+                </Link>
             </Td>
         </Tr>
     );

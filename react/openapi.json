@@ -3495,6 +3495,12 @@
           "participant": {
             "$ref": "#/components/schemas/UserUnlinked"
           },
+          "letter": {
+            "$ref": "#/components/schemas/LetterUnlinked"
+          },
+          "group": {
+            "$ref": "#/components/schemas/GroupUnlinked"
+          },
           "images": {
             "items": {
               "$ref": "#/components/schemas/Image"
@@ -3512,6 +3518,8 @@
           "created_at",
           "question",
           "participant",
+          "letter",
+          "group",
           "images"
         ],
         "title": "ResponseLinked",
