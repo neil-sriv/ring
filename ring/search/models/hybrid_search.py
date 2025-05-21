@@ -74,8 +74,8 @@ class HybridSearchDocument(Base, CreatedAtMixin):
         Vector(dim=768), nullable=False
     )
 
-    associations: Mapped[list[HybridSearchDocumentAssociation]] = (
-        relationship()
+    associations: Mapped[list[HybridSearchDocumentAssociation]] = relationship(
+        "HybridSearchDocumentAssociation", back_populates="document"
     )
 
     def __init__(self, raw_text: str, text_embedding_768: Vector):

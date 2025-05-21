@@ -223,7 +223,7 @@ class SearchResult(BaseModel):
     """Search result model that can hold different types of models based on type field.
 
     Attributes:
-        model (Union[Letter, Group, User, Response, Question]): The model instance
+        model (Any): The model instance
     """
 
     model: Any

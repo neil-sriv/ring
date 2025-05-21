@@ -37,7 +37,7 @@ async def raw_search(
         db: Database session
 
     Returns:
-        SearchResponse containing matching results and total count
+        RawSearchResponse containing matching results and total count
     """
     if not query.strip():
         raise HTTPException(
