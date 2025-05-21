@@ -29,6 +29,7 @@ from ring.letters.constants import LetterStatus
 from ring.letters.models.question_model import Question
 from ring.ring_pydantic.linked_schemas import PublicLetter
 from ring.ring_pydantic.pydantic_model import PydanticModel
+from ring.search.crud.hybrid_search import register_searchable_model
 from ring.sqlalchemy_base import Base
 
 if TYPE_CHECKING:
@@ -43,6 +44,7 @@ letter_to_user_assocation = Table(
 )
 
 
+@register_searchable_model("letter")
 class Letter(Base, APIIdentified, PydanticModel, CreatedAtMixin):
     """SQLAlchemy model representing a letter in the system.
 

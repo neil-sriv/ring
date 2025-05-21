@@ -7,7 +7,7 @@ entities need to be included in the response.
 
 from __future__ import annotations
 
-from typing import Any, Optional
+from typing import Any, Literal, Optional, Union
 
 from pydantic import BaseModel
 
@@ -206,3 +206,43 @@ class SubscriptionLinked(Subscription):
     """
 
     user: "UserUnlinked"
+
+
+class UnknownSearchResult(BaseModel):
+    """Search result model for unknown types.
+
+    Attributes:
+        type (str): Type of the model
+        model (Any): The model instance
+    """
+
+    model: Any
+
+
+class SearchResult(BaseModel):
+    """Search result model that can hold different types of models based on type field.
+
+    Attributes:
+        model (Any): The model instance
+    """
+
+    model: Any
+
+    @classmethod
+    def from_model(cls, model: Any) -> "SearchResult":
+        """Create a SearchResult from a model instance.
+
+        Args:
+            model: Any model instance that has a PYDANTIC_MODEL attribute
+        """
+        if not hasattr(model, "PYDANTIC_MODEL"):
+            return UnknownSearchResult(model=model)
+
+        # Convert SQLAlchemy model to Pydantic model using PYDANTIC_MODEL
+        pydantic_model = model.PYDANTIC_MODEL.from_orm(model)
+        return cls(model=pydantic_model)
+
+
+class SearchResponse(BaseModel):
+    results: list[SearchResult]
+    total: int
