@@ -226,7 +226,14 @@ class SearchResult(BaseModel):
         model (Any): The model instance
     """
 
-    model: Any
+    model: (
+        UserLinked
+        | GroupLinked
+        | QuestionLinked
+        | LetterLinked
+        | ResponseLinked
+        | UnknownSearchResult
+    )
 
     @classmethod
     def from_model(cls, model: Any) -> "SearchResult":
