@@ -10,7 +10,6 @@ import {
     Table,
     TableContainer,
     Tbody,
-    Td,
     Th,
     Thead,
     Tr
@@ -22,6 +21,7 @@ import { FaSearch } from "react-icons/fa";
 import { useQuery } from "@tanstack/react-query";
 import { type SearchResult } from "../../client";
 import { performSearchSearchSearchSearchGetOptions } from "../../client/@tanstack/react-query.gen";
+import { SearchResultRow } from "../../components/Common/SearchResultRow";
 
 export const Route = createFileRoute("/_layout/search")({
     component: Search,
@@ -44,13 +44,6 @@ function SearchContent() {
         if (!searchQuery.trim()) return;
         setIsSearching(true);
         await refetch();
-    };
-
-    const getApiIdentifier = (result: SearchResult) => {
-        if ('api_identifier' in result.model) {
-            return result.model.api_identifier;
-        }
-        return 'Unknown';
     };
 
     return (
@@ -89,15 +82,14 @@ function SearchContent() {
                     <Table fontSize="md" size={{ base: "sm", md: "md" }}>
                         <Thead>
                             <Tr>
-                                <Th>API Identifier</Th>
+                                <Th>Result</Th>
                             </Tr>
                         </Thead>
                         <Tbody>
-                            {searchResults.results.map((result: SearchResult) => (
-                                <Tr key={getApiIdentifier(result)}>
-                                    <Td>{getApiIdentifier(result)}</Td>
-                                </Tr>
-                            ))}
+                            {searchResults.results
+                                .map((result: SearchResult) => (
+                                    <SearchResultRow key={result.model.api_identifier} result={result} />
+                                ))}
                         </Tbody>
                     </Table>
                 </TableContainer>

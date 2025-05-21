@@ -568,9 +568,11 @@ export type SearchResponse = {
  *
  * Attributes:
  * model (Any): The model instance
+ * type (str): The type of the model
  */
 export type SearchResult = {
-    model: UserLinked | GroupLinked | QuestionLinked | LetterLinked | ResponseLinked | UnknownSearchResult;
+    model: UserLinked | GroupLinked | QuestionLinked | LetterLinked | ResponseLinked;
+    type: string;
 };
 
 export type SearchType = 'semantic' | 'keyword' | 'dual';
@@ -649,17 +651,6 @@ export type TaskUnlinked = {
 export type Token = {
     access_token: string;
     token_type: string;
-};
-
-/**
- * Search result model for unknown types.
- *
- * Attributes:
- * type (str): Type of the model
- * model (Any): The model instance
- */
-export type UnknownSearchResult = {
-    model: unknown;
 };
 
 /**

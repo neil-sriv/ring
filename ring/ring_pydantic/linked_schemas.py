@@ -224,6 +224,7 @@ class SearchResult(BaseModel):
 
     Attributes:
         model (Any): The model instance
+        type (str): The type of the model
     """
 
     model: (
@@ -232,8 +233,9 @@ class SearchResult(BaseModel):
         | QuestionLinked
         | LetterLinked
         | ResponseLinked
-        | UnknownSearchResult
+        # | UnknownSearchResult
     )
+    type: str
 
     @classmethod
     def from_model(cls, model: Any) -> "SearchResult":
@@ -247,7 +249,7 @@ class SearchResult(BaseModel):
 
         # Convert SQLAlchemy model to Pydantic model using PYDANTIC_MODEL
         pydantic_model = model.PYDANTIC_MODEL.from_orm(model)
-        return cls(model=pydantic_model)
+        return cls(model=pydantic_model, type=model.PYDANTIC_MODEL.__name__)
 
 
 class SearchResponse(BaseModel):

@@ -3728,20 +3728,22 @@
               },
               {
                 "$ref": "#/components/schemas/ResponseLinked"
-              },
-              {
-                "$ref": "#/components/schemas/UnknownSearchResult"
               }
             ],
             "title": "Model"
+          },
+          "type": {
+            "type": "string",
+            "title": "Type"
           }
         },
         "type": "object",
         "required": [
-          "model"
+          "model",
+          "type"
         ],
         "title": "SearchResult",
-        "description": "Search result model that can hold different types of models based on type field.\n\nAttributes:\n    model (Any): The model instance"
+        "description": "Search result model that can hold different types of models based on type field.\n\nAttributes:\n    model (Any): The model instance\n    type (str): The type of the model"
       },
       "SearchType": {
         "type": "string",
@@ -3875,19 +3877,6 @@
         ],
         "title": "Token",
         "description": "Authentication token schema.\n\nRepresents the structure of an authentication token response.\n\nAttributes:\n    access_token (str): The JWT access token string\n    token_type (str): The type of token (e.g., \"bearer\")"
-      },
-      "UnknownSearchResult": {
-        "properties": {
-          "model": {
-            "title": "Model"
-          }
-        },
-        "type": "object",
-        "required": [
-          "model"
-        ],
-        "title": "UnknownSearchResult",
-        "description": "Search result model for unknown types.\n\nAttributes:\n    type (str): Type of the model\n    model (Any): The model instance"
       },
       "UserCreate": {
         "properties": {
