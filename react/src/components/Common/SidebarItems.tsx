@@ -1,7 +1,7 @@
 import { Box, Flex, Icon, Text, useColorModeValue } from "@chakra-ui/react";
 // import { useQueryClient } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
-import { FiBriefcase, FiSettings, FiUsers } from "react-icons/fi";
+import { FiBriefcase, FiSearch, FiSettings, FiUsers } from "react-icons/fi";
 // import { PiCircleDashedFill } from "react-icons/pi";
 
 // import type { UserLinked } from "../../client";
@@ -9,6 +9,7 @@ import { FiBriefcase, FiSettings, FiUsers } from "react-icons/fi";
 const items = [
   // { icon: FiHome, title: "Dashboard", path: "/" },
   { icon: FiBriefcase, title: "Groups", path: "/groups" },
+  { icon: FiSearch, title: "Search", path: "/search" },
   // { icon: PiCircleDashedFill, title: "Loops", path: "/loops" },
   { icon: FiSettings, title: "User Settings", path: "/settings" },
 ];
