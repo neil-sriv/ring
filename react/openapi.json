@@ -3076,61 +3076,6 @@
         "title": "LetterCreate",
         "description": "Schema for creating a new letter.\n\nAttributes:\n    group_api_identifier (str): API identifier of the group to create the letter for\n    send_at (AwareDatetime): Scheduled time to send the letter"
       },
-      "LetterLinked": {
-        "properties": {
-          "api_identifier": {
-            "type": "string",
-            "title": "Api Identifier"
-          },
-          "number": {
-            "type": "integer",
-            "title": "Number"
-          },
-          "status": {
-            "$ref": "#/components/schemas/LetterStatus"
-          },
-          "send_at": {
-            "type": "string",
-            "format": "date-time",
-            "title": "Send At"
-          },
-          "created_at": {
-            "type": "string",
-            "format": "date-time",
-            "title": "Created At"
-          },
-          "participants": {
-            "items": {
-              "$ref": "#/components/schemas/UserUnlinked"
-            },
-            "type": "array",
-            "title": "Participants"
-          },
-          "group": {
-            "$ref": "#/components/schemas/GroupUnlinked"
-          },
-          "questions": {
-            "items": {
-              "$ref": "#/components/schemas/QuestionLinked"
-            },
-            "type": "array",
-            "title": "Questions"
-          }
-        },
-        "type": "object",
-        "required": [
-          "api_identifier",
-          "number",
-          "status",
-          "send_at",
-          "created_at",
-          "participants",
-          "group",
-          "questions"
-        ],
-        "title": "LetterLinked",
-        "description": "Letter model with linked relationships.\n\nExtends the base Letter model to include participants, group, and questions.\n\nAttributes:\n    participants (list[UserUnlinked]): Users participating in the letter\n    group (GroupUnlinked): Group the letter belongs to\n    questions (list[QuestionLinked]): Questions in the letter"
-      },
       "LetterStatus": {
         "type": "string",
         "enum": [
@@ -3732,10 +3677,10 @@
                 "$ref": "#/components/schemas/QuestionLinked"
               },
               {
-                "$ref": "#/components/schemas/LetterLinked"
+                "$ref": "#/components/schemas/ResponseLinked"
               },
               {
-                "$ref": "#/components/schemas/ResponseLinked"
+                "$ref": "#/components/schemas/PublicLetter"
               }
             ],
             "title": "Model"

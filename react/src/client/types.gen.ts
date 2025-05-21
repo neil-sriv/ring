@@ -251,27 +251,6 @@ export type LetterCreate = {
 };
 
 /**
- * Letter model with linked relationships.
- *
- * Extends the base Letter model to include participants, group, and questions.
- *
- * Attributes:
- * participants (list[UserUnlinked]): Users participating in the letter
- * group (GroupUnlinked): Group the letter belongs to
- * questions (list[QuestionLinked]): Questions in the letter
- */
-export type LetterLinked = {
-    api_identifier: string;
-    number: number;
-    status: LetterStatus;
-    send_at: string;
-    created_at: string;
-    participants: Array<UserUnlinked>;
-    group: GroupUnlinked;
-    questions: Array<QuestionLinked>;
-};
-
-/**
  * Enumeration of possible letter statuses.
  * Represents the different states a letter can be in within the system:
  * - UPCOMING: Letter is scheduled but not yet active
@@ -573,7 +552,7 @@ export type SearchResponse = {
  * type (str): The type of the model
  */
 export type SearchResult = {
-    model: UserLinked | GroupLinked | QuestionLinked | LetterLinked | ResponseLinked;
+    model: UserLinked | GroupLinked | QuestionLinked | ResponseLinked | PublicLetter;
     type: string;
 };
 
