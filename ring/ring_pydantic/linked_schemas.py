@@ -9,11 +9,20 @@ from __future__ import annotations
 
 from typing import Any, Literal, Optional, Union
 
-from pydantic import BaseModel
+from pydantic import (
+    BaseModel,
+    Field,
+    ValidationInfo,
+    computed_field,
+    field_validator,
+    model_validator,
+    validator,
+)
 
 from ring.letters.schemas.letter import Letter, LetterUnlinked
 from ring.letters.schemas.question import Question, QuestionUnlinked
 from ring.letters.schemas.response import Response, ResponseUnlinked
+from ring.lib.logger import logger
 from ring.notifications.schemas.subscription import Subscription
 from ring.parties.schemas.group import Group, GroupUnlinked
 from ring.parties.schemas.invite import Invite
@@ -137,7 +146,16 @@ class QuestionLinked(Question):
     """
 
     letter: "LetterUnlinked"
+    group: "GroupUnlinked"
     responses: list["ResponseUnlinked"]
+
+    @model_validator(mode="before")
+    @classmethod
+    def set_group(cls, obj: Any) -> "QuestionLinked":
+        if isinstance(obj, BaseModel):
+            return obj
+        obj.group = obj.letter.group
+        return obj
 
 
 class PublicQuestion(Question):
@@ -167,6 +185,17 @@ class ResponseLinked(Response, WithImageMixin):
 
     question: "QuestionUnlinked"
     participant: "UserUnlinked"
+    letter: "LetterUnlinked"
+    group: "GroupUnlinked"
+
+    @model_validator(mode="before")
+    @classmethod
+    def set_letter_and_group(cls, obj: Any) -> "ResponseLinked":
+        if isinstance(obj, BaseModel):
+            return obj
+        obj.letter = obj.question.letter
+        obj.group = obj.question.letter.group
+        return obj
 
 
 class ResponseWithParticipant(Response, WithImageMixin):
@@ -224,9 +253,18 @@ class SearchResult(BaseModel):
 
     Attributes:
         model (Any): The model instance
+        type (str): The type of the model
     """
 
-    model: Any
+    model: (
+        UserLinked
+        | GroupLinked
+        | QuestionLinked
+        | ResponseLinked
+        | PublicLetter
+        # | UnknownSearchResult
+    )
+    type: str
 
     @classmethod
     def from_model(cls, model: Any) -> "SearchResult":
@@ -239,8 +277,8 @@ class SearchResult(BaseModel):
             return UnknownSearchResult(model=model)
 
         # Convert SQLAlchemy model to Pydantic model using PYDANTIC_MODEL
-        pydantic_model = model.PYDANTIC_MODEL.from_orm(model)
-        return cls(model=pydantic_model)
+        pydantic_model = model.PYDANTIC_MODEL.model_validate(model)
+        return cls(model=pydantic_model, type=model.PYDANTIC_MODEL.__name__)
 
 
 class SearchResponse(BaseModel):

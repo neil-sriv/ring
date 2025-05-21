@@ -368,6 +368,7 @@ export type QuestionLinked = {
     api_identifier: string;
     created_at: string;
     letter: LetterUnlinked;
+    group: GroupUnlinked;
     responses: Array<ResponseUnlinked>;
 };
 
@@ -380,6 +381,15 @@ export type QuestionUnlinked = {
     question_text: string;
     api_identifier: string;
     created_at: string;
+};
+
+export type RawSearchResponse = {
+    results: Array<RawSearchResult>;
+    total: number;
+};
+
+export type RawSearchResult = {
+    raw_text: string;
 };
 
 /**
@@ -417,6 +427,8 @@ export type ResponseLinked = {
     created_at: string;
     question: QuestionUnlinked;
     participant: UserUnlinked;
+    letter: LetterUnlinked;
+    group: GroupUnlinked;
     /**
      * Get the list of images associated with this model.
      *
@@ -527,6 +539,25 @@ export type ScheduleSendParam = {
 export type ScheduleUnlinked = {
     tasks: Array<TaskUnlinked>;
 };
+
+export type SearchResponse = {
+    results: Array<SearchResult>;
+    total: number;
+};
+
+/**
+ * Search result model that can hold different types of models based on type field.
+ *
+ * Attributes:
+ * model (Any): The model instance
+ * type (str): The type of the model
+ */
+export type SearchResult = {
+    model: UserLinked | GroupLinked | QuestionLinked | ResponseLinked | PublicLetter;
+    type: string;
+};
+
+export type SearchType = 'semantic' | 'keyword' | 'dual';
 
 /**
  * Schema for updating a single group key-value pair.
@@ -1758,31 +1789,6 @@ export type DeleteQuestionQuestionsQuestionQuestionApiIdDeleteResponses = {
 
 export type DeleteQuestionQuestionsQuestionQuestionApiIdDeleteResponse = DeleteQuestionQuestionsQuestionQuestionApiIdDeleteResponses[keyof DeleteQuestionQuestionsQuestionQuestionApiIdDeleteResponses];
 
-export type GenerateQuestionQuestionsQuestionGeneratePostData = {
-    body: GenerateQuestionRequest;
-    path?: never;
-    query?: never;
-    url: '/questions/question:generate';
-};
-
-export type GenerateQuestionQuestionsQuestionGeneratePostErrors = {
-    /**
-     * Validation Error
-     */
-    422: HttpValidationError;
-};
-
-export type GenerateQuestionQuestionsQuestionGeneratePostError = GenerateQuestionQuestionsQuestionGeneratePostErrors[keyof GenerateQuestionQuestionsQuestionGeneratePostErrors];
-
-export type GenerateQuestionQuestionsQuestionGeneratePostResponses = {
-    /**
-     * Successful Response
-     */
-    200: GenerateQuestionResponse;
-};
-
-export type GenerateQuestionQuestionsQuestionGeneratePostResponse = GenerateQuestionQuestionsQuestionGeneratePostResponses[keyof GenerateQuestionQuestionsQuestionGeneratePostResponses];
-
 export type EditResponseResponsesResponseResponseApiIdEditResponsePostData = {
     body: ResponseCreateBase;
     path: {
@@ -1938,6 +1944,64 @@ export type GenerateCompletionLlmCompletionPostResponses = {
 };
 
 export type GenerateCompletionLlmCompletionPostResponse = GenerateCompletionLlmCompletionPostResponses[keyof GenerateCompletionLlmCompletionPostResponses];
+
+export type RawSearchSearchSearchRawSearchGetData = {
+    body?: never;
+    path?: never;
+    query: {
+        query: string;
+        search_type?: SearchType;
+        limit?: number;
+    };
+    url: '/search/search/raw-search';
+};
+
+export type RawSearchSearchSearchRawSearchGetErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type RawSearchSearchSearchRawSearchGetError = RawSearchSearchSearchRawSearchGetErrors[keyof RawSearchSearchSearchRawSearchGetErrors];
+
+export type RawSearchSearchSearchRawSearchGetResponses = {
+    /**
+     * Successful Response
+     */
+    200: RawSearchResponse;
+};
+
+export type RawSearchSearchSearchRawSearchGetResponse = RawSearchSearchSearchRawSearchGetResponses[keyof RawSearchSearchSearchRawSearchGetResponses];
+
+export type PerformSearchSearchSearchSearchGetData = {
+    body?: never;
+    path?: never;
+    query: {
+        query: string;
+        search_type?: SearchType;
+        limit?: number;
+    };
+    url: '/search/search/search';
+};
+
+export type PerformSearchSearchSearchSearchGetErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type PerformSearchSearchSearchSearchGetError = PerformSearchSearchSearchSearchGetErrors[keyof PerformSearchSearchSearchSearchGetErrors];
+
+export type PerformSearchSearchSearchSearchGetResponses = {
+    /**
+     * Successful Response
+     */
+    200: SearchResponse;
+};
+
+export type PerformSearchSearchSearchSearchGetResponse = PerformSearchSearchSearchSearchGetResponses[keyof PerformSearchSearchSearchSearchGetResponses];
 
 export type RootGetData = {
     body?: never;

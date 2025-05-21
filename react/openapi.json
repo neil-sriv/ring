@@ -2092,53 +2092,6 @@
         }
       }
     },
-    "/questions/question:generate": {
-      "post": {
-        "tags": [
-          "questions"
-        ],
-        "summary": "Generate Question",
-        "description": "Generate a question using LLM without saving it.",
-        "operationId": "generate_question_questions_question_generate_post",
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/GenerateQuestionRequest"
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/GenerateQuestionResponse"
-                }
-              }
-            }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            }
-          }
-        },
-        "security": [
-          {
-            "OAuth2PasswordBearer": []
-          }
-        ]
-      }
-    },
     "/responses/response/{response_api_id}:edit_response": {
       "post": {
         "tags": [
@@ -2440,6 +2393,131 @@
         ]
       }
     },
+    "/search/search/raw-search": {
+      "get": {
+        "tags": [
+          "search",
+          "search"
+        ],
+        "summary": "Raw Search",
+        "description": "Search the search table for a given query.\n\nArgs:\n    query: The search query string\n    search_type: Type of search to perform (semantic, keyword, or dual)\n    limit: Maximum number of results to return\n    db: Database session\n\nReturns:\n    RawSearchResponse containing matching results and total count",
+        "operationId": "raw_search_search_search_raw_search_get",
+        "parameters": [
+          {
+            "name": "query",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Query"
+            }
+          },
+          {
+            "name": "search_type",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/SearchType",
+              "default": "dual"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "default": 10,
+              "title": "Limit"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RawSearchResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/search/search/search": {
+      "get": {
+        "tags": [
+          "search",
+          "search"
+        ],
+        "summary": "Perform Search",
+        "operationId": "perform_search_search_search_search_get",
+        "parameters": [
+          {
+            "name": "query",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Query"
+            }
+          },
+          {
+            "name": "search_type",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/SearchType",
+              "default": "dual"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "default": 10,
+              "title": "Limit"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SearchResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/": {
       "get": {
         "summary": "Root",
@@ -2720,6 +2798,7 @@
       "GroupKeyValue": {
         "properties": {
           "key_values": {
+            "additionalProperties": true,
             "type": "object",
             "title": "Key Values",
             "description": "Dictionary containing all key-value pairs for the group"
@@ -3231,6 +3310,9 @@
           "letter": {
             "$ref": "#/components/schemas/LetterUnlinked"
           },
+          "group": {
+            "$ref": "#/components/schemas/GroupUnlinked"
+          },
           "responses": {
             "items": {
               "$ref": "#/components/schemas/ResponseUnlinked"
@@ -3245,6 +3327,7 @@
           "api_identifier",
           "created_at",
           "letter",
+          "group",
           "responses"
         ],
         "title": "QuestionLinked",
@@ -3274,6 +3357,40 @@
         ],
         "title": "QuestionUnlinked",
         "description": "Schema for question without linked relationships.\n\nInherits all fields from Question but excludes relationship data."
+      },
+      "RawSearchResponse": {
+        "properties": {
+          "results": {
+            "items": {
+              "$ref": "#/components/schemas/RawSearchResult"
+            },
+            "type": "array",
+            "title": "Results"
+          },
+          "total": {
+            "type": "integer",
+            "title": "Total"
+          }
+        },
+        "type": "object",
+        "required": [
+          "results",
+          "total"
+        ],
+        "title": "RawSearchResponse"
+      },
+      "RawSearchResult": {
+        "properties": {
+          "raw_text": {
+            "type": "string",
+            "title": "Raw Text"
+          }
+        },
+        "type": "object",
+        "required": [
+          "raw_text"
+        ],
+        "title": "RawSearchResult"
       },
       "ReplaceDefaultQuestions": {
         "properties": {
@@ -3327,6 +3444,12 @@
           "participant": {
             "$ref": "#/components/schemas/UserUnlinked"
           },
+          "letter": {
+            "$ref": "#/components/schemas/LetterUnlinked"
+          },
+          "group": {
+            "$ref": "#/components/schemas/GroupUnlinked"
+          },
           "images": {
             "items": {
               "$ref": "#/components/schemas/Image"
@@ -3344,6 +3467,8 @@
           "created_at",
           "question",
           "participant",
+          "letter",
+          "group",
           "images"
         ],
         "title": "ResponseLinked",
@@ -3520,6 +3645,71 @@
         ],
         "title": "ScheduleUnlinked",
         "description": "Schema for schedule data with unlinked task relationships.\n\nThis schema extends the base Schedule schema and includes a list of tasks,\nusing the unlinked task schema to avoid circular references.\n\nAttributes:\n    tasks: List of tasks associated with this schedule"
+      },
+      "SearchResponse": {
+        "properties": {
+          "results": {
+            "items": {
+              "$ref": "#/components/schemas/SearchResult"
+            },
+            "type": "array",
+            "title": "Results"
+          },
+          "total": {
+            "type": "integer",
+            "title": "Total"
+          }
+        },
+        "type": "object",
+        "required": [
+          "results",
+          "total"
+        ],
+        "title": "SearchResponse"
+      },
+      "SearchResult": {
+        "properties": {
+          "model": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/UserLinked"
+              },
+              {
+                "$ref": "#/components/schemas/GroupLinked"
+              },
+              {
+                "$ref": "#/components/schemas/QuestionLinked"
+              },
+              {
+                "$ref": "#/components/schemas/ResponseLinked"
+              },
+              {
+                "$ref": "#/components/schemas/PublicLetter"
+              }
+            ],
+            "title": "Model"
+          },
+          "type": {
+            "type": "string",
+            "title": "Type"
+          }
+        },
+        "type": "object",
+        "required": [
+          "model",
+          "type"
+        ],
+        "title": "SearchResult",
+        "description": "Search result model that can hold different types of models based on type field.\n\nAttributes:\n    model (Any): The model instance\n    type (str): The type of the model"
+      },
+      "SearchType": {
+        "type": "string",
+        "enum": [
+          "semantic",
+          "keyword",
+          "dual"
+        ],
+        "title": "SearchType"
       },
       "SingleGroupKeyValueUpdate": {
         "properties": {
