@@ -4,6 +4,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
 from ring.fastapp.dependencies import get_db
+from ring.ring_pydantic.linked_schemas import SearchResponse, SearchResult
 from ring.search.crud.hybrid_search import (
     dual_search_hybrid_search_document,
     keyword_search_hybrid_search_document,
@@ -13,8 +14,6 @@ from ring.search.crud.hybrid_search import (
 from ring.search.schemas.search import (
     RawSearchResponse,
     RawSearchResult,
-    SearchResponse,
-    SearchResult,
     SearchType,
 )
 
@@ -75,9 +74,6 @@ async def perform_search(
 ) -> SearchResponse:
     results = search(db=db, query=query, limit=limit)
     return SearchResponse(
-        results=[
-            SearchResult(model_api_identifier=result.api_identifier)
-            for result in results
-        ],
+        results=[SearchResult.from_model(result) for result in results],
         total=len(results),
     )

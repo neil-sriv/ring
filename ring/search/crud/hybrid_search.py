@@ -12,9 +12,8 @@ from sqlalchemy import func, or_, select
 from sqlalchemy.orm import Session
 
 from ring.api_identifier.api_identified_model import APIIdentified
-from ring.api_identifier.util import get_model, get_models
+from ring.api_identifier.util import get_models
 from ring.fastapp.config import get_llm_config
-from ring.lib.logger import logger
 from ring.lib.util import RegistrationDict
 from ring.search.models.hybrid_search import (
     HybridSearchDocument,
@@ -71,7 +70,7 @@ def create_hybrid_search_document(
     association = HybridSearchDocumentAssociation.create(
         model_api_identifier=model_api_identifier,
         model_type=model_type,
-        hybrid_search_document_id=db_hybrid_search_document.id,
+        hybrid_search_document=db_hybrid_search_document,
     )
     db.add_all([db_hybrid_search_document, association])
     return db_hybrid_search_document
@@ -162,15 +161,12 @@ def get_model_ids_from_hybrid_search_documents(
 def hydrate_results(
     db: Session,
     model_type: str,
-    hybrid_search_documents: list[HybridSearchDocument],
+    model_api_identifiers: list[str],
 ) -> list[APIIdentified]:
     return get_models(
         db,
         SEARCH_MODEL_REGISTRY[model_type],
-        [
-            document.model_api_identifier
-            for document in hybrid_search_documents
-        ],
+        model_api_identifiers,
     )
 
 
@@ -185,6 +181,8 @@ def search(
         db, search_results
     )
     hydrated_results = []
-    for model_type, model_ids in model_ids_by_type.items():
-        hydrated_results.extend(hydrate_results(db, model_type, model_ids))
+    for model_type, model_api_identifiers in model_ids_by_type.items():
+        hydrated_results.extend(
+            hydrate_results(db, model_type, model_api_identifiers)
+        )
     return hydrated_results

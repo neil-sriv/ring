@@ -40,23 +40,23 @@ class HybridSearchDocumentAssociation(Base):
         self,
         model_api_identifier: str,
         model_type: str,
-        hybrid_search_document_id: int,
+        hybrid_search_document: HybridSearchDocument,
     ) -> None:
         self.model_api_identifier = model_api_identifier
         self.model_type = model_type
-        self.hybrid_search_document_id = hybrid_search_document_id
+        self.document = hybrid_search_document
 
     @classmethod
     def create(
         cls,
         model_api_identifier: str,
         model_type: str,
-        hybrid_search_document_id: int,
+        hybrid_search_document: HybridSearchDocument,
     ) -> HybridSearchDocumentAssociation:
         association = cls(
             model_api_identifier=model_api_identifier,
             model_type=model_type,
-            hybrid_search_document_id=hybrid_search_document_id,
+            hybrid_search_document=hybrid_search_document,
         )
         return association
 
