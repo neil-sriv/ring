@@ -1,40 +1,41 @@
 import { extendTheme } from "@chakra-ui/react";
+import { colors } from "./constants/colors";
 
 const disabledStyles = {
   _disabled: {
-    backgroundColor: "ui.main",
+    backgroundColor: colors.primary.main,
   },
 };
 
 const theme = extendTheme({
   colors: {
     ui: {
-      main: "#009688",
-      secondary: "#EDF2F7",
-      success: "#48BB78",
-      danger: "#E53E3E",
-      light: "#FAFAFA",
-      dark: "#1A202C",
-      darkSlate: "#252D3D",
-      dim: "#A0AEC0",
+      main: colors.primary.main,
+      secondary: colors.neutral[100],
+      success: colors.success.main,
+      danger: colors.error.main,
+      light: colors.background.light,
+      dark: colors.background.dark,
+      darkSlate: colors.background.paper.dark,
+      dim: colors.neutral[400],
     },
   },
   components: {
     Link: {
       baseStyle: {
-        color: "ui.main",
+        color: colors.primary.main,
         _hover: {
-          color: "ui.dim",
+          color: colors.neutral[400],
         },
       },
     },
     Button: {
       variants: {
         primary: {
-          backgroundColor: "ui.main",
-          color: "ui.light",
+          backgroundColor: colors.primary.main,
+          color: colors.primary.contrast,
           _hover: {
-            backgroundColor: "#00766C",
+            backgroundColor: colors.primary.dark,
           },
           _disabled: {
             ...disabledStyles,
@@ -44,10 +45,10 @@ const theme = extendTheme({
           },
         },
         danger: {
-          backgroundColor: "ui.danger",
-          color: "ui.light",
+          backgroundColor: colors.error.main,
+          color: colors.error.contrast,
           _hover: {
-            backgroundColor: "#E32727",
+            backgroundColor: colors.error.dark,
           },
         },
       },
@@ -57,13 +58,30 @@ const theme = extendTheme({
         enclosed: {
           tab: {
             _selected: {
-              color: "ui.main",
+              color: colors.primary.main,
             },
           },
         },
       },
     },
   },
+  styles: {
+    global: (props: { colorMode: string }) => ({
+      'html, body': {
+        bg: props.colorMode === 'dark' ? colors.background.dark : colors.background.light,
+        color: props.colorMode === 'dark' ? colors.text.primary.dark : colors.text.primary.light,
+        minHeight: '100vh',
+        overflowX: 'hidden',
+        overscrollBehavior: 'none',
+      },
+      '#root': {
+        minHeight: '100vh',
+        bg: props.colorMode === 'dark' ? colors.background.dark : colors.background.light,
+        overscrollBehavior: 'none',
+      }
+    }),
+  },
 });
 
 export default theme;
+
