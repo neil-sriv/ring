@@ -15,6 +15,7 @@ FE_DIR = Path(Path(__file__).resolve().parents[1], "react")
 def fe(ctx: click.Context) -> None:
     pass
 
+
 @cmd_run("install", fe, cwd=FE_DIR)
 def fe_install(
     ctx: click.Context,
