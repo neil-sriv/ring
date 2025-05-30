@@ -1,158 +1,192 @@
 # Ring
+
 This is a clone of LetterLoop as a fun side project.
 
 ## Set up
+
 ### Requirements
+
 - Orbstack or Docker Installed
 - node v18 or greater
 - pnpm
 - oh-my-zsh (recommended)
 
+### First Time Dev Setup
+
 #### uv
-```
+
+```bash
 curl -LsSf https://astral.sh/uv/install.sh | sh
 uv python install 3.12
 ```
-### Install
+
 There is a `pyproject.toml` file that will install local `ring` commands and requirements.
-```
-uv sync
+
+```bash
+uv sync --group dev --group ai
 ```
 
 ### `env` set up
-There are a few setup steps to get the project running locally.
-```
-ring setup requirements
-ring setup local-ssl
+
+There are a few setup steps to get the project running locally. Make sure you are in a virtual environment:
+
+```bash
+source .venv/bin/activate
 ```
 
+Then:
+
+```bash
+docker network create ring-network
+```
+
+At this point:
+
+```bash
+rm -rf localhost.key localhost.crt
+ring setup local-ssl
+chmod 600 certs/node.key
+```
 
 Add a `.env` file with the following:
-```
-ENVIRONMENT=LOCAL
+
+```bash
+ENVIRONMENT=local
 API_PORT=8001
 CELERY_BROKER_URL=redis://redis:6379/0
 CELERY_RESULT_BACKEND=redis://redis:6379/0
 SQLALCHEMY_DATABASE_URI=postgresql://ring-postgres:ring-postgres@db:5432/ring
+COCKROACH_DATABASE_URI=cockroachdb://ringcockroach:ringcockroach@cockroach:26257/ring?sslmode=require
 JWT_SIGNING_ALGORITHM=HS256
 VITE_API_URL=https://localhost
 BACKEND_CORS_ORIGINS="https://localhost:5173 http://localhost:5173"
+SW_DEV=true
+LLM_SERVICE_API_KEY=4f9c2b68f0a52d23a3c77e56b1f04826a5e39aef7a8db43db2f2b2c4e8b68f2e
+VITE_MAINTENANCE_MODE=false
+JWT_SIGNING_KEY=fc0a54992975b846c22a4a61e3c7f60d0906e777cbf693d1bc3ff356dcb398e4
+VAPID_PRIVATE_KEY=randomstringasvalidapikeyisnotneededforlocaldevelopment
 ```
+
 We'll need a `JWT_SIGNING_KEY` as well which can be generated with `openssl`
-```
+
+```bash
 echo "JWT_SIGNING_KEY=$(openssl rand -hex 32)" >> .env
 ```
 
+Now you should be able to get FastAPI going:
+
+```bash
+ring compose up
+ring compose ps  # to verify everything is running
+```
+
+You can visit `https://localhost/api/v1/docs` to get to the swagger documentation!
+
+### Frontend Setup
+
+Install frontend dependencies:
+
+```bash
+ring fe install
+```
+
+Initialize the database (tables will be empty):
+
+```bash
+ring db upgrade
+```
+
 ### `oh-my-zsh` set up
+
 **Highly** recommend to use `oh-my-zsh` with the `virtualenvwrapper` and `dotenv` plugins.
 
 ## Development
+
 ### Running the server
-```
+
+```bash
 ring compose up
 ```
+
 API accessible and `localhost/api/v1/docs`
+
 ### Running the client
+
+```bash
+ring fe dev
 ```
-cd react
-pnpm
-pnpm run dev
-```
-Accessible at `localhost:5173`
+
+Accessible at `https://localhost:5173`
 
 ### `ring` commands
-```
-Usage: ring [OPTIONS] COMMAND [ARGS]...
 
-Options:
-  --help  Show this message and exit.
-
-Commands:
-  compose
-  db
-  docker
-  run
-```
 #### `ring compose`
-A wrapper around docker compose. By default it will use the compose.dev.yml and always build the images. Pass --prod to use the compose.prod.yml file.
-```
-Usage: ring compose [OPTIONS] COMMAND [ARGS]...
 
-Options:
-  --help  Show this message and exit.
+Docker Compose wrapper for managing services. By default uses `compose.dev.yml`, use `--profile prod` for production.
 
-Commands:
-  any
-  ps
-  up
+```bash
+ring compose up      # Start services
+ring compose ps      # Check service status
+ring compose any     # Run any docker compose command
 ```
 
 #### `ring db`
-Entrypoint to working with the database. Can open pgcli or run migrations.
-```
-Usage: ring db [OPTIONS] COMMAND [ARGS]...
 
-Options:
-  --help  Show this message and exit.
+Database management commands:
 
-Commands:
-  alembic
-  generate
-  pgcli
-  upgrade
+```bash
+ring db upgrade     # Run database migrations
+ring db generate    # Generate new migration
+ring db pgcli       # Open database CLI
+ring db alembic     # Run alembic commands directly
 ```
 
 #### `ring docker`
-Entrypoint to working with the docker registry. Can tag and push images to the registry.
-```
-Usage: ring docker [OPTIONS] COMMAND [ARGS]...
 
-Options:
-  --help  Show this message and exit.
+Docker registry management:
 
-Commands:
-  push
-  tag
-  tp
-```
-
-#### `ring run`
-Run scripts or start a shell.
-```
-Usage: ring run [OPTIONS] COMMAND [ARGS]...
-
-Options:
-  --help  Show this message and exit.
-
-Commands:
-  script
-  shell
+```bash
+ring docker push    # Push images to registry
+ring docker tag     # Tag images
+ring docker tp      # Tag and push
 ```
 
 #### `ring fe`
-Frontend commands
+
+Frontend development commands:
+
+```bash
+ring fe install     # Install frontend dependencies
+ring fe dev         # Start development server
+ring fe build       # Build for production
+ring fe regen       # Regenerate API client
 ```
-Usage: ring fe [OPTIONS] COMMAND [ARGS]...
 
-Options:
-  --help  Show this message and exit.
+#### `ring run`
 
-Commands:
-  build
-  dev
-  regen
+Utility commands:
+
+```bash
+ring run script     # Run a script
+ring run shell      # Start a shell
 ```
 
 ## Deployment
+
 ### Build new images
-```
+
+```bash
 VITE_API_URL=http://ring.neilsriv.tech ring compose any --prod build
 ```
+
 ### Push to registry
-```
+
+```bash
 ring docker tp
 ```
+
 ### Deploy
+
 - ssh into the server
 
 ```bash

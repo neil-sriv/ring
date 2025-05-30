@@ -15,14 +15,13 @@ FE_DIR = Path(Path(__file__).resolve().parents[1], "react")
 def fe(ctx: click.Context) -> None:
     pass
 
-
 @cmd_run("install", fe, cwd=FE_DIR)
 def fe_install(
     ctx: click.Context,
     *args: list[Any],
     **kwargs: dict[Any, Any],
 ) -> list[str]:
-    return ["pnpm"]
+    return ["pnpm", "install"]
 
 
 @cmd_run("dev", fe, cwd=FE_DIR)
