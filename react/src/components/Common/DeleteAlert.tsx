@@ -1,11 +1,12 @@
 import {
-  AlertDialog,
-  AlertDialogBody,
-  AlertDialogContent,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogOverlay,
-  Button,
+    AlertDialog,
+    AlertDialogBody,
+    AlertDialogContent,
+    AlertDialogFooter,
+    AlertDialogHeader,
+    AlertDialogOverlay,
+    Button,
+    useColorModeValue,
 } from "@chakra-ui/react";
 import { useMutation } from "@tanstack/react-query";
 import React from "react";
@@ -29,6 +30,7 @@ const Delete = ({ type, isOpen, onClose }: DeleteProps) => {
     handleSubmit,
     formState: { isSubmitting },
   } = useForm();
+  const textColor = useColorModeValue("ui.dark", "ui.light");
 
   const deleteEntity = async () => {
     throw new Error("Not implemented");
@@ -82,34 +84,54 @@ const Delete = ({ type, isOpen, onClose }: DeleteProps) => {
         size={{ base: "sm", md: "md" }}
         isCentered
       >
-        <AlertDialogOverlay>
-          <AlertDialogContent as="form" onSubmit={handleSubmit(onSubmit)}>
-            <AlertDialogHeader>Delete {type}</AlertDialogHeader>
+        <AlertDialogOverlay backdropFilter="blur(4px)" />
+        <AlertDialogContent 
+          as="form" 
+          onSubmit={handleSubmit(onSubmit)}
+          bg="ui.glass.light.background"
+          backdropFilter="blur(10px)"
+          border="1px solid"
+          borderColor="ui.glass.light.border"
+          _dark={{
+            bg: "ui.glass.dark.background",
+            borderColor: "ui.glass.dark.border",
+          }}
+        >
+          <AlertDialogHeader color={textColor}>Delete {type}</AlertDialogHeader>
 
-            <AlertDialogBody>
-              {type === "User" && (
-                <span>
-                  All items associated with this user will also be{" "}
-                  <strong>permantly deleted. </strong>
-                </span>
-              )}
-              Are you sure? You will not be able to undo this action.
-            </AlertDialogBody>
+          <AlertDialogBody color={textColor}>
+            {type === "User" && (
+              <span>
+                All items associated with this user will also be{" "}
+                <strong>permantly deleted. </strong>
+              </span>
+            )}
+            Are you sure? You will not be able to undo this action.
+          </AlertDialogBody>
 
-            <AlertDialogFooter gap={3}>
-              <Button variant="danger" type="submit" isLoading={isSubmitting}>
-                Delete
-              </Button>
-              <Button
-                ref={cancelRef}
-                onClick={onClose}
-                isDisabled={isSubmitting}
-              >
-                Cancel
-              </Button>
-            </AlertDialogFooter>
-          </AlertDialogContent>
-        </AlertDialogOverlay>
+          <AlertDialogFooter gap={3}>
+            <Button 
+              variant="danger" 
+              type="submit" 
+              isLoading={isSubmitting}
+              _hover={{ 
+                opacity: 0.9,
+                bg: "ui.danger",
+              }}
+              transition="all 0.2s ease-in-out"
+            >
+              Delete
+            </Button>
+            <Button
+              ref={cancelRef}
+              onClick={onClose}
+              isDisabled={isSubmitting}
+              variant="glass"
+            >
+              Cancel
+            </Button>
+          </AlertDialogFooter>
+        </AlertDialogContent>
       </AlertDialog>
     </>
   );

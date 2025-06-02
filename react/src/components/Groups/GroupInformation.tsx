@@ -1,31 +1,28 @@
 import {
-  Box,
-  Button,
-  Container,
-  Flex,
-  FormControl,
-  FormLabel,
-  Heading,
-  Input,
-  Text,
-  useColorModeValue,
+    Box,
+    Button,
+    Flex,
+    Heading,
+    Input,
+    Text,
+    useColorModeValue
 } from "@chakra-ui/react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { type SubmitHandler, useForm } from "react-hook-form";
 
-import {
-  GroupLinked,
-  GroupUpdate,
-  UpdateGroupPartiesGroupGroupApiIdPatchError,
-} from "../../client";
-import useCustomToast from "../../hooks/useCustomToast";
 import { useRouter } from "@tanstack/react-router";
-import {
-  readGroupPartiesGroupGroupApiIdGetQueryKey,
-  updateGroupPartiesGroupGroupApiIdPatchMutation,
-} from "../../client/@tanstack/react-query.gen";
 import { AxiosError } from "axios";
+import {
+    GroupLinked,
+    GroupUpdate,
+    UpdateGroupPartiesGroupGroupApiIdPatchError,
+} from "../../client";
+import {
+    readGroupPartiesGroupGroupApiIdGetQueryKey,
+    updateGroupPartiesGroupGroupApiIdPatchMutation,
+} from "../../client/@tanstack/react-query.gen";
+import useCustomToast from "../../hooks/useCustomToast";
 
 function GroupInformation({ groupId }: { groupId: string }) {
   const queryClient = useQueryClient();
@@ -91,69 +88,55 @@ function GroupInformation({ groupId }: { groupId: string }) {
     toggleEditMode();
   };
 
+  const textColor = useColorModeValue("ui.dark", "ui.light");
+  const bgColor = useColorModeValue("ui.glass.light.background", "ui.glass.dark.background");
+  const borderColor = useColorModeValue("ui.glass.light.border", "ui.glass.dark.border");
+
   return (
-    <>
-      <Container maxW="full">
-        <Heading size="sm" py={4}>
-          Group Information
-        </Heading>
-        <Box
-          w={{ sm: "full", md: "50%" }}
-          as="form"
-          onSubmit={handleSubmit(onSubmit)}
+    <Box
+      p={6}
+      bg={bgColor}
+      backdropFilter="blur(10px)"
+      border="1px solid"
+      borderColor={borderColor}
+      borderRadius="lg"
+      boxShadow="sm"
+    >
+      <Flex justify="space-between" align="center" mb={4}>
+        <Heading size="md" color={textColor}>Group Information</Heading>
+        <Button
+          variant="glass"
+          onClick={toggleEditMode}
+          _hover={{ 
+            opacity: 0.9,
+            bg: "ui.primary",
+          }}
+          transition="all 0.2s ease-in-out"
         >
-          <FormControl>
-            <FormLabel color={color} htmlFor="name">
-              Full name
-            </FormLabel>
-            {editMode ? (
-              <Input
-                id="name"
-                {...register("name", { maxLength: 30 })}
-                type="text"
-                size="md"
-              />
-            ) : (
-              <Text
-                size="md"
-                // py={2}
-                color={!group.name ? "ui.dim" : "inherit"}
-              >
-                {group.name || "N/A"}
-              </Text>
-            )}
-          </FormControl>
-          <FormControl mt={4}>
-            <FormLabel color={color} htmlFor="admin">
-              Admin
-            </FormLabel>
-            <Text
-              size="md"
-              // py={2}
-              color={!group.admin.name ? "ui.dim" : "inherit"}
-            >
-              {group.admin.name}
-            </Text>
-          </FormControl>
-          <Flex mt={4} gap={3}>
-            <Button
-              variant="primary"
-              onClick={toggleEditMode}
-              type={editMode ? "button" : "submit"}
-              isLoading={editMode ? isSubmitting : false}
-              isDisabled={editMode ? !isDirty : false}
-            >
-              {editMode ? "Save" : "Edit"}
-            </Button>
-            {editMode && (
-              <Button onClick={onCancel} isDisabled={isSubmitting}>
-                Cancel
-              </Button>
-            )}
-          </Flex>
-        </Box>
-      </Container>
-    </>
+          Edit
+        </Button>
+      </Flex>
+      
+      <Box>
+        <Text color={textColor} fontWeight="medium" mb={2}>Name</Text>
+        {editMode ? (
+          <Input
+            id="name"
+            {...register("name", { maxLength: 30 })}
+            type="text"
+            size="md"
+          />
+        ) : (
+          <Text color={textColor} mb={4}>{group.name || "N/A"}</Text>
+        )}
+        
+        <Text color={textColor} fontWeight="medium" mb={2}>Description</Text>
+        <Text color={textColor} mb={4}>{group.description || "No description provided"}</Text>
+        
+        <Text color={textColor} fontWeight="medium" mb={2}>Created At</Text>
+        <Text color={textColor}>{new Date(group.created_at).toLocaleDateString()}</Text>
+      </Box>
+    </Box>
   );
 }
 

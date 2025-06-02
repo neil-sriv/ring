@@ -1,33 +1,34 @@
 import {
-  Button,
-  FormControl,
-  FormErrorMessage,
-  FormLabel,
-  Input,
-  Modal,
-  ModalBody,
-  ModalCloseButton,
-  ModalContent,
-  ModalFooter,
-  ModalHeader,
-  ModalOverlay,
+    Button,
+    FormControl,
+    FormErrorMessage,
+    FormLabel,
+    Input,
+    Modal,
+    ModalBody,
+    ModalCloseButton,
+    ModalContent,
+    ModalFooter,
+    ModalHeader,
+    ModalOverlay,
+    useColorModeValue,
 } from "@chakra-ui/react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { type SubmitHandler, useForm } from "react-hook-form";
 
-import {
-  type GroupLinked,
-  type GroupUpdate,
-  UpdateGroupPartiesGroupGroupApiIdPatchError,
-  UserLinked,
-} from "../../client";
-import useCustomToast from "../../hooks/useCustomToast";
-import {
-  listGroupsPartiesGroupsGetQueryKey,
-  readUserMePartiesMeGetQueryKey,
-  updateGroupPartiesGroupGroupApiIdPatchMutation,
-} from "../../client/@tanstack/react-query.gen";
 import { AxiosError } from "axios";
+import {
+    type GroupLinked,
+    type GroupUpdate,
+    UpdateGroupPartiesGroupGroupApiIdPatchError,
+    UserLinked,
+} from "../../client";
+import {
+    listGroupsPartiesGroupsGetQueryKey,
+    readUserMePartiesMeGetQueryKey,
+    updateGroupPartiesGroupGroupApiIdPatchMutation,
+} from "../../client/@tanstack/react-query.gen";
+import useCustomToast from "../../hooks/useCustomToast";
 
 interface EditGroupProps {
   group: GroupLinked;
@@ -85,6 +86,8 @@ const EditGroup = ({ group, isOpen, onClose }: EditGroupProps) => {
     onClose();
   };
 
+  const textColor = useColorModeValue("ui.dark", "ui.light");
+
   return (
     <>
       <Modal
@@ -93,19 +96,43 @@ const EditGroup = ({ group, isOpen, onClose }: EditGroupProps) => {
         size={{ base: "sm", md: "md" }}
         isCentered
       >
-        <ModalOverlay />
-        <ModalContent as="form" onSubmit={handleSubmit(onSubmit)}>
-          <ModalHeader>Edit Group</ModalHeader>
-          <ModalCloseButton />
+        <ModalOverlay backdropFilter="blur(4px)" />
+        <ModalContent 
+          as="form" 
+          onSubmit={handleSubmit(onSubmit)}
+          bg="ui.glass.light.background"
+          backdropFilter="blur(10px)"
+          border="1px solid"
+          borderColor="ui.glass.light.border"
+          _dark={{
+            bg: "ui.glass.dark.background",
+            borderColor: "ui.glass.dark.border",
+          }}
+        >
+          <ModalHeader color={textColor}>Edit Group</ModalHeader>
+          <ModalCloseButton color={textColor} />
           <ModalBody pb={6}>
             <FormControl isInvalid={!!errors.name}>
-              <FormLabel htmlFor="name">Name</FormLabel>
+              <FormLabel htmlFor="name" color={textColor}>Name</FormLabel>
               <Input
                 id="name"
                 {...register("name", {
                   required: "Name is required",
                 })}
                 type="text"
+                bg="ui.glass.light.background"
+                borderColor="ui.glass.light.border"
+                _dark={{
+                  bg: "ui.glass.dark.background",
+                  borderColor: "ui.glass.dark.border",
+                }}
+                _hover={{
+                  borderColor: "ui.primary",
+                }}
+                _focus={{
+                  borderColor: "ui.primary",
+                  boxShadow: "0 0 0 1px var(--chakra-colors-ui-primary)",
+                }}
               />
               {errors.name && (
                 <FormErrorMessage>{errors.name.message}</FormErrorMessage>
@@ -127,10 +154,20 @@ const EditGroup = ({ group, isOpen, onClose }: EditGroupProps) => {
               type="submit"
               isLoading={isSubmitting}
               isDisabled={!isDirty}
+              _hover={{ 
+                opacity: 0.9,
+                bg: "ui.primary",
+              }}
+              transition="all 0.2s ease-in-out"
             >
               Save
             </Button>
-            <Button onClick={onCancel}>Cancel</Button>
+            <Button 
+              onClick={onCancel}
+              variant="glass"
+            >
+              Cancel
+            </Button>
           </ModalFooter>
         </ModalContent>
       </Modal>

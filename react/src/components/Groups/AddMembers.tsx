@@ -1,31 +1,32 @@
 import {
-  Button,
-  FormControl,
-  FormErrorMessage,
-  FormLabel,
-  Input,
-  Modal,
-  ModalBody,
-  ModalCloseButton,
-  ModalContent,
-  ModalFooter,
-  ModalHeader,
-  ModalOverlay,
-  Text,
+    Button,
+    FormControl,
+    FormErrorMessage,
+    FormLabel,
+    Input,
+    Modal,
+    ModalBody,
+    ModalCloseButton,
+    ModalContent,
+    ModalFooter,
+    ModalHeader,
+    ModalOverlay,
+    Text,
+    useColorModeValue,
 } from "@chakra-ui/react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { type SubmitHandler, useForm } from "react-hook-form";
 
-import {
-  AddMembersPartiesGroupGroupApiIdAddMembersPostError,
-  type GroupLinked,
-} from "../../client";
-import useCustomToast from "../../hooks/useCustomToast";
-import {
-  addMembersPartiesGroupGroupApiIdAddMembersPostMutation,
-  listGroupsPartiesGroupsGetQueryKey,
-} from "../../client/@tanstack/react-query.gen";
 import { AxiosError } from "axios";
+import {
+    AddMembersPartiesGroupGroupApiIdAddMembersPostError,
+    type GroupLinked,
+} from "../../client";
+import {
+    addMembersPartiesGroupGroupApiIdAddMembersPostMutation,
+    listGroupsPartiesGroupsGetQueryKey,
+} from "../../client/@tanstack/react-query.gen";
+import useCustomToast from "../../hooks/useCustomToast";
 
 interface AddMembersProps {
   group: GroupLinked;
@@ -89,6 +90,8 @@ const AddMembers = ({ group, isOpen, onClose }: AddMembersProps) => {
     onClose();
   };
 
+  const textColor = useColorModeValue("ui.dark", "ui.light");
+
   return (
     <>
       <Modal
@@ -97,14 +100,25 @@ const AddMembers = ({ group, isOpen, onClose }: AddMembersProps) => {
         size={{ base: "sm", md: "md" }}
         isCentered
       >
-        <ModalOverlay />
-        <ModalContent as="form" onSubmit={handleSubmit(onSubmit)}>
-          <ModalHeader>Add new members</ModalHeader>
-          <ModalCloseButton />
+        <ModalOverlay backdropFilter="blur(4px)" />
+        <ModalContent 
+          as="form" 
+          onSubmit={handleSubmit(onSubmit)}
+          bg="ui.glass.light.background"
+          backdropFilter="blur(10px)"
+          border="1px solid"
+          borderColor="ui.glass.light.border"
+          _dark={{
+            bg: "ui.glass.dark.background",
+            borderColor: "ui.glass.dark.border",
+          }}
+        >
+          <ModalHeader color={textColor}>Add new members</ModalHeader>
+          <ModalCloseButton color={textColor} />
           <ModalBody pb={6}>
             <FormControl isInvalid={!!errors.member_emails}>
-              <FormLabel htmlFor="name">New Member Emails</FormLabel>
-              <Text>
+              <FormLabel htmlFor="name" color={textColor}>New Member Emails</FormLabel>
+              <Text color={textColor}>
                 Enter the email addresses of the new members you want to add to
                 this group. Separate multiple emails with a comma.
               </Text>
@@ -114,6 +128,19 @@ const AddMembers = ({ group, isOpen, onClose }: AddMembersProps) => {
                   required: "New member emails are required",
                 })}
                 type="text"
+                bg="ui.glass.light.background"
+                borderColor="ui.glass.light.border"
+                _dark={{
+                  bg: "ui.glass.dark.background",
+                  borderColor: "ui.glass.dark.border",
+                }}
+                _hover={{
+                  borderColor: "ui.primary",
+                }}
+                _focus={{
+                  borderColor: "ui.primary",
+                  boxShadow: "0 0 0 1px var(--chakra-colors-ui-primary)",
+                }}
               />
               {errors.member_emails && (
                 <FormErrorMessage>
@@ -137,10 +164,20 @@ const AddMembers = ({ group, isOpen, onClose }: AddMembersProps) => {
               type="submit"
               isLoading={isSubmitting}
               isDisabled={!isDirty}
+              _hover={{ 
+                opacity: 0.9,
+                bg: "ui.primary",
+              }}
+              transition="all 0.2s ease-in-out"
             >
               Save
             </Button>
-            <Button onClick={onCancel}>Cancel</Button>
+            <Button 
+              onClick={onCancel}
+              variant="glass"
+            >
+              Cancel
+            </Button>
           </ModalFooter>
         </ModalContent>
       </Modal>

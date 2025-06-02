@@ -11,22 +11,23 @@ import {
   ModalFooter,
   ModalHeader,
   ModalOverlay,
+  useColorModeValue,
 } from "@chakra-ui/react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { type SubmitHandler, useForm } from "react-hook-form";
 
+import { AxiosError } from "axios";
 import {
   CreateGroupPartiesGroupPostError,
   type GroupCreate,
   UserLinked,
 } from "../../client";
-import useCustomToast from "../../hooks/useCustomToast";
 import {
   createGroupPartiesGroupPostMutation,
   listGroupsPartiesGroupsGetQueryKey,
   readUserMePartiesMeGetQueryKey,
 } from "../../client/@tanstack/react-query.gen";
-import { AxiosError } from "axios";
+import useCustomToast from "../../hooks/useCustomToast";
 
 interface AddGroupProps {
   isOpen: boolean;
@@ -84,6 +85,8 @@ const AddGroup = ({ isOpen, onClose }: AddGroupProps) => {
     });
   };
 
+  const textColor = useColorModeValue("ui.dark", "ui.light");
+
   return (
     <>
       <Modal
@@ -92,13 +95,24 @@ const AddGroup = ({ isOpen, onClose }: AddGroupProps) => {
         size={{ base: "sm", md: "md" }}
         isCentered
       >
-        <ModalOverlay />
-        <ModalContent as="form" onSubmit={handleSubmit(onSubmit)}>
-          <ModalHeader>Add Group</ModalHeader>
-          <ModalCloseButton />
+        <ModalOverlay backdropFilter="blur(4px)" />
+        <ModalContent 
+          as="form" 
+          onSubmit={handleSubmit(onSubmit)}
+          bg="ui.glass.light.background"
+          backdropFilter="blur(10px)"
+          border="1px solid"
+          borderColor="ui.glass.light.border"
+          _dark={{
+            bg: "ui.glass.dark.background",
+            borderColor: "ui.glass.dark.border",
+          }}
+        >
+          <ModalHeader color={textColor}>Add Group</ModalHeader>
+          <ModalCloseButton color={textColor} />
           <ModalBody pb={6}>
             <FormControl isRequired isInvalid={!!errors.name}>
-              <FormLabel htmlFor="name">Name</FormLabel>
+              <FormLabel htmlFor="name" color={textColor}>Name</FormLabel>
               <Input
                 id="name"
                 {...register("name", {
@@ -106,6 +120,19 @@ const AddGroup = ({ isOpen, onClose }: AddGroupProps) => {
                 })}
                 placeholder="Name"
                 type="text"
+                bg="ui.glass.light.background"
+                borderColor="ui.glass.light.border"
+                _dark={{
+                  bg: "ui.glass.dark.background",
+                  borderColor: "ui.glass.dark.border",
+                }}
+                _hover={{
+                  borderColor: "ui.primary",
+                }}
+                _focus={{
+                  borderColor: "ui.primary",
+                  boxShadow: "0 0 0 1px var(--chakra-colors-ui-primary)",
+                }}
               />
               {errors.name && (
                 <FormErrorMessage>{errors.name.message}</FormErrorMessage>
@@ -123,10 +150,24 @@ const AddGroup = ({ isOpen, onClose }: AddGroupProps) => {
           </ModalBody>
 
           <ModalFooter gap={3}>
-            <Button variant="primary" type="submit" isLoading={isSubmitting}>
+            <Button 
+              variant="primary" 
+              type="submit" 
+              isLoading={isSubmitting}
+              _hover={{ 
+                opacity: 0.9,
+                bg: "ui.primary",
+              }}
+              transition="all 0.2s ease-in-out"
+            >
               Save
             </Button>
-            <Button onClick={onClose}>Cancel</Button>
+            <Button 
+              onClick={onClose}
+              variant="glass"
+            >
+              Cancel
+            </Button>
           </ModalFooter>
         </ModalContent>
       </Modal>

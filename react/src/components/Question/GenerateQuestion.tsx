@@ -10,6 +10,7 @@ import {
     ModalHeader,
     ModalOverlay,
     Textarea,
+    useColorModeValue,
 } from "@chakra-ui/react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { type SubmitHandler, useForm } from "react-hook-form";
@@ -56,6 +57,7 @@ const GenerateQuestion = ({ isOpen, onClose, loopApiId }: GenerateQuestionProps)
         mode: "onBlur",
         criteriaMode: "all",
     });
+    const textColor = useColorModeValue("ui.dark", "ui.light");
 
     const generateQuestionMutation = useMutation({
         ...generateQuestionLettersLetterLetterApiIdGenerateQuestionPostMutation({
@@ -135,10 +137,21 @@ const GenerateQuestion = ({ isOpen, onClose, loopApiId }: GenerateQuestionProps)
             size={{ base: "sm", md: "md" }}
             isCentered
         >
-            <ModalOverlay />
-            <ModalContent as="form" onSubmit={handleSubmit(onGenerateQuestion)}>
-                <ModalHeader>Generate question</ModalHeader>
-                <ModalCloseButton />
+            <ModalOverlay backdropFilter="blur(4px)" />
+            <ModalContent 
+                as="form" 
+                onSubmit={handleSubmit(onGenerateQuestion)}
+                bg="ui.glass.light.background"
+                backdropFilter="blur(10px)"
+                border="1px solid"
+                borderColor="ui.glass.light.border"
+                _dark={{
+                    bg: "ui.glass.dark.background",
+                    borderColor: "ui.glass.dark.border",
+                }}
+            >
+                <ModalHeader color={textColor}>Generate question</ModalHeader>
+                <ModalCloseButton color={textColor} />
                 <ModalBody pb={6}>
                     <FormControl isInvalid={!!errors.questionPrompt}>
                         <Textarea
@@ -147,6 +160,20 @@ const GenerateQuestion = ({ isOpen, onClose, loopApiId }: GenerateQuestionProps)
                             {...register("questionPrompt", {
                                 required: "Question prompt is required.",
                             })}
+                            bg="ui.glass.light.background"
+                            borderColor="ui.glass.light.border"
+                            _dark={{
+                                bg: "ui.glass.dark.background",
+                                borderColor: "ui.glass.dark.border",
+                            }}
+                            _hover={{
+                                borderColor: "ui.primary",
+                            }}
+                            _focus={{
+                                borderColor: "ui.primary",
+                                boxShadow: "0 0 0 1px var(--chakra-colors-ui-primary)",
+                            }}
+                            minH="100px"
                         />
                         {errors.questionPrompt && (
                             <FormErrorMessage>
@@ -162,23 +189,35 @@ const GenerateQuestion = ({ isOpen, onClose, loopApiId }: GenerateQuestionProps)
                                 readOnly
                                 placeholder="Generated question will appear here..."
                                 minH="100px"
+                                bg="ui.glass.light.background"
+                                borderColor="ui.glass.light.border"
+                                _dark={{
+                                    bg: "ui.glass.dark.background",
+                                    borderColor: "ui.glass.dark.border",
+                                }}
                             />
                         </FormControl>
                     )}
                 </ModalBody>
 
                 <ModalFooter gap={3}>
-                    <Button
-                        type="submit"
+                    <Button 
+                        variant="primary" 
+                        type="submit" 
                         isLoading={generateQuestionMutation.isPending}
+                        _hover={{ 
+                            opacity: 0.9,
+                            bg: "ui.primary",
+                        }}
+                        transition="all 0.2s ease-in-out"
                     >
                         Generate
                     </Button>
-                    <Button
+                    <Button 
                         onClick={onSaveQuestion}
                         isLoading={addQuestionMutation.isPending}
                         isDisabled={!generatedQuestion}
-                        variant="primary"
+                        variant="glass"
                     >
                         Save
                     </Button>
