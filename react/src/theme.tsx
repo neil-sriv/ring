@@ -18,6 +18,10 @@ const theme = extendTheme({
       dark: colors.background.dark,
       darkSlate: colors.background.paper.dark,
       dim: colors.neutral[400],
+      glass: {
+        light: colors.glass.light,
+        dark: colors.glass.dark,
+      },
     },
   },
   components: {
@@ -25,7 +29,8 @@ const theme = extendTheme({
       baseStyle: {
         color: colors.primary.main,
         _hover: {
-          color: colors.neutral[400],
+          color: colors.primary.dark,
+          textDecoration: "none",
         },
       },
     },
@@ -49,6 +54,36 @@ const theme = extendTheme({
           color: colors.error.contrast,
           _hover: {
             backgroundColor: colors.error.dark,
+          },
+        },
+        glass: {
+          backgroundColor: "ui.glass.light.background",
+          color: "ui.dark",
+          backdropFilter: "blur(10px)",
+          border: "1px solid",
+          borderColor: "ui.glass.light.border",
+          _hover: {
+            backgroundColor: "ui.glass.light.background",
+            opacity: 0.9,
+          },
+          _dark: {
+            backgroundColor: "ui.glass.dark.background",
+            color: "ui.light",
+            borderColor: "ui.glass.dark.border",
+          },
+        },
+      },
+    },
+    Card: {
+      baseStyle: {
+        container: {
+          backgroundColor: "ui.glass.light.background",
+          backdropFilter: "blur(10px)",
+          border: "1px solid",
+          borderColor: "ui.glass.light.border",
+          _dark: {
+            backgroundColor: "ui.glass.dark.background",
+            borderColor: "ui.glass.dark.border",
           },
         },
       },

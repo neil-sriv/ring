@@ -23,8 +23,6 @@ import SidebarItems from "./SidebarItems";
 
 const Sidebar = () => {
   const queryClient = useQueryClient();
-  const bgColor = useColorModeValue("rgba(255, 255, 255, 0.8)", "rgba(26, 32, 44, 0.8)");
-  const borderColor = useColorModeValue("rgba(255, 255, 255, 0.2)", "rgba(255, 255, 255, 0.1)");
   const textColor = useColorModeValue("ui.dark", "ui.light");
   const currentUser = queryClient.getQueryData<UserLinked>(
     readUserMePartiesMeGetQueryKey()
@@ -49,14 +47,32 @@ const Sidebar = () => {
         left={4}
         fontSize="20px"
         icon={<FiMenu />}
-        bg="ui.main"
-        color="white"
-        _hover={{ bg: "ui.main", opacity: 0.8 }}
+        bg="ui.glass.light.background"
+        color="ui.dark"
+        backdropFilter="blur(10px)"
+        border="1px solid"
+        borderColor="ui.glass.light.border"
+        _hover={{ bg: "ui.glass.light.background", opacity: 0.9 }}
+        _dark={{
+          bg: "ui.glass.dark.background",
+          color: "ui.light",
+          borderColor: "ui.glass.dark.border",
+        }}
         zIndex={1000}
       />
       <Drawer isOpen={isOpen} placement="left" onClose={onClose}>
-        <DrawerOverlay />
-        <DrawerContent maxW="240px" bg={bgColor} backdropFilter="blur(10px)">
+        <DrawerOverlay backdropFilter="blur(4px)" />
+        <DrawerContent 
+          maxW="240px" 
+          bg="ui.glass.light.background"
+          backdropFilter="blur(10px)"
+          border="1px solid"
+          borderColor="ui.glass.light.border"
+          _dark={{
+            bg: "ui.glass.dark.background",
+            borderColor: "ui.glass.dark.border",
+          }}
+        >
           <DrawerCloseButton color={textColor} />
           <DrawerBody py={8}>
             <Flex flexDir="column" justify="space-between" h="100%">
@@ -95,7 +111,10 @@ const Sidebar = () => {
                   fontSize="sm" 
                   p={4}
                   borderTop="1px solid"
-                  borderColor={borderColor}
+                  borderColor="ui.glass.light.border"
+                  _dark={{
+                    borderColor: "ui.glass.dark.border"
+                  }}
                 >
                   Logged in as: {currentUser.email}
                 </Text>
@@ -107,23 +126,28 @@ const Sidebar = () => {
 
       {/* Desktop */}
       <Box
-        p={4}
-        h="100vh"
         position="sticky"
-        top="0"
+        top={0}
+        h="100vh"
         display={{ base: "none", md: "flex" }}
+        zIndex={1}
+        p={4}
       >
         <Flex
           flexDir="column"
           justify="space-between"
-          bg={bgColor}
+          bg="ui.glass.light.background"
           backdropFilter="blur(10px)"
           border="1px solid"
-          borderColor={borderColor}
+          borderColor="ui.glass.light.border"
+          _dark={{
+            bg: "ui.glass.dark.background",
+            borderColor: "ui.glass.dark.border",
+          }}
           p={6}
-          borderRadius="xl"
           w="240px"
           boxShadow="xl"
+          borderRadius="xl"
         >
           <Box>
             <Heading 
@@ -160,7 +184,10 @@ const Sidebar = () => {
               fontSize="sm" 
               p={4}
               borderTop="1px solid"
-              borderColor={borderColor}
+              borderColor="ui.glass.light.border"
+              _dark={{
+                borderColor: "ui.glass.dark.border"
+              }}
             >
               Logged in as: {currentUser.email}
             </Text>

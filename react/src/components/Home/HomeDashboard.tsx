@@ -1,10 +1,7 @@
 import { Box, Flex, Heading, VStack, useColorModeValue } from "@chakra-ui/react";
 import { useSuspenseQuery } from "@tanstack/react-query";
-import { motion } from "framer-motion";
 import { listDashboardLettersLettersLettersDashboardGetOptions } from "../../client/@tanstack/react-query.gen";
 import { LoopsGrid } from "../Loops/LoopsGrid";
-
-const MotionBox = motion(Box);
 
 export function HomeDashboard() {
   const dashboardLoops = useSuspenseQuery({
@@ -14,12 +11,13 @@ export function HomeDashboard() {
   const in_progress = dashboardLoops.data.in_progress;
   const upcoming = dashboardLoops.data.upcoming;
 
-  const bgColor = useColorModeValue("ui.light", "ui.dark");
   const textColor = useColorModeValue("ui.dark", "ui.light");
+  const bgColor = useColorModeValue("ui.glass.light.background", "ui.glass.dark.background");
+  const borderColor = useColorModeValue("ui.glass.light.border", "ui.glass.dark.border");
 
   return (
-    <Flex justify="center" w="100%" bg={bgColor}>
-      <Box maxW="1200px" w="100%" px={4}>
+    <Flex justify="center" w="100%" bg={bgColor} backdropFilter="blur(10px)">
+      <Box maxW="1200px" w="100%" px={4} py={8}>
         <VStack spacing={8} align="stretch" w="100%">
           <Heading 
             as="h1" 
@@ -29,6 +27,8 @@ export function HomeDashboard() {
             fontWeight="bold"
             letterSpacing="tight"
             py={4}
+            borderBottom="1px solid"
+            borderColor={borderColor}
           >
             Dashboard
           </Heading>

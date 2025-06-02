@@ -8,8 +8,8 @@ interface SidebarItemsProps {
 
 export default function SidebarItems({ onClose }: SidebarItemsProps) {
   const textColor = useColorModeValue("ui.dark", "ui.light");
-  const hoverBg = useColorModeValue("rgba(0, 0, 0, 0.05)", "rgba(255, 255, 255, 0.05)");
-  const activeBg = useColorModeValue("rgba(0, 0, 0, 0.1)", "rgba(255, 255, 255, 0.1)");
+  const hoverBg = useColorModeValue("ui.glass.light.background", "ui.glass.dark.background");
+  const activeBg = useColorModeValue("ui.glass.light.background", "ui.glass.dark.background");
   const activeColor = useColorModeValue("ui.main", "ui.main");
 
   const items = [
@@ -42,14 +42,18 @@ export default function SidebarItems({ onClose }: SidebarItemsProps) {
           alignItems="center"
           borderRadius="md"
           color={textColor}
+          transition="all 0.2s"
           _hover={{
             bg: hoverBg,
             textDecoration: "none",
+            transform: "translateX(4px)",
+            opacity: 0.9,
           }}
           activeProps={{
             style: {
               background: activeBg,
               color: activeColor,
+              transform: "translateX(4px)",
             },
           }}
           onClick={onClose}
