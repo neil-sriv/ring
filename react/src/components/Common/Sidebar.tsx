@@ -15,17 +15,17 @@ import {
 import { useQueryClient } from "@tanstack/react-query";
 import { FiLogOut, FiMenu } from "react-icons/fi";
 
+import { Link } from "@tanstack/react-router";
 import type { UserLinked } from "../../client";
+import { readUserMePartiesMeGetQueryKey } from "../../client/@tanstack/react-query.gen";
 import useAuth from "../../hooks/useAuth";
 import SidebarItems from "./SidebarItems";
-import { Link } from "@tanstack/react-router";
-import { readUserMePartiesMeGetQueryKey } from "../../client/@tanstack/react-query.gen";
 
 const Sidebar = () => {
   const queryClient = useQueryClient();
-  const bgColor = useColorModeValue("ui.light", "ui.dark");
+  const bgColor = useColorModeValue("rgba(255, 255, 255, 0.8)", "rgba(26, 32, 44, 0.8)");
+  const borderColor = useColorModeValue("rgba(255, 255, 255, 0.2)", "rgba(255, 255, 255, 0.1)");
   const textColor = useColorModeValue("ui.dark", "ui.light");
-  const secBgColor = useColorModeValue("ui.secondary", "ui.darkSlate");
   const currentUser = queryClient.getQueryData<UserLinked>(
     readUserMePartiesMeGetQueryKey()
   );
@@ -44,37 +44,59 @@ const Sidebar = () => {
         onClick={onOpen}
         display={{ base: "flex", md: "none" }}
         aria-label="Open Menu"
-        position="absolute"
+        position="fixed"
+        top={4}
+        left={4}
         fontSize="20px"
-        m={4}
         icon={<FiMenu />}
+        bg="ui.main"
+        color="white"
+        _hover={{ bg: "ui.main", opacity: 0.8 }}
+        zIndex={1000}
       />
       <Drawer isOpen={isOpen} placement="left" onClose={onClose}>
         <DrawerOverlay />
-        <DrawerContent maxW="250px">
-          <DrawerCloseButton />
+        <DrawerContent maxW="240px" bg={bgColor} backdropFilter="blur(10px)">
+          <DrawerCloseButton color={textColor} />
           <DrawerBody py={8}>
-            <Flex flexDir="column" justify="space-between">
+            <Flex flexDir="column" justify="space-between" h="100%">
               <Box>
-                {/* <Image src={Logo} alt="logo" p={6} /> */}
-                <Heading size="lg" textAlign="center" p={2}>
+                <Heading 
+                  size="lg" 
+                  textAlign="center" 
+                  p={4}
+                  color={textColor}
+                  fontWeight="bold"
+                  letterSpacing="tight"
+                >
                   <Link to="/">Ring</Link>
                 </Heading>
                 <SidebarItems onClose={onClose} />
                 <Flex
                   as="button"
                   onClick={handleLogout}
-                  p={2}
+                  p={3}
+                  mt={4}
                   color="ui.danger"
                   fontWeight="bold"
                   alignItems="center"
+                  borderRadius="md"
+                  _hover={{ bg: "ui.danger", color: "white" }}
+                  transition="all 0.2s"
                 >
                   <FiLogOut />
                   <Text ml={2}>Log out</Text>
                 </Flex>
               </Box>
               {currentUser?.email && (
-                <Text color={textColor} noOfLines={2} fontSize="sm" p={2}>
+                <Text 
+                  color={textColor} 
+                  noOfLines={2} 
+                  fontSize="sm" 
+                  p={4}
+                  borderTop="1px solid"
+                  borderColor={borderColor}
+                >
                   Logged in as: {currentUser.email}
                 </Text>
               )}
@@ -85,8 +107,7 @@ const Sidebar = () => {
 
       {/* Desktop */}
       <Box
-        bg={bgColor}
-        p={3}
+        p={4}
         h="100vh"
         position="sticky"
         top="0"
@@ -95,24 +116,51 @@ const Sidebar = () => {
         <Flex
           flexDir="column"
           justify="space-between"
-          bg={secBgColor}
-          p={4}
-          borderRadius={12}
+          bg={bgColor}
+          backdropFilter="blur(10px)"
+          border="1px solid"
+          borderColor={borderColor}
+          p={6}
+          borderRadius="xl"
+          w="240px"
+          boxShadow="xl"
         >
           <Box>
-            {/* <Image src={Logo} alt="Logo" w="180px" maxW="2xs" p={6} /> */}
-            <Heading size="lg" textAlign="center" p={2}>
+            <Heading 
+              size="lg" 
+              textAlign="center" 
+              p={4}
+              color={textColor}
+              fontWeight="bold"
+              letterSpacing="tight"
+            >
               <Link to="/">Ring</Link>
             </Heading>
             <SidebarItems />
+            <Flex
+              as="button"
+              onClick={handleLogout}
+              p={3}
+              mt={4}
+              color="ui.danger"
+              fontWeight="bold"
+              alignItems="center"
+              borderRadius="md"
+              _hover={{ bg: "ui.danger", color: "white" }}
+              transition="all 0.2s"
+            >
+              <FiLogOut />
+              <Text ml={2}>Log out</Text>
+            </Flex>
           </Box>
           {currentUser?.email && (
-            <Text
-              color={textColor}
-              noOfLines={2}
-              fontSize="sm"
-              p={2}
-              maxW="180px"
+            <Text 
+              color={textColor} 
+              noOfLines={2} 
+              fontSize="sm" 
+              p={4}
+              borderTop="1px solid"
+              borderColor={borderColor}
             >
               Logged in as: {currentUser.email}
             </Text>

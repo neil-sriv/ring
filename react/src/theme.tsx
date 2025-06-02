@@ -73,6 +73,16 @@ const theme = extendTheme({
         minHeight: '100vh',
         overflowX: 'hidden',
         overscrollBehavior: 'none',
+        '&::-webkit-scrollbar': {
+          width: '4px',
+        },
+        '&::-webkit-scrollbar-track': {
+          width: '6px',
+        },
+        '&::-webkit-scrollbar-thumb': {
+          background: props.colorMode === 'dark' ? colors.neutral[600] : colors.neutral[400],
+          borderRadius: '24px',
+        },
       },
       '#root': {
         minHeight: '100vh',
