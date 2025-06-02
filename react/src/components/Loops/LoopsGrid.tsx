@@ -1,8 +1,8 @@
-import { 
-  Box, 
-  Flex, 
-  Heading, 
-  VStack 
+import {
+    Box,
+    Flex,
+    Heading,
+    VStack
 } from "@chakra-ui/react";
 import { PublicLetter } from "../../client";
 import { LoopCard } from "./LoopCard";

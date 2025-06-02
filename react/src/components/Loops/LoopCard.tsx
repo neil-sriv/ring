@@ -1,6 +1,5 @@
 import {
-  Card,
-  CardHeader,
+  Box,
   Heading,
   LinkBox,
   LinkOverlay,
@@ -21,8 +20,19 @@ export function LoopCard(props: {
 
   return (
     <LinkBox height="100%">
-      <Card
+      <Box
         h="100%"
+        bg="ui.glass.light.background"
+        backdropFilter="blur(10px)"
+        border="1px solid"
+        borderColor="ui.glass.light.border"
+        _dark={{
+          bg: "ui.glass.dark.background",
+          borderColor: "ui.glass.dark.border",
+        }}
+        p={6}
+        borderRadius="xl"
+        boxShadow="md"
         transition="all 0.2s"
         _hover={{
           transform: "translateY(-4px)",
@@ -30,28 +40,26 @@ export function LoopCard(props: {
           borderColor: "ui.main",
         }}
       >
-        <CardHeader p={4}>
-          <LinkOverlay
-            as={Link}
-            to={`/loops/${props.loop.api_identifier}`}
-            _hover={{ textDecoration: "none" }}
-          >
-            <VStack align="start" spacing={2}>
-              <Heading size="md" color={textColor}>
-                Issue #{props.loop.number}
-              </Heading>
-              {props.includeGroupName && (
-                <Text color={subtextColor} fontSize="sm">
-                  {props.loop.group.name}
-                </Text>
-              )}
+        <LinkOverlay
+          as={Link}
+          to={`/loops/${props.loop.api_identifier}`}
+          _hover={{ textDecoration: "none" }}
+        >
+          <VStack align="start" spacing={2}>
+            <Heading size="md" color={textColor}>
+              Issue #{props.loop.number}
+            </Heading>
+            {props.includeGroupName && (
               <Text color={subtextColor} fontSize="sm">
-                {sendDate.toLocaleDateString()}
+                {props.loop.group.name}
               </Text>
-            </VStack>
-          </LinkOverlay>
-        </CardHeader>
-      </Card>
+            )}
+            <Text color={subtextColor} fontSize="sm">
+              {sendDate.toLocaleDateString()}
+            </Text>
+          </VStack>
+        </LinkOverlay>
+      </Box>
     </LinkBox>
   );
 }

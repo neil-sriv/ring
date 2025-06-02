@@ -1,20 +1,22 @@
 import {
-  Container,
-  Heading,
-  Spinner,
-  Tab,
-  TabList,
-  TabPanel,
-  TabPanels,
-  Tabs
+    Box,
+    Container,
+    Heading,
+    Spinner,
+    Tab,
+    TabList,
+    TabPanel,
+    TabPanels,
+    Tabs,
+    useColorModeValue,
 } from "@chakra-ui/react";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
 import { Suspense } from "react";
 import { PublicLetter } from "../../../../client";
 import {
-  listLettersLettersLettersGetOptions,
-  readGroupPartiesGroupGroupApiIdGetOptions,
+    listLettersLettersLettersGetOptions,
+    readGroupPartiesGroupGroupApiIdGetOptions,
 } from "../../../../client/@tanstack/react-query.gen";
 import { GroupKeyValuesTable } from "../../../../components/GroupKeyValues/GroupKeyValuesTable";
 import { LLMPlayground } from "../../../../components/LLMPlayground/LLMPlayground";
@@ -59,6 +61,7 @@ export const Route = createFileRoute("/_layout/groups/$groupId/loops")({
 function LoopsContentLoader() {
   const groupId = Route.useParams().groupId;
   const props = Route.useLoaderData();
+  const textColor = useColorModeValue("ui.dark", "ui.light");
 
   const { data: group } = useSuspenseQuery({
     ...readGroupPartiesGroupGroupApiIdGetOptions({
@@ -92,23 +95,58 @@ function LoopsContentLoader() {
 
   return (
     <Container maxW="full">
-      <Heading size="lg" textAlign={{ base: "center", md: "left" }} py={12}>
-        {group!.name}
-      </Heading>
-      <Tabs variant="enclosed">
-        <TabList>
-          {tabsConfig.map((tab, index) => (
-            <Tab key={index}>{tab.title}</Tab>
-          ))}
-        </TabList>
-        <TabPanels>
-          {tabsConfig.map((tab, index) => (
-            <TabPanel key={index}>
-              {tab.component()}
-            </TabPanel>
-          ))}
-        </TabPanels>
-      </Tabs>
+      <Box 
+        bg="ui.glass.light.background"
+        backdropFilter="blur(10px)"
+        border="1px solid"
+        borderColor="ui.glass.light.border"
+        _dark={{
+          bg: "ui.glass.dark.background",
+          borderColor: "ui.glass.dark.border",
+        }}
+        p={6}
+        borderRadius="xl"
+        boxShadow="md"
+        mb={6}
+      >
+        <Heading size="lg" textAlign={{ base: "center", md: "left" }} color={textColor}>
+          {group!.name}
+        </Heading>
+      </Box>
+      <Box
+        bg="ui.glass.light.background"
+        backdropFilter="blur(10px)"
+        border="1px solid"
+        borderColor="ui.glass.light.border"
+        _dark={{
+          bg: "ui.glass.dark.background",
+          borderColor: "ui.glass.dark.border",
+        }}
+        p={6}
+        borderRadius="xl"
+        boxShadow="md"
+      >
+        <Tabs variant="enclosed">
+          <TabList>
+            {tabsConfig.map((tab, index) => (
+              <Tab 
+                key={index}
+                _hover={{ transform: "translateY(-2px)" }}
+                transition="all 0.2s"
+              >
+                {tab.title}
+              </Tab>
+            ))}
+          </TabList>
+          <TabPanels>
+            {tabsConfig.map((tab, index) => (
+              <TabPanel key={index}>
+                {tab.component()}
+              </TabPanel>
+            ))}
+          </TabPanels>
+        </Tabs>
+      </Box>
     </Container>
   );
 }
