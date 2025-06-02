@@ -1,20 +1,21 @@
 import {
-  AlertDialog,
-  AlertDialogBody,
-  AlertDialogContent,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogOverlay,
-  Button,
+    AlertDialog,
+    AlertDialogBody,
+    AlertDialogContent,
+    AlertDialogFooter,
+    AlertDialogHeader,
+    AlertDialogOverlay,
+    Button,
+    useColorModeValue,
 } from "@chakra-ui/react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import React from "react";
 import { useForm } from "react-hook-form";
 
 import { deleteUserPartiesUserIdDelete } from "../../client";
+import { readUserMePartiesMeGetQueryKey } from "../../client/@tanstack/react-query.gen";
 import useAuth from "../../hooks/useAuth";
 import useCustomToast from "../../hooks/useCustomToast";
-import { readUserMePartiesMeGetQueryKey } from "../../client/@tanstack/react-query.gen";
 
 interface DeleteProps {
   isOpen: boolean;
@@ -25,6 +26,7 @@ const DeleteConfirmation = ({ isOpen, onClose }: DeleteProps) => {
   const queryClient = useQueryClient();
   const showToast = useCustomToast();
   const cancelRef = React.useRef<HTMLButtonElement | null>(null);
+  const textColor = useColorModeValue("ui.dark", "ui.light");
   const {
     handleSubmit,
     formState: { isSubmitting },
@@ -60,41 +62,58 @@ const DeleteConfirmation = ({ isOpen, onClose }: DeleteProps) => {
   };
 
   return (
-    <>
-      <AlertDialog
-        isOpen={isOpen}
-        onClose={onClose}
-        leastDestructiveRef={cancelRef}
-        size={{ base: "sm", md: "md" }}
-        isCentered
+    <AlertDialog
+      isOpen={isOpen}
+      onClose={onClose}
+      leastDestructiveRef={cancelRef}
+      size={{ base: "sm", md: "md" }}
+      isCentered
+    >
+      <AlertDialogOverlay backdropFilter="blur(4px)" />
+      <AlertDialogContent 
+        as="form" 
+        onSubmit={handleSubmit(onSubmit)}
+        bg="ui.glass.light.background"
+        backdropFilter="blur(10px)"
+        border="1px solid"
+        borderColor="ui.glass.light.border"
+        _dark={{
+          bg: "ui.glass.dark.background",
+          borderColor: "ui.glass.dark.border",
+        }}
       >
-        <AlertDialogOverlay>
-          <AlertDialogContent as="form" onSubmit={handleSubmit(onSubmit)}>
-            <AlertDialogHeader>Confirmation Required</AlertDialogHeader>
+        <AlertDialogHeader color={textColor}>
+          Confirmation Required
+        </AlertDialogHeader>
 
-            <AlertDialogBody>
-              All your account data will be{" "}
-              <strong>permanently deleted.</strong> If you are sure, please
-              click <strong>"Confirm"</strong> to proceed. This action cannot be
-              undone.
-            </AlertDialogBody>
+        <AlertDialogBody color={textColor}>
+          All your account data will be{" "}
+          <strong>permanently deleted.</strong> If you are sure, please
+          click <strong>"Confirm"</strong> to proceed. This action cannot be
+          undone.
+        </AlertDialogBody>
 
-            <AlertDialogFooter gap={3}>
-              <Button variant="danger" type="submit" isLoading={isSubmitting}>
-                Confirm
-              </Button>
-              <Button
-                ref={cancelRef}
-                onClick={onClose}
-                isDisabled={isSubmitting}
-              >
-                Cancel
-              </Button>
-            </AlertDialogFooter>
-          </AlertDialogContent>
-        </AlertDialogOverlay>
-      </AlertDialog>
-    </>
+        <AlertDialogFooter gap={3}>
+          <Button 
+            variant="danger" 
+            type="submit" 
+            isLoading={isSubmitting}
+            _hover={{ transform: "translateY(-2px)" }}
+            transition="all 0.2s"
+          >
+            Confirm
+          </Button>
+          <Button
+            ref={cancelRef}
+            onClick={onClose}
+            isDisabled={isSubmitting}
+            variant="glass"
+          >
+            Cancel
+          </Button>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
   );
 };
 
