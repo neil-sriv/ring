@@ -61,16 +61,15 @@ JWT_SIGNING_ALGORITHM=HS256
 VITE_API_URL=https://localhost
 BACKEND_CORS_ORIGINS="https://localhost:5173 http://localhost:5173"
 SW_DEV=true
-LLM_SERVICE_API_KEY=4f9c2b68f0a52d23a3c77e56b1f04826a5e39aef7a8db43db2f2b2c4e8b68f2e
 VITE_MAINTENANCE_MODE=false
-JWT_SIGNING_KEY=fc0a54992975b846c22a4a61e3c7f60d0906e777cbf693d1bc3ff356dcb398e4
-VAPID_PRIVATE_KEY=randomstringasvalidapikeyisnotneededforlocaldevelopment
 ```
 
-We'll need a `JWT_SIGNING_KEY` as well which can be generated with `openssl`
+We'll need to generate `JWT_SIGNING_KEY`, `LLM_SERVICE_API_KEY`, and `VAPID_PRIVATE_KEY` using `openssl`:
 
 ```bash
 echo "JWT_SIGNING_KEY=$(openssl rand -hex 32)" >> .env
+echo "LLM_SERVICE_API_KEY=$(openssl rand -hex 32)" >> .env
+echo "VAPID_PRIVATE_KEY=$(openssl rand -hex 32)" >> .env
 ```
 
 Now you should be able to get FastAPI going:
@@ -89,6 +88,8 @@ Install frontend dependencies:
 ```bash
 ring fe install
 ```
+
+### Backend Setup
 
 Initialize the database (tables will be empty):
 
