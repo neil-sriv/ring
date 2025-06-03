@@ -41,7 +41,13 @@ const theme = extendTheme({
           color: colors.primary.contrast,
           _hover: {
             backgroundColor: colors.primary.dark,
+            transform: "translateY(-2px)",
+            boxShadow: "lg",
           },
+          _active: {
+            transform: "translateY(0)",
+          },
+          transition: "all 0.2s",
           _disabled: {
             ...disabledStyles,
             _hover: {
@@ -54,7 +60,13 @@ const theme = extendTheme({
           color: colors.error.contrast,
           _hover: {
             backgroundColor: colors.error.dark,
+            transform: "translateY(-2px)",
+            boxShadow: "lg",
           },
+          _active: {
+            transform: "translateY(0)",
+          },
+          transition: "all 0.2s",
         },
         glass: {
           backgroundColor: "ui.glass.light.background",
@@ -65,7 +77,13 @@ const theme = extendTheme({
           _hover: {
             backgroundColor: "ui.glass.light.background",
             opacity: 0.9,
+            transform: "translateY(-2px)",
+            boxShadow: "lg",
           },
+          _active: {
+            transform: "translateY(0)",
+          },
+          transition: "all 0.2s",
           _dark: {
             backgroundColor: "ui.glass.dark.background",
             color: "ui.light",
@@ -85,6 +103,45 @@ const theme = extendTheme({
             backgroundColor: "ui.glass.dark.background",
             borderColor: "ui.glass.dark.border",
           },
+          transition: "all 0.2s",
+          _hover: {
+            transform: "translateY(-2px)",
+            boxShadow: "lg",
+          },
+        },
+      },
+    },
+    Modal: {
+      baseStyle: {
+        dialog: {
+          backgroundColor: "ui.glass.light.background",
+          backdropFilter: "blur(10px)",
+          border: "1px solid",
+          borderColor: "ui.glass.light.border",
+          _dark: {
+            backgroundColor: "ui.glass.dark.background",
+            borderColor: "ui.glass.dark.border",
+          },
+        },
+        overlay: {
+          backdropFilter: "blur(4px)",
+        },
+      },
+    },
+    Drawer: {
+      baseStyle: {
+        dialog: {
+          backgroundColor: "ui.glass.light.background",
+          backdropFilter: "blur(10px)",
+          border: "1px solid",
+          borderColor: "ui.glass.light.border",
+          _dark: {
+            backgroundColor: "ui.glass.dark.background",
+            borderColor: "ui.glass.dark.border",
+          },
+        },
+        overlay: {
+          backdropFilter: "blur(4px)",
         },
       },
     },
@@ -95,6 +152,10 @@ const theme = extendTheme({
             _selected: {
               color: colors.primary.main,
             },
+            _hover: {
+              transform: "translateX(4px)",
+            },
+            transition: "all 0.2s",
           },
         },
       },

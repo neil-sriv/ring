@@ -97,7 +97,7 @@ function Login() {
         position="absolute"
         w="100%"
         h="100%"
-        opacity={0.1}
+        opacity={0.15}
         zIndex={0}
       >
         <MotionBox
@@ -109,11 +109,13 @@ function Login() {
           borderRadius="full"
           bg="ui.main"
           animate={{
-            scale: [1, 1.2, 1],
-            opacity: [0.3, 0.5, 0.3],
+            scale: [1, 1.3, 1],
+            opacity: [0.4, 0.6, 0.4],
+            x: [0, 30, 0],
+            y: [0, -20, 0],
           }}
           transition={{
-            duration: 8,
+            duration: 12,
             repeat: Infinity,
             ease: "easeInOut",
           }}
@@ -128,10 +130,32 @@ function Login() {
           bg="ui.darkSlate"
           animate={{
             scale: [1.2, 1, 1.2],
-            opacity: [0.5, 0.3, 0.5],
+            opacity: [0.6, 0.4, 0.6],
+            x: [0, -40, 0],
+            y: [0, 30, 0],
           }}
           transition={{
-            duration: 10,
+            duration: 15,
+            repeat: Infinity,
+            ease: "easeInOut",
+          }}
+        />
+        <MotionBox
+          position="absolute"
+          top="50%"
+          left="50%"
+          w="200px"
+          h="200px"
+          borderRadius="full"
+          bg="ui.main"
+          animate={{
+            scale: [1, 1.2, 1],
+            opacity: [0.3, 0.5, 0.3],
+            x: [-100, 100, -100],
+            y: [-50, 50, -50],
+          }}
+          transition={{
+            duration: 18,
             repeat: Infinity,
             ease: "easeInOut",
           }}
