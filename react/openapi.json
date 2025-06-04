@@ -2393,15 +2393,14 @@
         ]
       }
     },
-    "/search/search/raw-search": {
+    "/search/raw-search": {
       "get": {
         "tags": [
-          "search",
           "search"
         ],
         "summary": "Raw Search",
         "description": "Search the search table for a given query.\n\nArgs:\n    query: The search query string\n    search_type: Type of search to perform (semantic, keyword, or dual)\n    limit: Maximum number of results to return\n    db: Database session\n\nReturns:\n    RawSearchResponse containing matching results and total count",
-        "operationId": "raw_search_search_search_raw_search_get",
+        "operationId": "raw_search_search_raw_search_get",
         "parameters": [
           {
             "name": "query",
@@ -2456,14 +2455,13 @@
         }
       }
     },
-    "/search/search/search": {
+    "/search/search": {
       "get": {
         "tags": [
-          "search",
           "search"
         ],
         "summary": "Perform Search",
-        "operationId": "perform_search_search_search_search_get",
+        "operationId": "perform_search_search_search_get",
         "parameters": [
           {
             "name": "query",
@@ -2590,7 +2588,7 @@
             "anyOf": [
               {
                 "type": "string",
-                "pattern": "password"
+                "pattern": "^password$"
               },
               {
                 "type": "null"

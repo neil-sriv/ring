@@ -17,7 +17,7 @@ from ring.search.schemas.search import (
     SearchType,
 )
 
-router = APIRouter(prefix="/search", tags=["search"])
+router = APIRouter()
 
 
 @router.get("/raw-search", response_model=RawSearchResponse)
