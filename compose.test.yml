@@ -12,7 +12,7 @@ services:
     networks:
       - default
   test-cockroach:
-    image: cockroachdb/cockroach:latest
+    image: cockroachdb/cockroach:v25.2.1
     container_name: ring-test-cockroach
     restart: unless-stopped
     profiles: [ "test" ]
