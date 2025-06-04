@@ -23,14 +23,18 @@ def requirements(
     **kwargs: dict[Any, Any],
 ) -> list[list[str]]:
     return [
-        ["uv", "sync", "--extra", "dev"],
+        ["uv", "sync", "--group", "dev", "--group", "ai"],
         [
             "uv",
             "pip",
             "compile",
-            "pyproject.toml",
+            "--group",
+            "dev",
+            "--group",
+            "ai",
             "-o",
             "ring/requirements.txt",
+            "pyproject.toml",
         ],
         ["pre-commit", "install"],
         ["ring", "fe", "install"],
