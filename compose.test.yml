@@ -31,7 +31,7 @@ services:
     command: [ "pytest", "-c", "ring/tests/pytest.ini" ]
     build:
       context: ./ring
-      dockerfile: tests/test.Dockerfile
+      dockerfile: test.Dockerfile
       target: ring
     depends_on:
       # - test-db
