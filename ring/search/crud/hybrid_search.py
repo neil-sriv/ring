@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from collections import defaultdict
+from enum import Enum
 from functools import wraps
 
 from llm_service import (
@@ -21,12 +22,20 @@ from ring.search.models.hybrid_search import (
 )
 from ring.search.schemas.search import SearchType
 
-SEARCH_MODEL_REGISTRY: RegistrationDict[str, type[APIIdentified]] = (
-    RegistrationDict("SEARCH_MODEL_REGISTRY")
-)
+SEARCH_MODEL_REGISTRY: RegistrationDict[
+    SearchableType, type[APIIdentified]
+] = RegistrationDict("SEARCH_MODEL_REGISTRY")
 
 
-def register_searchable_model(model_type: str):
+class SearchableType(str, Enum):
+    USER = "user"
+    GROUP = "group"
+    RESPONSE = "response"
+    LETTER = "letter"
+    QUESTION = "question"
+
+
+def register_searchable_model(model_type: SearchableType):
     """Decorator to register a model as searchable.
 
     :param model_type: Type identifier for the model
@@ -37,7 +46,7 @@ def register_searchable_model(model_type: str):
         def wrapper(*args, **kwargs):
             return cls(*args, **kwargs)
 
-        SEARCH_MODEL_REGISTRY[model_type] = cls
+        SEARCH_MODEL_REGISTRY[model_type.value] = cls
         return cls
 
     return decorator
@@ -60,7 +69,10 @@ def _generate_text_embedding(text: str) -> list[float | int]:
 
 
 def create_hybrid_search_document(
-    db: Session, raw_text: str, model_api_identifier: str, model_type: str
+    db: Session,
+    raw_text: str,
+    model_api_identifier: str,
+    model_type: SearchableType,
 ) -> HybridSearchDocument:
     text_embedding = _generate_text_embedding(raw_text)
     db_hybrid_search_document = HybridSearchDocument.create(
@@ -69,7 +81,7 @@ def create_hybrid_search_document(
     )
     association = HybridSearchDocumentAssociation.create(
         model_api_identifier=model_api_identifier,
-        model_type=model_type,
+        model_type=model_type.value,
         hybrid_search_document=db_hybrid_search_document,
     )
     db.add_all([db_hybrid_search_document, association])
@@ -160,12 +172,12 @@ def get_model_ids_from_hybrid_search_documents(
 
 def hydrate_results(
     db: Session,
-    model_type: str,
+    model_type: SearchableType,
     model_api_identifiers: list[str],
 ) -> list[APIIdentified]:
     return get_models(
         db,
-        SEARCH_MODEL_REGISTRY[model_type],
+        SEARCH_MODEL_REGISTRY[model_type.value],
         model_api_identifiers,
     )
 

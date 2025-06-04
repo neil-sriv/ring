@@ -21,7 +21,10 @@ from ring.parties.models.group_key_value import GroupKeyValue
 from ring.parties.models.user_group_assocation import user_group_association
 from ring.ring_pydantic.linked_schemas import GroupLinked
 from ring.ring_pydantic.pydantic_model import PydanticModel
-from ring.search.crud.hybrid_search import register_searchable_model
+from ring.search.crud.hybrid_search import (
+    SearchableType,
+    register_searchable_model,
+)
 from ring.sqlalchemy_base import Base
 from ring.tasks.models.schedule_model import Schedule
 
@@ -29,7 +32,7 @@ if TYPE_CHECKING:
     from ring.parties.models.user_model import User
 
 
-@register_searchable_model("group")
+@register_searchable_model(SearchableType.GROUP)
 class Group(Base, PydanticModel, APIIdentified, CreatedAtMixin):
     """SQLAlchemy model representing a group of users.
 
