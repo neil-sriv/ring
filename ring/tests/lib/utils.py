@@ -2,6 +2,9 @@ from __future__ import annotations
 
 from typing import Any, Sequence
 
+from pydantic import BaseModel
+
+from ring.lib.logger import logger
 from ring.ring_pydantic.pydantic_model import PydanticModel
 from ring.sqlalchemy_base import Base
 
@@ -21,6 +24,14 @@ def assert_pydantic_model_json_dump_equivalent_to_response_dict(
     model: PydanticModel, data: dict[str, Any]
 ) -> None:
     assert model.to_pydantic().model_dump(mode="json") == data
+
+
+def assert_pydantic_schema_json_dump_equivalent_to_response_dict(
+    schema: BaseModel, data: dict[str, Any]
+) -> None:
+    logger.error(schema.model_dump(mode="json"))
+    logger.error(data)
+    assert schema.model_dump(mode="json") == data
 
 
 def assert_api_model_not_found(
