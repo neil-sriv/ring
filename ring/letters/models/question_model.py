@@ -18,10 +18,6 @@ from ring.created_at import CreatedAtMixin
 from ring.parties.models.user_model import User
 from ring.ring_pydantic.linked_schemas import QuestionLinked
 from ring.ring_pydantic.pydantic_model import PydanticModel
-from ring.search.crud.hybrid_search import (
-    SearchableType,
-    register_searchable_model,
-)
 from ring.sqlalchemy_base import Base
 
 if TYPE_CHECKING:
@@ -29,7 +25,6 @@ if TYPE_CHECKING:
     from ring.letters.models.response_model import Response
 
 
-@register_searchable_model(SearchableType.QUESTION)
 class Question(Base, APIIdentified, PydanticModel, CreatedAtMixin):
     """SQLAlchemy model representing a question within a letter.
 

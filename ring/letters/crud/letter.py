@@ -26,10 +26,13 @@ from ring.lib.logger import logger
 from ring.parties.models.group_model import Group
 from ring.parties.models.user_model import User
 from ring.search.crud.hybrid_search import (
-    SearchableType,
     create_hybrid_search_document,
+    register_search_function,
 )
-from ring.search.models.hybrid_search import HybridSearchDocument
+from ring.search.models.hybrid_search import (
+    HybridSearchDocument,
+    SearchableType,
+)
 from ring.tasks.crud import schedule as schedule_crud
 from ring.tasks.models.task_model import TaskType
 
@@ -458,6 +461,7 @@ def add_participants(
     letter.participants.extend(participants)
 
 
+@register_search_function(SearchableType.LETTER, Letter)
 def create_letter_search_document(
     db: Session, letter: Letter
 ) -> HybridSearchDocument:

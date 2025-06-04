@@ -18,10 +18,13 @@ from ring.letters.models.letter_model import Letter
 from ring.parties.models.group_model import Group
 from ring.parties.models.user_model import User
 from ring.search.crud.hybrid_search import (
-    SearchableType,
     create_hybrid_search_document,
+    register_search_function,
 )
-from ring.search.models.hybrid_search import HybridSearchDocument
+from ring.search.models.hybrid_search import (
+    HybridSearchDocument,
+    SearchableType,
+)
 from ring.tasks.crud import (
     schedule as schedule_crud,
 )
@@ -218,6 +221,7 @@ def add_members(db: Session, group: Group, members: Sequence[User]) -> None:
         group.upcoming_letter.participants.extend(members)
 
 
+@register_search_function(SearchableType.GROUP, Group)
 def create_group_search_document(
     db: Session, group: Group
 ) -> HybridSearchDocument:

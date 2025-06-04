@@ -27,10 +27,13 @@ from ring.letters.models.response_model import (
 from ring.letters.schemas.response import Response as ResponseUpdate
 from ring.s3.models.s3_model import Image, MediaType
 from ring.search.crud.hybrid_search import (
-    SearchableType,
     create_hybrid_search_document,
+    register_search_function,
 )
-from ring.search.models.hybrid_search import HybridSearchDocument
+from ring.search.models.hybrid_search import (
+    HybridSearchDocument,
+    SearchableType,
+)
 
 if TYPE_CHECKING:
     from sqlalchemy.orm import Session
@@ -209,6 +212,7 @@ def create_response(
     return db_response
 
 
+@register_search_function(SearchableType.RESPONSE, Response)
 def create_response_search_document(
     db: Session, response: Response
 ) -> HybridSearchDocument:

@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from enum import Enum
+
 from pgvector.sqlalchemy import Vector
 from sqlalchemy import ForeignKey, UniqueConstraint, literal_column, select
 from sqlalchemy.dialects.postgresql import TSVECTOR
@@ -7,6 +9,14 @@ from sqlalchemy.orm import Mapped, Session, mapped_column, relationship
 
 from ring.created_at import CreatedAtMixin
 from ring.sqlalchemy_base import Base
+
+
+class SearchableType(str, Enum):
+    USER = "user"
+    GROUP = "group"
+    RESPONSE = "response"
+    LETTER = "letter"
+    QUESTION = "question"
 
 
 class HybridSearchDocumentAssociation(Base):

@@ -12,10 +12,13 @@ from sqlalchemy import select
 
 from ring.parties.models.user_model import User
 from ring.search.crud.hybrid_search import (
-    SearchableType,
     create_hybrid_search_document,
+    register_search_function,
 )
-from ring.search.models.hybrid_search import HybridSearchDocument
+from ring.search.models.hybrid_search import (
+    HybridSearchDocument,
+    SearchableType,
+)
 from ring.security import get_password_hash, verify_password
 
 if TYPE_CHECKING:
@@ -85,6 +88,7 @@ def get_users(db: Session, skip: int = 0, limit: int = 100) -> Sequence[User]:
     return db.scalars(select(User).offset(skip).limit(limit)).all()
 
 
+@register_search_function(SearchableType.USER, User)
 def create_user_search_document(
     db: Session, user: User
 ) -> HybridSearchDocument:

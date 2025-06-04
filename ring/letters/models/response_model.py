@@ -17,10 +17,6 @@ from ring.created_at import CreatedAtMixin
 from ring.ring_pydantic.linked_schemas import ResponseLinked
 from ring.ring_pydantic.pydantic_model import PydanticModel
 from ring.s3.models.s3_model import Image
-from ring.search.crud.hybrid_search import (
-    SearchableType,
-    register_searchable_model,
-)
 from ring.sqlalchemy_base import Base
 
 if TYPE_CHECKING:
@@ -58,7 +54,6 @@ class ImageResponseAssociation(Base):
     )
 
 
-@register_searchable_model(SearchableType.RESPONSE)
 class Response(Base, APIIdentified, PydanticModel, CreatedAtMixin):
     """SQLAlchemy model representing a response to a question.
 

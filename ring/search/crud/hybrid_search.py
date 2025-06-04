@@ -1,8 +1,10 @@
 from __future__ import annotations
 
 from collections import defaultdict
+from dataclasses import dataclass
 from enum import Enum
 from functools import wraps
+from typing import Callable
 
 from llm_service import (
     ApiClient,
@@ -19,37 +21,55 @@ from ring.lib.util import RegistrationDict
 from ring.search.models.hybrid_search import (
     HybridSearchDocument,
     HybridSearchDocumentAssociation,
+    SearchableType,
 )
 from ring.search.schemas.search import SearchType
 
-SEARCH_MODEL_REGISTRY: RegistrationDict[
-    SearchableType, type[APIIdentified]
-] = RegistrationDict("SEARCH_MODEL_REGISTRY")
+
+@dataclass
+class SearchRegistration:
+    model_class: type[APIIdentified]
+    search_function: Callable[[Session, APIIdentified], HybridSearchDocument]
 
 
-class SearchableType(str, Enum):
-    USER = "user"
-    GROUP = "group"
-    RESPONSE = "response"
-    LETTER = "letter"
-    QUESTION = "question"
+SEARCH_REGISTRY: RegistrationDict[SearchableType, SearchRegistration] = (
+    RegistrationDict("SEARCH_REGISTRY")
+)
 
 
-def register_searchable_model(model_type: SearchableType):
-    """Decorator to register a model as searchable.
-
-    :param model_type: Type identifier for the model
-    """
-
-    def decorator(cls: type[APIIdentified]) -> type[APIIdentified]:
-        @wraps(cls)
+def register_search_function(
+    searchable_type: SearchableType,
+    model_class: type[APIIdentified],
+):
+    def decorator(
+        search_function: Callable[
+            [Session, APIIdentified], HybridSearchDocument
+        ],
+    ):
+        @wraps(search_function)
         def wrapper(*args, **kwargs):
-            return cls(*args, **kwargs)
+            return search_function(*args, **kwargs)
 
-        SEARCH_MODEL_REGISTRY[model_type.value] = cls
-        return cls
+        SEARCH_REGISTRY[searchable_type.value] = SearchRegistration(
+            model_class=model_class,
+            search_function=wrapper,
+        )
+        return wrapper
 
     return decorator
+
+
+def type_to_model_class(
+    searchable_type: SearchableType,
+) -> type[APIIdentified]:
+    return SEARCH_REGISTRY[searchable_type].model_class
+
+
+def model_class_to_type(model: type[APIIdentified]) -> SearchableType:
+    for searchable_type, model_type in SEARCH_REGISTRY.items():
+        if model_type == model:
+            return searchable_type
+    raise ValueError(f"Model {model} not found in SEARCH_REGISTRY")
 
 
 def _generate_text_embedding(text: str) -> list[float | int]:
@@ -164,7 +184,7 @@ def get_model_ids_from_hybrid_search_documents(
         )
     )
     for assocation in assocations:
-        assocation_groups[assocation.model_type].append(
+        assocation_groups[SearchableType(assocation.model_type)].append(
             assocation.model_api_identifier
         )
     return assocation_groups
@@ -177,7 +197,7 @@ def hydrate_results(
 ) -> list[APIIdentified]:
     return get_models(
         db,
-        SEARCH_MODEL_REGISTRY[model_type.value],
+        SEARCH_REGISTRY[model_type.value].model_class,
         model_api_identifiers,
     )
 
