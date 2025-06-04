@@ -13,7 +13,7 @@ from sqlalchemy.orm import Session
 from ring.async_scheduler.schedule import register_interval_job_schedule
 from ring.fastapp.config import RingConfig, get_config
 from ring.lib.logger import logger
-from ring.sqlalchemy_base import Base, SessionLocal, get_db
+from ring.sqlalchemy_base import Base, SessionLocal, db_session, get_db
 
 jobstores = {
     "memory": MemoryJobStore(),
@@ -84,10 +84,10 @@ def job_factory(
     def decorator(
         func: Callable[..., JOB_RETURN_TYPE],
     ) -> Callable[..., JOB_RETURN_TYPE]:
+        @db_session
         @wraps(func)
-        def wrapper(*args: Any, **kwargs: Any) -> JOB_RETURN_TYPE:
+        def wrapper(db: Session, *args: Any, **kwargs: Any) -> JOB_RETURN_TYPE:
             logger.info(f"Running job {name}: {[args]} {[kwargs]}")
-            db = next(get_db())
             try:
                 return func(db, *args, **kwargs)
             finally:
