@@ -17,6 +17,11 @@ from ring.letters.crud.default_question import replace_default_questions
 from ring.letters.models.letter_model import Letter
 from ring.parties.models.group_model import Group
 from ring.parties.models.user_model import User
+from ring.search.crud.hybrid_search import (
+    SearchableType,
+    create_hybrid_search_document,
+)
+from ring.search.models.hybrid_search import HybridSearchDocument
 from ring.tasks.crud import (
     schedule as schedule_crud,
 )
@@ -69,6 +74,7 @@ def create_group(db: Session, admin_api_id: str, name: str) -> Group:
     )
     db_group = Group.create(name, admin_user)
     db.add(db_group)
+    db.add(create_group_search_document(db, db_group))
     replace_default_questions(db, db_group, DEFAULT_QUESTIONS)
     return db_group
 
@@ -210,3 +216,25 @@ def add_members(db: Session, group: Group, members: Sequence[User]) -> None:
         group.in_progress_letter.participants.extend(members)
     if group.upcoming_letter:
         group.upcoming_letter.participants.extend(members)
+
+
+def create_group_search_document(
+    db: Session, group: Group
+) -> HybridSearchDocument:
+    """Create a search document for a group.
+
+    Args:
+        db (Session): Database session
+        group (Group): Group to create a search document for
+
+    Returns:
+        HybridSearchDocument: Search document for the group
+    """
+    member_names = " ".join(member.name for member in group.members)
+    key_values = " ".join(
+        f"{key}: {value}" for key, value in group.key_values.items()
+    )
+    raw_text = f"{group.name} {member_names} {key_values}"
+    return create_hybrid_search_document(
+        db, raw_text, group.api_identifier, SearchableType.GROUP
+    )

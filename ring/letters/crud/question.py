@@ -7,7 +7,7 @@ including validation of user responses and response editing.
 from __future__ import annotations
 
 import json
-from typing import TYPE_CHECKING, Optional, Sequence
+from typing import TYPE_CHECKING, Sequence
 
 from llm_service import ApiClient, CompletionRequest, CompletionsApi
 from pydantic import BaseModel
@@ -15,11 +15,17 @@ from sqlalchemy import select
 
 from ring.api_identifier import util as api_identifier_crud
 from ring.fastapp.config import get_llm_config
+from ring.letters.crud.response import create_response
 from ring.letters.models.letter_model import Letter
 from ring.letters.models.question_model import Question
 from ring.letters.models.response_model import Response
 from ring.lib.logger import logger
 from ring.parties.models.user_model import User
+from ring.search.crud.hybrid_search import (
+    SearchableType,
+    create_hybrid_search_document,
+)
+from ring.search.models.hybrid_search import HybridSearchDocument
 
 if TYPE_CHECKING:
     from sqlalchemy.orm import Session
@@ -91,10 +97,7 @@ def add_response(
         ValueError: If user is not a participant or has already responded
     """
     _validate_response(question, user)
-    response = Response.create(user, question, response_text)
-    db.add(response)
-    question.responses.append(response)
-    return response
+    return create_response(db, question, user, response_text)
 
 
 def edit_response(
@@ -190,3 +193,42 @@ def generate_question(prompt: str, letter: Letter | None = None) -> str:
     output = OutputFormat.model_validate_json(response.output_schema)
 
     return output.question_text
+
+
+def create_question(
+    db: Session, letter: Letter, question_text: str, author: User | None = None
+) -> Question:
+    """Create a question.
+
+    Args:
+        db (Session): Database session
+        letter (Letter): Letter to add question to
+        question_text (str): Text of the question
+        author (User | None, optional): Author of the question. Defaults to None.
+
+    Returns:
+        Question: Created question
+    """
+    db_question = Question.create(letter, question_text, author=author)
+    db.add(db_question)
+    db.add(create_question_search_document(db, db_question))
+    return db_question
+
+
+def create_question_search_document(
+    db: Session, question: Question
+) -> HybridSearchDocument:
+    """Create a search document for a question.
+
+    Args:
+        db (Session): Database session
+        question (Question): Question to create a search document for
+
+    Returns:
+        HybridSearchDocument: Search document for the question
+    """
+    author_name = question.author.name if question.author else ""
+    raw_text = f"{question.question_text} {author_name}"
+    return create_hybrid_search_document(
+        db, raw_text, question.api_identifier, SearchableType.QUESTION
+    )

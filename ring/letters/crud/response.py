@@ -19,15 +19,23 @@ from ring.fastapp.dependencies import (
     a_get_s3_client_dependencies,
 )
 from ring.letters.models.letter_model import Letter
+from ring.letters.models.question_model import Question
 from ring.letters.models.response_model import (
     ImageResponseAssociation,
     Response,
 )
 from ring.letters.schemas.response import Response as ResponseUpdate
 from ring.s3.models.s3_model import Image, MediaType
+from ring.search.crud.hybrid_search import (
+    SearchableType,
+    create_hybrid_search_document,
+)
+from ring.search.models.hybrid_search import HybridSearchDocument
 
 if TYPE_CHECKING:
     from sqlalchemy.orm import Session
+
+    from ring.parties.models.user_model import User
 
 
 def get_response(db: Session, response_api_id: str) -> Response:
@@ -176,3 +184,44 @@ async def a_upload_image(
 #     add_image_to_response(db, response, image)
 
 #     return response
+
+
+def create_response(
+    db: Session,
+    question: Question,
+    user: User,
+    response_text: str,
+) -> Response:
+    """Create a response.
+
+    Args:
+        db (Session): Database session
+        question (Question): Question to add response to
+        user (User): User creating the response
+        response_text (str): Text content of the response
+
+    Returns:
+        Response: Newly created response
+    """
+    db_response = Response.create(user, question, response_text)
+    db.add(db_response)
+    db.add(create_response_search_document(db, db_response))
+    return db_response
+
+
+def create_response_search_document(
+    db: Session, response: Response
+) -> HybridSearchDocument:
+    """Create a search document for a response.
+
+    Args:
+        db (Session): Database session
+        response (Response): Response to create a search document for
+
+    Returns:
+        HybridSearchDocument: Search document for the response
+    """
+    raw_text = f"{response.response_text} {response.participant.name}"
+    return create_hybrid_search_document(
+        db, raw_text, response.api_identifier, SearchableType.RESPONSE
+    )

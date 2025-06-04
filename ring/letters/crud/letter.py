@@ -19,11 +19,17 @@ from ring.letters.constants import (
     QUESTION_BANK,
     LetterStatus,
 )
+from ring.letters.crud.question import create_question
 from ring.letters.models.letter_model import Letter
 from ring.letters.models.question_model import Question
 from ring.lib.logger import logger
 from ring.parties.models.group_model import Group
 from ring.parties.models.user_model import User
+from ring.search.crud.hybrid_search import (
+    SearchableType,
+    create_hybrid_search_document,
+)
+from ring.search.models.hybrid_search import HybridSearchDocument
 from ring.tasks.crud import schedule as schedule_crud
 from ring.tasks.models.task_model import TaskType
 
@@ -104,6 +110,7 @@ def create_letter(
     )
     db_letter = Letter.create(group, send_at, letter_status, number=number)
     db.add(db_letter)
+    db.add(create_letter_search_document(db, db_letter))
 
     if letter_status in [LetterStatus.IN_PROGRESS, LetterStatus.UPCOMING]:
         upsert_letter_tasks(db, db_letter, send_at)
@@ -263,9 +270,7 @@ def add_question(
     Returns:
         Question: Created question
     """
-    db_question = Question.create(letter, question_text, author=author)
-    db.add(db_question)
-    return db_question
+    return create_question(db, letter, question_text, author=author)
 
 
 def add_default_questions(db: Session, letter: Letter) -> Sequence[Question]:
@@ -451,3 +456,27 @@ def add_participants(
         participants (list[User]): Users to add as participants
     """
     letter.participants.extend(participants)
+
+
+def create_letter_search_document(
+    db: Session, letter: Letter
+) -> HybridSearchDocument:
+    """Create a search document for a letter.
+
+    Args:
+        db (Session): Database session
+        letter (Letter): Letter to create a search document for
+
+    Returns:
+        HybridSearchDocument: Search document for the letter
+    """
+    question_texts = " ".join(
+        question.question_text for question in letter.questions
+    )
+    participant_names = " ".join(
+        participant.name for participant in letter.participants
+    )
+    raw_text = f"{letter.group.name} {question_texts} {participant_names}"
+    return create_hybrid_search_document(
+        db, raw_text, letter.api_identifier, SearchableType.LETTER
+    )
