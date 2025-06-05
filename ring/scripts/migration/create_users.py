@@ -1,3 +1,5 @@
+"""Script to create users and groups from a JSON configuration file."""
+
 from __future__ import annotations
 
 import json
@@ -8,12 +10,24 @@ from typing import Any
 from ring.parties.crud import group as group_crud
 from ring.parties.crud import user as user_crud
 from ring.parties.models.group_model import Group
-from ring.scripts.script_base import script_di
-from ring.sqlalchemy_base import Session
+from ring.scripts.dependencies import (
+    ScriptDependencies,
+    get_script_dependencies,
+    script_depends,
+)
 
 
-@script_di()
-def run_script(db: Session, dry_run: bool = True) -> None:
+def run_script(
+    dry_run: bool = True,
+    deps: ScriptDependencies = script_depends(get_script_dependencies),
+) -> None:
+    """Create users and groups from a JSON configuration file.
+
+    Args:
+        dry_run (bool): Whether to commit changes
+        deps (ScriptDependencies): Script dependencies provided by script_depends
+    """
+    db = deps.db
     with open(os.path.join(os.path.dirname(__file__), "users.json")) as f:
         groups_dict: list[dict[str, Any]] = json.load(f)["groups"]
     groups: list[Group] = []

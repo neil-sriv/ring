@@ -1,27 +1,42 @@
-from __future__ import annotations
+"""Script to backfill admin status for specified users."""
 
-from sqlalchemy.orm import Session
+from __future__ import annotations
 
 from ring.lib.logger import logger
 from ring.parties.crud import user as user_crud
-from ring.scripts.script_base import script_di
+from ring.scripts.dependencies import (
+    ScriptDependencies,
+    get_script_dependencies,
+    script_depends,
+)
 
 
-@script_di()
 def run_script(
-    db: Session, dry_run: bool = True, user_emails: list[str] | None = None
+    user_emails: list[str] | None = None,
+    dry_run: bool = True,
+    deps: ScriptDependencies = script_depends(get_script_dependencies),
 ) -> None:
+    """Set admin status for specified users.
+
+    Args:
+        user_emails (list[str] | None): List of user emails to make admin
+        dry_run (bool): Whether to commit changes
+        deps (ScriptDependencies): Script dependencies provided by script_depends
+
+    Raises:
+        ValueError: If user_emails is not provided
+    """
     if user_emails is None:
         raise ValueError("user_emails is required")
     logger.info(f"Setting admin=True for {len(user_emails)} users")
     for user_email in user_emails:
-        user = user_crud.get_user_by_email(db, user_email)
+        user = user_crud.get_user_by_email(deps.db, user_email)
         if user is None:
             logger.error(f"User {user_email} not found")
             continue
-        user_crud.make_user_admin(db, user)
+        user_crud.make_user_admin(deps.db, user)
     if dry_run:
         logger.info("Dry run, rolling back")
-        db.rollback()
+        deps.db.rollback()
     else:
-        db.commit()
+        deps.db.commit()
