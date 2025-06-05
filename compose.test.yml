@@ -48,6 +48,7 @@ services:
       - cockroach_database_uri=cockroachdb://ringcockroach:ringcockroach@test-cockroach:26257/test
       - environment=test
       - VAPID_PRIVATE_KEY=private_key
+      - LLM_SERVICE_API_KEY=test
     networks:
       - default
 
