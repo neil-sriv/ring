@@ -12,7 +12,6 @@ annotated-types==0.6.0
     # via pydantic
 anyio==3.7.1
     # via
-    #   fastapi
     #   httpx
     #   starlette
     #   watchfiles
@@ -56,19 +55,21 @@ cfgv==3.4.0
     # via pre-commit
 charset-normalizer==3.3.2
     # via requests
-cli-helpers==2.3.0
+cli-helpers==2.4.0
     # via pgcli
 click==8.1.7
     # via
     #   ring (pyproject.toml)
     #   pgcli
     #   pgspecial
+    #   rich-toolkit
+    #   typer
     #   uvicorn
 configobj==5.0.8
     # via
     #   cli-helpers
     #   pgcli
-cryptography==42.0.2
+cryptography==45.0.3
     # via
     #   http-ece
     #   py-vapid
@@ -92,8 +93,10 @@ factory-boy==3.3.3
     # via pytest-factoryboy
 faker==37.1.0
     # via factory-boy
-fastapi==0.104.1
+fastapi==0.115.12
     # via ring (pyproject.toml)
+fastapi-cli==0.0.7
+    # via fastapi
 filelock==3.16.1
     # via virtualenv
 frozenlist==1.5.0
@@ -102,15 +105,15 @@ frozenlist==1.5.0
     #   aiosignal
 greenlet==3.0.3
     # via sqlalchemy
-h11==0.14.0
+h11==0.16.0
     # via
     #   httpcore
     #   uvicorn
 http-ece==1.2.1
     # via pywebpush
-httpcore==1.0.2
+httpcore==1.0.9
     # via httpx
-httptools==0.6.1
+httptools==0.6.4
     # via uvicorn
 httpx==0.28.1
     # via fastapi
@@ -140,7 +143,7 @@ itsdangerous==2.1.2
     # via fastapi
 jedi==0.19.1
     # via ipython
-jinja2==3.1.2
+jinja2==3.1.6
     # via fastapi
 jmespath==1.0.1
     # via
@@ -188,7 +191,7 @@ nodeenv==1.9.1
     # via pre-commit
 numpy==2.2.5
     # via pgvector
-orjson==3.9.10
+orjson==3.10.18
     # via fastapi
 packaging==25.0
     # via
@@ -196,11 +199,9 @@ packaging==25.0
     #   pytest-factoryboy
 parso==0.8.3
     # via jedi
-pendulum==3.0.0
-    # via pgcli
 pexpect==4.9.0
     # via ipython
-pgcli==4.0.1
+pgcli==4.3.0
     # via ring (pyproject.toml)
 pgspecial==2.1.1
     # via pgcli
@@ -238,7 +239,7 @@ pwdlib==0.2.0
     # via ring (pyproject.toml)
 py-vapid==1.9.2
     # via pywebpush
-pyasn1==0.5.1
+pyasn1==0.4.8
     # via
     #   python-jose
     #   rsa
@@ -283,15 +284,13 @@ python-dateutil==2.8.2
     # via
     #   botocore
     #   llm-service
-    #   pendulum
-    #   time-machine
 python-dotenv==1.0.0
     # via
     #   pydantic-settings
     #   uvicorn
-python-jose==3.3.0
+python-jose==3.4.0
     # via ring (pyproject.toml)
-python-multipart==0.0.6
+python-multipart==0.0.20
     # via fastapi
 pywebpush==2.0.3
     # via ring (pyproject.toml)
@@ -307,7 +306,12 @@ requests==2.32.3
     #   ring (pyproject.toml)
     #   pywebpush
 rich==14.0.0
-    # via pytest-pretty
+    # via
+    #   pytest-pretty
+    #   rich-toolkit
+    #   typer
+rich-toolkit==0.14.7
+    # via fastapi-cli
 rsa==4.9
     # via python-jose
 ruff==0.5.4
@@ -316,6 +320,8 @@ s3transfer==0.10.0
     # via boto3
 setproctitle==1.3.3
     # via pgcli
+shellingham==1.5.4
+    # via typer
 shortuuid==1.0.11
     # via ring (pyproject.toml)
 six==1.16.0
@@ -345,16 +351,16 @@ sqlparse==0.4.4
     #   pgspecial
 stack-data==0.6.3
     # via ipython
-starlette==0.27.0
+starlette==0.46.2
     # via fastapi
 tabulate==0.9.0
     # via cli-helpers
-time-machine==2.13.0
-    # via pendulum
 traitlets==5.14.1
     # via
     #   ipython
     #   matplotlib-inline
+typer==0.16.0
+    # via fastapi-cli
 types-awscrt==0.21.0
     # via botocore-stubs
 types-s3transfer==0.10.1
@@ -368,16 +374,18 @@ typing-extensions==4.13.2
     #   pydantic
     #   pydantic-core
     #   pytest-factoryboy
+    #   rich-toolkit
     #   sqlalchemy
+    #   typer
     #   typing-inspection
 typing-inspection==0.4.0
     # via pydantic
 tzdata==2023.3
-    # via
-    #   faker
-    #   pendulum
+    # via faker
 tzlocal==5.3.1
-    # via apscheduler
+    # via
+    #   apscheduler
+    #   pgcli
 ujson==5.9.0
     # via fastapi
 urllib3==2.3.0
@@ -385,8 +393,10 @@ urllib3==2.3.0
     #   botocore
     #   llm-service
     #   requests
-uvicorn==0.24.0.post1
-    # via fastapi
+uvicorn==0.34.2
+    # via
+    #   fastapi
+    #   fastapi-cli
 uvloop==0.19.0
     # via uvicorn
 virtualenv==20.28.0
