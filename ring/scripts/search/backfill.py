@@ -12,7 +12,6 @@ from ring.parties.crud import group as group_crud
 from ring.parties.crud import user as user_crud
 from ring.scripts.script_base import script_di
 from ring.search.crud.hybrid_search import (
-    type_to_model_class,
     type_to_search_registration,
 )
 from ring.search.models.hybrid_search import (
@@ -40,7 +39,7 @@ def run_script(
             SearchableType.RESPONSE,
         ]
     for searchable_type in searchable_types:
-        model_class = type_to_model_class(searchable_type)
+        model_class = type_to_search_registration(searchable_type).model_class
         models = db.scalars(select(model_class)).all()
         # partition models into those that have search documents and those that don't
 
