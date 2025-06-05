@@ -236,7 +236,7 @@ def create_group_search_document(
     """
     member_names = " ".join(member.name for member in group.members)
     key_values = " ".join(
-        f"{key}: {value}" for key, value in group.key_values.items()
+        f"{key}: {value}" for key, value in group.key_values.key_values.items()
     )
     raw_text = f"{group.name} {member_names} {key_values}"
     return create_hybrid_search_document(
