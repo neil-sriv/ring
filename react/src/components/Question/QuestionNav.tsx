@@ -1,9 +1,7 @@
 import { Button, Flex, Icon, useDisclosure } from "@chakra-ui/react";
 import { FaPlus } from "react-icons/fa";
 
-import { useQueryClient } from "@tanstack/react-query";
-import { GroupLinked, PublicLetter, UserLinked } from "../../client";
-import { readUserMePartiesMeGetQueryKey } from "../../client/@tanstack/react-query.gen";
+import { GroupLinked, PublicLetter } from "../../client";
 import AddQuestion from "./AddQuestion";
 import GenerateQuestion from "./GenerateQuestion";
 
@@ -15,10 +13,6 @@ type QuestionNavProps = {
 function QuestionNav(props: QuestionNavProps): JSX.Element {
   const addQuestionModal = useDisclosure();
   const generateQuestionModal = useDisclosure();
-  const queryClient = useQueryClient();
-  const currentUser = queryClient.getQueryData<UserLinked>(
-    readUserMePartiesMeGetQueryKey()
-  );
 
   const onClickAddQuestion = (): void => {
     addQuestionModal.onOpen();

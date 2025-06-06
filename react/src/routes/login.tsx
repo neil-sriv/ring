@@ -14,7 +14,6 @@ import {
   Link,
   Text,
   VStack,
-  keyframes,
   useBoolean,
   useColorModeValue,
 } from "@chakra-ui/react";
@@ -29,11 +28,6 @@ import { type SubmitHandler, useForm } from "react-hook-form";
 import type { BodyLoginAccessTokenLoginAccessTokenPost as AccessToken } from "../client";
 import useAuth from "../hooks/useAuth";
 import { emailPattern } from "../util/misc";
-
-const fadeIn = keyframes`
-  from { opacity: 0; transform: translateY(20px); }
-  to { opacity: 1; transform: translateY(0); }
-`;
 
 const MotionBox = motion(Box);
 
