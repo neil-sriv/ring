@@ -1,60 +1,69 @@
-import { Box, Flex, Icon, Text, useColorModeValue } from "@chakra-ui/react";
-// import { useQueryClient } from "@tanstack/react-query";
+import { Box, Flex, Text, useColorModeValue } from "@chakra-ui/react";
 import { Link } from "@tanstack/react-router";
-import { FiBriefcase, FiSearch, FiSettings, FiUsers } from "react-icons/fi";
-// import { PiCircleDashedFill } from "react-icons/pi";
-
-// import type { UserLinked } from "../../client";
-
-const items = [
-  // { icon: FiHome, title: "Dashboard", path: "/" },
-  { icon: FiBriefcase, title: "Groups", path: "/groups" },
-  { icon: FiSearch, title: "Search", path: "/search" },
-  // { icon: PiCircleDashedFill, title: "Loops", path: "/loops" },
-  { icon: FiSettings, title: "User Settings", path: "/settings" },
-];
+import { FiHome, FiSettings, FiUsers } from "react-icons/fi";
 
 interface SidebarItemsProps {
   onClose?: () => void;
 }
 
-const SidebarItems = ({ onClose }: SidebarItemsProps) => {
-  // const queryClient = useQueryClient();
-  const textColor = useColorModeValue("ui.main", "ui.light");
-  const bgActive = useColorModeValue("#E2E8F0", "#4A5568");
-  // const currentUser = queryClient.getQueryData<UserLinked>(["currentUser"]);
+export default function SidebarItems({ onClose }: SidebarItemsProps) {
+  const textColor = useColorModeValue("ui.dark", "ui.light");
+  const hoverBg = useColorModeValue("ui.glass.light.background", "ui.glass.dark.background");
+  const activeBg = useColorModeValue("ui.glass.light.background", "ui.glass.dark.background");
+  const activeColor = useColorModeValue("ui.main", "ui.main");
 
-  // const finalItems = currentUser?.is_superuser
-  const finalItems = false
-    ? [...items, { icon: FiUsers, title: "Admin", path: "/admin" }]
-    : items;
-
-  const listItems = finalItems.map(({ icon, title, path }) => (
-    <Flex
-      as={Link}
-      to={path}
-      w="100%"
-      p={2}
-      key={title}
-      activeProps={{
-        style: {
-          background: bgActive,
-          borderRadius: "12px",
-        },
-      }}
-      color={textColor}
-      onClick={onClose}
-    >
-      <Icon as={icon} alignSelf="center" />
-      <Text ml={2}>{title}</Text>
-    </Flex>
-  ));
+  const items = [
+    {
+      name: "Home",
+      icon: FiHome,
+      path: "/",
+    },
+    {
+      name: "Groups",
+      icon: FiUsers,
+      path: "/groups",
+    },
+    {
+      name: "Settings",
+      icon: FiSettings,
+      path: "/settings",
+    },
+  ];
 
   return (
-    <>
-      <Box>{listItems}</Box>
-    </>
+    <Box>
+      {items.map((item) => (
+        <Flex
+          key={item.name}
+          as={Link}
+          to={item.path}
+          p={3}
+          mb={2}
+          alignItems="center"
+          borderRadius="md"
+          color={textColor}
+          transition="all 0.2s"
+          _hover={{
+            bg: hoverBg,
+            textDecoration: "none",
+            transform: "translateX(4px)",
+            opacity: 0.9,
+          }}
+          activeProps={{
+            style: {
+              background: activeBg,
+              color: activeColor,
+              transform: "translateX(4px)",
+            },
+          }}
+          onClick={onClose}
+        >
+          <item.icon />
+          <Text ml={3} fontWeight="medium">
+            {item.name}
+          </Text>
+        </Flex>
+      ))}
+    </Box>
   );
-};
-
-export default SidebarItems;
+}

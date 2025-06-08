@@ -1,31 +1,32 @@
 import {
-  Button,
-  FormControl,
-  FormErrorMessage,
-  FormLabel,
-  Input,
-  Modal,
-  ModalBody,
-  ModalCloseButton,
-  ModalContent,
-  ModalFooter,
-  ModalHeader,
-  ModalOverlay,
+    Button,
+    FormControl,
+    FormErrorMessage,
+    FormLabel,
+    Input,
+    Modal,
+    ModalBody,
+    ModalCloseButton,
+    ModalContent,
+    ModalFooter,
+    ModalHeader,
+    ModalOverlay,
+    useColorModeValue,
 } from "@chakra-ui/react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { type SubmitHandler, useForm } from "react-hook-form";
 
+import { AxiosError } from "axios";
 import {
-  EditLetterLettersLetterLetterApiIdEditLetterPostError,
-  PublicLetter,
+    EditLetterLettersLetterLetterApiIdEditLetterPostError,
+    PublicLetter,
 } from "../../client";
+import {
+    editLetterLettersLetterLetterApiIdEditLetterPostMutation,
+    readLetterLettersLetterLetterApiIdGetQueryKey,
+} from "../../client/@tanstack/react-query.gen";
 import useCustomToast from "../../hooks/useCustomToast";
 import { toISOLocal } from "../../util/misc";
-import {
-  editLetterLettersLetterLetterApiIdEditLetterPostMutation,
-  readLetterLettersLetterLetterApiIdGetQueryKey,
-} from "../../client/@tanstack/react-query.gen";
-import { AxiosError } from "axios";
 
 type LetterFormProps = {
   sendAt: Date | string;
@@ -87,6 +88,8 @@ const EditLetter = ({ isOpen, onClose, loop }: EditLetterProps) => {
     });
   };
 
+  const textColor = useColorModeValue("ui.dark", "ui.light");
+
   return (
     <>
       <Modal
@@ -95,13 +98,24 @@ const EditLetter = ({ isOpen, onClose, loop }: EditLetterProps) => {
         size={{ base: "sm", md: "md" }}
         isCentered
       >
-        <ModalOverlay />
-        <ModalContent as="form" onSubmit={handleSubmit(onSubmit)}>
-          <ModalHeader>Start Next Loop</ModalHeader>
-          <ModalCloseButton />
+        <ModalOverlay backdropFilter="blur(4px)" />
+        <ModalContent 
+          as="form" 
+          onSubmit={handleSubmit(onSubmit)}
+          bg="ui.glass.light.background"
+          backdropFilter="blur(10px)"
+          border="1px solid"
+          borderColor="ui.glass.light.border"
+          _dark={{
+            bg: "ui.glass.dark.background",
+            borderColor: "ui.glass.dark.border",
+          }}
+        >
+          <ModalHeader color={textColor}>Start Next Loop</ModalHeader>
+          <ModalCloseButton color={textColor} />
           <ModalBody pb={6}>
             <FormControl isRequired>
-              <FormLabel htmlFor="sendAt">Send at</FormLabel>
+              <FormLabel htmlFor="sendAt" color={textColor}>Send at</FormLabel>
               <Input
                 id="sendAt"
                 {...register("sendAt", {
@@ -110,6 +124,19 @@ const EditLetter = ({ isOpen, onClose, loop }: EditLetterProps) => {
                 })}
                 type="datetime-local"
                 min={toISOLocal(new Date()).slice(0, 16)}
+                bg="ui.glass.light.background"
+                borderColor="ui.glass.light.border"
+                _dark={{
+                  bg: "ui.glass.dark.background",
+                  borderColor: "ui.glass.dark.border",
+                }}
+                _hover={{
+                  borderColor: "ui.primary",
+                }}
+                _focus={{
+                  borderColor: "ui.primary",
+                  boxShadow: "0 0 0 1px var(--chakra-colors-ui-primary)",
+                }}
               />
               {errors.sendAt && (
                 <FormErrorMessage>{errors.sendAt.message}</FormErrorMessage>
@@ -118,10 +145,24 @@ const EditLetter = ({ isOpen, onClose, loop }: EditLetterProps) => {
           </ModalBody>
 
           <ModalFooter gap={3}>
-            <Button variant="primary" type="submit" isLoading={isSubmitting}>
+            <Button 
+              variant="primary" 
+              type="submit" 
+              isLoading={isSubmitting}
+              _hover={{ 
+                opacity: 0.9,
+                bg: "ui.primary",
+              }}
+              transition="all 0.2s ease-in-out"
+            >
               Save
             </Button>
-            <Button onClick={onClose}>Cancel</Button>
+            <Button 
+              onClick={onClose}
+              variant="glass"
+            >
+              Cancel
+            </Button>
           </ModalFooter>
         </ModalContent>
       </Modal>
