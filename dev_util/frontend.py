@@ -22,7 +22,7 @@ def fe_install(
     *args: list[Any],
     **kwargs: dict[Any, Any],
 ) -> list[str]:
-    return ["pnpm"]
+    return ["pnpm", "install"]
 
 
 @cmd_run("dev", fe, cwd=FE_DIR)

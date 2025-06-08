@@ -49,11 +49,11 @@ google-auth==2.38.0
     # via google-genai
 google-genai==1.8.0
     # via llm (pyproject.toml)
-h11==0.14.0
+h11==0.16.0
     # via
     #   httpcore
     #   uvicorn
-httpcore==1.0.7
+httpcore==1.0.9
     # via httpx
 httptools==0.6.4
     # via uvicorn
@@ -208,7 +208,7 @@ ujson==5.10.0
     # via fastapi
 urllib3==2.3.0
     # via requests
-uvicorn==0.27.1
+uvicorn==0.34.2
     # via
     #   fastapi
     #   fastapi-cli
