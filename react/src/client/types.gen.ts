@@ -292,6 +292,21 @@ export type LetterUpdate = {
 export type MediaType = 'image' | 'video';
 
 /**
+ * Minimal letter model.
+ *
+ * Attributes:
+ * group (GroupUnlinked): Group the letter belongs to
+ */
+export type MinimalLetter = {
+    api_identifier: string;
+    number: number;
+    status: LetterStatus;
+    send_at: string;
+    created_at: string;
+    group: GroupUnlinked;
+};
+
+/**
  * Schema for setting a new password (e.g., after reset).
  *
  * Attributes:
@@ -1552,7 +1567,7 @@ export type ListLettersLettersLettersGetResponses = {
     /**
      * Successful Response
      */
-    200: Array<PublicLetter>;
+    200: Array<MinimalLetter>;
 };
 
 export type ListLettersLettersLettersGetResponse = ListLettersLettersLettersGetResponses[keyof ListLettersLettersLettersGetResponses];
