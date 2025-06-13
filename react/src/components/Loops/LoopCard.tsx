@@ -8,10 +8,10 @@ import {
   VStack
 } from "@chakra-ui/react";
 import { Link } from "@tanstack/react-router";
-import { PublicLetter } from "../../client";
+import { MinimalLetter } from "../../client";
 
 export function LoopCard(props: {
-  loop: PublicLetter;
+  loop: MinimalLetter;
   includeGroupName?: boolean
 }): JSX.Element {
   const sendDate = new Date(props.loop.send_at);

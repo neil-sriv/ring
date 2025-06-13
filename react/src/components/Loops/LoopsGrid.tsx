@@ -1,10 +1,10 @@
 import {
-    Box,
-    Flex,
-    Heading,
-    VStack
+  Box,
+  Flex,
+  Heading,
+  VStack
 } from "@chakra-ui/react";
-import { PublicLetter } from "../../client";
+import { MinimalLetter } from "../../client";
 import { LoopCard } from "./LoopCard";
 
 export function LoopsGrid({
@@ -13,7 +13,7 @@ export function LoopsGrid({
   subheading,
   includeGroupName = false,
 }: {
-  loops: PublicLetter[];
+  loops: MinimalLetter[];
   heading: string;
   subheading?: string;
   includeGroupName?: boolean;
@@ -24,17 +24,17 @@ export function LoopsGrid({
         <Heading size="md">{heading}</Heading>
         {subheading && <Heading size="sm">{subheading}</Heading>}
       </Box>
-      <Flex 
-        flexWrap="wrap" 
-        justifyContent="center" 
-        gap={4} 
+      <Flex
+        flexWrap="wrap"
+        justifyContent="center"
+        gap={4}
         w="100%"
       >
         {loops.map((loop) => (
           <Box key={loop.api_identifier} flex="0 1 calc(25% - 1rem)" minWidth="200px">
-            <LoopCard 
-              loop={loop} 
-              includeGroupName={includeGroupName} 
+            <LoopCard
+              loop={loop}
+              includeGroupName={includeGroupName}
             />
           </Box>
         ))}
