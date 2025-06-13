@@ -16,6 +16,7 @@ from sqlalchemy.orm import Session
 from ring.letters.constants import LetterStatus
 from ring.letters.models.letter_model import Letter
 from ring.parties.models.group_model import Group
+from ring.ring_pydantic.linked_schemas import MinimalLetter
 from ring.tests.factories.letters.letter_factory import LetterFactory
 from ring.tests.factories.parties.group_factory import GroupFactory
 from ring.tests.factories.parties.user_factory import UserFactory
@@ -146,7 +147,9 @@ class TestLetterAPI:
         assert response.status_code == 200
         data = response.json()
         assert len(data) == 5
-        assert_pydantic_models_json_dump_in_response_dict(letters, data)
+        assert_pydantic_models_json_dump_in_response_dict(
+            letters, data, override_pydantic_model=MinimalLetter
+        )
 
     def test_list_letters_not_found(
         self, authenticated_client: TestClient, db_session: Session
