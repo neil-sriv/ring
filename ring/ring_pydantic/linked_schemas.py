@@ -100,6 +100,16 @@ class LetterLinked(Letter):
     questions: list["QuestionLinked"]
 
 
+class MinimalLetter(Letter):
+    """Minimal letter model.
+
+    Attributes:
+        group (GroupUnlinked): Group the letter belongs to
+    """
+
+    group: "GroupUnlinked"
+
+
 class PublicLetter(Letter):
     """Public letter model with linked relationships.
 
