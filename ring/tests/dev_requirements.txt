@@ -243,6 +243,8 @@ pyasn1==0.4.8
     # via
     #   python-jose
     #   rsa
+pycasbin==1.45.0
+    # via ring (pyproject.toml)
 pycparser==2.22
     # via cffi
 pydantic==2.11.4
@@ -326,6 +328,8 @@ shellingham==1.5.4
     # via typer
 shortuuid==1.0.13
     # via ring (pyproject.toml)
+simpleeval==1.0.3
+    # via pycasbin
 six==1.17.0
     # via
     #   ecdsa
