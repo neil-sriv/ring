@@ -11,6 +11,14 @@ from typing import TYPE_CHECKING, Optional, Sequence
 from sqlalchemy import select
 
 from ring.parties.models.user_model import User
+from ring.search.crud.hybrid_search import (
+    create_hybrid_search_document,
+    register_search_function,
+)
+from ring.search.models.hybrid_search import (
+    HybridSearchDocument,
+    SearchableType,
+)
 from ring.security import get_password_hash, verify_password
 
 if TYPE_CHECKING:
@@ -80,6 +88,25 @@ def get_users(db: Session, skip: int = 0, limit: int = 100) -> Sequence[User]:
     return db.scalars(select(User).offset(skip).limit(limit)).all()
 
 
+@register_search_function(SearchableType.USER, User)
+def create_user_search_document(
+    db: Session, user: User
+) -> HybridSearchDocument:
+    """Create a search document for a user.
+
+    Args:
+        db (Session): Database session
+        user (User): User to create a search document for
+
+    Returns:
+        HybridSearchDocument: Search document for the user
+    """
+    raw_text = f"{user.name} {user.email}"
+    return create_hybrid_search_document(
+        db, raw_text, user.api_identifier, SearchableType.USER
+    )
+
+
 def create_user(
     db: Session,
     email: str,
@@ -100,6 +127,7 @@ def create_user(
     hashed_password = get_password_hash(password)
     db_user = User.create(email, name, hashed_password)
     db.add(db_user)
+    db.add(create_user_search_document(db, db_user))
     return db_user
 
 

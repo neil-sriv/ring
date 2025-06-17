@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import logging
 from typing import Generator
+from unittest.mock import patch
 
 import pytest
 from fastapi.testclient import TestClient
@@ -19,6 +20,7 @@ from sqlalchemy.orm import (
 
 from ring.fastapp.config import get_config
 from ring.fastapp.fast import app
+from ring.search.crud.hybrid_search import _generate_text_embedding
 from ring.sqlalchemy_base import Base, get_db
 from ring.tests.factories.base_factory import ALL_FACTORIES, BaseFactory
 
@@ -144,3 +146,23 @@ def unauthenticated_client(
     with TestClient(app, base_url="http://testserver/api/v1") as c:
         yield c
     logger.info("Closed test client")
+
+
+@pytest.fixture(autouse=True)
+def mock_text_embedding() -> Generator[None, None, None]:
+    """Automatically patch the text embedding function for all tests.
+
+    This fixture provides a consistent mock embedding vector for all tests,
+    ensuring deterministic behavior in tests that use text embeddings.
+
+    Yields:
+        None: The fixture yields nothing, but patches the function during test execution
+    """
+    # Create a mock embedding vector of 768 dimensions (standard size)
+    mock_embedding = [0.1] * 768
+
+    with patch(
+        "ring.search.crud.hybrid_search._generate_text_embedding",
+        return_value=mock_embedding,
+    ):
+        yield

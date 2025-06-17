@@ -31,7 +31,7 @@ services:
     command: [ "pytest", "-c", "ring/tests/pytest.ini" ]
     build:
       context: ./ring
-      dockerfile: tests/test.Dockerfile
+      dockerfile: test.Dockerfile
       target: ring
     depends_on:
       # - test-db
@@ -48,6 +48,7 @@ services:
       - cockroach_database_uri=cockroachdb://ringcockroach:ringcockroach@test-cockroach:26257/test
       - environment=test
       - VAPID_PRIVATE_KEY=private_key
+      - LLM_SERVICE_API_KEY=test
     networks:
       - default
 

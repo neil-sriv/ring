@@ -16,7 +16,6 @@ from ring.letters.models.response_model import Response
 from ring.parties.models.user_group_assocation import user_group_association
 from ring.ring_pydantic.linked_schemas import UserLinked
 from ring.ring_pydantic.pydantic_model import PydanticModel
-from ring.search.crud.hybrid_search import register_searchable_model
 from ring.sqlalchemy_base import Base
 
 if TYPE_CHECKING:
@@ -24,7 +23,6 @@ if TYPE_CHECKING:
     from ring.parties.models.group_model import Group
 
 
-@register_searchable_model("user")
 class User(Base, APIIdentified, PydanticModel, CreatedAtMixin):
     """SQLAlchemy model representing a user in the system.
 
