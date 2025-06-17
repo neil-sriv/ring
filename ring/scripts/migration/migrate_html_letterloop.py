@@ -24,19 +24,21 @@ from ring.letters.constants import LetterStatus
 from ring.letters.models.question_model import Question
 from ring.letters.models.response_model import Response
 from ring.parties.models.user_model import User
-from ring.sqlalchemy_base import Session
-from ring.scripts.script_base import script_di
+from ring.scripts.dependencies import (
+    ScriptDependencies,
+    get_script_dependencies,
+    script_depends,
+)
 from bs4 import BeautifulSoup, PageElement, Tag
 from ring.lib.logger import logger
 
 
-@script_di()
 def run_script(
-    db: Session,
     group_name: str,
     issue_numbers: list[int],
     user_admin_email: str,
     dry_run: bool = True,
+    deps: ScriptDependencies = script_depends(get_script_dependencies),
 ) -> None:
     """Import legacy Letterloop HTML files into the Ring database.
 
@@ -45,16 +47,17 @@ def run_script(
     images, and user information from the HTML files.
 
     Args:
-        db (Session): SQLAlchemy database session
         group_name (str): Name of the group the letters belong to
         issue_numbers (list[int]): List of issue numbers to import
         user_admin_email (str): Email of the admin user for the group
         dry_run (bool, optional): If True, rolls back all changes. Defaults to True.
+        deps (ScriptDependencies): Script dependencies provided by script_depends
 
     Raises:
         ValueError: If any specified HTML file is not found
         AssertionError: If the specified admin user is not found
     """
+    db = deps.db
     for issue_number in issue_numbers:
         issue_file_path = Path(
             f"/src/ring/scripts/migration/{group_name}/{issue_number}.html"
@@ -249,82 +252,57 @@ def _parse_question(
                     break
                 curr_str = (
                     first_content.contents[idx].string
-                    or first_content.contents[idx].contents[0].string
+                    if first_content.contents[idx].string
+                    else first_content.contents[idx].contents[0].string
                 )
-                if curr_str and response_text:
-                    response_text += f"\n{curr_str}"
-                elif curr_str:
-                    response_text += curr_str
+                response_text += curr_str
                 idx += 1
-            # second content is the image
-            if stack.contents[1].name == "img":
-                url = stack.contents[1].get("src")
+            if idx < len(first_content.contents):
+                url = first_content.contents[idx].get("src")
         else:
-            first_content = stack.contents[0]
-            author = first_content.contents[0].string
-            response_text = ""
-            idx = 2
-            while first_content.contents[idx].name != "button":
-                if (
-                    not first_content.contents[idx].string
-                    and not first_content.contents[idx].contents
-                ):
-                    break
-                curr_str = (
-                    first_content.contents[idx].string
-                    or first_content.contents[idx].contents[0].string
-                )
-                if curr_str and response_text:
-                    response_text += f"\n{curr_str}"
-                elif curr_str:
-                    response_text += curr_str
-                idx += 1
-        logger.info([author])
-        [current_user] = [
-            m for m in letter.group.members if m.name == author.strip()
-        ]
+            continue
+
+        [current_user] = [m for m in group.members if m.name == author]
         response = question_crud.add_response(
             db, current_question, current_user, response_text
         )
         db.add(response)
         if url:
-            with tempfile.SpooledTemporaryFile() as f:
-                f.write(requests.get(url).content)
-                f.seek(0)
-                # upload_result = upload_image(db, response, [f])
-
+            upload(db, response, url)
+        pp(str(response))
     return current_question
 
 
 def _parse_asked_question_text(
     question: PageElement,
 ) -> tuple[str | None, str]:
-    """Parse the question text and author from a question element.
+    """Parse the text of a question that was asked by a specific user.
 
     Args:
-        question (PageElement): BeautifulSoup PageElement containing the question
+        question (PageElement): BeautifulSoup PageElement containing the question text
 
     Returns:
-        tuple[str | None, str]: A tuple containing the author name (or None) and
-            the question text
+        tuple[str | None, str]: Tuple of (author name, question text)
     """
     author_name = None
-    parts = question.contents[0].contents
-    if len(parts) > 1:
-        if not parts[0].string:
-            author_name = question.contents[0].text.split(" asked:")[0]
+    question_text = ""
+    for content in question.contents:
+        if content.name == "span":
+            author_name = content.string
         else:
-            author_name = parts[0].string.split(" asked:")[0]
-    return author_name, parts[-1].string
+            question_text += content.string
+    return author_name, question_text
 
 
 async def upload(db: Session, response: Response, url: str):
-    """Upload an image from a URL and associate it with a response.
+    """Upload an image for a response.
 
     Args:
         db (Session): SQLAlchemy database session
-        response (Response): Response to associate the image with
+        response (Response): Response to attach the image to
         url (str): URL of the image to upload
     """
-    upload_result = await upload_image(db, response, url)
-    logger.info(upload_result)
+    with tempfile.NamedTemporaryFile() as f:
+        f.write(requests.get(url).content)
+        f.flush()
+        upload_image(db, response, f.name)

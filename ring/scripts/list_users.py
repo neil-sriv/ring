@@ -9,19 +9,27 @@ from sqlalchemy import select
 
 from ring.lib.logger import logger
 from ring.parties.models.user_model import User
-from ring.scripts.script_base import script_di
-from ring.sqlalchemy_base import Session
+from ring.scripts.dependencies import (
+    ScriptDependencies,
+    get_script_dependencies,
+    script_depends,
+)
 
 
-@script_di()
-def run_script(db: Session) -> None:
+def run_script(
+    deps: ScriptDependencies = script_depends(get_script_dependencies),
+) -> list[User]:
     """List all users in the database.
 
     Executes a simple query to retrieve all users and prints them to stdout.
     Uses SQLAlchemy's select statement for efficient querying.
 
     Args:
-        db (Session): Database session provided by script_di
+        deps (ScriptDependencies): Script dependencies provided by script_depends
+
+    Returns:
+        list[User]: List of all users in the database
     """
-    users = db.scalars(select(User)).all()
+    users = deps.db.scalars(select(User)).all()
     logger.info(users)
+    return users

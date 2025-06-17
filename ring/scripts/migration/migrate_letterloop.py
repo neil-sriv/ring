@@ -20,17 +20,19 @@ from ring.letters.models.letter_model import Letter
 from ring.lib.logger import logger
 from ring.parties.models.group_model import Group
 from ring.parties.models.user_model import User
-from ring.scripts.script_base import script_di
-from ring.sqlalchemy_base import Session
+from ring.scripts.dependencies import (
+    ScriptDependencies,
+    get_script_dependencies,
+    script_depends,
+)
 
 
-@script_di()
 def run_script(
-    db: Session,
     group_name: str,
     issue_number: int,
     user_admin_email: str,
     dry_run: bool = True,
+    deps: ScriptDependencies = script_depends(get_script_dependencies),
 ) -> None:
     """Import a legacy Letterloop text file into the Ring database.
 
@@ -39,16 +41,17 @@ def run_script(
     from the text file and creates the corresponding database records.
 
     Args:
-        db (Session): SQLAlchemy database session
         group_name (str): Name of the group the letter belongs to
         issue_number (int): Issue number of the letter to import
         user_admin_email (str): Email of the admin user for the group
         dry_run (bool, optional): If True, rolls back all changes. Defaults to True.
+        deps (ScriptDependencies): Script dependencies provided by script_depends
 
     Raises:
         ValueError: If the specified text file is not found
         AssertionError: If the specified admin user is not found
     """
+    db = deps.db
     issue_file_path = Path(
         f"/src/ring/scripts/migration/{group_name}/{issue_number}.txt"
     )

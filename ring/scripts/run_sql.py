@@ -9,12 +9,17 @@ from __future__ import annotations
 from sqlalchemy import text
 
 from ring.lib.logger import logger
-from ring.scripts.script_base import script_di
-from ring.sqlalchemy_base import Session
+from ring.scripts.dependencies import (
+    ScriptDependencies,
+    get_script_dependencies,
+    script_depends,
+)
 
 
-@script_di()
-def run_script(db: Session, query: str) -> None:
+def run_script(
+    query: str,
+    deps: ScriptDependencies = script_depends(get_script_dependencies),
+) -> None:
     """Execute a raw SQL query and display the results.
 
     This function executes the provided SQL query using SQLAlchemy's text()
@@ -22,8 +27,8 @@ def run_script(db: Session, query: str) -> None:
     names and formatted output.
 
     Args:
-        db (Session): Database session provided by script_di
         query (str): Raw SQL query to execute
+        deps (ScriptDependencies): Script dependencies provided by script_depends
 
     Note:
         The query is executed using SQLAlchemy's text() construct which provides
@@ -31,6 +36,6 @@ def run_script(db: Session, query: str) -> None:
         queries being executed.
     """
     logger.info("Running query: {}".format(query))
-    results = db.execute(text(query))
+    results = deps.db.execute(text(query))
     logger.info(results.keys())
     logger.info(results.fetchall())

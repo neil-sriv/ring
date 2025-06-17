@@ -9,13 +9,33 @@ from __future__ import annotations
 import importlib.util
 import json
 import pathlib
+from contextlib import contextmanager
 
 import click
 
 from ring.fastapp.init_app_modules import init_app_modules
 from ring.lib.logger import logger
+from ring.scripts.dependencies import (
+    ScriptDependencies,
+    get_script_dependencies,
+)
 
 # import asyncio
+
+
+@contextmanager
+def script_context():
+    """Context manager for script execution.
+
+    This context manager ensures proper initialization and cleanup of script resources.
+    """
+    init_app_modules()
+    logger.level("DEBUG")
+    logger.debug("Debug logging enabled")
+    try:
+        yield
+    finally:
+        pass
 
 
 @click.group()
@@ -42,23 +62,20 @@ def run_script(script: pathlib.Path, json_args: str):
     Raises:
         click.ClickException: If the script file is invalid or cannot be loaded
     """
-    init_app_modules()
+    with script_context():
+        file_name = script.name
+        spec = importlib.util.spec_from_file_location(file_name, script)
+        if spec is None:
+            raise click.ClickException("Invalid script")
+        module = importlib.util.module_from_spec(spec)
+        loader = spec.loader
+        if loader is None:
+            raise click.ClickException("Invalid script")
 
-    logger.level("DEBUG")
-    logger.debug("Debug logging enabled")
-    file_name = script.name
-    spec = importlib.util.spec_from_file_location(file_name, script)
-    if spec is None:
-        raise click.ClickException("Invalid script")
-    module = importlib.util.module_from_spec(spec)
-    loader = spec.loader
-    if loader is None:
-        raise click.ClickException("Invalid script")
-
-    script_args = json.loads(json_args)
-    loader.exec_module(module)
-    click.echo(f"Running script: {module}")
-    module.run_script(**script_args)
+        script_args = json.loads(json_args)
+        loader.exec_module(module)
+        click.echo(f"Running script: {module}")
+        module.run_script(**script_args)
 
 
 if __name__ == "__main__":
