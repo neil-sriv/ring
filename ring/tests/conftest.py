@@ -7,12 +7,14 @@ and HTTP clients. It sets up the test environment and manages test resources.
 from __future__ import annotations
 
 import logging
+import os
+from pathlib import Path
 from typing import Generator
 from unittest.mock import patch
 
 import pytest
 from fastapi.testclient import TestClient
-from sqlalchemy import Engine, create_engine
+from sqlalchemy import Engine, create_engine, text
 from sqlalchemy.orm import (
     Session,
     sessionmaker,
@@ -25,7 +27,6 @@ from ring.sqlalchemy_base import Base, get_db
 from ring.tests.factories.base_factory import ALL_FACTORIES, BaseFactory
 
 # Create a new SQLAlchemy engine instance
-# engine = create_engine("postgresql://ring:ring@test-db:5432/ring_test")
 config = get_config()
 engine = create_engine(config.cockroach_database_uri)
 
@@ -47,12 +48,97 @@ def logger() -> Generator[logging.Logger, None, None]:
     yield logger
 
 
+def _execute_schema_file(engine: Engine, logger: logging.Logger) -> None:
+    """Execute the schema.sql file to create the database schema.
+
+    Args:
+        engine (Engine): SQLAlchemy engine instance
+        logger (logging.Logger): Logger instance for tracking operations
+    """
+    schema_path = Path(__file__).parent.parent / "db" / "schema.sql"
+    if not schema_path.exists():
+        raise FileNotFoundError(f"Schema file not found at {schema_path}")
+
+    logger.info(f"Reading schema from {schema_path}")
+    with open(schema_path) as f:
+        schema_sql = f.read()
+
+    # Split the SQL file into individual statements
+    # This is a simple split that works for most cases, but might need adjustment
+    # for more complex SQL files with semicolons in string literals
+    statements = [
+        stmt.strip() for stmt in schema_sql.split(";") if stmt.strip()
+    ]
+
+    with engine.connect() as conn:
+        for statement in statements:
+            if statement:  # Skip empty statements
+                logger.debug(f"Executing: {statement[:100]}...")
+                conn.execute(text(statement))
+        conn.commit()
+
+
+def _drop_all_objects(engine: Engine, logger: logging.Logger) -> None:
+    """Drop all existing tables and sequences from the database.
+
+    Args:
+        engine (Engine): SQLAlchemy engine instance
+        logger (logging.Logger): Logger instance for tracking operations
+    """
+    with engine.connect() as conn:
+        # Drop all tables first (this will also drop dependent sequences)
+        result = conn.execute(
+            text("""
+            SELECT table_name 
+            FROM information_schema.tables 
+            WHERE table_schema = 'public'
+        """)
+        )
+        tables = [row[0] for row in result]
+
+        for table in tables:
+            conn.execute(text(f'DROP TABLE IF EXISTS "{table}" CASCADE'))
+
+        # Drop any remaining sequences
+        result = conn.execute(
+            text("""
+            SELECT sequence_name 
+            FROM information_schema.sequences 
+            WHERE sequence_schema = 'public'
+        """)
+        )
+        sequences = [row[0] for row in result]
+
+        for sequence in sequences:
+            conn.execute(text(f'DROP SEQUENCE IF EXISTS "{sequence}" CASCADE'))
+
+        conn.commit()
+        logger.info("Dropped all existing database objects")
+
+
+def _enable_vector_index(engine: Engine, logger: logging.Logger) -> None:
+    """Enable vector index feature in CockroachDB.
+
+    Args:
+        engine (Engine): SQLAlchemy engine instance
+        logger (logging.Logger): Logger instance for tracking operations
+    """
+    with engine.connect().execution_options(
+        isolation_level="AUTOCOMMIT"
+    ) as conn:
+        conn.execute(
+            text("SET CLUSTER SETTING feature.vector_index.enabled = true;")
+        )
+        conn.commit()
+        logger.info("Enabled vector index feature")
+
+
 @pytest.fixture(scope="session")
 def db_engine(logger: logging.Logger) -> Generator[Engine, None, None]:
     """Create and manage the test database engine.
 
-    This fixture creates a fresh database engine for testing, creates all tables,
-    and ensures proper cleanup after tests.
+    This fixture creates a fresh database engine for testing, creates all tables
+    using the schema.sql file, and ensures proper cleanup after tests.
 
     Args:
         logger (logging.Logger): Logger instance for tracking database operations
@@ -62,11 +148,20 @@ def db_engine(logger: logging.Logger) -> Generator[Engine, None, None]:
     """
     logger.info("Creating test database engine")
     try:
-        Base.metadata.create_all(bind=engine)
+        # Enable vector indexing
+        _enable_vector_index(engine, logger)
+
+        # Clean up any existing objects
+        _drop_all_objects(engine, logger)
+
+        # Create fresh schema
+        _execute_schema_file(engine, logger)
+
         yield engine
     finally:
-        Base.metadata.drop_all(bind=engine)
-        logger.info("Dropped test database engine")
+        # Clean up after tests
+        _drop_all_objects(engine, logger)
+        logger.info("Test database cleanup complete")
 
 
 def _patch_factories(logger: logging.Logger, session: Session) -> None:
