@@ -30,6 +30,7 @@ from ring.search.schemas.search import SearchType
 class SearchRegistration:
     model_class: type[APIIdentified]
     search_function: Callable[[Session, APIIdentified], HybridSearchDocument]
+    search_type: SearchableType
 
 
 SEARCH_REGISTRY: RegistrationDict[SearchableType, SearchRegistration] = (
@@ -53,22 +54,25 @@ def register_search_function(
         SEARCH_REGISTRY[searchable_type.value] = SearchRegistration(
             model_class=model_class,
             search_function=wrapper,
+            search_type=searchable_type,
         )
         return wrapper
 
     return decorator
 
 
-def type_to_model_class(
+def type_to_search_registration(
     searchable_type: SearchableType,
-) -> type[APIIdentified]:
-    return SEARCH_REGISTRY[searchable_type].model_class
+) -> SearchRegistration:
+    return SEARCH_REGISTRY[searchable_type]
 
 
-def model_class_to_type(model: type[APIIdentified]) -> SearchableType:
-    for searchable_type, model_type in SEARCH_REGISTRY.items():
-        if model_type == model:
-            return searchable_type
+def model_class_to_search_registration(
+    model: type[APIIdentified],
+) -> SearchRegistration:
+    for _, search_registration in SEARCH_REGISTRY.items():
+        if search_registration.model_class == model:
+            return search_registration
     raise ValueError(f"Model {model} not found in SEARCH_REGISTRY")
 
 

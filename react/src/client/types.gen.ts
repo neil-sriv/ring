@@ -1945,7 +1945,7 @@ export type GenerateCompletionLlmCompletionPostResponses = {
 
 export type GenerateCompletionLlmCompletionPostResponse = GenerateCompletionLlmCompletionPostResponses[keyof GenerateCompletionLlmCompletionPostResponses];
 
-export type RawSearchSearchSearchRawSearchGetData = {
+export type RawSearchSearchRawSearchGetData = {
     body?: never;
     path?: never;
     query: {
@@ -1953,28 +1953,28 @@ export type RawSearchSearchSearchRawSearchGetData = {
         search_type?: SearchType;
         limit?: number;
     };
-    url: '/search/search/raw-search';
+    url: '/search/raw-search';
 };
 
-export type RawSearchSearchSearchRawSearchGetErrors = {
+export type RawSearchSearchRawSearchGetErrors = {
     /**
      * Validation Error
      */
     422: HttpValidationError;
 };
 
-export type RawSearchSearchSearchRawSearchGetError = RawSearchSearchSearchRawSearchGetErrors[keyof RawSearchSearchSearchRawSearchGetErrors];
+export type RawSearchSearchRawSearchGetError = RawSearchSearchRawSearchGetErrors[keyof RawSearchSearchRawSearchGetErrors];
 
-export type RawSearchSearchSearchRawSearchGetResponses = {
+export type RawSearchSearchRawSearchGetResponses = {
     /**
      * Successful Response
      */
     200: RawSearchResponse;
 };
 
-export type RawSearchSearchSearchRawSearchGetResponse = RawSearchSearchSearchRawSearchGetResponses[keyof RawSearchSearchSearchRawSearchGetResponses];
+export type RawSearchSearchRawSearchGetResponse = RawSearchSearchRawSearchGetResponses[keyof RawSearchSearchRawSearchGetResponses];
 
-export type PerformSearchSearchSearchSearchGetData = {
+export type PerformSearchSearchSearchGetData = {
     body?: never;
     path?: never;
     query: {
@@ -1982,26 +1982,26 @@ export type PerformSearchSearchSearchSearchGetData = {
         search_type?: SearchType;
         limit?: number;
     };
-    url: '/search/search/search';
+    url: '/search/search';
 };
 
-export type PerformSearchSearchSearchSearchGetErrors = {
+export type PerformSearchSearchSearchGetErrors = {
     /**
      * Validation Error
      */
     422: HttpValidationError;
 };
 
-export type PerformSearchSearchSearchSearchGetError = PerformSearchSearchSearchSearchGetErrors[keyof PerformSearchSearchSearchSearchGetErrors];
+export type PerformSearchSearchSearchGetError = PerformSearchSearchSearchGetErrors[keyof PerformSearchSearchSearchGetErrors];
 
-export type PerformSearchSearchSearchSearchGetResponses = {
+export type PerformSearchSearchSearchGetResponses = {
     /**
      * Successful Response
      */
     200: SearchResponse;
 };
 
-export type PerformSearchSearchSearchSearchGetResponse = PerformSearchSearchSearchSearchGetResponses[keyof PerformSearchSearchSearchSearchGetResponses];
+export type PerformSearchSearchSearchGetResponse = PerformSearchSearchSearchGetResponses[keyof PerformSearchSearchSearchGetResponses];
 
 export type RootGetData = {
     body?: never;

@@ -20,7 +20,7 @@ import { FaSearch } from "react-icons/fa";
 
 import { useQuery } from "@tanstack/react-query";
 import { type SearchResult } from "../../client";
-import { performSearchSearchSearchSearchGetOptions } from "../../client/@tanstack/react-query.gen";
+import { performSearchSearchSearchGetOptions } from "../../client/@tanstack/react-query.gen";
 import { SearchResultRow } from "../../components/Common/SearchResultRow";
 
 export const Route = createFileRoute("/_layout/search")({
@@ -32,7 +32,7 @@ function SearchContent() {
     const [isSearching, setIsSearching] = useState(false);
 
     const { data: searchResults, refetch } = useQuery({
-        ...performSearchSearchSearchSearchGetOptions({
+        ...performSearchSearchSearchGetOptions({
             query: {
                 query: searchQuery,
             },
