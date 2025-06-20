@@ -35,7 +35,7 @@ from ring.letters.schemas.question import (
 from ring.lib.logger import logger
 from ring.parties.models.user_model import User
 from ring.ring_pydantic import PublicLetter as LetterSchema
-from ring.ring_pydantic.linked_schemas import DashboardLetters
+from ring.ring_pydantic.linked_schemas import DashboardLetters, MinimalLetter
 
 router = APIRouter()
 
@@ -82,7 +82,7 @@ async def add_next_letter(
     return db_letter
 
 
-@router.get("/letters/", response_model=Sequence[LetterSchema])
+@router.get("/letters/", response_model=Sequence[MinimalLetter])
 async def list_letters(
     group_api_id: str,
     skip: int = 0,

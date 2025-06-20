@@ -1,22 +1,22 @@
 import {
-    Box,
-    Container,
-    Heading,
-    Spinner,
-    Tab,
-    TabList,
-    TabPanel,
-    TabPanels,
-    Tabs,
-    useColorModeValue,
+  Box,
+  Container,
+  Heading,
+  Spinner,
+  Tab,
+  TabList,
+  TabPanel,
+  TabPanels,
+  Tabs,
+  useColorModeValue,
 } from "@chakra-ui/react";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
 import { Suspense } from "react";
-import { PublicLetter } from "../../../../client";
+import { MinimalLetter } from "../../../../client";
 import {
-    listLettersLettersLettersGetOptions,
-    readGroupPartiesGroupGroupApiIdGetOptions,
+  listLettersLettersLettersGetOptions,
+  readGroupPartiesGroupGroupApiIdGetOptions,
 } from "../../../../client/@tanstack/react-query.gen";
 import { GroupKeyValuesTable } from "../../../../components/GroupKeyValues/GroupKeyValuesTable";
 import { LLMPlayground } from "../../../../components/LLMPlayground/LLMPlayground";
@@ -29,7 +29,7 @@ type LoopsSearchParams = {
 };
 
 type LoopsLoaderProps = {
-  loops: PublicLetter[];
+  loops: MinimalLetter[];
 };
 
 export const Route = createFileRoute("/_layout/groups/$groupId/loops")({
@@ -95,7 +95,7 @@ function LoopsContentLoader() {
 
   return (
     <Container maxW="full">
-      <Box 
+      <Box
         bg="ui.glass.light.background"
         backdropFilter="blur(10px)"
         border="1px solid"
@@ -129,7 +129,7 @@ function LoopsContentLoader() {
         <Tabs variant="enclosed">
           <TabList>
             {tabsConfig.map((tab, index) => (
-              <Tab 
+              <Tab
                 key={index}
                 _hover={{ transform: "translateY(-2px)" }}
                 transition="all 0.2s"

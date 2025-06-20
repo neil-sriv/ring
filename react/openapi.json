@@ -1618,7 +1618,7 @@
                 "schema": {
                   "type": "array",
                   "items": {
-                    "$ref": "#/components/schemas/PublicLetter"
+                    "$ref": "#/components/schemas/MinimalLetter"
                   },
                   "title": "Response List Letters Letters Letters  Get"
                 }
@@ -3142,6 +3142,45 @@
         ],
         "title": "MediaType",
         "description": "Enumeration of supported media types.\n\nAttributes:\n    IMAGE: Image files (e.g., jpg, png)\n    VIDEO: Video files"
+      },
+      "MinimalLetter": {
+        "properties": {
+          "api_identifier": {
+            "type": "string",
+            "title": "Api Identifier"
+          },
+          "number": {
+            "type": "integer",
+            "title": "Number"
+          },
+          "status": {
+            "$ref": "#/components/schemas/LetterStatus"
+          },
+          "send_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Send At"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          },
+          "group": {
+            "$ref": "#/components/schemas/GroupUnlinked"
+          }
+        },
+        "type": "object",
+        "required": [
+          "api_identifier",
+          "number",
+          "status",
+          "send_at",
+          "created_at",
+          "group"
+        ],
+        "title": "MinimalLetter",
+        "description": "Minimal letter model.\n\nAttributes:\n    group (GroupUnlinked): Group the letter belongs to"
       },
       "NewPassword": {
         "properties": {

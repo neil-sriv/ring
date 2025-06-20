@@ -1,17 +1,17 @@
 import { Button, Flex, Icon, useDisclosure } from "@chakra-ui/react";
 import { FaPlus } from "react-icons/fa";
 
-import AddLetter from "./AddLoop";
-import { GroupLinked, PublicLetter, UserLinked } from "../../client";
 import { useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "@tanstack/react-router";
+import { GroupLinked, MinimalLetter, UserLinked } from "../../client";
 import {
   listLettersLettersLettersGetQueryKey,
   readUserMePartiesMeGetQueryKey,
 } from "../../client/@tanstack/react-query.gen";
+import AddLetter from "./AddLoop";
 
 type LoopNavProps = {
-  loops: PublicLetter[];
+  loops: MinimalLetter[];
   group: GroupLinked;
 };
 

@@ -1,10 +1,9 @@
 import { Box, VStack } from "@chakra-ui/react";
-import { PublicLetter } from "../../client";
-import { LoopsGrid } from "./LoopsGrid";
+import { GroupLinked, MinimalLetter } from "../../client";
 import LoopNav from "./LoopNav";
-import { GroupLinked } from "../../client";
+import { LoopsGrid } from "./LoopsGrid";
 
-export function LoopsTab({ loops, group }: { loops: PublicLetter[]; group: GroupLinked }) {
+export function LoopsTab({ loops, group }: { loops: MinimalLetter[]; group: GroupLinked }) {
   const publishedLoops = loops.filter(loop => loop.status === "SENT");
   const inProgressLoops = loops.filter(loop => loop.status === "IN_PROGRESS");
   const upcomingLoops = loops.filter(loop => loop.status !== "SENT" && loop.status !== "IN_PROGRESS");
