@@ -1,1 +1,3 @@
-p,usr_59c222b7-7741-48e2-b70c-1664f0305eed,lttr_ae3b36df-448c-416b-9724-27a9f8a3b9fd,read
+p,grp_b3fd0a4d-8e3d-4e22-a525-13c56780e0ec,grp_b3fd0a4d-8e3d-4e22-a525-13c56780e0ec,read
+g2,lttr_ae3b36df-448c-416b-9724-27a9f8a3b9fd,grp_b3fd0a4d-8e3d-4e22-a525-13c56780e0ec
+g,usr_59c222b7-7741-48e2-b70c-1664f0305eed,grp_b3fd0a4d-8e3d-4e22-a525-13c56780e0ec
