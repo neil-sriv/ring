@@ -73,6 +73,7 @@ dependencies = [
     "apscheduler>=3.11.0",
     "pgvector>=0.4.1",
     "pycasbin>=1.45.0",
+    "casbin-sqlalchemy-adapter>=1.4.0",
 ]
 
 [dependency-groups]
