@@ -3,7 +3,11 @@ from __future__ import annotations
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
-from ring.fastapp.dependencies import get_db
+from ring.fastapp.dependencies import (
+    AuthenticatedRequestDependencies,
+    get_db,
+    get_request_dependencies,
+)
 from ring.ring_pydantic.linked_schemas import SearchResponse, SearchResult
 from ring.search.crud.hybrid_search import (
     dual_search_hybrid_search_document,
@@ -70,9 +74,17 @@ async def perform_search(
     query: str,
     search_type: SearchType = SearchType.DUAL,
     limit: int = 10,
-    db: Session = Depends(get_db),
+    req_dep: AuthenticatedRequestDependencies = Depends(
+        get_request_dependencies,
+    ),
 ) -> SearchResponse:
-    results = search(db=db, query=query, limit=limit)
+    results = search(
+        db=req_dep.db,
+        query=query,
+        user=req_dep.current_user,
+        limit=limit,
+        search_type=search_type,
+    )
     return SearchResponse(
         results=[SearchResult.from_model(result) for result in results],
         total=len(results),

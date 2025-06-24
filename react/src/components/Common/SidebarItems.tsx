@@ -1,6 +1,6 @@
 import { Box, Flex, Text, useColorModeValue } from "@chakra-ui/react";
 import { Link } from "@tanstack/react-router";
-import { FiHome, FiSettings, FiUsers } from "react-icons/fi";
+import { FiHome, FiSearch, FiSettings, FiUsers } from "react-icons/fi";
 
 interface SidebarItemsProps {
   onClose?: () => void;
@@ -22,6 +22,11 @@ export default function SidebarItems({ onClose }: SidebarItemsProps) {
       name: "Groups",
       icon: FiUsers,
       path: "/groups",
+    },
+    {
+      name: "Search",
+      icon: FiSearch,
+      path: "/search",
     },
     {
       name: "Settings",
