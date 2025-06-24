@@ -1,39 +1,60 @@
 from __future__ import annotations
 
-from enum import Enum
 from typing import Sequence
 
+from casbin import Enforcer
+from sqlalchemy.orm import Session
+
 from ring.api_identifier.api_identified_model import APIIdentified
-from ring.authz.enforcer import get_enforcer
+from ring.authz.enforcer import (
+    Action,
+    build_stateless_enforcer,
+    enforce_stateless,
+)
 from ring.parties.models.user_model import User
 
-_enforcer = get_enforcer()
 
-
-class Action(Enum):
-    """Action to perform on a resource."""
-
-    READ = "read"
-    WRITE = "write"
-
-
-def can(user: User, action: Action, resource: APIIdentified) -> bool:
+def can(
+    db: Session,
+    user: User,
+    action: Action,
+    resource: APIIdentified,
+    enforcer: Enforcer | None = None,
+) -> bool:
     """Check if a user has permission to perform an action on a resource."""
-    return _enforcer.enforce(
-        user.api_identifier, resource.api_identifier, action.value
+    return enforce_stateless(
+        db,
+        user.api_identifier,
+        resource.api_identifier,
+        action.value,
+        enforcer,
     )
 
 
-def check(user: User, action: Action, resource: APIIdentified) -> bool:
+def check(
+    db: Session,
+    user: User,
+    action: Action,
+    resource: APIIdentified,
+    enforcer: Enforcer | None = None,
+) -> bool:
     """Check if a user has permission to perform an action on a resource."""
-    if not can(user, action, resource):
+    if not can(db, user, action, resource, enforcer):
         raise PermissionError(
             f"User {user.api_identifier} does not have permission to {action.value} {resource.api_identifier}"
         )
 
 
 def filter_to_authorized(
-    user: User, action: Action, resources: Sequence[APIIdentified]
+    db: Session,
+    user: User,
+    action: Action,
+    resources: Sequence[APIIdentified],
 ) -> Sequence[APIIdentified]:
     """Filter a sequence of resources to only include those that the user has permission to perform an action on."""
-    return [resource for resource in resources if can(user, action, resource)]
+    enforcer = build_stateless_enforcer(db, user.api_identifier)
+    return [
+        resource
+        for resource in resources
+        if can(db, user, action, resource, enforcer)
+    ]
