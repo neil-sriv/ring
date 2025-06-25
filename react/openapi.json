@@ -2462,6 +2462,11 @@
         ],
         "summary": "Perform Search",
         "operationId": "perform_search_search_search_get",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
         "parameters": [
           {
             "name": "query",

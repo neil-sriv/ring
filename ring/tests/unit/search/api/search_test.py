@@ -12,17 +12,16 @@ from unittest.mock import MagicMock, patch
 from fastapi.testclient import TestClient
 from sqlalchemy.orm import Session
 
+from ring.parties.models.user_model import User
 from ring.ring_pydantic.linked_schemas import SearchResponse, SearchResult
 from ring.search.crud.hybrid_search import (
     HybridSearchDocument,
     HybridSearchDocumentAssociation,
     SearchableType,
 )
-from ring.search.schemas.search import SearchType
+from ring.tests.factories.parties.group_factory import GroupFactory
 from ring.tests.factories.parties.user_factory import UserFactory
 from ring.tests.lib.utils import (
-    assert_pydantic_model_json_dump_equivalent_to_response_dict,
-    assert_pydantic_models_json_dump_in_response_dict,
     assert_pydantic_schema_json_dump_equivalent_to_response_dict,
 )
 
@@ -115,6 +114,7 @@ class TestSearchAPI:
         self,
         mock_generate_embedding: MagicMock,
         authenticated_client: TestClient,
+        current_user: User,
         db_session: Session,
         logger,
     ) -> None:
@@ -133,6 +133,10 @@ class TestSearchAPI:
         """
         # Create test users
         users = [UserFactory.create() for _ in range(3)]
+        group = GroupFactory.create()
+        for user in users:
+            group.members.append(user)
+        group.members.append(current_user)
         db_session.commit()
 
         # Create test documents with different embeddings

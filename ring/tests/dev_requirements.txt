@@ -80,7 +80,9 @@ cryptography==44.0.2
     #   python-jose
     #   pywebpush
 decorator==5.2.1
-    # via ipython
+    # via
+    #   ipdb
+    #   ipython
 distlib==0.3.9
     # via virtualenv
 dnspython==2.7.0
@@ -134,9 +136,12 @@ inflection==0.5.1
     # via pytest-factoryboy
 iniconfig==2.1.0
     # via pytest
+ipdb==0.13.13
+    # via ring (pyproject.toml:dev)
 ipython==8.36.0
     # via
     #   ring (pyproject.toml)
+    #   ipdb
     #   ipython-autoimport
     #   ipython-autotime
 ipython-autoimport==0.5.1

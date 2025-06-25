@@ -16,8 +16,11 @@ from sqlalchemy.orm import Session
 
 from ring.api_identifier.api_identified_model import APIIdentified
 from ring.api_identifier.util import get_models
+from ring.authz.authz import filter_to_authorized
+from ring.authz.enforcer import Action
 from ring.fastapp.config import get_llm_config
 from ring.lib.util import RegistrationDict
+from ring.parties.models.user_model import User
 from ring.search.models.hybrid_search import (
     HybridSearchDocument,
     HybridSearchDocumentAssociation,
@@ -209,6 +212,7 @@ def hydrate_results(
 def search(
     db: Session,
     query: str,
+    user: User,
     limit: int = 10,
     search_type: SearchType = SearchType.DUAL,
 ) -> list[APIIdentified]:
@@ -221,4 +225,7 @@ def search(
         hydrated_results.extend(
             hydrate_results(db, model_type, model_api_identifiers)
         )
+    hydrated_results = filter_to_authorized(
+        db, user, Action.READ, hydrated_results
+    )
     return hydrated_results

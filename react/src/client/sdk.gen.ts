@@ -1390,6 +1390,12 @@ export const rawSearchSearchRawSearchGet = <ThrowOnError extends boolean = false
  */
 export const performSearchSearchSearchGet = <ThrowOnError extends boolean = false>(options: Options<PerformSearchSearchSearchGetData, ThrowOnError>) => {
     return (options.client ?? _heyApiClient).get<PerformSearchSearchSearchGetResponse, PerformSearchSearchSearchGetError, ThrowOnError>({
+        security: [
+            {
+                scheme: 'bearer',
+                type: 'http'
+            }
+        ],
         url: '/search/search',
         ...options
     });
