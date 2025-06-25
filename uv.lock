@@ -1687,6 +1687,18 @@ wheels = [
 ]
 
 [[package]]
+name = "pycasbin"
+version = "1.45.0"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "simpleeval" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/0f/1a/da3f411c365e8335e5634061cfce114f5a3500bc564c84279766746a72fa/pycasbin-1.45.0.tar.gz", hash = "sha256:2f4a95b9f41e41bb1abfaa72d6f4246014ec5770ad227c07f6ee98a586742dfd", size = 426292, upload-time = "2025-06-07T13:06:11.607Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/86/c1/37e7ce788ef8d34727563a881a86346d51796eac5d5d032bf22881399f8e/pycasbin-1.45.0-py3-none-any.whl", hash = "sha256:74ca4ed64c7a36dda1bf1b616414860f31ee9fcb45058ca0052fa927251dd574", size = 475607, upload-time = "2025-06-07T13:06:09.881Z" },
+]
+
+[[package]]
 name = "pycparser"
 version = "2.22"
 source = { registry = "https://pypi.org/simple" }
@@ -2031,6 +2043,7 @@ dependencies = [
     { name = "pre-commit" },
     { name = "psycopg2-binary" },
     { name = "pwdlib", extra = ["argon2", "bcrypt"] },
+    { name = "pycasbin" },
     { name = "pydantic" },
     { name = "pyjwt" },
     { name = "pynamodb" },
@@ -2078,6 +2091,7 @@ requires-dist = [
     { name = "pre-commit", specifier = ">=4.0.1" },
     { name = "psycopg2-binary", specifier = ">=2.9.10" },
     { name = "pwdlib", extras = ["argon2", "bcrypt"], specifier = "~=0.2" },
+    { name = "pycasbin", specifier = ">=1.45.0" },
     { name = "pydantic", specifier = "~=2.5" },
     { name = "pyjwt", specifier = "~=2.8" },
     { name = "pynamodb", specifier = "~=5.0" },
@@ -2244,6 +2258,15 @@ source = { registry = "https://pypi.org/simple" }
 sdist = { url = "https://files.pythonhosted.org/packages/8c/e2/bcf761f3bff95856203f9559baf3741c416071dd200c0fc19fad7f078f86/shortuuid-1.0.13.tar.gz", hash = "sha256:3bb9cf07f606260584b1df46399c0b87dd84773e7b25912b7e391e30797c5e72", size = 9662, upload-time = "2024-03-11T20:11:06.879Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/c0/44/21d6bf170bf40b41396480d8d49ad640bca3f2b02139cd52aa1e272830a5/shortuuid-1.0.13-py3-none-any.whl", hash = "sha256:a482a497300b49b4953e15108a7913244e1bb0d41f9d332f5e9925dba33a3c5a", size = 10529, upload-time = "2024-03-11T20:11:04.807Z" },
+]
+
+[[package]]
+name = "simpleeval"
+version = "1.0.3"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/ff/6f/15be211749430f52f2c8f0c69158a6fc961c03aac93fa28d44d1a6f5ebc7/simpleeval-1.0.3.tar.gz", hash = "sha256:67bbf246040ac3b57c29cf048657b9cf31d4e7b9d6659684daa08ca8f1e45829", size = 24358, upload-time = "2024-11-02T10:29:46.912Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/a0/e9/e58082fbb8cecbb6fb4133033c40cc50c248b1a331582be3a0f39138d65b/simpleeval-1.0.3-py3-none-any.whl", hash = "sha256:e3bdbb8c82c26297c9a153902d0fd1858a6c3774bf53ff4f134788c3f2035c38", size = 15762, upload-time = "2024-11-02T10:29:45.706Z" },
 ]
 
 [[package]]
