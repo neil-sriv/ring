@@ -6,7 +6,11 @@ from casbin import Enforcer
 from sqlalchemy.orm import Session
 
 from ring.api_identifier.api_identified_model import APIIdentified
-from ring.api_identifier.util import bulk_get_models, get_models
+from ring.api_identifier.util import (
+    IDNotFoundException,
+    bulk_get_models,
+    get_models,
+)
 from ring.authz.enforcer import (
     Action,
     build_stateless_enforcer,
@@ -27,7 +31,7 @@ def can(
         db,
         user.api_identifier,
         resource.api_identifier,
-        action.value,
+        action,
         enforcer,
     )
 
@@ -91,6 +95,11 @@ def bulk_check(
         raise PermissionError(
             "User does not have permission to perform action on one or more resources"
         )
+    return [
+        resource
+        for resource in resources
+        if not isinstance(resource, InaccessibleResource)
+    ]
 
 
 def bulk_load_and_check(
@@ -99,7 +108,12 @@ def bulk_load_and_check(
     action: Action,
     resource_api_identifiers: Sequence[str],
 ) -> Sequence[APIIdentified]:
-    resources = bulk_get_models(db, resource_api_identifiers)
+    try:
+        resources = bulk_get_models(db, resource_api_identifiers)
+    except IDNotFoundException as e:
+        raise PermissionError(
+            f"One or more resources not found or not accessible to user: {e.api_ids}"
+        ) from e
     return bulk_check(db, user, action, resources)
 
 

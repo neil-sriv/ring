@@ -103,4 +103,4 @@ def enforce_stateless(
 ) -> bool:
     if enforcer is None:
         enforcer = build_stateless_enforcer(db, sub_api_id)
-    return enforcer.enforce(sub_api_id, obj_api_id, act)
+    return enforcer.enforce(sub_api_id, obj_api_id, act.value)
