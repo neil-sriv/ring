@@ -8,13 +8,12 @@ from __future__ import annotations
 
 from collections import defaultdict
 from dataclasses import dataclass
-from enum import Enum
 from typing import TYPE_CHECKING, Optional, Sequence, TypeVar
 
 from fastapi import HTTPException
 from sqlalchemy.exc import NoResultFound
 
-from ring.api_identifier.api_identified_model import APIIdentified
+from ring.api_identifier.api_identified_model import APIIdentified, APIPrefix
 from ring.lib.util import RegistrationDict
 
 if TYPE_CHECKING:
@@ -65,17 +64,6 @@ class IDNotFoundException(APIIdentifierException):
 
 
 API_CLS = TypeVar("API_CLS", bound=APIIdentified)
-
-
-class APIPrefix(str, Enum):
-    USER = "usr"
-    GROUP = "grp"
-    INVITE = "inv"
-    LETTER = "lttr"
-    QUESTION = "qstn"
-    RESPONSE = "rspn"
-    DEFAULT_QUESTION = "dfqstn"
-    SUBSCRIPTION = "sbscrp"
 
 
 @dataclass
