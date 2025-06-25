@@ -42,6 +42,10 @@ botocore-stubs==1.34.141
     # via boto3-stubs
 bs4==0.0.2
     # via ring (pyproject.toml)
+casbin==1.43.0
+    # via casbin-sqlalchemy-adapter
+casbin-sqlalchemy-adapter==1.4.0
+    # via ring (pyproject.toml)
 certifi==2023.11.17
     # via
     #   httpcore
@@ -327,7 +331,9 @@ shellingham==1.5.4
 shortuuid==1.0.11
     # via ring (pyproject.toml)
 simpleeval==1.0.3
-    # via pycasbin
+    # via
+    #   casbin
+    #   pycasbin
 six==1.16.0
     # via
     #   asttokens
@@ -343,6 +349,7 @@ sqlalchemy==2.0.25
     # via
     #   ring (pyproject.toml)
     #   alembic
+    #   casbin-sqlalchemy-adapter
     #   sqlalchemy-cockroachdb
     #   sqlalchemy-json
 sqlalchemy-cockroachdb==2.0.2
