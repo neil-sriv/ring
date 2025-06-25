@@ -13,6 +13,7 @@ from faker import Faker
 from pgvector.sqlalchemy import Vector
 from sqlalchemy.orm import Session
 
+from ring.authz.enforcer import Action
 from ring.search.crud.hybrid_search import (
     create_hybrid_search_document,
     get_model_ids_from_hybrid_search_documents,
@@ -200,8 +201,10 @@ class TestHybridSearchCRUD:
         "ring.search.crud.hybrid_search.get_model_ids_from_hybrid_search_documents"
     )
     @patch("ring.search.crud.hybrid_search.hydrate_results")
+    @patch("ring.search.crud.hybrid_search.filter_to_authorized")
     def test_search(
         self,
+        mock_filter_authorized: MagicMock,
         mock_hydrate: MagicMock,
         mock_get_model_ids: MagicMock,
         mock_dual_search: MagicMock,
@@ -214,8 +217,10 @@ class TestHybridSearchCRUD:
         1. The search pipeline is executed correctly
         2. Results are properly hydrated
         3. The search type parameter is respected
+        4. Authorization filtering is applied
 
         Args:
+            mock_filter_authorized (MagicMock): Mock for authorization filtering
             mock_hydrate (MagicMock): Mock for result hydration
             mock_get_model_ids (MagicMock): Mock for model ID extraction
             mock_dual_search (MagicMock): Mock for dual search
@@ -231,9 +236,14 @@ class TestHybridSearchCRUD:
         mock_hydrated = [MagicMock(), MagicMock()]
         mock_hydrate.return_value = mock_hydrated
 
+        # Mock authorization filtering to return the hydrated results
+        mock_filter_authorized.return_value = mock_hydrated
+
+        user = UserFactory.create()
         results = search(
             db_session,
             "test query",
+            user=user,
             limit=10,
             search_type=SearchType.DUAL,
         )
@@ -242,3 +252,6 @@ class TestHybridSearchCRUD:
         mock_dual_search.assert_called_once_with(db_session, "test query", 10)
         mock_get_model_ids.assert_called_once_with(db_session, mock_documents)
         mock_hydrate.assert_called_once()
+        mock_filter_authorized.assert_called_once_with(
+            db_session, user, Action.READ, mock_hydrated
+        )
