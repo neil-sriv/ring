@@ -13,6 +13,7 @@ from sqlalchemy import ForeignKey, Integer, String, Text, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from ring.api_identifier.api_identified_model import APIIdentified
+from ring.api_identifier.util import APIPrefix, register_api_class
 from ring.created_at import CreatedAtMixin
 from ring.ring_pydantic.linked_schemas import ResponseLinked
 from ring.ring_pydantic.pydantic_model import PydanticModel
@@ -54,6 +55,7 @@ class ImageResponseAssociation(Base):
     )
 
 
+@register_api_class(APIPrefix.RESPONSE)
 class Response(Base, APIIdentified, PydanticModel, CreatedAtMixin):
     """SQLAlchemy model representing a response to a question.
 
@@ -71,7 +73,7 @@ class Response(Base, APIIdentified, PydanticModel, CreatedAtMixin):
 
     __tablename__ = "response"
 
-    API_ID_PREFIX = "rspn"
+    API_ID_PREFIX = APIPrefix.RESPONSE
     PYDANTIC_MODEL = ResponseLinked
 
     id: Mapped[int] = mapped_column(primary_key=True, index=True)

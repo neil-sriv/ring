@@ -10,6 +10,7 @@ from sqlalchemy import ForeignKey
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from ring.api_identifier.api_identified_model import APIIdentified
+from ring.api_identifier.util import APIPrefix, register_api_class
 from ring.created_at import CreatedAtMixin
 from ring.parties.models.group_model import Group
 from ring.parties.models.one_time_token_model import OneTimeToken
@@ -22,6 +23,7 @@ from ring.sqlalchemy_base import Base
 DEFAULT_INVITE_TOKEN_TTL = 60 * 60 * 24 * 7
 
 
+@register_api_class(APIPrefix.INVITE)
 class Invite(Base, APIIdentified, PydanticModel, CreatedAtMixin):
     """SQLAlchemy model representing a group invitation.
 
@@ -44,7 +46,7 @@ class Invite(Base, APIIdentified, PydanticModel, CreatedAtMixin):
 
     __tablename__ = "invite"
 
-    API_ID_PREFIX = "inv"
+    API_ID_PREFIX = APIPrefix.INVITE
     PYDANTIC_MODEL = InviteUnlinked
 
     id: Mapped[int] = mapped_column(primary_key=True, index=True)

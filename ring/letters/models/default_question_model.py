@@ -12,6 +12,7 @@ from sqlalchemy import ForeignKey, Index, String, Text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from ring.api_identifier.api_identified_model import APIIdentified
+from ring.api_identifier.util import APIPrefix, register_api_class
 from ring.created_at import CreatedAtMixin
 from ring.sqlalchemy_base import Base
 
@@ -19,6 +20,7 @@ if TYPE_CHECKING:
     from ring.parties.models.group_model import Group
 
 
+@register_api_class(APIPrefix.DEFAULT_QUESTION)
 class DefaultQuestion(Base, APIIdentified, CreatedAtMixin):
     """SQLAlchemy model representing a default question template for a group.
 
@@ -33,7 +35,7 @@ class DefaultQuestion(Base, APIIdentified, CreatedAtMixin):
 
     __tablename__ = "default_question"
 
-    API_ID_PREFIX = "dfqstn"
+    API_ID_PREFIX = APIPrefix.DEFAULT_QUESTION
     # PYDANTIC_MODEL = QuestionLinked
 
     id: Mapped[int] = mapped_column(primary_key=True, index=True)

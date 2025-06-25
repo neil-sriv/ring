@@ -6,12 +6,16 @@ including retrieving models by their API identifiers and handling related errors
 
 from __future__ import annotations
 
+from collections import defaultdict
+from dataclasses import dataclass
+from enum import Enum
 from typing import TYPE_CHECKING, Optional, Sequence, TypeVar
 
 from fastapi import HTTPException
 from sqlalchemy.exc import NoResultFound
 
 from ring.api_identifier.api_identified_model import APIIdentified
+from ring.lib.util import RegistrationDict
 
 if TYPE_CHECKING:
     from sqlalchemy.orm import Session
@@ -61,6 +65,46 @@ class IDNotFoundException(APIIdentifierException):
 
 
 API_CLS = TypeVar("API_CLS", bound=APIIdentified)
+
+
+class APIPrefix(str, Enum):
+    USER = "usr"
+    GROUP = "grp"
+    INVITE = "inv"
+    LETTER = "lttr"
+    QUESTION = "qstn"
+    RESPONSE = "rspn"
+    DEFAULT_QUESTION = "dfqstn"
+    SUBSCRIPTION = "sbscrp"
+
+
+@dataclass
+class APIClassRegistration:
+    model_class: type[APIIdentified]
+    prefix: str
+
+
+API_CLASS_REGISTRY: RegistrationDict[APIPrefix, APIClassRegistration] = (
+    RegistrationDict("API_CLASS_REGISTRY")
+)
+
+
+def register_api_class(
+    api_prefix: APIPrefix,
+):
+    def decorator(
+        model_class: type[APIIdentified],
+    ):
+        API_CLASS_REGISTRY[api_prefix] = APIClassRegistration(
+            model_class, api_prefix.value
+        )
+        return model_class
+
+    return decorator
+
+
+def get_class_from_prefix(prefix: str) -> type[APIIdentified]:
+    return API_CLASS_REGISTRY[APIPrefix(prefix)].model_class
 
 
 def get_model(db: Session, model_cls: type[API_CLS], api_id: str) -> API_CLS:
@@ -117,3 +161,19 @@ def get_models(
         raise IDNotFoundException(model_cls, list(missing_api_ids))
     except NoResultFound:
         raise IDNotFoundException(model_cls, api_ids)
+
+
+def bulk_get_models(
+    db: Session,
+    api_ids: list[str],
+) -> Sequence[APIIdentified]:
+    """Retrieve multiple model instances by their API identifiers."""
+    api_ids_by_prefix: defaultdict[APIPrefix, list[str]] = defaultdict(list)
+    for api_id in api_ids:
+        prefix = APIPrefix(api_id.split("_")[0])
+        api_ids_by_prefix[prefix].append(api_id)
+    models: list[APIIdentified] = []
+    for prefix, api_ids in api_ids_by_prefix.items():
+        model_cls = get_class_from_prefix(prefix)
+        models.extend(get_models(db, model_cls, api_ids))
+    return models
