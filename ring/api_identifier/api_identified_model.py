@@ -7,10 +7,21 @@ identifiers using UUIDs.
 
 from __future__ import annotations
 
-from typing import Optional
+from enum import Enum
 from uuid import uuid4
 
 from sqlalchemy.orm import Mapped, mapped_column
+
+
+class APIPrefix(str, Enum):
+    USER = "usr"
+    GROUP = "grp"
+    INVITE = "inv"
+    LETTER = "lttr"
+    QUESTION = "qstn"
+    RESPONSE = "rspn"
+    DEFAULT_QUESTION = "dfqstn"
+    SUBSCRIPTION = "sbscrp"
 
 
 class APIIdentified:
@@ -20,29 +31,29 @@ class APIIdentified:
     for database models. Each model using this mixin must define an API_ID_PREFIX.
 
     Attributes:
-        API_ID_PREFIX (str): Class variable that must be set by inheriting classes
+        API_ID_PREFIX (Union[str, Enum]): Class variable that must be set by inheriting classes
         api_identifier (Mapped[str]): SQLAlchemy column storing the unique identifier string
     """
 
-    API_ID_PREFIX: str
+    API_ID_PREFIX: APIPrefix
 
     api_identifier: Mapped[str] = mapped_column(unique=True, index=True)
 
-    def __init__(self, api_prefix: Optional[str] = None) -> None:
+    def __init__(self) -> None:
         """Initialize an APIIdentified instance with a unique identifier.
 
         Args:
-            api_prefix (Optional[str], optional): Custom prefix for the API identifier. Defaults to None.
+            None
 
         Raises:
-            ValueError: If neither api_prefix nor API_ID_PREFIX is set
             AssertionError: If not used as a mixin
         """
         assert isinstance(
             self, APIIdentified
         ), "APIIdentified must be used as a mixin"
-        prefix = api_prefix or getattr(self, "API_ID_PREFIX", None)
-        if not prefix:
-            raise ValueError("API_ID_PREFIX must be set on the class")
+        assert hasattr(
+            self, "API_ID_PREFIX"
+        ), "API_ID_PREFIX must be set on the class"
+        prefix = self.API_ID_PREFIX
 
-        self.api_identifier = f"{prefix}_{uuid4()}"
+        self.api_identifier = f"{prefix.value}_{uuid4()}"

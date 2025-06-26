@@ -11,6 +11,7 @@ from typing import TYPE_CHECKING, Optional
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from ring.api_identifier.api_identified_model import APIIdentified
+from ring.api_identifier.util import APIPrefix, register_api_class
 from ring.created_at import CreatedAtMixin
 from ring.letters.models.response_model import Response
 from ring.parties.models.user_group_assocation import user_group_association
@@ -23,6 +24,7 @@ if TYPE_CHECKING:
     from ring.parties.models.group_model import Group
 
 
+@register_api_class(APIPrefix.USER)
 class User(Base, APIIdentified, PydanticModel, CreatedAtMixin):
     """SQLAlchemy model representing a user in the system.
 
@@ -44,7 +46,7 @@ class User(Base, APIIdentified, PydanticModel, CreatedAtMixin):
     __allow_unmapped__ = True
     __tablename__ = "user"
 
-    API_ID_PREFIX = "usr"
+    API_ID_PREFIX = APIPrefix.USER
     PYDANTIC_MODEL = UserLinked
 
     id: Mapped[int] = mapped_column(primary_key=True, index=True)

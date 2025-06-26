@@ -14,6 +14,7 @@ from sqlalchemy.ext.hybrid import hybrid_property
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from ring.api_identifier.api_identified_model import APIIdentified
+from ring.api_identifier.util import APIPrefix, register_api_class
 from ring.created_at import CreatedAtMixin
 from ring.parties.models.user_model import User
 from ring.ring_pydantic.linked_schemas import QuestionLinked
@@ -25,6 +26,7 @@ if TYPE_CHECKING:
     from ring.letters.models.response_model import Response
 
 
+@register_api_class(APIPrefix.QUESTION)
 class Question(Base, APIIdentified, PydanticModel, CreatedAtMixin):
     """SQLAlchemy model representing a question within a letter.
 
@@ -42,7 +44,7 @@ class Question(Base, APIIdentified, PydanticModel, CreatedAtMixin):
 
     __tablename__ = "question"
 
-    API_ID_PREFIX = "qstn"
+    API_ID_PREFIX = APIPrefix.QUESTION
     PYDANTIC_MODEL = QuestionLinked
 
     id: Mapped[int] = mapped_column(primary_key=True, index=True)

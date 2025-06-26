@@ -13,6 +13,7 @@ from sqlalchemy.ext.hybrid import hybrid_property
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from ring.api_identifier.api_identified_model import APIIdentified
+from ring.api_identifier.util import APIPrefix, register_api_class
 from ring.created_at import CreatedAtMixin
 from ring.letters.constants import LetterStatus
 from ring.letters.models.default_question_model import DefaultQuestion
@@ -28,6 +29,7 @@ if TYPE_CHECKING:
     from ring.parties.models.user_model import User
 
 
+@register_api_class(APIPrefix.GROUP)
 class Group(Base, PydanticModel, APIIdentified, CreatedAtMixin):
     """SQLAlchemy model representing a group of users.
 
@@ -51,7 +53,7 @@ class Group(Base, PydanticModel, APIIdentified, CreatedAtMixin):
 
     __tablename__ = "group"
 
-    API_ID_PREFIX = "grp"
+    API_ID_PREFIX = APIPrefix.GROUP
     PYDANTIC_MODEL = GroupLinked
 
     id: Mapped[int] = mapped_column(primary_key=True, index=True)

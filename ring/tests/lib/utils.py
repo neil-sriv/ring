@@ -53,3 +53,17 @@ def assert_api_model_not_found(
         "model": model_cls.__name__,
         "api_ids": api_ids,
     }
+
+
+def assert_lists_equal_with_order_insensitive(
+    list1: list[Any], list2: list[Any]
+) -> None:
+    assert sorted(list1) == sorted(list2)
+
+
+def assert_sqlalchemy_object_list_equal_with_order_insensitive(
+    list1: list[Base], list2: list[Base]
+) -> None:
+    assert sorted(list1, key=lambda x: x.id) == sorted(
+        list2, key=lambda x: x.id
+    )

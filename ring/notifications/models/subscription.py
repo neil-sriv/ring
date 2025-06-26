@@ -12,6 +12,7 @@ from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from ring.api_identifier.api_identified_model import APIIdentified
+from ring.api_identifier.util import APIPrefix, register_api_class
 from ring.created_at import CreatedAtMixin
 from ring.parties.models.user_model import User
 from ring.ring_pydantic.linked_schemas import SubscriptionLinked
@@ -19,6 +20,7 @@ from ring.ring_pydantic.pydantic_model import PydanticModel
 from ring.sqlalchemy_base import Base
 
 
+@register_api_class(APIPrefix.SUBSCRIPTION)
 class Subscription(Base, APIIdentified, PydanticModel, CreatedAtMixin):
     """SQLAlchemy model for web push notification subscriptions.
 
@@ -38,7 +40,7 @@ class Subscription(Base, APIIdentified, PydanticModel, CreatedAtMixin):
 
     __tablename__ = "subscription"
 
-    API_ID_PREFIX = "sbscrp"
+    API_ID_PREFIX = APIPrefix.SUBSCRIPTION
     PYDANTIC_MODEL = SubscriptionLinked
 
     id: Mapped[int] = mapped_column(primary_key=True, index=True)
