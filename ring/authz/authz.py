@@ -33,6 +33,10 @@ class AuthDeniedError(HTTPException):
         Args:
             message (Optional[str], optional): Custom error message. Defaults to None.
         """
+        if not message:
+            message = (
+                f"One or more resources not found or not accessible to user"
+            )
         logger.error(f"AuthDeniedError: {message}", extra=kwargs)
         super().__init__(status_code=403, detail=message)
 
@@ -141,15 +145,7 @@ def bulk_load_and_check(
     action: Action,
     resource_api_identifiers: Sequence[str],
 ) -> Sequence[APIIdentified]:
-    try:
-        resources = bulk_get_models(db, resource_api_identifiers)
-    except IDNotFoundException as e:
-        raise AuthDeniedError(
-            f"One or more resources not found or not accessible to user: {e.api_ids}",
-            user=user.api_identifier,
-            action=action.value,
-            resources=e.api_ids,
-        ) from e
+    resources = bulk_get_models(db, resource_api_identifiers)
     return bulk_check(db, user, action, resources)
 
 

@@ -15,9 +15,12 @@ from typing import Sequence
 from fastapi import APIRouter, Depends
 from sqlalchemy import ColumnElement, and_, or_
 
-from ring.api_identifier import (
-    util as api_identifier_crud,
+from ring.authz.authz import (
+    bulk_check,
+    check,
+    load_and_check,
 )
+from ring.authz.enforcer import Action
 from ring.fastapp.dependencies import (
     AuthenticatedRequestDependencies,
     get_request_dependencies,
@@ -62,6 +65,12 @@ async def add_next_letter(
     Raises:
         ValueError: If there is already a letter in progress or upcoming
     """
+    load_and_check(
+        req_dep.db,
+        req_dep.current_user,
+        Action.READ,
+        letter.group_api_identifier,
+    )
     group_letters = letter_crud.get_letters(
         req_dep.db, group_api_id=letter.group_api_identifier
     )
@@ -104,9 +113,16 @@ async def list_letters(
     Returns:
         Sequence[Letter]: List of letters
     """
+    load_and_check(
+        req_dep.db,
+        req_dep.current_user,
+        Action.READ,
+        group_api_id,
+    )
     letters = letter_crud.get_letters(
         req_dep.db, group_api_id=group_api_id, skip=skip, limit=limit
     )
+    bulk_check(req_dep.db, req_dep.current_user, Action.READ, letters)
     return letters
 
 
@@ -129,10 +145,11 @@ async def read_letter(
     Raises:
         IDNotFoundException: If letter with given API ID is not found
     """
-    db_letter = api_identifier_crud.get_model(
+    db_letter = load_and_check(
         req_dep.db,
-        Letter,
-        api_id=letter_api_id,
+        req_dep.current_user,
+        Action.READ,
+        letter_api_id,
     )
     return db_letter
 
@@ -169,6 +186,7 @@ async def list_dashboard_letters(
     letters = letter_crud.get_letters_for_user(
         req_dep.db, req_dep.current_user, filters=filters
     )
+    bulk_check(req_dep.db, req_dep.current_user, Action.READ, letters)
     grouped_letters: dict[str, list[Letter]] = defaultdict(list)
     for k, g in itertools.groupby(letters, key=lambda letter: letter.status):
         grouped_letters[k].extend(g)
@@ -207,10 +225,11 @@ async def edit_letter(
         AssertionError: If new send time violates timing constraints
         IDNotFoundException: If letter with given API ID is not found
     """
-    db_letter = api_identifier_crud.get_model(
+    db_letter = load_and_check(
         req_dep.db,
-        Letter,
-        api_id=letter_api_id,
+        req_dep.current_user,
+        Action.READ,
+        letter_api_id,
     )
     curr_time = datetime.now(tz=UTC)
     if db_letter.status == LetterStatus.UPCOMING:
@@ -252,16 +271,18 @@ async def add_question(
     :return: Updated letter with the new question
     :rtype: Letter
     """
-    db_letter = api_identifier_crud.get_model(
+    db_letter = load_and_check(
         req_dep.db,
-        Letter,
-        api_id=letter_api_id,
+        req_dep.current_user,
+        Action.READ,
+        letter_api_id,
     )
     db_author = (
-        api_identifier_crud.get_model(
+        load_and_check(
             req_dep.db,
-            User,
-            api_id=question.author_api_id,
+            req_dep.current_user,
+            Action.READ,
+            question.author_api_id,
         )
         if question.author_api_id
         else None
@@ -286,8 +307,11 @@ async def generate_question(
     ),
 ) -> GenerateQuestionResponse:
     """Generate a question using LLM without saving it."""
-    db_letter = api_identifier_crud.get_model(
-        req_dep.db, Letter, api_id=letter_api_id
+    db_letter = load_and_check(
+        req_dep.db,
+        req_dep.current_user,
+        Action.READ,
+        letter_api_id,
     )
     generated_text = question_crud.generate_question(request.prompt, db_letter)
     return GenerateQuestionResponse(generated_text=generated_text)
