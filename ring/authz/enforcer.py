@@ -6,7 +6,6 @@ from casbin import Enforcer, Model
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from ring.api_identifier.util import get_model
 from ring.letters.models.letter_model import Letter
 from ring.letters.models.question_model import Question
 from ring.letters.models.response_model import Response
@@ -18,7 +17,7 @@ class Action(Enum):
     """Action to perform on a resource."""
 
     READ = "read"
-    WRITE = "write"
+    # WRITE = "write"
 
 
 def get_enforcer() -> Enforcer:
