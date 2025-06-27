@@ -19,7 +19,10 @@ logger.remove()
 
 # Add console handler with colorized output for INFO and above
 logger.add(
-    sys.stdout, format="{time} {level} {message}", level="INFO", colorize=True
+    sys.stdout,
+    format="{time} {level} {message} {extra}",
+    level="INFO",
+    colorize=True,
 )
 
 # Add file handler with JSON serialization and rotation for all DEBUG and above
