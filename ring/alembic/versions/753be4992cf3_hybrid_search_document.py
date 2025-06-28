@@ -64,11 +64,11 @@ def upgrade() -> None:
         CREATE INVERTED INDEX IF NOT EXISTS content_search_inverted_idx ON hybrid_search_document (text_tsv);
         """
     )
-    op.execute(
-        """
-        CREATE VECTOR INDEX IF NOT EXISTS embedding_vector_idx ON hybrid_search_document (text_embedding_384);
-        """
-    )
+    # op.execute(
+    #     """
+    #     CREATE VECTOR INDEX IF NOT EXISTS embedding_vector_idx ON hybrid_search_document (text_embedding_384);
+    #     """
+    # )
     # ### end Alembic commands ###
 
 

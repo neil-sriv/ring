@@ -75,7 +75,7 @@ def downgrade() -> None:
             "text_tsv",
             postgresql.TSVECTOR(),
             autoincrement=False,
-            nullable=False,
+            nullable=True,
         ),
     )
     op.execute(
