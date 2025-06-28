@@ -63,9 +63,9 @@ def downgrade() -> None:
             nullable=False,
         ),
     )
-    op.execute(
-        """
-        CREATE VECTOR INDEX IF NOT EXISTS embedding_vector_idx ON hybrid_search_document (text_embedding_384);
-        """
-    )
+    # op.execute(
+    #     """
+    #     CREATE VECTOR INDEX IF NOT EXISTS embedding_vector_idx ON hybrid_search_document (text_embedding_384);
+    #     """
+    # )
     # ### end Alembic commands ###

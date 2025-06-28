@@ -40,11 +40,11 @@ def upgrade() -> None:
             nullable=False,
         ),
     )
-    op.execute(
-        """
-        CREATE VECTOR INDEX IF NOT EXISTS embedding_768_vector_idx ON hybrid_search_document (text_embedding_768);
-        """
-    )
+    # op.execute(
+    #     """
+    #     CREATE VECTOR INDEX IF NOT EXISTS embedding_768_vector_idx ON hybrid_search_document (text_embedding_768);
+    #     """
+    # )
     # ### end Alembic commands ###
 
 
