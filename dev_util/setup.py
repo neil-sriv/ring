@@ -11,14 +11,12 @@ SETUP_DIR = Path(__file__).resolve().parents[1]
 
 
 @dev_group("setup")
-@click.pass_context
-def setup(ctx: click.Context) -> None:
+def setup() -> None:
     pass
 
 
 @cmd_run("requirements", setup, cwd=SETUP_DIR)
 def requirements(
-    ctx: click.Context,
     *args: list[Any],
     **kwargs: dict[Any, Any],
 ) -> list[list[str]]:
@@ -43,7 +41,6 @@ def requirements(
 
 @cmd_run("local-ssl", setup, cwd=SETUP_DIR)
 def local_ssl(
-    ctx: click.Context,
     *args: list[Any],
     **kwargs: dict[Any, Any],
 ) -> list[str]:

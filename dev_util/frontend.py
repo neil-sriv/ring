@@ -11,14 +11,12 @@ FE_DIR = Path(Path(__file__).resolve().parents[1], "react")
 
 
 @dev_group("fe")
-@click.pass_context
-def fe(ctx: click.Context) -> None:
+def fe() -> None:
     pass
 
 
 @cmd_run("install", fe, cwd=FE_DIR)
 def fe_install(
-    ctx: click.Context,
     *args: list[Any],
     **kwargs: dict[Any, Any],
 ) -> list[str]:
@@ -27,7 +25,6 @@ def fe_install(
 
 @cmd_run("dev", fe, cwd=FE_DIR)
 def fe_dev(
-    ctx: click.Context,
     *args: list[Any],
     **kwargs: dict[Any, Any],
 ) -> list[str]:
@@ -36,7 +33,6 @@ def fe_dev(
 
 @cmd_run("build", fe, cwd=FE_DIR)
 def fe_build(
-    ctx: click.Context,
     *args: list[Any],
     **kwargs: dict[Any, Any],
 ) -> list[str]:
@@ -45,7 +41,6 @@ def fe_build(
 
 @cmd_run("regen", fe, cwd=FE_DIR)
 def fe_regen(
-    ctx: click.Context,
     *args: list[Any],
     **kwargs: dict[Any, Any],
 ) -> list[str]:
