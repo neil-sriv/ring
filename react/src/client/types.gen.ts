@@ -259,6 +259,8 @@ export type LetterCreate = {
  */
 export type LetterStatus = 'UPCOMING' | 'IN_PROGRESS' | 'SENT';
 
+export type LetterType = 'CYCLIC' | 'ADHOC';
+
 /**
  * Schema for letter without linked relationships.
  *
@@ -1542,6 +1544,33 @@ export type AddNextLetterLettersLetterPostResponses = {
 };
 
 export type AddNextLetterLettersLetterPostResponse = AddNextLetterLettersLetterPostResponses[keyof AddNextLetterLettersLetterPostResponses];
+
+export type AddNextLetterLettersLetterLetterTypePostData = {
+    body: LetterCreate;
+    path: {
+        letter_type: LetterType;
+    };
+    query?: never;
+    url: '/letters/letter:{letter_type}';
+};
+
+export type AddNextLetterLettersLetterLetterTypePostErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type AddNextLetterLettersLetterLetterTypePostError = AddNextLetterLettersLetterLetterTypePostErrors[keyof AddNextLetterLettersLetterLetterTypePostErrors];
+
+export type AddNextLetterLettersLetterLetterTypePostResponses = {
+    /**
+     * Successful Response
+     */
+    200: PublicLetter;
+};
+
+export type AddNextLetterLettersLetterLetterTypePostResponse = AddNextLetterLettersLetterLetterTypePostResponses[keyof AddNextLetterLettersLetterLetterTypePostResponses];
 
 export type ListLettersLettersLettersGetData = {
     body?: never;

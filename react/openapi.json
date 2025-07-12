@@ -1566,6 +1566,62 @@
         ]
       }
     },
+    "/letters/letter:{letter_type}": {
+      "post": {
+        "tags": [
+          "letters"
+        ],
+        "summary": "Add Next Letter",
+        "operationId": "add_next_letter_letters_letter__letter_type__post",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "letter_type",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/LetterType"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LetterCreate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PublicLetter"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/letters/letters/": {
       "get": {
         "tags": [
@@ -3088,6 +3144,15 @@
         ],
         "title": "LetterStatus",
         "description": "Enumeration of possible letter statuses.\nRepresents the different states a letter can be in within the system:\n- UPCOMING: Letter is scheduled but not yet active\n- IN_PROGRESS: Letter is currently active and accepting responses\n- SENT: Letter has been completed and sent"
+      },
+      "LetterType": {
+        "type": "string",
+        "enum": [
+          "CYCLIC",
+          "ADHOC"
+        ],
+        "title": "LetterType",
+        "description": ""
       },
       "LetterUnlinked": {
         "properties": {
