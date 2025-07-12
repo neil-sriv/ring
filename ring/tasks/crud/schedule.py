@@ -200,7 +200,8 @@ def poll_schedule_task(db: Session) -> dict[str, str]:
     tasks = schedule_crud.collect_pending_tasks(db, curr_time)
     if tasks:
         scheduler.add_job(
-            task_crud.execute_tasks_async,
+            # task_crud.execute_tasks_async,
+            "execute_tasks",
             args=[[task.id for task in tasks]],
         )
 
@@ -209,12 +210,12 @@ def poll_schedule_task(db: Session) -> dict[str, str]:
     )
     if postpend:
         scheduler.add_job(
-            postpend_upcoming_letters,
+            "postpend_upcoming_letters",
             args=[[letter.id for letter in postpend]],
         )
     if promote:
         scheduler.add_job(
-            promote_and_create_new_letters,
+            "promote_and_create_new_letters",
             args=[[letter.id for letter in promote]],
         )
     logger.info(
