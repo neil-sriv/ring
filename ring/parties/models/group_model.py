@@ -66,7 +66,7 @@ class Group(Base, PydanticModel, APIIdentified, CreatedAtMixin):
     members: Mapped[list["User"]] = relationship(
         secondary=user_group_association, back_populates="groups"
     )
-    _letters: Mapped[list["Letter"]] = relationship(
+    letters: Mapped[list["Letter"]] = relationship(
         back_populates="group", cascade="all"
     )
     schedule: Mapped["Schedule"] = relationship(
@@ -130,12 +130,12 @@ class Group(Base, PydanticModel, APIIdentified, CreatedAtMixin):
         else:
             raise ValueError("Admin must be a member of the group")
 
-    @hybrid_property
-    def letters(self) -> Sequence[Letter]:
-        return self._letters
+    # @hybrid_property
+    # def letters(self) -> Mapped[list["Letter"]]:
+    #     return self._letters
 
     @hybrid_property
-    def cyclic_letters(self) -> Sequence[Letter]:
+    def cyclic_letters(self) -> Mapped[list["Letter"]]:
         return [
             letter
             for letter in self.letters
