@@ -6,7 +6,7 @@ including membership, letters, and scheduling.
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Sequence
 
 from sqlalchemy import ForeignKey
 from sqlalchemy.ext.hybrid import hybrid_property
@@ -15,7 +15,7 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 from ring.api_identifier.api_identified_model import APIIdentified
 from ring.api_identifier.util import APIPrefix, register_api_class
 from ring.created_at import CreatedAtMixin
-from ring.letters.constants import LetterStatus
+from ring.letters.constants import LetterStatus, LetterType
 from ring.letters.models.default_question_model import DefaultQuestion
 from ring.letters.models.letter_model import Letter
 from ring.parties.models.group_key_value import GroupKeyValue
@@ -66,7 +66,7 @@ class Group(Base, PydanticModel, APIIdentified, CreatedAtMixin):
     members: Mapped[list["User"]] = relationship(
         secondary=user_group_association, back_populates="groups"
     )
-    letters: Mapped[list["Letter"]] = relationship(
+    _letters: Mapped[list["Letter"]] = relationship(
         back_populates="group", cascade="all"
     )
     schedule: Mapped["Schedule"] = relationship(
@@ -131,6 +131,18 @@ class Group(Base, PydanticModel, APIIdentified, CreatedAtMixin):
             raise ValueError("Admin must be a member of the group")
 
     @hybrid_property
+    def letters(self) -> Sequence[Letter]:
+        return self._letters
+
+    @hybrid_property
+    def cyclic_letters(self) -> Sequence[Letter]:
+        return [
+            letter
+            for letter in self.letters
+            if letter.letter_type == LetterType.CYCLIC
+        ]
+
+    @hybrid_property
     def in_progress_letter(self) -> Letter | None:
         """Get the group's currently active letter.
 
@@ -142,7 +154,7 @@ class Group(Base, PydanticModel, APIIdentified, CreatedAtMixin):
         """
         upcoming = [
             letter
-            for letter in self.letters
+            for letter in self.cyclic_letters
             if letter.status == LetterStatus.IN_PROGRESS
         ]
         assert len(upcoming) <= 1
@@ -160,7 +172,7 @@ class Group(Base, PydanticModel, APIIdentified, CreatedAtMixin):
         """
         upcoming = [
             letter
-            for letter in self.letters
+            for letter in self.cyclic_letters
             if letter.status == LetterStatus.UPCOMING
         ]
         assert len(upcoming) <= 1

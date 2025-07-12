@@ -18,6 +18,7 @@ from ring.letters.constants import (
     DEFAULT_QUESTIONS,
     QUESTION_BANK,
     LetterStatus,
+    LetterType,
 )
 from ring.letters.crud.question import create_question
 from ring.letters.models.letter_model import Letter
@@ -90,6 +91,7 @@ def create_letter(
     send_at: datetime,
     number: int | None = None,
     letter_status: LetterStatus = LetterStatus.UPCOMING,
+    letter_type: LetterType = LetterType.CYCLIC,
 ) -> Letter:
     """Create a new letter for a group.
 
@@ -111,7 +113,9 @@ def create_letter(
         Group,
         api_id=group_api_id,
     )
-    db_letter = Letter.create(group, send_at, letter_status, number=number)
+    db_letter = Letter.create(
+        group, send_at, letter_status, number=number, letter_type=letter_type
+    )
     db.add(db_letter)
     db.add(create_letter_search_document(db, db_letter))
 

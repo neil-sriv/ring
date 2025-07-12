@@ -26,7 +26,7 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 from ring.api_identifier.api_identified_model import APIIdentified
 from ring.api_identifier.util import APIPrefix, register_api_class
 from ring.created_at import CreatedAtMixin
-from ring.letters.constants import LetterStatus
+from ring.letters.constants import LetterStatus, LetterType
 from ring.letters.models.question_model import Question
 from ring.ring_pydantic.linked_schemas import PublicLetter
 from ring.ring_pydantic.pydantic_model import PydanticModel
@@ -75,6 +75,7 @@ class Letter(Base, APIIdentified, PydanticModel, CreatedAtMixin):
         DateTime(timezone=True),
         nullable=True,
     )
+    letter_type: Mapped[LetterType] = mapped_column()
 
     participants: Mapped[list["User"]] = relationship(
         secondary=letter_to_user_assocation
@@ -107,6 +108,7 @@ class Letter(Base, APIIdentified, PydanticModel, CreatedAtMixin):
         send_at: datetime,
         status: LetterStatus,
         number: int | None = None,
+        letter_type: LetterType = LetterType.CYCLIC,
     ) -> None:
         """Initialize a new Letter instance.
 
@@ -115,13 +117,15 @@ class Letter(Base, APIIdentified, PydanticModel, CreatedAtMixin):
             send_at (datetime): Scheduled send time of the letter
             status (LetterStatus): Initial status of the letter
             number (int | None, optional): Letter number. Defaults to None.
+            letter_type (LetterType): Type of the letter
         """
         APIIdentified.__init__(self)
-        self.number = number if number else len(group.letters) + 1
+        self.number = number if number else len(group.cyclic_letters) + 1
         self.group = group
         self.participants = group.members
         self.send_at = send_at
         self.status = status
+        self.letter_type = letter_type
 
     @classmethod
     def create(
@@ -130,6 +134,7 @@ class Letter(Base, APIIdentified, PydanticModel, CreatedAtMixin):
         send_at: datetime,
         letter_status: LetterStatus,
         number: int | None = None,
+        letter_type: LetterType = LetterType.CYCLIC,
     ) -> Letter:
         """Create a new Letter instance.
 
@@ -140,11 +145,18 @@ class Letter(Base, APIIdentified, PydanticModel, CreatedAtMixin):
             send_at (datetime): Scheduled send time of the letter
             letter_status (LetterStatus): Initial status of the letter
             number (int | None, optional): Letter number. Defaults to None.
+            letter_type (LetterType): Type of the letter
 
         Returns:
             Letter: New Letter instance
         """
-        letter = cls(group, send_at, letter_status, number=number)
+        letter = cls(
+            group,
+            send_at,
+            letter_status,
+            number=number,
+            letter_type=letter_type,
+        )
         return letter
 
     @hybrid_property

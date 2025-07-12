@@ -62,7 +62,7 @@ class TestLetterAPI:
         assert data["group"]["api_identifier"] == group.api_identifier
         assert datetime.fromisoformat(data["send_at"]) == send_at
         assert_pydantic_model_json_dump_equivalent_to_response_dict(
-            group.letters[-1], data
+            group.cyclic_letters[-1], data
         )
 
     def test_add_next_letter_with_existing_letter_upcoming(
