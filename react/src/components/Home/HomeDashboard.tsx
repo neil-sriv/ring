@@ -19,9 +19,9 @@ export function HomeDashboard() {
     <Flex justify="center" w="100%" bg={bgColor} backdropFilter="blur(10px)">
       <Box maxW="1200px" w="100%" px={4} py={8}>
         <VStack spacing={8} align="stretch" w="100%">
-          <Heading 
-            as="h1" 
-            textAlign="center" 
+          <Heading
+            as="h1"
+            textAlign="center"
             color={textColor}
             size="xl"
             fontWeight="bold"
@@ -34,9 +34,10 @@ export function HomeDashboard() {
           </Heading>
           {recently_completed.length > 0 && (
             <LoopsGrid
-              loops={recently_completed.sort((a, b) => a.number - b.number)}
+              loops={recently_completed.sort((a, b) => new Date(a.send_at).getTime() - new Date(b.send_at).getTime())}
               heading="Published Issues"
               includeGroupName={true}
+              showLoopTypeLabel={true}
             />
           )}
           {in_progress.length > 0 && (
@@ -45,6 +46,7 @@ export function HomeDashboard() {
               heading="In Progress"
               subheading="Add your response now!"
               includeGroupName={true}
+              showLoopTypeLabel={true}
             />
           )}
           {upcoming.length > 0 && (
@@ -53,6 +55,7 @@ export function HomeDashboard() {
               heading="Upcoming Issues"
               subheading="You can add questions to the upcoming issues before they are available"
               includeGroupName={true}
+              showLoopTypeLabel={true}
             />
           )}
         </VStack>

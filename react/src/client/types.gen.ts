@@ -248,6 +248,7 @@ export type InviteLinked = {
 export type LetterCreate = {
     group_api_identifier: string;
     send_at: string;
+    title?: string | null;
 };
 
 /**
@@ -268,10 +269,12 @@ export type LetterType = 'CYCLIC' | 'ADHOC';
  */
 export type LetterUnlinked = {
     api_identifier: string;
-    number: number;
+    number?: number | null;
     status: LetterStatus;
     send_at: string;
     created_at: string;
+    title?: string | null;
+    letter_type: LetterType;
 };
 
 /**
@@ -301,10 +304,12 @@ export type MediaType = 'image' | 'video';
  */
 export type MinimalLetter = {
     api_identifier: string;
-    number: number;
+    number?: number | null;
     status: LetterStatus;
     send_at: string;
     created_at: string;
+    title?: string | null;
+    letter_type: LetterType;
     group: GroupUnlinked;
 };
 
@@ -332,10 +337,12 @@ export type NewPassword = {
  */
 export type PublicLetter = {
     api_identifier: string;
-    number: number;
+    number?: number | null;
     status: LetterStatus;
     send_at: string;
     created_at: string;
+    title?: string | null;
+    letter_type: LetterType;
     group: GroupUnlinked;
     questions: Array<PublicQuestion>;
     responders: Array<UserUnlinked>;
@@ -1577,6 +1584,7 @@ export type ListLettersLettersLettersGetData = {
     path?: never;
     query: {
         group_api_id: string;
+        letter_type?: LetterType | null;
         skip?: number;
         limit?: number;
     };
