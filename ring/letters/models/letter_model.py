@@ -68,14 +68,15 @@ class Letter(Base, APIIdentified, PydanticModel, CreatedAtMixin):
     PYDANTIC_MODEL = PublicLetter
 
     id: Mapped[int] = mapped_column(primary_key=True, index=True)
-    number: Mapped[int] = mapped_column()
+    number: Mapped[int | None] = mapped_column(nullable=True)
     api_identifier: Mapped[str] = mapped_column(unique=True, index=True)
     status: Mapped[str] = mapped_column()
     send_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),
         nullable=True,
     )
-    letter_type: Mapped[LetterType] = mapped_column()
+    letter_type: Mapped[str] = mapped_column()
+    title: Mapped[str] = mapped_column(nullable=True)
 
     participants: Mapped[list["User"]] = relationship(
         secondary=letter_to_user_assocation
@@ -109,6 +110,7 @@ class Letter(Base, APIIdentified, PydanticModel, CreatedAtMixin):
         status: LetterStatus,
         number: int | None = None,
         letter_type: LetterType = LetterType.CYCLIC,
+        title: str | None = None,
     ) -> None:
         """Initialize a new Letter instance.
 
@@ -120,12 +122,14 @@ class Letter(Base, APIIdentified, PydanticModel, CreatedAtMixin):
             letter_type (LetterType): Type of the letter
         """
         APIIdentified.__init__(self)
-        self.number = number if number else len(group.cyclic_letters) + 1
+        if letter_type == LetterType.CYCLIC:
+            self.number = number if number else len(group.cyclic_letters) + 1
         self.group = group
         self.participants = group.members
         self.send_at = send_at
         self.status = status
         self.letter_type = letter_type
+        self.title = title
 
     @classmethod
     def create(
@@ -135,6 +139,7 @@ class Letter(Base, APIIdentified, PydanticModel, CreatedAtMixin):
         letter_status: LetterStatus,
         number: int | None = None,
         letter_type: LetterType = LetterType.CYCLIC,
+        title: str | None = None,
     ) -> Letter:
         """Create a new Letter instance.
 
@@ -156,6 +161,7 @@ class Letter(Base, APIIdentified, PydanticModel, CreatedAtMixin):
             letter_status,
             number=number,
             letter_type=letter_type,
+            title=title,
         )
         return letter
 

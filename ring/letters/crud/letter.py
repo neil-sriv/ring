@@ -42,13 +42,18 @@ if TYPE_CHECKING:
 
 
 def get_letters(
-    db: Session, group_api_id: str, skip: int = 0, limit: int = 100
+    db: Session,
+    group_api_id: str,
+    letter_type: LetterType | None = None,
+    skip: int = 0,
+    limit: int = 100,
 ) -> Sequence[Letter]:
     """Retrieve letters for a specific group with pagination.
 
     Args:
         db (Session): Database session
         group_api_id (str): API identifier of the group
+        letter_type (LetterType): Type of letter to get
         skip (int, optional): Number of records to skip. Defaults to 0.
         limit (int, optional): Maximum number of records to return. Defaults to 100.
 
@@ -59,9 +64,11 @@ def get_letters(
         IDNotFoundException: If group with given API ID is not found
     """
     group = api_identifier_crud.get_model(db, Group, api_id=group_api_id)
-    return db.scalars(
-        select(Letter).filter(Letter.group == group).offset(skip).limit(limit)
-    ).all()
+    query = select(Letter).filter(Letter.group == group)
+    if letter_type:
+        query = query.filter(Letter.letter_type == letter_type)
+    query = query.offset(skip).limit(limit)
+    return db.scalars(query).all()
 
 
 def get_letters_for_user(
@@ -92,6 +99,7 @@ def create_letter(
     number: int | None = None,
     letter_status: LetterStatus = LetterStatus.UPCOMING,
     letter_type: LetterType = LetterType.CYCLIC,
+    title: str | None = None,
 ) -> Letter:
     """Create a new letter for a group.
 
@@ -101,6 +109,8 @@ def create_letter(
         send_at (datetime): When the letter should be sent
         number (int | None, optional): Sequential number for the letter. Defaults to None.
         letter_status (LetterStatus, optional): Status of the letter. Defaults to UPCOMING.
+        letter_type (LetterType, optional): Type of letter. Defaults to CYCLIC.
+        title (str | None, optional): Title of the letter. Defaults to None.
 
     Returns:
         Letter: Newly created letter
@@ -114,7 +124,12 @@ def create_letter(
         api_id=group_api_id,
     )
     db_letter = Letter.create(
-        group, send_at, letter_status, number=number, letter_type=letter_type
+        group,
+        send_at,
+        letter_status,
+        number=number,
+        letter_type=letter_type,
+        title=title,
     )
     db.add(db_letter)
     db.add(create_letter_search_document(db, db_letter))

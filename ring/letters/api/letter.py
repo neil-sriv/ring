@@ -18,7 +18,7 @@ from sqlalchemy import ColumnElement, and_, or_
 from ring.api_identifier import (
     util as api_identifier_crud,
 )
-from ring.authz.authz import bulk_load_and_check
+from ring.authz.authz import bulk_load_and_check, load_and_check
 from ring.authz.enforcer import Action
 from ring.fastapp.dependencies import (
     AuthenticatedRequestDependencies,
@@ -92,7 +92,7 @@ async def add_next_letter(
         get_request_dependencies,
     ),
 ) -> Letter:
-    [db_group] = bulk_load_and_check(
+    db_group = load_and_check(
         req_dep.db,
         req_dep.current_user,
         Action.READ,
@@ -104,6 +104,7 @@ async def add_next_letter(
         send_at=letter.send_at,
         letter_status=LetterStatus.UPCOMING,
         letter_type=letter_type,
+        title=letter.title,
     )
     req_dep.db.commit()
     return db_letter
@@ -112,6 +113,7 @@ async def add_next_letter(
 @router.get("/letters/", response_model=Sequence[MinimalLetter])
 async def list_letters(
     group_api_id: str,
+    letter_type: LetterType | None = None,
     skip: int = 0,
     limit: int = 100,
     req_dep: AuthenticatedRequestDependencies = Depends(
@@ -132,7 +134,11 @@ async def list_letters(
         Sequence[Letter]: List of letters
     """
     letters = letter_crud.get_letters(
-        req_dep.db, group_api_id=group_api_id, skip=skip, limit=limit
+        req_dep.db,
+        group_api_id=group_api_id,
+        letter_type=letter_type,
+        skip=skip,
+        limit=limit,
     )
     return letters
 
