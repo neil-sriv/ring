@@ -109,8 +109,15 @@ def compose_exec(
             if opts is None:
                 opts = []
             cmd_string = f(ctx, *args, **kwargs)
-            working_dir = f"/src/{directory}" if directory else "/src"
-            return [cmd, "-w", working_dir] + opts + [service] + cmd_string
+
+            # Handle working directory - if directory is explicitly None, don't set working dir
+            if directory is None:
+                working_dir_args = []
+            else:
+                working_dir = f"/src/{directory}" if directory else "/src"
+                working_dir_args = ["-w", working_dir]
+
+            return [cmd] + working_dir_args + opts + [service] + cmd_string
 
         return inner
 
@@ -148,3 +155,45 @@ def compose_up(
         "--build",
         "--detach",
     ]
+
+
+def compose_cmd_run(
+    name: str,
+    group: click.Group = compose,
+    profile: str = "dev",
+    **kwargs: Any,
+) -> Callable[[Callable[..., list[str]]], click.Command]:
+    """
+    Decorator that combines cmd_run with compose functionality.
+    This allows direct control over compose commands while still using the cmd_run infrastructure.
+
+    Args:
+        name: The name of the command.
+        group: The group of the command.
+        profile: The compose profile to use.
+        **kwargs: Additional arguments to pass to cmd_run.
+    """
+
+    def decorator(f: Callable[..., list[str]]) -> click.Command:
+        # Filter out compose-specific parameters that cmd_run doesn't understand
+        cmd_run_kwargs = {
+            k: v
+            for k, v in kwargs.items()
+            if k not in ["service", "directory", "cmd", "opts"]
+        }
+
+        @cmd_run(name, group, **cmd_run_kwargs)
+        @click.option("--profile", type=str, default=profile)
+        @functools.wraps(f)
+        def inner(
+            ctx: click.Context,
+            *args: list[Any],
+            **kwargs: dict[Any, Any],
+        ) -> list[str]:
+            profile = kwargs.pop("profile")
+            cmd_string = f(ctx, *args, **kwargs)
+            return compose_starter(profile) + cmd_string + ctx.args  # type: ignore
+
+        return inner
+
+    return decorator

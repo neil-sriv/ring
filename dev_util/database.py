@@ -5,7 +5,7 @@ from typing import Any
 
 import click
 
-from dev_util.compose import compose_exec
+from dev_util.compose import compose_cmd_run, compose_exec
 from dev_util.dev import cmd_run, dev_group
 
 LOCAL_POSTGRES_URI = (
@@ -43,28 +43,50 @@ docker compose -f compose.core.yml -f compose.dev.yml --profile dev exec -it coc
 """
 
 
-# @compose_exec("cockroach", db, "cockroach", "./cockroach", "exec", ["-it"])
-@cmd_run("cockroach", db)
-def db_cockroach(
+# # @compose_exec("cockroach", db, "cockroach", "./cockroach", "exec", ["-it"])
+# @cmd_run("cockroach", db)
+# def db_cockroach(
+#     ctx: click.Context,
+#     *args: list[Any],
+#     **kwargs: dict[Any, Any],
+# ) -> list[str]:
+#     """
+#     Run cockroach on the local database.
+#     """
+#     return [
+#         "docker",
+#         "compose",
+#         "-f",
+#         "compose.core.yml",
+#         "-f",
+#         "compose.dev.yml",
+#         "--profile",
+#         "dev",
+#         "exec",
+#         "-it",
+#         "cockroach",
+#         "./cockroach",
+#         "sql",
+#         "-d",
+#         "ring",
+#         "--url",
+#         COCKROACH_CONNECTION_STRING,
+#     ]
+
+
+# Alternative using compose_cmd_run (simpler approach):
+@compose_exec(
+    "cockroach", db, service="cockroach", opts=["-it"], directory=None
+)
+def db_cockroach_alt(
     ctx: click.Context,
     *args: list[Any],
     **kwargs: dict[Any, Any],
 ) -> list[str]:
     """
-    Run cockroach on the local database.
+    Run cockroach on the local database (alternative approach).
     """
     return [
-        "docker",
-        "compose",
-        "-f",
-        "compose.core.yml",
-        "-f",
-        "compose.dev.yml",
-        "--profile",
-        "dev",
-        "exec",
-        "-it",
-        "cockroach",
         "./cockroach",
         "sql",
         "-d",
@@ -101,3 +123,23 @@ def db_alembic(
     **kwargs: dict[Any, Any],
 ) -> list[str]:
     return ["alembic"]
+
+
+@compose_exec(
+    "generate-schema", db, service="cockroach", opts=["-it"], directory=None
+)
+def db_generate_schema(
+    ctx: click.Context,
+    *args: list[Any],
+    **kwargs: dict[Any, Any],
+) -> list[str]:
+    return [
+        "./cockroach",
+        "sql",
+        "-d",
+        "ring",
+        "--url",
+        COCKROACH_CONNECTION_STRING,
+        "-e",
+        "SHOW CREATE ALL TABLES",
+    ]
