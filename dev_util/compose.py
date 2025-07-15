@@ -42,9 +42,10 @@ def compose_run(
     group: click.Group = compose,
     *args: Any,
     profile: str = "dev",
+    **kwargs: Any,
 ) -> Callable[[Callable[..., list[str]]], click.Command]:
     def decorator(f: Callable[..., list[str]]) -> click.Command:
-        @cmd_run(name, group, *args)
+        @cmd_run(name, group, *args, **kwargs)
         @click.option("--profile", type=str, default=profile)
         @functools.wraps(f)
         def inner(
