@@ -82,9 +82,10 @@ def dev_command(
 
     def decorator(f: Callable[..., None]) -> click.Command:
         @group.command(name=name, context_settings=UNLIMITED_ARGS_SETTINGS)
+        @click.pass_context
         @functools.wraps(f)
-        def inner(*args: Any, **kwargs: Any) -> None:
-            return f(*args, **kwargs)
+        def inner(ctx: click.Context, *args: Any, **kwargs: Any) -> None:
+            return f(ctx, *args, **kwargs)
 
         return inner
 

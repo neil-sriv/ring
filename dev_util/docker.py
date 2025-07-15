@@ -27,7 +27,7 @@ def docker(ctx: click.Context) -> None:
     multiple=True,
     default=IMAGE_TAG_NAMES,
 )
-def tag(image: list[str]) -> None:
+def tag(ctx: click.Context, image: list[str]) -> None:
     run_cmds = [
         ["docker", "tag", f"prod-{i}:latest", f"{ECR_URI_BASE}{i}:latest"]
         for i in image
@@ -44,7 +44,7 @@ def tag(image: list[str]) -> None:
     multiple=True,
     default=IMAGE_TAG_NAMES,
 )
-def push(image: list[str]) -> None:
+def push(ctx: click.Context, image: list[str]) -> None:
     run_cmds = [["docker", "push", f"{ECR_URI_BASE}{i}:latest"] for i in image]
     for cmd in run_cmds:
         subprocess_run(cmd)
@@ -58,7 +58,6 @@ def push(image: list[str]) -> None:
     multiple=True,
     default=IMAGE_TAG_NAMES,
 )
-@click.pass_context
 def push_and_tag(ctx: click.Context, image: list[str]) -> None:
     ctx.forward(tag)
     # ctx.invoke(tag)
