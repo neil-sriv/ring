@@ -137,7 +137,7 @@ async def reset_password_request(
     ott = generate_token(TokenType.PASSWORD_RESET, email)
     req_dep.db.add(ott)
     scheduler.add_job(
-        "email_password_reset",
+        email_password_reset,
         args=[email, ott.token],
     )
     req_dep.db.commit()
