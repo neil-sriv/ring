@@ -82,9 +82,10 @@ def dev_command(
 
     def decorator(f: Callable[..., None]) -> click.Command:
         @group.command(name=name, context_settings=UNLIMITED_ARGS_SETTINGS)
+        @click.pass_context
         @functools.wraps(f)
-        def inner(*args: Any, **kwargs: Any) -> None:
-            return f(*args, **kwargs)
+        def inner(ctx: click.Context, *args: Any, **kwargs: Any) -> None:
+            return f(ctx, *args, **kwargs)
 
         return inner
 
@@ -95,6 +96,7 @@ def cmd_run(
     name: str,
     group: click.Group,
     cwd: Path | None = ROOT_DIR,
+    capture_output: bool = False,
 ) -> Callable[[Callable[..., list[str] | list[list[str]]]], click.Command]:
     """
     Decorator for running commands.
@@ -111,20 +113,22 @@ def cmd_run(
         @group.command(name=name, context_settings=UNLIMITED_ARGS_SETTINGS)
         @click.pass_context
         @functools.wraps(f)
-        def inner(ctx: click.Context, *args: Any, **kwargs: Any) -> None:
+        def inner(ctx: click.Context, *args: Any, **kwargs: Any) -> list[str]:
             cmd_string_s = f(ctx, *args, **kwargs)
             if isinstance(cmd_string_s[0], str):
                 cmd_strings = [cmd_string_s]
             else:
                 cmd_strings = cmd_string_s  # type: ignore
             try:
-                [
+                results = [
                     subprocess_run(
                         cmd_string,  # type: ignore
                         cwd=cwd,
-                    )
+                        capture_output=capture_output,
+                    ).stdout
                     for cmd_string in cmd_strings
                 ]
+                return results
             except subprocess.CalledProcessError as e:
                 print(e)
                 exit(1)

@@ -5,8 +5,8 @@ from typing import Any
 
 import click
 
-from dev_util.compose import compose_exec
-from dev_util.dev import cmd_run, dev_group
+from dev_util.compose import compose_cmd_run, compose_exec
+from dev_util.dev import cmd_run, dev_command, dev_group
 
 LOCAL_POSTGRES_URI = (
     "postgresql://ring-postgres:ring-postgres@localhost:8004/ring"
@@ -43,28 +43,50 @@ docker compose -f compose.core.yml -f compose.dev.yml --profile dev exec -it coc
 """
 
 
-# @compose_exec("cockroach", db, "cockroach", "./cockroach", "exec", ["-it"])
-@cmd_run("cockroach", db)
-def db_cockroach(
+# # @compose_exec("cockroach", db, "cockroach", "./cockroach", "exec", ["-it"])
+# @cmd_run("cockroach", db)
+# def db_cockroach(
+#     ctx: click.Context,
+#     *args: list[Any],
+#     **kwargs: dict[Any, Any],
+# ) -> list[str]:
+#     """
+#     Run cockroach on the local database.
+#     """
+#     return [
+#         "docker",
+#         "compose",
+#         "-f",
+#         "compose.core.yml",
+#         "-f",
+#         "compose.dev.yml",
+#         "--profile",
+#         "dev",
+#         "exec",
+#         "-it",
+#         "cockroach",
+#         "./cockroach",
+#         "sql",
+#         "-d",
+#         "ring",
+#         "--url",
+#         COCKROACH_CONNECTION_STRING,
+#     ]
+
+
+# Alternative using compose_cmd_run (simpler approach):
+@compose_exec(
+    "cockroach", db, service="cockroach", opts=["-it"], directory=None
+)
+def db_cockroach_alt(
     ctx: click.Context,
     *args: list[Any],
     **kwargs: dict[Any, Any],
 ) -> list[str]:
     """
-    Run cockroach on the local database.
+    Run cockroach on the local database (alternative approach).
     """
     return [
-        "docker",
-        "compose",
-        "-f",
-        "compose.core.yml",
-        "-f",
-        "compose.dev.yml",
-        "--profile",
-        "dev",
-        "exec",
-        "-it",
-        "cockroach",
         "./cockroach",
         "sql",
         "-d",
@@ -101,3 +123,60 @@ def db_alembic(
     **kwargs: dict[Any, Any],
 ) -> list[str]:
     return ["alembic"]
+
+
+@compose_exec(
+    "generate-schema",
+    db,
+    service="cockroach",
+    opts=["-it"],
+    directory=None,
+    capture_output=True,
+)
+def db_generate_schema(
+    ctx: click.Context,
+    *args: list[Any],
+    **kwargs: dict[Any, Any],
+) -> list[str]:
+    return [
+        "./cockroach",
+        "sql",
+        "-d",
+        "ring",
+        "--url",
+        COCKROACH_CONNECTION_STRING,
+        "-e",
+        "SHOW CREATE ALL TABLES",
+    ]
+
+
+@dev_command("autogenerate-schema", db)
+def db_autogenerate_schema(
+    ctx: click.Context,
+    *args: list[Any],
+    **kwargs: dict[Any, Any],
+) -> list[str]:
+    results = ctx.invoke(
+        db_generate_schema,
+    )
+
+    # Clean up the output using temporary character approach
+    cleaned_output = results[0]
+
+    # Step 1: Convert double quotes to temporary character
+    cleaned_output = cleaned_output.replace('""', "%")
+
+    # Step 2: Remove all remaining single quotes
+    cleaned_output = cleaned_output.replace('"', "")
+
+    # Step 3: Convert temporary character back to single quotes
+    cleaned_output = cleaned_output.replace("%", '"')
+
+    # Step 4: Remove the first line that contains "create_statement"
+    lines = cleaned_output.split("\n")
+    if lines and "create_statement" in lines[0]:
+        lines = lines[1:]  # Remove the first line
+    cleaned_output = "\n".join(lines)
+
+    with open("ring/db/schema.sql", "w") as f:
+        f.write(cleaned_output)
