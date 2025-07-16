@@ -31,7 +31,7 @@ export function LoopsTab({ loops, group }: { loops: MinimalLetter[]; group: Grou
 
       {publishedLoops.length > 0 && (
         <LoopsGrid
-          loops={publishedLoops.sort((a, b) => a.number - b.number)}
+          loops={publishedLoops.sort((a, b) => new Date(a.send_at).getTime() - new Date(b.send_at).getTime())}
           heading="Published Issues"
         />
       )}

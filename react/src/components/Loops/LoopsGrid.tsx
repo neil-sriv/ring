@@ -12,11 +12,13 @@ export function LoopsGrid({
   heading,
   subheading,
   includeGroupName = false,
+  showLoopTypeLabel = false,
 }: {
   loops: MinimalLetter[];
   heading: string;
   subheading?: string;
   includeGroupName?: boolean;
+  showLoopTypeLabel?: boolean;
 }): JSX.Element {
   return (
     <VStack w="100%" spacing={4} align="center">
@@ -35,6 +37,7 @@ export function LoopsGrid({
             <LoopCard
               loop={loop}
               includeGroupName={includeGroupName}
+              showLoopTypeLabel={showLoopTypeLabel}
             />
           </Box>
         ))}

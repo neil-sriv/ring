@@ -117,6 +117,15 @@ def bulk_load_and_check(
     return bulk_check(db, user, action, resources)
 
 
+def load_and_check(
+    db: Session,
+    user: User,
+    action: Action,
+    resource_api_identifier: str,
+) -> APIIdentified:
+    return bulk_load_and_check(db, user, action, [resource_api_identifier])[0]
+
+
 class InaccessibleResource:
     def __init__(
         self,

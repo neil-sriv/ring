@@ -18,11 +18,13 @@ from sqlalchemy import ColumnElement, and_, or_
 from ring.api_identifier import (
     util as api_identifier_crud,
 )
+from ring.authz.authz import bulk_load_and_check, load_and_check
+from ring.authz.enforcer import Action
 from ring.fastapp.dependencies import (
     AuthenticatedRequestDependencies,
     get_request_dependencies,
 )
-from ring.letters.constants import LetterStatus
+from ring.letters.constants import LetterStatus, LetterType
 from ring.letters.crud import letter as letter_crud
 from ring.letters.crud import question as question_crud
 from ring.letters.models.letter_model import Letter
@@ -82,9 +84,36 @@ async def add_next_letter(
     return db_letter
 
 
+@router.post("/letter:{letter_type}", response_model=LetterSchema)
+async def add_next_letter(
+    letter_type: LetterType,
+    letter: LetterCreate,
+    req_dep: AuthenticatedRequestDependencies = Depends(
+        get_request_dependencies,
+    ),
+) -> Letter:
+    db_group = load_and_check(
+        req_dep.db,
+        req_dep.current_user,
+        Action.READ,
+        letter.group_api_identifier,
+    )
+    db_letter = letter_crud.create_letter(
+        req_dep.db,
+        group_api_id=db_group.api_identifier,
+        send_at=letter.send_at,
+        letter_status=LetterStatus.UPCOMING,
+        letter_type=letter_type,
+        title=letter.title,
+    )
+    req_dep.db.commit()
+    return db_letter
+
+
 @router.get("/letters/", response_model=Sequence[MinimalLetter])
 async def list_letters(
     group_api_id: str,
+    letter_type: LetterType | None = None,
     skip: int = 0,
     limit: int = 100,
     req_dep: AuthenticatedRequestDependencies = Depends(
@@ -105,7 +134,11 @@ async def list_letters(
         Sequence[Letter]: List of letters
     """
     letters = letter_crud.get_letters(
-        req_dep.db, group_api_id=group_api_id, skip=skip, limit=limit
+        req_dep.db,
+        group_api_id=group_api_id,
+        letter_type=letter_type,
+        skip=skip,
+        limit=limit,
     )
     return letters
 

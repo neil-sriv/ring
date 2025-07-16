@@ -8,7 +8,7 @@ from __future__ import annotations
 
 from pydantic import AwareDatetime, BaseModel, ConfigDict
 
-from ring.letters.constants import LetterStatus
+from ring.letters.constants import LetterStatus, LetterType
 
 
 class LetterBase(BaseModel):
@@ -30,6 +30,7 @@ class LetterCreate(LetterBase):
 
     group_api_identifier: str
     send_at: AwareDatetime
+    title: str | None = None
 
 
 class LetterUpdate(LetterBase):
@@ -56,10 +57,12 @@ class Letter(LetterBase):
     model_config = ConfigDict(from_attributes=True)
 
     api_identifier: str
-    number: int
+    number: int | None = None
     status: LetterStatus
     send_at: AwareDatetime
     created_at: AwareDatetime
+    title: str | None = None
+    letter_type: LetterType
 
 
 class LetterUnlinked(Letter):

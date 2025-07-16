@@ -68,12 +68,14 @@
   CREATE SEQUENCE public.letter_id_seq AS INT8 MINVALUE 1 MAXVALUE 9223372036854775807 INCREMENT 1 START 1;
   CREATE TABLE public.letter (
       id INT8 NOT NULL DEFAULT nextval('public.letter_id_seq'::REGCLASS),
-      number INT8 NOT NULL,
+      number INT8 NULL,
       api_identifier VARCHAR NOT NULL,
       group_id INT8 NULL,
       status VARCHAR NOT NULL,
       send_at TIMESTAMPTZ NULL,
       created_at TIMESTAMPTZ NOT NULL DEFAULT now():::TIMESTAMPTZ,
+      letter_type VARCHAR NOT NULL DEFAULT 'CYCLIC':::STRING,
+      title VARCHAR NULL,
       CONSTRAINT letter_pkey PRIMARY KEY (id ASC),
       UNIQUE INDEX unique_group_letter_number (group_id ASC, number ASC),
       UNIQUE INDEX ix_letter_api_identifier (api_identifier ASC),
@@ -208,8 +210,7 @@
       text_embedding_768 VECTOR(768) NOT NULL,
       CONSTRAINT hybrid_search_document_pkey PRIMARY KEY (id ASC),
       INDEX ix_hybrid_search_document_created_at (created_at ASC),
-      INVERTED INDEX content_search_inverted_idx (text_tsv),
-      VECTOR INDEX embedding_768_vector_idx (text_embedding_768 vector_l2_ops)
+      INVERTED INDEX content_search_inverted_idx (text_tsv)
   );
   CREATE TABLE public.hybrid_search_document_association (
       id INT8 NOT NULL DEFAULT unique_rowid(),

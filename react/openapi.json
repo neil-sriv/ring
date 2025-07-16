@@ -1566,6 +1566,62 @@
         ]
       }
     },
+    "/letters/letter:{letter_type}": {
+      "post": {
+        "tags": [
+          "letters"
+        ],
+        "summary": "Add Next Letter",
+        "operationId": "add_next_letter_letters_letter__letter_type__post",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "letter_type",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/LetterType"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LetterCreate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PublicLetter"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/letters/letters/": {
       "get": {
         "tags": [
@@ -1587,6 +1643,22 @@
             "schema": {
               "type": "string",
               "title": "Group Api Id"
+            }
+          },
+          {
+            "name": "letter_type",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "$ref": "#/components/schemas/LetterType"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Letter Type"
             }
           },
           {
@@ -3069,6 +3141,17 @@
             "type": "string",
             "format": "date-time",
             "title": "Send At"
+          },
+          "title": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Title"
           }
         },
         "type": "object",
@@ -3089,6 +3172,15 @@
         "title": "LetterStatus",
         "description": "Enumeration of possible letter statuses.\nRepresents the different states a letter can be in within the system:\n- UPCOMING: Letter is scheduled but not yet active\n- IN_PROGRESS: Letter is currently active and accepting responses\n- SENT: Letter has been completed and sent"
       },
+      "LetterType": {
+        "type": "string",
+        "enum": [
+          "CYCLIC",
+          "ADHOC"
+        ],
+        "title": "LetterType",
+        "description": ""
+      },
       "LetterUnlinked": {
         "properties": {
           "api_identifier": {
@@ -3096,7 +3188,14 @@
             "title": "Api Identifier"
           },
           "number": {
-            "type": "integer",
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
             "title": "Number"
           },
           "status": {
@@ -3111,15 +3210,29 @@
             "type": "string",
             "format": "date-time",
             "title": "Created At"
+          },
+          "title": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Title"
+          },
+          "letter_type": {
+            "$ref": "#/components/schemas/LetterType"
           }
         },
         "type": "object",
         "required": [
           "api_identifier",
-          "number",
           "status",
           "send_at",
-          "created_at"
+          "created_at",
+          "letter_type"
         ],
         "title": "LetterUnlinked",
         "description": "Schema for letter without linked relationships.\n\nInherits all fields from Letter but excludes relationship data."
@@ -3155,7 +3268,14 @@
             "title": "Api Identifier"
           },
           "number": {
-            "type": "integer",
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
             "title": "Number"
           },
           "status": {
@@ -3171,6 +3291,20 @@
             "format": "date-time",
             "title": "Created At"
           },
+          "title": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Title"
+          },
+          "letter_type": {
+            "$ref": "#/components/schemas/LetterType"
+          },
           "group": {
             "$ref": "#/components/schemas/GroupUnlinked"
           }
@@ -3178,10 +3312,10 @@
         "type": "object",
         "required": [
           "api_identifier",
-          "number",
           "status",
           "send_at",
           "created_at",
+          "letter_type",
           "group"
         ],
         "title": "MinimalLetter",
@@ -3208,7 +3342,14 @@
             "title": "Api Identifier"
           },
           "number": {
-            "type": "integer",
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
             "title": "Number"
           },
           "status": {
@@ -3223,6 +3364,20 @@
             "type": "string",
             "format": "date-time",
             "title": "Created At"
+          },
+          "title": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Title"
+          },
+          "letter_type": {
+            "$ref": "#/components/schemas/LetterType"
           },
           "group": {
             "$ref": "#/components/schemas/GroupUnlinked"
@@ -3252,10 +3407,10 @@
         "type": "object",
         "required": [
           "api_identifier",
-          "number",
           "status",
           "send_at",
           "created_at",
+          "letter_type",
           "group",
           "questions",
           "responders",

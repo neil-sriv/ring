@@ -90,6 +90,7 @@ class TestGroupModel:
         db_session.commit()
 
         assert group.letters == letters
+        assert group.cyclic_letters == letters
         assert group.in_progress_letter in letters
         assert group.upcoming_letter in letters
 

@@ -5,7 +5,7 @@ from typing import Any
 
 import factory
 
-from ring.letters.constants import LetterStatus
+from ring.letters.constants import LetterStatus, LetterType
 from ring.letters.crud.letter import upsert_letter_tasks
 from ring.letters.models.letter_model import Letter
 from ring.tests.factories.base_factory import BaseFactory, register_factory
@@ -30,6 +30,7 @@ class LetterFactory(BaseFactory[Letter]):
         lambda: datetime.now(tz=UTC) + timedelta(days=2)
     )
     status = LetterStatus.IN_PROGRESS
+    letter_type = LetterType.CYCLIC
     group = factory.SubFactory(
         "ring.tests.factories.parties.group_factory.GroupFactory"
     )

@@ -20,6 +20,7 @@ import {
 } from "../../../../client/@tanstack/react-query.gen";
 import { GroupKeyValuesTable } from "../../../../components/GroupKeyValues/GroupKeyValuesTable";
 import { LLMPlayground } from "../../../../components/LLMPlayground/LLMPlayground";
+import { AdhocLoopsTab } from "../../../../components/Loops/AdhocLoopsTab";
 import { LoopsTab } from "../../../../components/Loops/LoopsTab";
 import { useGroupKeyValues } from "../../../../hooks/useGroupKeyValues";
 
@@ -47,7 +48,11 @@ export const Route = createFileRoute("/_layout/groups/$groupId/loops")({
   }): Promise<LoopsLoaderProps> => {
     const loops = await context.queryClient.ensureQueryData({
       ...listLettersLettersLettersGetOptions({
-        query: { group_api_id: params.groupId, skip: offset, limit: limit },
+        query: {
+          group_api_id: params.groupId,
+          skip: offset,
+          limit: limit,
+        },
       }),
     });
 
@@ -74,7 +79,11 @@ function LoopsContentLoader() {
   const tabsConfig = [
     {
       title: "Loops",
-      component: () => <LoopsTab loops={props.loops} group={group} />
+      component: () => <LoopsTab loops={props.loops.filter(loop => loop.letter_type === "CYCLIC")} group={group} />
+    },
+    {
+      title: "Adhoc Loops",
+      component: () => <AdhocLoopsTab loops={props.loops.filter(loop => loop.letter_type === "ADHOC")} group={group} />
     },
     {
       title: "Key Values",

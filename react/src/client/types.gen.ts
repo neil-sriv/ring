@@ -248,6 +248,7 @@ export type InviteLinked = {
 export type LetterCreate = {
     group_api_identifier: string;
     send_at: string;
+    title?: string | null;
 };
 
 /**
@@ -259,6 +260,8 @@ export type LetterCreate = {
  */
 export type LetterStatus = 'UPCOMING' | 'IN_PROGRESS' | 'SENT';
 
+export type LetterType = 'CYCLIC' | 'ADHOC';
+
 /**
  * Schema for letter without linked relationships.
  *
@@ -266,10 +269,12 @@ export type LetterStatus = 'UPCOMING' | 'IN_PROGRESS' | 'SENT';
  */
 export type LetterUnlinked = {
     api_identifier: string;
-    number: number;
+    number?: number | null;
     status: LetterStatus;
     send_at: string;
     created_at: string;
+    title?: string | null;
+    letter_type: LetterType;
 };
 
 /**
@@ -299,10 +304,12 @@ export type MediaType = 'image' | 'video';
  */
 export type MinimalLetter = {
     api_identifier: string;
-    number: number;
+    number?: number | null;
     status: LetterStatus;
     send_at: string;
     created_at: string;
+    title?: string | null;
+    letter_type: LetterType;
     group: GroupUnlinked;
 };
 
@@ -330,10 +337,12 @@ export type NewPassword = {
  */
 export type PublicLetter = {
     api_identifier: string;
-    number: number;
+    number?: number | null;
     status: LetterStatus;
     send_at: string;
     created_at: string;
+    title?: string | null;
+    letter_type: LetterType;
     group: GroupUnlinked;
     questions: Array<PublicQuestion>;
     responders: Array<UserUnlinked>;
@@ -1543,11 +1552,39 @@ export type AddNextLetterLettersLetterPostResponses = {
 
 export type AddNextLetterLettersLetterPostResponse = AddNextLetterLettersLetterPostResponses[keyof AddNextLetterLettersLetterPostResponses];
 
+export type AddNextLetterLettersLetterLetterTypePostData = {
+    body: LetterCreate;
+    path: {
+        letter_type: LetterType;
+    };
+    query?: never;
+    url: '/letters/letter:{letter_type}';
+};
+
+export type AddNextLetterLettersLetterLetterTypePostErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type AddNextLetterLettersLetterLetterTypePostError = AddNextLetterLettersLetterLetterTypePostErrors[keyof AddNextLetterLettersLetterLetterTypePostErrors];
+
+export type AddNextLetterLettersLetterLetterTypePostResponses = {
+    /**
+     * Successful Response
+     */
+    200: PublicLetter;
+};
+
+export type AddNextLetterLettersLetterLetterTypePostResponse = AddNextLetterLettersLetterLetterTypePostResponses[keyof AddNextLetterLettersLetterLetterTypePostResponses];
+
 export type ListLettersLettersLettersGetData = {
     body?: never;
     path?: never;
     query: {
         group_api_id: string;
+        letter_type?: LetterType | null;
         skip?: number;
         limit?: number;
     };

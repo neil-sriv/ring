@@ -16,6 +16,13 @@ class LetterStatus(StrEnum):
     SENT = "SENT"
 
 
+class LetterType(StrEnum):
+    """ """
+
+    CYCLIC = "CYCLIC"
+    ADHOC = "ADHOC"
+
+
 #  Default questions that are automatically added to new letters
 DEFAULT_QUESTIONS = [
     "📸 Photo Wall",
