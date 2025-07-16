@@ -399,6 +399,7 @@ def collect_future_letters(
     letters_to_promote = db.scalars(
         select(Letter)
         .where(
+            Letter.letter_type == LetterType.CYCLIC,
             Letter.status == LetterStatus.UPCOMING,
             Letter.send_at <= recent_time,
         )
@@ -408,6 +409,7 @@ def collect_future_letters(
     letters_to_postpend = db.scalars(
         select(Letter)
         .where(
+            Letter.letter_type == LetterType.CYCLIC,
             Letter.status == LetterStatus.IN_PROGRESS,
             Letter.send_at <= recent_time,
         )
