@@ -10,6 +10,7 @@ from apscheduler.jobstores.sqlalchemy import SQLAlchemyJobStore
 from apscheduler.schedulers.background import BackgroundScheduler
 from sqlalchemy.orm import Session
 
+from ring.async_scheduler.job_registry import register_job
 from ring.async_scheduler.schedule import register_interval_job_schedule
 from ring.fastapp.config import RingConfig, get_config
 from ring.lib.logger import logger
@@ -94,6 +95,8 @@ def job_factory(
                 db.close()
 
         wrapper.name = name
+
+        register_job(name, func)
         return wrapper
 
     return decorator
@@ -114,7 +117,6 @@ def interval_job_factory(
             return func(*args, **kwargs)
 
         wrapper.name = name
-        register_interval_job_schedule(name, wrapper, **kwargs)
         return wrapper
 
     return decorator

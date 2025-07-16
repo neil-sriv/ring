@@ -7,6 +7,7 @@ managing database sessions.
 
 from __future__ import annotations
 
+from functools import wraps
 from typing import Any, Callable, Iterator, TypeVar
 
 from sqlalchemy import create_engine
@@ -76,6 +77,7 @@ def db_session(func: Callable[..., T]) -> Callable[..., T]:
         ```
     """
 
+    @wraps(func)
     def wrapper(*args: Any, **kwargs: Any) -> T:
         """Wrapper function that manages the database session.
 
