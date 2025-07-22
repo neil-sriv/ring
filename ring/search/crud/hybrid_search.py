@@ -204,8 +204,9 @@ def hydrate_results(
 ) -> list[APIIdentified]:
     return get_models(
         db,
-        SEARCH_REGISTRY[model_type.value].model_class,
+        SEARCH_REGISTRY[model_type].model_class,
         model_api_identifiers,
+        raise_on_missing=False,
     )
 
 
@@ -217,9 +218,11 @@ def search(
     search_type: SearchType = SearchType.DUAL,
 ) -> list[APIIdentified]:
     search_results = dual_search_hybrid_search_document(db, query, limit)
+    print(search_results)
     model_ids_by_type = get_model_ids_from_hybrid_search_documents(
         db, search_results
     )
+    print(model_ids_by_type)
     hydrated_results = []
     for model_type, model_api_identifiers in model_ids_by_type.items():
         hydrated_results.extend(

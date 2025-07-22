@@ -120,7 +120,10 @@ def get_model(db: Session, model_cls: type[API_CLS], api_id: str) -> API_CLS:
 
 
 def get_models(
-    db: Session, model_cls: type[API_CLS], api_ids: list[str]
+    db: Session,
+    model_cls: type[API_CLS],
+    api_ids: list[str],
+    raise_on_missing: bool = True,
 ) -> Sequence[API_CLS]:
     """Retrieve multiple model instances by their API identifiers.
 
@@ -128,6 +131,7 @@ def get_models(
         db (Session): SQLAlchemy database session
         model_cls (type[API_CLS]): The model class to query
         api_ids (list[str]): List of API identifiers to look up
+        raise_on_missing (bool): Whether to raise an exception if any API identifier is not found
 
     Returns:
         Sequence[API_CLS]: Sequence of model instances matching the API identifiers
@@ -135,20 +139,15 @@ def get_models(
     Raises:
         IDNotFoundException: If any API identifier is not found
     """
-    try:
-        models = (
-            db.query(model_cls)
-            .filter(model_cls.api_identifier.in_(api_ids))
-            .all()
-        )
-        if len(models) == len(api_ids):
-            return models
-        missing_api_ids = set(api_ids) - {
-            model.api_identifier for model in models
-        }
+    models = (
+        db.query(model_cls).filter(model_cls.api_identifier.in_(api_ids)).all()
+    )
+    if len(models) == len(api_ids):
+        return models
+    missing_api_ids = set(api_ids) - {model.api_identifier for model in models}
+    if raise_on_missing:
         raise IDNotFoundException(model_cls, list(missing_api_ids))
-    except NoResultFound:
-        raise IDNotFoundException(model_cls, api_ids)
+    return models
 
 
 def bulk_get_models(
