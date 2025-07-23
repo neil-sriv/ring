@@ -9,12 +9,13 @@ import {
   VStack
 } from "@chakra-ui/react";
 import { Link } from "@tanstack/react-router";
-import { MinimalLetter } from "../../client";
+import { MinimalLetter, PublicLetter } from "../../client";
 
 export function LoopCard(props: {
-  loop: MinimalLetter;
+  loop: MinimalLetter | PublicLetter;
   includeGroupName?: boolean;
   showLoopTypeLabel?: boolean;
+  showResponderCount?: boolean;
 }): JSX.Element {
   const sendDate = new Date(props.loop.send_at);
   const textColor = useColorModeValue("ui.dark", "ui.light");
@@ -66,6 +67,16 @@ export function LoopCard(props: {
     return null;
   };
 
+  // Check if responders attribute exists and get responder count
+  const getResponderCount = () => {
+    if (props.showResponderCount && 'responders' in props.loop && props.loop.responders) {
+      return props.loop.responders.length;
+    }
+    return null;
+  };
+
+  const responderCount = getResponderCount();
+
   return (
     <LinkBox height="100%">
       <Box
@@ -107,6 +118,11 @@ export function LoopCard(props: {
             <Text color={subtextColor} fontSize="sm">
               {sendDate.toLocaleDateString()}
             </Text>
+            {responderCount !== null && (
+              <Text color={subtextColor} fontSize="sm">
+                {responderCount} responder{responderCount !== 1 ? 's' : ''}
+              </Text>
+            )}
           </VStack>
         </LinkOverlay>
       </Box>

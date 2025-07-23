@@ -1,29 +1,29 @@
 import {
-    Button,
-    FormControl,
-    FormErrorMessage,
-    FormLabel,
-    Input,
-    Modal,
-    ModalBody,
-    ModalCloseButton,
-    ModalContent,
-    ModalFooter,
-    ModalHeader,
-    ModalOverlay,
-    useColorModeValue,
+  Button,
+  FormControl,
+  FormErrorMessage,
+  FormLabel,
+  Input,
+  Modal,
+  ModalBody,
+  ModalCloseButton,
+  ModalContent,
+  ModalFooter,
+  ModalHeader,
+  ModalOverlay,
+  useColorModeValue,
 } from "@chakra-ui/react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { type SubmitHandler, useForm } from "react-hook-form";
 
 import { AxiosError } from "axios";
 import {
-    EditLetterLettersLetterLetterApiIdEditLetterPostError,
-    PublicLetter,
+  EditLetterLettersLetterLetterApiIdEditLetterPostError,
+  PublicLetter,
 } from "../../client";
 import {
-    editLetterLettersLetterLetterApiIdEditLetterPostMutation,
-    readLetterLettersLetterLetterApiIdGetQueryKey,
+  editLetterLettersLetterLetterApiIdEditLetterPostMutation,
+  readLetterLettersLetterLetterApiIdGetQueryKey,
 } from "../../client/@tanstack/react-query.gen";
 import useCustomToast from "../../hooks/useCustomToast";
 import { toISOLocal } from "../../util/misc";
@@ -99,8 +99,8 @@ const EditLetter = ({ isOpen, onClose, loop }: EditLetterProps) => {
         isCentered
       >
         <ModalOverlay backdropFilter="blur(4px)" />
-        <ModalContent 
-          as="form" 
+        <ModalContent
+          as="form"
           onSubmit={handleSubmit(onSubmit)}
           bg="ui.glass.light.background"
           backdropFilter="blur(10px)"
@@ -111,7 +111,7 @@ const EditLetter = ({ isOpen, onClose, loop }: EditLetterProps) => {
             borderColor: "ui.glass.dark.border",
           }}
         >
-          <ModalHeader color={textColor}>Start Next Loop</ModalHeader>
+          <ModalHeader color={textColor}>Edit Loop</ModalHeader>
           <ModalCloseButton color={textColor} />
           <ModalBody pb={6}>
             <FormControl isRequired>
@@ -145,11 +145,11 @@ const EditLetter = ({ isOpen, onClose, loop }: EditLetterProps) => {
           </ModalBody>
 
           <ModalFooter gap={3}>
-            <Button 
-              variant="primary" 
-              type="submit" 
+            <Button
+              variant="primary"
+              type="submit"
               isLoading={isSubmitting}
-              _hover={{ 
+              _hover={{
                 opacity: 0.9,
                 bg: "ui.primary",
               }}
@@ -157,7 +157,7 @@ const EditLetter = ({ isOpen, onClose, loop }: EditLetterProps) => {
             >
               Save
             </Button>
-            <Button 
+            <Button
               onClick={onClose}
               variant="glass"
             >
