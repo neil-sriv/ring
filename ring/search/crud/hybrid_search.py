@@ -204,8 +204,9 @@ def hydrate_results(
 ) -> list[APIIdentified]:
     return get_models(
         db,
-        SEARCH_REGISTRY[model_type.value].model_class,
+        SEARCH_REGISTRY[model_type].model_class,
         model_api_identifiers,
+        raise_on_missing=False,
     )
 
 
