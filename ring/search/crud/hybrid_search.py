@@ -73,9 +73,9 @@ def type_to_search_registration(
 def model_class_to_search_registration(
     model: type[APIIdentified],
 ) -> SearchRegistration:
-    for _, search_registration in SEARCH_REGISTRY.items():
-        if search_registration.model_class == model:
-            return search_registration
+    for registration in SEARCH_REGISTRY.values():
+        if registration.model_class == model:
+            return registration
     raise ValueError(f"Model {model} not found in SEARCH_REGISTRY")
 
 
