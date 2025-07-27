@@ -20,6 +20,7 @@ from pydantic import (
     validator,
 )
 
+from ring.letters.schemas.comment import Comment, CommentUnlinked
 from ring.letters.schemas.letter import Letter, LetterUnlinked
 from ring.letters.schemas.question import Question, QuestionUnlinked
 from ring.letters.schemas.response import Response, ResponseUnlinked
@@ -219,6 +220,20 @@ class ResponseWithParticipant(Response, WithImageMixin):
     """
 
     participant: "UserUnlinked"
+
+
+class CommentLinked(Comment):
+    """Comment model with linked relationships.
+
+    Extends the base Comment model to include author and question information.
+
+    Attributes:
+        author (UserUnlinked): User who wrote the comment
+        question (QuestionUnlinked): Question being commented on
+    """
+
+    author: "UserUnlinked"
+    question: "QuestionUnlinked"
 
 
 class InviteLinked(Invite):
