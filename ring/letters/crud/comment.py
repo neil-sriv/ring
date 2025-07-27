@@ -188,26 +188,3 @@ def can_user_delete_comment(user: User, comment: Comment) -> bool:
     return user.admin
 
 
-def is_user_in_question_group(db: Session, user: User, question: Question) -> bool:
-    """Check if a user is a member of the group that owns the question.
-
-    Args:
-        db (Session): Database session
-        user (User): User to check
-        question (Question): Question to check against
-
-    Returns:
-        bool: True if user is in the group, False otherwise
-    """
-    # Load the question with letter and group if not already loaded
-    if not hasattr(question, 'letter') or question.letter is None:
-        question = (
-            db.query(Question)
-            .options(
-                joinedload(Question.letter).joinedload('group.members')
-            )
-            .filter(Question.id == question.id)
-            .first()
-        )
-    
-    return user in question.letter.group.members

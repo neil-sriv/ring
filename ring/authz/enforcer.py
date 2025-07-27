@@ -7,6 +7,7 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from ring.api_identifier.util import get_model
+from ring.letters.models.comment_model import Comment
 from ring.letters.models.letter_model import Letter
 from ring.letters.models.question_model import Question
 from ring.letters.models.response_model import Response
@@ -84,6 +85,33 @@ def build_stateless_enforcer(db: Session, sub_api_id: str) -> Enforcer:
         if response_api_id:
             enforcer.add_named_grouping_policy(
                 "g2", response_api_id, question_api_id
+            )
+
+    # add g2 rules for comments
+    stmt_comments = (
+        select(
+            Question.api_identifier,
+            Comment.api_identifier,
+        )
+        .join(Question.comments)
+        .where(
+            Question.letter_id.in_(
+                select(Letter.id)
+                .join(Letter.group)
+                .where(
+                    Group.api_identifier.in_(
+                        [group_api_id for group_api_id, _ in user_groups]
+                    )
+                )
+            )
+        )
+    )
+    comments = db.execute(stmt_comments).all()
+    
+    for question_api_id, comment_api_id in comments:
+        if comment_api_id:
+            enforcer.add_named_grouping_policy(
+                "g2", comment_api_id, question_api_id
             )
 
     # add p rules for group permissions
