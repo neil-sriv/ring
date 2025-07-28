@@ -42,16 +42,17 @@ export function HomeDashboard() {
           )}
           {in_progress.length > 0 && (
             <LoopsGrid
-              loops={in_progress}
+              loops={in_progress.sort((a, b) => new Date(a.send_at).getTime() - new Date(b.send_at).getTime())}
               heading="In Progress"
               subheading="Add your response now!"
               includeGroupName={true}
               showLoopTypeLabel={true}
+              showResponderCount={true}
             />
           )}
           {upcoming.length > 0 && (
             <LoopsGrid
-              loops={upcoming}
+              loops={upcoming.sort((a, b) => new Date(a.send_at).getTime() - new Date(b.send_at).getTime())}
               heading="Upcoming Issues"
               subheading="You can add questions to the upcoming issues before they are available"
               includeGroupName={true}

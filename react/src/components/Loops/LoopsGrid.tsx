@@ -4,7 +4,7 @@ import {
   Heading,
   VStack
 } from "@chakra-ui/react";
-import { MinimalLetter } from "../../client";
+import { MinimalLetter, PublicLetter } from "../../client";
 import { LoopCard } from "./LoopCard";
 
 export function LoopsGrid({
@@ -13,12 +13,14 @@ export function LoopsGrid({
   subheading,
   includeGroupName = false,
   showLoopTypeLabel = false,
+  showResponderCount = false,
 }: {
-  loops: MinimalLetter[];
+  loops: MinimalLetter[] | PublicLetter[];
   heading: string;
   subheading?: string;
   includeGroupName?: boolean;
   showLoopTypeLabel?: boolean;
+  showResponderCount?: boolean;
 }): JSX.Element {
   return (
     <VStack w="100%" spacing={4} align="center">
@@ -38,6 +40,7 @@ export function LoopsGrid({
               loop={loop}
               includeGroupName={includeGroupName}
               showLoopTypeLabel={showLoopTypeLabel}
+              showResponderCount={showResponderCount}
             />
           </Box>
         ))}
