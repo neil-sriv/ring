@@ -112,6 +112,12 @@ API accessible and `localhost/api/v1/docs`
 ring fe dev
 ```
 
+### Running the LLM service -- this is required for locally testing
+
+```bash
+cd llm && docker compose -f compose.llm.yml up llm -d
+```
+
 Accessible at `https://localhost:5173`
 
 ### `ring` commands
