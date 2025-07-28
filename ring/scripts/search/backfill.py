@@ -61,6 +61,11 @@ def run_script(
             SearchableType.QUESTION,
             SearchableType.RESPONSE,
         ]
+    else:
+        searchable_types = [
+            SearchableType(searchable_type)
+            for searchable_type in searchable_types
+        ]
 
     for searchable_type in searchable_types:
         model_class = type_to_search_registration(searchable_type).model_class
