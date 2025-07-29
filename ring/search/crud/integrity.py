@@ -30,6 +30,21 @@ class IntegrityCheckResult:
     total_search_documents_found: int
 
 
+def log_integrity_check_result(result: IntegrityCheckResult) -> None:
+    """Log integrity check results in a standardized format.
+
+    Args:
+        result: The integrity check result to log
+    """
+    logger.info(
+        f"Integrity check for {result.searchable_type.value}: "
+        f"{result.missing_documents_count} missing documents, "
+        f"{result.non_existent_references_count} non-existent references, "
+        f"{result.total_models_checked} models checked, "
+        f"{result.total_search_documents_found} search documents found"
+    )
+
+
 def check_integrity_for_searchable_type(
     db: Session, searchable_type: SearchableType
 ) -> IntegrityCheckResult:
@@ -79,21 +94,17 @@ def check_integrity_for_searchable_type(
 
     total_search_documents_found = len(associations)
 
-    logger.info(
-        f"Integrity check for {searchable_type.value}: "
-        f"{missing_documents_count} missing documents, "
-        f"{non_existent_references_count} non-existent references, "
-        f"{total_models_checked} models checked, "
-        f"{total_search_documents_found} search documents found"
-    )
-
-    return IntegrityCheckResult(
+    result = IntegrityCheckResult(
         searchable_type=searchable_type,
         missing_documents_count=missing_documents_count,
         non_existent_references_count=non_existent_references_count,
         total_models_checked=total_models_checked,
         total_search_documents_found=total_search_documents_found,
     )
+
+    log_integrity_check_result(result)
+
+    return result
 
 
 @job_factory("check_integrity_for_searchable_type")
