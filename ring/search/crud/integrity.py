@@ -3,6 +3,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Any
 
+from loguru import logger
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
@@ -11,7 +12,6 @@ from ring.async_scheduler.scheduler import (
     job_factory,
     scheduler,
 )
-from ring.lib.logger import logger
 from ring.search.crud.hybrid_search import SEARCH_REGISTRY, SearchableType
 from ring.search.models.hybrid_search import (
     HybridSearchDocument,

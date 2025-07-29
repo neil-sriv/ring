@@ -11,6 +11,7 @@ from typing import Awaitable, Callable
 
 from fastapi import FastAPI, Request, Response
 from fastapi.responses import JSONResponse
+from loguru import logger
 from starlette.middleware.cors import CORSMiddleware
 
 from ring.api_identifier.util import IDNotFoundException
@@ -18,7 +19,6 @@ from ring.async_scheduler.scheduler import scheduler
 from ring.fastapp.config import get_config
 from ring.fastapp.init_app_modules import init_app_modules
 from ring.fastapp.routes import router
-from ring.lib.logger import logger
 
 
 @asynccontextmanager

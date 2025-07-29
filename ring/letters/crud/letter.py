@@ -10,6 +10,7 @@ import random
 from datetime import UTC, datetime, timedelta
 from typing import TYPE_CHECKING, Any, Sequence
 
+from loguru import logger
 from sqlalchemy import ColumnElement, select
 
 from ring.api_identifier import util as api_identifier_crud
@@ -23,7 +24,6 @@ from ring.letters.constants import (
 from ring.letters.crud.question import create_question
 from ring.letters.models.letter_model import Letter
 from ring.letters.models.question_model import Question
-from ring.lib.logger import logger
 from ring.parties.models.group_model import Group
 from ring.parties.models.user_model import User
 from ring.search.crud.hybrid_search import (

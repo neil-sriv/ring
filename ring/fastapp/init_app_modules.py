@@ -1,6 +1,7 @@
 from __future__ import annotations
 
-from ring.lib.logger import logger
+from loguru import logger
+
 from ring.search._gen.all_search_registration import (
     import_all_search_registrations,
 )

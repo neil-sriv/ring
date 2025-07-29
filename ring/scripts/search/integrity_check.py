@@ -8,7 +8,8 @@ from __future__ import annotations
 
 from typing import Any
 
-from ring.lib.logger import logger
+from loguru import logger
+
 from ring.scripts.dependencies import (
     ScriptDependencies,
     get_script_dependencies,

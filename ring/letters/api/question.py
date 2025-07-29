@@ -7,6 +7,7 @@ creating, updating, and uploading images for responses.
 from __future__ import annotations
 
 from fastapi import APIRouter, Depends, HTTPException, UploadFile, status
+from loguru import logger
 
 from ring.api_identifier import (
     util as api_identifier_crud,
@@ -24,7 +25,6 @@ from ring.letters.schemas.question import (
     GenerateQuestionResponse,
 )
 from ring.letters.schemas.response import ResponseUpsert
-from ring.lib.logger import logger
 from ring.ring_pydantic.linked_schemas import QuestionLinked
 
 router = APIRouter()

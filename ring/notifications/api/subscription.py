@@ -7,12 +7,12 @@ subscriptions, allowing users to receive notifications through their browsers.
 from __future__ import annotations
 
 from fastapi import APIRouter, Depends
+from loguru import logger
 
 from ring.fastapp.dependencies import (
     AuthenticatedRequestDependencies,
     get_request_dependencies,
 )
-from ring.lib.logger import logger
 from ring.notifications.crud.subscription import (
     create_subscription,
     get_subscription_by_endpoint,

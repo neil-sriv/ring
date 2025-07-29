@@ -10,6 +10,7 @@ import json
 from typing import TYPE_CHECKING, Sequence
 
 from llm_service import ApiClient, CompletionRequest, CompletionsApi
+from loguru import logger
 from pydantic import BaseModel
 from sqlalchemy import select
 
@@ -19,7 +20,6 @@ from ring.letters.crud.response import create_response
 from ring.letters.models.letter_model import Letter
 from ring.letters.models.question_model import Question
 from ring.letters.models.response_model import Response
-from ring.lib.logger import logger
 from ring.parties.models.user_model import User
 from ring.search.crud.hybrid_search import (
     create_hybrid_search_document,

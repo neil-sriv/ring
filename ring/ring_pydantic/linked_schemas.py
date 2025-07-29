@@ -9,6 +9,7 @@ from __future__ import annotations
 
 from typing import Any, Literal, Optional, Union
 
+from loguru import logger
 from pydantic import (
     BaseModel,
     Field,
@@ -22,7 +23,6 @@ from pydantic import (
 from ring.letters.schemas.letter import Letter, LetterUnlinked
 from ring.letters.schemas.question import Question, QuestionUnlinked
 from ring.letters.schemas.response import Response, ResponseUnlinked
-from ring.lib.logger import logger
 from ring.notifications.schemas.subscription import Subscription
 from ring.parties.schemas.group import Group, GroupUnlinked
 from ring.parties.schemas.invite import Invite

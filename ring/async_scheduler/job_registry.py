@@ -9,7 +9,8 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Any, Callable
 
-from ring.lib.logger import logger
+from loguru import logger
+
 from ring.lib.util import RegistrationDict
 
 JOB_RETURN_TYPE = Any

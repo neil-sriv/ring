@@ -11,13 +11,12 @@ from dataclasses import dataclass
 from typing import Optional
 
 import boto3
+from loguru import logger
 from mypy_boto3_ses.client import BotocoreClientError, SESClient
 from mypy_boto3_ses.type_defs import (
     DestinationTypeDef,
     MessageTypeDef,
 )
-
-from ring.lib.logger import logger
 
 # The character encoding for the email.
 CHARSET = "UTF-8"

@@ -57,10 +57,10 @@ def run_script(db: Session) -> None:
     import click
     import sqlalchemy
     from IPython import embed
+    from loguru import logger
     from traitlets.config import Config
 
     import ring
-    from ring.lib.logger import logger
     from ring.lib.util import get_all_subclasses
     from ring.sqlalchemy_base import Base
 

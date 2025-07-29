@@ -12,9 +12,9 @@ import pathlib
 from contextlib import contextmanager
 
 import click
+from loguru import logger
 
 from ring.fastapp.init_app_modules import init_offline_modules
-from ring.lib.logger import logger
 
 
 @contextmanager
