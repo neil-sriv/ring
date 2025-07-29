@@ -113,10 +113,14 @@ def interval_job_factory(
     ) -> Callable[..., JOB_RETURN_TYPE]:
         @wraps(func)
         @job_factory(name)
-        def wrapper(*args: Any, **kwargs: Any) -> JOB_RETURN_TYPE:
-            return func(*args, **kwargs)
+        def wrapper(*args: Any, **func_kwargs: Any) -> JOB_RETURN_TYPE:
+            return func(*args, **func_kwargs)
 
         wrapper.name = name
+
+        # Register the job with interval parameters for later scheduling
+        register_interval_job_schedule(name, wrapper, **kwargs)
+
         return wrapper
 
     return decorator
