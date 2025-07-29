@@ -40,4 +40,3 @@ def schedule_all_interval_jobs() -> None:
 
 def initialize() -> None:
     import_all_jobs()
-    schedule_all_interval_jobs()

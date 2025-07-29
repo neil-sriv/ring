@@ -49,4 +49,4 @@ def register_job(
         job_function=job_function,
     )
 
-    logger.info(f"Registered job '{name}'")
+    # logger.info(f"Registered job '{name}'")

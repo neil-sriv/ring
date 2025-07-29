@@ -13,14 +13,8 @@ from contextlib import contextmanager
 
 import click
 
-from ring.fastapp.init_app_modules import init_app_modules
+from ring.fastapp.init_app_modules import init_offline_modules
 from ring.lib.logger import logger
-from ring.scripts.dependencies import (
-    ScriptDependencies,
-    get_script_dependencies,
-)
-
-# import asyncio
 
 
 @contextmanager
@@ -29,7 +23,7 @@ def script_context():
 
     This context manager ensures proper initialization and cleanup of script resources.
     """
-    init_app_modules()
+    init_offline_modules()
     logger.level("DEBUG")
     logger.debug("Debug logging enabled")
     try:
