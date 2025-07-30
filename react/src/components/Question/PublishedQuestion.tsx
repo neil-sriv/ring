@@ -1,7 +1,7 @@
 import { Box, Heading, Link, Text } from "@chakra-ui/react";
 import { PublicQuestion, ResponseWithParticipant } from "../../client";
-import { S3Image, S3Video } from "../Common/SingleUploadImage";
 import { splitText, URLMatch } from "../../util/URLParse";
+import { S3Image, S3Video } from "../Common/SingleUploadImage";
 
 function TextBlockWithUrls({
   texts,
@@ -19,7 +19,11 @@ function TextBlockWithUrls({
         </Link>
       );
     } else {
-      elements.push(<Text key={"" + index + responseApiId}>{text}</Text>);
+      elements.push(
+        <Text whiteSpace="pre-line" key={"" + index + responseApiId}>
+          {text}
+        </Text>
+      );
     }
   });
   return <>{elements}</>;
