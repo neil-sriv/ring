@@ -7,6 +7,8 @@ task data with different levels of detail.
 
 from __future__ import annotations
 
+from typing import Any
+
 from pydantic import AwareDatetime, BaseModel, ConfigDict
 
 
@@ -45,7 +47,7 @@ class Task(TaskBase):
     type: str
     status: str
     execute_at: AwareDatetime
-    arguments: dict[str, str]
+    arguments: dict[str, Any]
 
 
 class TaskUnlinked(Task):

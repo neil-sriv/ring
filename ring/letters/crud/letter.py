@@ -216,6 +216,7 @@ def upsert_letter_tasks(
         TaskType.SEND_EMAIL,
         letter.send_at,
         send_at,
+        {"letter_id": letter.id},
     )
     if not send_email_task:
         schedule_crud.register_task(
@@ -223,7 +224,7 @@ def upsert_letter_tasks(
             letter.group.schedule,
             TaskType.SEND_EMAIL,
             send_at,
-            {},
+            {"letter_id": letter.id},
         )
 
     # reminder email 1
@@ -249,7 +250,10 @@ def upsert_letter_tasks(
                     letter.group.schedule,
                     TaskType.REMINDER_EMAIL,
                     send_at - timedelta(days=8),
-                    {"letter_status": LetterStatus.UPCOMING},
+                    {
+                        "letter_id": letter.id,
+                        "letter_status": LetterStatus.UPCOMING,
+                    },
                 )
 
     # reminder email 2
@@ -274,7 +278,10 @@ def upsert_letter_tasks(
                 letter.group.schedule,
                 TaskType.REMINDER_EMAIL,
                 send_at - timedelta(days=1),
-                {"letter_status": LetterStatus.IN_PROGRESS},
+                {
+                    "letter_id": letter.id,
+                    "letter_status": LetterStatus.IN_PROGRESS,
+                },
             )
 
 
