@@ -93,6 +93,11 @@ export default function CommentSection({ questionApiId }: CommentSectionProps) {
 
   const comments = commentsData?.comments || [];
   const totalComments = commentsData?.total || 0;
+  
+  // Debug logging
+  console.log('Comments data:', commentsData);
+  console.log('Comments array:', comments);
+  console.log('Total comments:', totalComments);
 
   return (
     <VStack spacing={6} align="stretch" mt={8}>

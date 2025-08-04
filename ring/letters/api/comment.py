@@ -24,6 +24,7 @@ from ring.letters.models.question_model import Question
 from ring.letters.schemas.comment import (
     CommentCreate,
     CommentUpdate,
+    CommentUnlinked,
 )
 from ring.ring_pydantic.core import ResponseMessage
 from ring.ring_pydantic.linked_schemas import CommentLinked
@@ -90,7 +91,12 @@ async def create_comment(
     req_dep.db.refresh(comment)
     
     # Convert to Pydantic model
-    return CommentLinked.model_validate(comment)
+    comment_unlinked = CommentUnlinked.from_orm_with_relations(comment)
+    return CommentLinked(
+        **comment_unlinked.model_dump(),
+        author=comment.author,
+        question=comment.question
+    )
 
 
 @router.get(
@@ -148,6 +154,7 @@ async def get_comments(
     
     # Convert SQLAlchemy models to Pydantic models
     comment_list = []
+    print(f"Processing {len(comments)} comments for question {question_api_id}")
     for comment in comments:
         try:
             # Ensure relationships are loaded
@@ -156,13 +163,24 @@ async def get_comments(
             if not comment.question:
                 raise ValueError(f"Comment {comment.api_identifier} has no question")
             
-            # Convert to Pydantic model
-            comment_data = CommentLinked.model_validate(comment)
+            # Convert to Pydantic model - first create CommentUnlinked with proper fields
+            comment_unlinked = CommentUnlinked.from_orm_with_relations(comment)
+            # Then create CommentLinked with the relationships
+            comment_data = CommentLinked(
+                **comment_unlinked.model_dump(),
+                author=comment.author,
+                question=comment.question
+            )
             comment_list.append(comment_data)
+            print(f"Successfully serialized comment {comment.api_identifier}")
         except Exception as e:
             # Log the error but continue processing other comments
             print(f"Error serializing comment {comment.api_identifier}: {e}")
+            import traceback
+            traceback.print_exc()
             continue
+    
+    print(f"Returning {len(comment_list)} comments out of {total} total")
     
     return CommentsListResponse(
         comments=comment_list,
@@ -228,7 +246,12 @@ async def update_comment(
     req_dep.db.refresh(updated_comment)
     
     # Convert to Pydantic model
-    return CommentLinked.model_validate(updated_comment)
+    comment_unlinked = CommentUnlinked.from_orm_with_relations(updated_comment)
+    return CommentLinked(
+        **comment_unlinked.model_dump(),
+        author=updated_comment.author,
+        question=updated_comment.question
+    )
 
 
 @router.delete(
