@@ -1050,7 +1050,7 @@ wheels = [
 [[package]]
 name = "llm"
 version = "0.1.0"
-source = { virtual = "llm" }
+source = { editable = "llm" }
 dependencies = [
     { name = "fastapi", extra = ["all"] },
     { name = "google-genai" },

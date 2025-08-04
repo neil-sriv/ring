@@ -9,21 +9,22 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from sqlalchemy import ForeignKey, String, Text
+from sqlalchemy import ForeignKey, String
 from sqlalchemy.ext.hybrid import hybrid_property
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from ring.api_identifier.api_identified_model import APIIdentified
 from ring.api_identifier.util import APIPrefix, register_api_class
 from ring.created_at import CreatedAtMixin
-from ring.parties.models.user_model import User
 from ring.ring_pydantic.linked_schemas import QuestionLinked
 from ring.ring_pydantic.pydantic_model import PydanticModel
 from ring.sqlalchemy_base import Base
 
 if TYPE_CHECKING:
+    from ring.letters.models.comment_model import Comment
     from ring.letters.models.letter_model import Letter
     from ring.letters.models.response_model import Response
+    from ring.parties.models.user_model import User
 
 
 @register_api_class(APIPrefix.QUESTION)
@@ -51,6 +52,10 @@ class Question(Base, APIIdentified, PydanticModel, CreatedAtMixin):
     api_identifier: Mapped[str] = mapped_column(unique=True, index=True)
 
     responses: Mapped[list["Response"]] = relationship(
+        back_populates="question", cascade="all"
+    )
+
+    comments: Mapped[list["Comment"]] = relationship(
         back_populates="question", cascade="all"
     )
 

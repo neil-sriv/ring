@@ -7,9 +7,9 @@ export function HomeDashboard() {
   const dashboardLoops = useSuspenseQuery({
     ...listDashboardLettersLettersLettersDashboardGetOptions(),
   });
-  const recently_completed = dashboardLoops.data.recently_completed;
-  const in_progress = dashboardLoops.data.in_progress;
-  const upcoming = dashboardLoops.data.upcoming;
+  const recently_completed = dashboardLoops.data?.recently_completed || [];
+  const in_progress = dashboardLoops.data?.in_progress || [];
+  const upcoming = dashboardLoops.data?.upcoming || [];
 
   const textColor = useColorModeValue("ui.dark", "ui.light");
   const bgColor = useColorModeValue("ui.glass.light.background", "ui.glass.dark.background");

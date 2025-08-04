@@ -10,7 +10,7 @@ from __future__ import annotations
 from fastapi import APIRouter
 
 from ring.auth.api import authn
-from ring.letters.api import letter, question, response
+from ring.letters.api import comment, letter, question, response
 from ring.llm.api import completion
 from ring.notifications.api import subscription
 from ring.parties.api import group, group_key_value, invite, user
@@ -34,6 +34,7 @@ router.include_router(letter.router, prefix="/letters", tags=["letters"])
 router.include_router(schedule.router, prefix="/schedule", tags=["schedule"])
 router.include_router(question.router, prefix="/questions", tags=["questions"])
 router.include_router(response.router, prefix="/responses", tags=["responses"])
+router.include_router(comment.router, prefix="/letters", tags=["comments"])
 
 # Invitation and notification routes
 router.include_router(invite.router, prefix="/invites", tags=["invites"])

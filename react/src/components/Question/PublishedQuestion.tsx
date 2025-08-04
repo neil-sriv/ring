@@ -1,7 +1,8 @@
-import { Box, Heading, Link, Text } from "@chakra-ui/react";
+import { Box, Heading, Link, Text, VStack } from "@chakra-ui/react";
 import { PublicQuestion, ResponseWithParticipant } from "../../client";
 import { splitText, URLMatch } from "../../util/URLParse";
 import { S3Image, S3Video } from "../Common/SingleUploadImage";
+import CommentSection from "../Comments/CommentSection";
 
 function TextBlockWithUrls({
   texts,
@@ -59,21 +60,26 @@ function PublishedQuestion({
 }: {
   question: PublicQuestion;
 }): JSX.Element {
+
   return (
-    <Box my="20px">
-      {question.author == null ? (
-        <Heading size="lg">{question.question_text}</Heading>
-      ) : (
-        <Heading size="lg">
-          {question.author.name} asked: {question.question_text}
-        </Heading>
-      )}
-      {question.responses.map((response) => {
-        return (
-          <ResponseBlock response={response} key={response.api_identifier} />
-        );
-      })}
-    </Box>
+    <VStack spacing={6} align="stretch" my="20px">
+      <Box>
+        {question.author == null ? (
+          <Heading size="lg">{question.question_text}</Heading>
+        ) : (
+          <Heading size="lg">
+            {question.author.name} asked: {question.question_text}
+          </Heading>
+        )}
+        {question.responses.map((response) => {
+          return (
+            <ResponseBlock response={response} key={response.api_identifier} />
+          );
+        })}
+      </Box>
+      
+      <CommentSection questionApiId={question.api_identifier} />
+    </VStack>
   );
 }
 
