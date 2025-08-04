@@ -10,6 +10,7 @@ from __future__ import annotations
 from datetime import timedelta
 from typing import Any, Callable
 
+import sqlalchemy
 from loguru import logger
 from sqlalchemy.orm import Session
 
@@ -17,6 +18,8 @@ from ring.async_scheduler.scheduler import job_factory, scheduler
 from ring.email_util import send_email
 from ring.letters.constants import LetterStatus
 from ring.letters.crud import letter as letter_crud
+from ring.letters.models.letter_model import Letter
+from ring.lib.util import RegistrationDict
 from ring.tasks.crud.reminder_email_task import construct_reminder_email
 from ring.tasks.crud.send_email_task import construct_send_letter_email
 from ring.tasks.models.task_model import (
@@ -78,7 +81,9 @@ def execute_reminder_email_task(
     db.commit()
 
 
-def execute_send_email_task(db: Session, task: SendEmailTask) -> None:
+def execute_send_email_task(
+    db: Session, task: SendEmailTask, **kwargs: Any
+) -> None:
     """Execute a send email task.
 
     Sends a letter email to all participants and marks the letter as sent
@@ -87,18 +92,27 @@ def execute_send_email_task(db: Session, task: SendEmailTask) -> None:
     Args:
         db: Database session
         task: The send email task to execute
-
+        **kwargs: Additional arguments for the task
     Raises:
         AssertionError: If no in-progress letter is found
     """
-    group = task.schedule.group
-    letter_to_send = group.in_progress_letter
+    logger.debug(f"Executing send email task with kwargs: {kwargs}")
+    letter_id = kwargs.get("letter_id")
+    if letter_id:
+        letter = db.scalars(
+            sqlalchemy.select(Letter).where(Letter.id == letter_id)
+        ).one()
+        assert letter
+        letter_to_send = letter
+    else:
+        group = task.schedule.group
+        letter_to_send = group.in_progress_letter
     assert letter_to_send
     message_id = send_email(
         construct_send_letter_email(
             [u.email for u in letter_to_send.participants],
             letter_to_send.number,
-            group.name,
+            letter_to_send.group.name,
             letter_to_send.api_identifier,
             letter_crud.compile_letter_dict(letter_to_send),
         )
@@ -196,6 +210,11 @@ ASYNC_TASK_TO_EXECUTE_MAPPING: dict[
     TaskType.SEND_EMAIL: async_send_email_task,
     TaskType.REMINDER_EMAIL: async_reminder_email_task,
 }
+
+
+# TASK_REGISTRY: RegistrationDict[TaskType, Callable[[Any], None]] = (
+#     RegistrationDict("TASK_REGISTRY")
+# )
 
 
 @job_factory("execute_tasks")
