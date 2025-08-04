@@ -57,11 +57,11 @@ const EditLetter = ({ isOpen, onClose, loop }: EditLetterProps) => {
   } = useForm<LetterFormProps>({
     mode: "onBlur",
     criteriaMode: "all",
-    defaultValues: {
-      sendAt: toISOLocal(previousSendAt).slice(0, 16),
+    values: isOpen ? {
+      sendAt: toISOLocal(new Date(loop.send_at)).slice(0, 16),
       title: loop.title || "",
       isInProgress: loop.status === "IN_PROGRESS",
-    },
+    } : undefined,
   });
 
   const mutation = useMutation({
