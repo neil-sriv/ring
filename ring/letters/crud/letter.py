@@ -134,8 +134,7 @@ def create_letter(
     db.add(db_letter)
     db.add(create_letter_search_document(db, db_letter))
 
-    if letter_status in [LetterStatus.IN_PROGRESS, LetterStatus.UPCOMING]:
-        upsert_letter_tasks(db, db_letter, send_at)
+    upsert_letter_tasks(db, db_letter, send_at)
     return db_letter
 
 

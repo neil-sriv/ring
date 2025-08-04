@@ -8,8 +8,10 @@ import {
   useColorModeValue,
   VStack
 } from "@chakra-ui/react";
+import { useQueryClient } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
-import { MinimalLetter, PublicLetter } from "../../client";
+import { MinimalLetter, PublicLetter, UserLinked } from "../../client";
+import { readUserMePartiesMeGetQueryKey } from "../../client/@tanstack/react-query.gen";
 
 export function LoopCard(props: {
   loop: MinimalLetter | PublicLetter;
@@ -17,6 +19,11 @@ export function LoopCard(props: {
   showLoopTypeLabel?: boolean;
   showResponderCount?: boolean;
 }): JSX.Element {
+  const queryClient = useQueryClient();
+  const currentUser = queryClient.getQueryData<UserLinked>(
+    readUserMePartiesMeGetQueryKey()
+  );
+
   const sendDate = new Date(props.loop.send_at);
   const textColor = useColorModeValue("ui.dark", "ui.light");
   const subtextColor = useColorModeValue("ui.dim", "ui.dim");
@@ -75,7 +82,26 @@ export function LoopCard(props: {
     return null;
   };
 
+  // Check if user has unanswered questions in this published loop
+  const getUnansweredQuestionsCount = () => {
+    if (
+      props.loop.status === "SENT" &&
+      currentUser &&
+      'questions' in props.loop &&
+      props.loop.questions
+    ) {
+      const unansweredQuestions = props.loop.questions.filter((question) => {
+        return !question.responses.some(
+          (response) => response.participant.api_identifier === currentUser.api_identifier
+        );
+      });
+      return unansweredQuestions.length;
+    }
+    return 0;
+  };
+
   const responderCount = getResponderCount();
+  const unansweredCount = getUnansweredQuestionsCount();
 
   return (
     <LinkBox height="100%">
@@ -121,6 +147,11 @@ export function LoopCard(props: {
             {responderCount !== null && (
               <Text color={subtextColor} fontSize="sm">
                 {responderCount} responder{responderCount !== 1 ? 's' : ''}
+              </Text>
+            )}
+            {unansweredCount > 0 && (
+              <Text color="orange.500" fontSize="sm" fontWeight="medium">
+                You have {unansweredCount} unanswered question{unansweredCount !== 1 ? 's' : ''}
               </Text>
             )}
           </VStack>
