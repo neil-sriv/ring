@@ -2,7 +2,8 @@
 
 from __future__ import annotations
 
-from ring.lib.logger import logger
+from loguru import logger
+
 from ring.parties.crud import user as user_crud
 from ring.scripts.dependencies import (
     ScriptDependencies,

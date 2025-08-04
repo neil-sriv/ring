@@ -5,9 +5,9 @@ This script retrieves and displays all users from the database using SQLAlchemy.
 
 from __future__ import annotations
 
+from loguru import logger
 from sqlalchemy import select
 
-from ring.lib.logger import logger
 from ring.parties.models.user_model import User
 from ring.scripts.dependencies import (
     ScriptDependencies,

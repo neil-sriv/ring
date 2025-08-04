@@ -13,8 +13,8 @@ from pprint import pp
 from typing import Any, Sequence
 
 import sqlalchemy
+from loguru import logger
 
-from ring.lib.logger import logger
 from ring.parties.crud import group as group_crud
 from ring.parties.crud import user as user_crud
 from ring.parties.models.group_model import Group

@@ -12,11 +12,11 @@ import time
 from typing import TYPE_CHECKING, Any, Sequence
 
 import sqlalchemy
+from loguru import logger
 from sqlalchemy import or_, select
 
 from ring.api_identifier import util as api_identifier_crud
 from ring.async_scheduler.scheduler import interval_job_factory, scheduler
-from ring.lib.logger import logger
 from ring.parties.models.group_model import Group
 from ring.tasks.crud import task as task_crud
 from ring.tasks.models.schedule_model import Schedule

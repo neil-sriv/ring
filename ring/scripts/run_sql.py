@@ -6,9 +6,9 @@ display the results in a formatted manner using pprintpp.
 
 from __future__ import annotations
 
+from loguru import logger
 from sqlalchemy import text
 
-from ring.lib.logger import logger
 from ring.scripts.dependencies import (
     ScriptDependencies,
     get_script_dependencies,

@@ -4,7 +4,8 @@ from dataclasses import dataclass
 from typing import Any, Callable
 
 # from ring.apscheduler.scheduler import JOB_RETURN_TYPE
-from ring.lib.logger import logger
+from loguru import logger
+
 from ring.lib.util import RegistrationDict
 
 INTERVAL_JOB_SCHEDULE_REGISTRY: RegistrationDict[str, IntervalJobSchedule] = (

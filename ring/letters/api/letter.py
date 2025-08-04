@@ -13,6 +13,7 @@ from datetime import UTC, datetime, timedelta
 from typing import Sequence
 
 from fastapi import APIRouter, Depends
+from loguru import logger
 from sqlalchemy import ColumnElement, and_, or_
 
 from ring.api_identifier import (
@@ -34,7 +35,6 @@ from ring.letters.schemas.question import (
     GenerateQuestionResponse,
     QuestionCreate,
 )
-from ring.lib.logger import logger
 from ring.parties.models.user_model import User
 from ring.ring_pydantic import PublicLetter as LetterSchema
 from ring.ring_pydantic.linked_schemas import DashboardLetters, MinimalLetter

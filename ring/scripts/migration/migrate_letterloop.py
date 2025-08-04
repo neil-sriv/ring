@@ -11,13 +11,13 @@ from datetime import datetime
 from pathlib import Path
 from pprint import pp
 
+from loguru import logger
 from sqlalchemy import select
 
 import ring.letters.crud.letter as letter_crud
 import ring.letters.crud.question as question_crud
 from ring.letters.constants import LetterStatus
 from ring.letters.models.letter_model import Letter
-from ring.lib.logger import logger
 from ring.parties.models.group_model import Group
 from ring.parties.models.user_model import User
 from ring.scripts.dependencies import (

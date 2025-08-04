@@ -10,13 +10,13 @@ from __future__ import annotations
 from datetime import timedelta
 from typing import Any, Callable
 
+from loguru import logger
 from sqlalchemy.orm import Session
 
 from ring.async_scheduler.scheduler import job_factory, scheduler
 from ring.email_util import send_email
 from ring.letters.constants import LetterStatus
 from ring.letters.crud import letter as letter_crud
-from ring.lib.logger import logger
 from ring.tasks.crud.reminder_email_task import construct_reminder_email
 from ring.tasks.crud.send_email_task import construct_send_letter_email
 from ring.tasks.models.task_model import (

@@ -16,10 +16,11 @@ from ring.alembic.alembic_helpers import (
     cockroach_compare_type,
     include_object,
 )
+from ring.fastapp._gen.all_sqla_models import import_all_sqla_models
 from ring.fastapp.config import get_config
-from ring.fastapp.init_app_modules import init_app_modules
 
-init_app_modules()
+import_all_sqla_models()
+
 from ring.sqlalchemy_base import Base
 
 # this is the Alembic Config object, which provides

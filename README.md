@@ -9,7 +9,6 @@ This is a clone of LetterLoop as a fun side project.
 - Orbstack or Docker Installed
 - node v18 or greater
 - pnpm
-- oh-my-zsh (recommended)
 
 ### First Time Dev Setup
 
@@ -96,10 +95,6 @@ Initialize the database (tables will be empty):
 ```bash
 ring db upgrade
 ```
-
-### `oh-my-zsh` set up
-
-**Highly** recommend to use `oh-my-zsh` with the `virtualenvwrapper` and `dotenv` plugins.
 
 ## Development
 

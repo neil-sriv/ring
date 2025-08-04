@@ -12,7 +12,7 @@ from __future__ import annotations
 from typing import Any
 
 from ring.api_identifier import util as api_identifier_crud
-from ring.fastapp.init_app_modules import init_app_modules
+from ring.fastapp.init_app_modules import init_offline_modules
 from ring.letters.crud import letter as letter_crud
 from ring.letters.crud import question as question_crud
 from ring.parties.crud import group as group_crud
@@ -57,14 +57,14 @@ def run_script(db: Session) -> None:
     import click
     import sqlalchemy
     from IPython import embed
+    from loguru import logger
     from traitlets.config import Config
 
     import ring
-    from ring.lib.logger import logger
     from ring.lib.util import get_all_subclasses
     from ring.sqlalchemy_base import Base
 
-    init_app_modules()
+    init_offline_modules()
 
     click.echo("Configuring IPython...")
     c = Config()

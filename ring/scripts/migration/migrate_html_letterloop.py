@@ -30,7 +30,7 @@ from ring.scripts.dependencies import (
     script_depends,
 )
 from bs4 import BeautifulSoup, PageElement, Tag
-from ring.lib.logger import logger
+from loguru import logger
 
 
 def run_script(

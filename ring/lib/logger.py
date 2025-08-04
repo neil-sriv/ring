@@ -5,13 +5,14 @@ This module configures loguru for application-wide logging with two handlers:
 2. File output with DEBUG level, JSON serialization, and rotation/retention policies
 
 The logger can be imported and used throughout the application as:
-    from ring.lib.logger import logger
+    from loguru import logger
 """
 
 from __future__ import annotations
 
 import sys
 
+# import logger
 from loguru import logger
 
 # Remove default handler to avoid duplicate logs

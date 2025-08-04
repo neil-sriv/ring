@@ -9,6 +9,10 @@ def import_all_jobs() -> None:
     )
     from ring.parties.crud.authn import email_password_reset
     from ring.parties.crud.invite import email_user_invites
+    from ring.search.crud.integrity import (
+        async_check_integrity_for_searchable_type,
+        search_integrity_check,
+    )
     from ring.tasks.crud.schedule import poll_schedule_task
     from ring.tasks.crud.task import (
         async_reminder_email_task,
@@ -36,4 +40,3 @@ def schedule_all_interval_jobs() -> None:
 
 def initialize() -> None:
     import_all_jobs()
-    schedule_all_interval_jobs()

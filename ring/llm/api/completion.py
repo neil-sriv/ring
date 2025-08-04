@@ -16,6 +16,7 @@ from llm_service import (
 from llm_service import (
     CompletionRequest as LLMCompletionRequest,
 )
+from loguru import logger
 from pydantic import BaseModel
 
 from ring.fastapp.config import get_llm_config
@@ -23,7 +24,6 @@ from ring.fastapp.dependencies import (
     AuthenticatedRequestDependencies,
     get_request_dependencies,
 )
-from ring.lib.logger import logger
 from ring.llm.schemas.completion import CompletionRequest, CompletionResponse
 
 router = APIRouter()

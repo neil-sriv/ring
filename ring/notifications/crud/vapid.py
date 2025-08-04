@@ -8,10 +8,10 @@ from __future__ import annotations
 
 import json
 
+from loguru import logger
 from pywebpush import WebPushException, webpush  # type: ignore
 
 from ring.fastapp.config import get_config
-from ring.lib.logger import logger
 from ring.notifications.crud.subscription import serialize_subscription_info
 from ring.notifications.models.subscription import Subscription
 from ring.parties.models.user_model import User

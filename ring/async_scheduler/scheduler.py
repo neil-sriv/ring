@@ -8,12 +8,12 @@ from apscheduler.executors.pool import ProcessPoolExecutor, ThreadPoolExecutor
 from apscheduler.jobstores.memory import MemoryJobStore
 from apscheduler.jobstores.sqlalchemy import SQLAlchemyJobStore
 from apscheduler.schedulers.background import BackgroundScheduler
+from loguru import logger
 from sqlalchemy.orm import Session
 
 from ring.async_scheduler.job_registry import register_job
 from ring.async_scheduler.schedule import register_interval_job_schedule
 from ring.fastapp.config import RingConfig, get_config
-from ring.lib.logger import logger
 from ring.sqlalchemy_base import Base, SessionLocal, db_session, get_db
 
 jobstores = {
@@ -113,10 +113,14 @@ def interval_job_factory(
     ) -> Callable[..., JOB_RETURN_TYPE]:
         @wraps(func)
         @job_factory(name)
-        def wrapper(*args: Any, **kwargs: Any) -> JOB_RETURN_TYPE:
-            return func(*args, **kwargs)
+        def wrapper(*args: Any, **func_kwargs: Any) -> JOB_RETURN_TYPE:
+            return func(*args, **func_kwargs)
 
         wrapper.name = name
+
+        # Register the job with interval parameters for later scheduling
+        register_interval_job_schedule(name, wrapper, **kwargs)
+
         return wrapper
 
     return decorator

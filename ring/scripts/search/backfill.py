@@ -2,11 +2,11 @@
 
 from __future__ import annotations
 
+from loguru import logger
 from sqlalchemy import delete, select
 from sqlalchemy.orm import Session
 
 from ring.api_identifier.api_identified_model import APIIdentified
-from ring.lib.logger import logger
 from ring.scripts.dependencies import (
     ScriptDependencies,
     get_script_dependencies,
@@ -60,6 +60,11 @@ def run_script(
             SearchableType.LETTER,
             SearchableType.QUESTION,
             SearchableType.RESPONSE,
+        ]
+    else:
+        searchable_types = [
+            SearchableType(searchable_type)
+            for searchable_type in searchable_types
         ]
 
     for searchable_type in searchable_types:
