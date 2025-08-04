@@ -61,8 +61,8 @@ function IssueContent() {
     <Flex justify="center" w="100%">
       <Box maxW="1200px" w="100%" px={[2, 4]}>
         <VStack spacing={[4, 6, 8]} align="center" w="100%">
-          <Box 
-            w="100%" 
+          <Box
+            w="100%"
             bg="ui.glass.light.background"
             backdropFilter="blur(10px)"
             border="1px solid"
@@ -86,11 +86,11 @@ function IssueContent() {
                     {group!.name}
                   </Link>
                 </Heading>
-                {group.admin.api_identifier === currentUser?.api_identifier && (
+                {group.admin.api_identifier === currentUser?.api_identifier && loop.status !== "SENT" && (
                   <Button
                     variant="primary"
                     onClick={editLoopModal.onOpen}
-                    _hover={{ 
+                    _hover={{
                       opacity: 0.9,
                       bg: "ui.primary",
                     }}
@@ -155,7 +155,7 @@ function IssueContent() {
             </Flex>
           )}
 
-          <Box 
+          <Box
             w="100%"
             bg="ui.glass.light.background"
             backdropFilter="blur(10px)"
