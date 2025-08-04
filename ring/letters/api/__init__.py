@@ -5,6 +5,6 @@ from ring.letters.api import comment, letter, question, response
 __all__ = [
     "comment",
     "letter",
-    "question", 
+    "question",
     "response",
 ]

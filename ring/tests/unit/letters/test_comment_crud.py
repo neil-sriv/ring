@@ -43,7 +43,9 @@ class TestCreateComment:
         assert comment.deleted_by is None
         assert comment.updated_at is None
 
-    def test_create_comment_with_long_content(self, db_session: Session) -> None:
+    def test_create_comment_with_long_content(
+        self, db_session: Session
+    ) -> None:
         """Test creating a comment with maximum allowed content length."""
         user = UserFactory.create()
         group = GroupFactory.create(admin=user)
@@ -85,10 +87,16 @@ class TestGetCommentsForQuestion:
         question = QuestionFactory.create()
         user1 = UserFactory.create()
         user2 = UserFactory.create()
-        
-        comment1 = CommentFactory.create(question=question, author=user1, content="First comment")
-        comment2 = CommentFactory.create(question=question, author=user2, content="Second comment")
-        comment3 = CommentFactory.create(question=question, author=user1, content="Third comment")
+
+        comment1 = CommentFactory.create(
+            question=question, author=user1, content="First comment"
+        )
+        comment2 = CommentFactory.create(
+            question=question, author=user2, content="Second comment"
+        )
+        comment3 = CommentFactory.create(
+            question=question, author=user1, content="Third comment"
+        )
         db_session.commit()
 
         comments, total = comment_crud.get_comments_for_question(
@@ -107,8 +115,10 @@ class TestGetCommentsForQuestion:
         """Test that deleted comments are excluded by default."""
         question = QuestionFactory.create()
         user = UserFactory.create()
-        
-        comment1 = CommentFactory.create(question=question, author=user, content="Active comment")
+
+        comment1 = CommentFactory.create(
+            question=question, author=user, content="Active comment"
+        )
         comment2 = CommentFactory.create(
             question=question,
             author=user,
@@ -132,8 +142,10 @@ class TestGetCommentsForQuestion:
         """Test including deleted comments."""
         question = QuestionFactory.create()
         user = UserFactory.create()
-        
-        comment1 = CommentFactory.create(question=question, author=user, content="Active comment")
+
+        comment1 = CommentFactory.create(
+            question=question, author=user, content="Active comment"
+        )
         comment2 = CommentFactory.create(
             question=question,
             author=user,
@@ -156,7 +168,7 @@ class TestGetCommentsForQuestion:
         """Test comment pagination."""
         question = QuestionFactory.create()
         user = UserFactory.create()
-        
+
         # Create 10 comments
         for i in range(10):
             CommentFactory.create(
@@ -248,7 +260,9 @@ class TestSoftDeleteComment:
         assert deleted_comment.deleted_by == admin
         assert deleted_comment.is_deleted is True
 
-    def test_soft_delete_already_deleted_comment(self, db_session: Session) -> None:
+    def test_soft_delete_already_deleted_comment(
+        self, db_session: Session
+    ) -> None:
         """Test soft deleting an already deleted comment."""
         admin = UserFactory.create(admin=True)
         comment = CommentFactory.create(
@@ -308,7 +322,9 @@ class TestPermissionChecks:
 
         assert comment_crud.can_user_delete_comment(admin, comment) is True
 
-    def test_can_regular_user_delete_comment(self, db_session: Session) -> None:
+    def test_can_regular_user_delete_comment(
+        self, db_session: Session
+    ) -> None:
         """Test that regular users cannot delete comments."""
         user = UserFactory.create(admin=False)
         comment = CommentFactory.create(author=user)
@@ -333,7 +349,9 @@ class TestPermissionChecks:
 
         assert result == comment
 
-    def test_get_comment_for_user_not_in_group(self, db_session: Session) -> None:
+    def test_get_comment_for_user_not_in_group(
+        self, db_session: Session
+    ) -> None:
         """Test getting a comment when user is not in the group."""
         user1 = UserFactory.create()
         user2 = UserFactory.create()
@@ -351,7 +369,9 @@ class TestPermissionChecks:
 
         assert result is None
 
-    def test_get_comment_for_user_deleted_comment(self, db_session: Session) -> None:
+    def test_get_comment_for_user_deleted_comment(
+        self, db_session: Session
+    ) -> None:
         """Test getting a deleted comment returns None for regular users."""
         user = UserFactory.create()
         group = GroupFactory.create(admin=user)
@@ -372,7 +392,9 @@ class TestPermissionChecks:
 
         assert result is None
 
-    def test_get_comment_for_admin_deleted_comment(self, db_session: Session) -> None:
+    def test_get_comment_for_admin_deleted_comment(
+        self, db_session: Session
+    ) -> None:
         """Test getting a deleted comment returns the comment for admins."""
         admin = UserFactory.create(admin=True)
         group = GroupFactory.create(admin=admin)

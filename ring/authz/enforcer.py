@@ -107,7 +107,7 @@ def build_stateless_enforcer(db: Session, sub_api_id: str) -> Enforcer:
         )
     )
     comments = db.execute(stmt_comments).all()
-    
+
     for question_api_id, comment_api_id in comments:
         if comment_api_id:
             enforcer.add_named_grouping_policy(

@@ -3,20 +3,20 @@
 from __future__ import annotations
 
 from datetime import datetime
-from unittest.mock import MagicMock
 
 import pytest
 from fastapi import status
 from fastapi.testclient import TestClient
 from sqlalchemy.orm import Session
 
-from ring.auth.api.schemas import AccessToken
 from ring.letters.models.comment_model import Comment
+from ring.parties.models.user_model import User
 from ring.tests.factories.letters.comment_factory import CommentFactory
 from ring.tests.factories.letters.letter_factory import LetterFactory
 from ring.tests.factories.letters.question_factory import QuestionFactory
 from ring.tests.factories.parties.group_factory import GroupFactory
 from ring.tests.factories.parties.user_factory import UserFactory
+from ring.tests.unit.conftest import TClientForUser
 
 
 class TestCreateCommentEndpoint:
@@ -24,124 +24,105 @@ class TestCreateCommentEndpoint:
 
     def test_create_comment_success(
         self,
-        client: TestClient,
+        authenticated_client: TestClient,
         db_session: Session,
-        mock_auth_dependencies: MagicMock,
+        current_user: User,
     ) -> None:
         """Test successful comment creation."""
-        user = UserFactory.create()
-        group = GroupFactory.create(admin=user)
+        # Create a group with the current user as admin and member
+        group = GroupFactory.create(admin=current_user)
+        group.members.append(current_user)
         letter = LetterFactory.create(group=group)
         question = QuestionFactory.create(letter=letter)
         db_session.commit()
 
-        mock_auth_dependencies.return_value.current_user = user
-        mock_auth_dependencies.return_value.db = db_session
-
-        response = client.post(
+        response = authenticated_client.post(
             f"/letters/questions/{question.api_identifier}/comments",
             json={"content": "This is a test comment"},
-            headers={"Authorization": "Bearer test-token"},
         )
 
         assert response.status_code == status.HTTP_201_CREATED
         data = response.json()
         assert data["content"] == "This is a test comment"
-        assert data["author"]["api_identifier"] == user.api_identifier
+        assert data["author"]["api_identifier"] == current_user.api_identifier
         assert data["question"]["api_identifier"] == question.api_identifier
         assert "api_identifier" in data
         assert data["api_identifier"].startswith("com_")
 
     def test_create_comment_user_not_in_group(
         self,
-        client: TestClient,
+        get_client_for_user: TClientForUser,
         db_session: Session,
-        mock_auth_dependencies: MagicMock,
     ) -> None:
         """Test that users not in the group cannot comment."""
+        # Create a group with user1 as admin
         user1 = UserFactory.create()
         user2 = UserFactory.create()
         group = GroupFactory.create(admin=user1)
+        group.members.append(user1)
         letter = LetterFactory.create(group=group)
         question = QuestionFactory.create(letter=letter)
         db_session.commit()
 
-        mock_auth_dependencies.return_value.current_user = user2
-        mock_auth_dependencies.return_value.db = db_session
-
+        # Use user2 who is not in the group
+        client = get_client_for_user(user2)
         response = client.post(
             f"/letters/questions/{question.api_identifier}/comments",
             json={"content": "This should fail"},
-            headers={"Authorization": "Bearer test-token"},
         )
 
         assert response.status_code == status.HTTP_403_FORBIDDEN
 
     def test_create_comment_empty_content(
         self,
-        client: TestClient,
+        authenticated_client: TestClient,
         db_session: Session,
-        mock_auth_dependencies: MagicMock,
+        current_user: User,
     ) -> None:
         """Test that empty content is rejected."""
-        user = UserFactory.create()
-        group = GroupFactory.create(admin=user)
+        group = GroupFactory.create(admin=current_user)
+        group.members.append(current_user)
         letter = LetterFactory.create(group=group)
         question = QuestionFactory.create(letter=letter)
         db_session.commit()
 
-        mock_auth_dependencies.return_value.current_user = user
-        mock_auth_dependencies.return_value.db = db_session
-
-        response = client.post(
+        response = authenticated_client.post(
             f"/letters/questions/{question.api_identifier}/comments",
             json={"content": ""},
-            headers={"Authorization": "Bearer test-token"},
         )
 
         assert response.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
 
     def test_create_comment_content_too_long(
         self,
-        client: TestClient,
+        authenticated_client: TestClient,
         db_session: Session,
-        mock_auth_dependencies: MagicMock,
+        current_user: User,
     ) -> None:
         """Test that content over 5000 chars is rejected."""
-        user = UserFactory.create()
-        group = GroupFactory.create(admin=user)
+        group = GroupFactory.create(admin=current_user)
+        group.members.append(current_user)
         letter = LetterFactory.create(group=group)
         question = QuestionFactory.create(letter=letter)
         db_session.commit()
 
-        mock_auth_dependencies.return_value.current_user = user
-        mock_auth_dependencies.return_value.db = db_session
-
-        response = client.post(
+        response = authenticated_client.post(
             f"/letters/questions/{question.api_identifier}/comments",
             json={"content": "A" * 5001},
-            headers={"Authorization": "Bearer test-token"},
         )
 
         assert response.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
 
     def test_create_comment_nonexistent_question(
         self,
-        client: TestClient,
+        authenticated_client: TestClient,
         db_session: Session,
-        mock_auth_dependencies: MagicMock,
+        current_user: User,
     ) -> None:
         """Test creating comment on nonexistent question."""
-        user = UserFactory.create()
-        db_session.commit()
-
-        mock_auth_dependencies.return_value.current_user = user
-        mock_auth_dependencies.return_value.db = db_session
-
-        response = client.post(
+        response = authenticated_client.post(
             "/letters/questions/que_nonexistent/comments",
             json={"content": "This should fail"},
-            headers={"Authorization": "Bearer test-token"},
         )
 
         assert response.status_code == status.HTTP_403_FORBIDDEN
@@ -152,16 +133,16 @@ class TestGetCommentsEndpoint:
 
     def test_get_comments_success(
         self,
-        client: TestClient,
+        authenticated_client: TestClient,
         db_session: Session,
-        mock_auth_dependencies: MagicMock,
+        current_user: User,
     ) -> None:
         """Test successful retrieval of comments."""
         user = UserFactory.create()
         group = GroupFactory.create(admin=user)
         letter = LetterFactory.create(group=group)
         question = QuestionFactory.create(letter=letter)
-        
+
         comment1 = CommentFactory.create(
             question=question,
             author=user,
@@ -174,12 +155,8 @@ class TestGetCommentsEndpoint:
         )
         db_session.commit()
 
-        mock_auth_dependencies.return_value.current_user = user
-        mock_auth_dependencies.return_value.db = db_session
-
-        response = client.get(
+        response = authenticated_client.get(
             f"/letters/questions/{question.api_identifier}/comments",
-            headers={"Authorization": "Bearer test-token"},
         )
 
         assert response.status_code == status.HTTP_200_OK
@@ -192,16 +169,16 @@ class TestGetCommentsEndpoint:
 
     def test_get_comments_pagination(
         self,
-        client: TestClient,
+        authenticated_client: TestClient,
         db_session: Session,
-        mock_auth_dependencies: MagicMock,
+        current_user: User,
     ) -> None:
         """Test comment pagination."""
         user = UserFactory.create()
         group = GroupFactory.create(admin=user)
         letter = LetterFactory.create(group=group)
         question = QuestionFactory.create(letter=letter)
-        
+
         # Create 10 comments
         for i in range(10):
             CommentFactory.create(
@@ -211,13 +188,9 @@ class TestGetCommentsEndpoint:
             )
         db_session.commit()
 
-        mock_auth_dependencies.return_value.current_user = user
-        mock_auth_dependencies.return_value.db = db_session
-
         # Get first page
-        response = client.get(
+        response = authenticated_client.get(
             f"/letters/questions/{question.api_identifier}/comments?skip=0&limit=5",
-            headers={"Authorization": "Bearer test-token"},
         )
 
         assert response.status_code == status.HTTP_200_OK
@@ -228,16 +201,16 @@ class TestGetCommentsEndpoint:
 
     def test_get_comments_exclude_deleted(
         self,
-        client: TestClient,
+        authenticated_client: TestClient,
         db_session: Session,
-        mock_auth_dependencies: MagicMock,
+        current_user: User,
     ) -> None:
         """Test that deleted comments are excluded for regular users."""
         user = UserFactory.create()
         group = GroupFactory.create(admin=user)
         letter = LetterFactory.create(group=group)
         question = QuestionFactory.create(letter=letter)
-        
+
         comment1 = CommentFactory.create(
             question=question,
             author=user,
@@ -252,12 +225,8 @@ class TestGetCommentsEndpoint:
         )
         db_session.commit()
 
-        mock_auth_dependencies.return_value.current_user = user
-        mock_auth_dependencies.return_value.db = db_session
-
-        response = client.get(
+        response = authenticated_client.get(
             f"/letters/questions/{question.api_identifier}/comments",
-            headers={"Authorization": "Bearer test-token"},
         )
 
         assert response.status_code == status.HTTP_200_OK
@@ -268,9 +237,9 @@ class TestGetCommentsEndpoint:
 
     def test_get_comments_include_deleted_admin_only(
         self,
-        client: TestClient,
+        authenticated_client: TestClient,
         db_session: Session,
-        mock_auth_dependencies: MagicMock,
+        current_user: User,
     ) -> None:
         """Test that only admins can see deleted comments."""
         admin = UserFactory.create(admin=True)
@@ -279,7 +248,7 @@ class TestGetCommentsEndpoint:
         group.members.append(regular_user)
         letter = LetterFactory.create(group=group)
         question = QuestionFactory.create(letter=letter)
-        
+
         comment = CommentFactory.create(
             question=question,
             author=regular_user,
@@ -293,9 +262,8 @@ class TestGetCommentsEndpoint:
         mock_auth_dependencies.return_value.current_user = regular_user
         mock_auth_dependencies.return_value.db = db_session
 
-        response = client.get(
+        response = authenticated_client.get(
             f"/letters/questions/{question.api_identifier}/comments?include_deleted=true",
-            headers={"Authorization": "Bearer test-token"},
         )
 
         assert response.status_code == status.HTTP_403_FORBIDDEN
@@ -304,9 +272,8 @@ class TestGetCommentsEndpoint:
         mock_auth_dependencies.return_value.current_user = admin
         mock_auth_dependencies.return_value.db = db_session
 
-        response = client.get(
+        response = authenticated_client.get(
             f"/letters/questions/{question.api_identifier}/comments?include_deleted=true",
-            headers={"Authorization": "Bearer test-token"},
         )
 
         assert response.status_code == status.HTTP_200_OK
@@ -315,9 +282,9 @@ class TestGetCommentsEndpoint:
 
     def test_get_comments_user_not_in_group(
         self,
-        client: TestClient,
+        authenticated_client: TestClient,
         db_session: Session,
-        mock_auth_dependencies: MagicMock,
+        current_user: User,
     ) -> None:
         """Test that users not in group cannot see comments."""
         user1 = UserFactory.create()
@@ -330,9 +297,8 @@ class TestGetCommentsEndpoint:
         mock_auth_dependencies.return_value.current_user = user2
         mock_auth_dependencies.return_value.db = db_session
 
-        response = client.get(
+        response = authenticated_client.get(
             f"/letters/questions/{question.api_identifier}/comments",
-            headers={"Authorization": "Bearer test-token"},
         )
 
         assert response.status_code == status.HTTP_403_FORBIDDEN
@@ -343,9 +309,9 @@ class TestUpdateCommentEndpoint:
 
     def test_update_comment_success(
         self,
-        client: TestClient,
+        authenticated_client: TestClient,
         db_session: Session,
-        mock_auth_dependencies: MagicMock,
+        current_user: User,
     ) -> None:
         """Test successful comment update by author."""
         user = UserFactory.create()
@@ -359,13 +325,9 @@ class TestUpdateCommentEndpoint:
         )
         db_session.commit()
 
-        mock_auth_dependencies.return_value.current_user = user
-        mock_auth_dependencies.return_value.db = db_session
-
-        response = client.patch(
+        response = authenticated_client.patch(
             f"/letters/comments/{comment.api_identifier}",
             json={"content": "Updated content"},
-            headers={"Authorization": "Bearer test-token"},
         )
 
         assert response.status_code == status.HTTP_200_OK
@@ -375,9 +337,9 @@ class TestUpdateCommentEndpoint:
 
     def test_update_comment_not_author(
         self,
-        client: TestClient,
+        authenticated_client: TestClient,
         db_session: Session,
-        mock_auth_dependencies: MagicMock,
+        current_user: User,
     ) -> None:
         """Test that non-authors cannot update comments."""
         user1 = UserFactory.create()
@@ -396,19 +358,18 @@ class TestUpdateCommentEndpoint:
         mock_auth_dependencies.return_value.current_user = user2
         mock_auth_dependencies.return_value.db = db_session
 
-        response = client.patch(
+        response = authenticated_client.patch(
             f"/letters/comments/{comment.api_identifier}",
             json={"content": "This should fail"},
-            headers={"Authorization": "Bearer test-token"},
         )
 
         assert response.status_code == status.HTTP_403_FORBIDDEN
 
     def test_update_deleted_comment(
         self,
-        client: TestClient,
+        authenticated_client: TestClient,
         db_session: Session,
-        mock_auth_dependencies: MagicMock,
+        current_user: User,
     ) -> None:
         """Test that deleted comments cannot be updated."""
         user = UserFactory.create()
@@ -424,22 +385,18 @@ class TestUpdateCommentEndpoint:
         )
         db_session.commit()
 
-        mock_auth_dependencies.return_value.current_user = user
-        mock_auth_dependencies.return_value.db = db_session
-
-        response = client.patch(
+        response = authenticated_client.patch(
             f"/letters/comments/{comment.api_identifier}",
             json={"content": "This should fail"},
-            headers={"Authorization": "Bearer test-token"},
         )
 
         assert response.status_code == status.HTTP_403_FORBIDDEN
 
     def test_update_comment_empty_content(
         self,
-        client: TestClient,
+        authenticated_client: TestClient,
         db_session: Session,
-        mock_auth_dependencies: MagicMock,
+        current_user: User,
     ) -> None:
         """Test that empty content is rejected."""
         user = UserFactory.create()
@@ -453,13 +410,9 @@ class TestUpdateCommentEndpoint:
         )
         db_session.commit()
 
-        mock_auth_dependencies.return_value.current_user = user
-        mock_auth_dependencies.return_value.db = db_session
-
-        response = client.patch(
+        response = authenticated_client.patch(
             f"/letters/comments/{comment.api_identifier}",
             json={"content": ""},
-            headers={"Authorization": "Bearer test-token"},
         )
 
         assert response.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
@@ -470,9 +423,9 @@ class TestDeleteCommentEndpoint:
 
     def test_delete_comment_admin_success(
         self,
-        client: TestClient,
+        authenticated_client: TestClient,
         db_session: Session,
-        mock_auth_dependencies: MagicMock,
+        current_user: User,
     ) -> None:
         """Test successful comment deletion by admin."""
         admin = UserFactory.create(admin=True)
@@ -491,9 +444,8 @@ class TestDeleteCommentEndpoint:
         mock_auth_dependencies.return_value.current_user = admin
         mock_auth_dependencies.return_value.db = db_session
 
-        response = client.delete(
+        response = authenticated_client.delete(
             f"/letters/comments/{comment.api_identifier}",
-            headers={"Authorization": "Bearer test-token"},
         )
 
         assert response.status_code == status.HTTP_200_OK
@@ -507,9 +459,9 @@ class TestDeleteCommentEndpoint:
 
     def test_delete_comment_regular_user_fails(
         self,
-        client: TestClient,
+        authenticated_client: TestClient,
         db_session: Session,
-        mock_auth_dependencies: MagicMock,
+        current_user: User,
     ) -> None:
         """Test that regular users cannot delete comments."""
         user = UserFactory.create(admin=False)
@@ -523,21 +475,17 @@ class TestDeleteCommentEndpoint:
         )
         db_session.commit()
 
-        mock_auth_dependencies.return_value.current_user = user
-        mock_auth_dependencies.return_value.db = db_session
-
-        response = client.delete(
+        response = authenticated_client.delete(
             f"/letters/comments/{comment.api_identifier}",
-            headers={"Authorization": "Bearer test-token"},
         )
 
         assert response.status_code == status.HTTP_403_FORBIDDEN
 
     def test_delete_already_deleted_comment(
         self,
-        client: TestClient,
+        authenticated_client: TestClient,
         db_session: Session,
-        mock_auth_dependencies: MagicMock,
+        current_user: User,
     ) -> None:
         """Test deleting an already deleted comment."""
         admin = UserFactory.create(admin=True)
@@ -556,18 +504,17 @@ class TestDeleteCommentEndpoint:
         mock_auth_dependencies.return_value.current_user = admin
         mock_auth_dependencies.return_value.db = db_session
 
-        response = client.delete(
+        response = authenticated_client.delete(
             f"/letters/comments/{comment.api_identifier}",
-            headers={"Authorization": "Bearer test-token"},
         )
 
         assert response.status_code == status.HTTP_400_BAD_REQUEST
 
     def test_delete_comment_user_not_in_group(
         self,
-        client: TestClient,
+        authenticated_client: TestClient,
         db_session: Session,
-        mock_auth_dependencies: MagicMock,
+        current_user: User,
     ) -> None:
         """Test that users not in group cannot delete comments."""
         admin1 = UserFactory.create(admin=True)
@@ -581,9 +528,8 @@ class TestDeleteCommentEndpoint:
         mock_auth_dependencies.return_value.current_user = admin2
         mock_auth_dependencies.return_value.db = db_session
 
-        response = client.delete(
+        response = authenticated_client.delete(
             f"/letters/comments/{comment.api_identifier}",
-            headers={"Authorization": "Bearer test-token"},
         )
 
         assert response.status_code == status.HTTP_403_FORBIDDEN
@@ -594,16 +540,16 @@ class TestCommentAuthorizationIntegration:
 
     def test_comment_hierarchy_permissions(
         self,
-        client: TestClient,
+        authenticated_client: TestClient,
         db_session: Session,
-        mock_auth_dependencies: MagicMock,
+        current_user: User,
     ) -> None:
         """Test that comment permissions follow the group hierarchy."""
         user1 = UserFactory.create()
         user2 = UserFactory.create()
         group1 = GroupFactory.create(admin=user1)
         group2 = GroupFactory.create(admin=user2)
-        
+
         letter1 = LetterFactory.create(group=group1)
         question1 = QuestionFactory.create(letter=letter1)
         comment1 = CommentFactory.create(
@@ -611,7 +557,7 @@ class TestCommentAuthorizationIntegration:
             author=user1,
             content="Comment in group1",
         )
-        
+
         letter2 = LetterFactory.create(group=group2)
         question2 = QuestionFactory.create(letter=letter2)
         comment2 = CommentFactory.create(
@@ -625,14 +571,12 @@ class TestCommentAuthorizationIntegration:
         mock_auth_dependencies.return_value.current_user = user1
         mock_auth_dependencies.return_value.db = db_session
 
-        response = client.get(
+        response = authenticated_client.get(
             f"/letters/questions/{question1.api_identifier}/comments",
-            headers={"Authorization": "Bearer test-token"},
         )
         assert response.status_code == status.HTTP_200_OK
 
-        response = client.get(
+        response = authenticated_client.get(
             f"/letters/questions/{question2.api_identifier}/comments",
-            headers={"Authorization": "Bearer test-token"},
         )
         assert response.status_code == status.HTTP_403_FORBIDDEN

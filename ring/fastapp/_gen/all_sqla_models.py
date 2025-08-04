@@ -4,6 +4,7 @@ from __future__ import annotations
 def import_all_sqla_models() -> None:
     """Import all SQLAlchemy models."""
     from ring.key_value.models.model_key_value import ModelKeyValue
+    from ring.letters.models.comment_model import Comment
     from ring.letters.models.default_question_model import DefaultQuestion
     from ring.letters.models.letter_model import (
         Letter,

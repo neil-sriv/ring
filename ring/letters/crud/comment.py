@@ -63,10 +63,10 @@ def get_comment(
         Optional[Comment]: Comment instance or None if not found
     """
     query = db.query(Comment).filter(Comment.api_identifier == comment_api_id)
-    
+
     if not include_deleted:
         query = query.filter(Comment.deleted_at.is_(None))
-    
+
     return query.first()
 
 
@@ -91,7 +91,7 @@ def get_comments_for_question(
     """
     # Get the question
     question = api_identifier_crud.get_model(db, Question, question_api_id)
-    
+
     # Base query with author and question loaded
     query = (
         db.query(Comment)
@@ -99,14 +99,14 @@ def get_comments_for_question(
         .options(joinedload(Comment.question))
         .filter(Comment.question_id == question.id)
     )
-    
+
     # Filter out deleted comments unless requested
     if not include_deleted:
         query = query.filter(Comment.deleted_at.is_(None))
-    
+
     # Get total count
     total = query.count()
-    
+
     # Apply pagination and ordering
     comments = (
         query.order_by(Comment.created_at.desc())
@@ -114,7 +114,7 @@ def get_comments_for_question(
         .limit(limit)
         .all()
     )
-    
+
     return comments, total
 
 
@@ -169,10 +169,7 @@ def can_user_edit_comment(user: User, comment: Comment) -> bool:
         bool: True if user can edit, False otherwise
     """
     # User can edit their own non-deleted comments
-    return (
-        comment.author_id == user.id 
-        and comment.deleted_at is None
-    )
+    return comment.author_id == user.id and comment.deleted_at is None
 
 
 def can_user_delete_comment(user: User, comment: Comment) -> bool:
@@ -187,5 +184,3 @@ def can_user_delete_comment(user: User, comment: Comment) -> bool:
     """
     # Only admins can delete comments (soft delete)
     return user.admin
-
-

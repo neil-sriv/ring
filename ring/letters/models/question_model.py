@@ -54,7 +54,7 @@ class Question(Base, APIIdentified, PydanticModel, CreatedAtMixin):
     responses: Mapped[list["Response"]] = relationship(
         back_populates="question", cascade="all"
     )
-    
+
     comments: Mapped[list["Comment"]] = relationship(
         back_populates="question", cascade="all"
     )

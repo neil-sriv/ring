@@ -87,7 +87,9 @@ class TestCommentModel:
         assert comment.content == "Updated content"
         assert comment.updated_at is not None
 
-    def test_comment_cascade_on_question_delete(self, db_session: Session) -> None:
+    def test_comment_cascade_on_question_delete(
+        self, db_session: Session
+    ) -> None:
         """Test that comments are deleted when question is deleted."""
         question = QuestionFactory.create()
         comment = CommentFactory.create(question=question)
@@ -100,9 +102,13 @@ class TestCommentModel:
         db_session.commit()
 
         # Comment should be gone
-        assert db_session.query(Comment).filter_by(id=comment_id).first() is None
+        assert (
+            db_session.query(Comment).filter_by(id=comment_id).first() is None
+        )
 
-    def test_comment_not_cascade_on_author_delete(self, db_session: Session) -> None:
+    def test_comment_not_cascade_on_author_delete(
+        self, db_session: Session
+    ) -> None:
         """Test that comments remain when author is deleted."""
         user = UserFactory.create()
         comment = CommentFactory.create(author=user)
@@ -166,7 +172,10 @@ class TestCommentModel:
         assert linked_dict["api_identifier"] == comment.api_identifier
         assert linked_dict["content"] == "Test comment"
         assert linked_dict["author"]["api_identifier"] == user.api_identifier
-        assert linked_dict["question"]["api_identifier"] == question.api_identifier
+        assert (
+            linked_dict["question"]["api_identifier"]
+            == question.api_identifier
+        )
         assert "deleted_by" in linked_dict
 
     def test_comment_timestamps(self, db_session: Session) -> None:

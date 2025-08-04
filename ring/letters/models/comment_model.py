@@ -50,28 +50,25 @@ class Comment(Base, APIIdentified, PydanticModel, CreatedAtMixin):
 
     id: Mapped[int] = mapped_column(primary_key=True, index=True)
     api_identifier: Mapped[str] = mapped_column(unique=True, index=True)
-    
+
     content: Mapped[str] = mapped_column(Text)
     updated_at: Mapped[datetime | None] = mapped_column(nullable=True)
     deleted_at: Mapped[datetime | None] = mapped_column(nullable=True)
-    
+
     question_id: Mapped[int] = mapped_column(
-        ForeignKey("question.id"), 
-        index=True
+        ForeignKey("question.id"), index=True
     )
     question: Mapped["Question"] = relationship(back_populates="comments")
-    
-    author_id: Mapped[int] = mapped_column(
-        ForeignKey("user.id"),
-        index=True
-    )
+
+    author_id: Mapped[int] = mapped_column(ForeignKey("user.id"), index=True)
     author: Mapped["User"] = relationship(foreign_keys=[author_id])
-    
+
     deleted_by_id: Mapped[int | None] = mapped_column(
-        ForeignKey("user.id"), 
-        nullable=True
+        ForeignKey("user.id"), nullable=True
     )
-    deleted_by: Mapped["User | None"] = relationship(foreign_keys=[deleted_by_id])
+    deleted_by: Mapped["User | None"] = relationship(
+        foreign_keys=[deleted_by_id]
+    )
 
     def __init__(
         self,
