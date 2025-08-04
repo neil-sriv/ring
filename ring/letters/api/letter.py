@@ -12,7 +12,7 @@ from collections import defaultdict
 from datetime import UTC, datetime, timedelta
 from typing import Sequence
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException
 from loguru import logger
 from sqlalchemy import ColumnElement, and_, or_
 
@@ -245,6 +245,11 @@ async def edit_letter(
         Letter,
         api_id=letter_api_id,
     )
+    if db_letter.status == LetterStatus.SENT:
+        raise HTTPException(
+            status_code=400,
+            detail="Cannot edit a sent letter",
+        )
     curr_time = datetime.now(tz=UTC)
     if db_letter.status == LetterStatus.UPCOMING:
         assert (
