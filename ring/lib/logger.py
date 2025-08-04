@@ -12,7 +12,8 @@ from __future__ import annotations
 
 import sys
 
-loguru import logger
+# import logger
+from loguru import logger
 
 # Remove default handler to avoid duplicate logs
 logger.remove()
