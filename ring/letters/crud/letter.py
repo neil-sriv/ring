@@ -191,8 +191,8 @@ def edit_letter(
         Letter: Updated letter
     """
     if send_at:
-        letter.send_at = send_at
         upsert_letter_tasks(db, letter, send_at)
+        letter.send_at = send_at
     if status:
         letter.status = status
         if status == LetterStatus.IN_PROGRESS:
@@ -203,8 +203,6 @@ def edit_letter(
                 LetterStatus.UPCOMING,
                 letter.id,
             )
-        elif status == LetterStatus.UPCOMING:
-            upsert_letter_tasks(db, letter, letter.send_at)
     if title:
         letter.title = title
     db.flush()
@@ -230,8 +228,8 @@ def delete_letter_task(
         letter.group.schedule,
         task_type,
         filters=[
-            Task.arguments["letter_id"] == letter_id,
-            Task.arguments["letter_status"] == letter_status,
+            Task.arguments
+            == {"letter_id": letter_id, "letter_status": letter_status},
         ],
     )
 
