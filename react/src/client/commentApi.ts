@@ -4,7 +4,7 @@
  * until the OpenAPI spec is updated and client is regenerated.
  */
 
-import { client } from './sdk.gen';
+import { client } from './client.gen';
 
 export interface CommentCreate {
   content: string;
@@ -46,18 +46,24 @@ export async function createComment(
   questionApiId: string,
   data: CommentCreate
 ): Promise<Comment> {
-  const response = await client.POST('/letters/questions/{question_api_id}/comments', {
-    params: {
+  try {
+    const { data: responseData } = await client.post({
+      url: '/letters/questions/{question_api_id}/comments',
       path: { question_api_id: questionApiId },
-    },
-    body: data,
-  });
+      body: data,
+      security: [
+        {
+          scheme: 'bearer',
+          type: 'http'
+        }
+      ],
+      throwOnError: true
+    });
 
-  if (response.error) {
-    throw new Error(response.error.detail || 'Failed to create comment');
+    return responseData as Comment;
+  } catch (error: any) {
+    throw new Error(error.response?.data?.detail || 'Failed to create comment');
   }
-
-  return response.data as Comment;
 }
 
 /**
@@ -71,22 +77,28 @@ export async function getComments(
     include_deleted?: boolean;
   }
 ): Promise<CommentsResponse> {
-  const response = await client.GET('/letters/questions/{question_api_id}/comments', {
-    params: {
+  try {
+    const { data } = await client.get({
+      url: '/letters/questions/{question_api_id}/comments',
       path: { question_api_id: questionApiId },
       query: {
         skip: params?.skip || 0,
         limit: params?.limit || 50,
         include_deleted: params?.include_deleted || false,
       },
-    },
-  });
+      security: [
+        {
+          scheme: 'bearer',
+          type: 'http'
+        }
+      ],
+      throwOnError: true
+    });
 
-  if (response.error) {
-    throw new Error(response.error.detail || 'Failed to fetch comments');
+    return data as CommentsResponse;
+  } catch (error: any) {
+    throw new Error(error.response?.data?.detail || 'Failed to fetch comments');
   }
-
-  return response.data as CommentsResponse;
 }
 
 /**
@@ -96,32 +108,44 @@ export async function updateComment(
   commentApiId: string,
   data: CommentUpdate
 ): Promise<Comment> {
-  const response = await client.PATCH('/letters/comments/{comment_api_id}', {
-    params: {
+  try {
+    const { data: responseData } = await client.patch({
+      url: '/letters/comments/{comment_api_id}',
       path: { comment_api_id: commentApiId },
-    },
-    body: data,
-  });
+      body: data,
+      security: [
+        {
+          scheme: 'bearer',
+          type: 'http'
+        }
+      ],
+      throwOnError: true
+    });
 
-  if (response.error) {
-    throw new Error(response.error.detail || 'Failed to update comment');
+    return responseData as Comment;
+  } catch (error: any) {
+    throw new Error(error.response?.data?.detail || 'Failed to update comment');
   }
-
-  return response.data as Comment;
 }
 
 /**
  * Delete a comment
  */
 export async function deleteComment(commentApiId: string): Promise<void> {
-  const response = await client.DELETE('/letters/comments/{comment_api_id}', {
-    params: {
+  try {
+    await client.delete({
+      url: '/letters/comments/{comment_api_id}',
       path: { comment_api_id: commentApiId },
-    },
-  });
-
-  if (response.error) {
-    throw new Error(response.error.detail || 'Failed to delete comment');
+      security: [
+        {
+          scheme: 'bearer',
+          type: 'http'
+        }
+      ],
+      throwOnError: true
+    });
+  } catch (error: any) {
+    throw new Error(error.response?.data?.detail || 'Failed to delete comment');
   }
 }
 

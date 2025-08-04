@@ -18,8 +18,9 @@ import { FiMoreVertical, FiEdit2, FiTrash2 } from "react-icons/fi";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { format } from "date-fns";
 
-import useAuth from "../../hooks/useAuth";
-import axios from "axios";
+import { UserLinked } from "../../client";
+import { readUserMePartiesMeGetQueryKey } from "../../client/@tanstack/react-query.gen";
+import { updateComment, deleteComment, commentQueryKeys } from "../../client/commentApi";
 // Comment types will be added after API client generation
 
 interface CommentItemProps {
@@ -28,28 +29,26 @@ interface CommentItemProps {
 }
 
 export default function CommentItem({ comment, questionApiId }: CommentItemProps) {
-  const { user } = useAuth();
   const toast = useToast();
   const queryClient = useQueryClient();
+  const currentUser = queryClient.getQueryData<UserLinked>(
+    readUserMePartiesMeGetQueryKey()
+  );
   const [isEditing, setIsEditing] = useState(false);
   const [editContent, setEditContent] = useState(comment.content);
 
-  const isAuthor = user?.api_identifier === comment.author.api_identifier;
-  const isAdmin = user?.admin || false;
+  const isAuthor = currentUser?.api_identifier === comment.author.api_identifier;
+  const isAdmin = currentUser?.admin || false;
   const canEdit = isAuthor && !comment.deleted_at;
   const canDelete = isAdmin && !comment.deleted_at;
 
   // Update comment mutation
   const updateMutation = useMutation({
     mutationFn: async (content: string) => {
-      const response = await axios.patch(
-        `/api/v1/letters/comments/${comment.api_identifier}`,
-        { content }
-      );
-      return response.data;
+      return await updateComment(comment.api_identifier, { content });
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["comments", questionApiId] });
+      queryClient.invalidateQueries({ queryKey: commentQueryKeys.list(questionApiId) });
       setIsEditing(false);
       toast({
         title: "Comment updated",
@@ -70,13 +69,10 @@ export default function CommentItem({ comment, questionApiId }: CommentItemProps
   // Delete comment mutation
   const deleteMutation = useMutation({
     mutationFn: async () => {
-      const response = await axios.delete(
-        `/api/v1/letters/comments/${comment.api_identifier}`
-      );
-      return response.data;
+      return await deleteComment(comment.api_identifier);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["comments", questionApiId] });
+      queryClient.invalidateQueries({ queryKey: commentQueryKeys.list(questionApiId) });
       toast({
         title: "Comment deleted",
         status: "success",

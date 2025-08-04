@@ -92,10 +92,11 @@ def get_comments_for_question(
     # Get the question
     question = api_identifier_crud.get_model(db, Question, question_api_id)
     
-    # Base query with author loaded
+    # Base query with author and question loaded
     query = (
         db.query(Comment)
         .options(joinedload(Comment.author))
+        .options(joinedload(Comment.question))
         .filter(Comment.question_id == question.id)
     )
     

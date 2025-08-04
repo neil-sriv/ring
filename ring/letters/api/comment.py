@@ -27,8 +27,18 @@ from ring.letters.schemas.comment import (
 )
 from ring.ring_pydantic.core import ResponseMessage
 from ring.ring_pydantic.linked_schemas import CommentLinked
+from pydantic import BaseModel, model_validator
 
 router = APIRouter()
+
+
+class CommentsListResponse(BaseModel):
+    """Response schema for paginated comments list."""
+    comments: list[CommentLinked]
+    total: int
+    skip: int
+    limit: int
+    has_more: bool
 
 
 @router.post(
@@ -75,12 +85,17 @@ async def create_comment(
     )
     
     req_dep.db.commit()
-    return comment
+    
+    # Refresh to ensure relationships are loaded
+    req_dep.db.refresh(comment)
+    
+    # Convert to Pydantic model
+    return CommentLinked.model_validate(comment)
 
 
 @router.get(
     "/questions/{question_api_id}/comments",
-    response_model=dict,
+    response_model=CommentsListResponse,
 )
 async def get_comments(
     question_api_id: str,
@@ -131,13 +146,31 @@ async def get_comments(
         limit=limit,
     )
     
-    return {
-        "comments": comments,
-        "total": total,
-        "skip": skip,
-        "limit": limit,
-        "has_more": (skip + limit) < total,
-    }
+    # Convert SQLAlchemy models to Pydantic models
+    comment_list = []
+    for comment in comments:
+        try:
+            # Ensure relationships are loaded
+            if not comment.author:
+                raise ValueError(f"Comment {comment.api_identifier} has no author")
+            if not comment.question:
+                raise ValueError(f"Comment {comment.api_identifier} has no question")
+            
+            # Convert to Pydantic model
+            comment_data = CommentLinked.model_validate(comment)
+            comment_list.append(comment_data)
+        except Exception as e:
+            # Log the error but continue processing other comments
+            print(f"Error serializing comment {comment.api_identifier}: {e}")
+            continue
+    
+    return CommentsListResponse(
+        comments=comment_list,
+        total=total,
+        skip=skip,
+        limit=limit,
+        has_more=(skip + limit) < total,
+    )
 
 
 @router.patch(
@@ -190,7 +223,12 @@ async def update_comment(
     )
     
     req_dep.db.commit()
-    return updated_comment
+    
+    # Refresh to ensure relationships are loaded
+    req_dep.db.refresh(updated_comment)
+    
+    # Convert to Pydantic model
+    return CommentLinked.model_validate(updated_comment)
 
 
 @router.delete(

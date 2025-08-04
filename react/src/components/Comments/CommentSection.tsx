@@ -12,8 +12,9 @@ import {
   AlertIcon,
 } from "@chakra-ui/react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import useAuth from "../../hooks/useAuth";
-import axios from "axios";
+import { UserLinked } from "../../client";
+import { readUserMePartiesMeGetQueryKey } from "../../client/@tanstack/react-query.gen";
+import { getComments, createComment, commentQueryKeys } from "../../client/commentApi";
 // Comment types will be added after API client generation
 import CommentItem from "./CommentItem";
 
@@ -22,35 +23,29 @@ interface CommentSectionProps {
 }
 
 export default function CommentSection({ questionApiId }: CommentSectionProps) {
-  const { user } = useAuth();
   const toast = useToast();
   const queryClient = useQueryClient();
+  const currentUser = queryClient.getQueryData<UserLinked>(
+    readUserMePartiesMeGetQueryKey()
+  );
   const [newComment, setNewComment] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Fetch comments
   const { data: commentsData, isLoading, error } = useQuery({
-    queryKey: ["comments", questionApiId],
+    queryKey: commentQueryKeys.list(questionApiId, { limit: 50 }),
     queryFn: async () => {
-      const response = await axios.get(
-        `/api/v1/letters/questions/${questionApiId}/comments`,
-        { params: { limit: 50 } }
-      );
-      return response.data;
+      return await getComments(questionApiId, { limit: 50 });
     },
   });
 
   // Create comment mutation
   const createCommentMutation = useMutation({
     mutationFn: async (content: string) => {
-      const response = await axios.post(
-        `/api/v1/letters/questions/${questionApiId}/comments`,
-        { content }
-      );
-      return response.data;
+      return await createComment(questionApiId, { content });
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["comments", questionApiId] });
+      queryClient.invalidateQueries({ queryKey: commentQueryKeys.list(questionApiId) });
       setNewComment("");
       toast({
         title: "Comment added",
@@ -109,7 +104,7 @@ export default function CommentSection({ questionApiId }: CommentSectionProps) {
         </Text>
 
         {/* Add comment form */}
-        {user && (
+        {currentUser && (
           <Box mb={6}>
             <Textarea
               value={newComment}
