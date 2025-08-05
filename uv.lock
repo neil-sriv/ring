@@ -2097,6 +2097,7 @@ dependencies = [
     { name = "sqlalchemy-cockroachdb" },
     { name = "sqlalchemy-json" },
     { name = "watchdog" },
+    { name = "websockets" },
 ]
 
 [package.dev-dependencies]
@@ -2149,6 +2150,7 @@ requires-dist = [
     { name = "sqlalchemy-cockroachdb", specifier = ">=2.0.2" },
     { name = "sqlalchemy-json", specifier = ">=0.7.0" },
     { name = "watchdog", specifier = "~=4.0" },
+    { name = "websockets", specifier = ">=14.1" },
 ]
 
 [package.metadata.requires-dev]
