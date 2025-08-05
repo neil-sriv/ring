@@ -641,7 +641,7 @@ export type TaskUnlinked = {
     status: string;
     execute_at: string;
     arguments: {
-        [key: string]: string;
+        [key: string]: unknown;
     };
 };
 
@@ -1894,6 +1894,35 @@ export type UploadImageResponsesResponseResponseApiIdUploadImagePostResponses = 
 };
 
 export type UploadImageResponsesResponseResponseApiIdUploadImagePostResponse = UploadImageResponsesResponseResponseApiIdUploadImagePostResponses[keyof UploadImageResponsesResponseResponseApiIdUploadImagePostResponses];
+
+export type DeleteImageResponsesResponseResponseApiIdDeleteImageDeleteData = {
+    body?: never;
+    path: {
+        response_api_id: string;
+    };
+    query: {
+        s3_url: string;
+    };
+    url: '/responses/response/{response_api_id}:delete_image';
+};
+
+export type DeleteImageResponsesResponseResponseApiIdDeleteImageDeleteErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type DeleteImageResponsesResponseResponseApiIdDeleteImageDeleteError = DeleteImageResponsesResponseResponseApiIdDeleteImageDeleteErrors[keyof DeleteImageResponsesResponseResponseApiIdDeleteImageDeleteErrors];
+
+export type DeleteImageResponsesResponseResponseApiIdDeleteImageDeleteResponses = {
+    /**
+     * Successful Response
+     */
+    200: ResponseLinked;
+};
+
+export type DeleteImageResponsesResponseResponseApiIdDeleteImageDeleteResponse = DeleteImageResponsesResponseResponseApiIdDeleteImageDeleteResponses[keyof DeleteImageResponsesResponseResponseApiIdDeleteImageDeleteResponses];
 
 export type CreateInviteInvitesPostData = {
     body: InviteCreate;
