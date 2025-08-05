@@ -24,7 +24,6 @@ export function AdhocLoopsTab({ loops, group }: { loops: MinimalLetter[]; group:
                     </Heading>
                     <Text color={subtextColor} textAlign="center" maxW="600px">
                         Adhoc loops are one-time loops that can be created outside of the regular cycle.
-                        This feature is currently under development.
                     </Text>
                 </VStack>
             </Box>
