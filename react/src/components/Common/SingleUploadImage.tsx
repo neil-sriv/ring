@@ -1,14 +1,16 @@
 import {
   Box,
   Center,
+  chakra,
   Icon,
+  IconButton,
   Image,
   Input,
   ScaleFade,
   VStack,
-  chakra,
 } from "@chakra-ui/react";
 import { useState } from "react";
+import { FaTimes } from "react-icons/fa";
 import { MdAddPhotoAlternate } from "react-icons/md";
 
 /**
@@ -126,12 +128,92 @@ export function SingleUploadImage({
   );
 }
 
-export function S3Image({ s3Key, alt }: { s3Key: string; alt?: string }) {
-  const url = `https://du32exnxihxuf.cloudfront.net/${s3Key}`;
-  return <Image src={url} alt={alt} boxSize="50%" />;
+interface S3MediaProps {
+  s3Key: string;
+  alt?: string;
+  handleDelete?: () => void;
 }
 
-export function S3Video({ s3Key }: { s3Key: string }) {
+function S3MediaContainer({ children }: { children: React.ReactNode }) {
+  return (
+    <Box
+      borderRadius="md"
+      _hover={{
+        boxShadow: "md",
+        transition: "all 0.2s ease-in-out",
+      }}
+      transition="all 0.2s ease-in-out"
+      boxShadow="sm"
+      overflow="hidden"
+      display="inline-block"
+      p={2}
+      position="relative"
+    >
+      {children}
+    </Box>
+  );
+}
+
+export function S3Image({ s3Key, alt, handleDelete }: S3MediaProps) {
   const url = `https://du32exnxihxuf.cloudfront.net/${s3Key}`;
-  return <Box as="video" src={url} controls boxSize="50%" />;
+  return (
+    <S3MediaContainer>
+      <Image
+        src={url}
+        alt={alt}
+        maxW="400px"
+        maxH="300px"
+        objectFit="contain"
+        _hover={{
+          transform: "scale(1.02)",
+          transition: "all 0.2s ease-in-out",
+        }}
+        transition="all 0.2s ease-in-out"
+      />
+      {handleDelete && <IconButton
+        aria-label="Delete image"
+        icon={<FaTimes />}
+        size="sm"
+        colorScheme="red"
+        variant="solid"
+        position="absolute"
+        top={3}
+        right={3}
+        opacity={0.7}
+        _hover={{ opacity: 1 }}
+        onClick={handleDelete}
+        zIndex={1}
+      />}
+    </S3MediaContainer>
+  );
+}
+
+export function S3Video({ s3Key, handleDelete }: { s3Key: string; handleDelete?: () => void }) {
+  const url = `https://du32exnxihxuf.cloudfront.net/${s3Key}`;
+  return (
+    <S3MediaContainer>
+      <Box
+        as="video"
+        src={url}
+        controls
+        maxW="400px"
+        maxH="300px"
+        objectFit="contain"
+      />
+      {handleDelete && <IconButton
+        aria-label="Delete video"
+        icon={<FaTimes />}
+        size="sm"
+        colorScheme="red"
+        variant="solid"
+        position="absolute"
+        top={3}
+        right={3}
+        opacity={0.7}
+        _hover={{ opacity: 1 }}
+        onClick={handleDelete}
+        zIndex={1}
+      />}
+    </S3MediaContainer>
+  );
 }
