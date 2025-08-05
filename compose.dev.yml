@@ -38,7 +38,7 @@ services:
       - default
 
   cockroach:
-    image: cockroachdb/cockroach-unstable:v25.2.0-rc.1
+    image: cockroachdb/cockroach:v25.2.1
     container_name: ring-cockroach
     restart: unless-stopped
     profiles: [ "dev" ]
