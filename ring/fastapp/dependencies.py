@@ -111,19 +111,10 @@ async def get_unauthenticated_request_dependencies(
     return RequestDependenciesBase(db=db)
 
 
-async def a_get_s3_client_dependencies() -> S3Client:
+async def get_s3_client_dependencies() -> S3Client:
     """Get an asynchronous AWS S3 client.
 
     Returns:
         S3Client: Boto3 S3 client for asynchronous operations
-    """
-    return boto3.client("s3")  # type: ignore
-
-
-def get_s3_client_dependencies() -> S3Client:
-    """Get a synchronous AWS S3 client.
-
-    Returns:
-        S3Client: Boto3 S3 client for synchronous operations
     """
     return boto3.client("s3")  # type: ignore
