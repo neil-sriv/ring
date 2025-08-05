@@ -92,6 +92,8 @@ function PublishedLoop({ loop }: { loop: PublicLetter }) {
               <PublishedQuestion
                 question={question}
                 key={question.api_identifier}
+                currentUserApiId={currentUser.api_identifier}
+                letterSendAt={loop.send_at}
               />
             );
           })}
