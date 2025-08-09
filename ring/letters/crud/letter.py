@@ -35,7 +35,7 @@ from ring.search.models.hybrid_search import (
     SearchableType,
 )
 from ring.tasks.crud import schedule as schedule_crud
-from ring.tasks.models.task_model import TaskType
+from ring.tasks.models.task_model import Task, TaskType
 
 if TYPE_CHECKING:
     from sqlalchemy.orm import Session
@@ -176,7 +176,9 @@ def create_letter_with_questions(
 def edit_letter(
     db: Session,
     letter: Letter,
-    send_at: datetime,
+    send_at: datetime | None = None,
+    title: str | None = None,
+    status: LetterStatus | None = None,
 ) -> Letter:
     """Update a letter's send time and associated tasks.
 
@@ -188,10 +190,48 @@ def edit_letter(
     Returns:
         Letter: Updated letter
     """
-    upsert_letter_tasks(db, letter, send_at)
-    letter.send_at = send_at
+    if send_at:
+        upsert_letter_tasks(db, letter, send_at)
+        letter.send_at = send_at
+    if status:
+        letter.status = status
+        if status == LetterStatus.IN_PROGRESS:
+            delete_letter_task(
+                db,
+                letter,
+                TaskType.REMINDER_EMAIL,
+                LetterStatus.UPCOMING,
+                letter.id,
+            )
+    if title:
+        letter.title = title
     db.flush()
     return letter
+
+
+def delete_letter_task(
+    db: Session,
+    letter: Letter,
+    task_type: TaskType,
+    letter_status: LetterStatus,
+    letter_id: int,
+) -> None:
+    """Delete a letter task.
+
+    Args:
+        db (Session): Database session
+        letter (Letter): Letter to delete task for
+        task_type (TaskType): Type of task to delete
+    """
+    schedule_crud.unregister_task(
+        db,
+        letter.group.schedule,
+        task_type,
+        filters=[
+            Task.arguments
+            == {"letter_id": letter_id, "letter_status": letter_status},
+        ],
+    )
 
 
 def upsert_letter_tasks(

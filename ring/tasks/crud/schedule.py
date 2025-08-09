@@ -13,7 +13,7 @@ from typing import TYPE_CHECKING, Any, Sequence
 
 import sqlalchemy
 from loguru import logger
-from sqlalchemy import or_, select
+from sqlalchemy import ColumnElement, or_, select
 
 from ring.api_identifier import util as api_identifier_crud
 from ring.async_scheduler.scheduler import interval_job_factory, scheduler
@@ -74,7 +74,8 @@ def unregister_task(
     db: Session,
     schedule: Schedule,
     task_type: TaskType,
-    execute_at: datetime.datetime,
+    execute_at: datetime.datetime | None = None,
+    filters: list[ColumnElement] | None = None,
 ):
     """Remove a pending task from a schedule.
 
@@ -84,12 +85,18 @@ def unregister_task(
         task_type: Type of task to remove
         execute_at: Execution time of the task to remove
     """
+    query_filters: list[ColumnElement] = [
+        Task.schedule_id == schedule.id,
+        Task.type == task_type,
+        Task.status == TaskStatus.PENDING,
+    ]
+    if execute_at:
+        query_filters.append(Task.execute_at == execute_at)
+    if filters:
+        query_filters.extend(filters)
     task = db.scalars(
         sqlalchemy.select(Task).where(
-            Task.schedule_id == schedule.id,
-            Task.type == task_type,
-            Task.status == TaskStatus.PENDING,
-            Task.execute_at == execute_at,
+            *query_filters,
         )
     ).one_or_none()
     if task:
