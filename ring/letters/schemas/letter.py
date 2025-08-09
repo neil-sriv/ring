@@ -40,7 +40,9 @@ class LetterUpdate(LetterBase):
         send_at (AwareDatetime): New scheduled time to send the letter
     """
 
-    send_at: AwareDatetime
+    send_at: AwareDatetime | None = None
+    title: str | None = None
+    status: LetterStatus | None = None
 
 
 class Letter(LetterBase):
