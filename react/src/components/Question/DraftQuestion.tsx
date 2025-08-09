@@ -1,30 +1,32 @@
-import { Box, Heading, Textarea, Button, useDisclosure, Modal, ModalOverlay, ModalContent, ModalHeader, ModalBody, ModalFooter, ModalCloseButton, Flex } from "@chakra-ui/react";
+import { Box, Button, Flex, Heading, Modal, ModalBody, ModalCloseButton, ModalContent, ModalFooter, ModalHeader, ModalOverlay, Textarea, useDisclosure } from "@chakra-ui/react";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { AxiosError } from "axios";
+import { useState } from "react";
+import { FaTrash } from "react-icons/fa";
 import {
+  deleteImageResponsesResponseResponseApiIdDeleteImageDelete,
+  DeleteQuestionQuestionsQuestionQuestionApiIdDeleteError,
   PublicQuestion,
   ResponseWithParticipant,
   uploadImageQuestionsQuestionQuestionApiIdUploadImagePost,
   upsertResponseQuestionsQuestionQuestionApiIdUpsertResponsePost,
   UserLinked,
-  DeleteQuestionQuestionsQuestionQuestionApiIdDeleteError,
 } from "../../client";
-import { useState } from "react";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import {
+  deleteQuestionQuestionsQuestionQuestionApiIdDeleteMutation,
+  readLetterLettersLetterLetterApiIdGetQueryKey,
+  readUserMePartiesMeGetQueryKey,
+} from "../../client/@tanstack/react-query.gen";
 import useCustomToast from "../../hooks/useCustomToast";
 import {
   S3Image,
   S3Video,
   SingleUploadImage,
 } from "../Common/SingleUploadImage";
-import {
-  deleteQuestionQuestionsQuestionQuestionApiIdDeleteMutation,
-  readLetterLettersLetterLetterApiIdGetQueryKey,
-  readUserMePartiesMeGetQueryKey,
-} from "../../client/@tanstack/react-query.gen";
-import { FaTrash } from "react-icons/fa";
-import { AxiosError } from "axios";
 
 type ResponseBlockProps = {
   uploadFunction: (file: File) => Promise<void>;
+  deleteImage: (s3Url: string) => Promise<void>;
   questionApiId: string;
   response?: ResponseWithParticipant;
   submitResponse: (responseText: string) => Promise<void>;
@@ -55,19 +57,20 @@ function ResponseBlock(props: ResponseBlockProps) {
           }
         }}
       />
-      {props.response?.images.map((image, index) => {
-        return image.media_type === "image" ? (
-          <S3Image s3Key={image.s3_url} alt="response" key={index} />
-        ) : (
-          <S3Video s3Key={image.s3_url} key={index} />
-        );
-      })}
       {!props.readOnly && (
         <SingleUploadImage
           onUpdateFile={props.uploadFunction}
           name={props.questionApiId}
         />
       )}
+      {props.response?.images.map((image, index) => {
+        return image.media_type === "image" ? (
+          <S3Image s3Key={image.s3_url} alt="response" key={index} handleDelete={() => props.deleteImage(image.s3_url)} />
+        ) : (
+          <S3Video s3Key={image.s3_url} key={index} handleDelete={() => props.deleteImage(image.s3_url)} />
+        );
+      })}
+
     </Box>
   );
 }
@@ -149,6 +152,59 @@ function DraftQuestion({
     });
   };
 
+  const handleDeleteImage = async (s3Url: string) => {
+    try {
+      // Optimistically update the UI
+      queryClient.setQueryData(
+        readLetterLettersLetterLetterApiIdGetQueryKey({
+          path: { letter_api_id: loopApiId },
+        }),
+        (oldData: any) => {
+          if (!oldData) return oldData;
+
+          // Create a deep copy and remove the image
+          const updatedData = JSON.parse(JSON.stringify(oldData));
+
+          // Find the response and remove the image
+          updatedData.questions = updatedData.questions.map((q: any) => {
+            if (q.api_identifier === question.api_identifier) {
+              q.responses = q.responses.map((r: any) => {
+                if (r.participant.api_identifier === currentUser.api_identifier) {
+                  r.images = r.images.filter((img: any) => img.s3_url !== s3Url);
+                }
+                return r;
+              });
+            }
+            return q;
+          });
+
+          return updatedData;
+        }
+      );
+
+      // Make the API call
+      await deleteImageResponsesResponseResponseApiIdDeleteImageDelete({
+        path: { response_api_id: response!.api_identifier },
+        query: {
+          s3_url: s3Url,
+        },
+      });
+
+      showToast("Success!", "Image deleted successfully.", "success");
+    } catch (error) {
+      console.error("Error deleting image:", error);
+
+      // Revert optimistic update on error
+      queryClient.invalidateQueries({
+        queryKey: readLetterLettersLetterLetterApiIdGetQueryKey({
+          path: { letter_api_id: loopApiId },
+        }),
+      });
+
+      showToast("Error!", "Failed to delete image.", "error");
+    }
+  };
+
   return (
     <Box my="20px">
       <Flex justify="space-between" align="center">
@@ -176,6 +232,7 @@ function DraftQuestion({
         response={response}
         submitResponse={handleUpsert}
         uploadFunction={newHandleUpload}
+        deleteImage={handleDeleteImage}
         key={question.api_identifier}
         readOnly={readOnly}
       />

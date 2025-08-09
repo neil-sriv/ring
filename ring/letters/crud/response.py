@@ -16,7 +16,7 @@ from fastapi import UploadFile
 from ring.api_identifier import util as api_identifier_crud
 from ring.fastapp.config import get_config
 from ring.fastapp.dependencies import (
-    a_get_s3_client_dependencies,
+    get_s3_client_dependencies,
 )
 from ring.letters.models.letter_model import Letter
 from ring.letters.models.question_model import Question
@@ -121,7 +121,7 @@ def add_image_to_response(
     return response
 
 
-async def a_upload_image(
+async def upload_image(
     db: Session,
     response: Response,
     response_images: list[UploadFile],
@@ -138,7 +138,7 @@ async def a_upload_image(
     """
     s3_file_prefix = f"{response.question.letter.group.api_identifier}/{response.question.letter.api_identifier}/{response.api_identifier}/"
     # upload image to S3
-    client = await a_get_s3_client_dependencies()
+    client = await get_s3_client_dependencies()
     for image_file in response_images:
         random_string = "".join(random.choices(string_lib.ascii_letters, k=12))
         s3_file_path = (
@@ -160,33 +160,6 @@ async def a_upload_image(
         add_image_to_response(db, response, image)
 
     return response
-
-
-# def upload_image(
-#     db: Session,
-#     response: Response,
-#     response_images: list[SpooledTemporaryFile],
-# ) -> Response:
-#     s3_file_prefix = f"{response.question.letter.group.api_identifier}/{response.question.letter.api_identifier}/{response.api_identifier}/"
-#     random_string = "".join(random.choices(string_lib.ascii_letters, k=12))
-#     s3_file_path = (
-#         s3_file_prefix
-#         + hashlib.sha1(bytearray(random_string, "utf-8")).hexdigest()
-#     )
-#     # upload image to S3
-#     client = get_s3_client_dependencies()
-#     for image_file in response_images:
-#         client.upload_fileobj(
-#             image_file,
-#             get_config().BUCKET_NAME,
-#             s3_file_path,
-#         )
-
-#     # Update response with _image_file S3 path
-#     image = Image.create(s3_url=s3_file_path)
-#     add_image_to_response(db, response, image)
-
-#     return response
 
 
 def create_response(
@@ -229,3 +202,43 @@ def create_response_search_document(
     return create_hybrid_search_document(
         db, raw_text, response.api_identifier, SearchableType.RESPONSE
     )
+
+
+def delete_image_from_response(
+    db: Session,
+    response: Response,
+    s3_url: str,
+) -> Response:
+    """Delete an image from a response.
+
+    Removes the image association and deletes the Image model row.
+    The S3 file is not deleted to avoid data loss.
+
+    Args:
+        db (Session): Database session
+        response (Response): Response containing the image
+        image_id (int): ID of the image to delete
+
+    Returns:
+        Response: Updated response without the deleted image
+
+    Raises:
+        ValueError: If image is not found in the response
+    """
+    # Find the image association for this specific image
+    image_association = None
+    for assoc in response.image_associations:
+        if assoc.image.s3_url == s3_url:
+            image_association = assoc
+            break
+
+    if not image_association:
+        raise ValueError(f"Image with S3 URL {s3_url} not found in response")
+
+    # Remove the association from the response
+    response.image_associations.remove(image_association)
+
+    # Delete the image model (this will cascade to remove the association)
+    db.delete(image_association.image)
+
+    return response

@@ -2281,6 +2281,63 @@
         }
       }
     },
+    "/responses/response/{response_api_id}:delete_image": {
+      "delete": {
+        "tags": [
+          "responses"
+        ],
+        "summary": "Delete Image",
+        "description": "Delete an image from a response.\n\nRemoves the image association and deletes the Image model row.\nThe S3 file is not deleted to avoid data loss.\n\nArgs:\n    response_api_id (str): API identifier of the response\n    s3_url (str): S3 URL of the image to delete\n    req_dep (AuthenticatedRequestDependencies): Request dependencies including database session and auth\n\nReturns:\n    Response: Updated response without the deleted image\n\nRaises:\n    IDNotFoundException: If response with given API ID is not found\n    ValueError: If image is not found in the response",
+        "operationId": "delete_image_responses_response__response_api_id__delete_image_delete",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "response_api_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Response Api Id"
+            }
+          },
+          {
+            "name": "s3_url",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "S3 Url"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResponseLinked"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/invites/": {
       "post": {
         "tags": [
