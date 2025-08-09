@@ -284,7 +284,9 @@ export type LetterUnlinked = {
  * send_at (AwareDatetime): New scheduled time to send the letter
  */
 export type LetterUpdate = {
-    send_at: string;
+    send_at?: string | null;
+    title?: string | null;
+    status?: LetterStatus | null;
 };
 
 /**

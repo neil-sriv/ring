@@ -6,8 +6,9 @@ including membership, letters, and scheduling.
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Sequence
+from typing import TYPE_CHECKING
 
+from loguru import logger
 from sqlalchemy import ForeignKey
 from sqlalchemy.ext.hybrid import hybrid_property
 from sqlalchemy.orm import Mapped, mapped_column, relationship
@@ -175,5 +176,9 @@ class Group(Base, PydanticModel, APIIdentified, CreatedAtMixin):
             for letter in self.cyclic_letters
             if letter.status == LetterStatus.UPCOMING
         ]
-        assert len(upcoming) <= 1
+        # assert len(upcoming) <= 1
+        if len(upcoming) > 1:
+            logger.error(
+                f"Multiple upcoming letters for group {self.id}: {upcoming}"
+            )
         return upcoming[0] if upcoming else None

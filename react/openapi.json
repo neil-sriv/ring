@@ -3297,15 +3297,40 @@
       "LetterUpdate": {
         "properties": {
           "send_at": {
-            "type": "string",
-            "format": "date-time",
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
             "title": "Send At"
+          },
+          "title": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Title"
+          },
+          "status": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/LetterStatus"
+              },
+              {
+                "type": "null"
+              }
+            ]
           }
         },
         "type": "object",
-        "required": [
-          "send_at"
-        ],
         "title": "LetterUpdate",
         "description": "Schema for updating an existing letter.\n\nAttributes:\n    send_at (AwareDatetime): New scheduled time to send the letter"
       },
