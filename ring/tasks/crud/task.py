@@ -108,11 +108,11 @@ def execute_send_email_task(
         group = task.schedule.group
         letter_to_send = group.in_progress_letter
     assert letter_to_send
+    title = f"Ring Newsletter {("#" + str(letter_to_send.number)) if not letter_to_send.title else str(letter_to_send.title)} for {letter_to_send.group.name}"
     message_id = send_email(
         construct_send_letter_email(
             [u.email for u in letter_to_send.participants],
-            letter_to_send.number,
-            letter_to_send.group.name,
+            title,
             letter_to_send.api_identifier,
             letter_crud.compile_letter_dict(letter_to_send),
         )

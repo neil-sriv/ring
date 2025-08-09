@@ -72,8 +72,7 @@ def construct_question_text(
 
 def construct_send_letter_email(
     recipients: list[str],
-    letter_number: int,
-    group_name: str,
+    title: str,
     letter_api_id: str,
     letter_dict: dict[str, list[tuple[str, list[str]]]],
 ) -> EmailDraft:
@@ -109,23 +108,19 @@ def construct_send_letter_email(
     BODY_HTML = """<html>
     <head></head>
     <body>
-    <h1>Ring Newsletter #{letter_number} for {group_name}</h1>
+    <h1>{title}</h1>
     <h2>Check out the newsletter online at <a href="http://ring.neilsriv.tech/loops/{letter_api_id}">http://ring.neilsriv.tech</a></h2>
     {question_html}
     </body>
     </html>
                 """.format(
-        letter_number=letter_number,
-        group_name=group_name,
+        title=title,
         letter_api_id=letter_api_id,
         question_html=question_html,
     )
 
     # Try to send the email.
-    subject = "Ring: Newsletter #{} for {}".format(
-        letter_number,
-        group_name,
-    )
+    subject = title
     email_draft = construct_email_draft(
         recipients, subject, BODY_HTML, BODY_TEXT
     )

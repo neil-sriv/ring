@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import logging
 from datetime import UTC
 from functools import wraps
 from typing import Any, Callable, TypeVar
@@ -33,6 +34,31 @@ executors = {
 job_defaults = {"coalesce": False, "max_instances": 1}
 
 
+class APSchedulerLoguruHandler(logging.Handler):
+    """Custom logging handler that properly formats APScheduler log messages through loguru."""
+
+    def emit(self, record):
+        # Format the message properly
+        msg = self.format(record)
+        # Map logging levels to loguru levels
+        level_map = {
+            logging.DEBUG: "DEBUG",
+            logging.INFO: "INFO",
+            logging.WARNING: "WARNING",
+            logging.ERROR: "ERROR",
+            logging.CRITICAL: "CRITICAL",
+        }
+        level = level_map.get(record.levelno, "INFO")
+        logger.log(level, msg)
+
+
+# Configure APScheduler's logger to use our custom handler
+apscheduler_logger = logging.getLogger("apscheduler")
+apscheduler_logger.handlers.clear()  # Remove any existing handlers
+apscheduler_logger.addHandler(APSchedulerLoguruHandler())
+apscheduler_logger.setLevel(logging.DEBUG)
+
+
 class CustomScheduler(BackgroundScheduler):
     def __init__(self) -> None:
         super().__init__()
@@ -62,7 +88,7 @@ scheduler.configure(
     executors=executors,
     job_defaults=job_defaults,
     timezone=UTC,
-    logger=logger,
+    logger=apscheduler_logger,
 )
 
 JOB_RETURN_TYPE = TypeVar("JOB_RETURN_TYPE")
