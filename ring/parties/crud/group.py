@@ -12,7 +12,7 @@ from typing import TYPE_CHECKING, Sequence
 from sqlalchemy import select
 
 from ring.api_identifier import util as api_identifier_crud
-from ring.letters.constants import DEFAULT_QUESTIONS
+from ring.letters.constants import DEFAULT_QUESTIONS, LetterStatus
 from ring.letters.crud.default_question import replace_default_questions
 from ring.letters.models.letter_model import Letter
 from ring.parties.models.group_model import Group
@@ -180,32 +180,6 @@ def get_letter_by_api_id(group: Group, api_id: str) -> Letter:
     if not letter:
         raise ValueError(f"Could not find letter with api_id {api_id}")
     return letter
-
-
-def schedule_send(
-    db: Session, group_api_id: str, letter_api_id: str, send_at: datetime
-) -> Group:
-    """Schedule a letter to be sent at a specific time.
-
-    Args:
-        db (Session): Database session
-        group_api_id (str): API identifier of the group
-        letter_api_id (str): API identifier of the letter
-        send_at (datetime): When to send the letter
-
-    Returns:
-        Group: Updated group
-    """
-    db_group = api_identifier_crud.get_model(db, Group, api_id=group_api_id)
-    db_letter = get_letter_by_api_id(db_group, letter_api_id)
-    schedule_crud.register_task(
-        db,
-        db_group.schedule,
-        TaskType.SEND_EMAIL,
-        send_at,
-        {"letter_api_id": db_letter.api_identifier},
-    )
-    return db_group
 
 
 def add_members(db: Session, group: Group, members: Sequence[User]) -> None:

@@ -218,38 +218,6 @@ class TestGroupCrud:
         ):
             group_crud.get_letter_by_api_id(group, "invalid")
 
-    def test_schedule_send(self, db_session: Session) -> None:
-        """Test scheduling a letter to be sent.
-
-        This test verifies that:
-        1. A send task is created
-        2. The task has the correct type and arguments
-        3. The task is scheduled for the correct time
-        4. The task is associated with the group's schedule
-
-        Args:
-            db_session (Session): Database session
-        """
-        group = GroupFactory.create()
-        letter = LetterFactory.create(group=group)
-        db_session.execute(sqlalchemy.delete(Task))
-        db_session.commit()
-
-        group_crud.schedule_send(
-            db_session,
-            group.api_identifier,
-            letter.api_identifier,
-            letter.send_at,
-        )
-        db_session.commit()
-
-        assert len(group.schedule.tasks) == 1
-        [task] = group.schedule.tasks
-        assert task.type == TaskType.SEND_EMAIL
-        assert group.schedule.send_email_tasks == [task]
-        assert task.execute_at == letter.send_at
-        assert task.arguments == {"letter_api_id": letter.api_identifier}
-
     def test_add_members(self, db_session: Session) -> None:
         """Test adding multiple members to a group.
 

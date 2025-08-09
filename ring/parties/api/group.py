@@ -13,6 +13,7 @@ from ring.fastapp.dependencies import (
     AuthenticatedRequestDependencies,
     get_request_dependencies,
 )
+from ring.letters.constants import LetterStatus
 from ring.letters.crud.default_question import replace_default_questions
 from ring.letters.crud.letter import add_participants
 from ring.parties.crud import group as group_crud
@@ -203,42 +204,6 @@ async def remove_user_from_group(
         )
     group = group_crud.remove_member(
         req_dep.db, group_api_id=group_api_id, user_api_id=user_api_id
-    )
-    req_dep.db.commit()
-    return group
-
-
-@router.post(
-    "/group/{group_api_id}:schedule_send",
-    response_model=GroupSchema,
-    deprecated=True,
-)
-async def schedule_send(
-    group_api_id: str,
-    schedule_param: ScheduleSendParam,
-    req_dep: AuthenticatedRequestDependencies = Depends(
-        get_request_dependencies,
-    ),
-) -> Group:
-    """Schedule a letter to be sent.
-
-    Args:
-        group_api_id (str): API identifier of the group
-        schedule_param (ScheduleSendParam): Schedule parameters
-        req_dep (AuthenticatedRequestDependencies): Request dependencies
-
-    Returns:
-        Group: Updated group
-
-    Note:
-        This endpoint is deprecated.
-    """
-    utc_send_at = schedule_param.send_at.astimezone(tz=timezone.utc)
-    group = group_crud.schedule_send(
-        req_dep.db,
-        group_api_id=group_api_id,
-        letter_api_id=schedule_param.letter_api_id,
-        send_at=utc_send_at,
     )
     req_dep.db.commit()
     return group
