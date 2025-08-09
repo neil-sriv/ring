@@ -254,8 +254,8 @@ async def edit_letter(
         curr_time = datetime.now(tz=UTC)
         if db_letter.status == LetterStatus.UPCOMING:
             assert (
-                letter.send_at > db_letter.group.in_progress_letter.send_at
-                if db_letter.group.in_progress_letter
+                letter.send_at > db_letter.group.in_progress_letters[0].send_at
+                if db_letter.group.in_progress_letters
                 else letter.send_at > curr_time
             )
         else:

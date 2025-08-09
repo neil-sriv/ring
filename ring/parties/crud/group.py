@@ -124,10 +124,12 @@ def add_member(db: Session, group_api_id: str, user_api_id: str) -> Group:
     db_group = api_identifier_crud.get_model(db, Group, api_id=group_api_id)
     db_user = api_identifier_crud.get_model(db, User, api_id=user_api_id)
     db_group.members.append(db_user)
-    if db_group.in_progress_letter:
-        db_group.in_progress_letter.participants.append(db_user)
-    if db_group.upcoming_letter:
-        db_group.upcoming_letter.participants.append(db_user)
+    for letter in db_group.letters:
+        if (
+            letter.status == LetterStatus.IN_PROGRESS
+            or letter.status == LetterStatus.UPCOMING
+        ):
+            letter.participants.append(db_user)
     return db_group
 
 
@@ -215,10 +217,12 @@ def add_members(db: Session, group: Group, members: Sequence[User]) -> None:
         members (Sequence[User]): Users to add to the group
     """
     group.members.extend(members)
-    if group.in_progress_letter:
-        group.in_progress_letter.participants.extend(members)
-    if group.upcoming_letter:
-        group.upcoming_letter.participants.extend(members)
+    for letter in group.letters:
+        if (
+            letter.status == LetterStatus.IN_PROGRESS
+            or letter.status == LetterStatus.UPCOMING
+        ):
+            letter.participants.extend(members)
 
 
 @register_search_function(SearchableType.GROUP, Group)

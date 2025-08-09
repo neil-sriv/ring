@@ -338,11 +338,12 @@ async def add_members(
         req_dep.db, db_group, req_dep.current_user, unregistered
     )
     group_crud.add_members(req_dep.db, db_group, db_users)
-    in_prog, upcoming = db_group.in_progress_letter, db_group.upcoming_letter
-    if in_prog is not None:
-        add_participants(req_dep.db, in_prog, db_users)
-    if upcoming is not None:
-        add_participants(req_dep.db, upcoming, db_users)
+    for letter in db_group.letters:
+        if (
+            letter.status == LetterStatus.IN_PROGRESS
+            or letter.status == LetterStatus.UPCOMING
+        ):
+            add_participants(req_dep.db, letter, db_users)
     req_dep.db.commit()
 
     if invites:

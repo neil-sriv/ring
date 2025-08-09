@@ -91,8 +91,8 @@ class TestGroupModel:
 
         assert group.letters == letters
         assert group.cyclic_letters == letters
-        assert group.in_progress_letter in letters
-        assert group.upcoming_letter in letters
+        assert group.in_progress_letters == [letters[0]]
+        assert group.upcoming_letters == [letters[1]]
 
     def test_group_model_schedule(self, db_session: Session, faker: Faker):
         """Test group model's relationship with schedule.
