@@ -1,4 +1,4 @@
-import { Box, Heading, Link, Text } from "@chakra-ui/react";
+import { Badge, Box, Heading, Link, Text, useColorModeValue } from "@chakra-ui/react";
 import { PublicQuestion, ResponseWithParticipant } from "../../client";
 import { splitText, URLMatch } from "../../util/URLParse";
 import { S3Image, S3Video } from "../Common/SingleUploadImage";
@@ -29,15 +29,39 @@ function TextBlockWithUrls({
   return <>{elements}</>;
 }
 
-function ResponseBlock({ response }: { response: ResponseWithParticipant }) {
+function ResponseBlock({ response, isLateAnswer }: { response: ResponseWithParticipant; isLateAnswer?: boolean }) {
   let responseText = [response.response_text];
   const urlMatches = URLMatch(response.response_text);
   if (urlMatches != null) {
     responseText = splitText(response.response_text);
   }
+
+  const bgColor = useColorModeValue(
+    isLateAnswer ? "purple.50" : "transparent",
+    isLateAnswer ? "purple.900" : "transparent"
+  );
+  const borderColor = useColorModeValue(
+    isLateAnswer ? "purple.200" : "transparent",
+    isLateAnswer ? "purple.600" : "transparent"
+  );
+
   return (
-    <Box my="10px">
-      <Heading size="md">{response.participant.name}</Heading>
+    <Box
+      my="10px"
+      p={isLateAnswer ? "3" : "0"}
+      bg={bgColor}
+      border={isLateAnswer ? "1px" : "none"}
+      borderColor={borderColor}
+      borderRadius={isLateAnswer ? "md" : "0"}
+    >
+      <Box display="flex" alignItems="center" gap="2" mb="2">
+        <Heading size="md">{response.participant.name}</Heading>
+        {isLateAnswer && (
+          <Badge colorScheme="purple" variant="subtle" fontSize="xs">
+            Late Answer
+          </Badge>
+        )}
+      </Box>
       {/* <Text>{responseText}</Text> */}
       <TextBlockWithUrls
         texts={responseText}
@@ -56,9 +80,17 @@ function ResponseBlock({ response }: { response: ResponseWithParticipant }) {
 
 function PublishedQuestion({
   question,
+  currentUserApiId,
+  letterSendAt,
 }: {
   question: PublicQuestion;
+  currentUserApiId?: string;
+  letterSendAt?: string;
 }): JSX.Element {
+  // Determine which responses are late answers
+  // A response is considered "late" if it was submitted after the letter was scheduled to be sent
+  const letterSendDate = letterSendAt ? new Date(letterSendAt) : null;
+
   return (
     <Box my="20px">
       {question.author == null ? (
@@ -69,8 +101,15 @@ function PublishedQuestion({
         </Heading>
       )}
       {question.responses.map((response) => {
+        const responseCreatedAt = new Date(response.created_at);
+        const isLateAnswer = letterSendDate ? responseCreatedAt > letterSendDate : false;
+
         return (
-          <ResponseBlock response={response} key={response.api_identifier} />
+          <ResponseBlock
+            response={response}
+            key={response.api_identifier}
+            isLateAnswer={isLateAnswer}
+          />
         );
       })}
     </Box>
