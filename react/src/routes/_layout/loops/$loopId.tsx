@@ -104,9 +104,16 @@ function IssueContent() {
                   </Button>
                 )}
               </Box>
-              <Heading size={["md", "lg"]} color={textColor}>
-                <p> Issue #{loop.number}</p>
-              </Heading>
+              {loop.title && (
+                <Heading size={["md", "lg"]} color={textColor}>
+                  {loop.title}
+                </Heading>
+              )}
+              {!loop.title && loop.number && (
+                <Heading size={["md", "lg"]} color={textColor}>
+                  Issue #{loop.number}
+                </Heading>
+              )}
               {loop.status === "IN_PROGRESS" && (
                 <Heading
                   size="md"
