@@ -250,16 +250,24 @@ async def edit_letter(
             status_code=400,
             detail="Cannot edit a sent letter",
         )
-    curr_time = datetime.now(tz=UTC)
-    if db_letter.status == LetterStatus.UPCOMING:
-        assert (
-            letter.send_at > db_letter.group.in_progress_letter.send_at
-            if db_letter.group.in_progress_letter
-            else letter.send_at > curr_time
-        )
-    else:
-        assert letter.send_at > curr_time
-    letter_crud.edit_letter(req_dep.db, db_letter, letter.send_at)
+    if letter.send_at:
+        curr_time = datetime.now(tz=UTC)
+        if db_letter.status == LetterStatus.UPCOMING:
+            assert (
+                letter.send_at > db_letter.group.in_progress_letter.send_at
+                if db_letter.group.in_progress_letter
+                else letter.send_at > curr_time
+            )
+        else:
+            assert letter.send_at > curr_time
+
+    letter_crud.edit_letter(
+        req_dep.db,
+        db_letter,
+        send_at=letter.send_at,
+        title=letter.title,
+        status=letter.status,
+    )
     req_dep.db.commit()
     return db_letter
 
