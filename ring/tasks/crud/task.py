@@ -52,11 +52,16 @@ def execute_reminder_email_task(
         AssertionError: If letter timing doesn't match task execution time
     """
     group = task.schedule.group
-    letter_to_send = (
-        group.in_progress_letter
-        if letter_status == LetterStatus.IN_PROGRESS
-        else group.upcoming_letter
-    )
+    if letter_id := task.arguments.get("letter_id"):
+        letter_to_send = db.scalars(
+            sqlalchemy.select(Letter).where(Letter.id == letter_id)
+        ).one()
+    else:
+        letter_to_send = (
+            group.in_progress_letters[0]
+            if letter_status == LetterStatus.IN_PROGRESS
+            else group.upcoming_letters[0]
+        )
     assert letter_to_send
     if letter_to_send.status == LetterStatus.UPCOMING:
         assert task.execute_at == letter_to_send.send_at - timedelta(days=8)
