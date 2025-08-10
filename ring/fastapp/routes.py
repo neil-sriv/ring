@@ -48,6 +48,9 @@ router.include_router(completion.router, prefix="/llm", tags=["llm"])
 
 router.include_router(search.router, prefix="/search", tags=["search"])
 
+router.include_router(
+    document.websocket_router, prefix="/ws/notebook", tags=["notebook"]
+)
 router.include_router(document.router, prefix="/notebook", tags=["notebook"])
 
 
