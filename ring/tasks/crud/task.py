@@ -35,6 +35,7 @@ def execute_reminder_email_task(
     db: Session,
     task: ReminderEmailTask,
     letter_status: LetterStatus = LetterStatus.UPCOMING,
+    **kwargs: Any,
 ) -> None:
     """Execute a reminder email task.
 
@@ -52,7 +53,7 @@ def execute_reminder_email_task(
         AssertionError: If letter timing doesn't match task execution time
     """
     group = task.schedule.group
-    if letter_id := task.arguments.get("letter_id"):
+    if letter_id := kwargs.get("letter_id"):
         letter_to_send = db.scalars(
             sqlalchemy.select(Letter).where(Letter.id == letter_id)
         ).one()
