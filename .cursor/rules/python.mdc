@@ -68,5 +68,6 @@ Key Conventions
    - Favor asynchronous and non-blocking flows.
    - Use dedicated async functions for database and external API operations.
    - Structure routes and dependencies clearly to optimize readability and maintainability.
+4. Do not ever add content to __init__.py files
 
 Refer to FastAPI documentation for Data Models, Path Operations, and Middleware for best practices.
