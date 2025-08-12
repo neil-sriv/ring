@@ -10,14 +10,16 @@ import {
   Tabs,
   useColorModeValue,
 } from "@chakra-ui/react";
-import { useSuspenseQuery } from "@tanstack/react-query";
+import { useQueryClient, useSuspenseQuery } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
 import { Suspense } from "react";
-import { MinimalLetter } from "../../../../client";
+import { MinimalLetter, UserUnlinked } from "../../../../client";
 import {
   listLettersLettersLettersGetOptions,
   readGroupPartiesGroupGroupApiIdGetOptions,
+  readUserMePartiesMeGetQueryKey,
 } from "../../../../client/@tanstack/react-query.gen";
+import { CollabEditor } from "../../../../components/Document/Editor";
 import { GroupKeyValuesTable } from "../../../../components/GroupKeyValues/GroupKeyValuesTable";
 import { LLMPlayground } from "../../../../components/LLMPlayground/LLMPlayground";
 import { AdhocLoopsTab } from "../../../../components/Loops/AdhocLoopsTab";
@@ -73,6 +75,9 @@ function LoopsContentLoader() {
       path: { group_api_id: groupId },
     }),
   });
+  const currentUser = useQueryClient().getQueryData<UserUnlinked>(
+    readUserMePartiesMeGetQueryKey()
+  );
 
   const { data: keyValues } = useGroupKeyValues(groupId);
 
@@ -99,6 +104,18 @@ function LoopsContentLoader() {
     {
       title: "LLM Playground",
       component: () => <LLMPlayground />
+    },
+    {
+      title: "Collaborative Editor",
+      component: () => (
+        <Box p={4}>
+          <Heading size="md" mb={4}>Group Collaborative Document</Heading>
+          <CollabEditor
+            docId="dcmnt_1d6f3ba3-914b-4a2b-beee-f1e088ab1e3f"
+            user={currentUser!}
+          />
+        </Box>
+      )
     }
   ];
 

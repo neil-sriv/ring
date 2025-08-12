@@ -104,10 +104,10 @@ async def nb_document_websocket(
     await join_document_room(document_api_id, websocket)
     try:
         while True:
-            # data = await websocket.receive_bytes()
-            data = await websocket.receive_text()
+            # Y-websocket sends binary data, not text
+            data = await websocket.receive_bytes()
             await broadcast_document_message(document_api_id, data, websocket)
-            await websocket.send_text(f"Message text was: {data}")
+            # Don't echo back - Y.js handles the protocol
     except WebSocketDisconnect:
         # Client disconnected normally - just clean up
         logger.info(f"Client disconnected from document {document_api_id}")
