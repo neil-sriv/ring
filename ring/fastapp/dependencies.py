@@ -11,7 +11,8 @@ from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
 import boto3
-from fastapi import Depends, HTTPException, status
+from fastapi import Depends, HTTPException, WebSocket, status
+from loguru import logger
 from mypy_boto3_s3 import S3Client
 
 from ring.parties.crud import user as user_crud
@@ -109,6 +110,57 @@ async def get_unauthenticated_request_dependencies(
         RequestDependenciesBase: Basic request dependencies
     """
     return RequestDependenciesBase(db=db)
+
+
+async def get_websocket_request_dependencies(
+    websocket: WebSocket, db: Session = Depends(get_db)
+) -> AuthenticatedRequestDependencies:
+    """Get dependencies for authenticated WebSocket connections.
+
+    This dependency extracts the authentication token from WebSocket query parameters
+    and validates the user, providing the same interface as regular HTTP endpoints.
+
+    Args:
+        websocket (WebSocket): The WebSocket connection object
+
+    Returns:
+        AuthenticatedRequestDependencies: Combined dependencies including database and user
+
+    Raises:
+        HTTPException: If authentication fails
+    """
+    # Extract token from query parameters
+    token = websocket.query_params.get("token")
+    logger.info(f"WebSocket auth: token extracted: {token}")
+    if not token:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Missing authentication token",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+
+    try:
+        # Manually authenticate the user
+        user_email = decode_token(token)
+        current_user = user_crud.get_user_by_email(db, email=user_email)
+
+        if not current_user:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Invalid authentication token",
+                headers={"WWW-Authenticate": "Bearer"},
+            )
+
+        return AuthenticatedRequestDependencies(
+            db=db, current_user=current_user
+        )
+
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Authentication failed",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
 
 
 async def get_s3_client_dependencies() -> S3Client:
