@@ -29,11 +29,9 @@ from ring.notebook.crud.document import (
     leave_document_room,
     update_document,
 )
-from ring.notebook.models.document import Document, DocumentEdit
+from ring.notebook.models.document import Document
 from ring.notebook.schemas.document import (
     DocumentCreate,
-    DocumentEditCreate,
-    DocumentEditResponse,
     DocumentResponse,
     DocumentUpdate,
 )
@@ -162,44 +160,6 @@ async def update_document_endpoint(
     return updated_document
 
 
-@router.post(
-    "/documents/{document_api_id}/edits",
-    response_model=DocumentEditResponse,
-    status_code=status.HTTP_201_CREATED,
-)
-async def add_document_edit_endpoint(
-    document_api_id: str,
-    edit: DocumentEditCreate,
-    req_dep: AuthenticatedRequestDependencies = Depends(
-        get_request_dependencies,
-    ),
-) -> DocumentEdit:
-    """Add an edit to a document.
-
-    Args:
-        document_api_id (str): API identifier of the document
-        edit (DocumentEditCreate): Edit creation parameters
-        req_dep (AuthenticatedRequestDependencies): Request dependencies including database session and auth
-
-    Returns:
-        DocumentEdit: Newly created edit
-
-    Raises:
-        IDNotFoundException: If document with given API ID is not found
-    """
-    db_document = get_model(req_dep.db, Document, document_api_id)
-
-    db_edit = add_document_edit(
-        req_dep.db,
-        db_document,
-        edit.delta,
-        req_dep.current_user,
-    )
-
-    req_dep.db.commit()
-    return db_edit
-
-
 @websocket_router.websocket("/{document_api_id}")
 async def nb_document_websocket(
     websocket: WebSocket,
@@ -222,13 +182,14 @@ async def nb_document_websocket(
         while True:
             data = await websocket.receive_bytes()
             logger.info(f"Received data: {data}")
-            db_edit = add_document_edit(
-                req_dep.db,
-                db_document,
-                data,
-                req_dep.current_user,
-            )
-            req_dep.db.commit()
+            print(data)
+            # db_edit = add_document_edit(
+            #     req_dep.db,
+            #     db_document,
+            #     data,
+            #     req_dep.current_user,
+            # )
+            # req_dep.db.commit()
             await broadcast_document_message(document_api_id, data, websocket)
     except WebSocketDisconnect:
         logger.info(f"Client disconnected from document {document_api_id}")
