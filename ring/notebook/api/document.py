@@ -10,6 +10,8 @@ from typing import List
 
 from fastapi import APIRouter, Depends, WebSocket, status
 from loguru import logger
+from pycrdt import Doc, Provider
+from pycrdt.websocket import WebsocketServer
 from starlette.websockets import WebSocketDisconnect
 
 from ring.api_identifier.util import get_model
@@ -160,45 +162,45 @@ async def update_document_endpoint(
     return updated_document
 
 
-@websocket_router.websocket("/{document_api_id}")
-async def nb_document_websocket(
-    websocket: WebSocket,
-    document_api_id: str,
-    req_dep: AuthenticatedRequestDependencies = Depends(
-        get_websocket_request_dependencies
-    ),
-) -> None:
-    """
-    Websocket endpoint for a notebook document.
-    """
-    logger.info(f"WebSocket request for document {document_api_id}")
-    db_document = get_model(req_dep.db, Document, document_api_id)
-    await websocket.accept()
-    logger.info(
-        f"WebSocket connected to document {document_api_id} by user {req_dep.current_user.email}"
-    )
-    await join_document_room(document_api_id, websocket)
-    try:
-        while True:
-            data = await websocket.receive_bytes()
-            logger.info(f"Received data: {data}")
-            print(data)
-            # db_edit = add_document_edit(
-            #     req_dep.db,
-            #     db_document,
-            #     data,
-            #     req_dep.current_user,
-            # )
-            # req_dep.db.commit()
-            await broadcast_document_message(document_api_id, data, websocket)
-    except WebSocketDisconnect:
-        logger.info(f"Client disconnected from document {document_api_id}")
-        await leave_document_room(document_api_id, websocket)
-    except Exception as e:
-        logger.error(f"WebSocket error: {e}")
-        await leave_document_room(document_api_id, websocket)
-        try:
-            await websocket.close()
-        except RuntimeError:
-            pass
-        raise
+# @websocket_router.websocket("/{document_api_id}")
+# async def nb_document_websocket(
+#     websocket: WebSocket,
+#     document_api_id: str,
+#     req_dep: AuthenticatedRequestDependencies = Depends(
+#         get_websocket_request_dependencies
+#     ),
+# ) -> None:
+#     """
+#     Websocket endpoint for a notebook document.
+#     """
+#     logger.info(f"WebSocket request for document {document_api_id}")
+#     db_document = get_model(req_dep.db, Document, document_api_id)
+#     await websocket.accept()
+#     logger.info(
+#         f"WebSocket connected to document {document_api_id} by user {req_dep.current_user.email}"
+#     )
+#     await join_document_room(document_api_id, websocket)
+#     try:
+#         while True:
+#             data = await websocket.receive_bytes()
+#             logger.info(f"Received data: {data}")
+#             print(data)
+#             # db_edit = add_document_edit(
+#             #     req_dep.db,
+#             #     db_document,
+#             #     data,
+#             #     req_dep.current_user,
+#             # )
+#             # req_dep.db.commit()
+#             await broadcast_document_message(document_api_id, data, websocket)
+#     except WebSocketDisconnect:
+#         logger.info(f"Client disconnected from document {document_api_id}")
+#         await leave_document_room(document_api_id, websocket)
+#     except Exception as e:
+#         logger.error(f"WebSocket error: {e}")
+#         await leave_document_room(document_api_id, websocket)
+#         try:
+#             await websocket.close()
+#         except RuntimeError:
+#             pass
+#         raise

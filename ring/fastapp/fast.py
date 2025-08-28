@@ -12,6 +12,7 @@ from typing import Awaitable, Callable
 from fastapi import FastAPI, Request, Response
 from fastapi.responses import JSONResponse
 from loguru import logger
+from pycrdt.websocket import ASGIServer, WebsocketServer
 from starlette.middleware.cors import CORSMiddleware
 
 from ring.api_identifier.util import IDNotFoundException
@@ -24,7 +25,10 @@ from ring.fastapp.routes import router
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     scheduler.start()
-    yield
+
+    async with app.state.ws_server:
+        yield
+
     scheduler.shutdown()
 
 
@@ -46,6 +50,11 @@ def create_app() -> FastAPI:
             allow_headers=["*"],
         )
 
+    ws_server = WebsocketServer()
+    asgi_ws = ASGIServer(ws_server)
+    app.state.ws_server = ws_server
+
+    app.mount("/ws/notebook", asgi_ws, name="ws_server")
     app.include_router(router)
 
     return app

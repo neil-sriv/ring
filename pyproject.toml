@@ -76,6 +76,7 @@ dependencies = [
     "casbin-sqlalchemy-adapter>=1.4.0",
     "casbin>=1.43.0",
     "websockets>=14.1",
+    "pycrdt-websocket>=0.16.0",
 ]
 
 [dependency-groups]

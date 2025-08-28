@@ -13,6 +13,10 @@ annotated-types==0.7.0
 anyio==4.9.0
     # via
     #   httpx
+    #   pycrdt
+    #   pycrdt-store
+    #   pycrdt-websocket
+    #   sqlite-anyio
     #   starlette
     #   watchfiles
 apscheduler==3.11.0
@@ -43,7 +47,9 @@ botocore-stubs==1.38.6
 bs4==0.0.2
     # via ring (pyproject.toml)
 casbin==1.43.0
-    # via casbin-sqlalchemy-adapter
+    # via
+    #   ring (pyproject.toml)
+    #   casbin-sqlalchemy-adapter
 casbin-sqlalchemy-adapter==1.4.0
     # via ring (pyproject.toml)
 certifi==2025.4.26
@@ -256,6 +262,14 @@ pycasbin==1.45.0
     # via ring (pyproject.toml)
 pycparser==2.22
     # via cffi
+pycrdt==0.12.27
+    # via
+    #   pycrdt-store
+    #   pycrdt-websocket
+pycrdt-store==0.1.2
+    # via pycrdt-websocket
+pycrdt-websocket==0.16.0
+    # via ring (pyproject.toml)
 pydantic==2.11.4
     # via
     #   ring (pyproject.toml)
@@ -361,6 +375,8 @@ sqlalchemy-cockroachdb==2.0.2
     # via ring (pyproject.toml)
 sqlalchemy-json==0.7.0
     # via ring (pyproject.toml)
+sqlite-anyio==0.2.3
+    # via pycrdt-store
 sqlparse==0.5.3
     # via
     #   pgcli
