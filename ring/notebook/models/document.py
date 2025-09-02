@@ -3,6 +3,7 @@ from __future__ import annotations
 from datetime import datetime
 from typing import TYPE_CHECKING
 
+from loguru import logger
 from sqlalchemy import (
     BLOB,
     Constraint,
@@ -43,6 +44,9 @@ class Document(Base, APIIdentified, CreatedAtMixin):
         self, name: str, content: bytes, latest_snapshot_version: int
     ):
         APIIdentified.__init__(self)
+        logger.info(
+            f"Creating document: {name}, self.api_identifier: {self.api_identifier}"
+        )
         self.name = name
         self.content = content
         self.latest_snapshot_version = latest_snapshot_version

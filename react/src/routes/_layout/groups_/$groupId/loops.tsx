@@ -111,7 +111,7 @@ function LoopsContentLoader() {
         <Box p={4}>
           <Heading size="md" mb={4}>Group Collaborative Document</Heading>
           <CollabEditor
-            docId="dcmnt_1d6f3ba3-914b-4a2b-beee-f1e088ab1e3f"
+            docId="dcmnt_fdd95a02-7f6e-4952-a6e1-3c57b7627de1"
             user={currentUser!}
           />
         </Box>
