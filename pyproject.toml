@@ -77,6 +77,7 @@ dependencies = [
     "casbin>=1.43.0",
     "websockets>=14.1",
     "pycrdt-websocket>=0.16.0",
+    "httpx-ws>=0.7.2",
 ]
 
 [dependency-groups]

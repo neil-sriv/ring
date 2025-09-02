@@ -13,6 +13,7 @@ annotated-types==0.6.0
 anyio==4.10.0
     # via
     #   httpx
+    #   httpx-ws
     #   pycrdt
     #   pycrdt-store
     #   pycrdt-websocket
@@ -121,14 +122,21 @@ h11==0.16.0
     # via
     #   httpcore
     #   uvicorn
+    #   wsproto
 http-ece==1.2.1
     # via pywebpush
 httpcore==1.0.9
-    # via httpx
+    # via
+    #   httpx
+    #   httpx-ws
 httptools==0.6.4
     # via uvicorn
 httpx==0.28.1
-    # via fastapi
+    # via
+    #   fastapi
+    #   httpx-ws
+httpx-ws==0.7.2
+    # via ring (pyproject.toml)
 identify==2.6.3
     # via pre-commit
 idna==3.6
@@ -446,5 +454,7 @@ websockets==15.0.1
     # via
     #   ring (pyproject.toml)
     #   uvicorn
+wsproto==1.2.0
+    # via httpx-ws
 yarl==1.18.3
     # via aiohttp

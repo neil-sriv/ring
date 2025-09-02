@@ -12,7 +12,6 @@ from typing import Awaitable, Callable
 from fastapi import FastAPI, Request, Response
 from fastapi.responses import JSONResponse
 from loguru import logger
-from pycrdt.websocket import ASGIServer, WebsocketServer
 from starlette.middleware.cors import CORSMiddleware
 
 from ring.api_identifier.util import IDNotFoundException
@@ -20,6 +19,10 @@ from ring.async_scheduler.scheduler import scheduler
 from ring.fastapp.config import get_config
 from ring.fastapp.init_app_modules import init_app_modules
 from ring.fastapp.routes import router
+from ring.notebook.crdt_websocket_server import (
+    create_asgi_server,
+    create_websocket_server,
+)
 
 
 @asynccontextmanager
@@ -27,7 +30,9 @@ async def lifespan(app: FastAPI):
     scheduler.start()
 
     async with app.state.ws_server:
+        logger.info("WS server started")
         yield
+        logger.info("WS server stopped")
 
     scheduler.shutdown()
 
@@ -50,10 +55,13 @@ def create_app() -> FastAPI:
             allow_headers=["*"],
         )
 
-    ws_server = WebsocketServer()
-    asgi_ws = ASGIServer(ws_server)
+    # ws_server = WebsocketServer(provider_factory=Provider)
+    ws_server = create_websocket_server()
+    asgi_ws = create_asgi_server(ws_server)
     app.state.ws_server = ws_server
 
+    # DO NOT CHANGE THIS PATH - pycrdt ASGI server must stay at /ws/notebook
+    # Frontend connects to /api/v1/ws/notebook/ which gets routed here via FastAPI root_path
     app.mount("/ws/notebook", asgi_ws, name="ws_server")
     app.include_router(router)
 
