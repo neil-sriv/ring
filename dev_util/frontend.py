@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 from pathlib import Path
 from typing import Any
 
@@ -48,9 +49,21 @@ def fe_regen(
     ctx: click.Context,
     *args: list[Any],
     **kwargs: dict[Any, Any],
+) -> list[list[str]]:
+    spec_result = ctx.invoke(fe_spec)
+    spec_json = json.loads(spec_result[0])
+    with open(FE_DIR / "openapi.json", "w") as f:
+        json.dump(spec_json, f)
+    return [
+        ["node", "modify-openapi-operationids.js"],
+        ["pnpm", "run", "generate-client"],
+    ]
+
+
+@cmd_run("spec", fe, cwd=FE_DIR, capture_output=True)
+def fe_spec(
+    ctx: click.Context,
+    *args: list[Any],
+    **kwargs: dict[Any, Any],
 ) -> list[str]:
-    return (
-        ["node", "modify-openapi-operationids.js"]
-        + ["&&"]
-        + ["pnpm", "run", "generate-client"]
-    )
+    return ["curl", "http://localhost:8001/api/v1/openapi.json"]
