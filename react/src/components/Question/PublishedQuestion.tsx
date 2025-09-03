@@ -80,11 +80,9 @@ function ResponseBlock({ response, isLateAnswer }: { response: ResponseWithParti
 
 function PublishedQuestion({
   question,
-  currentUserApiId,
   letterSendAt,
 }: {
   question: PublicQuestion;
-  currentUserApiId?: string;
   letterSendAt?: string;
 }): JSX.Element {
   // Determine which responses are late answers
