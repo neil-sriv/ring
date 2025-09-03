@@ -131,12 +131,13 @@ class Group(Base, PydanticModel, APIIdentified, CreatedAtMixin):
         else:
             raise ValueError("Admin must be a member of the group")
 
-    # @hybrid_property
-    # def letters(self) -> Mapped[list["Letter"]]:
-    #     return self._letters
-
     @hybrid_property
-    def cyclic_letters(self) -> Mapped[list["Letter"]]:
+    def cyclic_letters(self) -> list[Letter]:
+        """Get the group's cyclic letters.
+
+        Returns:
+            list[Letter]: Cyclic letters
+        """
         return [
             letter
             for letter in self.letters
@@ -144,41 +145,33 @@ class Group(Base, PydanticModel, APIIdentified, CreatedAtMixin):
         ]
 
     @hybrid_property
-    def in_progress_letter(self) -> Letter | None:
-        """Get the group's currently active letter.
+    def upcoming_letters(self) -> list[Letter]:
+        """Get the group's upcoming letters.
 
         Returns:
-            Letter | None: Active letter or None if no letter is in progress
-
-        Raises:
-            AssertionError: If more than one letter is in progress
+            list[Letter]: Upcoming letters
         """
-        upcoming = [
-            letter
-            for letter in self.cyclic_letters
-            if letter.status == LetterStatus.IN_PROGRESS
-        ]
-        assert len(upcoming) <= 1
-        return upcoming[0] if upcoming else None
+        return sorted(
+            [
+                letter
+                for letter in self.cyclic_letters
+                if letter.status == LetterStatus.UPCOMING
+            ],
+            key=lambda x: x.send_at,
+        )
 
     @hybrid_property
-    def upcoming_letter(self) -> Letter | None:
-        """Get the group's next scheduled letter.
+    def in_progress_letters(self) -> list[Letter]:
+        """Get the group's in-progress letters.
 
         Returns:
-            Letter | None: Upcoming letter or None if no letter is scheduled
-
-        Raises:
-            AssertionError: If more than one letter is upcoming
+            list[Letter]: In-progress letters
         """
-        upcoming = [
-            letter
-            for letter in self.cyclic_letters
-            if letter.status == LetterStatus.UPCOMING
-        ]
-        # assert len(upcoming) <= 1
-        if len(upcoming) > 1:
-            logger.error(
-                f"Multiple upcoming letters for group {self.id}: {upcoming}"
-            )
-        return upcoming[0] if upcoming else None
+        return sorted(
+            [
+                letter
+                for letter in self.cyclic_letters
+                if letter.status == LetterStatus.IN_PROGRESS
+            ],
+            key=lambda x: x.send_at,
+        )

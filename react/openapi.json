@@ -1067,65 +1067,6 @@
         }
       }
     },
-    "/parties/group/{group_api_id}:schedule_send": {
-      "post": {
-        "tags": [
-          "parties"
-        ],
-        "summary": "Schedule Send",
-        "description": "Schedule a letter to be sent.\n\nArgs:\n    group_api_id (str): API identifier of the group\n    schedule_param (ScheduleSendParam): Schedule parameters\n    req_dep (AuthenticatedRequestDependencies): Request dependencies\n\nReturns:\n    Group: Updated group\n\nNote:\n    This endpoint is deprecated.",
-        "operationId": "schedule_send_parties_group__group_api_id__schedule_send_post",
-        "deprecated": true,
-        "security": [
-          {
-            "OAuth2PasswordBearer": []
-          }
-        ],
-        "parameters": [
-          {
-            "name": "group_api_id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "title": "Group Api Id"
-            }
-          }
-        ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/ScheduleSendParam"
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/GroupLinked"
-                }
-              }
-            }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
     "/parties/group/{group_api_id}:add_members": {
       "post": {
         "tags": [
@@ -3887,26 +3828,6 @@
         ],
         "title": "ScheduleLinked",
         "description": "Schedule model with linked relationships.\n\nExtends the base Schedule model to include the associated group and tasks.\n\nAttributes:\n    group (GroupUnlinked): The group this schedule belongs to\n    tasks (list[TaskUnlinked]): Tasks in the schedule"
-      },
-      "ScheduleSendParam": {
-        "properties": {
-          "letter_api_id": {
-            "type": "string",
-            "title": "Letter Api Id"
-          },
-          "send_at": {
-            "type": "string",
-            "format": "date-time",
-            "title": "Send At"
-          }
-        },
-        "type": "object",
-        "required": [
-          "letter_api_id",
-          "send_at"
-        ],
-        "title": "ScheduleSendParam",
-        "description": "Parameters for scheduling a send operation.\n\nThis schema defines the parameters needed to schedule a send operation\nfor a letter.\n\nAttributes:\n    letter_api_id: API identifier of the letter to send\n    send_at: When the letter should be sent"
       },
       "ScheduleUnlinked": {
         "properties": {

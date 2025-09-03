@@ -539,21 +539,6 @@ export type ScheduleLinked = {
 };
 
 /**
- * Parameters for scheduling a send operation.
- *
- * This schema defines the parameters needed to schedule a send operation
- * for a letter.
- *
- * Attributes:
- * letter_api_id: API identifier of the letter to send
- * send_at: When the letter should be sent
- */
-export type ScheduleSendParam = {
-    letter_api_id: string;
-    send_at: string;
-};
-
-/**
  * Schema for schedule data with unlinked task relationships.
  *
  * This schema extends the base Schedule schema and includes a list of tasks,
@@ -1311,33 +1296,6 @@ export type RemoveUserFromGroupPartiesGroupGroupApiIdRemoveMemberUserApiIdPostRe
 };
 
 export type RemoveUserFromGroupPartiesGroupGroupApiIdRemoveMemberUserApiIdPostResponse = RemoveUserFromGroupPartiesGroupGroupApiIdRemoveMemberUserApiIdPostResponses[keyof RemoveUserFromGroupPartiesGroupGroupApiIdRemoveMemberUserApiIdPostResponses];
-
-export type ScheduleSendPartiesGroupGroupApiIdScheduleSendPostData = {
-    body: ScheduleSendParam;
-    path: {
-        group_api_id: string;
-    };
-    query?: never;
-    url: '/parties/group/{group_api_id}:schedule_send';
-};
-
-export type ScheduleSendPartiesGroupGroupApiIdScheduleSendPostErrors = {
-    /**
-     * Validation Error
-     */
-    422: HttpValidationError;
-};
-
-export type ScheduleSendPartiesGroupGroupApiIdScheduleSendPostError = ScheduleSendPartiesGroupGroupApiIdScheduleSendPostErrors[keyof ScheduleSendPartiesGroupGroupApiIdScheduleSendPostErrors];
-
-export type ScheduleSendPartiesGroupGroupApiIdScheduleSendPostResponses = {
-    /**
-     * Successful Response
-     */
-    200: GroupLinked;
-};
-
-export type ScheduleSendPartiesGroupGroupApiIdScheduleSendPostResponse = ScheduleSendPartiesGroupGroupApiIdScheduleSendPostResponses[keyof ScheduleSendPartiesGroupGroupApiIdScheduleSendPostResponses];
 
 export type AddMembersPartiesGroupGroupApiIdAddMembersPostData = {
     body: AddMembers;
