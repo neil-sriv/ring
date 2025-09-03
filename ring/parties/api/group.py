@@ -13,6 +13,7 @@ from ring.fastapp.dependencies import (
     AuthenticatedRequestDependencies,
     get_request_dependencies,
 )
+from ring.letters.constants import LetterStatus
 from ring.letters.crud.default_question import replace_default_questions
 from ring.letters.crud.letter import add_participants
 from ring.parties.crud import group as group_crud
@@ -208,42 +209,6 @@ async def remove_user_from_group(
     return group
 
 
-@router.post(
-    "/group/{group_api_id}:schedule_send",
-    response_model=GroupSchema,
-    deprecated=True,
-)
-async def schedule_send(
-    group_api_id: str,
-    schedule_param: ScheduleSendParam,
-    req_dep: AuthenticatedRequestDependencies = Depends(
-        get_request_dependencies,
-    ),
-) -> Group:
-    """Schedule a letter to be sent.
-
-    Args:
-        group_api_id (str): API identifier of the group
-        schedule_param (ScheduleSendParam): Schedule parameters
-        req_dep (AuthenticatedRequestDependencies): Request dependencies
-
-    Returns:
-        Group: Updated group
-
-    Note:
-        This endpoint is deprecated.
-    """
-    utc_send_at = schedule_param.send_at.astimezone(tz=timezone.utc)
-    group = group_crud.schedule_send(
-        req_dep.db,
-        group_api_id=group_api_id,
-        letter_api_id=schedule_param.letter_api_id,
-        send_at=utc_send_at,
-    )
-    req_dep.db.commit()
-    return group
-
-
 @router.patch(
     "/group/{group_api_id}",
     response_model=GroupSchema,
@@ -338,11 +303,12 @@ async def add_members(
         req_dep.db, db_group, req_dep.current_user, unregistered
     )
     group_crud.add_members(req_dep.db, db_group, db_users)
-    in_prog, upcoming = db_group.in_progress_letter, db_group.upcoming_letter
-    if in_prog is not None:
-        add_participants(req_dep.db, in_prog, db_users)
-    if upcoming is not None:
-        add_participants(req_dep.db, upcoming, db_users)
+    for letter in db_group.letters:
+        if (
+            letter.status == LetterStatus.IN_PROGRESS
+            or letter.status == LetterStatus.UPCOMING
+        ):
+            add_participants(req_dep.db, letter, db_users)
     req_dep.db.commit()
 
     if invites:

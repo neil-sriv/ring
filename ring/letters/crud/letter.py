@@ -462,10 +462,10 @@ def collect_future_letters(
         .order_by(Letter.send_at)
     ).all()
     letters_to_promote = [
-        l for l in letters_to_promote if not l.group.in_progress_letter
+        l for l in letters_to_promote if not l.group.in_progress_letters
     ]
     letters_to_postpend = [
-        l for l in letters_to_postpend if not l.group.upcoming_letter
+        l for l in letters_to_postpend if not l.group.upcoming_letters
     ]
     return letters_to_postpend, letters_to_promote
 
