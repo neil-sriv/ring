@@ -4,10 +4,11 @@ import { EditorContent, useEditor } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
 import React, { useEffect, useRef } from 'react';
 
-export const CollabEditor: React.FC<{ docId: string }> = ({ docId }) => {
+export const CollabEditor: React.FC<{ docId: string; onSavingChange?: (isSaving: boolean) => void; onEditingChange?: (isEditing: boolean) => void }> = ({ docId, onSavingChange, onEditingChange }) => {
     const editorRef = useRef<any>(null);
     const wsRef = useRef<WebSocket | null>(null);
     const lastContentRef = useRef<string>('');
+    const editingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
     useEffect(() => {
         const accessToken = localStorage.getItem('access_token') ?? '';
@@ -92,6 +93,19 @@ export const CollabEditor: React.FC<{ docId: string }> = ({ docId }) => {
             if (content !== lastContentRef.current) {
                 lastContentRef.current = content;
 
+                // Set editing state immediately when user types
+                onEditingChange?.(true);
+
+                // Clear any existing editing timeout
+                if (editingTimeoutRef.current) {
+                    clearTimeout(editingTimeoutRef.current);
+                }
+
+                // Set editing timeout to clear editing state after 1 second of inactivity
+                editingTimeoutRef.current = setTimeout(() => {
+                    onEditingChange?.(false);
+                }, 1000);
+
                 // Send to WebSocket
                 if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
                     wsRef.current.send(JSON.stringify({
@@ -104,6 +118,7 @@ export const CollabEditor: React.FC<{ docId: string }> = ({ docId }) => {
                 // Debounced sync to backend
                 clearTimeout((window as any).syncTimeout);
                 (window as any).syncTimeout = setTimeout(async () => {
+                    onSavingChange?.(true);
                     try {
                         const accessToken = localStorage.getItem('access_token') ?? '';
                         const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:8000';
@@ -118,8 +133,10 @@ export const CollabEditor: React.FC<{ docId: string }> = ({ docId }) => {
                         });
                     } catch (error) {
                         console.error('Failed to sync to backend:', error);
+                    } finally {
+                        onSavingChange?.(false);
                     }
-                }, 2000);
+                }, 1000);
             }
         },
     });

@@ -70,7 +70,12 @@ async def broadcast_document_message(
     for connection in room.active_connections:
         if connection == sender:
             continue
-        await connection.send_bytes(data)
+        try:
+            await connection.send_bytes(data)
+        except Exception as e:
+            logger.error(f"Failed to send message to connection: {e}")
+            # Remove dead connections
+            room.active_connections.remove(connection)
 
 
 # Document CRUD operations

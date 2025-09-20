@@ -236,9 +236,26 @@ async def nb_document_websocket(
     await join_document_room(document_api_id, websocket)
     try:
         while True:
-            data = await websocket.receive_bytes()
-            logger.info(f"Received WebSocket message: {data}")
-            await broadcast_document_message(document_api_id, data, websocket)
+            message = await websocket.receive()
+            logger.info(f"Received WebSocket message: {message}")
+
+            # Handle different message types
+            if message["type"] == "websocket.receive":
+                if "bytes" in message:
+                    data = message["bytes"]
+                    await broadcast_document_message(
+                        document_api_id, data, websocket
+                    )
+                elif "text" in message:
+                    data = message["text"].encode("utf-8")
+                    await broadcast_document_message(
+                        document_api_id, data, websocket
+                    )
+                else:
+                    logger.warning(f"Unknown message format: {message}")
+            elif message["type"] == "websocket.disconnect":
+                logger.info("WebSocket disconnected")
+                break
     except WebSocketDisconnect:
         await leave_document_room(document_api_id, websocket)
     except Exception as e:
