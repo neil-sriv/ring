@@ -9,6 +9,10 @@ export const CollabEditor: React.FC<{ docId: string; onSavingChange?: (isSaving:
     const wsRef = useRef<WebSocket | null>(null);
     const lastContentRef = useRef<string>('');
     const editingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+    const lastSentMessageIdRef = useRef<string>('');
+    const isUpdatingFromWebSocketRef = useRef<boolean>(false);
+    const wsSendTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+    const pendingContentRef = useRef<string>('');
 
     useEffect(() => {
         const accessToken = localStorage.getItem('access_token') ?? '';
@@ -46,11 +50,62 @@ export const CollabEditor: React.FC<{ docId: string; onSavingChange?: (isSaving:
 
             wsRef.current.onmessage = (event) => {
                 try {
-                    const data = JSON.parse(event.data);
-                    if (data.type === 'content_update' && data.content !== lastContentRef.current) {
+                    // Handle both text and binary data
+                    let messageData;
+                    if (typeof event.data === 'string') {
+                        messageData = JSON.parse(event.data);
+                    } else if (event.data instanceof ArrayBuffer) {
+                        // Convert ArrayBuffer to string
+                        const decoder = new TextDecoder();
+                        const text = decoder.decode(event.data);
+                        messageData = JSON.parse(text);
+                    } else if (event.data instanceof Blob) {
+                        // Handle Blob data
+                        event.data.text().then((text: string) => {
+                            try {
+                                const data = JSON.parse(text);
+                                if (data.type === 'content_update' && data.content !== lastContentRef.current) {
+                                    // Skip if this is our own message to prevent infinite loop
+                                    if (data.messageId && data.messageId === lastSentMessageIdRef.current) {
+                                        return;
+                                    }
+
+                                    if (editorRef.current) {
+                                        // Set flag to prevent onUpdate from firing
+                                        isUpdatingFromWebSocketRef.current = true;
+                                        editorRef.current.commands.setContent(data.content);
+                                        lastContentRef.current = data.content;
+                                        // Reset flag after a brief delay
+                                        setTimeout(() => {
+                                            isUpdatingFromWebSocketRef.current = false;
+                                        }, 100);
+                                    }
+                                }
+                            } catch (error) {
+                                console.error('Failed to parse WebSocket Blob message:', error);
+                            }
+                        });
+                        return; // Exit early for async Blob handling
+                    } else {
+                        console.warn('Unknown WebSocket message type:', typeof event.data);
+                        return;
+                    }
+
+                    if (messageData.type === 'content_update' && messageData.content !== lastContentRef.current) {
+                        // Skip if this is our own message to prevent infinite loop
+                        if (messageData.messageId && messageData.messageId === lastSentMessageIdRef.current) {
+                            return;
+                        }
+
                         if (editorRef.current) {
-                            editorRef.current.commands.setContent(data.content);
-                            lastContentRef.current = data.content;
+                            // Set flag to prevent onUpdate from firing
+                            isUpdatingFromWebSocketRef.current = true;
+                            editorRef.current.commands.setContent(messageData.content);
+                            lastContentRef.current = messageData.content;
+                            // Reset flag after a brief delay
+                            setTimeout(() => {
+                                isUpdatingFromWebSocketRef.current = false;
+                            }, 100);
                         }
                     }
                 } catch (error) {
@@ -75,6 +130,10 @@ export const CollabEditor: React.FC<{ docId: string; onSavingChange?: (isSaving:
             if (wsRef.current) {
                 wsRef.current.close();
             }
+            // Clean up timeouts
+            if (wsSendTimeoutRef.current) {
+                clearTimeout(wsSendTimeoutRef.current);
+            }
         };
     }, [docId]);
 
@@ -89,6 +148,11 @@ export const CollabEditor: React.FC<{ docId: string; onSavingChange?: (isSaving:
             editorRef.current = editor;
         },
         onUpdate: ({ editor }) => {
+            // Skip if we're updating from WebSocket to prevent infinite loop
+            if (isUpdatingFromWebSocketRef.current) {
+                return;
+            }
+
             const content = editor.getHTML();
             if (content !== lastContentRef.current) {
                 lastContentRef.current = content;
@@ -106,14 +170,27 @@ export const CollabEditor: React.FC<{ docId: string; onSavingChange?: (isSaving:
                     onEditingChange?.(false);
                 }, 1000);
 
-                // Send to WebSocket
-                if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
-                    wsRef.current.send(JSON.stringify({
-                        type: 'content_update',
-                        content: content,
-                        docId: docId
-                    }));
+                // Debounced WebSocket send to prevent rapid-fire messages
+                pendingContentRef.current = content;
+
+                // Clear any existing WebSocket send timeout
+                if (wsSendTimeoutRef.current) {
+                    clearTimeout(wsSendTimeoutRef.current);
                 }
+
+                // Send to WebSocket with minimal debouncing
+                wsSendTimeoutRef.current = setTimeout(() => {
+                    if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN && pendingContentRef.current === content) {
+                        const messageId = `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+                        lastSentMessageIdRef.current = messageId;
+                        wsRef.current.send(JSON.stringify({
+                            type: 'content_update',
+                            content: content,
+                            docId: docId,
+                            messageId: messageId
+                        }));
+                    }
+                }, 10); // Minimal debounce - just enough to batch rapid changes
 
                 // Debounced sync to backend
                 clearTimeout((window as any).syncTimeout);
