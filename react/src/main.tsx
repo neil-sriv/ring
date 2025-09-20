@@ -66,7 +66,7 @@ function App() {
   const resp = useQuery({
     ...readUserMePartiesMeGetOptions({}),
     retry: false,
-    // refetchInterval: 5000,
+    refetchInterval: 5000,
     enabled: localStorage.getItem("access_token") !== null,
   });
 

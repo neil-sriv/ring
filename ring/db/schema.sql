@@ -210,7 +210,8 @@ CREATE TABLE public.hybrid_search_document (
 	text_embedding_768 VECTOR(768) NOT NULL,
 	CONSTRAINT hybrid_search_document_pkey PRIMARY KEY (id ASC),
 	INDEX ix_hybrid_search_document_created_at (created_at ASC),
-	INVERTED INDEX content_search_inverted_idx (text_tsv)
+	INVERTED INDEX content_search_inverted_idx (text_tsv),
+	VECTOR INDEX embedding_vector_idx (text_embedding_768 vector_l2_ops)
 );
 CREATE TABLE public.hybrid_search_document_association (
 	id INT8 NOT NULL DEFAULT unique_rowid(),
@@ -219,6 +220,29 @@ CREATE TABLE public.hybrid_search_document_association (
 	model_type VARCHAR NOT NULL,
 	CONSTRAINT hybrid_search_document_association_pkey PRIMARY KEY (id ASC),
 	UNIQUE INDEX uq_model_api_identifier_model_type (model_api_identifier ASC, model_type ASC)
+);
+CREATE TABLE public.documents (
+	id INT8 NOT NULL DEFAULT unique_rowid(),
+	name VARCHAR NOT NULL,
+	content BYTES NOT NULL,
+	latest_snapshot_version INT8 NOT NULL,
+	api_identifier VARCHAR NOT NULL,
+	created_at TIMESTAMPTZ NOT NULL DEFAULT now():::TIMESTAMPTZ,
+	CONSTRAINT documents_pkey PRIMARY KEY (id ASC),
+	UNIQUE INDEX ix_documents_api_identifier (api_identifier ASC),
+	INDEX ix_documents_created_at (created_at ASC)
+);
+CREATE SEQUENCE public.document_edit_version_seq MINVALUE 1 MAXVALUE 9223372036854775807 INCREMENT 1 START 1;
+CREATE TABLE public.document_edits (
+	id INT8 NOT NULL DEFAULT unique_rowid(),
+	delta BYTES NOT NULL,
+	version INT8 NOT NULL DEFAULT nextval('public.document_edit_version_seq'::REGCLASS),
+	document_id INT8 NOT NULL,
+	author_id INT8 NOT NULL,
+	created_at TIMESTAMPTZ NOT NULL DEFAULT now():::TIMESTAMPTZ,
+	CONSTRAINT document_edits_pkey PRIMARY KEY (id ASC),
+	UNIQUE INDEX unique_document_edit_version (document_id ASC, version ASC),
+	INDEX ix_document_edits_created_at (created_at ASC)
 );
 ALTER TABLE public."group" ADD CONSTRAINT group_admin_id_fkey FOREIGN KEY (admin_id) REFERENCES public."user"(id);
 ALTER TABLE public.default_question ADD CONSTRAINT default_question_group_id_fkey FOREIGN KEY (group_id) REFERENCES public."group"(id);
@@ -242,6 +266,8 @@ ALTER TABLE public.task ADD CONSTRAINT task_schedule_id_fkey FOREIGN KEY (schedu
 ALTER TABLE public.user_group_assocation ADD CONSTRAINT user_group_assocation_group_id_fkey FOREIGN KEY (group_id) REFERENCES public."group"(id);
 ALTER TABLE public.user_group_assocation ADD CONSTRAINT user_group_assocation_user_id_fkey FOREIGN KEY (user_id) REFERENCES public."user"(id);
 ALTER TABLE public.hybrid_search_document_association ADD CONSTRAINT association_hybrid_search_document_id_fkey FOREIGN KEY (hybrid_search_document_id) REFERENCES public.hybrid_search_document(id) ON DELETE CASCADE;
+ALTER TABLE public.document_edits ADD CONSTRAINT document_edits_author_id_fkey FOREIGN KEY (author_id) REFERENCES public."user"(id);
+ALTER TABLE public.document_edits ADD CONSTRAINT document_edits_document_id_fkey FOREIGN KEY (document_id) REFERENCES public.documents(id);
 -- Validate foreign key constraints. These can fail if there was unvalidated data during the SHOW CREATE ALL TABLES
 ALTER TABLE public."group" VALIDATE CONSTRAINT group_admin_id_fkey;
 ALTER TABLE public.default_question VALIDATE CONSTRAINT default_question_group_id_fkey;
@@ -265,3 +291,5 @@ ALTER TABLE public.task VALIDATE CONSTRAINT task_schedule_id_fkey;
 ALTER TABLE public.user_group_assocation VALIDATE CONSTRAINT user_group_assocation_group_id_fkey;
 ALTER TABLE public.user_group_assocation VALIDATE CONSTRAINT user_group_assocation_user_id_fkey;
 ALTER TABLE public.hybrid_search_document_association VALIDATE CONSTRAINT association_hybrid_search_document_id_fkey;
+ALTER TABLE public.document_edits VALIDATE CONSTRAINT document_edits_author_id_fkey;
+ALTER TABLE public.document_edits VALIDATE CONSTRAINT document_edits_document_id_fkey;

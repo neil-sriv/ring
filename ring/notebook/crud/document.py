@@ -101,10 +101,8 @@ def create_document(
 
     # Create initial edit
     initial_edit = DocumentEdit(
-        timestamp=db_document.created_at,
-        delta=content,
-        version=1,
         document=db_document,
+        delta=content.encode("utf-8"),
         author=author,
     )
     db.add(initial_edit)
