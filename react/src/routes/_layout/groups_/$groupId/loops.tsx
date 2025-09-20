@@ -10,14 +10,13 @@ import {
   Tabs,
   useColorModeValue,
 } from "@chakra-ui/react";
-import { useQueryClient, useSuspenseQuery } from "@tanstack/react-query";
+import { useSuspenseQuery } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
 import { Suspense } from "react";
-import { MinimalLetter, UserUnlinked } from "../../../../client";
+import { MinimalLetter } from "../../../../client";
 import {
   listLettersLettersLettersGetOptions,
-  readGroupPartiesGroupGroupApiIdGetOptions,
-  readUserMePartiesMeGetQueryKey,
+  readGroupPartiesGroupGroupApiIdGetOptions
 } from "../../../../client/@tanstack/react-query.gen";
 import { CollabEditor } from "../../../../components/Document/Editor";
 import { GroupKeyValuesTable } from "../../../../components/GroupKeyValues/GroupKeyValuesTable";
@@ -75,9 +74,6 @@ function LoopsContentLoader() {
       path: { group_api_id: groupId },
     }),
   });
-  const currentUser = useQueryClient().getQueryData<UserUnlinked>(
-    readUserMePartiesMeGetQueryKey()
-  );
 
   const { data: keyValues } = useGroupKeyValues(groupId);
 
@@ -112,7 +108,6 @@ function LoopsContentLoader() {
           <Heading size="md" mb={4}>Group Collaborative Document</Heading>
           <CollabEditor
             docId="dcmnt_fdd95a02-7f6e-4952-a6e1-3c57b7627de1"
-            user={currentUser!}
           />
         </Box>
       )

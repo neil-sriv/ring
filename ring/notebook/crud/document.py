@@ -38,7 +38,6 @@ async def join_document_room(
     if not room:
         room = DocumentRoom(document_api_id=document_api_id)
     room.active_connections.append(websocket)
-    logger.debug(f"{room}")
     active_connections[document_api_id] = room
 
 
@@ -53,7 +52,6 @@ async def leave_document_room(
     if not room:
         return
     room.active_connections.remove(websocket)
-    logger.debug(f"{room}")
     if not room.active_connections:
         del active_connections[document_api_id]
 
@@ -70,7 +68,6 @@ async def broadcast_document_message(
     if not room:
         return
     for connection in room.active_connections:
-        logger.debug(f"{connection}")
         if connection == sender:
             continue
         await connection.send_bytes(data)
@@ -114,6 +111,7 @@ def update_document(
     db: Session,
     document: Document,
     name: Optional[str] = None,
+    content: Optional[str] = None,
 ) -> Document:
     """Update a document.
 
@@ -128,20 +126,22 @@ def update_document(
     """
     if name is not None:
         document.name = name
+    if content is not None:
+        document.content = content.encode("utf-8")
 
     db.add(document)
     return document
 
 
-def get_documents(
-    db: Session,
-    group_api_id: str,
-) -> Sequence[Document]:
-    """Get documents for a group."""
-    document_ids = db.scalars(
-        select(Document.id).where(Document.group_api_id == group_api_id)
-    )
-    return bulk_get_models(db, Document, document_ids)
+# def get_documents(
+#     db: Session,
+#     group_api_id: str,
+# ) -> Sequence[Document]:
+#     """Get documents for a group."""
+#     document_ids = db.scalars(
+#         select(Document.id).where(Document.group_api_id == group_api_id)
+#     )
+#     return bulk_get_models(db, Document, document_ids)
 
 
 def snapshot_document(

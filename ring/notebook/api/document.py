@@ -10,8 +10,6 @@ from typing import List
 
 from fastapi import APIRouter, Depends, WebSocket, status
 from loguru import logger
-from pycrdt import Doc, Provider
-from pycrdt.websocket import WebsocketServer
 from starlette.websockets import WebSocketDisconnect
 
 from ring.api_identifier.util import get_model
@@ -26,7 +24,7 @@ from ring.notebook.crud.document import (
     add_document_edit,
     broadcast_document_message,
     create_document,
-    get_documents,
+    # get_documents,
     join_document_room,
     leave_document_room,
     update_document,
@@ -62,7 +60,6 @@ async def create_document_endpoint(
     Returns:
         Document: Newly created document
     """
-    logger.info(f"Creating document: {document.name}")
     db_document = create_document(
         req_dep.db,
         document.name,
@@ -73,27 +70,27 @@ async def create_document_endpoint(
     return db_document
 
 
-@router.get(
-    "/documents/{group_api_id}",
-    response_model=List[DocumentResponse],
-)
-async def list_documents(
-    group_api_id: str,
-    req_dep: AuthenticatedRequestDependencies = Depends(
-        get_request_dependencies,
-    ),
-) -> List[Document]:
-    """List documents for a group.
+# @router.get(
+#     "/documents/{group_api_id}",
+#     response_model=List[DocumentResponse],
+# )
+# async def list_documents(
+#     group_api_id: str,
+#     req_dep: AuthenticatedRequestDependencies = Depends(
+#         get_request_dependencies,
+#     ),
+# ) -> List[Document]:
+#     """List documents for a group.
 
-    Args:
-        group_api_id (str): API identifier of the group
-        req_dep (AuthenticatedRequestDependencies): Request dependencies including database session and auth
+#     Args:
+#         group_api_id (str): API identifier of the group
+#         req_dep (AuthenticatedRequestDependencies): Request dependencies including database session and auth
 
-    Returns:
-        List[Document]: List of documents
-    """
-    documents = get_documents(req_dep.db, group_api_id)
-    return documents
+#     Returns:
+#         List[Document]: List of documents
+#     """
+#     documents = get_documents(req_dep.db, group_api_id)
+#     return documents
 
 
 @router.get(
@@ -147,10 +144,6 @@ async def update_document_endpoint(
     """
     db_document = get_model(req_dep.db, Document, document_api_id)
 
-    # Check if user is authorized to update the document
-    # For now, allow any authenticated user to update any document
-    # You can add more sophisticated authorization logic here
-
     updated_document = update_document(
         req_dep.db,
         db_document,
@@ -162,45 +155,97 @@ async def update_document_endpoint(
     return updated_document
 
 
-# @websocket_router.websocket("/{document_api_id}")
-# async def nb_document_websocket(
-#     websocket: WebSocket,
-#     document_api_id: str,
-#     req_dep: AuthenticatedRequestDependencies = Depends(
-#         get_websocket_request_dependencies
-#     ),
-# ) -> None:
-#     """
-#     Websocket endpoint for a notebook document.
-#     """
-#     logger.info(f"WebSocket request for document {document_api_id}")
-#     db_document = get_model(req_dep.db, Document, document_api_id)
-#     await websocket.accept()
-#     logger.info(
-#         f"WebSocket connected to document {document_api_id} by user {req_dep.current_user.email}"
-#     )
-#     await join_document_room(document_api_id, websocket)
-#     try:
-#         while True:
-#             data = await websocket.receive_bytes()
-#             logger.info(f"Received data: {data}")
-#             print(data)
-#             # db_edit = add_document_edit(
-#             #     req_dep.db,
-#             #     db_document,
-#             #     data,
-#             #     req_dep.current_user,
-#             # )
-#             # req_dep.db.commit()
-#             await broadcast_document_message(document_api_id, data, websocket)
-#     except WebSocketDisconnect:
-#         logger.info(f"Client disconnected from document {document_api_id}")
-#         await leave_document_room(document_api_id, websocket)
-#     except Exception as e:
-#         logger.error(f"WebSocket error: {e}")
-#         await leave_document_room(document_api_id, websocket)
-#         try:
-#             await websocket.close()
-#         except RuntimeError:
-#             pass
-#         raise
+@websocket_router.websocket("/")
+async def nb_automerge_repo_websocket(
+    websocket: WebSocket,
+    req_dep: AuthenticatedRequestDependencies = Depends(
+        get_websocket_request_dependencies
+    ),
+) -> None:
+    """
+    WebSocket endpoint for Automerge Repo collaboration.
+    This endpoint handles Automerge sync protocol messages.
+    """
+    await websocket.accept()
+
+    # Store active connections for broadcasting
+    active_automerge_connections = getattr(
+        nb_automerge_repo_websocket, "active_connections", set()
+    )
+    active_automerge_connections.add(websocket)
+    nb_automerge_repo_websocket.active_connections = (
+        active_automerge_connections
+    )
+
+    try:
+        while True:
+            data = await websocket.receive_text()
+            logger.info(f"Received WebSocket message: {data}")
+
+            # Parse JSON message
+            try:
+                import json
+
+                message = json.loads(data)
+
+                if message.get("type") == "content_update":
+                    # Broadcast content update to all other clients
+                    for connection in active_automerge_connections:
+                        if connection != websocket:
+                            try:
+                                await connection.send_text(data)
+                            except Exception:
+                                # Remove dead connections
+                                active_automerge_connections.discard(
+                                    connection
+                                )
+
+            except json.JSONDecodeError:
+                logger.warning(f"Invalid JSON received: {data}")
+
+    except WebSocketDisconnect:
+        pass
+
+    except WebSocketDisconnect:
+        pass
+    except Exception as e:
+        logger.error(f"Automerge WebSocket error: {e}")
+        try:
+            await websocket.close()
+        except RuntimeError:
+            pass
+        raise
+    finally:
+        # Clean up connection
+        active_automerge_connections.discard(websocket)
+
+
+@websocket_router.websocket("/{document_api_id}")
+async def nb_document_websocket(
+    websocket: WebSocket,
+    document_api_id: str,
+    req_dep: AuthenticatedRequestDependencies = Depends(
+        get_websocket_request_dependencies
+    ),
+) -> None:
+    """
+    Websocket endpoint for a notebook document.
+    """
+    db_document = get_model(req_dep.db, Document, document_api_id)
+    await websocket.accept()
+    await join_document_room(document_api_id, websocket)
+    try:
+        while True:
+            data = await websocket.receive_bytes()
+            logger.info(f"Received WebSocket message: {data}")
+            await broadcast_document_message(document_api_id, data, websocket)
+    except WebSocketDisconnect:
+        await leave_document_room(document_api_id, websocket)
+    except Exception as e:
+        logger.error(f"Document WebSocket error: {e}")
+        await leave_document_room(document_api_id, websocket)
+        try:
+            await websocket.close()
+        except RuntimeError:
+            pass
+        raise

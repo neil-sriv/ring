@@ -129,6 +129,7 @@ async def get_websocket_request_dependencies(
     Raises:
         HTTPException: If authentication fails
     """
+    logger.info(f"WebSocket request: {websocket}")
     # Extract token from query parameters
     token = websocket.query_params.get("token")
     logger.info(f"WebSocket auth: token extracted: {token}")

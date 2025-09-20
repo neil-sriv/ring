@@ -12,6 +12,11 @@
     "generate-client": "openapi-ts -f openapi-ts.config.ts"
   },
   "dependencies": {
+    "@automerge/automerge-repo": "^2.3.0",
+    "@automerge/automerge-repo-network-websocket": "^2.3.0",
+    "@automerge/automerge-repo-storage-indexeddb": "^2.3.0",
+    "@automerge/prosemirror": "^0.1.0",
+    "@automerge/react": "^2.3.0",
     "@chakra-ui/icons": "2.1.1",
     "@chakra-ui/react": "2.8.2",
     "@emotion/react": "11.11.3",
@@ -35,6 +40,10 @@
     "axios": "^1.9.0",
     "form-data": "4.0.0",
     "framer-motion": "10.16.16",
+    "prosemirror-example-setup": "^1.2.3",
+    "prosemirror-model": "^1.25.3",
+    "prosemirror-state": "^1.4.3",
+    "prosemirror-view": "^1.41.1",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "react-error-boundary": "^4.0.13",
@@ -65,6 +74,8 @@
     "@vitejs/plugin-react-swc": "^3.5.0",
     "typescript": "^5.2.2",
     "vite": "^5.4.19",
-    "vite-plugin-pwa": "^0.21.1"
+    "vite-plugin-pwa": "^0.21.1",
+    "vite-plugin-top-level-await": "^1.6.0",
+    "vite-plugin-wasm": "^3.5.0"
   }
 }

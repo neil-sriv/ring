@@ -44,16 +44,17 @@ class Document(Base, APIIdentified, CreatedAtMixin):
         self, name: str, content: bytes, latest_snapshot_version: int
     ):
         APIIdentified.__init__(self)
-        logger.info(
-            f"Creating document: {name}, self.api_identifier: {self.api_identifier}"
-        )
         self.name = name
         self.content = content
         self.latest_snapshot_version = latest_snapshot_version
 
     @classmethod
-    def create(cls, name: str, content: bytes):
-        return cls(name=name, content=content, latest_snapshot_version=0)
+    def create(cls, name: str, content: str):
+        # Convert string content to bytes for storage
+        content_bytes = (
+            content.encode("utf-8") if isinstance(content, str) else content
+        )
+        return cls(name=name, content=content_bytes, latest_snapshot_version=0)
 
 
 class DocumentEdit(Base, CreatedAtMixin):
