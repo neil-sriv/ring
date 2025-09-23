@@ -37621,36 +37621,66 @@ Error generating stack: ` + s.message + `
     });
   }
   function Mue(e) {
-    var _a6, _b3;
-    const [t, r] = w.useState(((_a6 = e.response) == null ? void 0 : _a6.response_text) ?? ""), n = pr(), o = (s) => {
-      r(s.target.value);
+    var _a6, _b3, _c4;
+    const [t, r] = w.useState(((_a6 = e.response) == null ? void 0 : _a6.response_text) ?? ""), [n, o] = w.useState(false), s = w.useRef(null), i = w.useRef(null), a = pr();
+    w.useEffect(() => {
+      var _a7;
+      r(((_a7 = e.response) == null ? void 0 : _a7.response_text) ?? "");
+    }, [
+      (_b3 = e.response) == null ? void 0 : _b3.response_text
+    ]);
+    const l = (c) => {
+      const u = c.target.value;
+      r(u), s.current && clearTimeout(s.current), s.current = setTimeout(async () => {
+        var _a7;
+        if (u !== (((_a7 = e.response) == null ? void 0 : _a7.response_text) ?? "")) {
+          i.current = Date.now(), o(true);
+          try {
+            await e.submitResponse(u), a("Success!", "Answer saved.", "success");
+          } catch (d) {
+            console.error("Failed to save response:", d), a("Error!", "Failed to save answer.", "error");
+          } finally {
+            const d = Date.now() - (i.current || 0), f = Math.max(0, 250 - d);
+            setTimeout(() => {
+              o(false);
+            }, f);
+          }
+        }
+      }, 1e3);
     };
-    return p.jsxs(Pe, {
+    return w.useEffect(() => () => {
+      s.current && clearTimeout(s.current);
+    }, []), p.jsxs(Pe, {
       my: "10px",
       children: [
         p.jsx(Ql, {
           size: "md",
           variant: "filled",
           value: t,
-          onChange: o,
+          onChange: l,
           isDisabled: e.readOnly,
-          onBlur: async () => {
-            var _a7;
-            (((_a7 = e.response) == null ? void 0 : _a7.response_text) ?? "") !== t && (await e.submitResponse(t), n("Success!", "Answer saved.", "success"));
-          }
+          placeholder: n ? "Saving..." : "Type your response...",
+          opacity: n ? 0.7 : 1,
+          transition: "opacity 0.2s ease"
+        }),
+        n && p.jsx(Pe, {
+          fontSize: "sm",
+          color: "gray.500",
+          mt: 1,
+          children: "Saving..."
         }),
         !e.readOnly && p.jsx(Oue, {
           onUpdateFile: e.uploadFunction,
           name: e.questionApiId
         }),
-        (_b3 = e.response) == null ? void 0 : _b3.images.map((s, i) => s.media_type === "image" ? p.jsx(mN, {
-          s3Key: s.s3_url,
+        (_c4 = e.response) == null ? void 0 : _c4.images.map((c, u) => c.media_type === "image" ? p.jsx(mN, {
+          s3Key: c.s3_url,
           alt: "response",
-          handleDelete: () => e.deleteImage(s.s3_url)
-        }, i) : p.jsx(gN, {
-          s3Key: s.s3_url,
-          handleDelete: () => e.deleteImage(s.s3_url)
-        }, i))
+          handleDelete: () => e.deleteImage(c.s3_url)
+        }, u) : p.jsx(gN, {
+          s3Key: c.s3_url,
+          handleDelete: () => e.deleteImage(c.s3_url)
+        }, u))
       ]
     });
   }
