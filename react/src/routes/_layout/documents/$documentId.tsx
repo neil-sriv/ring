@@ -1,16 +1,21 @@
 import {
     Box,
     Container,
-    Heading,
     HStack,
     Spinner,
     Text,
     useColorModeValue,
 } from "@chakra-ui/react";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
 import { Suspense, useRef, useState } from "react";
 import { DocumentResponse } from "../../../client";
-import { getDocumentEndpointNotebookDocumentsDocumentApiIdGetOptions } from "../../../client/@tanstack/react-query.gen";
+import {
+    getDocumentEndpointNotebookDocumentsDocumentApiIdGetOptions,
+    getDocumentEndpointNotebookDocumentsDocumentApiIdGetQueryKey,
+    updateDocumentEndpointNotebookDocumentsDocumentApiIdPutMutation
+} from "../../../client/@tanstack/react-query.gen";
+import { EditableTitle } from "../../../components/Document/EditableTitle";
 import { CollabEditor } from "../../../components/Document/Editor";
 
 type DocumentLoaderProps = {
@@ -39,11 +44,29 @@ export const Route = createFileRoute("/_layout/documents/$documentId")({
 
 function DocumentContentLoader() {
     const documentId = Route.useParams().documentId;
-    const props = Route.useLoaderData();
     const textColor = useColorModeValue("ui.dark", "ui.light");
     const [isSaving, setIsSaving] = useState(false);
     const [isEditing, setIsEditing] = useState(false);
     const savingStartTimeRef = useRef<number | null>(null);
+    const queryClient = useQueryClient();
+
+    // Use query data instead of loader data to get real-time updates
+    const { data: document, isLoading: isDocumentLoading } = useQuery({
+        ...getDocumentEndpointNotebookDocumentsDocumentApiIdGetOptions({
+            path: { document_api_id: documentId },
+        }),
+    });
+
+    const updateDocumentMutation = useMutation({
+        ...updateDocumentEndpointNotebookDocumentsDocumentApiIdPutMutation(),
+        onSuccess: () => {
+            queryClient.invalidateQueries({
+                queryKey: getDocumentEndpointNotebookDocumentsDocumentApiIdGetQueryKey({
+                    path: { document_api_id: documentId },
+                }),
+            });
+        },
+    });
 
     const handleSavingChange = (saving: boolean) => {
         if (saving) {
@@ -51,13 +74,44 @@ function DocumentContentLoader() {
             setIsSaving(true);
         } else {
             const elapsed = Date.now() - (savingStartTimeRef.current || 0);
-            const remainingTime = Math.max(0, 1000 - elapsed);
+            const remainingTime = Math.max(0, 500 - elapsed);
 
             setTimeout(() => {
                 setIsSaving(false);
             }, remainingTime);
         }
     };
+
+    const handleTitleChange = async (newTitle: string) => {
+        await updateDocumentMutation.mutateAsync({
+            path: {
+                document_api_id: documentId,
+            },
+            body: {
+                name: newTitle,
+            },
+        });
+    };
+
+    if (isDocumentLoading) {
+        return (
+            <Container maxW="full" mt={8}>
+                <Box textAlign="center" py={8}>
+                    <Spinner size="xl" />
+                </Box>
+            </Container>
+        );
+    }
+
+    if (!document) {
+        return (
+            <Container maxW="full" mt={8}>
+                <Box textAlign="center" py={8}>
+                    <Text>Document not found</Text>
+                </Box>
+            </Container>
+        );
+    }
 
     return (
         <Container maxW="full" mt={8}>
@@ -76,9 +130,14 @@ function DocumentContentLoader() {
                 mb={6}
             >
                 <HStack justify="space-between" align="center">
-                    <Heading size="lg" textAlign={{ base: "center", md: "left" }} color={textColor}>
-                        {props.document.name}
-                    </Heading>
+                    <EditableTitle
+                        title={document.name}
+                        onTitleChange={handleTitleChange}
+                        isLoading={updateDocumentMutation.isPending}
+                        size="lg"
+                        textAlign="left"
+                        color={textColor}
+                    />
                     <HStack
                         spacing={2}
                         bg="whiteAlpha.200"

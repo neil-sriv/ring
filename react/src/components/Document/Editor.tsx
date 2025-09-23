@@ -275,7 +275,7 @@ export const CollabEditor: React.FC<{ docId: string; onSavingChange?: (isSaving:
                                         // Reset flag after a brief delay
                                         setTimeout(() => {
                                             isUpdatingFromWebSocketRef.current = false;
-                                        }, 100);
+                                        }, 50);
                                     }
                                 }
                             } catch (error) {
