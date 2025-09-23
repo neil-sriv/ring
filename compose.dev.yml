@@ -8,9 +8,9 @@ services:
     env_file:
       - ./.env
     depends_on:
-      - db
+      - cockroach
     links:
-      - db
+      - cockroach
 
   nginx:
     volumes:
@@ -18,25 +18,6 @@ services:
       - ./localhost.crt:/etc/nginx/certs/nginx-selfsigned.crt:ro
       - ./localhost.key:/etc/nginx/certs/nginx-selfsigned.key:ro
       - ./react/dist:/usr/share/nginx/html
-
-  db:
-    restart: unless-stopped
-    container_name: ring-db
-    image: postgres:16.1
-    volumes:
-      - pgdata:/var/lib/postgresql/data
-    ports:
-      - 8004:5432
-    expose:
-      - 5432
-    environment:
-      - POSTGRES_USER=ring-postgres
-      - POSTGRES_PASSWORD=ring-postgres
-      - POSTGRES_DB=ring
-    profiles: [ "dev" ]
-    networks:
-      - default
-
   cockroach:
     image: cockroachdb/cockroach:v25.2.1
     container_name: ring-cockroach
@@ -62,5 +43,4 @@ networks:
     external: true
 
 volumes:
-  pgdata:
   cockroach-data:

@@ -141,12 +141,13 @@ function LoopsContentLoader() {
         boxShadow="md"
       >
         <Tabs variant="enclosed">
-          <TabList>
+          <TabList overflowX="auto" overflowY="hidden" flexWrap="nowrap">
             {tabsConfig.map((tab, index) => (
               <Tab
                 key={index}
                 _hover={{ transform: "translateY(-2px)" }}
                 transition="all 0.2s"
+                flexShrink={0}
               >
                 {tab.title}
               </Tab>
