@@ -214,7 +214,8 @@ def create_question(
     """
     db_question = Question.create(letter, question_text, author=author)
     db.add(db_question)
-    db.add(create_question_search_document(db, db_question))
+    if search_document := create_question_search_document(db, db_question):
+        db.add(search_document)
     return db_question
 
 

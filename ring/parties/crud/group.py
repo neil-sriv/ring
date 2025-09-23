@@ -77,7 +77,8 @@ def create_group(db: Session, admin_api_id: str, name: str) -> Group:
     )
     db_group = Group.create(name, admin_user)
     db.add(db_group)
-    db.add(create_group_search_document(db, db_group))
+    if search_document := create_group_search_document(db, db_group):
+        db.add(search_document)
     replace_default_questions(db, db_group, DEFAULT_QUESTIONS)
     return db_group
 
