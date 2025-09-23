@@ -1,7 +1,7 @@
 import { Box, Button, Flex, Heading, Modal, ModalBody, ModalCloseButton, ModalContent, ModalFooter, ModalHeader, ModalOverlay, Textarea, useDisclosure } from "@chakra-ui/react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { AxiosError } from "axios";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { FaTrash } from "react-icons/fa";
 import {
   deleteImageResponsesResponseResponseApiIdDeleteImageDelete,
@@ -37,10 +37,57 @@ function ResponseBlock(props: ResponseBlockProps) {
   const [responseText, setResponseText] = useState(
     props.response?.response_text ?? ""
   );
+  const [isSaving, setIsSaving] = useState(false);
+  const debounceTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const savingStartTimeRef = useRef<number | null>(null);
   const showToast = useCustomToast();
+
+  // Update local state when response prop changes
+  useEffect(() => {
+    setResponseText(props.response?.response_text ?? "");
+  }, [props.response?.response_text]);
+
   const handleResponseChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
-    setResponseText(e.target.value);
+    const newValue = e.target.value;
+    setResponseText(newValue);
+
+    // Clear existing timeout
+    if (debounceTimeoutRef.current) {
+      clearTimeout(debounceTimeoutRef.current);
+    }
+
+    // Set new timeout for debounced save
+    debounceTimeoutRef.current = setTimeout(async () => {
+      if (newValue !== (props.response?.response_text ?? "")) {
+        savingStartTimeRef.current = Date.now();
+        setIsSaving(true);
+        try {
+          await props.submitResponse(newValue);
+          showToast("Success!", "Answer saved.", "success");
+        } catch (error) {
+          console.error("Failed to save response:", error);
+          showToast("Error!", "Failed to save answer.", "error");
+        } finally {
+          // Ensure saving animation shows for at least 250ms
+          const elapsed = Date.now() - (savingStartTimeRef.current || 0);
+          const remainingTime = Math.max(0, 250 - elapsed);
+
+          setTimeout(() => {
+            setIsSaving(false);
+          }, remainingTime);
+        }
+      }
+    }, 1000); // 1 second debounce
   };
+
+  // Cleanup timeout on unmount
+  useEffect(() => {
+    return () => {
+      if (debounceTimeoutRef.current) {
+        clearTimeout(debounceTimeoutRef.current);
+      }
+    };
+  }, []);
 
   return (
     <Box my="10px">
@@ -50,13 +97,15 @@ function ResponseBlock(props: ResponseBlockProps) {
         value={responseText}
         onChange={handleResponseChange}
         isDisabled={props.readOnly}
-        onBlur={async () => {
-          if ((props.response?.response_text ?? "") !== responseText) {
-            await props.submitResponse(responseText);
-            showToast("Success!", "Answer saved.", "success");
-          }
-        }}
+        placeholder={isSaving ? "Saving..." : "Type your response..."}
+        opacity={isSaving ? 0.7 : 1}
+        transition="opacity 0.2s ease"
       />
+      {isSaving && (
+        <Box fontSize="sm" color="gray.500" mt={1}>
+          Saving...
+        </Box>
+      )}
       {!props.readOnly && (
         <SingleUploadImage
           onUpdateFile={props.uploadFunction}
