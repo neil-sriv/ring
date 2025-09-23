@@ -220,17 +220,41 @@ export const CollabEditor: React.FC<{ docId: string; onSavingChange?: (isSaving:
 
     if (!editor) {
         return (
-            <Box borderWidth="1px" borderRadius="md" p={4} minH="100vh">
-                <Box textAlign="center" py={8}>
-                    Initializing editor...
-                </Box>
+            <Box textAlign="center" py={8}>
+                Initializing editor...
             </Box>
         );
     }
 
     return (
-        <Box borderWidth="1px" borderRadius="md" p={4} minH="100vh">
-            <EditorContent editor={editor} />
+        <Box minH="100vh">
+            <Box
+                bg="gray.50"
+                borderRadius="lg"
+                p={6}
+                border="1px solid"
+                borderColor="gray.200"
+                boxShadow="sm"
+                transition="all 0.2s"
+                _dark={{
+                    bg: "gray.800",
+                    borderColor: "gray.600"
+                }}
+                _focusWithin={{
+                    borderColor: "blue.400",
+                    boxShadow: "0 0 0 1px var(--chakra-colors-blue-400)"
+                }}
+            >
+                <EditorContent
+                    editor={editor}
+                    style={{
+                        minHeight: "400px",
+                        fontSize: "16px",
+                        lineHeight: "1.6",
+                        outline: "none"
+                    }}
+                />
+            </Box>
         </Box>
     );
 };

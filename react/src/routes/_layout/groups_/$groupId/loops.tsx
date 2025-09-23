@@ -2,25 +2,23 @@ import {
   Box,
   Container,
   Heading,
-  HStack,
   Spinner,
   Tab,
   TabList,
   TabPanel,
   TabPanels,
   Tabs,
-  Text,
   useColorModeValue,
 } from "@chakra-ui/react";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
-import { Suspense, useRef, useState } from "react";
+import { Suspense } from "react";
 import { MinimalLetter } from "../../../../client";
 import {
   listLettersLettersLettersGetOptions,
   readGroupPartiesGroupGroupApiIdGetOptions
 } from "../../../../client/@tanstack/react-query.gen";
-import { CollabEditor } from "../../../../components/Document/Editor";
+import { DocumentsGrid } from "../../../../components/Document/DocumentsGrid";
 import { GroupKeyValuesTable } from "../../../../components/GroupKeyValues/GroupKeyValuesTable";
 import { LLMPlayground } from "../../../../components/LLMPlayground/LLMPlayground";
 import { AdhocLoopsTab } from "../../../../components/Loops/AdhocLoopsTab";
@@ -104,69 +102,8 @@ function LoopsContentLoader() {
       component: () => <LLMPlayground />
     },
     {
-      title: "Collaborative Editor",
-      component: () => {
-        const [isSaving, setIsSaving] = useState(false);
-        const [isEditing, setIsEditing] = useState(false);
-        const savingStartTimeRef = useRef<number | null>(null);
-
-        const handleSavingChange = (saving: boolean) => {
-          if (saving) {
-            savingStartTimeRef.current = Date.now();
-            setIsSaving(true);
-          } else {
-            const elapsed = Date.now() - (savingStartTimeRef.current || 0);
-            const remainingTime = Math.max(0, 1000 - elapsed);
-
-            setTimeout(() => {
-              setIsSaving(false);
-            }, remainingTime);
-          }
-        };
-
-        return (
-          <Box p={4}>
-            <HStack spacing={3} mb={4} align="center">
-              <Heading size="md">Group Collaborative Document</Heading>
-              <HStack
-                spacing={2}
-                bg="whiteAlpha.200"
-                px={3}
-                py={1}
-                borderRadius="md"
-                borderWidth="1px"
-                borderColor="whiteAlpha.300"
-                _dark={{
-                  bg: "whiteAlpha.100",
-                  borderColor: "whiteAlpha.200"
-                }}
-              >
-                {isSaving ? (
-                  <>
-                    <Spinner size="sm" color="blue.400" />
-                    <Text fontSize="sm" color="gray.700" _dark={{ color: "gray.300" }}>
-                      Syncing...
-                    </Text>
-                  </>
-                ) : isEditing ? (
-                  <Text fontSize="sm" color="orange.600" _dark={{ color: "orange.400" }}>
-                    Editing...
-                  </Text>
-                ) : (
-                  <Text fontSize="sm" color="green.600" _dark={{ color: "green.400" }}>
-                    Saved
-                  </Text>
-                )}
-              </HStack>
-            </HStack>
-            <CollabEditor
-              docId="dcmnt_fdd95a02-7f6e-4952-a6e1-3c57b7627de1"
-              onSavingChange={handleSavingChange}
-              onEditingChange={setIsEditing}
-            />
-          </Box>
-        );
-      }
+      title: "Documents",
+      component: () => <DocumentsGrid groupApiId={groupId} />
     }
   ];
 
