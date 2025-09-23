@@ -14,6 +14,7 @@ from sqlalchemy.orm import Session
 from ring.notebook.crud.document import (
     add_document_edit,
     create_document,
+    get_documents,
     update_document,
 )
 from ring.notebook.models.document import Document, DocumentEdit
@@ -21,6 +22,7 @@ from ring.tests.factories.notebook.document_factory import (
     DocumentEditFactory,
     DocumentFactory,
 )
+from ring.tests.factories.parties.group_factory import GroupFactory
 from ring.tests.factories.parties.user_factory import UserFactory
 
 
@@ -45,13 +47,14 @@ class TestDocumentCRUD:
             faker (Faker): Faker instance for generating test data
         """
         user = UserFactory.create()
+        group = GroupFactory.create()
         db_session.commit()
 
         name, content = (
             faker.sentence(nb_words=3),
             faker.text(max_nb_chars=500),
         )
-        document = create_document(db_session, name, content, user)
+        document = create_document(db_session, name, content, user, group)
         db_session.commit()
 
         assert document.name == name
@@ -82,11 +85,12 @@ class TestDocumentCRUD:
             faker (Faker): Faker instance for generating test data
         """
         user = UserFactory.create()
+        group = GroupFactory.create()
         db_session.commit()
 
         name = faker.sentence(nb_words=3)
         content = ""
-        document = create_document(db_session, name, content, user)
+        document = create_document(db_session, name, content, user, group)
         db_session.commit()
 
         assert document.name == name
@@ -332,3 +336,19 @@ class TestDocumentCRUD:
 
         # Verify document version remains unchanged (no auto-increment)
         assert document.latest_snapshot_version == original_version
+
+    def test_get_documents(self, db_session: Session) -> None:
+        """Test getting documents for a group.
+
+        This test verifies that:
+        1. Documents can be retrieved for a group
+        2. The documents have the correct attributes
+        3. The documents are properly stored in the database
+        """
+        group = GroupFactory.create()
+        db_session.commit()
+        assert get_documents(db_session, group) == []
+
+        documents = [DocumentFactory.create(group=group) for _ in range(3)]
+        db_session.commit()
+        assert get_documents(db_session, group) == documents

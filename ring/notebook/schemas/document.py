@@ -9,7 +9,7 @@ from __future__ import annotations
 from datetime import datetime
 from typing import Optional
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
 
 
 class DocumentCreate(BaseModel):
@@ -17,6 +17,7 @@ class DocumentCreate(BaseModel):
 
     name: str = Field(..., description="Name of the document")
     content: str = Field(..., description="Initial content of the document")
+    group_api_id: str = Field(..., description="API identifier of the group")
 
 
 class DocumentUpdate(BaseModel):
@@ -30,6 +31,8 @@ class DocumentUpdate(BaseModel):
 
 class DocumentResponse(BaseModel):
     """Schema for document responses."""
+
+    model_config = ConfigDict(from_attributes=True)
 
     api_identifier: str = Field(
         ..., description="API identifier of the document"

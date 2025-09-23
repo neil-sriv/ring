@@ -9,6 +9,7 @@ from sqlalchemy import Sequence, select
 
 from ring.api_identifier.util import bulk_get_models
 from ring.notebook.models.document import Document, DocumentEdit
+from ring.parties.models.group_model import Group
 from ring.parties.models.user_model import User
 
 if TYPE_CHECKING:
@@ -84,6 +85,7 @@ def create_document(
     name: str,
     content: str,
     author: User,
+    group: Group,
 ) -> Document:
     """Create a new document.
 
@@ -96,7 +98,7 @@ def create_document(
     Returns:
         Document: Newly created document
     """
-    db_document = Document.create(name=name, content=content)
+    db_document = Document.create(name=name, content=content, group=group)
     db.add(db_document)
 
     # Create initial edit
@@ -136,15 +138,14 @@ def update_document(
     return document
 
 
-# def get_documents(
-#     db: Session,
-#     group_api_id: str,
-# ) -> Sequence[Document]:
-#     """Get documents for a group."""
-#     document_ids = db.scalars(
-#         select(Document.id).where(Document.group_api_id == group_api_id)
-#     )
-#     return bulk_get_models(db, Document, document_ids)
+def get_documents(
+    db: Session,
+    group: Group,
+) -> list[Document]:
+    """Get documents for a group."""
+    return list(
+        db.scalars(select(Document).where(Document.group_id == group.id)).all()
+    )
 
 
 def snapshot_document(

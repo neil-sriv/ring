@@ -33,6 +33,9 @@ members = [
     "llm"
 ]
 
+[tool.pyright]
+typeCheckingMode = "basic"
+
 
 [project]
 name = "ring"

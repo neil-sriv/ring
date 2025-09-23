@@ -10,6 +10,7 @@ import factory
 
 from ring.notebook.models.document import Document, DocumentEdit
 from ring.tests.factories.base_factory import BaseFactory, register_factory
+from ring.tests.factories.parties.group_factory import GroupFactory
 from ring.tests.factories.parties.user_factory import UserFactory
 
 
@@ -23,6 +24,7 @@ class DocumentFactory(BaseFactory[Document]):
     name = factory.Faker("sentence", nb_words=3)
     latest_snapshot_version = factory.Sequence(lambda n: n + 1)
     content = factory.LazyFunction(lambda: b"Default test content")
+    group = factory.SubFactory(GroupFactory)
 
 
 @register_factory

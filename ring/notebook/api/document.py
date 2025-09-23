@@ -6,8 +6,6 @@ creating, updating, deleting documents and managing document edits.
 
 from __future__ import annotations
 
-from typing import List
-
 from fastapi import APIRouter, Depends, WebSocket, status
 from loguru import logger
 from starlette.websockets import WebSocketDisconnect
@@ -15,16 +13,13 @@ from starlette.websockets import WebSocketDisconnect
 from ring.api_identifier.util import get_model
 from ring.fastapp.dependencies import (
     AuthenticatedRequestDependencies,
-    RequestDependenciesBase,
     get_request_dependencies,
-    get_unauthenticated_request_dependencies,
     get_websocket_request_dependencies,
 )
 from ring.notebook.crud.document import (
-    add_document_edit,
     broadcast_document_message,
     create_document,
-    # get_documents,
+    get_documents,
     join_document_room,
     leave_document_room,
     update_document,
@@ -35,6 +30,7 @@ from ring.notebook.schemas.document import (
     DocumentResponse,
     DocumentUpdate,
 )
+from ring.parties.models.group_model import Group
 
 router = APIRouter()
 websocket_router = APIRouter()
@@ -60,37 +56,40 @@ async def create_document_endpoint(
     Returns:
         Document: Newly created document
     """
+    group = get_model(req_dep.db, Group, document.group_api_id)
     db_document = create_document(
         req_dep.db,
         document.name,
         document.content,
         req_dep.current_user,
+        group,
     )
     req_dep.db.commit()
     return db_document
 
 
-# @router.get(
-#     "/documents/{group_api_id}",
-#     response_model=List[DocumentResponse],
-# )
-# async def list_documents(
-#     group_api_id: str,
-#     req_dep: AuthenticatedRequestDependencies = Depends(
-#         get_request_dependencies,
-#     ),
-# ) -> List[Document]:
-#     """List documents for a group.
+@router.get(
+    "/documents",
+    response_model=list[DocumentResponse],
+)
+async def list_documents(
+    group_api_id: str,
+    req_dep: AuthenticatedRequestDependencies = Depends(
+        get_request_dependencies,
+    ),
+) -> list[Document]:
+    """List documents for a group.
 
-#     Args:
-#         group_api_id (str): API identifier of the group
-#         req_dep (AuthenticatedRequestDependencies): Request dependencies including database session and auth
+    Args:
+        group_api_id (str): API identifier of the group
+        req_dep (AuthenticatedRequestDependencies): Request dependencies including database session and auth
 
-#     Returns:
-#         List[Document]: List of documents
-#     """
-#     documents = get_documents(req_dep.db, group_api_id)
-#     return documents
+    Returns:
+        List[Document]: List of documents
+    """
+    group = get_model(req_dep.db, Group, group_api_id)
+    documents = get_documents(req_dep.db, group)
+    return documents
 
 
 @router.get(
@@ -180,7 +179,6 @@ async def nb_automerge_repo_websocket(
     try:
         while True:
             data = await websocket.receive_text()
-            logger.info(f"Received WebSocket message: {data}")
 
             # Parse JSON message
             try:
@@ -202,9 +200,6 @@ async def nb_automerge_repo_websocket(
 
             except json.JSONDecodeError:
                 logger.warning(f"Invalid JSON received: {data}")
-
-    except WebSocketDisconnect:
-        pass
 
     except WebSocketDisconnect:
         pass
@@ -237,7 +232,6 @@ async def nb_document_websocket(
     try:
         while True:
             message = await websocket.receive()
-            logger.info(f"Received WebSocket message: {message}")
 
             # Handle different message types
             if message["type"] == "websocket.receive":
