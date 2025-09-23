@@ -6,8 +6,6 @@ creating, updating, deleting documents and managing document edits.
 
 from __future__ import annotations
 
-from typing import List
-
 from fastapi import APIRouter, Depends, WebSocket, status
 from loguru import logger
 from starlette.websockets import WebSocketDisconnect
@@ -15,17 +13,13 @@ from starlette.websockets import WebSocketDisconnect
 from ring.api_identifier.util import get_model
 from ring.fastapp.dependencies import (
     AuthenticatedRequestDependencies,
-    RequestDependenciesBase,
     get_request_dependencies,
-    get_unauthenticated_request_dependencies,
     get_websocket_request_dependencies,
 )
 from ring.notebook.crud.document import (
-    add_document_edit,
     broadcast_document_message,
     create_document,
     get_documents,
-    # get_documents,
     join_document_room,
     leave_document_room,
     update_document,
@@ -185,7 +179,6 @@ async def nb_automerge_repo_websocket(
     try:
         while True:
             data = await websocket.receive_text()
-            logger.info(f"Received WebSocket message: {data}")
 
             # Parse JSON message
             try:
@@ -207,9 +200,6 @@ async def nb_automerge_repo_websocket(
 
             except json.JSONDecodeError:
                 logger.warning(f"Invalid JSON received: {data}")
-
-    except WebSocketDisconnect:
-        pass
 
     except WebSocketDisconnect:
         pass
@@ -242,7 +232,6 @@ async def nb_document_websocket(
     try:
         while True:
             message = await websocket.receive()
-            logger.info(f"Received WebSocket message: {message}")
 
             # Handle different message types
             if message["type"] == "websocket.receive":
