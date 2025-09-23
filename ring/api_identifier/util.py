@@ -81,7 +81,7 @@ def register_api_class(
     api_prefix: APIPrefix,
 ):
     def decorator(
-        model_class: type[APIIdentified],
+        model_class: type[API_CLS],
     ):
         API_CLASS_REGISTRY[api_prefix] = APIClassRegistration(
             model_class, api_prefix.value
