@@ -54,7 +54,7 @@ export const Route = createFileRoute("/login")({
 
 function Login() {
   const [show, setShow] = useBoolean();
-  const { data: search } = Route.useSearch();
+  const search = Route.useSearch();
   const { loginMutation, error, resetError } = useAuth(search.next);
   const {
     register,
