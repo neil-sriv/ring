@@ -19,7 +19,9 @@ from sqlalchemy.orm import Mapped, declared_attr, mapped_column, relationship
 from ring.api_identifier.api_identified_model import APIIdentified, APIPrefix
 from ring.api_identifier.util import register_api_class
 from ring.created_at import CreatedAtMixin
+from ring.notebook.schemas.document import DocumentResponse
 from ring.parties.models.group_model import Group
+from ring.ring_pydantic.pydantic_model import PydanticModel
 from ring.sqlalchemy_base import Base
 
 if TYPE_CHECKING:
@@ -27,10 +29,11 @@ if TYPE_CHECKING:
 
 
 @register_api_class(APIPrefix.DOCUMENT)
-class Document(Base, APIIdentified, CreatedAtMixin):
+class Document(Base, APIIdentified, CreatedAtMixin, PydanticModel):
     __tablename__ = "documents"
 
     API_ID_PREFIX = APIPrefix.DOCUMENT
+    PYDANTIC_MODEL = DocumentResponse
 
     id: Mapped[int] = mapped_column(primary_key=True)
     name: Mapped[str] = mapped_column(nullable=False)

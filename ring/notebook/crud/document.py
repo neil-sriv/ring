@@ -138,15 +138,14 @@ def update_document(
     return document
 
 
-# def get_documents(
-#     db: Session,
-#     group_api_id: str,
-# ) -> Sequence[Document]:
-#     """Get documents for a group."""
-#     document_ids = db.scalars(
-#         select(Document.id).where(Document.group_api_id == group_api_id)
-#     )
-#     return bulk_get_models(db, Document, document_ids)
+def get_documents(
+    db: Session,
+    group: Group,
+) -> list[Document]:
+    """Get documents for a group."""
+    return list(
+        db.scalars(select(Document).where(Document.group_id == group.id)).all()
+    )
 
 
 def snapshot_document(

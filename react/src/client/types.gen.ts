@@ -2106,6 +2106,33 @@ export type PerformSearchSearchSearchGetResponses = {
 
 export type PerformSearchSearchSearchGetResponse = PerformSearchSearchSearchGetResponses[keyof PerformSearchSearchSearchGetResponses];
 
+export type ListDocumentsNotebookDocumentsGetData = {
+    body?: never;
+    path?: never;
+    query: {
+        group_api_id: string;
+    };
+    url: '/notebook/documents';
+};
+
+export type ListDocumentsNotebookDocumentsGetErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type ListDocumentsNotebookDocumentsGetError = ListDocumentsNotebookDocumentsGetErrors[keyof ListDocumentsNotebookDocumentsGetErrors];
+
+export type ListDocumentsNotebookDocumentsGetResponses = {
+    /**
+     * Successful Response
+     */
+    200: Array<DocumentResponse>;
+};
+
+export type ListDocumentsNotebookDocumentsGetResponse = ListDocumentsNotebookDocumentsGetResponses[keyof ListDocumentsNotebookDocumentsGetResponses];
+
 export type CreateDocumentEndpointNotebookDocumentsPostData = {
     body: DocumentCreate;
     path?: never;
