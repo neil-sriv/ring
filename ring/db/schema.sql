@@ -228,6 +228,7 @@ CREATE TABLE public.documents (
 	latest_snapshot_version INT8 NOT NULL,
 	api_identifier VARCHAR NOT NULL,
 	created_at TIMESTAMPTZ NOT NULL DEFAULT now():::TIMESTAMPTZ,
+	group_id INT8 NOT NULL,
 	CONSTRAINT documents_pkey PRIMARY KEY (id ASC),
 	UNIQUE INDEX ix_documents_api_identifier (api_identifier ASC),
 	INDEX ix_documents_created_at (created_at ASC)
@@ -266,6 +267,7 @@ ALTER TABLE public.task ADD CONSTRAINT task_schedule_id_fkey FOREIGN KEY (schedu
 ALTER TABLE public.user_group_assocation ADD CONSTRAINT user_group_assocation_group_id_fkey FOREIGN KEY (group_id) REFERENCES public."group"(id);
 ALTER TABLE public.user_group_assocation ADD CONSTRAINT user_group_assocation_user_id_fkey FOREIGN KEY (user_id) REFERENCES public."user"(id);
 ALTER TABLE public.hybrid_search_document_association ADD CONSTRAINT association_hybrid_search_document_id_fkey FOREIGN KEY (hybrid_search_document_id) REFERENCES public.hybrid_search_document(id) ON DELETE CASCADE;
+ALTER TABLE public.documents ADD CONSTRAINT documents_group_id_fkey FOREIGN KEY (group_id) REFERENCES public."group"(id);
 ALTER TABLE public.document_edits ADD CONSTRAINT document_edits_author_id_fkey FOREIGN KEY (author_id) REFERENCES public."user"(id);
 ALTER TABLE public.document_edits ADD CONSTRAINT document_edits_document_id_fkey FOREIGN KEY (document_id) REFERENCES public.documents(id);
 -- Validate foreign key constraints. These can fail if there was unvalidated data during the SHOW CREATE ALL TABLES
@@ -291,5 +293,6 @@ ALTER TABLE public.task VALIDATE CONSTRAINT task_schedule_id_fkey;
 ALTER TABLE public.user_group_assocation VALIDATE CONSTRAINT user_group_assocation_group_id_fkey;
 ALTER TABLE public.user_group_assocation VALIDATE CONSTRAINT user_group_assocation_user_id_fkey;
 ALTER TABLE public.hybrid_search_document_association VALIDATE CONSTRAINT association_hybrid_search_document_id_fkey;
+ALTER TABLE public.documents VALIDATE CONSTRAINT documents_group_id_fkey;
 ALTER TABLE public.document_edits VALIDATE CONSTRAINT document_edits_author_id_fkey;
 ALTER TABLE public.document_edits VALIDATE CONSTRAINT document_edits_document_id_fkey;

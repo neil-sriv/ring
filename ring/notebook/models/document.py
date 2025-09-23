@@ -19,6 +19,7 @@ from sqlalchemy.orm import Mapped, declared_attr, mapped_column, relationship
 from ring.api_identifier.api_identified_model import APIIdentified, APIPrefix
 from ring.api_identifier.util import register_api_class
 from ring.created_at import CreatedAtMixin
+from ring.parties.models.group_model import Group
 from ring.sqlalchemy_base import Base
 
 if TYPE_CHECKING:
@@ -40,21 +41,34 @@ class Document(Base, APIIdentified, CreatedAtMixin):
         back_populates="document", cascade="all, delete-orphan"
     )
 
+    group_id: Mapped[int] = mapped_column(ForeignKey("group.id"))
+    group: Mapped["Group"] = relationship()
+
     def __init__(
-        self, name: str, content: bytes, latest_snapshot_version: int
+        self,
+        name: str,
+        content: bytes,
+        latest_snapshot_version: int,
+        group: Group,
     ):
         APIIdentified.__init__(self)
         self.name = name
         self.content = content
         self.latest_snapshot_version = latest_snapshot_version
+        self.group = group
 
     @classmethod
-    def create(cls, name: str, content: str):
+    def create(cls, name: str, content: str, group: Group):
         # Convert string content to bytes for storage
         content_bytes = (
             content.encode("utf-8") if isinstance(content, str) else content
         )
-        return cls(name=name, content=content_bytes, latest_snapshot_version=0)
+        return cls(
+            name=name,
+            content=content_bytes,
+            latest_snapshot_version=0,
+            group=group,
+        )
 
 
 class DocumentEdit(Base, CreatedAtMixin):

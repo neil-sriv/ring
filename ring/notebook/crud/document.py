@@ -9,6 +9,7 @@ from sqlalchemy import Sequence, select
 
 from ring.api_identifier.util import bulk_get_models
 from ring.notebook.models.document import Document, DocumentEdit
+from ring.parties.models.group_model import Group
 from ring.parties.models.user_model import User
 
 if TYPE_CHECKING:
@@ -84,6 +85,7 @@ def create_document(
     name: str,
     content: str,
     author: User,
+    group: Group,
 ) -> Document:
     """Create a new document.
 
@@ -96,7 +98,7 @@ def create_document(
     Returns:
         Document: Newly created document
     """
-    db_document = Document.create(name=name, content=content)
+    db_document = Document.create(name=name, content=content, group=group)
     db.add(db_document)
 
     # Create initial edit

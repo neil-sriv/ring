@@ -16,6 +16,7 @@ from sqlalchemy.orm import Session
 from ring.notebook.models.document import Document
 from ring.notebook.schemas.document import DocumentCreate, DocumentUpdate
 from ring.tests.factories.notebook.document_factory import DocumentFactory
+from ring.tests.factories.parties.group_factory import GroupFactory
 from ring.tests.lib.utils import (
     assert_api_model_not_found,
     assert_pydantic_model_json_dump_equivalent_to_response_dict,
@@ -29,7 +30,7 @@ class TestDocumentAPI:
     including CRUD operations, schema validation, and error handling.
     """
 
-    def test_create_document_schema(self):
+    def test_create_document_schema(self, db_session: Session):
         """Test that DocumentCreate schema works correctly.
 
         This test verifies that:
@@ -40,13 +41,18 @@ class TestDocumentAPI:
         Args:
             faker (Faker): Faker instance for generating test data
         """
+        group = GroupFactory.create()
+        db_session.commit()
+
         document_data = {
             "name": "Test Document",
             "content": "This is a test document content.",
+            "group_api_id": group.api_identifier,
         }
         document = DocumentCreate(**document_data)
         assert document.name == "Test Document"
         assert document.content == "This is a test document content."
+        assert document.group_api_id == group.api_identifier
 
     def test_update_document_schema(self):
         """Test that DocumentUpdate schema works correctly.
@@ -108,6 +114,10 @@ class TestDocumentAPI:
             faker (Faker): Faker instance for generating test data
             db_session (Session): Database session
         """
+
+        group = GroupFactory.create()
+        db_session.commit()
+
         name, content = (
             faker.sentence(nb_words=3),
             faker.text(max_nb_chars=500),
@@ -115,6 +125,7 @@ class TestDocumentAPI:
         input_data: dict[str, str] = {
             "name": name,
             "content": content,
+            "group_api_id": group.api_identifier,
         }
         response = authenticated_client.post(
             "/notebook/documents", json=input_data
@@ -125,7 +136,6 @@ class TestDocumentAPI:
         assert data["name"] == name
         assert data["content"] == content
         assert data["latest_snapshot_version"] == 0
-
         # Verify document was created in database
         db_document = db_session.scalar(
             sqlalchemy.select(Document).filter(Document.name == name)
@@ -133,6 +143,7 @@ class TestDocumentAPI:
         assert db_document is not None
         assert db_document.name == name
         assert db_document.content.decode("utf-8") == content
+        assert db_document.group == group
 
     def test_create_document_unauthenticated(
         self,
