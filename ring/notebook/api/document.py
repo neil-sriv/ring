@@ -24,6 +24,7 @@ from ring.notebook.crud.document import (
     add_document_edit,
     broadcast_document_message,
     create_document,
+    get_documents,
     # get_documents,
     join_document_room,
     leave_document_room,
@@ -73,27 +74,28 @@ async def create_document_endpoint(
     return db_document
 
 
-# @router.get(
-#     "/documents/{group_api_id}",
-#     response_model=List[DocumentResponse],
-# )
-# async def list_documents(
-#     group_api_id: str,
-#     req_dep: AuthenticatedRequestDependencies = Depends(
-#         get_request_dependencies,
-#     ),
-# ) -> List[Document]:
-#     """List documents for a group.
+@router.get(
+    "/documents",
+    response_model=list[DocumentResponse],
+)
+async def list_documents(
+    group_api_id: str,
+    req_dep: AuthenticatedRequestDependencies = Depends(
+        get_request_dependencies,
+    ),
+) -> list[Document]:
+    """List documents for a group.
 
-#     Args:
-#         group_api_id (str): API identifier of the group
-#         req_dep (AuthenticatedRequestDependencies): Request dependencies including database session and auth
+    Args:
+        group_api_id (str): API identifier of the group
+        req_dep (AuthenticatedRequestDependencies): Request dependencies including database session and auth
 
-#     Returns:
-#         List[Document]: List of documents
-#     """
-#     documents = get_documents(req_dep.db, group_api_id)
-#     return documents
+    Returns:
+        List[Document]: List of documents
+    """
+    group = get_model(req_dep.db, Group, group_api_id)
+    documents = get_documents(req_dep.db, group)
+    return documents
 
 
 @router.get(

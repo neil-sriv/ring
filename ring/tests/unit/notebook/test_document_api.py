@@ -20,6 +20,7 @@ from ring.tests.factories.parties.group_factory import GroupFactory
 from ring.tests.lib.utils import (
     assert_api_model_not_found,
     assert_pydantic_model_json_dump_equivalent_to_response_dict,
+    assert_pydantic_models_json_dump_in_response_dict,
 )
 
 
@@ -417,3 +418,21 @@ class TestDocumentAPI:
         assert response.status_code == 401
         data = response.json()
         assert data["detail"] == "Not authenticated"
+
+    def test_list_documents(
+        self,
+        authenticated_client: TestClient,
+        db_session: Session,
+    ) -> None:
+        """Test listing documents for a group."""
+        group = GroupFactory.create()
+        documents = [DocumentFactory.create(group=group) for _ in range(3)]
+        db_session.commit()
+        response = authenticated_client.get(
+            f"/notebook/documents/?group_api_id={group.api_identifier}"
+        )
+        assert response.status_code == 200
+        data = response.json()
+        print(data)
+        assert len(data) == 3
+        assert_pydantic_models_json_dump_in_response_dict(documents, data)

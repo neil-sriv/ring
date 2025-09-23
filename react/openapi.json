@@ -2599,15 +2599,20 @@
         "summary": "Create Document Endpoint",
         "description": "Create a new document.\n\nArgs:\n    document (DocumentCreate): Document creation parameters\n    req_dep (AuthenticatedRequestDependencies): Request dependencies including database session and auth\n\nReturns:\n    Document: Newly created document",
         "operationId": "create_document_endpoint_notebook_documents_post",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
         "requestBody": {
+          "required": true,
           "content": {
             "application/json": {
               "schema": {
                 "$ref": "#/components/schemas/DocumentCreate"
               }
             }
-          },
-          "required": true
+          }
         },
         "responses": {
           "201": {
@@ -2630,12 +2635,57 @@
               }
             }
           }
-        },
+        }
+      },
+      "get": {
+        "tags": [
+          "notebook"
+        ],
+        "summary": "List Documents",
+        "description": "List documents for a group.\n\nArgs:\n    group_api_id (str): API identifier of the group\n    req_dep (AuthenticatedRequestDependencies): Request dependencies including database session and auth\n\nReturns:\n    List[Document]: List of documents",
+        "operationId": "list_documents_notebook_documents_get",
         "security": [
           {
             "OAuth2PasswordBearer": []
           }
-        ]
+        ],
+        "parameters": [
+          {
+            "name": "group_api_id",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Group Api Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/DocumentResponse"
+                  },
+                  "title": "Response List Documents Notebook Documents Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
       }
     },
     "/notebook/documents/{document_api_id}": {

@@ -13,6 +13,8 @@ def assert_pydantic_models_json_dump_in_response_dict(
     data: dict[str, Any],
     override_pydantic_model: type[BaseModel] | None = None,
 ) -> None:
+    for model in models:
+        print(model.to_pydantic().model_dump(mode="json"))
     assert all(
         [
             (
