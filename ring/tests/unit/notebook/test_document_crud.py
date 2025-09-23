@@ -21,6 +21,7 @@ from ring.tests.factories.notebook.document_factory import (
     DocumentEditFactory,
     DocumentFactory,
 )
+from ring.tests.factories.parties.group_factory import GroupFactory
 from ring.tests.factories.parties.user_factory import UserFactory
 
 
@@ -45,13 +46,14 @@ class TestDocumentCRUD:
             faker (Faker): Faker instance for generating test data
         """
         user = UserFactory.create()
+        group = GroupFactory.create()
         db_session.commit()
 
         name, content = (
             faker.sentence(nb_words=3),
             faker.text(max_nb_chars=500),
         )
-        document = create_document(db_session, name, content, user)
+        document = create_document(db_session, name, content, user, group)
         db_session.commit()
 
         assert document.name == name
@@ -82,11 +84,12 @@ class TestDocumentCRUD:
             faker (Faker): Faker instance for generating test data
         """
         user = UserFactory.create()
+        group = GroupFactory.create()
         db_session.commit()
 
         name = faker.sentence(nb_words=3)
         content = ""
-        document = create_document(db_session, name, content, user)
+        document = create_document(db_session, name, content, user, group)
         db_session.commit()
 
         assert document.name == name

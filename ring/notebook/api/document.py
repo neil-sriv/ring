@@ -35,6 +35,7 @@ from ring.notebook.schemas.document import (
     DocumentResponse,
     DocumentUpdate,
 )
+from ring.parties.models.group_model import Group
 
 router = APIRouter()
 websocket_router = APIRouter()
@@ -60,11 +61,13 @@ async def create_document_endpoint(
     Returns:
         Document: Newly created document
     """
+    group = get_model(req_dep.db, Group, document.group_api_id)
     db_document = create_document(
         req_dep.db,
         document.name,
         document.content,
         req_dep.current_user,
+        group,
     )
     req_dep.db.commit()
     return db_document

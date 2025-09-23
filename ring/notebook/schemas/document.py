@@ -17,6 +17,7 @@ class DocumentCreate(BaseModel):
 
     name: str = Field(..., description="Name of the document")
     content: str = Field(..., description="Initial content of the document")
+    group_api_id: str = Field(..., description="API identifier of the group")
 
 
 class DocumentUpdate(BaseModel):
