@@ -10,9 +10,10 @@ alembic==1.13.1
     # via ring (pyproject.toml)
 annotated-types==0.6.0
     # via pydantic
-anyio==3.7.1
+anyio==4.10.0
     # via
     #   httpx
+    #   httpx-ws
     #   starlette
     #   watchfiles
 apscheduler==3.11.0
@@ -43,7 +44,9 @@ botocore-stubs==1.34.141
 bs4==0.0.2
     # via ring (pyproject.toml)
 casbin==1.43.0
-    # via casbin-sqlalchemy-adapter
+    # via
+    #   ring (pyproject.toml)
+    #   casbin-sqlalchemy-adapter
 casbin-sqlalchemy-adapter==1.4.0
     # via ring (pyproject.toml)
 certifi==2023.11.17
@@ -115,14 +118,21 @@ h11==0.16.0
     # via
     #   httpcore
     #   uvicorn
+    #   wsproto
 http-ece==1.2.1
     # via pywebpush
 httpcore==1.0.9
-    # via httpx
+    # via
+    #   httpx
+    #   httpx-ws
 httptools==0.6.4
     # via uvicorn
 httpx==0.28.1
-    # via fastapi
+    # via
+    #   fastapi
+    #   httpx-ws
+httpx-ws==0.7.2
+    # via ring (pyproject.toml)
 identify==2.6.3
     # via pre-commit
 idna==3.6
@@ -384,6 +394,7 @@ types-s3transfer==0.10.1
 typing-extensions==4.13.2
     # via
     #   alembic
+    #   anyio
     #   fastapi
     #   llm-service
     #   psycopg
@@ -425,7 +436,11 @@ wcwidth==0.2.12
     # via
     #   prompt-toolkit
     #   tabulate
-websockets==12.0
-    # via uvicorn
+websockets==15.0.1
+    # via
+    #   ring (pyproject.toml)
+    #   uvicorn
+wsproto==1.2.0
+    # via httpx-ws
 yarl==1.18.3
     # via aiohttp

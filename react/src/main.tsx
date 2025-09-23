@@ -11,9 +11,9 @@ import { routeTree } from "./routeTree.gen";
 import { StrictMode } from "react";
 import theme from "./theme";
 
-import { client } from "./client/client.gen";
-import { readUserMePartiesMeGetOptions } from "./client/@tanstack/react-query.gen";
 import { registerSW } from "virtual:pwa-register";
+import { readUserMePartiesMeGetOptions } from "./client/@tanstack/react-query.gen";
+import { client } from "./client/client.gen";
 
 /* PWA */
 const updateSW = registerSW({

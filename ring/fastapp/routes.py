@@ -12,6 +12,7 @@ from fastapi import APIRouter
 from ring.auth.api import authn
 from ring.letters.api import letter, question, response
 from ring.llm.api import completion
+from ring.notebook.api import document
 from ring.notifications.api import subscription
 from ring.parties.api import group, group_key_value, invite, user
 from ring.search.api import search
@@ -46,6 +47,11 @@ router.include_router(
 router.include_router(completion.router, prefix="/llm", tags=["llm"])
 
 router.include_router(search.router, prefix="/search", tags=["search"])
+
+router.include_router(
+    document.websocket_router, prefix="/ws/notebook", tags=["notebook"]
+)
+router.include_router(document.router, prefix="/notebook", tags=["notebook"])
 
 
 @router.get("/")

@@ -1,32 +1,32 @@
 import {
-    Button,
-    FormControl,
-    FormErrorMessage,
-    FormLabel,
-    Input,
-    Modal,
-    ModalBody,
-    ModalCloseButton,
-    ModalContent,
-    ModalFooter,
-    ModalHeader,
-    ModalOverlay,
-    useColorModeValue,
+  Button,
+  FormControl,
+  FormErrorMessage,
+  FormLabel,
+  Input,
+  Modal,
+  ModalBody,
+  ModalCloseButton,
+  ModalContent,
+  ModalFooter,
+  ModalHeader,
+  ModalOverlay,
+  useColorModeValue,
 } from "@chakra-ui/react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { type SubmitHandler, useForm } from "react-hook-form";
 
 import { AxiosError } from "axios";
 import {
-    type GroupLinked,
-    type GroupUpdate,
-    UpdateGroupPartiesGroupGroupApiIdPatchError,
-    UserLinked,
+  type GroupLinked,
+  type GroupUpdate,
+  UpdateGroupPartiesGroupGroupApiIdPatchError,
+  UserLinked,
 } from "../../client";
 import {
-    listGroupsPartiesGroupsGetQueryKey,
-    readUserMePartiesMeGetQueryKey,
-    updateGroupPartiesGroupGroupApiIdPatchMutation,
+  listGroupsPartiesGroupsGetQueryKey,
+  readUserMePartiesMeGetQueryKey,
+  updateGroupPartiesGroupGroupApiIdPatchMutation,
 } from "../../client/@tanstack/react-query.gen";
 import useCustomToast from "../../hooks/useCustomToast";
 
@@ -97,8 +97,8 @@ const EditGroup = ({ group, isOpen, onClose }: EditGroupProps) => {
         isCentered
       >
         <ModalOverlay backdropFilter="blur(4px)" />
-        <ModalContent 
-          as="form" 
+        <ModalContent
+          as="form"
           onSubmit={handleSubmit(onSubmit)}
           bg="ui.glass.light.background"
           backdropFilter="blur(10px)"
@@ -154,7 +154,7 @@ const EditGroup = ({ group, isOpen, onClose }: EditGroupProps) => {
               type="submit"
               isLoading={isSubmitting}
               isDisabled={!isDirty}
-              _hover={{ 
+              _hover={{
                 opacity: 0.9,
                 bg: "ui.primary",
               }}
@@ -162,7 +162,7 @@ const EditGroup = ({ group, isOpen, onClose }: EditGroupProps) => {
             >
               Save
             </Button>
-            <Button 
+            <Button
               onClick={onCancel}
               variant="glass"
             >
