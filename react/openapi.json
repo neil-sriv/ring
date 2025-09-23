@@ -2591,6 +2591,157 @@
         }
       }
     },
+    "/notebook/documents": {
+      "post": {
+        "tags": [
+          "notebook"
+        ],
+        "summary": "Create Document Endpoint",
+        "description": "Create a new document.\n\nArgs:\n    document (DocumentCreate): Document creation parameters\n    req_dep (AuthenticatedRequestDependencies): Request dependencies including database session and auth\n\nReturns:\n    Document: Newly created document",
+        "operationId": "create_document_endpoint_notebook_documents_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DocumentCreate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DocumentResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ]
+      }
+    },
+    "/notebook/documents/{document_api_id}": {
+      "get": {
+        "tags": [
+          "notebook"
+        ],
+        "summary": "Get Document Endpoint",
+        "description": "Get a document by its API identifier.\n\nArgs:\n    document_api_id (str): API identifier of the document\n    req_dep (AuthenticatedRequestDependencies): Request dependencies including database session and auth\n\nReturns:\n    Document: The requested document\n\nRaises:\n    IDNotFoundException: If document with given API ID is not found",
+        "operationId": "get_document_endpoint_notebook_documents__document_api_id__get",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "document_api_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Document Api Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DocumentResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "notebook"
+        ],
+        "summary": "Update Document Endpoint",
+        "description": "Update a document.\n\nArgs:\n    document_api_id (str): API identifier of the document\n    document_update (DocumentUpdate): Document update parameters\n    req_dep (AuthenticatedRequestDependencies): Request dependencies including database session and auth\n\nReturns:\n    Document: Updated document\n\nRaises:\n    IDNotFoundException: If document with given API ID is not found",
+        "operationId": "update_document_endpoint_notebook_documents__document_api_id__put",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "document_api_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Document Api Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DocumentUpdate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DocumentResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/": {
       "get": {
         "summary": "Root",
@@ -2822,6 +2973,117 @@
         ],
         "title": "DashboardLetters",
         "description": "Model for the letters dashboard view.\n\nGroups letters by their status for dashboard display.\n\nAttributes:\n    upcoming (list[PublicLetter]): Letters scheduled for the future\n    in_progress (list[PublicLetter]): Currently active letters\n    recently_completed (list[PublicLetter]): Recently finished letters"
+      },
+      "DocumentCreate": {
+        "properties": {
+          "name": {
+            "type": "string",
+            "title": "Name",
+            "description": "Name of the document"
+          },
+          "content": {
+            "type": "string",
+            "title": "Content",
+            "description": "Initial content of the document"
+          },
+          "group_api_id": {
+            "type": "string",
+            "title": "Group Api Id",
+            "description": "API identifier of the group"
+          }
+        },
+        "type": "object",
+        "required": [
+          "name",
+          "content",
+          "group_api_id"
+        ],
+        "title": "DocumentCreate",
+        "description": "Schema for creating a new document."
+      },
+      "DocumentResponse": {
+        "properties": {
+          "api_identifier": {
+            "type": "string",
+            "title": "Api Identifier",
+            "description": "API identifier of the document"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name",
+            "description": "Name of the document"
+          },
+          "content": {
+            "type": "string",
+            "title": "Content",
+            "description": "Current content of the document"
+          },
+          "latest_snapshot_version": {
+            "type": "integer",
+            "title": "Latest Snapshot Version",
+            "description": "Latest snapshot version"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At",
+            "description": "When the document was created"
+          },
+          "updated_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Updated At",
+            "description": "When the document was last updated"
+          }
+        },
+        "type": "object",
+        "required": [
+          "api_identifier",
+          "name",
+          "content",
+          "latest_snapshot_version",
+          "created_at"
+        ],
+        "title": "DocumentResponse",
+        "description": "Schema for document responses."
+      },
+      "DocumentUpdate": {
+        "properties": {
+          "name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Name",
+            "description": "New name for the document"
+          },
+          "content": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Content",
+            "description": "New content for the document"
+          }
+        },
+        "type": "object",
+        "title": "DocumentUpdate",
+        "description": "Schema for updating a document."
       },
       "GenerateQuestionRequest": {
         "properties": {

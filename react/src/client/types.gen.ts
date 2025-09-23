@@ -70,6 +70,68 @@ export type DashboardLetters = {
     recently_completed: Array<PublicLetter>;
 };
 
+/**
+ * Schema for creating a new document.
+ */
+export type DocumentCreate = {
+    /**
+     * Name of the document
+     */
+    name: string;
+    /**
+     * Initial content of the document
+     */
+    content: string;
+    /**
+     * API identifier of the group
+     */
+    group_api_id: string;
+};
+
+/**
+ * Schema for document responses.
+ */
+export type DocumentResponse = {
+    /**
+     * API identifier of the document
+     */
+    api_identifier: string;
+    /**
+     * Name of the document
+     */
+    name: string;
+    /**
+     * Current content of the document
+     */
+    content: string;
+    /**
+     * Latest snapshot version
+     */
+    latest_snapshot_version: number;
+    /**
+     * When the document was created
+     */
+    created_at: string;
+    /**
+     * When the document was last updated
+     */
+    updated_at?: string | null;
+};
+
+/**
+ * Schema for updating a document.
+ */
+export type DocumentUpdate = {
+    /**
+     * New name for the document
+     */
+    name?: string | null;
+    /**
+     * New content for the document
+     */
+    content?: string | null;
+};
+
 export type GenerateQuestionRequest = {
     prompt: string;
 };
@@ -2043,6 +2105,85 @@ export type PerformSearchSearchSearchGetResponses = {
 };
 
 export type PerformSearchSearchSearchGetResponse = PerformSearchSearchSearchGetResponses[keyof PerformSearchSearchSearchGetResponses];
+
+export type CreateDocumentEndpointNotebookDocumentsPostData = {
+    body: DocumentCreate;
+    path?: never;
+    query?: never;
+    url: '/notebook/documents';
+};
+
+export type CreateDocumentEndpointNotebookDocumentsPostErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type CreateDocumentEndpointNotebookDocumentsPostError = CreateDocumentEndpointNotebookDocumentsPostErrors[keyof CreateDocumentEndpointNotebookDocumentsPostErrors];
+
+export type CreateDocumentEndpointNotebookDocumentsPostResponses = {
+    /**
+     * Successful Response
+     */
+    201: DocumentResponse;
+};
+
+export type CreateDocumentEndpointNotebookDocumentsPostResponse = CreateDocumentEndpointNotebookDocumentsPostResponses[keyof CreateDocumentEndpointNotebookDocumentsPostResponses];
+
+export type GetDocumentEndpointNotebookDocumentsDocumentApiIdGetData = {
+    body?: never;
+    path: {
+        document_api_id: string;
+    };
+    query?: never;
+    url: '/notebook/documents/{document_api_id}';
+};
+
+export type GetDocumentEndpointNotebookDocumentsDocumentApiIdGetErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type GetDocumentEndpointNotebookDocumentsDocumentApiIdGetError = GetDocumentEndpointNotebookDocumentsDocumentApiIdGetErrors[keyof GetDocumentEndpointNotebookDocumentsDocumentApiIdGetErrors];
+
+export type GetDocumentEndpointNotebookDocumentsDocumentApiIdGetResponses = {
+    /**
+     * Successful Response
+     */
+    200: DocumentResponse;
+};
+
+export type GetDocumentEndpointNotebookDocumentsDocumentApiIdGetResponse = GetDocumentEndpointNotebookDocumentsDocumentApiIdGetResponses[keyof GetDocumentEndpointNotebookDocumentsDocumentApiIdGetResponses];
+
+export type UpdateDocumentEndpointNotebookDocumentsDocumentApiIdPutData = {
+    body: DocumentUpdate;
+    path: {
+        document_api_id: string;
+    };
+    query?: never;
+    url: '/notebook/documents/{document_api_id}';
+};
+
+export type UpdateDocumentEndpointNotebookDocumentsDocumentApiIdPutErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type UpdateDocumentEndpointNotebookDocumentsDocumentApiIdPutError = UpdateDocumentEndpointNotebookDocumentsDocumentApiIdPutErrors[keyof UpdateDocumentEndpointNotebookDocumentsDocumentApiIdPutErrors];
+
+export type UpdateDocumentEndpointNotebookDocumentsDocumentApiIdPutResponses = {
+    /**
+     * Successful Response
+     */
+    200: DocumentResponse;
+};
+
+export type UpdateDocumentEndpointNotebookDocumentsDocumentApiIdPutResponse = UpdateDocumentEndpointNotebookDocumentsDocumentApiIdPutResponses[keyof UpdateDocumentEndpointNotebookDocumentsDocumentApiIdPutResponses];
 
 export type RootGetData = {
     body?: never;
