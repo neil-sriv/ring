@@ -181,7 +181,8 @@ def create_response(
     """
     db_response = Response.create(user, question, response_text)
     db.add(db_response)
-    db.add(create_response_search_document(db, db_response))
+    if search_document := create_response_search_document(db, db_response):
+        db.add(search_document)
     return db_response
 
 

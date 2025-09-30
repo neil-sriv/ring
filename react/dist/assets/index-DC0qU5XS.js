@@ -38354,15 +38354,20 @@ Error generating stack: ` + s.message + `
         }
       }), a.onClose();
     }, p = async (x) => {
-      await oL({
-        path: {
-          question_api_id: e.api_identifier
-        },
-        body: {
-          response_text: x,
-          participant_api_identifier: s.api_identifier
-        }
-      });
+      try {
+        await oL({
+          path: {
+            question_api_id: e.api_identifier
+          },
+          body: {
+            response_text: x,
+            participant_api_identifier: s.api_identifier
+          },
+          throwOnError: true
+        });
+      } catch (v) {
+        throw console.error("Error in handleUpsert:", v), v;
+      }
     }, m = async (x) => {
       await sce({
         path: {

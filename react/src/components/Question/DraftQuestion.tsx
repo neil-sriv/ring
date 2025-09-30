@@ -177,14 +177,20 @@ function DraftQuestion({
     deleteModal.onClose();
   };
 
-  const handleUpsert = async (responseText: string) => {
-    await upsertResponseQuestionsQuestionQuestionApiIdUpsertResponsePost({
-      path: { question_api_id: question.api_identifier },
-      body: {
-        response_text: responseText,
-        participant_api_identifier: currentUser.api_identifier,
-      },
-    });
+  const handleUpsert = async (responseText: string): Promise<void> => {
+    try {
+      await upsertResponseQuestionsQuestionQuestionApiIdUpsertResponsePost({
+        path: { question_api_id: question.api_identifier },
+        body: {
+          response_text: responseText,
+          participant_api_identifier: currentUser.api_identifier,
+        },
+        throwOnError: true, // This will make the function throw on HTTP error status codes
+      });
+    } catch (error) {
+      console.error("Error in handleUpsert:", error);
+      throw error; // Re-throw to be caught by the calling function
+    }
   };
 
   const newHandleUpload = async (file: File) => {

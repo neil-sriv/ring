@@ -132,7 +132,8 @@ def create_letter(
         title=title,
     )
     db.add(db_letter)
-    db.add(create_letter_search_document(db, db_letter))
+    if search_document := create_letter_search_document(db, db_letter):
+        db.add(search_document)
 
     upsert_letter_tasks(db, db_letter, send_at)
     return db_letter

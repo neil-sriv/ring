@@ -127,7 +127,8 @@ def create_user(
     hashed_password = get_password_hash(password)
     db_user = User.create(email, name, hashed_password)
     db.add(db_user)
-    db.add(create_user_search_document(db, db_user))
+    if search_document := create_user_search_document(db, db_user):
+        db.add(search_document)
     return db_user
 
 

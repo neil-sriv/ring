@@ -11,6 +11,7 @@ from llm_service import (
     EmbeddingRequest,
     EmbeddingsApi,
 )
+from loguru import logger
 from sqlalchemy import func, or_, select
 from sqlalchemy.orm import Session
 
@@ -52,7 +53,12 @@ def register_search_function(
     ):
         @wraps(search_function)
         def wrapper(*args, **kwargs):
-            return search_function(*args, **kwargs)
+            try:
+                return search_function(*args, **kwargs)
+            except Exception as e:
+                logger.error(f"Error in search function: {e}")
+                # raise e
+                return None
 
         SEARCH_REGISTRY[searchable_type.value] = SearchRegistration(
             model_class=model_class,
