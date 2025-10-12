@@ -1,16 +1,4 @@
 services:
-  test-db:
-    container_name: ring-test-db
-    image: postgres:16.1
-    ports:
-      - 8006:5432
-    environment:
-      - POSTGRES_USER=ring
-      - POSTGRES_PASSWORD=ring
-      - POSTGRES_DB=ring_test
-    profiles: [ "test" ]
-    networks:
-      - default
   test-cockroach:
     image: cockroachdb/cockroach:v25.2.1
     container_name: ring-test-cockroach
@@ -34,7 +22,6 @@ services:
       dockerfile: test.Dockerfile
       target: ring
     depends_on:
-      # - test-db
       - test-cockroach
     volumes:
       - ./ring:/src/ring
@@ -43,7 +30,6 @@ services:
       - PYTHONPATH=.
       - JWT_SIGNING_KEY=secret
       - JWT_SIGNING_ALGORITHM=HS256
-      # - sqlalchemy_database_uri=postgresql://ring:ring@test-db:5432/ring_test
       - sqlalchemy_database_uri=blank
       - cockroach_database_uri=cockroachdb://ringcockroach:ringcockroach@test-cockroach:26257/test
       - environment=test
