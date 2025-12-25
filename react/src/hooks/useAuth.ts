@@ -1,5 +1,5 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { useNavigate, useSearch } from "@tanstack/react-router";
+import { useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
 
 import {
@@ -21,8 +21,7 @@ const isLoggedIn = () => {
   return localStorage.getItem("access_token") !== null;
 };
 
-const useAuth = () => {
-  const search = useSearch({ strict: false });
+const useAuth = (next?: string) => {
   const [error, setError] = useState<string | null>(null);
   const navigate = useNavigate();
   const queryClient = useQueryClient();
@@ -34,8 +33,8 @@ const useAuth = () => {
       queryClient.ensureQueryData({
         ...readUserMePartiesMeGetOptions({}),
       });
-      // @ts-expect-error
-      navigate({ to: search.path || "/" });
+      // Redirect to the next parameter if provided, otherwise go to home
+      navigate({ to: next || "/" });
     },
     onError: (err: AxiosError<LoginAccessTokenLoginAccessTokenPostError>) => {
       const errDetail =

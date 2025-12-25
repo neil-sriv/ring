@@ -1,5 +1,5 @@
 import { Flex, Spinner } from "@chakra-ui/react";
-import { Outlet, createFileRoute } from "@tanstack/react-router";
+import { Outlet, createFileRoute, redirect } from "@tanstack/react-router";
 
 import Sidebar from "../components/Common/Sidebar";
 import UserMenu from "../components/Common/UserMenu";
@@ -13,11 +13,30 @@ import { UserLinked } from "../client/types.gen";
 
 export const Route = createFileRoute("/_layout")({
   component: Layout,
-  beforeLoad: async ({ context }): Promise<void> => {
-    const user = await context.queryClient.ensureQueryData({
-      ...readUserMePartiesMeGetOptions(),
-    });
-    context.auth.user = user;
+  beforeLoad: async ({ context, location }): Promise<void> => {
+    try {
+      const user = await context.queryClient.ensureQueryData({
+        ...readUserMePartiesMeGetOptions(),
+      });
+      context.auth.user = user;
+    } catch (error) {
+      // If authentication fails, redirect to login with the current path as next parameter
+      // Only add next parameter if we're not already on the login page
+      if (location.pathname !== "/login") {
+        const currentPath = location.pathname + location.search;
+        throw redirect({
+          to: "/login",
+          search: {
+            next: currentPath,
+          },
+        });
+      } else {
+        // Already on login page, just redirect without next parameter
+        throw redirect({
+          to: "/login",
+        });
+      }
+    }
   },
 });
 
