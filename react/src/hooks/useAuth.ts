@@ -34,9 +34,12 @@ const useAuth = (next?: string) => {
         ...readUserMePartiesMeGetOptions({}),
       });
       // Redirect to the next parameter if provided, otherwise go to home
-      // Use window.location.href to preserve hash fragments
+      // TanStack Router should handle hash fragments when included in the path
       if (next) {
-        window.location.href = next;
+        // Parse the next URL to extract all parts (pathname, search, hash)
+        const url = new URL(next, window.location.origin);
+        const fullPath = url.pathname + url.search + url.hash;
+        navigate({ to: fullPath });
       } else {
         navigate({ to: "/" });
       }
