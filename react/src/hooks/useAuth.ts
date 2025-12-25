@@ -34,7 +34,12 @@ const useAuth = (next?: string) => {
         ...readUserMePartiesMeGetOptions({}),
       });
       // Redirect to the next parameter if provided, otherwise go to home
-      navigate({ to: next || "/" });
+      // Use window.location.href to preserve hash fragments
+      if (next) {
+        window.location.href = next;
+      } else {
+        navigate({ to: "/" });
+      }
     },
     onError: (err: AxiosError<LoginAccessTokenLoginAccessTokenPostError>) => {
       const errDetail =
