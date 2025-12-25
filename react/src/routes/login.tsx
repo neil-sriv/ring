@@ -45,33 +45,16 @@ export const Route = createFileRoute("/login")({
     ) {
       // If already authenticated and there's a next parameter, redirect there
       // Otherwise redirect to home
-      // Use TanStack Router's hash option to preserve hash fragments
-      if (search.next) {
-        try {
-          // Parse the next URL to extract pathname, search, and hash
-          const baseUrl = typeof window !== "undefined" ? window.location.origin : "http://localhost";
-          const url = new URL(search.next, baseUrl);
-          const pathname = url.pathname;
-          const searchParams = url.search;
-          const hash = url.hash.slice(1); // Remove the '#' character
-          
-          throw redirect({
-            to: pathname + searchParams,
-            ...(hash && { hash: hash as any }),
-          });
-        } catch (e) {
-          // If URL parsing fails (e.g., relative path), use the next parameter directly
-          if (e instanceof TypeError) {
-            throw redirect({
-              to: search.next,
-            });
-          }
-          // Re-throw redirect exceptions
-          throw e;
+      // If next contains a hash fragment, use window.location.href to preserve it
+      // since redirect doesn't support hash option the same way navigate does
+      if (search.next && search.next.includes("#")) {
+        if (typeof window !== "undefined") {
+          window.location.href = search.next;
+          return; // Navigation will happen, no need to throw redirect
         }
       }
       throw redirect({
-        to: "/",
+        to: search.next || "/",
       });
     }
   },
