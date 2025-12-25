@@ -42,10 +42,16 @@ const useAuth = (next?: string) => {
         const search = url.search;
         const hash = url.hash.slice(1); // Remove the '#' character
         
-        navigate({
-          to: pathname + search,
-          ...(hash && { hash: hash as any }),
-        });
+        if (hash) {
+          navigate({
+            to: pathname + search,
+            hash: hash,
+          });
+        } else {
+          navigate({
+            to: pathname + search,
+          });
+        }
       } else {
         navigate({ to: "/" });
       }
