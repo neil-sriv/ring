@@ -55,6 +55,9 @@ const useAuth = (next?: string) => {
       } else {
         navigate({ to: "/" });
       }
+      // Ensure next is a string (not an object) to avoid [object Object] in URL
+      const redirectTo = typeof next === "string" && next ? next : "/";
+      navigate({ to: redirectTo });
     },
     onError: (err: AxiosError<LoginAccessTokenLoginAccessTokenPostError>) => {
       const errDetail =

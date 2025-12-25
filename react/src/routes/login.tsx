@@ -35,7 +35,7 @@ export const Route = createFileRoute("/login")({
   component: Login,
   validateSearch: (search: Record<string, unknown>) => {
     return {
-      next: (search.next as string) || undefined,
+      next: typeof search.next === "string" && search.next ? search.next : undefined,
     };
   },
   beforeLoad: async ({ context, search }) => {
@@ -54,7 +54,7 @@ export const Route = createFileRoute("/login")({
           const pathname = url.pathname;
           const searchParams = url.search;
           const hash = url.hash.slice(1); // Remove the '#' character
-          
+
           if (hash) {
             throw redirect({
               to: pathname + searchParams,
@@ -76,8 +76,10 @@ export const Route = createFileRoute("/login")({
           throw e;
         }
       }
+      // Ensure next is a string (not an object) to avoid [object Object] in URL
+      const redirectTo = typeof search.next === "string" && search.next ? search.next : "/";
       throw redirect({
-        to: "/",
+        to: redirectTo,
       });
     }
   },
