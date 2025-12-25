@@ -43,7 +43,14 @@ client.instance.interceptors.response.use(
   (error) => {
     if (error.response?.status === 401) {
       localStorage.removeItem("access_token");
-      window.location.href = "/login";
+      const currentPath = window.location.pathname + window.location.search;
+      // Only add next parameter if we're not already on the login page
+      if (window.location.pathname !== "/login") {
+        const nextParam = encodeURIComponent(currentPath);
+        window.location.href = `/login?next=${nextParam}`;
+      } else {
+        window.location.href = "/login";
+      }
     }
     return Promise.reject(error);
   }

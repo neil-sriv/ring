@@ -33,13 +33,20 @@ const MotionBox = motion(Box);
 
 export const Route = createFileRoute("/login")({
   component: Login,
-  beforeLoad: async ({ context }) => {
+  validateSearch: (search: Record<string, unknown>) => {
+    return {
+      next: (search.next as string) || undefined,
+    };
+  },
+  beforeLoad: async ({ context, search }) => {
     if (
       context.auth.isAuthenticated &&
       localStorage.getItem("access_token") !== null
     ) {
+      // If already authenticated and there's a next parameter, redirect there
+      // Otherwise redirect to home
       throw redirect({
-        to: "/",
+        to: search.next || "/",
       });
     }
   },
@@ -47,7 +54,8 @@ export const Route = createFileRoute("/login")({
 
 function Login() {
   const [show, setShow] = useBoolean();
-  const { loginMutation, error, resetError } = useAuth();
+  const search = Route.useSearch();
+  const { loginMutation, error, resetError } = useAuth(search.next);
   const {
     register,
     handleSubmit,
