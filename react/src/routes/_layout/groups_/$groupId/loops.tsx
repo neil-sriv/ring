@@ -12,7 +12,7 @@ import {
 } from "@chakra-ui/react";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
-import { Suspense } from "react";
+import { Suspense, useEffect, useMemo, useState } from "react";
 import { MinimalLetter } from "../../../../client";
 import {
   listLettersLettersLettersGetOptions,
@@ -80,14 +80,17 @@ function LoopsContentLoader() {
   const tabsConfig = [
     {
       title: "Loops",
+      hash: "loops",
       component: () => <LoopsTab loops={props.loops.filter(loop => loop.letter_type === "CYCLIC")} group={group} />
     },
     {
       title: "Adhoc Loops",
+      hash: "adhoc-loops",
       component: () => <AdhocLoopsTab loops={props.loops.filter(loop => loop.letter_type === "ADHOC")} group={group} />
     },
     {
       title: "Key Values",
+      hash: "key-values",
       component: () => (
         <GroupKeyValuesTable
           keyValues={{
@@ -99,13 +102,62 @@ function LoopsContentLoader() {
     },
     {
       title: "LLM Playground",
+      hash: "llm-playground",
       component: () => <LLMPlayground />
     },
     {
       title: "Documents",
+      hash: "documents",
       component: () => <DocumentsGrid groupApiId={groupId} />
     }
   ];
+
+  // Map hash fragments to tab indices (memoized for stability)
+  const hashToIndex = useMemo(
+    () => new Map(tabsConfig.map((tab, index) => [tab.hash, index])),
+    [tabsConfig.length] // Only recreate if number of tabs changes
+  );
+  
+  // Get initial tab index from hash fragment
+  const getInitialTabIndex = (): number => {
+    if (typeof window !== "undefined") {
+      const hash = window.location.hash.slice(1); // Remove the '#' character
+      const index = hashToIndex.get(hash);
+      return index !== undefined ? index : 0;
+    }
+    return 0;
+  };
+
+  const [tabIndex, setTabIndex] = useState(getInitialTabIndex);
+
+  // Update hash when tab changes
+  const handleTabChange = (index: number) => {
+    setTabIndex(index);
+    const hash = tabsConfig[index]?.hash;
+    if (hash) {
+      window.location.hash = hash;
+    }
+  };
+
+  // Listen for hash changes (e.g., browser back/forward)
+  useEffect(() => {
+    const handleHashChange = () => {
+      const hash = window.location.hash.slice(1);
+      const index = hashToIndex.get(hash);
+      if (index !== undefined) {
+        setTabIndex(index);
+      }
+    };
+
+    window.addEventListener("hashchange", handleHashChange);
+    
+    // Also check hash on mount in case it was set before component mounted
+    handleHashChange();
+
+    return () => {
+      window.removeEventListener("hashchange", handleHashChange);
+    };
+  }, [hashToIndex]);
 
   return (
     <Container maxW="full">
@@ -140,7 +192,7 @@ function LoopsContentLoader() {
         borderRadius="xl"
         boxShadow="md"
       >
-        <Tabs variant="enclosed">
+        <Tabs variant="enclosed" index={tabIndex} onChange={handleTabChange}>
           <TabList overflowX="auto" overflowY="hidden" flexWrap="nowrap">
             {tabsConfig.map((tab, index) => (
               <Tab
