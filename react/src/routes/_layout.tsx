@@ -23,7 +23,9 @@ export const Route = createFileRoute("/_layout")({
       // If authentication fails, redirect to login with the current path as next parameter
       // Only add next parameter if we're not already on the login page
       if (location.pathname !== "/login") {
-        const currentPath = location.pathname + location.search;
+        // Include hash fragment from window.location since TanStack Router's location might not have it
+        const hash = typeof window !== "undefined" ? window.location.hash : "";
+        const currentPath = location.pathname + location.search + hash;
         throw redirect({
           to: "/login",
           search: {

@@ -34,7 +34,27 @@ const useAuth = (next?: string) => {
         ...readUserMePartiesMeGetOptions({}),
       });
       // Redirect to the next parameter if provided, otherwise go to home
-      navigate({ to: next || "/" });
+      // Use TanStack Router's hash option to preserve hash fragments
+      if (next) {
+        // Parse the next URL to extract pathname, search, and hash
+        const url = new URL(next, window.location.origin);
+        const pathname = url.pathname;
+        const search = url.search;
+        const hash = url.hash.slice(1); // Remove the '#' character
+        
+        if (hash) {
+          navigate({
+            to: pathname + search,
+            hash: hash,
+          });
+        } else {
+          navigate({
+            to: pathname + search,
+          });
+        }
+      } else {
+        navigate({ to: "/" });
+      }
     },
     onError: (err: AxiosError<LoginAccessTokenLoginAccessTokenPostError>) => {
       const errDetail =

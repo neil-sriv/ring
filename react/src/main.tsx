@@ -43,7 +43,7 @@ client.instance.interceptors.response.use(
   (error) => {
     if (error.response?.status === 401) {
       localStorage.removeItem("access_token");
-      const currentPath = window.location.pathname + window.location.search;
+      const currentPath = window.location.pathname + window.location.search + window.location.hash;
       // Only add next parameter if we're not already on the login page
       if (window.location.pathname !== "/login") {
         const nextParam = encodeURIComponent(currentPath);
