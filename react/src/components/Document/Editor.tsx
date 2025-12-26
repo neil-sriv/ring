@@ -6,6 +6,7 @@ import { EditorContent, useEditor, useEditorState } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
 import React, { useEffect, useRef } from 'react';
 import { FaBold, FaCode, FaItalic, FaListOl, FaListUl, FaMinus, FaQuoteLeft, FaRedo, FaStrikethrough, FaUndo } from 'react-icons/fa';
+import { getAccessToken } from '../../util/auth';
 
 function MenuBar({ editor }: { editor: Editor }) {
     const editorState = useEditorState({
@@ -212,7 +213,7 @@ export const CollabEditor: React.FC<{ docId: string; onSavingChange?: (isSaving:
     const pendingContentRef = useRef<string>('');
 
     useEffect(() => {
-        const accessToken = localStorage.getItem('access_token') ?? '';
+        const accessToken = getAccessToken();
         const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:8000';
         const wsUrl = `${baseUrl.replace('http', 'ws')}/api/v1/ws/notebook/${docId}?token=${encodeURIComponent(accessToken)}`;
 
@@ -395,7 +396,7 @@ export const CollabEditor: React.FC<{ docId: string; onSavingChange?: (isSaving:
                 (window as any).syncTimeout = setTimeout(async () => {
                     onSavingChange?.(true);
                     try {
-                        const accessToken = localStorage.getItem('access_token') ?? '';
+                        const accessToken = getAccessToken();
                         const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:8000';
 
                         await fetch(`${baseUrl}/api/v1/notebook/documents/${docId}`, {

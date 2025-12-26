@@ -28,6 +28,7 @@ import { type SubmitHandler, useForm } from "react-hook-form";
 import type { BodyLoginAccessTokenLoginAccessTokenPost as AccessToken } from "../client";
 import useAuth from "../hooks/useAuth";
 import { emailPattern } from "../util/misc";
+import { hasAccessToken } from "../util/auth";
 
 const MotionBox = motion(Box);
 
@@ -41,7 +42,7 @@ export const Route = createFileRoute("/login")({
   beforeLoad: async ({ context, search }) => {
     if (
       context.auth.isAuthenticated &&
-      localStorage.getItem("access_token") !== null
+      hasAccessToken()
     ) {
       // If already authenticated and there's a next parameter, redirect there
       // Otherwise redirect to home

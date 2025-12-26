@@ -24,6 +24,7 @@ import {
 } from "../../client/@tanstack/react-query.gen";
 import { AxiosError } from "axios";
 import { useNavigate } from "@tanstack/react-router";
+import { setTokens } from "../../util/auth";
 
 interface ImpersonateUserProps {
     user: UserLinked;
@@ -59,7 +60,7 @@ const ImpersonateUser = ({ user, isOpen, onClose }: ImpersonateUserProps) => {
             showToast("Success!", "Impersonated user successfully.", "success");
             reset();
             onClose();
-            localStorage.setItem("access_token", data.access_token);
+            setTokens(data.access_token, data.refresh_token);
             queryClient.invalidateQueries();
             queryClient.ensureQueryData({
                 ...readUserMePartiesMeGetOptions({}),
