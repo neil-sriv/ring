@@ -1,37 +1,37 @@
 import {
-    AlertDialog,
-    AlertDialogBody,
-    AlertDialogContent,
-    AlertDialogFooter,
-    AlertDialogHeader,
-    AlertDialogOverlay,
-    Button,
-    useColorModeValue,
-} from "@chakra-ui/react";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
-import React from "react";
-import { useForm } from "react-hook-form";
+  AlertDialog,
+  AlertDialogBody,
+  AlertDialogContent,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogOverlay,
+  Button,
+  useColorModeValue,
+} from "@chakra-ui/react"
+import { useMutation, useQueryClient } from "@tanstack/react-query"
+import React from "react"
+import { useForm } from "react-hook-form"
 
-import { deleteUserPartiesUserIdDelete } from "../../client";
-import { readUserMePartiesMeGetQueryKey } from "../../client/@tanstack/react-query.gen";
-import useAuth from "../../hooks/useAuth";
-import useCustomToast from "../../hooks/useCustomToast";
+import { deleteUserPartiesUserIdDelete } from "../../client"
+import { readUserMePartiesMeGetQueryKey } from "../../client/@tanstack/react-query.gen"
+import useAuth from "../../hooks/useAuth"
+import useCustomToast from "../../hooks/useCustomToast"
 
 interface DeleteProps {
-  isOpen: boolean;
-  onClose: () => void;
+  isOpen: boolean
+  onClose: () => void
 }
 
 const DeleteConfirmation = ({ isOpen, onClose }: DeleteProps) => {
-  const queryClient = useQueryClient();
-  const showToast = useCustomToast();
-  const cancelRef = React.useRef<HTMLButtonElement | null>(null);
-  const textColor = useColorModeValue("ui.dark", "ui.light");
+  const queryClient = useQueryClient()
+  const showToast = useCustomToast()
+  const cancelRef = React.useRef<HTMLButtonElement | null>(null)
+  const textColor = useColorModeValue("ui.dark", "ui.light")
   const {
     handleSubmit,
     formState: { isSubmitting },
-  } = useForm();
-  const { logout } = useAuth();
+  } = useForm()
+  const { logout } = useAuth()
 
   const mutation = useMutation({
     mutationFn: () => deleteUserPartiesUserIdDelete(),
@@ -39,27 +39,26 @@ const DeleteConfirmation = ({ isOpen, onClose }: DeleteProps) => {
       showToast(
         "Success",
         "Your account has been successfully deleted.",
-        "success"
-      );
-      logout();
-      queryClient.clear();
-      onClose();
+        "success",
+      )
+      logout()
+      queryClient.clear()
+      onClose()
     },
     onError: (err: Error) => {
-      const errDetail =
-        err.message || "no error detail, please contact support";
-      showToast("Something went wrong.", `${errDetail}`, "error");
+      const errDetail = err.message || "no error detail, please contact support"
+      showToast("Something went wrong.", `${errDetail}`, "error")
     },
     onSettled: () => {
       queryClient.invalidateQueries({
         queryKey: readUserMePartiesMeGetQueryKey(),
-      });
+      })
     },
-  });
+  })
 
   const onSubmit = async () => {
-    mutation.mutate();
-  };
+    mutation.mutate()
+  }
 
   return (
     <AlertDialog
@@ -70,8 +69,8 @@ const DeleteConfirmation = ({ isOpen, onClose }: DeleteProps) => {
       isCentered
     >
       <AlertDialogOverlay backdropFilter="blur(4px)" />
-      <AlertDialogContent 
-        as="form" 
+      <AlertDialogContent
+        as="form"
         onSubmit={handleSubmit(onSubmit)}
         bg="ui.glass.light.background"
         backdropFilter="blur(10px)"
@@ -87,16 +86,15 @@ const DeleteConfirmation = ({ isOpen, onClose }: DeleteProps) => {
         </AlertDialogHeader>
 
         <AlertDialogBody color={textColor}>
-          All your account data will be{" "}
-          <strong>permanently deleted.</strong> If you are sure, please
-          click <strong>"Confirm"</strong> to proceed. This action cannot be
-          undone.
+          All your account data will be <strong>permanently deleted.</strong> If
+          you are sure, please click <strong>"Confirm"</strong> to proceed. This
+          action cannot be undone.
         </AlertDialogBody>
 
         <AlertDialogFooter gap={3}>
-          <Button 
-            variant="danger" 
-            type="submit" 
+          <Button
+            variant="danger"
+            type="submit"
             isLoading={isSubmitting}
             _hover={{ transform: "translateY(-2px)" }}
             transition="all 0.2s"
@@ -114,7 +112,7 @@ const DeleteConfirmation = ({ isOpen, onClose }: DeleteProps) => {
         </AlertDialogFooter>
       </AlertDialogContent>
     </AlertDialog>
-  );
-};
+  )
+}
 
-export default DeleteConfirmation;
+export default DeleteConfirmation

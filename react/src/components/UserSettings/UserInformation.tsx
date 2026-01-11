@@ -1,44 +1,44 @@
 import {
-    Box,
-    Button,
-    Container,
-    Flex,
-    FormControl,
-    FormErrorMessage,
-    FormLabel,
-    Heading,
-    Input,
-    Text,
-    useColorModeValue,
-    VStack,
-} from "@chakra-ui/react";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { useState } from "react";
-import { type SubmitHandler, useForm } from "react-hook-form";
+  Box,
+  Button,
+  Container,
+  Flex,
+  FormControl,
+  FormErrorMessage,
+  FormLabel,
+  Heading,
+  Input,
+  Text,
+  VStack,
+  useColorModeValue,
+} from "@chakra-ui/react"
+import { useMutation, useQueryClient } from "@tanstack/react-query"
+import { useState } from "react"
+import { type SubmitHandler, useForm } from "react-hook-form"
 
-import { AxiosError } from "axios";
+import type { AxiosError } from "axios"
+import type {
+  UpdateUserMePartiesMePatchError,
+  UserLinked,
+  UserUpdate,
+} from "../../client"
 import {
-    type UserLinked,
-    type UserUpdate,
-    UpdateUserMePartiesMePatchError,
-} from "../../client";
-import {
-    readUserMePartiesMeGetQueryKey,
-    readUsersPartiesUsersGetQueryKey,
-    updateUserMePartiesMePatchMutation,
-} from "../../client/@tanstack/react-query.gen";
-import useCustomToast from "../../hooks/useCustomToast";
-import { emailPattern } from "../../util/misc";
-import { subscribeToPush } from "../../util/notifications";
+  readUserMePartiesMeGetQueryKey,
+  readUsersPartiesUsersGetQueryKey,
+  updateUserMePartiesMePatchMutation,
+} from "../../client/@tanstack/react-query.gen"
+import useCustomToast from "../../hooks/useCustomToast"
+import { emailPattern } from "../../util/misc"
+import { subscribeToPush } from "../../util/notifications"
 
 const UserInformation = () => {
-  const queryClient = useQueryClient();
-  const textColor = useColorModeValue("ui.dark", "ui.light");
-  const showToast = useCustomToast();
-  const [editMode, setEditMode] = useState(false);
+  const queryClient = useQueryClient()
+  const textColor = useColorModeValue("ui.dark", "ui.light")
+  const showToast = useCustomToast()
+  const [editMode, setEditMode] = useState(false)
   const currentUser = queryClient.getQueryData<UserLinked>(
-    readUserMePartiesMeGetQueryKey()
-  );
+    readUserMePartiesMeGetQueryKey(),
+  )
   const {
     register,
     handleSubmit,
@@ -52,41 +52,41 @@ const UserInformation = () => {
       name: currentUser?.name,
       email: currentUser?.email,
     },
-  });
+  })
 
   const toggleEditMode = () => {
-    setEditMode(!editMode);
-  };
+    setEditMode(!editMode)
+  }
 
   const mutation = useMutation({
     ...updateUserMePartiesMePatchMutation(),
     onSuccess: () => {
-      showToast("Success!", "User updated successfully.", "success");
-      reset();
+      showToast("Success!", "User updated successfully.", "success")
+      reset()
     },
     onError: (err: AxiosError<UpdateUserMePartiesMePatchError>) => {
       const errDetail =
-        err.response?.data.detail || "no error detail, please contact support";
-      showToast("Something went wrong.", `${errDetail}`, "error");
+        err.response?.data.detail || "no error detail, please contact support"
+      showToast("Something went wrong.", `${errDetail}`, "error")
     },
     onSettled: async () => {
       queryClient.invalidateQueries({
         queryKey: readUsersPartiesUsersGetQueryKey(),
-      });
+      })
       await queryClient.refetchQueries({
         queryKey: readUserMePartiesMeGetQueryKey(),
-      });
+      })
     },
-  });
+  })
 
   const onSubmit: SubmitHandler<UserUpdate> = async (data) => {
-    mutation.mutate({ body: data });
-  };
+    mutation.mutate({ body: data })
+  }
 
   const onCancel = () => {
-    reset();
-    toggleEditMode();
-  };
+    reset()
+    toggleEditMode()
+  }
 
   return (
     <Container maxW="full">
@@ -185,7 +185,7 @@ const UserInformation = () => {
           <Button
             variant="glass"
             onClick={() => {
-              subscribeToPush(currentUser!.api_identifier);
+              subscribeToPush(currentUser!.api_identifier)
             }}
           >
             Enable Notifications
@@ -193,7 +193,7 @@ const UserInformation = () => {
         </Box>
       </VStack>
     </Container>
-  );
-};
+  )
+}
 
-export default UserInformation;
+export default UserInformation

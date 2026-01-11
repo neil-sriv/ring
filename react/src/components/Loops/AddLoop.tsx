@@ -11,38 +11,38 @@ import {
   ModalFooter,
   ModalHeader,
   ModalOverlay,
-} from "@chakra-ui/react";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { type SubmitHandler, useForm } from "react-hook-form";
+} from "@chakra-ui/react"
+import { useMutation, useQueryClient } from "@tanstack/react-query"
+import { type SubmitHandler, useForm } from "react-hook-form"
 
-import { AxiosError } from "axios";
-import { AddNextLetterLettersLetterPostError } from "../../client";
+import type { AxiosError } from "axios"
+import type { AddNextLetterLettersLetterPostError } from "../../client"
 import {
   addNextLetterLettersLetterPostMutation,
   listLettersLettersLettersGetQueryKey,
-} from "../../client/@tanstack/react-query.gen";
-import useCustomToast from "../../hooks/useCustomToast";
-import { toISOLocal } from "../../util/misc";
+} from "../../client/@tanstack/react-query.gen"
+import useCustomToast from "../../hooks/useCustomToast"
+import { toISOLocal } from "../../util/misc"
 
 type LetterFormProps = {
-  sendAt: Date | string;
-};
+  sendAt: Date | string
+}
 
 interface AddLetterProps {
-  isOpen: boolean;
-  onClose: () => void;
-  groupApiId: string;
+  isOpen: boolean
+  onClose: () => void
+  groupApiId: string
 }
 
 const AddLetter = ({ isOpen, onClose, groupApiId }: AddLetterProps) => {
-  const queryClient = useQueryClient();
-  const showToast = useCustomToast();
-  let defaultDate = new Date();
-  defaultDate.setUTCDate(defaultDate.getDate() + 14);
-  defaultDate.setUTCHours(21);
-  defaultDate.setUTCMinutes(0);
-  defaultDate.setUTCSeconds(0);
-  defaultDate.setUTCMilliseconds(0);
+  const queryClient = useQueryClient()
+  const showToast = useCustomToast()
+  const defaultDate = new Date()
+  defaultDate.setUTCDate(defaultDate.getDate() + 14)
+  defaultDate.setUTCHours(21)
+  defaultDate.setUTCMinutes(0)
+  defaultDate.setUTCSeconds(0)
+  defaultDate.setUTCMilliseconds(0)
   const {
     register,
     handleSubmit,
@@ -54,28 +54,28 @@ const AddLetter = ({ isOpen, onClose, groupApiId }: AddLetterProps) => {
     defaultValues: {
       sendAt: defaultDate.toISOString().slice(0, 16),
     },
-  });
+  })
 
   const mutation = useMutation({
     ...addNextLetterLettersLetterPostMutation(),
     onSuccess: () => {
-      showToast("Success!", "Next letter created successfully.", "success");
-      reset();
-      onClose();
+      showToast("Success!", "Next letter created successfully.", "success")
+      reset()
+      onClose()
     },
     onError: (err: AxiosError<AddNextLetterLettersLetterPostError>) => {
       const errDetail =
-        err.response?.data.detail || "no error detail, please contact support";
-      showToast("Something went wrong.", `${errDetail}`, "error");
+        err.response?.data.detail || "no error detail, please contact support"
+      showToast("Something went wrong.", `${errDetail}`, "error")
     },
     onSettled: () => {
       queryClient.invalidateQueries({
         queryKey: listLettersLettersLettersGetQueryKey({
           query: { group_api_id: groupApiId },
         }),
-      });
+      })
     },
-  });
+  })
 
   const onSubmit: SubmitHandler<LetterFormProps> = (data) => {
     mutation.mutate({
@@ -84,8 +84,8 @@ const AddLetter = ({ isOpen, onClose, groupApiId }: AddLetterProps) => {
         send_at:
           data.sendAt instanceof Date ? toISOLocal(data.sendAt) : data.sendAt,
       },
-    });
-  };
+    })
+  }
 
   return (
     <>
@@ -126,7 +126,7 @@ const AddLetter = ({ isOpen, onClose, groupApiId }: AddLetterProps) => {
         </ModalContent>
       </Modal>
     </>
-  );
-};
+  )
+}
 
-export default AddLetter;
+export default AddLetter

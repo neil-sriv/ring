@@ -1,46 +1,46 @@
 import {
-    Button,
-    FormControl,
-    FormErrorMessage,
-    FormLabel,
-    Input,
-    Modal,
-    ModalBody,
-    ModalCloseButton,
-    ModalContent,
-    ModalFooter,
-    ModalHeader,
-    ModalOverlay,
-    Text,
-    useColorModeValue,
-} from "@chakra-ui/react";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { type SubmitHandler, useForm } from "react-hook-form";
+  Button,
+  FormControl,
+  FormErrorMessage,
+  FormLabel,
+  Input,
+  Modal,
+  ModalBody,
+  ModalCloseButton,
+  ModalContent,
+  ModalFooter,
+  ModalHeader,
+  ModalOverlay,
+  Text,
+  useColorModeValue,
+} from "@chakra-ui/react"
+import { useMutation, useQueryClient } from "@tanstack/react-query"
+import { type SubmitHandler, useForm } from "react-hook-form"
 
-import { AxiosError } from "axios";
+import type { AxiosError } from "axios"
+import type {
+  AddMembersPartiesGroupGroupApiIdAddMembersPostError,
+  GroupLinked,
+} from "../../client"
 import {
-    AddMembersPartiesGroupGroupApiIdAddMembersPostError,
-    type GroupLinked,
-} from "../../client";
-import {
-    addMembersPartiesGroupGroupApiIdAddMembersPostMutation,
-    listGroupsPartiesGroupsGetQueryKey,
-} from "../../client/@tanstack/react-query.gen";
-import useCustomToast from "../../hooks/useCustomToast";
+  addMembersPartiesGroupGroupApiIdAddMembersPostMutation,
+  listGroupsPartiesGroupsGetQueryKey,
+} from "../../client/@tanstack/react-query.gen"
+import useCustomToast from "../../hooks/useCustomToast"
 
 interface AddMembersProps {
-  group: GroupLinked;
-  isOpen: boolean;
-  onClose: () => void;
+  group: GroupLinked
+  isOpen: boolean
+  onClose: () => void
 }
 
 type AddMembersFormType = {
-  member_emails: string;
-};
+  member_emails: string
+}
 
 const AddMembers = ({ group, isOpen, onClose }: AddMembersProps) => {
-  const queryClient = useQueryClient();
-  const showToast = useCustomToast();
+  const queryClient = useQueryClient()
+  const showToast = useCustomToast()
   const {
     register,
     handleSubmit,
@@ -49,48 +49,48 @@ const AddMembers = ({ group, isOpen, onClose }: AddMembersProps) => {
   } = useForm<AddMembersFormType>({
     mode: "onBlur",
     criteriaMode: "all",
-  });
+  })
 
   const mutation = useMutation({
     ...addMembersPartiesGroupGroupApiIdAddMembersPostMutation(),
     onSuccess: () => {
-      showToast("Success!", "Group updated successfully.", "success");
-      reset();
-      onClose();
+      showToast("Success!", "Group updated successfully.", "success")
+      reset()
+      onClose()
     },
     onError: (
-      err: AxiosError<AddMembersPartiesGroupGroupApiIdAddMembersPostError>
+      err: AxiosError<AddMembersPartiesGroupGroupApiIdAddMembersPostError>,
     ) => {
-      console.log(err);
+      console.log(err)
       const errDetail =
-        err.response?.data.detail || "no error detail, please contact support";
-      showToast("Something went wrong.", `${errDetail}`, "error");
+        err.response?.data.detail || "no error detail, please contact support"
+      showToast("Something went wrong.", `${errDetail}`, "error")
     },
     onSettled: () => {
       queryClient.invalidateQueries({
         queryKey: listGroupsPartiesGroupsGetQueryKey({
           query: { user_api_id: group.api_identifier },
         }),
-      });
+      })
     },
-  });
+  })
 
   const onSubmit: SubmitHandler<AddMembersFormType> = async (data) => {
     const memberEmails = data.member_emails
       .split(",")
-      .map((email) => email.trim());
+      .map((email) => email.trim())
     mutation.mutate({
       body: { member_emails: memberEmails },
       path: { group_api_id: group.api_identifier },
-    });
-  };
+    })
+  }
 
   const onCancel = () => {
-    reset();
-    onClose();
-  };
+    reset()
+    onClose()
+  }
 
-  const textColor = useColorModeValue("ui.dark", "ui.light");
+  const textColor = useColorModeValue("ui.dark", "ui.light")
 
   return (
     <>
@@ -101,8 +101,8 @@ const AddMembers = ({ group, isOpen, onClose }: AddMembersProps) => {
         isCentered
       >
         <ModalOverlay backdropFilter="blur(4px)" />
-        <ModalContent 
-          as="form" 
+        <ModalContent
+          as="form"
           onSubmit={handleSubmit(onSubmit)}
           bg="ui.glass.light.background"
           backdropFilter="blur(10px)"
@@ -117,7 +117,9 @@ const AddMembers = ({ group, isOpen, onClose }: AddMembersProps) => {
           <ModalCloseButton color={textColor} />
           <ModalBody pb={6}>
             <FormControl isInvalid={!!errors.member_emails}>
-              <FormLabel htmlFor="name" color={textColor}>New Member Emails</FormLabel>
+              <FormLabel htmlFor="name" color={textColor}>
+                New Member Emails
+              </FormLabel>
               <Text color={textColor}>
                 Enter the email addresses of the new members you want to add to
                 this group. Separate multiple emails with a comma.
@@ -164,7 +166,7 @@ const AddMembers = ({ group, isOpen, onClose }: AddMembersProps) => {
               type="submit"
               isLoading={isSubmitting}
               isDisabled={!isDirty}
-              _hover={{ 
+              _hover={{
                 opacity: 0.9,
                 bg: "ui.primary",
               }}
@@ -172,17 +174,14 @@ const AddMembers = ({ group, isOpen, onClose }: AddMembersProps) => {
             >
               Save
             </Button>
-            <Button 
-              onClick={onCancel}
-              variant="glass"
-            >
+            <Button onClick={onCancel} variant="glass">
               Cancel
             </Button>
           </ModalFooter>
         </ModalContent>
       </Modal>
     </>
-  );
-};
+  )
+}
 
-export default AddMembers;
+export default AddMembers

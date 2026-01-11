@@ -1,57 +1,67 @@
-import { useState } from "react";
 import {
-  Box,
-  VStack,
-  Text,
-  Textarea,
-  Button,
-  Divider,
-  useToast,
-  Spinner,
   Alert,
   AlertIcon,
-} from "@chakra-ui/react";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { UserLinked } from "../../client";
-import { readUserMePartiesMeGetQueryKey } from "../../client/@tanstack/react-query.gen";
-import { getComments, createComment, commentQueryKeys } from "../../client/commentApi";
+  Box,
+  Button,
+  Divider,
+  Spinner,
+  Text,
+  Textarea,
+  VStack,
+  useToast,
+} from "@chakra-ui/react"
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
+import { useState } from "react"
+import type { UserLinked } from "../../client"
+import { readUserMePartiesMeGetQueryKey } from "../../client/@tanstack/react-query.gen"
+import {
+  commentQueryKeys,
+  createComment,
+  getComments,
+} from "../../client/commentApi"
 // Comment types will be added after API client generation
-import CommentItem from "./CommentItem";
+import CommentItem from "./CommentItem"
 
 interface CommentSectionProps {
-  questionApiId: string;
+  questionApiId: string
 }
 
 export default function CommentSection({ questionApiId }: CommentSectionProps) {
-  const toast = useToast();
-  const queryClient = useQueryClient();
+  const toast = useToast()
+  const queryClient = useQueryClient()
   const currentUser = queryClient.getQueryData<UserLinked>(
-    readUserMePartiesMeGetQueryKey()
-  );
-  const [newComment, setNewComment] = useState("");
-  const [isSubmitting, setIsSubmitting] = useState(false);
+    readUserMePartiesMeGetQueryKey(),
+  )
+  const [newComment, setNewComment] = useState("")
+  const [isSubmitting, setIsSubmitting] = useState(false)
 
   // Fetch comments
-  const { data: commentsData, isLoading, error } = useQuery({
+  const {
+    data: commentsData,
+    isLoading,
+    error,
+  } = useQuery({
     queryKey: commentQueryKeys.list(questionApiId, { limit: 50 }),
     queryFn: async () => {
-      return await getComments(questionApiId, { limit: 50 });
+      return await getComments(questionApiId, { limit: 50 })
     },
-  });
+  })
 
   // Create comment mutation
   const createCommentMutation = useMutation({
     mutationFn: async (content: string) => {
-      return await createComment(questionApiId, { content });
+      return await createComment(questionApiId, { content })
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: commentQueryKeys.list(questionApiId) });
-      setNewComment("");
+      queryClient.invalidateQueries({
+        queryKey: commentQueryKeys.list(questionApiId),
+      })
+      setNewComment("")
       toast({
         title: "Comment added",
         status: "success",
         duration: 3000,
-      });
+      })
     },
     onError: (error: any) => {
       toast({
@@ -59,27 +69,27 @@ export default function CommentSection({ questionApiId }: CommentSectionProps) {
         description: error.response?.data?.detail || "Something went wrong",
         status: "error",
         duration: 5000,
-      });
+      })
     },
-  });
+  })
 
   const handleSubmit = async () => {
-    if (!newComment.trim()) return;
-    
-    setIsSubmitting(true);
+    if (!newComment.trim()) return
+
+    setIsSubmitting(true)
     try {
-      await createCommentMutation.mutateAsync(newComment);
+      await createCommentMutation.mutateAsync(newComment)
     } finally {
-      setIsSubmitting(false);
+      setIsSubmitting(false)
     }
-  };
+  }
 
   if (isLoading) {
     return (
       <Box py={8} textAlign="center">
         <Spinner size="lg" />
       </Box>
-    );
+    )
   }
 
   if (error) {
@@ -88,24 +98,25 @@ export default function CommentSection({ questionApiId }: CommentSectionProps) {
         <AlertIcon />
         Failed to load comments
       </Alert>
-    );
+    )
   }
 
-  const comments = commentsData?.comments || [];
-  const totalComments = commentsData?.total || 0;
-  
+  const comments = commentsData?.comments || []
+  const totalComments = commentsData?.total || 0
+
   // Debug logging
-  console.log('Comments data:', commentsData);
-  console.log('Comments array:', comments);
-  console.log('Total comments:', totalComments);
+  console.log("Comments data:", commentsData)
+  console.log("Comments array:", comments)
+  console.log("Total comments:", totalComments)
 
   return (
     <VStack spacing={6} align="stretch" mt={8}>
       <Divider />
-      
+
       <Box>
         <Text fontSize="xl" fontWeight="bold" mb={4}>
-          Discussion ({totalComments} {totalComments === 1 ? "comment" : "comments"})
+          Discussion ({totalComments}{" "}
+          {totalComments === 1 ? "comment" : "comments"})
         </Text>
 
         {/* Add comment form */}
@@ -158,5 +169,5 @@ export default function CommentSection({ questionApiId }: CommentSectionProps) {
         )}
       </Box>
     </VStack>
-  );
+  )
 }

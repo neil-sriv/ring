@@ -1,4 +1,4 @@
-import { ViewIcon, ViewOffIcon } from "@chakra-ui/icons";
+import { ViewIcon, ViewOffIcon } from "@chakra-ui/icons"
 import {
   Box,
   Button,
@@ -16,20 +16,20 @@ import {
   VStack,
   useBoolean,
   useColorModeValue,
-} from "@chakra-ui/react";
+} from "@chakra-ui/react"
 import {
   Link as RouterLink,
   createFileRoute,
   redirect,
-} from "@tanstack/react-router";
-import { motion } from "framer-motion";
-import { type SubmitHandler, useForm } from "react-hook-form";
+} from "@tanstack/react-router"
+import { motion } from "framer-motion"
+import { type SubmitHandler, useForm } from "react-hook-form"
 
-import type { BodyLoginAccessTokenLoginAccessTokenPost as AccessToken } from "../client";
-import useAuth from "../hooks/useAuth";
-import { emailPattern } from "../util/misc";
+import type { BodyLoginAccessTokenLoginAccessTokenPost as AccessToken } from "../client"
+import useAuth from "../hooks/useAuth"
+import { emailPattern } from "../util/misc"
 
-const MotionBox = motion(Box);
+const MotionBox = motion(Box)
 
 export const Route = createFileRoute("/login")({
   component: Login,
@@ -40,14 +40,14 @@ export const Route = createFileRoute("/login")({
     ) {
       throw redirect({
         to: "/",
-      });
+      })
     }
   },
-});
+})
 
 function Login() {
-  const [show, setShow] = useBoolean();
-  const { loginMutation, error, resetError } = useAuth();
+  const [show, setShow] = useBoolean()
+  const { loginMutation, error, resetError } = useAuth()
   const {
     register,
     handleSubmit,
@@ -59,25 +59,31 @@ function Login() {
       username: "",
       password: "",
     },
-  });
+  })
 
-  const bgColor = useColorModeValue("rgba(255, 255, 255, 0.8)", "rgba(26, 32, 44, 0.8)");
-  const borderColor = useColorModeValue("rgba(255, 255, 255, 0.2)", "rgba(255, 255, 255, 0.1)");
-  const textColor = useColorModeValue("gray.800", "white");
+  const bgColor = useColorModeValue(
+    "rgba(255, 255, 255, 0.8)",
+    "rgba(26, 32, 44, 0.8)",
+  )
+  const borderColor = useColorModeValue(
+    "rgba(255, 255, 255, 0.2)",
+    "rgba(255, 255, 255, 0.1)",
+  )
+  const textColor = useColorModeValue("gray.800", "white")
 
   const onSubmit: SubmitHandler<AccessToken> = async (data) => {
-    if (isSubmitting) return;
+    if (isSubmitting) return
 
-    resetError();
+    resetError()
 
     try {
       await loginMutation.mutateAsync({
         body: data,
-      });
+      })
     } catch {
       // error is handled by useAuth hook
     }
-  };
+  }
 
   return (
     <Center
@@ -87,13 +93,7 @@ function Login() {
       overflow="hidden"
     >
       {/* Background animated circles */}
-      <Box
-        position="absolute"
-        w="100%"
-        h="100%"
-        opacity={0.15}
-        zIndex={0}
-      >
+      <Box position="absolute" w="100%" h="100%" opacity={0.15} zIndex={0}>
         <MotionBox
           position="absolute"
           top="20%"
@@ -110,7 +110,7 @@ function Login() {
           }}
           transition={{
             duration: 12,
-            repeat: Infinity,
+            repeat: Number.POSITIVE_INFINITY,
             ease: "easeInOut",
           }}
         />
@@ -130,7 +130,7 @@ function Login() {
           }}
           transition={{
             duration: 15,
-            repeat: Infinity,
+            repeat: Number.POSITIVE_INFINITY,
             ease: "easeInOut",
           }}
         />
@@ -150,7 +150,7 @@ function Login() {
           }}
           transition={{
             duration: 18,
-            repeat: Infinity,
+            repeat: Number.POSITIVE_INFINITY,
             ease: "easeInOut",
           }}
         />
@@ -272,5 +272,5 @@ function Login() {
         </Container>
       </MotionBox>
     </Center>
-  );
+  )
 }

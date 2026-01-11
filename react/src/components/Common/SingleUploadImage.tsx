@@ -7,9 +7,9 @@ import {
   ScaleFade,
   VStack,
   chakra,
-} from "@chakra-ui/react";
-import { useState } from "react";
-import { MdAddPhotoAlternate } from "react-icons/md";
+} from "@chakra-ui/react"
+import { useState } from "react"
+import { MdAddPhotoAlternate } from "react-icons/md"
 
 /**
  * SingleUploadImage Component
@@ -52,31 +52,31 @@ import { MdAddPhotoAlternate } from "react-icons/md";
  * };
  */
 type SingleUploadImageProps = {
-  size?: string;
-  onUpdateFile(file: File): Promise<void>;
-  name: string;
-};
+  size?: string
+  onUpdateFile(file: File): Promise<void>
+  name: string
+}
 
 export function SingleUploadImage({
   size = "50px",
   onUpdateFile,
   name,
 }: SingleUploadImageProps): JSX.Element {
-  const [uploadedFile, setUploadedFile] = useState<File | null>(null);
+  const [uploadedFile, setUploadedFile] = useState<File | null>(null)
 
   const handleFileChange = async (
-    event: React.ChangeEvent<HTMLInputElement>
+    event: React.ChangeEvent<HTMLInputElement>,
   ) => {
-    const { files } = event.target;
+    const { files } = event.target
     if (!files || files.length === 0) {
-      return;
+      return
     }
-    const selectedFiles = files as FileList;
-    const file = selectedFiles?.[0];
-    setUploadedFile(file);
-    await onUpdateFile(file);
-    setUploadedFile(null);
-  };
+    const selectedFiles = files as FileList
+    const file = selectedFiles?.[0]
+    setUploadedFile(file)
+    await onUpdateFile(file)
+    setUploadedFile(null)
+  }
 
   return (
     <Center
@@ -123,15 +123,15 @@ export function SingleUploadImage({
         accept="image/*, video/*"
       />
     </Center>
-  );
+  )
 }
 
 export function S3Image({ s3Key, alt }: { s3Key: string; alt?: string }) {
-  const url = `https://du32exnxihxuf.cloudfront.net/${s3Key}`;
-  return <Image src={url} alt={alt} boxSize="50%" />;
+  const url = `https://du32exnxihxuf.cloudfront.net/${s3Key}`
+  return <Image src={url} alt={alt} boxSize="50%" />
 }
 
 export function S3Video({ s3Key }: { s3Key: string }) {
-  const url = `https://du32exnxihxuf.cloudfront.net/${s3Key}`;
-  return <Box as="video" src={url} controls boxSize="50%" />;
+  const url = `https://du32exnxihxuf.cloudfront.net/${s3Key}`
+  return <Box as="video" src={url} controls boxSize="50%" />
 }

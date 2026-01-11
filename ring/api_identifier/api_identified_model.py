@@ -22,7 +22,7 @@ class APIPrefix(str, Enum):
     RESPONSE = "rspn"
     DEFAULT_QUESTION = "dfqstn"
     SUBSCRIPTION = "sbscrp"
-    COMMENT = "com"
+    COMMENT = "cmnt"
 
 
 class APIIdentified:

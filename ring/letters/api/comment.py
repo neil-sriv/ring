@@ -1,16 +1,14 @@
 """Comment API endpoints.
 
-This module provides FastAPI endpoints for managing comments on questions,
-including creating, reading, updating, and deleting comments with proper
+This module provides FastAPI endpoints for managing comments on any API-identified
+object, including creating, reading, updating, and deleting comments with proper
 permission checks.
 """
 
 from __future__ import annotations
 
-from typing import Optional
-
 from fastapi import APIRouter, Depends, HTTPException, Query, status
-from pydantic import BaseModel, model_validator
+from pydantic import BaseModel
 
 from ring.api_identifier import util as api_identifier_crud
 from ring.authz.authz import load_and_check
@@ -21,7 +19,6 @@ from ring.fastapp.dependencies import (
 )
 from ring.letters.crud import comment as comment_crud
 from ring.letters.models.comment_model import Comment
-from ring.letters.models.question_model import Question
 from ring.letters.schemas.comment import (
     CommentCreate,
     CommentUnlinked,
@@ -44,155 +41,117 @@ class CommentsListResponse(BaseModel):
 
 
 @router.post(
-    "/questions/{question_api_id}/comments",
+    "/comments/{target_api_id}",
     response_model=CommentLinked,
     status_code=status.HTTP_201_CREATED,
 )
 async def create_comment(
-    question_api_id: str,
+    target_api_id: str,
     comment_data: CommentCreate,
     req_dep: AuthenticatedRequestDependencies = Depends(
         get_request_dependencies,
     ),
-) -> Comment:
-    """Create a new comment on a question.
+) -> CommentLinked:
+    """Create a new comment on any API-identified object.
 
-    Only group members can comment on questions within their group's letters.
+    The user must have read access to the target object to comment on it.
 
     Args:
-        question_api_id (str): API identifier of the question
-        comment_data (CommentCreate): Comment creation data
-        req_dep (AuthenticatedRequestDependencies): Request dependencies
+        target_api_id: API identifier of the object to comment on
+        comment_data: Comment creation data
+        req_dep: Request dependencies
 
     Returns:
-        Comment: Created comment with author and question information
+        Created comment with author information
 
     Raises:
-        PermissionError: If user doesn't have access to the question
+        PermissionError: If user doesn't have access to the target object
     """
-    # This checks if user has access to the question (via group membership)
-    question = load_and_check(
+    # Check if user has access to the target object
+    load_and_check(
         req_dep.db,
         req_dep.current_user,
         Action.READ,
-        question_api_id,
+        target_api_id,
     )
 
     # Create the comment
     comment = comment_crud.create_comment(
         db=req_dep.db,
-        question=question,
+        target_api_id=target_api_id,
         author=req_dep.current_user,
         content=comment_data.content,
     )
 
     req_dep.db.commit()
-
-    # Refresh to ensure relationships are loaded
     req_dep.db.refresh(comment)
 
-    # Convert to Pydantic model
-    comment_unlinked = CommentUnlinked.from_orm_with_relations(comment)
     return CommentLinked(
-        **comment_unlinked.model_dump(),
+        api_identifier=comment.api_identifier,
+        content=comment.content,
+        created_at=comment.created_at,
+        target_api_id=comment.target_api_id,
+        author_api_identifier=comment.author.api_identifier,
         author=comment.author,
-        question=comment.question,
     )
 
 
 @router.get(
-    "/questions/{question_api_id}/comments",
+    "/comments/{target_api_id}",
     response_model=CommentsListResponse,
 )
 async def get_comments(
-    question_api_id: str,
+    target_api_id: str,
     skip: int = Query(0, ge=0, description="Number of comments to skip"),
     limit: int = Query(
         50, ge=1, le=100, description="Maximum comments to return"
     ),
-    include_deleted: bool = Query(
-        False, description="Include deleted comments (admin only)"
-    ),
     req_dep: AuthenticatedRequestDependencies = Depends(
         get_request_dependencies,
     ),
-) -> dict:
-    """Get comments for a question with pagination.
+) -> CommentsListResponse:
+    """Get comments for any API-identified object with pagination.
 
     Args:
-        question_api_id (str): API identifier of the question
-        skip (int): Number of comments to skip for pagination
-        limit (int): Maximum number of comments to return
-        include_deleted (bool): Include soft-deleted comments (admin only)
-        req_dep (AuthenticatedRequestDependencies): Request dependencies
+        target_api_id: API identifier of the target object
+        skip: Number of comments to skip for pagination
+        limit: Maximum number of comments to return
+        req_dep: Request dependencies
 
     Returns:
-        dict: Paginated response with comments list and metadata
+        Paginated response with comments list and metadata
 
     Raises:
-        PermissionError: If user doesn't have access to the question
-        HTTPException: If non-admin tries to view deleted comments
+        PermissionError: If user doesn't have access to the target object
     """
-    # Check access to question
-    question = load_and_check(
+    # Check access to target object
+    load_and_check(
         req_dep.db,
         req_dep.current_user,
         Action.READ,
-        question_api_id,
+        target_api_id,
     )
 
-    # Only admins can see deleted comments
-    if include_deleted and not req_dep.current_user.admin:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Only admins can view deleted comments",
-        )
-
     # Get comments with pagination
-    comments, total = comment_crud.get_comments_for_question(
+    comments, total = comment_crud.get_comments_for_target(
         db=req_dep.db,
-        question_api_id=question_api_id,
-        include_deleted=include_deleted,
+        target_api_id=target_api_id,
         skip=skip,
         limit=limit,
     )
 
-    # Convert SQLAlchemy models to Pydantic models
-    comment_list = []
-    print(
-        f"Processing {len(comments)} comments for question {question_api_id}"
-    )
-    for comment in comments:
-        try:
-            # Ensure relationships are loaded
-            if not comment.author:
-                raise ValueError(
-                    f"Comment {comment.api_identifier} has no author"
-                )
-            if not comment.question:
-                raise ValueError(
-                    f"Comment {comment.api_identifier} has no question"
-                )
-
-            # Convert to Pydantic model - first create CommentUnlinked with proper fields
-            comment_unlinked = CommentUnlinked.from_orm_with_relations(comment)
-            # Then create CommentLinked with the relationships
-            comment_data = CommentLinked(
-                **comment_unlinked.model_dump(),
-                author=comment.author,
-                question=comment.question,
-            )
-            comment_list.append(comment_data)
-            print(f"Successfully serialized comment {comment.api_identifier}")
-        except Exception as e:
-            # Log the error but continue processing other comments
-            print(f"Error serializing comment {comment.api_identifier}: {e}")
-            import traceback
-
-            traceback.print_exc()
-            continue
-
-    print(f"Returning {len(comment_list)} comments out of {total} total")
+    # Convert to response models
+    comment_list = [
+        CommentLinked(
+            api_identifier=c.api_identifier,
+            content=c.content,
+            created_at=c.created_at,
+            target_api_id=c.target_api_id,
+            author_api_identifier=c.author.api_identifier,
+            author=c.author,
+        )
+        for c in comments
+    ]
 
     return CommentsListResponse(
         comments=comment_list,
@@ -204,7 +163,7 @@ async def get_comments(
 
 
 @router.patch(
-    "/comments/{comment_api_id}",
+    "/comments/{comment_api_id}/edit",
     response_model=CommentLinked,
 )
 async def update_comment(
@@ -213,30 +172,30 @@ async def update_comment(
     req_dep: AuthenticatedRequestDependencies = Depends(
         get_request_dependencies,
     ),
-) -> Comment:
+) -> CommentLinked:
     """Update a comment's content.
 
     Only the comment author can edit their own comments.
 
     Args:
-        comment_api_id (str): API identifier of the comment
-        comment_data (CommentUpdate): Updated comment data
-        req_dep (AuthenticatedRequestDependencies): Request dependencies
+        comment_api_id: API identifier of the comment
+        comment_data: Updated comment data
+        req_dep: Request dependencies
 
     Returns:
-        Comment: Updated comment
+        Updated comment
 
     Raises:
         PermissionError: If user doesn't have access to the comment
-        HTTPException: If user is not the comment author or comment is deleted
+        HTTPException: If user is not the comment author
     """
-    # Load and check access to comment
-    comment = load_and_check(
-        req_dep.db,
-        req_dep.current_user,
-        Action.READ,
-        comment_api_id,
-    )
+    # Load comment
+    comment = comment_crud.get_comment(req_dep.db, comment_api_id)
+    if not comment:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Comment not found",
+        )
 
     # Check if user can edit
     if not comment_crud.can_user_edit_comment(req_dep.current_user, comment):
@@ -253,16 +212,15 @@ async def update_comment(
     )
 
     req_dep.db.commit()
-
-    # Refresh to ensure relationships are loaded
     req_dep.db.refresh(updated_comment)
 
-    # Convert to Pydantic model
-    comment_unlinked = CommentUnlinked.from_orm_with_relations(updated_comment)
     return CommentLinked(
-        **comment_unlinked.model_dump(),
+        api_identifier=updated_comment.api_identifier,
+        content=updated_comment.content,
+        created_at=updated_comment.created_at,
+        target_api_id=updated_comment.target_api_id,
+        author_api_identifier=updated_comment.author.api_identifier,
         author=updated_comment.author,
-        question=updated_comment.question,
     )
 
 
@@ -276,49 +234,39 @@ async def delete_comment(
         get_request_dependencies,
     ),
 ) -> ResponseMessage:
-    """Soft delete a comment.
+    """Delete a comment.
 
-    Only group admins can delete comments. Regular users who want to remove
-    their own comments should edit them instead.
+    Users can delete their own comments. Admins can delete any comment.
 
     Args:
-        comment_api_id (str): API identifier of the comment
-        req_dep (AuthenticatedRequestDependencies): Request dependencies
+        comment_api_id: API identifier of the comment
+        req_dep: Request dependencies
 
     Returns:
-        ResponseMessage: Success message
+        Success message
 
     Raises:
-        PermissionError: If user doesn't have access to the comment
-        HTTPException: If user is not an admin
+        HTTPException: If comment not found or user lacks permission
     """
-    # Load and check access
-    comment = load_and_check(
-        req_dep.db,
-        req_dep.current_user,
-        Action.READ,
-        comment_api_id,
-    )
+    # Load comment
+    comment = comment_crud.get_comment(req_dep.db, comment_api_id)
+    if not comment:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Comment not found",
+        )
 
     # Check if user can delete
     if not comment_crud.can_user_delete_comment(req_dep.current_user, comment):
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
-            detail="Only admins can delete comments",
+            detail="You can only delete your own comments",
         )
 
-    # Check if already deleted
-    if comment.is_deleted:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Comment is already deleted",
-        )
-
-    # Soft delete
-    comment_crud.soft_delete_comment(
+    # Delete the comment
+    comment_crud.delete_comment(
         db=req_dep.db,
         comment=comment,
-        deleted_by=req_dep.current_user,
     )
 
     req_dep.db.commit()

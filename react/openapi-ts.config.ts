@@ -1,4 +1,4 @@
-import { defaultPlugins } from "@hey-api/openapi-ts";
+import { defaultPlugins } from "@hey-api/openapi-ts"
 
 export default {
   input: "openapi.json",
@@ -8,4 +8,4 @@ export default {
     "@hey-api/client-axios",
     "@tanstack/react-query",
   ],
-};
+}

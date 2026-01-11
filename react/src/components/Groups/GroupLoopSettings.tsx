@@ -4,63 +4,63 @@ import {
   Container,
   Flex,
   FormControl,
-  FormLabel,
   FormErrorMessage,
+  FormLabel,
   Heading,
   Input,
   List,
   Text,
   useColorModeValue,
-} from "@chakra-ui/react";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { useState } from "react";
+} from "@chakra-ui/react"
+import { useMutation, useQueryClient } from "@tanstack/react-query"
+import { useState } from "react"
 import {
   Controller,
   type SubmitHandler,
   useFieldArray,
   useForm,
-} from "react-hook-form";
+} from "react-hook-form"
 
-import { GroupLinked } from "../../client";
-import { 
-  ReplaceGroupDefaultQuestionsPartiesGroupGroupApiIdReplaceDefaultQuestionsPostError,
-  UpdateGroupPartiesGroupGroupApiIdPatchError,
-} from "../../client/types.gen";
-import useCustomToast from "../../hooks/useCustomToast";
-import { useRouter } from "@tanstack/react-router";
-import { FiPlus } from "react-icons/fi";
+import { useRouter } from "@tanstack/react-router"
+import type { AxiosError } from "axios"
+import { FiPlus } from "react-icons/fi"
+import type { GroupLinked } from "../../client"
 import {
   readGroupPartiesGroupGroupApiIdGetQueryKey,
   replaceGroupDefaultQuestionsPartiesGroupGroupApiIdReplaceDefaultQuestionsPostMutation,
   updateGroupPartiesGroupGroupApiIdPatchMutation,
-} from "../../client/@tanstack/react-query.gen";
-import { AxiosError } from "axios";
+} from "../../client/@tanstack/react-query.gen"
+import type {
+  ReplaceGroupDefaultQuestionsPartiesGroupGroupApiIdReplaceDefaultQuestionsPostError,
+  UpdateGroupPartiesGroupGroupApiIdPatchError,
+} from "../../client/types.gen"
+import useCustomToast from "../../hooks/useCustomToast"
 
 type QuestionField = {
-  question_text: string;
-};
+  question_text: string
+}
 
 type FormData = {
-  questions: QuestionField[];
-  cycle_length: number;
-};
+  questions: QuestionField[]
+  cycle_length: number
+}
 
 function GroupLoopSettings({ groupId }: { groupId: string }) {
-  const queryClient = useQueryClient();
-  const color = useColorModeValue("inherit", "ui.light");
-  const showToast = useCustomToast();
-  const [editMode, setEditMode] = useState(false);
+  const queryClient = useQueryClient()
+  const color = useColorModeValue("inherit", "ui.light")
+  const showToast = useCustomToast()
+  const [editMode, setEditMode] = useState(false)
   const group = queryClient.getQueryData<GroupLinked>(
     readGroupPartiesGroupGroupApiIdGetQueryKey({
       path: { group_api_id: groupId },
-    })
-  );
+    }),
+  )
 
   if (group === undefined) {
-    return null;
+    return null
   }
 
-  const router = useRouter();
+  const router = useRouter()
   const {
     handleSubmit,
     reset,
@@ -76,7 +76,7 @@ function GroupLoopSettings({ groupId }: { groupId: string }) {
       })),
       cycle_length: group.cycle_length,
     },
-  });
+  })
 
   const { fields, append, remove } = useFieldArray({
     control,
@@ -86,70 +86,70 @@ function GroupLoopSettings({ groupId }: { groupId: string }) {
         value.every((question) => question.question_text.length > 0) ||
         "Question cannot be empty.",
     },
-  });
+  })
 
   const toggleEditMode = () => {
-    setEditMode(!editMode);
-  };
+    setEditMode(!editMode)
+  }
 
   const defaultQuestionsMutation = useMutation({
     ...replaceGroupDefaultQuestionsPartiesGroupGroupApiIdReplaceDefaultQuestionsPostMutation(),
     onSuccess: () => {
-      showToast("Success!", "Loop settings updated successfully.", "success");
+      showToast("Success!", "Loop settings updated successfully.", "success")
     },
     onError: (
-      err: AxiosError<ReplaceGroupDefaultQuestionsPartiesGroupGroupApiIdReplaceDefaultQuestionsPostError>
+      err: AxiosError<ReplaceGroupDefaultQuestionsPartiesGroupGroupApiIdReplaceDefaultQuestionsPostError>,
     ) => {
       const errDetail =
-        err.response?.data.detail || "no error detail, please contact support";
-      showToast("Something went wrong.", `${errDetail}`, "error");
+        err.response?.data.detail || "no error detail, please contact support"
+      showToast("Something went wrong.", `${errDetail}`, "error")
     },
     onSettled: async () => {
       queryClient.invalidateQueries({
         queryKey: readGroupPartiesGroupGroupApiIdGetQueryKey({
           path: { group_api_id: groupId },
         }),
-      });
-      router.invalidate();
+      })
+      router.invalidate()
       await queryClient.refetchQueries({
         queryKey: readGroupPartiesGroupGroupApiIdGetQueryKey({
           path: { group_api_id: groupId },
         }),
-      });
+      })
     },
-  });
+  })
 
   const cycleUpdateMutation = useMutation({
     ...updateGroupPartiesGroupGroupApiIdPatchMutation(),
     onSuccess: () => {
-      showToast("Success!", "Cycle length updated successfully.", "success");
+      showToast("Success!", "Cycle length updated successfully.", "success")
     },
     onError: (err: AxiosError<UpdateGroupPartiesGroupGroupApiIdPatchError>) => {
       const errDetail =
-        err.response?.data.detail || "no error detail, please contact support";
-      showToast("Something went wrong.", `${errDetail}`, "error");
+        err.response?.data.detail || "no error detail, please contact support"
+      showToast("Something went wrong.", `${errDetail}`, "error")
     },
     onSettled: async () => {
       queryClient.invalidateQueries({
         queryKey: readGroupPartiesGroupGroupApiIdGetQueryKey({
           path: { group_api_id: groupId },
         }),
-      });
-      router.invalidate();
+      })
+      router.invalidate()
       await queryClient.refetchQueries({
         queryKey: readGroupPartiesGroupGroupApiIdGetQueryKey({
           path: { group_api_id: groupId },
         }),
-      });
+      })
     },
-  });
+  })
 
   const onSubmit: SubmitHandler<FormData> = async (data) => {
     if (data.cycle_length !== group.cycle_length) {
       cycleUpdateMutation.mutate({
         body: { cycle_length: data.cycle_length },
         path: { group_api_id: groupId },
-      });
+      })
     }
 
     defaultQuestionsMutation.mutate({
@@ -157,15 +157,15 @@ function GroupLoopSettings({ groupId }: { groupId: string }) {
         questions: data.questions.map((question) => question.question_text),
       },
       path: { group_api_id: groupId },
-    });
+    })
 
-    toggleEditMode();
-  };
+    toggleEditMode()
+  }
 
   const onCancel = () => {
-    reset();
-    toggleEditMode();
-  };
+    reset()
+    toggleEditMode()
+  }
 
   return (
     <>
@@ -201,9 +201,7 @@ function GroupLoopSettings({ groupId }: { groupId: string }) {
                 {group.cycle_length} days
               </Text>
             )}
-            <FormErrorMessage>
-              {errors.cycle_length && errors.cycle_length.message}
-            </FormErrorMessage>
+            <FormErrorMessage>{errors.cycle_length?.message}</FormErrorMessage>
           </FormControl>
           <FormControl mt={4}>
             <FormLabel color={color} htmlFor="defaultQuestions">
@@ -277,7 +275,7 @@ function GroupLoopSettings({ groupId }: { groupId: string }) {
         </Box>
       </Container>
     </>
-  );
+  )
 }
 
-export default GroupLoopSettings;
+export default GroupLoopSettings

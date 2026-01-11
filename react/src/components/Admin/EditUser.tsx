@@ -13,31 +13,31 @@ import {
   ModalFooter,
   ModalHeader,
   ModalOverlay,
-} from "@chakra-ui/react";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { type SubmitHandler, useForm } from "react-hook-form";
+} from "@chakra-ui/react"
+import { useMutation, useQueryClient } from "@tanstack/react-query"
+import { type SubmitHandler, useForm } from "react-hook-form"
 
-import { type UserLinked, UserUpdate } from "../../client";
-import useCustomToast from "../../hooks/useCustomToast";
-import { emailPattern } from "../../util/misc";
+import type { UserLinked, UserUpdate } from "../../client"
 import {
   readUsersPartiesUsersGetQueryKey,
   updateUserPartiesUserIdPatchMutation,
-} from "../../client/@tanstack/react-query.gen";
+} from "../../client/@tanstack/react-query.gen"
+import useCustomToast from "../../hooks/useCustomToast"
+import { emailPattern } from "../../util/misc"
 
 interface EditUserProps {
-  user: UserLinked;
-  isOpen: boolean;
-  onClose: () => void;
+  user: UserLinked
+  isOpen: boolean
+  onClose: () => void
 }
 
 interface UserUpdateForm extends UserUpdate {
-  confirm_password: string;
+  confirm_password: string
 }
 
 const EditUser = ({ user, isOpen, onClose }: EditUserProps) => {
-  const queryClient = useQueryClient();
-  const showToast = useCustomToast();
+  const queryClient = useQueryClient()
+  const showToast = useCustomToast()
 
   const {
     register,
@@ -48,14 +48,14 @@ const EditUser = ({ user, isOpen, onClose }: EditUserProps) => {
     mode: "onBlur",
     criteriaMode: "all",
     defaultValues: user,
-  });
+  })
 
   const mutation = useMutation({
     ...updateUserPartiesUserIdPatchMutation(),
     onSuccess: () => {
-      showToast("Success!", "User updated successfully.", "success");
-      reset();
-      onClose();
+      showToast("Success!", "User updated successfully.", "success")
+      reset()
+      onClose()
     },
     // onError: (err: AxiosError<UpdateUserMePartiesMePatchError>) => {
     //   const errDetail =
@@ -65,18 +65,18 @@ const EditUser = ({ user, isOpen, onClose }: EditUserProps) => {
     onSettled: () => {
       queryClient.invalidateQueries({
         queryKey: readUsersPartiesUsersGetQueryKey(),
-      });
+      })
     },
-  });
+  })
 
   const onSubmit: SubmitHandler<UserUpdateForm> = async () => {
-    mutation.mutate({});
-  };
+    mutation.mutate({})
+  }
 
   const onCancel = () => {
-    reset();
-    onClose();
-  };
+    reset()
+    onClose()
+  }
 
   return (
     <>
@@ -173,7 +173,7 @@ const EditUser = ({ user, isOpen, onClose }: EditUserProps) => {
         </ModalContent>
       </Modal>
     </>
-  );
-};
+  )
+}
 
-export default EditUser;
+export default EditUser

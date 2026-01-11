@@ -1,44 +1,58 @@
-import { Box, Heading, Textarea, Button, useDisclosure, Modal, ModalOverlay, ModalContent, ModalHeader, ModalBody, ModalFooter, ModalCloseButton, Flex } from "@chakra-ui/react";
 import {
-  PublicQuestion,
-  ResponseWithParticipant,
+  Box,
+  Button,
+  Flex,
+  Heading,
+  Modal,
+  ModalBody,
+  ModalCloseButton,
+  ModalContent,
+  ModalFooter,
+  ModalHeader,
+  ModalOverlay,
+  Textarea,
+  useDisclosure,
+} from "@chakra-ui/react"
+import { useMutation, useQueryClient } from "@tanstack/react-query"
+import type { AxiosError } from "axios"
+import { useState } from "react"
+import { FaTrash } from "react-icons/fa"
+import {
+  type DeleteQuestionQuestionsQuestionQuestionApiIdDeleteError,
+  type PublicQuestion,
+  type ResponseWithParticipant,
+  type UserLinked,
   uploadImageQuestionsQuestionQuestionApiIdUploadImagePost,
   upsertResponseQuestionsQuestionQuestionApiIdUpsertResponsePost,
-  UserLinked,
-  DeleteQuestionQuestionsQuestionQuestionApiIdDeleteError,
-} from "../../client";
-import { useState } from "react";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
-import useCustomToast from "../../hooks/useCustomToast";
-import {
-  S3Image,
-  S3Video,
-  SingleUploadImage,
-} from "../Common/SingleUploadImage";
+} from "../../client"
 import {
   deleteQuestionQuestionsQuestionQuestionApiIdDeleteMutation,
   readLetterLettersLetterLetterApiIdGetQueryKey,
   readUserMePartiesMeGetQueryKey,
-} from "../../client/@tanstack/react-query.gen";
-import { FaTrash } from "react-icons/fa";
-import { AxiosError } from "axios";
+} from "../../client/@tanstack/react-query.gen"
+import useCustomToast from "../../hooks/useCustomToast"
+import {
+  S3Image,
+  S3Video,
+  SingleUploadImage,
+} from "../Common/SingleUploadImage"
 
 type ResponseBlockProps = {
-  uploadFunction: (file: File) => Promise<void>;
-  questionApiId: string;
-  response?: ResponseWithParticipant;
-  submitResponse: (responseText: string) => Promise<void>;
-  readOnly?: boolean;
-};
+  uploadFunction: (file: File) => Promise<void>
+  questionApiId: string
+  response?: ResponseWithParticipant
+  submitResponse: (responseText: string) => Promise<void>
+  readOnly?: boolean
+}
 
 function ResponseBlock(props: ResponseBlockProps) {
   const [responseText, setResponseText] = useState(
-    props.response?.response_text ?? ""
-  );
-  const showToast = useCustomToast();
+    props.response?.response_text ?? "",
+  )
+  const showToast = useCustomToast()
   const handleResponseChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
-    setResponseText(e.target.value);
-  };
+    setResponseText(e.target.value)
+  }
 
   return (
     <Box my="10px">
@@ -50,8 +64,8 @@ function ResponseBlock(props: ResponseBlockProps) {
         isDisabled={props.readOnly}
         onBlur={async () => {
           if ((props.response?.response_text ?? "") !== responseText) {
-            await props.submitResponse(responseText);
-            showToast("Success!", "Answer saved.", "success");
+            await props.submitResponse(responseText)
+            showToast("Success!", "Answer saved.", "success")
           }
         }}
       />
@@ -60,7 +74,7 @@ function ResponseBlock(props: ResponseBlockProps) {
           <S3Image s3Key={image.s3_url} alt="response" key={index} />
         ) : (
           <S3Video s3Key={image.s3_url} key={index} />
-        );
+        )
       })}
       {!props.readOnly && (
         <SingleUploadImage
@@ -69,7 +83,7 @@ function ResponseBlock(props: ResponseBlockProps) {
         />
       )}
     </Box>
-  );
+  )
 }
 
 function DraftQuestion({
@@ -78,52 +92,55 @@ function DraftQuestion({
   readOnly = false,
   isGroupAdmin = false,
 }: {
-  question: PublicQuestion;
-  loopApiId: string;
-  readOnly?: boolean;
-  isGroupAdmin?: boolean;
+  question: PublicQuestion
+  loopApiId: string
+  readOnly?: boolean
+  isGroupAdmin?: boolean
 }): JSX.Element {
-  const queryClient = useQueryClient();
+  const queryClient = useQueryClient()
   const currentUser = queryClient.getQueryData<UserLinked>(
-    readUserMePartiesMeGetQueryKey()
-  );
-  const showToast = useCustomToast();
-  const deleteModal = useDisclosure();
+    readUserMePartiesMeGetQueryKey(),
+  )
+  const showToast = useCustomToast()
+  const deleteModal = useDisclosure()
 
   if (!currentUser) {
-    return <Box>loading...</Box>;
+    return <Box>loading...</Box>
   }
   const response = question.responses.find(
     (response) =>
-      response.participant.api_identifier === currentUser.api_identifier
-  );
+      response.participant.api_identifier === currentUser.api_identifier,
+  )
 
-  const isAuthor = question.author?.api_identifier === currentUser.api_identifier;
-  const canDelete = isAuthor || isGroupAdmin;
+  const isAuthor =
+    question.author?.api_identifier === currentUser.api_identifier
+  const canDelete = isAuthor || isGroupAdmin
 
   const deleteMutation = useMutation({
     ...deleteQuestionQuestionsQuestionQuestionApiIdDeleteMutation(),
     onSuccess: () => {
-      showToast("Success!", "Question deleted successfully.", "success");
+      showToast("Success!", "Question deleted successfully.", "success")
       queryClient.invalidateQueries({
         queryKey: readLetterLettersLetterLetterApiIdGetQueryKey({
           path: { letter_api_id: loopApiId },
         }),
-      });
+      })
     },
-    onError: (error: AxiosError<DeleteQuestionQuestionsQuestionQuestionApiIdDeleteError>) => {
+    onError: (
+      error: AxiosError<DeleteQuestionQuestionsQuestionQuestionApiIdDeleteError>,
+    ) => {
       const errDetail =
-        error.response?.data.detail || "no error detail, please contact support";
-      showToast("Something went wrong.", `${errDetail}`, "error");
-    }
-  });
+        error.response?.data.detail || "no error detail, please contact support"
+      showToast("Something went wrong.", `${errDetail}`, "error")
+    },
+  })
 
   const handleDelete = async () => {
     await deleteMutation.mutateAsync({
       path: { question_api_id: question.api_identifier },
-    });
-    deleteModal.onClose();
-  };
+    })
+    deleteModal.onClose()
+  }
 
   const handleUpsert = async (responseText: string) => {
     await upsertResponseQuestionsQuestionQuestionApiIdUpsertResponsePost({
@@ -132,8 +149,8 @@ function DraftQuestion({
         response_text: responseText,
         participant_api_identifier: currentUser.api_identifier,
       },
-    });
-  };
+    })
+  }
 
   const newHandleUpload = async (file: File) => {
     await uploadImageQuestionsQuestionQuestionApiIdUploadImagePost({
@@ -141,13 +158,13 @@ function DraftQuestion({
       body: {
         response_image: file,
       },
-    });
+    })
     queryClient.invalidateQueries({
       queryKey: readLetterLettersLetterLetterApiIdGetQueryKey({
         path: { letter_api_id: loopApiId },
       }),
-    });
-  };
+    })
+  }
 
   return (
     <Box my="20px">
@@ -186,7 +203,8 @@ function DraftQuestion({
           <ModalHeader>Delete Question</ModalHeader>
           <ModalCloseButton />
           <ModalBody>
-            Are you sure you want to delete this question? This action cannot be undone.
+            Are you sure you want to delete this question? This action cannot be
+            undone.
           </ModalBody>
           <ModalFooter>
             <Button variant="ghost" mr={3} onClick={deleteModal.onClose}>
@@ -203,7 +221,7 @@ function DraftQuestion({
         </ModalContent>
       </Modal>
     </Box>
-  );
+  )
 }
 
-export default DraftQuestion;
+export default DraftQuestion

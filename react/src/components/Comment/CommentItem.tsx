@@ -1,39 +1,38 @@
 import {
   Box,
+  Button,
   Flex,
-  Text,
+  HStack,
   IconButton,
   Menu,
   MenuButton,
-  MenuList,
   MenuItem,
-  useColorModeValue,
-  useDisclosure,
+  MenuList,
+  Text,
   Textarea,
-  Button,
-  HStack,
-} from "@chakra-ui/react";
-import { HiDotsVertical } from "react-icons/hi";
-import { FiEdit2, FiTrash2 } from "react-icons/fi";
-import { useState } from "react";
+  useColorModeValue,
+} from "@chakra-ui/react"
+import { useState } from "react"
+import { FiEdit2, FiTrash2 } from "react-icons/fi"
+import { HiDotsVertical } from "react-icons/hi"
 
 interface CommentItemProps {
   comment: {
-    api_identifier: string;
-    content: string;
-    created_at: string;
-    updated_at?: string;
+    api_identifier: string
+    content: string
+    created_at: string
+    updated_at?: string
     author: {
-      api_identifier: string;
-      name: string;
-      email: string;
-    };
-    is_deleted?: boolean;
-  };
-  currentUserId?: string;
-  isAdmin?: boolean;
-  onEdit: (commentId: string, newContent: string) => void;
-  onDelete: (commentId: string) => void;
+      api_identifier: string
+      name: string
+      email: string
+    }
+    is_deleted?: boolean
+  }
+  currentUserId?: string
+  isAdmin?: boolean
+  onEdit: (commentId: string, newContent: string) => void
+  onDelete: (commentId: string) => void
 }
 
 const CommentItem = ({
@@ -43,48 +42,54 @@ const CommentItem = ({
   onEdit,
   onDelete,
 }: CommentItemProps) => {
-  const [isEditing, setIsEditing] = useState(false);
-  const [editContent, setEditContent] = useState(comment.content);
-  const textColor = useColorModeValue("ui.dark", "ui.light");
-  const subtextColor = useColorModeValue("ui.dim", "ui.dim");
-  const bgColor = useColorModeValue("ui.glass.light.background", "ui.glass.dark.background");
-  const borderColor = useColorModeValue("ui.glass.light.border", "ui.glass.dark.border");
+  const [isEditing, setIsEditing] = useState(false)
+  const [editContent, setEditContent] = useState(comment.content)
+  const textColor = useColorModeValue("ui.dark", "ui.light")
+  const subtextColor = useColorModeValue("ui.dim", "ui.dim")
+  const bgColor = useColorModeValue(
+    "ui.glass.light.background",
+    "ui.glass.dark.background",
+  )
+  const borderColor = useColorModeValue(
+    "ui.glass.light.border",
+    "ui.glass.dark.border",
+  )
 
-  const isAuthor = currentUserId === comment.author.api_identifier;
-  const canEdit = isAuthor && !comment.is_deleted;
-  const canDelete = isAdmin && !comment.is_deleted;
+  const isAuthor = currentUserId === comment.author.api_identifier
+  const canEdit = isAuthor && !comment.is_deleted
+  const canDelete = isAdmin && !comment.is_deleted
 
   const handleSaveEdit = () => {
     if (editContent.trim() && editContent !== comment.content) {
-      onEdit(comment.api_identifier, editContent);
+      onEdit(comment.api_identifier, editContent)
     }
-    setIsEditing(false);
-  };
+    setIsEditing(false)
+  }
 
   const handleCancelEdit = () => {
-    setEditContent(comment.content);
-    setIsEditing(false);
-  };
+    setEditContent(comment.content)
+    setIsEditing(false)
+  }
 
   // Simple time ago formatting
   const getTimeAgo = (dateString: string) => {
-    const date = new Date(dateString);
-    const now = new Date();
-    const seconds = Math.floor((now.getTime() - date.getTime()) / 1000);
-    
-    if (seconds < 60) return "just now";
-    const minutes = Math.floor(seconds / 60);
-    if (minutes < 60) return `${minutes} minute${minutes !== 1 ? 's' : ''} ago`;
-    const hours = Math.floor(minutes / 60);
-    if (hours < 24) return `${hours} hour${hours !== 1 ? 's' : ''} ago`;
-    const days = Math.floor(hours / 24);
-    if (days < 7) return `${days} day${days !== 1 ? 's' : ''} ago`;
-    
-    // For older comments, show the date
-    return date.toLocaleDateString();
-  };
+    const date = new Date(dateString)
+    const now = new Date()
+    const seconds = Math.floor((now.getTime() - date.getTime()) / 1000)
 
-  const timeAgo = getTimeAgo(comment.created_at);
+    if (seconds < 60) return "just now"
+    const minutes = Math.floor(seconds / 60)
+    if (minutes < 60) return `${minutes} minute${minutes !== 1 ? "s" : ""} ago`
+    const hours = Math.floor(minutes / 60)
+    if (hours < 24) return `${hours} hour${hours !== 1 ? "s" : ""} ago`
+    const days = Math.floor(hours / 24)
+    if (days < 7) return `${days} day${days !== 1 ? "s" : ""} ago`
+
+    // For older comments, show the date
+    return date.toLocaleDateString()
+  }
+
+  const timeAgo = getTimeAgo(comment.created_at)
 
   return (
     <Box
@@ -148,18 +153,16 @@ const CommentItem = ({
                 >
                   Save
                 </Button>
-                <Button
-                  size="sm"
-                  variant="glass"
-                  onClick={handleCancelEdit}
-                >
+                <Button size="sm" variant="glass" onClick={handleCancelEdit}>
                   Cancel
                 </Button>
               </HStack>
             </Box>
           ) : (
             <Text color={textColor} whiteSpace="pre-wrap">
-              {comment.is_deleted ? "[This comment has been deleted]" : comment.content}
+              {comment.is_deleted
+                ? "[This comment has been deleted]"
+                : comment.content}
             </Text>
           )}
         </Box>
@@ -219,7 +222,7 @@ const CommentItem = ({
         )}
       </Flex>
     </Box>
-  );
-};
+  )
+}
 
-export default CommentItem;
+export default CommentItem

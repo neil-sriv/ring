@@ -1,12 +1,17 @@
-import { Box, VStack } from "@chakra-ui/react";
-import { GroupLinked, MinimalLetter } from "../../client";
-import LoopNav from "./LoopNav";
-import { LoopsGrid } from "./LoopsGrid";
+import { Box, VStack } from "@chakra-ui/react"
+import type { GroupLinked, MinimalLetter } from "../../client"
+import LoopNav from "./LoopNav"
+import { LoopsGrid } from "./LoopsGrid"
 
-export function LoopsTab({ loops, group }: { loops: MinimalLetter[]; group: GroupLinked }) {
-  const publishedLoops = loops.filter(loop => loop.status === "SENT");
-  const inProgressLoops = loops.filter(loop => loop.status === "IN_PROGRESS");
-  const upcomingLoops = loops.filter(loop => loop.status !== "SENT" && loop.status !== "IN_PROGRESS");
+export function LoopsTab({
+  loops,
+  group,
+}: { loops: MinimalLetter[]; group: GroupLinked }) {
+  const publishedLoops = loops.filter((loop) => loop.status === "SENT")
+  const inProgressLoops = loops.filter((loop) => loop.status === "IN_PROGRESS")
+  const upcomingLoops = loops.filter(
+    (loop) => loop.status !== "SENT" && loop.status !== "IN_PROGRESS",
+  )
 
   return (
     <VStack spacing={8} w="100%">
@@ -31,10 +36,13 @@ export function LoopsTab({ loops, group }: { loops: MinimalLetter[]; group: Grou
 
       {publishedLoops.length > 0 && (
         <LoopsGrid
-          loops={publishedLoops.sort((a, b) => new Date(a.send_at).getTime() - new Date(b.send_at).getTime())}
+          loops={publishedLoops.sort(
+            (a, b) =>
+              new Date(a.send_at).getTime() - new Date(b.send_at).getTime(),
+          )}
           heading="Published Issues"
         />
       )}
     </VStack>
-  );
+  )
 }
