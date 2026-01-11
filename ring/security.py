@@ -7,6 +7,7 @@ and JWT for token-based authentication.
 
 from __future__ import annotations
 
+import uuid
 from datetime import UTC, datetime, timedelta
 from enum import Enum
 
@@ -77,7 +78,13 @@ def create_access_token(
     config = get_config()
     to_encode = data.copy()
     expire = datetime.now(tz=UTC) + timedelta(seconds=expires_ttl)
-    to_encode.update({"exp": expire, "type": TokenType.ACCESS.value})
+    to_encode.update(
+        {
+            "exp": expire,
+            "type": TokenType.ACCESS.value,
+            "jti": str(uuid.uuid4()),
+        }
+    )
     encoded_jwt = jwt.encode(
         to_encode,
         config.JWT_SIGNING_KEY,
@@ -109,7 +116,13 @@ def create_refresh_token(
     config = get_config()
     to_encode = data.copy()
     expire = datetime.now(tz=UTC) + timedelta(seconds=expires_ttl)
-    to_encode.update({"exp": expire, "type": TokenType.REFRESH.value})
+    to_encode.update(
+        {
+            "exp": expire,
+            "type": TokenType.REFRESH.value,
+            "jti": str(uuid.uuid4()),
+        }
+    )
     encoded_jwt = jwt.encode(
         to_encode,
         config.JWT_SIGNING_KEY,

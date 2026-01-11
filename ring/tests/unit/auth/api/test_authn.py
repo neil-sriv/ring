@@ -285,7 +285,9 @@ class TestTokenCreation:
         )
 
         exp = datetime.fromtimestamp(payload["exp"], tz=UTC)
-        expected_exp = datetime.now(tz=UTC) + timedelta(seconds=ACCESS_TOKEN_TTL)
+        expected_exp = datetime.now(tz=UTC) + timedelta(
+            seconds=ACCESS_TOKEN_TTL
+        )
 
         # Allow 5 seconds tolerance
         assert abs((exp - expected_exp).total_seconds()) < 5
@@ -308,7 +310,9 @@ class TestTokenCreation:
         )
 
         exp = datetime.fromtimestamp(payload["exp"], tz=UTC)
-        expected_exp = datetime.now(tz=UTC) + timedelta(seconds=REFRESH_TOKEN_TTL)
+        expected_exp = datetime.now(tz=UTC) + timedelta(
+            seconds=REFRESH_TOKEN_TTL
+        )
 
         # Allow 5 seconds tolerance
         assert abs((exp - expected_exp).total_seconds()) < 5
@@ -345,7 +349,9 @@ class TestTokenCreation:
         """Test that custom TTL can be set for access tokens."""
         email = "test@example.com"
         custom_ttl = 3600  # 1 hour
-        token = create_access_token(data={"sub": email}, expires_ttl=custom_ttl)
+        token = create_access_token(
+            data={"sub": email}, expires_ttl=custom_ttl
+        )
 
         config = get_config()
         payload = jwt.decode(
@@ -364,7 +370,9 @@ class TestTokenCreation:
         """Test that custom TTL can be set for refresh tokens."""
         email = "test@example.com"
         custom_ttl = 86400  # 1 day
-        token = create_refresh_token(data={"sub": email}, expires_ttl=custom_ttl)
+        token = create_refresh_token(
+            data={"sub": email}, expires_ttl=custom_ttl
+        )
 
         config = get_config()
         payload = jwt.decode(
