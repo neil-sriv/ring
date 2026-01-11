@@ -16,7 +16,7 @@ class CommentBase(BaseModel):
     """Base schema for comment-related operations.
 
     Attributes:
-        content (str): The text content of the comment
+        content: The text content of the comment
     """
 
     content: str = Field(..., min_length=1, max_length=5000)
@@ -35,7 +35,7 @@ class CommentUpdate(BaseModel):
     """Schema for updating a comment.
 
     Attributes:
-        content (str): Updated text content of the comment
+        content: Updated text content of the comment
     """
 
     content: str = Field(..., min_length=1, max_length=5000)
@@ -45,25 +45,21 @@ class CommentUnlinked(CommentBase):
     """Schema for comment without relationships.
 
     Attributes:
-        api_identifier (str): Unique API identifier for the comment
-        created_at (datetime): Timestamp when comment was created
-        updated_at (Optional[datetime]): Timestamp of last update
-        author_api_identifier (str): API identifier of the comment author
-        question_api_identifier (str): API identifier of the related question
-        is_deleted (bool): Whether the comment has been soft deleted
+        api_identifier: Unique API identifier for the comment
+        created_at: Timestamp when comment was created
+        target_api_id: API identifier of the object being commented on
+        author_api_identifier: API identifier of the comment author
     """
 
     model_config = ConfigDict(from_attributes=True, populate_by_name=True)
 
     api_identifier: str
     created_at: datetime
-    updated_at: Optional[datetime] = None
+    target_api_id: str
     author_api_identifier: str
-    question_api_identifier: str
-    is_deleted: bool = False
 
     @classmethod
-    def from_orm_with_relations(cls, comment):
+    def from_orm_with_relations(cls, comment: "Comment") -> "CommentUnlinked":
         """Create CommentUnlinked from ORM model with relationships.
 
         Args:
@@ -76,10 +72,8 @@ class CommentUnlinked(CommentBase):
             api_identifier=comment.api_identifier,
             content=comment.content,
             created_at=comment.created_at,
-            updated_at=comment.updated_at,
+            target_api_id=comment.target_api_id,
             author_api_identifier=comment.author.api_identifier,
-            question_api_identifier=comment.question.api_identifier,
-            is_deleted=comment.is_deleted,
         )
 
 

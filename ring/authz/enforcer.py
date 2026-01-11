@@ -87,31 +87,16 @@ def build_stateless_enforcer(db: Session, sub_api_id: str) -> Enforcer:
                 "g2", response_api_id, question_api_id
             )
 
-    # add g2 rules for comments
-    stmt_comments = (
-        select(
-            Question.api_identifier,
-            Comment.api_identifier,
-        )
-        .join(Question.comments)
-        .where(
-            Question.letter_id.in_(
-                select(Letter.id)
-                .join(Letter.group)
-                .where(
-                    Group.api_identifier.in_(
-                        [group_api_id for group_api_id, _ in user_groups]
-                    )
-                )
-            )
-        )
-    )
+    # add g2 rules for comments (linked to their target objects)
+    # Comments inherit permissions from their target object
+    stmt_comments = select(Comment.api_identifier, Comment.target_api_id)
     comments = db.execute(stmt_comments).all()
 
-    for question_api_id, comment_api_id in comments:
-        if comment_api_id:
+    for comment_api_id, target_api_id in comments:
+        if comment_api_id and target_api_id:
+            # Link comment to its target object in the hierarchy
             enforcer.add_named_grouping_policy(
-                "g2", comment_api_id, question_api_id
+                "g2", comment_api_id, target_api_id
             )
 
     # add p rules for group permissions

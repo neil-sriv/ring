@@ -225,15 +225,13 @@ class ResponseWithParticipant(Response, WithImageMixin):
 class CommentLinked(Comment):
     """Comment model with linked relationships.
 
-    Extends the base Comment model to include author and question information.
+    Extends the base Comment model to include author information.
 
     Attributes:
-        author (UserUnlinked): User who wrote the comment
-        question (QuestionUnlinked): Question being commented on
+        author: User who wrote the comment
     """
 
     author: "UserUnlinked"
-    question: "QuestionUnlinked"
 
 
 class InviteLinked(Invite):

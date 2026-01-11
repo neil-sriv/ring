@@ -11,7 +11,6 @@ import {
   Text,
   Textarea,
   useColorModeValue,
-  useDisclosure,
 } from "@chakra-ui/react"
 import { useState } from "react"
 import { FiEdit2, FiTrash2 } from "react-icons/fi"
