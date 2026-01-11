@@ -1,47 +1,47 @@
 import {
-    Button,
-    FormControl,
-    FormErrorMessage,
-    FormLabel,
-    Input,
-    Modal,
-    ModalBody,
-    ModalCloseButton,
-    ModalContent,
-    ModalFooter,
-    ModalHeader,
-    ModalOverlay,
-    useColorModeValue,
-} from "@chakra-ui/react";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { type SubmitHandler, useForm } from "react-hook-form";
+  Button,
+  FormControl,
+  FormErrorMessage,
+  FormLabel,
+  Input,
+  Modal,
+  ModalBody,
+  ModalCloseButton,
+  ModalContent,
+  ModalFooter,
+  ModalHeader,
+  ModalOverlay,
+  useColorModeValue,
+} from "@chakra-ui/react"
+import { useMutation, useQueryClient } from "@tanstack/react-query"
+import { type SubmitHandler, useForm } from "react-hook-form"
 
-import { AxiosError } from "axios";
+import type { AxiosError } from "axios"
+import type {
+  GroupLinked,
+  GroupUpdate,
+  UpdateGroupPartiesGroupGroupApiIdPatchError,
+  UserLinked,
+} from "../../client"
 import {
-    type GroupLinked,
-    type GroupUpdate,
-    UpdateGroupPartiesGroupGroupApiIdPatchError,
-    UserLinked,
-} from "../../client";
-import {
-    listGroupsPartiesGroupsGetQueryKey,
-    readUserMePartiesMeGetQueryKey,
-    updateGroupPartiesGroupGroupApiIdPatchMutation,
-} from "../../client/@tanstack/react-query.gen";
-import useCustomToast from "../../hooks/useCustomToast";
+  listGroupsPartiesGroupsGetQueryKey,
+  readUserMePartiesMeGetQueryKey,
+  updateGroupPartiesGroupGroupApiIdPatchMutation,
+} from "../../client/@tanstack/react-query.gen"
+import useCustomToast from "../../hooks/useCustomToast"
 
 interface EditGroupProps {
-  group: GroupLinked;
-  isOpen: boolean;
-  onClose: () => void;
+  group: GroupLinked
+  isOpen: boolean
+  onClose: () => void
 }
 
 const EditGroup = ({ group, isOpen, onClose }: EditGroupProps) => {
-  const queryClient = useQueryClient();
+  const queryClient = useQueryClient()
   const currentUser = queryClient.getQueryData<UserLinked>(
-    readUserMePartiesMeGetQueryKey()
-  );
-  const showToast = useCustomToast();
+    readUserMePartiesMeGetQueryKey(),
+  )
+  const showToast = useCustomToast()
   const {
     register,
     handleSubmit,
@@ -51,42 +51,42 @@ const EditGroup = ({ group, isOpen, onClose }: EditGroupProps) => {
     mode: "onBlur",
     criteriaMode: "all",
     defaultValues: group,
-  });
+  })
 
   const mutation = useMutation({
     ...updateGroupPartiesGroupGroupApiIdPatchMutation(),
     onSuccess: () => {
-      showToast("Success!", "Group updated successfully.", "success");
-      reset();
-      onClose();
+      showToast("Success!", "Group updated successfully.", "success")
+      reset()
+      onClose()
     },
     onError: (err: AxiosError<UpdateGroupPartiesGroupGroupApiIdPatchError>) => {
       const errDetail =
-        err.response?.data.detail || "no error detail, please contact support";
-      showToast("Something went wrong.", `${errDetail}`, "error");
+        err.response?.data.detail || "no error detail, please contact support"
+      showToast("Something went wrong.", `${errDetail}`, "error")
     },
     onSettled: () => {
       queryClient.invalidateQueries({
         queryKey: listGroupsPartiesGroupsGetQueryKey({
           query: { user_api_id: currentUser!.api_identifier },
         }),
-      });
+      })
     },
-  });
+  })
 
   const onSubmit: SubmitHandler<GroupUpdate> = async (data) => {
     mutation.mutate({
       path: { group_api_id: group.api_identifier },
       body: data,
-    });
-  };
+    })
+  }
 
   const onCancel = () => {
-    reset();
-    onClose();
-  };
+    reset()
+    onClose()
+  }
 
-  const textColor = useColorModeValue("ui.dark", "ui.light");
+  const textColor = useColorModeValue("ui.dark", "ui.light")
 
   return (
     <>
@@ -97,8 +97,8 @@ const EditGroup = ({ group, isOpen, onClose }: EditGroupProps) => {
         isCentered
       >
         <ModalOverlay backdropFilter="blur(4px)" />
-        <ModalContent 
-          as="form" 
+        <ModalContent
+          as="form"
           onSubmit={handleSubmit(onSubmit)}
           bg="ui.glass.light.background"
           backdropFilter="blur(10px)"
@@ -113,7 +113,9 @@ const EditGroup = ({ group, isOpen, onClose }: EditGroupProps) => {
           <ModalCloseButton color={textColor} />
           <ModalBody pb={6}>
             <FormControl isInvalid={!!errors.name}>
-              <FormLabel htmlFor="name" color={textColor}>Name</FormLabel>
+              <FormLabel htmlFor="name" color={textColor}>
+                Name
+              </FormLabel>
               <Input
                 id="name"
                 {...register("name", {
@@ -154,7 +156,7 @@ const EditGroup = ({ group, isOpen, onClose }: EditGroupProps) => {
               type="submit"
               isLoading={isSubmitting}
               isDisabled={!isDirty}
-              _hover={{ 
+              _hover={{
                 opacity: 0.9,
                 bg: "ui.primary",
               }}
@@ -162,17 +164,14 @@ const EditGroup = ({ group, isOpen, onClose }: EditGroupProps) => {
             >
               Save
             </Button>
-            <Button 
-              onClick={onCancel}
-              variant="glass"
-            >
+            <Button onClick={onCancel} variant="glass">
               Cancel
             </Button>
           </ModalFooter>
         </ModalContent>
       </Modal>
     </>
-  );
-};
+  )
+}
 
-export default EditGroup;
+export default EditGroup

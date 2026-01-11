@@ -12,36 +12,36 @@ import {
   ModalHeader,
   ModalOverlay,
   useColorModeValue,
-} from "@chakra-ui/react";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { type SubmitHandler, useForm } from "react-hook-form";
+} from "@chakra-ui/react"
+import { useMutation, useQueryClient } from "@tanstack/react-query"
+import { type SubmitHandler, useForm } from "react-hook-form"
 
-import { AxiosError } from "axios";
-import {
+import type { AxiosError } from "axios"
+import type {
   EditLetterLettersLetterLetterApiIdEditLetterPostError,
   PublicLetter,
-} from "../../client";
+} from "../../client"
 import {
   editLetterLettersLetterLetterApiIdEditLetterPostMutation,
   readLetterLettersLetterLetterApiIdGetQueryKey,
-} from "../../client/@tanstack/react-query.gen";
-import useCustomToast from "../../hooks/useCustomToast";
-import { toISOLocal } from "../../util/misc";
+} from "../../client/@tanstack/react-query.gen"
+import useCustomToast from "../../hooks/useCustomToast"
+import { toISOLocal } from "../../util/misc"
 
 type LetterFormProps = {
-  sendAt: Date | string;
-};
+  sendAt: Date | string
+}
 
 interface EditLetterProps {
-  isOpen: boolean;
-  onClose: () => void;
-  loop: PublicLetter;
+  isOpen: boolean
+  onClose: () => void
+  loop: PublicLetter
 }
 
 const EditLetter = ({ isOpen, onClose, loop }: EditLetterProps) => {
-  const queryClient = useQueryClient();
-  const showToast = useCustomToast();
-  const previousSendAt = new Date(loop.send_at);
+  const queryClient = useQueryClient()
+  const showToast = useCustomToast()
+  const previousSendAt = new Date(loop.send_at)
   const {
     register,
     handleSubmit,
@@ -53,30 +53,30 @@ const EditLetter = ({ isOpen, onClose, loop }: EditLetterProps) => {
     defaultValues: {
       sendAt: toISOLocal(previousSendAt).slice(0, 16),
     },
-  });
+  })
 
   const mutation = useMutation({
     ...editLetterLettersLetterLetterApiIdEditLetterPostMutation(),
     onSuccess: () => {
-      showToast("Success!", "Letter due date updated.", "success");
-      reset();
-      onClose();
+      showToast("Success!", "Letter due date updated.", "success")
+      reset()
+      onClose()
     },
     onError: (
-      err: AxiosError<EditLetterLettersLetterLetterApiIdEditLetterPostError>
+      err: AxiosError<EditLetterLettersLetterLetterApiIdEditLetterPostError>,
     ) => {
       const errDetail =
-        err.response?.data.detail || "no error detail, please contact support";
-      showToast("Something went wrong.", `${errDetail}`, "error");
+        err.response?.data.detail || "no error detail, please contact support"
+      showToast("Something went wrong.", `${errDetail}`, "error")
     },
     onSettled: () => {
       queryClient.invalidateQueries({
         queryKey: readLetterLettersLetterLetterApiIdGetQueryKey({
           path: { letter_api_id: loop.api_identifier },
         }),
-      });
+      })
     },
-  });
+  })
 
   const onSubmit: SubmitHandler<LetterFormProps> = (data) => {
     mutation.mutate({
@@ -85,10 +85,10 @@ const EditLetter = ({ isOpen, onClose, loop }: EditLetterProps) => {
           data.sendAt instanceof Date ? toISOLocal(data.sendAt) : data.sendAt,
       },
       path: { letter_api_id: loop.api_identifier },
-    });
-  };
+    })
+  }
 
-  const textColor = useColorModeValue("ui.dark", "ui.light");
+  const textColor = useColorModeValue("ui.dark", "ui.light")
 
   return (
     <>
@@ -115,7 +115,9 @@ const EditLetter = ({ isOpen, onClose, loop }: EditLetterProps) => {
           <ModalCloseButton color={textColor} />
           <ModalBody pb={6}>
             <FormControl isRequired>
-              <FormLabel htmlFor="sendAt" color={textColor}>Send at</FormLabel>
+              <FormLabel htmlFor="sendAt" color={textColor}>
+                Send at
+              </FormLabel>
               <Input
                 id="sendAt"
                 {...register("sendAt", {
@@ -157,17 +159,14 @@ const EditLetter = ({ isOpen, onClose, loop }: EditLetterProps) => {
             >
               Save
             </Button>
-            <Button
-              onClick={onClose}
-              variant="glass"
-            >
+            <Button onClick={onClose} variant="glass">
               Cancel
             </Button>
           </ModalFooter>
         </ModalContent>
       </Modal>
     </>
-  );
-};
+  )
+}
 
-export default EditLetter;
+export default EditLetter

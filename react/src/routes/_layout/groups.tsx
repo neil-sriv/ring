@@ -8,42 +8,42 @@ import {
   TableContainer,
   Tbody,
   Td,
+  Text,
   Th,
   Thead,
-  Text,
   Tr,
-} from "@chakra-ui/react";
-import { useSuspenseQuery } from "@tanstack/react-query";
-import { Link, createFileRoute } from "@tanstack/react-router";
-import { Link as ChakraLink } from "@chakra-ui/react";
+} from "@chakra-ui/react"
+import { Link as ChakraLink } from "@chakra-ui/react"
+import { useSuspenseQuery } from "@tanstack/react-query"
+import { Link, createFileRoute } from "@tanstack/react-router"
 
-import { Suspense } from "react";
-import { ErrorBoundary } from "react-error-boundary";
-import { UserLinked } from "../../client";
-import Navbar from "../../components/Common/Navbar";
-import ActionsMenu from "../../components/Common/ActionsMenu";
-import { listGroupsPartiesGroupsGetOptions } from "../../client/@tanstack/react-query.gen";
+import { Suspense } from "react"
+import { ErrorBoundary } from "react-error-boundary"
+import type { UserLinked } from "../../client"
+import { listGroupsPartiesGroupsGetOptions } from "../../client/@tanstack/react-query.gen"
+import ActionsMenu from "../../components/Common/ActionsMenu"
+import Navbar from "../../components/Common/Navbar"
 
 export const Route = createFileRoute("/_layout/groups")({
   component: Groups,
   loader: async ({ context }) => {
     if (!context.auth.user) {
-      throw new Error("User not authenticated");
+      throw new Error("User not authenticated")
     }
-    return context.auth.user;
+    return context.auth.user
   },
-});
+})
 
 function GroupTableBody() {
-  const currentUser = Route.useLoaderData<UserLinked>();
+  const currentUser = Route.useLoaderData<UserLinked>()
   const { data: groups } = useSuspenseQuery({
     ...listGroupsPartiesGroupsGetOptions({
       query: { user_api_id: currentUser?.api_identifier },
     }),
-  });
+  })
 
   if (!groups) {
-    return null;
+    return null
   }
 
   return (
@@ -66,7 +66,7 @@ function GroupTableBody() {
               <Text>
                 {group.members
                   .map((member) => {
-                    return member.name;
+                    return member.name
                   })
                   .sort()
                   .join(", ")}
@@ -87,7 +87,7 @@ function GroupTableBody() {
         </Tr>
       ))}
     </Tbody>
-  );
+  )
 }
 
 function GroupTable() {
@@ -133,7 +133,7 @@ function GroupTable() {
         </ErrorBoundary>
       </Table>
     </TableContainer>
-  );
+  )
 }
 
 function Groups() {
@@ -146,5 +146,5 @@ function Groups() {
       <Navbar type={"Group"} />
       <GroupTable />
     </Container>
-  );
+  )
 }

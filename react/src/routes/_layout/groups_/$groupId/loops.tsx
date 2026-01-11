@@ -9,36 +9,36 @@ import {
   TabPanels,
   Tabs,
   useColorModeValue,
-} from "@chakra-ui/react";
-import { useSuspenseQuery } from "@tanstack/react-query";
-import { createFileRoute } from "@tanstack/react-router";
-import { Suspense } from "react";
-import { MinimalLetter } from "../../../../client";
+} from "@chakra-ui/react"
+import { useSuspenseQuery } from "@tanstack/react-query"
+import { createFileRoute } from "@tanstack/react-router"
+import { Suspense } from "react"
+import type { MinimalLetter } from "../../../../client"
 import {
   listLettersLettersLettersGetOptions,
   readGroupPartiesGroupGroupApiIdGetOptions,
-} from "../../../../client/@tanstack/react-query.gen";
-import { GroupKeyValuesTable } from "../../../../components/GroupKeyValues/GroupKeyValuesTable";
-import { LLMPlayground } from "../../../../components/LLMPlayground/LLMPlayground";
-import { AdhocLoopsTab } from "../../../../components/Loops/AdhocLoopsTab";
-import { LoopsTab } from "../../../../components/Loops/LoopsTab";
-import { useGroupKeyValues } from "../../../../hooks/useGroupKeyValues";
+} from "../../../../client/@tanstack/react-query.gen"
+import { GroupKeyValuesTable } from "../../../../components/GroupKeyValues/GroupKeyValuesTable"
+import { LLMPlayground } from "../../../../components/LLMPlayground/LLMPlayground"
+import { AdhocLoopsTab } from "../../../../components/Loops/AdhocLoopsTab"
+import { LoopsTab } from "../../../../components/Loops/LoopsTab"
+import { useGroupKeyValues } from "../../../../hooks/useGroupKeyValues"
 
 type LoopsSearchParams = {
-  offset?: number;
-  limit?: number;
-};
+  offset?: number
+  limit?: number
+}
 
 type LoopsLoaderProps = {
-  loops: MinimalLetter[];
-};
+  loops: MinimalLetter[]
+}
 
 export const Route = createFileRoute("/_layout/groups/$groupId/loops")({
   validateSearch: (search: Record<string, string>): LoopsSearchParams => {
     return {
-      offset: parseInt(search.offset) || undefined,
-      limit: parseInt(search.limit) || undefined,
-    };
+      offset: Number.parseInt(search.offset) || undefined,
+      limit: Number.parseInt(search.limit) || undefined,
+    }
   },
   loaderDeps: ({ search: { offset, limit } }) => ({ offset, limit }),
   loader: async ({
@@ -54,53 +54,63 @@ export const Route = createFileRoute("/_layout/groups/$groupId/loops")({
           limit: limit,
         },
       }),
-    });
+    })
 
     return {
       loops,
-    };
+    }
   },
   component: LoopsContent,
-});
+})
 
 function LoopsContentLoader() {
-  const groupId = Route.useParams().groupId;
-  const props = Route.useLoaderData();
-  const textColor = useColorModeValue("ui.dark", "ui.light");
+  const groupId = Route.useParams().groupId
+  const props = Route.useLoaderData()
+  const textColor = useColorModeValue("ui.dark", "ui.light")
 
   const { data: group } = useSuspenseQuery({
     ...readGroupPartiesGroupGroupApiIdGetOptions({
       path: { group_api_id: groupId },
     }),
-  });
+  })
 
-  const { data: keyValues } = useGroupKeyValues(groupId);
+  const { data: keyValues } = useGroupKeyValues(groupId)
 
   const tabsConfig = [
     {
       title: "Loops",
-      component: () => <LoopsTab loops={props.loops.filter(loop => loop.letter_type === "CYCLIC")} group={group} />
+      component: () => (
+        <LoopsTab
+          loops={props.loops.filter((loop) => loop.letter_type === "CYCLIC")}
+          group={group}
+        />
+      ),
     },
     {
       title: "Adhoc Loops",
-      component: () => <AdhocLoopsTab loops={props.loops.filter(loop => loop.letter_type === "ADHOC")} group={group} />
+      component: () => (
+        <AdhocLoopsTab
+          loops={props.loops.filter((loop) => loop.letter_type === "ADHOC")}
+          group={group}
+        />
+      ),
     },
     {
       title: "Key Values",
       component: () => (
         <GroupKeyValuesTable
           keyValues={{
-            key_values: keyValues?.key_values || {}
+            key_values: keyValues?.key_values || {},
           }}
           groupApiId={groupId}
         />
-      )
+      ),
     },
     {
       title: "LLM Playground",
-      component: () => <LLMPlayground />
-    }
-  ];
+      component: () => <LLMPlayground />,
+    },
+  ]
 
   return (
     <Container maxW="full">
@@ -118,7 +128,11 @@ function LoopsContentLoader() {
         boxShadow="md"
         mb={6}
       >
-        <Heading size="lg" textAlign={{ base: "center", md: "left" }} color={textColor}>
+        <Heading
+          size="lg"
+          textAlign={{ base: "center", md: "left" }}
+          color={textColor}
+        >
           {group!.name}
         </Heading>
       </Box>
@@ -149,15 +163,13 @@ function LoopsContentLoader() {
           </TabList>
           <TabPanels>
             {tabsConfig.map((tab, index) => (
-              <TabPanel key={index}>
-                {tab.component()}
-              </TabPanel>
+              <TabPanel key={index}>{tab.component()}</TabPanel>
             ))}
           </TabPanels>
         </Tabs>
       </Box>
     </Container>
-  );
+  )
 }
 
 function LoopsContent() {
@@ -165,5 +177,5 @@ function LoopsContent() {
     <Suspense fallback={<Spinner size="xl" />}>
       <LoopsContentLoader />
     </Suspense>
-  );
+  )
 }

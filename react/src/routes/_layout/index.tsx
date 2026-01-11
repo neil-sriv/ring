@@ -1,12 +1,12 @@
-import { Box, Container } from "@chakra-ui/react";
-import { createFileRoute } from "@tanstack/react-router";
+import { Box, Container } from "@chakra-ui/react"
+import { createFileRoute } from "@tanstack/react-router"
 
-import { Suspense } from "react";
-import { HomeDashboard } from "../../components/Home/HomeDashboard";
+import { Suspense } from "react"
+import { HomeDashboard } from "../../components/Home/HomeDashboard"
 
 export const Route = createFileRoute("/_layout/")({
   component: Dashboard,
-});
+})
 
 function Dashboard() {
   return (
@@ -19,5 +19,5 @@ function Dashboard() {
         </Box>
       </Container>
     </>
-  );
+  )
 }

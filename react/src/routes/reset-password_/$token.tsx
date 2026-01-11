@@ -7,23 +7,23 @@ import {
   Heading,
   Input,
   Text,
-} from "@chakra-ui/react";
-import { useMutation } from "@tanstack/react-query";
-import { createFileRoute, redirect, useNavigate } from "@tanstack/react-router";
-import { type SubmitHandler, useForm } from "react-hook-form";
+} from "@chakra-ui/react"
+import { useMutation } from "@tanstack/react-query"
+import { createFileRoute, redirect, useNavigate } from "@tanstack/react-router"
+import { type SubmitHandler, useForm } from "react-hook-form"
 
-import {
+import type { AxiosError } from "axios"
+import type {
+  NewPassword,
   ResetPasswordResetPasswordTokenPostError,
-  type NewPassword,
-} from "../../client";
-import { isLoggedIn } from "../../hooks/useAuth";
-import useCustomToast from "../../hooks/useCustomToast";
-import { confirmPasswordRules, passwordRules } from "../../util/misc";
-import { resetPasswordResetPasswordTokenPostMutation } from "../../client/@tanstack/react-query.gen";
-import { AxiosError } from "axios";
+} from "../../client"
+import { resetPasswordResetPasswordTokenPostMutation } from "../../client/@tanstack/react-query.gen"
+import { isLoggedIn } from "../../hooks/useAuth"
+import useCustomToast from "../../hooks/useCustomToast"
+import { confirmPasswordRules, passwordRules } from "../../util/misc"
 
 interface NewPasswordForm extends NewPassword {
-  confirm_password: string;
+  confirm_password: string
 }
 
 export const Route = createFileRoute("/reset-password/$token")({
@@ -32,10 +32,10 @@ export const Route = createFileRoute("/reset-password/$token")({
     if (isLoggedIn()) {
       throw redirect({
         to: "/",
-      });
+      })
     }
   },
-});
+})
 
 function ResetPassword() {
   const {
@@ -50,32 +50,32 @@ function ResetPassword() {
     defaultValues: {
       new_password: "",
     },
-  });
-  const showToast = useCustomToast();
-  const navigate = useNavigate();
-  const { token } = Route.useParams();
+  })
+  const showToast = useCustomToast()
+  const navigate = useNavigate()
+  const { token } = Route.useParams()
 
   const mutation = useMutation({
     ...resetPasswordResetPasswordTokenPostMutation(),
     onSuccess: () => {
-      showToast("Success!", "Password updated.", "success");
-      reset();
-      navigate({ to: "/login" });
+      showToast("Success!", "Password updated.", "success")
+      reset()
+      navigate({ to: "/login" })
     },
     onError: (err: AxiosError<ResetPasswordResetPasswordTokenPostError>) => {
       const errDetail =
-        err.response?.data.detail || "no error detail, please contact support";
-      showToast("Something went wrong.", `${errDetail}`, "error");
+        err.response?.data.detail || "no error detail, please contact support"
+      showToast("Something went wrong.", `${errDetail}`, "error")
     },
-  });
+  })
 
   const onSubmit: SubmitHandler<NewPasswordForm> = async (data) => {
-    if (!token) return;
+    if (!token) return
     mutation.mutate({
       path: { token: token },
       body: data,
-    });
-  };
+    })
+  }
 
   return (
     <Container
@@ -122,5 +122,5 @@ function ResetPassword() {
         Reset Password
       </Button>
     </Container>
-  );
+  )
 }

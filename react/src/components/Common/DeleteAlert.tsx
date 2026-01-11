@@ -1,39 +1,39 @@
 import {
-    AlertDialog,
-    AlertDialogBody,
-    AlertDialogContent,
-    AlertDialogFooter,
-    AlertDialogHeader,
-    AlertDialogOverlay,
-    Button,
-    useColorModeValue,
-} from "@chakra-ui/react";
-import { useMutation } from "@tanstack/react-query";
-import React from "react";
-import { useForm } from "react-hook-form";
+  AlertDialog,
+  AlertDialogBody,
+  AlertDialogContent,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogOverlay,
+  Button,
+  useColorModeValue,
+} from "@chakra-ui/react"
+import { useMutation } from "@tanstack/react-query"
+import React from "react"
+import { useForm } from "react-hook-form"
 
 // import { LettersService, PartiesService } from "../../client";
-import useCustomToast from "../../hooks/useCustomToast";
+import useCustomToast from "../../hooks/useCustomToast"
 
 interface DeleteProps {
-  type: string;
-  id: string;
-  isOpen: boolean;
-  onClose: () => void;
+  type: string
+  id: string
+  isOpen: boolean
+  onClose: () => void
 }
 
 const Delete = ({ type, isOpen, onClose }: DeleteProps) => {
   // const queryClient = useQueryClient();
-  const showToast = useCustomToast();
-  const cancelRef = React.useRef<HTMLButtonElement | null>(null);
+  const showToast = useCustomToast()
+  const cancelRef = React.useRef<HTMLButtonElement | null>(null)
   const {
     handleSubmit,
     formState: { isSubmitting },
-  } = useForm();
-  const textColor = useColorModeValue("ui.dark", "ui.light");
+  } = useForm()
+  const textColor = useColorModeValue("ui.dark", "ui.light")
 
   const deleteEntity = async () => {
-    throw new Error("Not implemented");
+    throw new Error("Not implemented")
     // if (type === "Item") {
     //   await LettersService.readLetterLettersLetterLetterApiIdGet({
     //     letterApiId: id,
@@ -43,7 +43,7 @@ const Delete = ({ type, isOpen, onClose }: DeleteProps) => {
     // } else {
     //   throw new Error(`Unexpected type: ${type}`);
     // }
-  };
+  }
 
   const mutation = useMutation({
     mutationFn: deleteEntity,
@@ -51,16 +51,16 @@ const Delete = ({ type, isOpen, onClose }: DeleteProps) => {
       showToast(
         "Success",
         `The ${type.toLowerCase()} was deleted successfully.`,
-        "success"
-      );
-      onClose();
+        "success",
+      )
+      onClose()
     },
     onError: () => {
       showToast(
         "An error occurred.",
         `An error occurred while deleting the ${type.toLowerCase()}.`,
-        "error"
-      );
+        "error",
+      )
     },
     onSettled: () => {
       // const queryKey =
@@ -69,11 +69,11 @@ const Delete = ({ type, isOpen, onClose }: DeleteProps) => {
       //   queryKey: [type === "Group" ? "groups" : "users"],
       // });
     },
-  });
+  })
 
   const onSubmit = async () => {
-    mutation.mutate();
-  };
+    mutation.mutate()
+  }
 
   return (
     <>
@@ -85,8 +85,8 @@ const Delete = ({ type, isOpen, onClose }: DeleteProps) => {
         isCentered
       >
         <AlertDialogOverlay backdropFilter="blur(4px)" />
-        <AlertDialogContent 
-          as="form" 
+        <AlertDialogContent
+          as="form"
           onSubmit={handleSubmit(onSubmit)}
           bg="ui.glass.light.background"
           backdropFilter="blur(10px)"
@@ -110,11 +110,11 @@ const Delete = ({ type, isOpen, onClose }: DeleteProps) => {
           </AlertDialogBody>
 
           <AlertDialogFooter gap={3}>
-            <Button 
-              variant="danger" 
-              type="submit" 
+            <Button
+              variant="danger"
+              type="submit"
               isLoading={isSubmitting}
-              _hover={{ 
+              _hover={{
                 opacity: 0.9,
                 bg: "ui.danger",
               }}
@@ -134,7 +134,7 @@ const Delete = ({ type, isOpen, onClose }: DeleteProps) => {
         </AlertDialogContent>
       </AlertDialog>
     </>
-  );
-};
+  )
+}
 
-export default Delete;
+export default Delete

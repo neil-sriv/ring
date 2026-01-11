@@ -1,129 +1,151 @@
 import {
-  Box,
-  VStack,
-  Heading,
-  Textarea,
-  Button,
-  Text,
-  Flex,
-  Spinner,
-  Center,
-  useColorModeValue,
   Alert,
   AlertIcon,
+  Box,
+  Button,
+  Center,
+  Flex,
   HStack,
-} from "@chakra-ui/react";
-import { useState } from "react";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import CommentItem from "./CommentItem";
-import useCustomToast from "../../hooks/useCustomToast";
-import { UserLinked } from "../../client";
-import { 
-  createComment, 
-  getComments, 
-  updateComment, 
-  deleteComment, 
-  commentQueryKeys 
-} from "../../client/commentApi";
+  Heading,
+  Spinner,
+  Text,
+  Textarea,
+  VStack,
+  useColorModeValue,
+} from "@chakra-ui/react"
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
+import { useState } from "react"
+import type { UserLinked } from "../../client"
+import {
+  commentQueryKeys,
+  createComment,
+  deleteComment,
+  getComments,
+  updateComment,
+} from "../../client/commentApi"
+import useCustomToast from "../../hooks/useCustomToast"
+import CommentItem from "./CommentItem"
 
 interface Comment {
-  api_identifier: string;
-  content: string;
-  created_at: string;
-  updated_at?: string;
+  api_identifier: string
+  content: string
+  created_at: string
+  updated_at?: string
   author: {
-    api_identifier: string;
-    name: string;
-    email: string;
-  };
-  is_deleted?: boolean;
+    api_identifier: string
+    name: string
+    email: string
+  }
+  is_deleted?: boolean
 }
 
 interface CommentSectionProps {
-  questionApiId: string;
-  currentUser?: UserLinked;
+  questionApiId: string
+  currentUser?: UserLinked
 }
 
-const CommentSection = ({ questionApiId, currentUser }: CommentSectionProps) => {
-  const [newComment, setNewComment] = useState("");
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const queryClient = useQueryClient();
-  const showToast = useCustomToast();
-  
-  const textColor = useColorModeValue("ui.dark", "ui.light");
-  const bgColor = useColorModeValue("ui.glass.light.background", "ui.glass.dark.background");
-  const borderColor = useColorModeValue("ui.glass.light.border", "ui.glass.dark.border");
+const CommentSection = ({
+  questionApiId,
+  currentUser,
+}: CommentSectionProps) => {
+  const [newComment, setNewComment] = useState("")
+  const [isSubmitting, setIsSubmitting] = useState(false)
+  const queryClient = useQueryClient()
+  const showToast = useCustomToast()
+
+  const textColor = useColorModeValue("ui.dark", "ui.light")
+  const bgColor = useColorModeValue(
+    "ui.glass.light.background",
+    "ui.glass.dark.background",
+  )
+  const borderColor = useColorModeValue(
+    "ui.glass.light.border",
+    "ui.glass.dark.border",
+  )
 
   // Fetch comments query
-  const { data: commentsData, isLoading, error } = useQuery({
+  const {
+    data: commentsData,
+    isLoading,
+    error,
+  } = useQuery({
     queryKey: commentQueryKeys.list(questionApiId),
     queryFn: () => getComments(questionApiId, { limit: 50 }),
-  });
+  })
 
   // Create comment mutation
   const createCommentMutation = useMutation({
     mutationFn: (content: string) => createComment(questionApiId, { content }),
     onSuccess: () => {
-      showToast("Success!", "Comment posted successfully.", "success");
-      setNewComment("");
-      queryClient.invalidateQueries({ queryKey: commentQueryKeys.list(questionApiId) });
+      showToast("Success!", "Comment posted successfully.", "success")
+      setNewComment("")
+      queryClient.invalidateQueries({
+        queryKey: commentQueryKeys.list(questionApiId),
+      })
     },
     onError: (error: Error) => {
-      showToast("Error", error.message || "Failed to post comment.", "error");
+      showToast("Error", error.message || "Failed to post comment.", "error")
     },
-  });
+  })
 
   // Update comment mutation
   const updateCommentMutation = useMutation({
-    mutationFn: ({ commentId, content }: { commentId: string; content: string }) => 
+    mutationFn: ({
+      commentId,
+      content,
+    }: { commentId: string; content: string }) =>
       updateComment(commentId, { content }),
     onSuccess: () => {
-      showToast("Success!", "Comment updated successfully.", "success");
-      queryClient.invalidateQueries({ queryKey: commentQueryKeys.list(questionApiId) });
+      showToast("Success!", "Comment updated successfully.", "success")
+      queryClient.invalidateQueries({
+        queryKey: commentQueryKeys.list(questionApiId),
+      })
     },
     onError: (error: Error) => {
-      showToast("Error", error.message || "Failed to update comment.", "error");
+      showToast("Error", error.message || "Failed to update comment.", "error")
     },
-  });
+  })
 
   // Delete comment mutation
   const deleteCommentMutation = useMutation({
     mutationFn: (commentId: string) => deleteComment(commentId),
     onSuccess: () => {
-      showToast("Success!", "Comment deleted successfully.", "success");
-      queryClient.invalidateQueries({ queryKey: commentQueryKeys.list(questionApiId) });
+      showToast("Success!", "Comment deleted successfully.", "success")
+      queryClient.invalidateQueries({
+        queryKey: commentQueryKeys.list(questionApiId),
+      })
     },
     onError: (error: Error) => {
-      showToast("Error", error.message || "Failed to delete comment.", "error");
+      showToast("Error", error.message || "Failed to delete comment.", "error")
     },
-  });
+  })
 
   const handleSubmitComment = async () => {
-    if (!newComment.trim()) return;
-    setIsSubmitting(true);
+    if (!newComment.trim()) return
+    setIsSubmitting(true)
     try {
-      await createCommentMutation.mutateAsync(newComment);
+      await createCommentMutation.mutateAsync(newComment)
     } finally {
-      setIsSubmitting(false);
+      setIsSubmitting(false)
     }
-  };
+  }
 
   const handleEditComment = (commentId: string, newContent: string) => {
-    updateCommentMutation.mutate({ commentId, content: newContent });
-  };
+    updateCommentMutation.mutate({ commentId, content: newContent })
+  }
 
   const handleDeleteComment = (commentId: string) => {
     if (window.confirm("Are you sure you want to delete this comment?")) {
-      deleteCommentMutation.mutate(commentId);
+      deleteCommentMutation.mutate(commentId)
     }
-  };
+  }
 
   if (isLoading) {
     return (
       <Center py={8}>
         <Spinner size="lg" color="ui.primary" />
       </Center>
-    );
+    )
   }
 
   if (error) {
@@ -132,11 +154,11 @@ const CommentSection = ({ questionApiId, currentUser }: CommentSectionProps) => 
         <AlertIcon />
         Failed to load comments. Please try again later.
       </Alert>
-    );
+    )
   }
 
-  const comments = commentsData?.comments || [];
-  const hasComments = comments.length > 0;
+  const comments = commentsData?.comments || []
+  const hasComments = comments.length > 0
 
   return (
     <Box
@@ -216,7 +238,7 @@ const CommentSection = ({ questionApiId, currentUser }: CommentSectionProps) => 
             size="sm"
             onClick={() => {
               // TODO: Implement pagination
-              console.log("Load more comments");
+              console.log("Load more comments")
             }}
           >
             Load more comments
@@ -224,7 +246,7 @@ const CommentSection = ({ questionApiId, currentUser }: CommentSectionProps) => 
         </Center>
       )}
     </Box>
-  );
-};
+  )
+}
 
-export default CommentSection;
+export default CommentSection

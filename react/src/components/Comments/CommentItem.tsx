@@ -1,60 +1,69 @@
-import { useState } from "react";
 import {
   Box,
+  Button,
+  ButtonGroup,
   HStack,
-  VStack,
-  Text,
   IconButton,
   Menu,
   MenuButton,
-  MenuList,
   MenuItem,
-  useToast,
+  MenuList,
+  Text,
   Textarea,
-  Button,
-  ButtonGroup,
-} from "@chakra-ui/react";
-import { FiMoreVertical, FiEdit2, FiTrash2 } from "react-icons/fi";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { format } from "date-fns";
+  VStack,
+  useToast,
+} from "@chakra-ui/react"
+import { useMutation, useQueryClient } from "@tanstack/react-query"
+import { format } from "date-fns"
+import { useState } from "react"
+import { FiEdit2, FiMoreVertical, FiTrash2 } from "react-icons/fi"
 
-import { UserLinked } from "../../client";
-import { readUserMePartiesMeGetQueryKey } from "../../client/@tanstack/react-query.gen";
-import { updateComment, deleteComment, commentQueryKeys } from "../../client/commentApi";
+import type { UserLinked } from "../../client"
+import { readUserMePartiesMeGetQueryKey } from "../../client/@tanstack/react-query.gen"
+import {
+  commentQueryKeys,
+  deleteComment,
+  updateComment,
+} from "../../client/commentApi"
 // Comment types will be added after API client generation
 
 interface CommentItemProps {
-  comment: any; // Will be typed as CommentLinked after API client generation
-  questionApiId: string;
+  comment: any // Will be typed as CommentLinked after API client generation
+  questionApiId: string
 }
 
-export default function CommentItem({ comment, questionApiId }: CommentItemProps) {
-  const toast = useToast();
-  const queryClient = useQueryClient();
+export default function CommentItem({
+  comment,
+  questionApiId,
+}: CommentItemProps) {
+  const toast = useToast()
+  const queryClient = useQueryClient()
   const currentUser = queryClient.getQueryData<UserLinked>(
-    readUserMePartiesMeGetQueryKey()
-  );
-  const [isEditing, setIsEditing] = useState(false);
-  const [editContent, setEditContent] = useState(comment.content);
+    readUserMePartiesMeGetQueryKey(),
+  )
+  const [isEditing, setIsEditing] = useState(false)
+  const [editContent, setEditContent] = useState(comment.content)
 
-  const isAuthor = currentUser?.api_identifier === comment.author.api_identifier;
-  const isAdmin = currentUser?.admin || false;
-  const canEdit = isAuthor && !comment.deleted_at;
-  const canDelete = isAdmin && !comment.deleted_at;
+  const isAuthor = currentUser?.api_identifier === comment.author.api_identifier
+  const isAdmin = currentUser?.admin || false
+  const canEdit = isAuthor && !comment.deleted_at
+  const canDelete = isAdmin && !comment.deleted_at
 
   // Update comment mutation
   const updateMutation = useMutation({
     mutationFn: async (content: string) => {
-      return await updateComment(comment.api_identifier, { content });
+      return await updateComment(comment.api_identifier, { content })
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: commentQueryKeys.list(questionApiId) });
-      setIsEditing(false);
+      queryClient.invalidateQueries({
+        queryKey: commentQueryKeys.list(questionApiId),
+      })
+      setIsEditing(false)
       toast({
         title: "Comment updated",
         status: "success",
         duration: 3000,
-      });
+      })
     },
     onError: (error: any) => {
       toast({
@@ -62,22 +71,24 @@ export default function CommentItem({ comment, questionApiId }: CommentItemProps
         description: error.response?.data?.detail || "Something went wrong",
         status: "error",
         duration: 5000,
-      });
+      })
     },
-  });
+  })
 
   // Delete comment mutation
   const deleteMutation = useMutation({
     mutationFn: async () => {
-      return await deleteComment(comment.api_identifier);
+      return await deleteComment(comment.api_identifier)
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: commentQueryKeys.list(questionApiId) });
+      queryClient.invalidateQueries({
+        queryKey: commentQueryKeys.list(questionApiId),
+      })
       toast({
         title: "Comment deleted",
         status: "success",
         duration: 3000,
-      });
+      })
     },
     onError: (error: any) => {
       toast({
@@ -85,23 +96,23 @@ export default function CommentItem({ comment, questionApiId }: CommentItemProps
         description: error.response?.data?.detail || "Something went wrong",
         status: "error",
         duration: 5000,
-      });
+      })
     },
-  });
+  })
 
   const handleUpdate = async () => {
     if (!editContent.trim() || editContent === comment.content) {
-      setIsEditing(false);
-      return;
+      setIsEditing(false)
+      return
     }
-    await updateMutation.mutateAsync(editContent);
-  };
+    await updateMutation.mutateAsync(editContent)
+  }
 
   const handleDelete = async () => {
     if (window.confirm("Are you sure you want to delete this comment?")) {
-      await deleteMutation.mutateAsync();
+      await deleteMutation.mutateAsync()
     }
-  };
+  }
 
   return (
     <Box
@@ -136,7 +147,10 @@ export default function CommentItem({ comment, questionApiId }: CommentItemProps
               />
               <MenuList>
                 {canEdit && (
-                  <MenuItem icon={<FiEdit2 />} onClick={() => setIsEditing(true)}>
+                  <MenuItem
+                    icon={<FiEdit2 />}
+                    onClick={() => setIsEditing(true)}
+                  >
                     Edit
                   </MenuItem>
                 )}
@@ -173,8 +187,8 @@ export default function CommentItem({ comment, questionApiId }: CommentItemProps
               <Button
                 variant="ghost"
                 onClick={() => {
-                  setIsEditing(false);
-                  setEditContent(comment.content);
+                  setIsEditing(false)
+                  setEditContent(comment.content)
                 }}
               >
                 Cancel
@@ -186,5 +200,5 @@ export default function CommentItem({ comment, questionApiId }: CommentItemProps
         )}
       </VStack>
     </Box>
-  );
+  )
 }
