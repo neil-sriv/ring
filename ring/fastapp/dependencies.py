@@ -11,6 +11,7 @@ from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
 import boto3
+from botocore.config import Config
 from fastapi import Depends, HTTPException, WebSocket, status
 from loguru import logger
 from mypy_boto3_s3 import S3Client
@@ -165,9 +166,14 @@ async def get_websocket_request_dependencies(
 
 
 async def get_s3_client_dependencies() -> S3Client:
-    """Get an asynchronous AWS S3 client.
+    """Get an AWS S3 client with timeout configuration.
 
     Returns:
-        S3Client: Boto3 S3 client for asynchronous operations
+        S3Client: Boto3 S3 client with configured timeouts
     """
-    return boto3.client("s3")  # type: ignore
+    s3_config = Config(
+        connect_timeout=60,  # 60 seconds to establish connection
+        read_timeout=300,  # 5 minutes for read operations (uploads/downloads)
+        retries={"max_attempts": 3, "mode": "standard"},
+    )
+    return boto3.client("s3", config=s3_config)  # type: ignore
