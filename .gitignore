@@ -182,3 +182,5 @@ backup.sql
 certs/client.ringcockroach.*
 
 ssh-key-2025-05-16*
+
+node_modules/
