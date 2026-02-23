@@ -241,7 +241,9 @@ def send_response_open_email(db: Session, letter_id: int) -> None:
     recipients = [u.email for u in letter.participants]
 
     if not recipients:
-        logger.info(f"No recipients for response open email for letter {letter_id}")
+        logger.info(
+            f"No recipients for response open email for letter {letter_id}"
+        )
         return
 
     email_draft = construct_response_open_email(
