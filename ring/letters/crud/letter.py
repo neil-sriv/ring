@@ -476,12 +476,17 @@ def promote_and_create_new_letters(db: Session, letter_ids: list[int]) -> None:
     """Promote letters to IN_PROGRESS and create new upcoming letters.
 
     This task is triggered when letters need to be promoted from UPCOMING to
-    IN_PROGRESS status. It also creates new upcoming letters for the affected groups.
+    IN_PROGRESS status. It also creates new upcoming letters for the affected groups
+    and schedules email notifications to participants that the newsletter is now
+    open for responses.
 
     Args:
         db (Session): Database session
         letter_ids (list[int]): IDs of letters to promote
     """
+    from ring.async_scheduler.scheduler import scheduler
+    from ring.tasks.crud.task import send_response_open_email
+
     logger.info(f"Promoting letters: {letter_ids}")
     letters = db.scalars(select(Letter).where(Letter.id.in_(letter_ids))).all()
     for letter in letters:
@@ -490,6 +495,11 @@ def promote_and_create_new_letters(db: Session, letter_ids: list[int]) -> None:
             db,
             letter.group.api_identifier,
             letter.send_at + timedelta(days=letter.group.cycle_length),
+        )
+        # Schedule async job to send email notification
+        scheduler.add_job(
+            send_response_open_email,
+            args=[letter.id],
         )
     db.commit()
 

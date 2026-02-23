@@ -21,6 +21,9 @@ from ring.letters.crud import letter as letter_crud
 from ring.letters.models.letter_model import Letter
 from ring.lib.util import RegistrationDict
 from ring.tasks.crud.reminder_email_task import construct_reminder_email
+from ring.tasks.crud.response_open_email_task import (
+    construct_response_open_email,
+)
 from ring.tasks.crud.send_email_task import construct_send_letter_email
 from ring.tasks.models.task_model import (
     ReminderEmailTask,
@@ -216,6 +219,44 @@ ASYNC_TASK_TO_EXECUTE_MAPPING: dict[
     TaskType.SEND_EMAIL: async_send_email_task,
     TaskType.REMINDER_EMAIL: async_reminder_email_task,
 }
+
+
+@job_factory("send_response_open_email")
+def send_response_open_email(db: Session, letter_id: int) -> None:
+    """Send an email notifying participants that a newsletter is open for responses.
+
+    This job is triggered when a letter is promoted from UPCOMING to IN_PROGRESS
+    status. It sends an email to all participants letting them know they can now
+    add their responses.
+
+    Args:
+        db: Database session
+        letter_id: ID of the letter that was promoted
+    """
+    letter = db.scalars(
+        sqlalchemy.select(Letter).where(Letter.id == letter_id)
+    ).one()
+
+    letter_title = f"#{letter.number}" if not letter.title else letter.title
+    recipients = [u.email for u in letter.participants]
+
+    if not recipients:
+        logger.info(
+            f"No recipients for response open email for letter {letter_id}"
+        )
+        return
+
+    email_draft = construct_response_open_email(
+        recipients,
+        letter.group.name,
+        letter.api_identifier,
+        letter_title,
+    )
+    message_id = send_email(email_draft)
+    if message_id:
+        logger.info(
+            f"Sent response open email for letter {letter_id} to {recipients}"
+        )
 
 
 # TASK_REGISTRY: RegistrationDict[TaskType, Callable[[Any], None]] = (
