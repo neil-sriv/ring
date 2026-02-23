@@ -500,9 +500,7 @@ def promote_and_create_new_letters(db: Session, letter_ids: list[int]) -> None:
         )
         # Send email notification that the newsletter is now open for responses
         letter_title = (
-            f"#{letter.number}"
-            if not letter.title
-            else letter.title
+            f"#{letter.number}" if not letter.title else letter.title
         )
         recipients = [u.email for u in letter.participants]
         if recipients:
