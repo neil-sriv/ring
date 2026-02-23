@@ -477,17 +477,15 @@ def promote_and_create_new_letters(db: Session, letter_ids: list[int]) -> None:
 
     This task is triggered when letters need to be promoted from UPCOMING to
     IN_PROGRESS status. It also creates new upcoming letters for the affected groups
-    and sends email notifications to participants that the newsletter is now open
-    for responses.
+    and schedules email notifications to participants that the newsletter is now
+    open for responses.
 
     Args:
         db (Session): Database session
         letter_ids (list[int]): IDs of letters to promote
     """
-    from ring.email_util import send_email
-    from ring.tasks.crud.response_open_email_task import (
-        construct_response_open_email,
-    )
+    from ring.async_scheduler.scheduler import scheduler
+    from ring.tasks.crud.task import send_response_open_email
 
     logger.info(f"Promoting letters: {letter_ids}")
     letters = db.scalars(select(Letter).where(Letter.id.in_(letter_ids))).all()
@@ -498,24 +496,11 @@ def promote_and_create_new_letters(db: Session, letter_ids: list[int]) -> None:
             letter.group.api_identifier,
             letter.send_at + timedelta(days=letter.group.cycle_length),
         )
-        # Send email notification that the newsletter is now open for responses
-        letter_title = (
-            f"#{letter.number}" if not letter.title else letter.title
+        # Schedule async job to send email notification
+        scheduler.add_job(
+            send_response_open_email,
+            args=[letter.id],
         )
-        recipients = [u.email for u in letter.participants]
-        if recipients:
-            email_draft = construct_response_open_email(
-                recipients,
-                letter.group.name,
-                letter.api_identifier,
-                letter_title,
-            )
-            message_id = send_email(email_draft)
-            if message_id:
-                logger.info(
-                    f"Sent response open email for letter {letter.id} "
-                    f"to {recipients}"
-                )
     db.commit()
 
 
