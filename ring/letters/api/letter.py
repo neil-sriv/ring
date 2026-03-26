@@ -12,7 +12,7 @@ from collections import defaultdict
 from datetime import UTC, datetime, timedelta
 from typing import Sequence
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, status
 from loguru import logger
 from sqlalchemy import ColumnElement, and_, or_
 
@@ -36,6 +36,7 @@ from ring.letters.schemas.question import (
     QuestionCreate,
 )
 from ring.parties.models.user_model import User
+from ring.parties.schemas.group import SetDesignatedResponders
 from ring.ring_pydantic import PublicLetter as LetterSchema
 from ring.ring_pydantic.linked_schemas import DashboardLetters, MinimalLetter
 
@@ -105,6 +106,7 @@ async def add_next_letter(
         letter_status=LetterStatus.UPCOMING,
         letter_type=letter_type,
         title=letter.title,
+        designated_responder_api_ids=letter.designated_responder_api_identifiers,
     )
     req_dep.db.commit()
     return db_letter
@@ -337,3 +339,43 @@ async def generate_question(
     )
     generated_text = question_crud.generate_question(request.prompt, db_letter)
     return GenerateQuestionResponse(generated_text=generated_text)
+
+
+@router.post(
+    "/letter/{letter_api_id}:set_designated_responders",
+    response_model=LetterSchema,
+)
+async def set_letter_designated_responders(
+    letter_api_id: str,
+    body: SetDesignatedResponders,
+    req_dep: AuthenticatedRequestDependencies = Depends(
+        get_request_dependencies,
+    ),
+) -> Letter:
+    """Set the designated responders for a specific letter (loop).
+
+    Any member of the group can configure designated responders on a letter.
+    When set, only designated responders can submit responses to questions.
+    Pass an empty list to reset to default (inherits from group setting).
+    """
+    db_letter = api_identifier_crud.get_model(
+        req_dep.db, Letter, api_id=letter_api_id
+    )
+    if req_dep.current_user not in db_letter.group.members:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Letter not found",
+        )
+    responders = [
+        api_identifier_crud.get_model(req_dep.db, User, api_id=api_id)
+        for api_id in body.responder_api_identifiers
+    ]
+    for responder in responders:
+        if responder not in db_letter.group.members:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=f"User {responder.api_identifier} is not a member of the group",
+            )
+    db_letter.designated_responders = responders
+    req_dep.db.commit()
+    return db_letter

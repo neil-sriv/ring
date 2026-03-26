@@ -57,6 +57,11 @@ async def edit_response(
     update_response = api_identifier_crud.get_model(
         req_dep.db, Response, api_id=response_api_id
     )
+    if not update_response.question.letter.can_respond(req_dep.current_user):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="You are not a designated responder for this loop",
+        )
     question_crud.edit_response(
         req_dep.db,
         update_response,

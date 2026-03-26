@@ -100,6 +100,7 @@ def create_letter(
     letter_status: LetterStatus = LetterStatus.UPCOMING,
     letter_type: LetterType = LetterType.CYCLIC,
     title: str | None = None,
+    designated_responder_api_ids: list[str] | None = None,
 ) -> Letter:
     """Create a new letter for a group.
 
@@ -111,6 +112,8 @@ def create_letter(
         letter_status (LetterStatus, optional): Status of the letter. Defaults to UPCOMING.
         letter_type (LetterType, optional): Type of letter. Defaults to CYCLIC.
         title (str | None, optional): Title of the letter. Defaults to None.
+        designated_responder_api_ids (list[str] | None, optional): API IDs of designated
+            responders. If None, inherits from group setting.
 
     Returns:
         Letter: Newly created letter
@@ -131,6 +134,11 @@ def create_letter(
         letter_type=letter_type,
         title=title,
     )
+    if designated_responder_api_ids is not None:
+        db_letter.designated_responders = [
+            api_identifier_crud.get_model(db, User, api_id=api_id)
+            for api_id in designated_responder_api_ids
+        ]
     db.add(db_letter)
     if search_document := create_letter_search_document(db, db_letter):
         db.add(search_document)

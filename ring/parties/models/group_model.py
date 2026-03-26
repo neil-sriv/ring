@@ -20,6 +20,9 @@ from ring.letters.constants import LetterStatus, LetterType
 from ring.letters.models.default_question_model import DefaultQuestion
 from ring.letters.models.letter_model import Letter
 from ring.parties.models.group_key_value import GroupKeyValue
+from ring.parties.models.group_designated_responder import (
+    group_designated_responder,
+)
 from ring.parties.models.user_group_assocation import user_group_association
 from ring.ring_pydantic.linked_schemas import GroupLinked
 from ring.ring_pydantic.pydantic_model import PydanticModel
@@ -66,6 +69,9 @@ class Group(Base, PydanticModel, APIIdentified, CreatedAtMixin):
     _admin = relationship("User", foreign_keys=[admin_id])
     members: Mapped[list["User"]] = relationship(
         secondary=user_group_association, back_populates="groups"
+    )
+    designated_responders: Mapped[list["User"]] = relationship(
+        secondary=group_designated_responder,
     )
     letters: Mapped[list["Letter"]] = relationship(
         back_populates="group", cascade="all"
@@ -130,6 +136,16 @@ class Group(Base, PydanticModel, APIIdentified, CreatedAtMixin):
             self._admin = admin
         else:
             raise ValueError("Admin must be a member of the group")
+
+    @hybrid_property
+    def effective_responders(self) -> list[User]:
+        """Get the effective responders for the group.
+
+        Returns designated_responders if set, otherwise falls back to all members.
+        """
+        if self.designated_responders:
+            return self.designated_responders
+        return self.members
 
     @hybrid_property
     def cyclic_letters(self) -> list[Letter]:

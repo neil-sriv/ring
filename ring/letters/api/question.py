@@ -57,6 +57,11 @@ async def upsert_response(
     db_question = api_identifier_crud.get_model(
         req_dep.db, Question, api_id=question_api_id
     )
+    if not db_question.letter.can_respond(req_dep.current_user):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="You are not a designated responder for this loop",
+        )
     if response.api_identifier:
         db_response = api_identifier_crud.get_model(
             req_dep.db, Response, api_id=response.api_identifier
@@ -121,6 +126,11 @@ async def upload_image(
     db_question = api_identifier_crud.get_model(
         req_dep.db, Question, api_id=question_api_id
     )
+    if not db_question.letter.can_respond(req_dep.current_user):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="You are not a designated responder for this loop",
+        )
     response = [
         resp
         for resp in db_question.responses

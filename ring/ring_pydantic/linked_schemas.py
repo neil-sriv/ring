@@ -53,6 +53,7 @@ class GroupLinked(Group):
 
     Attributes:
         members (list[UserUnlinked]): Users who are members of the group
+        designated_responders (list[UserUnlinked]): Users designated as responders for the group
         letters (list[LetterUnlinked]): Letters associated with the group
         schedule (Optional[ScheduleUnlinked]): Group's schedule, if any
         admin (UserUnlinked): The group administrator
@@ -60,6 +61,7 @@ class GroupLinked(Group):
     """
 
     members: list["UserUnlinked"]
+    designated_responders: list["UserUnlinked"]
     letters: list["LetterUnlinked"]
     schedule: Optional["ScheduleUnlinked"]
     admin: "UserUnlinked"
@@ -121,12 +123,14 @@ class PublicLetter(Letter):
         questions (list[PublicQuestion]): Questions with public responses
         responders (list[UserUnlinked]): Users who have responded
         participants (list[UserUnlinked]): All participants in the letter
+        designated_responders (list[UserUnlinked]): Users designated as responders for this letter
     """
 
     group: "GroupUnlinked"
     questions: list["PublicQuestion"]
     responders: list["UserUnlinked"]
     participants: list["UserUnlinked"]
+    designated_responders: list["UserUnlinked"]
 
 
 class DashboardLetters(BaseModel):

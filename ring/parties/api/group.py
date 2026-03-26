@@ -25,6 +25,7 @@ from ring.parties.schemas.group import (
     GroupCreate,
     GroupUpdate,
     ReplaceDefaultQuestions,
+    SetDesignatedResponders,
 )
 from ring.ring_pydantic import GroupLinked as GroupSchema
 from ring.tasks.schemas.schedule import ScheduleSendParam
@@ -354,5 +355,45 @@ async def replace_group_default_questions(
     replace_default_questions(
         req_dep.db, db_group, default_questions.questions
     )
+    req_dep.db.commit()
+    return db_group
+
+
+@router.post(
+    "/group/{group_api_id}:set_designated_responders",
+    response_model=GroupSchema,
+)
+async def set_group_designated_responders(
+    group_api_id: str,
+    body: SetDesignatedResponders,
+    req_dep: AuthenticatedRequestDependencies = Depends(
+        get_request_dependencies,
+    ),
+) -> Group:
+    """Set the designated responders for a group.
+
+    Only the group admin can configure designated responders. When set,
+    only designated responders can submit responses to cyclic loops.
+    Pass an empty list to reset to default (all members can respond).
+    """
+    db_group = api_identifier_crud.get_model(
+        req_dep.db, Group, api_id=group_api_id
+    )
+    if req_dep.current_user != db_group.admin:
+        raise HTTPException(
+            status.HTTP_403_FORBIDDEN,
+            "Only the group admin can set designated responders",
+        )
+    responders = [
+        api_identifier_crud.get_model(req_dep.db, User, api_id=api_id)
+        for api_id in body.responder_api_identifiers
+    ]
+    for responder in responders:
+        if responder not in db_group.members:
+            raise HTTPException(
+                status.HTTP_400_BAD_REQUEST,
+                f"User {responder.api_identifier} is not a member of the group",
+            )
+    db_group.designated_responders = responders
     req_dep.db.commit()
     return db_group

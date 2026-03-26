@@ -56,6 +56,17 @@ class ReplaceDefaultQuestions(BaseModel):
     questions: list[str]
 
 
+class SetDesignatedResponders(BaseModel):
+    """Schema for setting a group's or letter's designated responders.
+
+    Attributes:
+        responder_api_identifiers (list[str]): API identifiers of users to designate as responders.
+            Pass an empty list to reset to default (all members can respond).
+    """
+
+    responder_api_identifiers: list[str]
+
+
 class Group(GroupBase):
     """Schema representing a group in the system.
 

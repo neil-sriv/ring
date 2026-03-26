@@ -5,6 +5,9 @@ def import_all_sqla_models() -> None:
     """Import all SQLAlchemy models."""
     from ring.key_value.models.model_key_value import ModelKeyValue
     from ring.letters.models.default_question_model import DefaultQuestion
+    from ring.letters.models.letter_designated_responder import (
+        letter_designated_responder,
+    )
     from ring.letters.models.letter_model import (
         Letter,
         letter_to_user_assocation,
@@ -20,6 +23,9 @@ def import_all_sqla_models() -> None:
     from ring.parties.models.group_model import Group
     from ring.parties.models.invite_model import Invite
     from ring.parties.models.one_time_token_model import OneTimeToken
+    from ring.parties.models.group_designated_responder import (
+        group_designated_responder,
+    )
     from ring.parties.models.user_group_assocation import (
         user_group_association,
     )

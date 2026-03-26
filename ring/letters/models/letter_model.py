@@ -27,6 +27,9 @@ from ring.api_identifier.api_identified_model import APIIdentified
 from ring.api_identifier.util import APIPrefix, register_api_class
 from ring.created_at import CreatedAtMixin
 from ring.letters.constants import LetterStatus, LetterType
+from ring.letters.models.letter_designated_responder import (
+    letter_designated_responder,
+)
 from ring.letters.models.question_model import Question
 from ring.ring_pydantic.linked_schemas import PublicLetter
 from ring.ring_pydantic.pydantic_model import PydanticModel
@@ -80,6 +83,9 @@ class Letter(Base, APIIdentified, PydanticModel, CreatedAtMixin):
 
     participants: Mapped[list["User"]] = relationship(
         secondary=letter_to_user_assocation
+    )
+    designated_responders: Mapped[list["User"]] = relationship(
+        secondary=letter_designated_responder,
     )
     group_id = Column(Integer, ForeignKey("group.id"))
     group: Mapped["Group"] = relationship(back_populates="letters")
@@ -164,6 +170,22 @@ class Letter(Base, APIIdentified, PydanticModel, CreatedAtMixin):
             title=title,
         )
         return letter
+
+    @hybrid_property
+    def effective_designated_responders(self) -> list[User]:
+        """Get the effective designated responders for the letter.
+
+        If the letter has its own designated_responders, use those.
+        Otherwise, fall back to the group's effective_responders
+        (which itself defaults to all group members).
+        """
+        if self.designated_responders:
+            return self.designated_responders
+        return self.group.effective_responders
+
+    def can_respond(self, user: User) -> bool:
+        """Check if a user is allowed to submit responses to this letter."""
+        return user in self.effective_designated_responders
 
     @hybrid_property
     def responders(self) -> list[User]:

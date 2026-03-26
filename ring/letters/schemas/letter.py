@@ -26,11 +26,14 @@ class LetterCreate(LetterBase):
     Attributes:
         group_api_identifier (str): API identifier of the group to create the letter for
         send_at (AwareDatetime): Scheduled time to send the letter
+        designated_responder_api_identifiers (list[str] | None): Optional list of user
+            API identifiers to designate as responders. If None, inherits from group setting.
     """
 
     group_api_identifier: str
     send_at: AwareDatetime
     title: str | None = None
+    designated_responder_api_identifiers: list[str] | None = None
 
 
 class LetterUpdate(LetterBase):
