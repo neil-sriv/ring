@@ -209,6 +209,7 @@ export type GroupLinked = {
     created_at: string;
     cycle_length: number;
     members: Array<UserUnlinked>;
+    designated_responders: Array<UserUnlinked>;
     letters: Array<LetterUnlinked>;
     schedule: ScheduleUnlinked | null;
     admin: UserUnlinked;
@@ -311,6 +312,7 @@ export type LetterCreate = {
     group_api_identifier: string;
     send_at: string;
     title?: string | null;
+    designated_responder_api_identifiers?: Array<string> | null;
 };
 
 /**
@@ -411,6 +413,7 @@ export type PublicLetter = {
     questions: Array<PublicQuestion>;
     responders: Array<UserUnlinked>;
     participants: Array<UserUnlinked>;
+    designated_responders: Array<UserUnlinked>;
 };
 
 /**
@@ -488,6 +491,10 @@ export type RawSearchResult = {
  */
 export type ReplaceDefaultQuestions = {
     questions: Array<string>;
+};
+
+export type SetDesignatedResponders = {
+    responder_api_identifiers: Array<string>;
 };
 
 /**
@@ -1413,6 +1420,27 @@ export type ReplaceGroupDefaultQuestionsPartiesGroupGroupApiIdReplaceDefaultQues
 
 export type ReplaceGroupDefaultQuestionsPartiesGroupGroupApiIdReplaceDefaultQuestionsPostResponse = ReplaceGroupDefaultQuestionsPartiesGroupGroupApiIdReplaceDefaultQuestionsPostResponses[keyof ReplaceGroupDefaultQuestionsPartiesGroupGroupApiIdReplaceDefaultQuestionsPostResponses];
 
+export type SetGroupDesignatedRespondersPartiesGroupGroupApiIdSetDesignatedRespondersPostData = {
+    body: SetDesignatedResponders;
+    path: {
+        group_api_id: string;
+    };
+    query?: never;
+    url: '/parties/group/{group_api_id}:set_designated_responders';
+};
+
+export type SetGroupDesignatedRespondersPartiesGroupGroupApiIdSetDesignatedRespondersPostErrors = {
+    422: HttpValidationError;
+};
+
+export type SetGroupDesignatedRespondersPartiesGroupGroupApiIdSetDesignatedRespondersPostError = SetGroupDesignatedRespondersPartiesGroupGroupApiIdSetDesignatedRespondersPostErrors[keyof SetGroupDesignatedRespondersPartiesGroupGroupApiIdSetDesignatedRespondersPostErrors];
+
+export type SetGroupDesignatedRespondersPartiesGroupGroupApiIdSetDesignatedRespondersPostResponses = {
+    200: GroupLinked;
+};
+
+export type SetGroupDesignatedRespondersPartiesGroupGroupApiIdSetDesignatedRespondersPostResponse = SetGroupDesignatedRespondersPartiesGroupGroupApiIdSetDesignatedRespondersPostResponses[keyof SetGroupDesignatedRespondersPartiesGroupGroupApiIdSetDesignatedRespondersPostResponses];
+
 export type ReadGroupKeyValuesPartiesGroupGroupApiIdKeyValueGetData = {
     body?: never;
     path: {
@@ -1754,6 +1782,27 @@ export type GenerateQuestionLettersLetterLetterApiIdGenerateQuestionPostResponse
 };
 
 export type GenerateQuestionLettersLetterLetterApiIdGenerateQuestionPostResponse = GenerateQuestionLettersLetterLetterApiIdGenerateQuestionPostResponses[keyof GenerateQuestionLettersLetterLetterApiIdGenerateQuestionPostResponses];
+
+export type SetLetterDesignatedRespondersLettersLetterLetterApiIdSetDesignatedRespondersPostData = {
+    body: SetDesignatedResponders;
+    path: {
+        letter_api_id: string;
+    };
+    query?: never;
+    url: '/letters/letter/{letter_api_id}:set_designated_responders';
+};
+
+export type SetLetterDesignatedRespondersLettersLetterLetterApiIdSetDesignatedRespondersPostErrors = {
+    422: HttpValidationError;
+};
+
+export type SetLetterDesignatedRespondersLettersLetterLetterApiIdSetDesignatedRespondersPostError = SetLetterDesignatedRespondersLettersLetterLetterApiIdSetDesignatedRespondersPostErrors[keyof SetLetterDesignatedRespondersLettersLetterLetterApiIdSetDesignatedRespondersPostErrors];
+
+export type SetLetterDesignatedRespondersLettersLetterLetterApiIdSetDesignatedRespondersPostResponses = {
+    200: PublicLetter;
+};
+
+export type SetLetterDesignatedRespondersLettersLetterLetterApiIdSetDesignatedRespondersPostResponse = SetLetterDesignatedRespondersLettersLetterLetterApiIdSetDesignatedRespondersPostResponses[keyof SetLetterDesignatedRespondersLettersLetterLetterApiIdSetDesignatedRespondersPostResponses];
 
 export type GetScheduleForGroupScheduleScheduleGroupApiIdGetData = {
     body?: never;

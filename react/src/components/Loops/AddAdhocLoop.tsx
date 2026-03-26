@@ -1,5 +1,7 @@
 import {
+    Box,
     Button,
+    Checkbox,
     FormControl,
     FormErrorMessage,
     FormLabel,
@@ -11,15 +13,19 @@ import {
     ModalFooter,
     ModalHeader,
     ModalOverlay,
+    Text,
+    VStack,
 } from "@chakra-ui/react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useState } from "react";
 import { type SubmitHandler, useForm } from "react-hook-form";
 
 import { AxiosError } from "axios";
-import { AddNextLetterLettersLetterLetterTypePostError } from "../../client";
+import { AddNextLetterLettersLetterLetterTypePostError, GroupLinked } from "../../client";
 import {
     addNextLetterLettersLetterLetterTypePostMutation,
     listLettersLettersLettersGetQueryKey,
+    readGroupPartiesGroupGroupApiIdGetQueryKey,
 } from "../../client/@tanstack/react-query.gen";
 import useCustomToast from "../../hooks/useCustomToast";
 import { toISOLocal } from "../../util/misc";
@@ -45,6 +51,17 @@ const AddAdhocLoop = ({ isOpen, onClose, groupApiId }: AddAdhocLoopProps) => {
     defaultDate.setUTCSeconds(0);
     defaultDate.setUTCMilliseconds(0);
 
+    const group = queryClient.getQueryData<GroupLinked>(
+        readGroupPartiesGroupGroupApiIdGetQueryKey({
+            path: { group_api_id: groupApiId },
+        })
+    );
+
+    const [selectedResponders, setSelectedResponders] = useState<Set<string>>(
+        () => new Set(group?.members.map((m) => m.api_identifier) ?? [])
+    );
+    const [customizeResponders, setCustomizeResponders] = useState(false);
+
     const {
         register,
         handleSubmit,
@@ -64,6 +81,8 @@ const AddAdhocLoop = ({ isOpen, onClose, groupApiId }: AddAdhocLoopProps) => {
         onSuccess: () => {
             showToast("Success!", "Adhoc loop created successfully.", "success");
             reset();
+            setCustomizeResponders(false);
+            setSelectedResponders(new Set(group?.members.map((m) => m.api_identifier) ?? []));
             onClose();
         },
         onError: (err: AxiosError<AddNextLetterLettersLetterLetterTypePostError>) => {
@@ -80,7 +99,25 @@ const AddAdhocLoop = ({ isOpen, onClose, groupApiId }: AddAdhocLoopProps) => {
         },
     });
 
+    function handleToggleResponder(apiIdentifier: string): void {
+        setSelectedResponders((prev) => {
+            const next = new Set(prev);
+            if (next.has(apiIdentifier)) {
+                if (next.size <= 1) {
+                    return next;
+                }
+                next.delete(apiIdentifier);
+            } else {
+                next.add(apiIdentifier);
+            }
+            return next;
+        });
+    }
+
     const onSubmit: SubmitHandler<AdhocLetterFormProps> = (data) => {
+        const isAllMembers = !customizeResponders ||
+            (group && selectedResponders.size === group.members.length);
+
         mutation.mutate({
             path: { letter_type: "ADHOC" },
             body: {
@@ -88,6 +125,9 @@ const AddAdhocLoop = ({ isOpen, onClose, groupApiId }: AddAdhocLoopProps) => {
                 send_at:
                     data.sendAt instanceof Date ? toISOLocal(data.sendAt) : data.sendAt,
                 title: data.title || null,
+                designated_responder_api_identifiers: isAllMembers
+                    ? null
+                    : Array.from(selectedResponders),
             },
         });
     };
@@ -122,7 +162,7 @@ const AddAdhocLoop = ({ isOpen, onClose, groupApiId }: AddAdhocLoopProps) => {
                             )}
                         </FormControl>
 
-                        <FormControl isRequired>
+                        <FormControl isRequired mb={4}>
                             <FormLabel htmlFor="sendAt">Send at</FormLabel>
                             <Input
                                 id="sendAt"
@@ -137,6 +177,38 @@ const AddAdhocLoop = ({ isOpen, onClose, groupApiId }: AddAdhocLoopProps) => {
                                 <FormErrorMessage>{errors.sendAt.message}</FormErrorMessage>
                             )}
                         </FormControl>
+
+                        {group && (
+                            <FormControl>
+                                <Checkbox
+                                    isChecked={customizeResponders}
+                                    onChange={(e) => setCustomizeResponders(e.target.checked)}
+                                    mb={2}
+                                >
+                                    Limit who can respond
+                                </Checkbox>
+                                {customizeResponders && (
+                                    <Box pl={6} pt={2}>
+                                        <Text fontSize="sm" color="gray.500" mb={2}>
+                                            Select which members can respond to this loop.
+                                            Everyone else will still receive the email.
+                                        </Text>
+                                        <VStack align="stretch" spacing={1}>
+                                            {group.members.map((member) => (
+                                                <Checkbox
+                                                    key={member.api_identifier}
+                                                    isChecked={selectedResponders.has(member.api_identifier)}
+                                                    onChange={() => handleToggleResponder(member.api_identifier)}
+                                                    size="sm"
+                                                >
+                                                    {member.name}
+                                                </Checkbox>
+                                            ))}
+                                        </VStack>
+                                    </Box>
+                                )}
+                            </FormControl>
+                        )}
                     </ModalBody>
 
                     <ModalFooter gap={3}>

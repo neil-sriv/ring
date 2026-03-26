@@ -12,6 +12,7 @@ import { GroupLinked } from "../../../../client";
 import GroupInformation from "../../../../components/Groups/GroupInformation";
 import GroupMembershipSettings from "../../../../components/Groups/GroupMembershipSettings";
 import GroupLoopSettings from "../../../../components/Groups/GroupLoopSettings";
+import GroupRespondersSettings from "../../../../components/Groups/GroupRespondersSettings";
 import { readGroupPartiesGroupGroupApiIdGetOptions } from "../../../../client/@tanstack/react-query.gen";
 
 export const Route = createFileRoute("/_layout/groups/$groupId/settings")({
@@ -35,6 +36,7 @@ const tabsConfig = [
   { title: "Group Information", component: GroupInformation },
   { title: "Membership", component: GroupMembershipSettings },
   { title: "Loop Settings", component: GroupLoopSettings },
+  { title: "Responders", component: GroupRespondersSettings },
 ];
 
 function GroupSettings() {

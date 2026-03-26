@@ -1,4 +1,4 @@
-import { Box, Button, Container, Flex, Heading, Icon, Text, useColorModeValue, useDisclosure, VStack } from "@chakra-ui/react";
+import { Badge, Box, Button, Container, Flex, Heading, Icon, Text, Tooltip, Wrap, WrapItem, useColorModeValue, useDisclosure, VStack } from "@chakra-ui/react";
 import { useQueryClient, useSuspenseQuery } from "@tanstack/react-query";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { Suspense } from "react";
@@ -12,6 +12,7 @@ import {
 } from "../../../client/@tanstack/react-query.gen";
 import DraftLoop from "../../../components/Loops/DraftLoop";
 import EditLetter from "../../../components/Loops/EditLoop";
+import LoopRespondersModal from "../../../components/Loops/LoopRespondersModal";
 import PublishedLoop from "../../../components/Loops/PublishedLoop";
 import AddQuestion from "../../../components/Question/AddQuestion";
 import GenerateQuestion from "../../../components/Question/GenerateQuestion";
@@ -56,6 +57,9 @@ function IssueContent() {
   const editLoopModal = useDisclosure();
   const addQuestionModal = useDisclosure();
   const generateQuestionModal = useDisclosure();
+  const respondersModal = useDisclosure();
+
+  const hasDesignatedResponders = loop.designated_responders.length > 0;
 
   return (
     <Flex justify="center" w="100%">
@@ -123,6 +127,34 @@ function IssueContent() {
                 >
                   Due {localDueDate.toLocaleString()}
                 </Heading>
+              )}
+              {hasDesignatedResponders && (
+                <Box pt={2}>
+                  <Tooltip label="Only designated responders can submit answers">
+                    <Text fontSize="sm" color={subtextColor} textAlign="center">
+                      Responders:{" "}
+                      <Wrap display="inline-flex" spacing={1}>
+                        {loop.designated_responders.map((r) => (
+                          <WrapItem key={r.api_identifier}>
+                            <Badge colorScheme="teal" variant="subtle" fontSize="xs">
+                              {r.name}
+                            </Badge>
+                          </WrapItem>
+                        ))}
+                      </Wrap>
+                    </Text>
+                  </Tooltip>
+                </Box>
+              )}
+              {loop.status !== "SENT" && (
+                <Button
+                  size="xs"
+                  variant="ghost"
+                  onClick={respondersModal.onOpen}
+                  mt={1}
+                >
+                  {hasDesignatedResponders ? "Edit Responders" : "Set Responders"}
+                </Button>
               )}
             </VStack>
           </Box>
@@ -199,6 +231,14 @@ function IssueContent() {
         onClose={generateQuestionModal.onClose}
         loopApiId={loop.api_identifier}
       />
+      {group && (
+        <LoopRespondersModal
+          isOpen={respondersModal.isOpen}
+          onClose={respondersModal.onClose}
+          loop={loop}
+          group={group}
+        />
+      )}
     </Flex>
   );
 }
