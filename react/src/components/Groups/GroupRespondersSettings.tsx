@@ -53,7 +53,8 @@ function GroupRespondersSettings({ groupId }: { groupId: string }) {
     return null;
   }
 
-  const isAllMembers = selectedResponders.size === group.members.length;
+  const validGroup = group;
+  const isAllMembers = selectedResponders.size === validGroup.members.length;
 
   const mutation = useMutation({
     ...setGroupDesignatedRespondersPartiesGroupGroupApiIdSetDesignatedRespondersPostMutation(),
@@ -101,7 +102,7 @@ function GroupRespondersSettings({ groupId }: { groupId: string }) {
     if (isAllMembers) {
       return;
     }
-    setSelectedResponders(new Set(group.members.map((m) => m.api_identifier)));
+    setSelectedResponders(new Set(validGroup.members.map((m) => m.api_identifier)));
   }
 
   function handleSave(): void {
@@ -115,9 +116,9 @@ function GroupRespondersSettings({ groupId }: { groupId: string }) {
 
   function handleCancel(): void {
     if (hasDesignatedResponders) {
-      setSelectedResponders(new Set(group.designated_responders.map((r) => r.api_identifier)));
+      setSelectedResponders(new Set(validGroup.designated_responders.map((r) => r.api_identifier)));
     } else {
-      setSelectedResponders(new Set(group.members.map((m) => m.api_identifier)));
+      setSelectedResponders(new Set(validGroup.members.map((m) => m.api_identifier)));
     }
     setEditMode(false);
   }
