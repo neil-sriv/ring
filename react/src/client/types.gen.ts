@@ -213,6 +213,7 @@ export type GroupLinked = {
     schedule: ScheduleUnlinked | null;
     admin: UserUnlinked;
     default_questions: Array<QuestionUnlinked>;
+    responder_allowlist: Array<UserUnlinked>;
 };
 
 /**
@@ -311,6 +312,7 @@ export type LetterCreate = {
     group_api_identifier: string;
     send_at: string;
     title?: string | null;
+    responder_api_identifiers?: Array<string> | null;
 };
 
 /**
@@ -411,6 +413,8 @@ export type PublicLetter = {
     questions: Array<PublicQuestion>;
     responders: Array<UserUnlinked>;
     participants: Array<UserUnlinked>;
+    responder_allowlist: Array<UserUnlinked>;
+    effective_responders: Array<UserUnlinked>;
 };
 
 /**
@@ -488,6 +492,14 @@ export type RawSearchResult = {
  */
 export type ReplaceDefaultQuestions = {
     questions: Array<string>;
+};
+
+export type ReplaceResponderAllowlist = {
+    user_api_identifiers: Array<string>;
+};
+
+export type ReplaceLetterResponderAllowlist = {
+    user_api_identifiers: Array<string>;
 };
 
 /**
@@ -1386,6 +1398,33 @@ export type AddMembersPartiesGroupGroupApiIdAddMembersPostResponses = {
 
 export type AddMembersPartiesGroupGroupApiIdAddMembersPostResponse = AddMembersPartiesGroupGroupApiIdAddMembersPostResponses[keyof AddMembersPartiesGroupGroupApiIdAddMembersPostResponses];
 
+export type ReplaceGroupResponderAllowlistPartiesGroupGroupApiIdReplaceResponderAllowlistPostData = {
+    body: ReplaceResponderAllowlist;
+    path: {
+        group_api_id: string;
+    };
+    query?: never;
+    url: '/parties/group/{group_api_id}:replace_responder_allowlist';
+};
+
+export type ReplaceGroupResponderAllowlistPartiesGroupGroupApiIdReplaceResponderAllowlistPostErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type ReplaceGroupResponderAllowlistPartiesGroupGroupApiIdReplaceResponderAllowlistPostError = ReplaceGroupResponderAllowlistPartiesGroupGroupApiIdReplaceResponderAllowlistPostErrors[keyof ReplaceGroupResponderAllowlistPartiesGroupGroupApiIdReplaceResponderAllowlistPostErrors];
+
+export type ReplaceGroupResponderAllowlistPartiesGroupGroupApiIdReplaceResponderAllowlistPostResponses = {
+    /**
+     * Successful Response
+     */
+    200: GroupLinked;
+};
+
+export type ReplaceGroupResponderAllowlistPartiesGroupGroupApiIdReplaceResponderAllowlistPostResponse = ReplaceGroupResponderAllowlistPartiesGroupGroupApiIdReplaceResponderAllowlistPostResponses[keyof ReplaceGroupResponderAllowlistPartiesGroupGroupApiIdReplaceResponderAllowlistPostResponses];
+
 export type ReplaceGroupDefaultQuestionsPartiesGroupGroupApiIdReplaceDefaultQuestionsPostData = {
     body: ReplaceDefaultQuestions;
     path: {
@@ -1673,6 +1712,33 @@ export type ListDashboardLettersLettersLettersDashboardGetResponses = {
 };
 
 export type ListDashboardLettersLettersLettersDashboardGetResponse = ListDashboardLettersLettersLettersDashboardGetResponses[keyof ListDashboardLettersLettersLettersDashboardGetResponses];
+
+export type ReplaceLetterResponderAllowlistLettersLetterLetterApiIdReplaceResponderAllowlistPostData = {
+    body: ReplaceLetterResponderAllowlist;
+    path: {
+        letter_api_id: string;
+    };
+    query?: never;
+    url: '/letters/letter/{letter_api_id}:replace_responder_allowlist';
+};
+
+export type ReplaceLetterResponderAllowlistLettersLetterLetterApiIdReplaceResponderAllowlistPostErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type ReplaceLetterResponderAllowlistLettersLetterLetterApiIdReplaceResponderAllowlistPostError = ReplaceLetterResponderAllowlistLettersLetterLetterApiIdReplaceResponderAllowlistPostErrors[keyof ReplaceLetterResponderAllowlistLettersLetterLetterApiIdReplaceResponderAllowlistPostErrors];
+
+export type ReplaceLetterResponderAllowlistLettersLetterLetterApiIdReplaceResponderAllowlistPostResponses = {
+    /**
+     * Successful Response
+     */
+    200: PublicLetter;
+};
+
+export type ReplaceLetterResponderAllowlistLettersLetterLetterApiIdReplaceResponderAllowlistPostResponse = ReplaceLetterResponderAllowlistLettersLetterLetterApiIdReplaceResponderAllowlistPostResponses[keyof ReplaceLetterResponderAllowlistLettersLetterLetterApiIdReplaceResponderAllowlistPostResponses];
 
 export type EditLetterLettersLetterLetterApiIdEditLetterPostData = {
     body: LetterUpdate;

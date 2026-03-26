@@ -1,6 +1,7 @@
 import {
   Box,
   Button,
+  Checkbox,
   Container,
   Flex,
   FormControl,
@@ -9,11 +10,12 @@ import {
   Heading,
   Input,
   List,
+  Stack,
   Text,
   useColorModeValue,
 } from "@chakra-ui/react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   Controller,
   type SubmitHandler,
@@ -21,9 +23,10 @@ import {
   useForm,
 } from "react-hook-form";
 
-import { GroupLinked } from "../../client";
-import { 
+import { GroupLinked, UserLinked } from "../../client";
+import {
   ReplaceGroupDefaultQuestionsPartiesGroupGroupApiIdReplaceDefaultQuestionsPostError,
+  ReplaceGroupResponderAllowlistPartiesGroupGroupApiIdReplaceResponderAllowlistPostError,
   UpdateGroupPartiesGroupGroupApiIdPatchError,
 } from "../../client/types.gen";
 import useCustomToast from "../../hooks/useCustomToast";
@@ -31,7 +34,9 @@ import { useRouter } from "@tanstack/react-router";
 import { FiPlus } from "react-icons/fi";
 import {
   readGroupPartiesGroupGroupApiIdGetQueryKey,
+  readUserMePartiesMeGetQueryKey,
   replaceGroupDefaultQuestionsPartiesGroupGroupApiIdReplaceDefaultQuestionsPostMutation,
+  replaceGroupResponderAllowlistPartiesGroupGroupApiIdReplaceResponderAllowlistPostMutation,
   updateGroupPartiesGroupGroupApiIdPatchMutation,
 } from "../../client/@tanstack/react-query.gen";
 import { AxiosError } from "axios";
@@ -55,10 +60,34 @@ function GroupLoopSettings({ groupId }: { groupId: string }) {
       path: { group_api_id: groupId },
     })
   );
+  const currentUser = queryClient.getQueryData<UserLinked>(
+    readUserMePartiesMeGetQueryKey(),
+  );
 
   if (group === undefined) {
     return null;
   }
+
+  const isGroupAdmin =
+    currentUser?.api_identifier === group.admin.api_identifier;
+
+  const [cyclicResponderIds, setCyclicResponderIds] = useState<string[]>(() =>
+    group.responder_allowlist.length === 0
+      ? group.members.map((m) => m.api_identifier)
+      : group.responder_allowlist.map((m) => m.api_identifier),
+  );
+
+  useEffect(() => {
+    setCyclicResponderIds(
+      group.responder_allowlist.length === 0
+        ? group.members.map((m) => m.api_identifier)
+        : group.responder_allowlist.map((m) => m.api_identifier),
+    );
+  }, [
+    group.api_identifier,
+    group.responder_allowlist,
+    group.members,
+  ]);
 
   const router = useRouter();
   const {
@@ -99,6 +128,37 @@ function GroupLoopSettings({ groupId }: { groupId: string }) {
     },
     onError: (
       err: AxiosError<ReplaceGroupDefaultQuestionsPartiesGroupGroupApiIdReplaceDefaultQuestionsPostError>
+    ) => {
+      const errDetail =
+        err.response?.data.detail || "no error detail, please contact support";
+      showToast("Something went wrong.", `${errDetail}`, "error");
+    },
+    onSettled: async () => {
+      queryClient.invalidateQueries({
+        queryKey: readGroupPartiesGroupGroupApiIdGetQueryKey({
+          path: { group_api_id: groupId },
+        }),
+      });
+      router.invalidate();
+      await queryClient.refetchQueries({
+        queryKey: readGroupPartiesGroupGroupApiIdGetQueryKey({
+          path: { group_api_id: groupId },
+        }),
+      });
+    },
+  });
+
+  const cyclicRespondersMutation = useMutation({
+    ...replaceGroupResponderAllowlistPartiesGroupGroupApiIdReplaceResponderAllowlistPostMutation(),
+    onSuccess: () => {
+      showToast(
+        "Success!",
+        "Cyclic loop responders updated.",
+        "success",
+      );
+    },
+    onError: (
+      err: AxiosError<ReplaceGroupResponderAllowlistPartiesGroupGroupApiIdReplaceResponderAllowlistPostError>,
     ) => {
       const errDetail =
         err.response?.data.detail || "no error detail, please contact support";
@@ -167,12 +227,75 @@ function GroupLoopSettings({ groupId }: { groupId: string }) {
     toggleEditMode();
   };
 
+  function toggleCyclicResponder(apiId: string): void {
+    setCyclicResponderIds((prev) =>
+      prev.includes(apiId)
+        ? prev.filter((id) => id !== apiId)
+        : [...prev, apiId],
+    );
+  }
+
+  function saveCyclicResponders(): void {
+    if (!group) {
+      return;
+    }
+    if (cyclicResponderIds.length === 0) {
+      showToast(
+        "Invalid selection",
+        "Select at least one person who can respond, or reset to everyone.",
+        "error",
+      );
+      return;
+    }
+    const allMemberIds = group.members.map((m) => m.api_identifier);
+    const isEveryone =
+      cyclicResponderIds.length === allMemberIds.length &&
+      allMemberIds.every((id) => cyclicResponderIds.includes(id));
+    cyclicRespondersMutation.mutate({
+      path: { group_api_id: groupId },
+      body: {
+        user_api_identifiers: isEveryone ? [] : cyclicResponderIds,
+      },
+    });
+  }
+
   return (
     <>
       <Container maxW="full">
         <Heading size="sm" py={4}>
           Loop Settings
         </Heading>
+        {isGroupAdmin && (
+          <Box mb={8}>
+            <Heading size="xs" py={2}>
+              Who can respond (cyclic loops)
+            </Heading>
+            <Text fontSize="sm" color={color} mb={3}>
+              Everyone in the group still receives loop emails. Only checked
+              members can submit responses on recurring loops unless you leave
+              everyone selected (default).
+            </Text>
+            <Stack spacing={2} mb={3}>
+              {group.members.map((m) => (
+                <Checkbox
+                  key={m.api_identifier}
+                  isChecked={cyclicResponderIds.includes(m.api_identifier)}
+                  onChange={() => toggleCyclicResponder(m.api_identifier)}
+                >
+                  {m.name || m.email}
+                </Checkbox>
+              ))}
+            </Stack>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={saveCyclicResponders}
+              isLoading={cyclicRespondersMutation.isPending}
+            >
+              Save responders
+            </Button>
+          </Box>
+        )}
         <Box
           w={{ sm: "full", md: "50%" }}
           as="form"

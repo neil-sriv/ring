@@ -1,5 +1,6 @@
 import {
     Button,
+    Checkbox,
     FormControl,
     FormErrorMessage,
     FormLabel,
@@ -11,12 +12,18 @@ import {
     ModalFooter,
     ModalHeader,
     ModalOverlay,
+    Stack,
+    Text,
 } from "@chakra-ui/react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useEffect, useState } from "react";
 import { type SubmitHandler, useForm } from "react-hook-form";
 
 import { AxiosError } from "axios";
-import { AddNextLetterLettersLetterLetterTypePostError } from "../../client";
+import {
+    AddNextLetterLettersLetterLetterTypePostError,
+    GroupLinked,
+} from "../../client";
 import {
     addNextLetterLettersLetterLetterTypePostMutation,
     listLettersLettersLettersGetQueryKey,
@@ -32,10 +39,10 @@ type AdhocLetterFormProps = {
 type AddAdhocLoopProps = {
     isOpen: boolean;
     onClose: () => void;
-    groupApiId: string;
+    group: GroupLinked;
 };
 
-const AddAdhocLoop = ({ isOpen, onClose, groupApiId }: AddAdhocLoopProps) => {
+const AddAdhocLoop = ({ isOpen, onClose, group }: AddAdhocLoopProps) => {
     const queryClient = useQueryClient();
     const showToast = useCustomToast();
     let defaultDate = new Date();
@@ -44,6 +51,14 @@ const AddAdhocLoop = ({ isOpen, onClose, groupApiId }: AddAdhocLoopProps) => {
     defaultDate.setUTCMinutes(0);
     defaultDate.setUTCSeconds(0);
     defaultDate.setUTCMilliseconds(0);
+
+    const [responderIds, setResponderIds] = useState<string[]>(() =>
+        group.members.map((m) => m.api_identifier),
+    );
+
+    useEffect(() => {
+        setResponderIds(group.members.map((m) => m.api_identifier));
+    }, [group.api_identifier, group.members]);
 
     const {
         register,
@@ -74,20 +89,36 @@ const AddAdhocLoop = ({ isOpen, onClose, groupApiId }: AddAdhocLoopProps) => {
         onSettled: () => {
             queryClient.invalidateQueries({
                 queryKey: listLettersLettersLettersGetQueryKey({
-                    query: { group_api_id: groupApiId },
+                    query: { group_api_id: group.api_identifier },
                 }),
             });
         },
     });
 
+    function toggleResponder(apiId: string): void {
+        setResponderIds((prev) =>
+            prev.includes(apiId)
+                ? prev.filter((id) => id !== apiId)
+                : [...prev, apiId],
+        );
+    }
+
     const onSubmit: SubmitHandler<AdhocLetterFormProps> = (data) => {
+        const allIds = group.members.map((m) => m.api_identifier);
+        const isEveryone =
+            responderIds.length === allIds.length &&
+            allIds.every((id) => responderIds.includes(id));
+        if (!isEveryone && responderIds.length === 0) {
+            return;
+        }
         mutation.mutate({
             path: { letter_type: "ADHOC" },
             body: {
-                group_api_identifier: groupApiId,
+                group_api_identifier: group.api_identifier,
                 send_at:
                     data.sendAt instanceof Date ? toISOLocal(data.sendAt) : data.sendAt,
                 title: data.title || null,
+                responder_api_identifiers: isEveryone ? [] : responderIds,
             },
         });
     };
@@ -122,6 +153,34 @@ const AddAdhocLoop = ({ isOpen, onClose, groupApiId }: AddAdhocLoopProps) => {
                             )}
                         </FormControl>
 
+                        <FormControl mb={4} isInvalid={responderIds.length === 0}>
+                            <FormLabel>Who can respond</FormLabel>
+                            <Text fontSize="sm" color="ui.dim" mb={2}>
+                                Everyone in the group can still add questions. Only
+                                checked members can submit answers (default: everyone).
+                            </Text>
+                            <Stack spacing={2}>
+                                {group.members.map((m) => (
+                                    <Checkbox
+                                        key={m.api_identifier}
+                                        isChecked={responderIds.includes(
+                                            m.api_identifier,
+                                        )}
+                                        onChange={() =>
+                                            toggleResponder(m.api_identifier)
+                                        }
+                                    >
+                                        {m.name || m.email}
+                                    </Checkbox>
+                                ))}
+                            </Stack>
+                            {responderIds.length === 0 && (
+                                <FormErrorMessage>
+                                    Select at least one responder.
+                                </FormErrorMessage>
+                            )}
+                        </FormControl>
+
                         <FormControl isRequired>
                             <FormLabel htmlFor="sendAt">Send at</FormLabel>
                             <Input
@@ -140,7 +199,12 @@ const AddAdhocLoop = ({ isOpen, onClose, groupApiId }: AddAdhocLoopProps) => {
                     </ModalBody>
 
                     <ModalFooter gap={3}>
-                        <Button variant="primary" type="submit" isLoading={isSubmitting}>
+                        <Button
+                            variant="primary"
+                            type="submit"
+                            isLoading={isSubmitting}
+                            isDisabled={responderIds.length === 0}
+                        >
                             Create Adhoc Loop
                         </Button>
                         <Button onClick={onClose}>Cancel</Button>

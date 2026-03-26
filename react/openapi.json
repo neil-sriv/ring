@@ -1125,6 +1125,64 @@
         }
       }
     },
+    "/parties/group/{group_api_id}:replace_responder_allowlist": {
+      "post": {
+        "tags": [
+          "parties"
+        ],
+        "summary": "Replace Group Responder Allowlist",
+        "description": "Set who may respond to cyclic loops for this group. Empty list resets to everyone in the group.",
+        "operationId": "replace_group_responder_allowlist_parties_group__group_api_id__replace_responder_allowlist_post",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "group_api_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Group Api Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReplaceResponderAllowlist"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GroupLinked"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/parties/group/{group_api_id}:replace_default_questions": {
       "post": {
         "tags": [
@@ -1724,6 +1782,64 @@
             "OAuth2PasswordBearer": []
           }
         ]
+      }
+    },
+    "/letters/letter/{letter_api_id}:replace_responder_allowlist": {
+      "post": {
+        "tags": [
+          "letters"
+        ],
+        "summary": "Replace Letter Responder Allowlist",
+        "description": "Set who may respond on this letter. Empty list uses the group default.",
+        "operationId": "replace_letter_responder_allowlist_letters_letter__letter_api_id__replace_responder_allowlist_post",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "letter_api_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Letter Api Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReplaceLetterResponderAllowlist"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PublicLetter"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
       }
     },
     "/letters/letter/{letter_api_id}:edit_letter": {
@@ -3268,6 +3384,13 @@
             },
             "type": "array",
             "title": "Default Questions"
+          },
+          "responder_allowlist": {
+            "items": {
+              "$ref": "#/components/schemas/UserUnlinked"
+            },
+            "type": "array",
+            "title": "Responder Allowlist"
           }
         },
         "type": "object",
@@ -3280,7 +3403,8 @@
           "letters",
           "schedule",
           "admin",
-          "default_questions"
+          "default_questions",
+          "responder_allowlist"
         ],
         "title": "GroupLinked",
         "description": "Group model with linked relationships.\n\nExtends the base Group model to include members, letters, and other related data.\n\nAttributes:\n    members (list[UserUnlinked]): Users who are members of the group\n    letters (list[LetterUnlinked]): Letters associated with the group\n    schedule (Optional[ScheduleUnlinked]): Group's schedule, if any\n    admin (UserUnlinked): The group administrator\n    default_questions (list[QuestionUnlinked]): Default questions for group letters"
@@ -3462,6 +3586,20 @@
               }
             ],
             "title": "Title"
+          },
+          "responder_api_identifiers": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Responder Api Identifiers"
           }
         },
         "type": "object",
@@ -3737,6 +3875,20 @@
             },
             "type": "array",
             "title": "Participants"
+          },
+          "responder_allowlist": {
+            "items": {
+              "$ref": "#/components/schemas/UserUnlinked"
+            },
+            "type": "array",
+            "title": "Responder Allowlist"
+          },
+          "effective_responders": {
+            "items": {
+              "$ref": "#/components/schemas/UserUnlinked"
+            },
+            "type": "array",
+            "title": "Effective Responders"
           }
         },
         "type": "object",
@@ -3749,7 +3901,9 @@
           "group",
           "questions",
           "responders",
-          "participants"
+          "participants",
+          "responder_allowlist",
+          "effective_responders"
         ],
         "title": "PublicLetter",
         "description": "Public letter model with linked relationships.\n\nA version of the Letter model that includes public information about participants\nand responses.\n\nAttributes:\n    group (GroupUnlinked): Group the letter belongs to\n    questions (list[PublicQuestion]): Questions with public responses\n    responders (list[UserUnlinked]): Users who have responded\n    participants (list[UserUnlinked]): All participants in the letter"
@@ -3940,6 +4094,38 @@
         ],
         "title": "ReplaceDefaultQuestions",
         "description": "Schema for replacing a group's default questions.\n\nAttributes:\n    questions (list[str]): New list of default questions"
+      },
+      "ReplaceResponderAllowlist": {
+        "properties": {
+          "user_api_identifiers": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "User Api Identifiers"
+          }
+        },
+        "type": "object",
+        "required": [
+          "user_api_identifiers"
+        ],
+        "title": "ReplaceResponderAllowlist"
+      },
+      "ReplaceLetterResponderAllowlist": {
+        "properties": {
+          "user_api_identifiers": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "User Api Identifiers"
+          }
+        },
+        "type": "object",
+        "required": [
+          "user_api_identifiers"
+        ],
+        "title": "ReplaceLetterResponderAllowlist"
       },
       "ResponseCreateBase": {
         "properties": {

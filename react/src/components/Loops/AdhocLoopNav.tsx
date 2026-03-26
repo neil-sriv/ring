@@ -45,7 +45,7 @@ function AdhocLoopNav(props: AdhocLoopNavProps): JSX.Element {
                 <AddAdhocLoop
                     isOpen={addAdhocLoopModal.isOpen}
                     onClose={addAdhocLoopModal.onClose}
-                    groupApiId={props.group.api_identifier}
+                    group={props.group}
                 />
             </Flex>
         </>
