@@ -19,10 +19,10 @@ from ring.created_at import CreatedAtMixin
 from ring.letters.constants import LetterStatus, LetterType
 from ring.letters.models.default_question_model import DefaultQuestion
 from ring.letters.models.letter_model import Letter
-from ring.parties.models.group_key_value import GroupKeyValue
 from ring.parties.models.group_designated_responder import (
     group_designated_responder,
 )
+from ring.parties.models.group_key_value import GroupKeyValue
 from ring.parties.models.user_group_assocation import user_group_association
 from ring.ring_pydantic.linked_schemas import GroupLinked
 from ring.ring_pydantic.pydantic_model import PydanticModel

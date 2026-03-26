@@ -19,13 +19,13 @@ def import_all_sqla_models() -> None:
     )
     from ring.notebook.models.document import Document, DocumentEdit
     from ring.notifications.models.subscription import Subscription
+    from ring.parties.models.group_designated_responder import (
+        group_designated_responder,
+    )
     from ring.parties.models.group_key_value import GroupKeyValue
     from ring.parties.models.group_model import Group
     from ring.parties.models.invite_model import Invite
     from ring.parties.models.one_time_token_model import OneTimeToken
-    from ring.parties.models.group_designated_responder import (
-        group_designated_responder,
-    )
     from ring.parties.models.user_group_assocation import (
         user_group_association,
     )
