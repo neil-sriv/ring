@@ -77,17 +77,4 @@ export default defineConfig({
     wasm(),
     topLevelAwait(),
   ],
-  server: {
-    https: {
-      key: "../localhost.key",
-      cert: "../localhost.crt",
-    },
-    proxy: {
-      "/api": {
-        target: "http://localhost:8001",
-        changeOrigin: true,
-        secure: false,
-      },
-    },
-  },
 });
