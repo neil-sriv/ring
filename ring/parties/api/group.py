@@ -18,6 +18,7 @@ from ring.letters.crud.default_question import replace_default_questions
 from ring.letters.crud.letter import add_participants
 from ring.parties.crud import group as group_crud
 from ring.parties.crud import invite as invite_crud
+from ring.letters.crud.responder_allowlist import set_group_responder_allowlist
 from ring.parties.models.group_model import Group
 from ring.parties.models.user_model import User
 from ring.parties.schemas.group import (
@@ -25,6 +26,7 @@ from ring.parties.schemas.group import (
     GroupCreate,
     GroupUpdate,
     ReplaceDefaultQuestions,
+    ReplaceResponderAllowlist,
 )
 from ring.ring_pydantic import GroupLinked as GroupSchema
 from ring.tasks.schemas.schedule import ScheduleSendParam
@@ -316,6 +318,42 @@ async def add_members(
             invite_crud.email_user_invites,
             args=[[invite.id for invite in invites]],
         )
+    return db_group
+
+
+@router.post(
+    "/group/{group_api_id}:replace_responder_allowlist",
+    response_model=GroupSchema,
+)
+async def replace_group_responder_allowlist(
+    group_api_id: str,
+    body: ReplaceResponderAllowlist,
+    req_dep: AuthenticatedRequestDependencies = Depends(
+        get_request_dependencies,
+    ),
+) -> Group:
+    """Set who may respond to cyclic loops (default: everyone in the group)."""
+    db_group = api_identifier_crud.get_model(
+        req_dep.db, Group, api_id=group_api_id
+    )
+    if req_dep.current_user != db_group.admin:
+        raise HTTPException(
+            status.HTTP_403_FORBIDDEN,
+            "Only the group admin can configure responders",
+        )
+    users: list[User] = []
+    if body.user_api_identifiers:
+        users = [
+            api_identifier_crud.get_model(
+                req_dep.db, User, api_id=api_id
+            )
+            for api_id in body.user_api_identifiers
+        ]
+    try:
+        set_group_responder_allowlist(req_dep.db, db_group, users)
+    except ValueError as e:
+        raise HTTPException(status.HTTP_400_BAD_REQUEST, str(e))
+    req_dep.db.commit()
     return db_group
 
 

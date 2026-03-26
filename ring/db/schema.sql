@@ -195,6 +195,16 @@ CREATE TABLE public.user_group_assocation (
 	rowid INT8 NOT VISIBLE NOT NULL DEFAULT unique_rowid(),
 	CONSTRAINT user_group_assocation_pkey PRIMARY KEY (rowid ASC)
 );
+CREATE TABLE public.group_responder_allowlist (
+	group_id INT8 NOT NULL,
+	user_id INT8 NOT NULL,
+	CONSTRAINT group_responder_allowlist_pkey PRIMARY KEY (group_id ASC, user_id ASC)
+);
+CREATE TABLE public.letter_responder_allowlist (
+	letter_id INT8 NOT NULL,
+	user_id INT8 NOT NULL,
+	CONSTRAINT letter_responder_allowlist_pkey PRIMARY KEY (letter_id ASC, user_id ASC)
+);
 CREATE TABLE public.apscheduler_jobs (
 	id VARCHAR(191) NOT NULL,
 	next_run_time FLOAT8 NULL,
@@ -266,6 +276,10 @@ ALTER TABLE public.subscription ADD CONSTRAINT subscription_user_id_fkey FOREIGN
 ALTER TABLE public.task ADD CONSTRAINT task_schedule_id_fkey FOREIGN KEY (schedule_id) REFERENCES public.schedule(id);
 ALTER TABLE public.user_group_assocation ADD CONSTRAINT user_group_assocation_group_id_fkey FOREIGN KEY (group_id) REFERENCES public."group"(id);
 ALTER TABLE public.user_group_assocation ADD CONSTRAINT user_group_assocation_user_id_fkey FOREIGN KEY (user_id) REFERENCES public."user"(id);
+ALTER TABLE public.group_responder_allowlist ADD CONSTRAINT group_responder_allowlist_group_id_fkey FOREIGN KEY (group_id) REFERENCES public."group"(id);
+ALTER TABLE public.group_responder_allowlist ADD CONSTRAINT group_responder_allowlist_user_id_fkey FOREIGN KEY (user_id) REFERENCES public."user"(id);
+ALTER TABLE public.letter_responder_allowlist ADD CONSTRAINT letter_responder_allowlist_letter_id_fkey FOREIGN KEY (letter_id) REFERENCES public.letter(id);
+ALTER TABLE public.letter_responder_allowlist ADD CONSTRAINT letter_responder_allowlist_user_id_fkey FOREIGN KEY (user_id) REFERENCES public."user"(id);
 ALTER TABLE public.hybrid_search_document_association ADD CONSTRAINT association_hybrid_search_document_id_fkey FOREIGN KEY (hybrid_search_document_id) REFERENCES public.hybrid_search_document(id) ON DELETE CASCADE;
 ALTER TABLE public.documents ADD CONSTRAINT documents_group_id_fkey FOREIGN KEY (group_id) REFERENCES public."group"(id);
 ALTER TABLE public.document_edits ADD CONSTRAINT document_edits_author_id_fkey FOREIGN KEY (author_id) REFERENCES public."user"(id);
@@ -292,6 +306,10 @@ ALTER TABLE public.subscription VALIDATE CONSTRAINT subscription_user_id_fkey;
 ALTER TABLE public.task VALIDATE CONSTRAINT task_schedule_id_fkey;
 ALTER TABLE public.user_group_assocation VALIDATE CONSTRAINT user_group_assocation_group_id_fkey;
 ALTER TABLE public.user_group_assocation VALIDATE CONSTRAINT user_group_assocation_user_id_fkey;
+ALTER TABLE public.group_responder_allowlist VALIDATE CONSTRAINT group_responder_allowlist_group_id_fkey;
+ALTER TABLE public.group_responder_allowlist VALIDATE CONSTRAINT group_responder_allowlist_user_id_fkey;
+ALTER TABLE public.letter_responder_allowlist VALIDATE CONSTRAINT letter_responder_allowlist_letter_id_fkey;
+ALTER TABLE public.letter_responder_allowlist VALIDATE CONSTRAINT letter_responder_allowlist_user_id_fkey;
 ALTER TABLE public.hybrid_search_document_association VALIDATE CONSTRAINT association_hybrid_search_document_id_fkey;
 ALTER TABLE public.documents VALIDATE CONSTRAINT documents_group_id_fkey;
 ALTER TABLE public.document_edits VALIDATE CONSTRAINT document_edits_author_id_fkey;

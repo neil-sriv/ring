@@ -12,7 +12,7 @@ from collections import defaultdict
 from datetime import UTC, datetime, timedelta
 from typing import Sequence
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, status
 from loguru import logger
 from sqlalchemy import ColumnElement, and_, or_
 
@@ -27,9 +27,14 @@ from ring.fastapp.dependencies import (
 )
 from ring.letters.constants import LetterStatus, LetterType
 from ring.letters.crud import letter as letter_crud
+from ring.letters.crud.responder_allowlist import set_letter_responder_allowlist
 from ring.letters.crud import question as question_crud
 from ring.letters.models.letter_model import Letter
-from ring.letters.schemas.letter import LetterCreate, LetterUpdate
+from ring.letters.schemas.letter import (
+    LetterCreate,
+    LetterUpdate,
+    ReplaceLetterResponderAllowlist,
+)
 from ring.letters.schemas.question import (
     GenerateQuestionRequest,
     GenerateQuestionResponse,
@@ -98,14 +103,26 @@ async def add_next_letter(
         Action.READ,
         letter.group_api_identifier,
     )
-    db_letter = letter_crud.create_letter(
-        req_dep.db,
-        group_api_id=db_group.api_identifier,
-        send_at=letter.send_at,
-        letter_status=LetterStatus.UPCOMING,
-        letter_type=letter_type,
-        title=letter.title,
-    )
+    responder_users: list[User] | None = None
+    if letter.responder_api_identifiers is not None:
+        responder_users = [
+            api_identifier_crud.get_model(
+                req_dep.db, User, api_id=api_id
+            )
+            for api_id in letter.responder_api_identifiers
+        ]
+    try:
+        db_letter = letter_crud.create_letter(
+            req_dep.db,
+            group_api_id=db_group.api_identifier,
+            send_at=letter.send_at,
+            letter_status=LetterStatus.UPCOMING,
+            letter_type=letter_type,
+            title=letter.title,
+            responder_users=responder_users,
+        )
+    except ValueError as e:
+        raise HTTPException(status.HTTP_400_BAD_REQUEST, str(e))
     req_dep.db.commit()
     return db_letter
 
@@ -268,6 +285,46 @@ async def edit_letter(
         title=letter.title,
         status=letter.status,
     )
+    req_dep.db.commit()
+    return db_letter
+
+
+@router.post(
+    "/letter/{letter_api_id}:replace_responder_allowlist",
+    response_model=LetterSchema,
+)
+async def replace_letter_responder_allowlist(
+    letter_api_id: str,
+    body: ReplaceLetterResponderAllowlist,
+    req_dep: AuthenticatedRequestDependencies = Depends(
+        get_request_dependencies,
+    ),
+) -> Letter:
+    """Set who may respond on this letter (overrides group default for adhoc)."""
+    db_letter = api_identifier_crud.get_model(
+        req_dep.db,
+        Letter,
+        api_id=letter_api_id,
+    )
+    if req_dep.current_user not in db_letter.group.members:
+        raise HTTPException(
+            status.HTTP_404_NOT_FOUND,
+            "Letter not found",
+        )
+    if db_letter.letter_type == LetterType.CYCLIC:
+        if req_dep.current_user != db_letter.group.admin:
+            raise HTTPException(
+                status.HTTP_403_FORBIDDEN,
+                "Only the group admin can configure responders on cyclic loops",
+            )
+    users = [
+        api_identifier_crud.get_model(req_dep.db, User, api_id=api_id)
+        for api_id in body.user_api_identifiers
+    ]
+    try:
+        set_letter_responder_allowlist(req_dep.db, db_letter, users)
+    except ValueError as e:
+        raise HTTPException(status.HTTP_400_BAD_REQUEST, str(e))
     req_dep.db.commit()
     return db_letter
 

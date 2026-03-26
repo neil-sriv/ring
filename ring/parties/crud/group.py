@@ -14,6 +14,10 @@ from sqlalchemy import select
 from ring.api_identifier import util as api_identifier_crud
 from ring.letters.constants import DEFAULT_QUESTIONS, LetterStatus
 from ring.letters.crud.default_question import replace_default_questions
+from ring.letters.crud.responder_allowlist import (
+    sync_allowlists_after_member_added,
+    sync_allowlists_after_member_removed,
+)
 from ring.letters.models.letter_model import Letter
 from ring.parties.models.group_model import Group
 from ring.parties.models.user_model import User
@@ -125,6 +129,7 @@ def add_member(db: Session, group_api_id: str, user_api_id: str) -> Group:
     db_group = api_identifier_crud.get_model(db, Group, api_id=group_api_id)
     db_user = api_identifier_crud.get_model(db, User, api_id=user_api_id)
     db_group.members.append(db_user)
+    sync_allowlists_after_member_added(db, db_group, db_user)
     for letter in db_group.letters:
         if (
             letter.status == LetterStatus.IN_PROGRESS
@@ -154,6 +159,7 @@ def remove_member(db: Session, group_api_id: str, user_api_id: str) -> Group:
         raise ValueError(
             f"User {user_api_id} is not a member of group {group_api_id}"
         )
+    sync_allowlists_after_member_removed(db, db_group, db_user)
     db_group.members.remove(db_user)
     return db_group
 
@@ -192,6 +198,8 @@ def add_members(db: Session, group: Group, members: Sequence[User]) -> None:
         members (Sequence[User]): Users to add to the group
     """
     group.members.extend(members)
+    for m in members:
+        sync_allowlists_after_member_added(db, group, m)
     for letter in group.letters:
         if (
             letter.status == LetterStatus.IN_PROGRESS

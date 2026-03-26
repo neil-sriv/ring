@@ -28,6 +28,9 @@ from ring.api_identifier.util import APIPrefix, register_api_class
 from ring.created_at import CreatedAtMixin
 from ring.letters.constants import LetterStatus, LetterType
 from ring.letters.models.question_model import Question
+from ring.parties.models.responder_allowlist_tables import (
+    letter_responder_allowlist,
+)
 from ring.ring_pydantic.linked_schemas import PublicLetter
 from ring.ring_pydantic.pydantic_model import PydanticModel
 from ring.sqlalchemy_base import Base
@@ -81,6 +84,9 @@ class Letter(Base, APIIdentified, PydanticModel, CreatedAtMixin):
     participants: Mapped[list["User"]] = relationship(
         secondary=letter_to_user_assocation
     )
+    responder_allowlist: Mapped[list["User"]] = relationship(
+        secondary=letter_responder_allowlist,
+    )
     group_id = Column(Integer, ForeignKey("group.id"))
     group: Mapped["Group"] = relationship(back_populates="letters")
 
@@ -130,6 +136,15 @@ class Letter(Base, APIIdentified, PydanticModel, CreatedAtMixin):
         self.status = status
         self.letter_type = letter_type
         self.title = title
+
+    @property
+    def effective_responders(self) -> list[User]:
+        """Users who may submit responses (subset of group members)."""
+        if self.responder_allowlist:
+            return list(self.responder_allowlist)
+        if self.group.responder_allowlist:
+            return list(self.group.responder_allowlist)
+        return list(self.group.members)
 
     @classmethod
     def create(

@@ -26,11 +26,23 @@ class LetterCreate(LetterBase):
     Attributes:
         group_api_identifier (str): API identifier of the group to create the letter for
         send_at (AwareDatetime): Scheduled time to send the letter
+        responder_api_identifiers (list[str] | None): If set, only these group members
+            may respond; if omitted or empty, use group default (everyone).
     """
 
     group_api_identifier: str
     send_at: AwareDatetime
     title: str | None = None
+    responder_api_identifiers: list[str] | None = None
+
+
+class ReplaceLetterResponderAllowlist(BaseModel):
+    """Replace who may respond on this letter (adhoc override or cyclic).
+
+    Empty list clears the letter override and uses the group default.
+    """
+
+    user_api_identifiers: list[str]
 
 
 class LetterUpdate(LetterBase):

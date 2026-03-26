@@ -57,6 +57,8 @@ class GroupLinked(Group):
         schedule (Optional[ScheduleUnlinked]): Group's schedule, if any
         admin (UserUnlinked): The group administrator
         default_questions (list[QuestionUnlinked]): Default questions for group letters
+        responder_allowlist (list[UserUnlinked]): If non-empty, only these members may
+            respond on cyclic loops; if empty, everyone in the group may respond
     """
 
     members: list["UserUnlinked"]
@@ -64,6 +66,7 @@ class GroupLinked(Group):
     schedule: Optional["ScheduleUnlinked"]
     admin: "UserUnlinked"
     default_questions: list["QuestionUnlinked"]
+    responder_allowlist: list["UserUnlinked"]
 
 
 class ScheduleLinked(Schedule):
@@ -121,12 +124,17 @@ class PublicLetter(Letter):
         questions (list[PublicQuestion]): Questions with public responses
         responders (list[UserUnlinked]): Users who have responded
         participants (list[UserUnlinked]): All participants in the letter
+        responder_allowlist (list[UserUnlinked]): If non-empty, overrides group
+            default for who may respond on this letter
+        effective_responders (list[UserUnlinked]): Members who may submit responses
     """
 
     group: "GroupUnlinked"
     questions: list["PublicQuestion"]
     responders: list["UserUnlinked"]
     participants: list["UserUnlinked"]
+    responder_allowlist: list["UserUnlinked"]
+    effective_responders: list["UserUnlinked"]
 
 
 class DashboardLetters(BaseModel):

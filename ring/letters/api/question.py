@@ -61,6 +61,11 @@ async def upsert_response(
         db_response = api_identifier_crud.get_model(
             req_dep.db, Response, api_id=response.api_identifier
         )
+        if db_response.participant != req_dep.current_user:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Cannot edit another user's response",
+            )
         question_crud.edit_response(
             req_dep.db,
             db_response,

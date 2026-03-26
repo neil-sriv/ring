@@ -20,6 +20,9 @@ from ring.letters.constants import LetterStatus, LetterType
 from ring.letters.models.default_question_model import DefaultQuestion
 from ring.letters.models.letter_model import Letter
 from ring.parties.models.group_key_value import GroupKeyValue
+from ring.parties.models.responder_allowlist_tables import (
+    group_responder_allowlist,
+)
 from ring.parties.models.user_group_assocation import user_group_association
 from ring.ring_pydantic.linked_schemas import GroupLinked
 from ring.ring_pydantic.pydantic_model import PydanticModel
@@ -66,6 +69,9 @@ class Group(Base, PydanticModel, APIIdentified, CreatedAtMixin):
     _admin = relationship("User", foreign_keys=[admin_id])
     members: Mapped[list["User"]] = relationship(
         secondary=user_group_association, back_populates="groups"
+    )
+    responder_allowlist: Mapped[list["User"]] = relationship(
+        secondary=group_responder_allowlist,
     )
     letters: Mapped[list["Letter"]] = relationship(
         back_populates="group", cascade="all"

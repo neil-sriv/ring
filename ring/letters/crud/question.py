@@ -75,6 +75,8 @@ def _validate_response(
     """
     if user not in question.letter.participants:
         raise ValueError("User is not a participant in the letter.")
+    if user not in question.letter.effective_responders:
+        raise ValueError("User is not allowed to respond to this loop.")
     if user.id in [resp.participant_id for resp in question.responses]:
         raise ValueError("User has already responded to this question.")
 
@@ -118,6 +120,8 @@ def edit_response(
     Returns:
         Response: Updated response
     """
+    if response.participant not in response.question.letter.effective_responders:
+        raise ValueError("User is not allowed to respond to this loop.")
     response.response_text = response_text
     db.add(response)
     return response

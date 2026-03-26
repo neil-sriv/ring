@@ -22,6 +22,10 @@ from ring.letters.constants import (
     LetterType,
 )
 from ring.letters.crud.question import create_question
+from ring.letters.crud.responder_allowlist import (
+    set_letter_responder_allowlist,
+    validate_responder_subset,
+)
 from ring.letters.models.letter_model import Letter
 from ring.letters.models.question_model import Question
 from ring.parties.models.group_model import Group
@@ -100,6 +104,7 @@ def create_letter(
     letter_status: LetterStatus = LetterStatus.UPCOMING,
     letter_type: LetterType = LetterType.CYCLIC,
     title: str | None = None,
+    responder_users: list[User] | None = None,
 ) -> Letter:
     """Create a new letter for a group.
 
@@ -111,6 +116,8 @@ def create_letter(
         letter_status (LetterStatus, optional): Status of the letter. Defaults to UPCOMING.
         letter_type (LetterType, optional): Type of letter. Defaults to CYCLIC.
         title (str | None, optional): Title of the letter. Defaults to None.
+        responder_users (list[User] | None, optional): If set, restricts who may
+            respond on this letter; empty list uses group-level responders only.
 
     Returns:
         Letter: Newly created letter
@@ -123,6 +130,8 @@ def create_letter(
         Group,
         api_id=group_api_id,
     )
+    if responder_users is not None and responder_users:
+        validate_responder_subset(group, responder_users)
     db_letter = Letter.create(
         group,
         send_at,
@@ -134,6 +143,9 @@ def create_letter(
     db.add(db_letter)
     if search_document := create_letter_search_document(db, db_letter):
         db.add(search_document)
+
+    if responder_users is not None:
+        set_letter_responder_allowlist(db, db_letter, responder_users)
 
     upsert_letter_tasks(db, db_letter, send_at)
     return db_letter

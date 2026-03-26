@@ -46,6 +46,15 @@ class AddMembers(BaseModel):
     member_emails: list[str]
 
 
+class ReplaceResponderAllowlist(BaseModel):
+    """Replace who may respond to cyclic loops in this group.
+
+    Empty list means everyone in the group may respond (default).
+    """
+
+    user_api_identifiers: list[str]
+
+
 class ReplaceDefaultQuestions(BaseModel):
     """Schema for replacing a group's default questions.
 
