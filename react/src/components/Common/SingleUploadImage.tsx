@@ -6,7 +6,7 @@ import {
   IconButton,
   Image,
   Input,
-  ScaleFade,
+  Spinner,
   VStack,
 } from "@chakra-ui/react";
 import { useState } from "react";
@@ -64,7 +64,7 @@ export function SingleUploadImage({
   onUpdateFile,
   name,
 }: SingleUploadImageProps): JSX.Element {
-  const [uploadedFile, setUploadedFile] = useState<File | null>(null);
+  const [isUploading, setIsUploading] = useState(false);
 
   const handleFileChange = async (
     event: React.ChangeEvent<HTMLInputElement>
@@ -73,11 +73,16 @@ export function SingleUploadImage({
     if (!files || files.length === 0) {
       return;
     }
-    const selectedFiles = files as FileList;
-    const file = selectedFiles?.[0];
-    setUploadedFile(file);
-    await onUpdateFile(file);
-    setUploadedFile(null);
+    setIsUploading(true);
+    try {
+      const uploadPromises = Array.from(files).map((file) =>
+        onUpdateFile(file)
+      );
+      await Promise.all(uploadPromises);
+    } finally {
+      setIsUploading(false);
+      event.target.value = "";
+    }
   };
 
   return (
@@ -97,31 +102,18 @@ export function SingleUploadImage({
         _hover={{ bg: "blackAlpha.600" }}
       >
         <VStack>
-          {uploadedFile == null && <Icon as={MdAddPhotoAlternate} />}
+          {isUploading ? <Spinner size="sm" /> : <Icon as={MdAddPhotoAlternate} />}
         </VStack>
       </Center>
 
-      {uploadedFile && (
-        <ScaleFade initialScale={0.9} in={uploadedFile !== null}>
-          <Image
-            w="100%"
-            h={"100%"}
-            src={URL.createObjectURL(uploadedFile)}
-            alt="Uploaded"
-          />
-        </ScaleFade>
-      )}
-
       <Input
-        required
         style={{ display: "none" }}
         type="file"
-        // id="file"
-        // name="file"
         id={name}
         name={name}
+        multiple
         onChange={handleFileChange}
-        isDisabled={uploadedFile !== null}
+        isDisabled={isUploading}
         accept="image/*, video/*"
       />
     </Center>
