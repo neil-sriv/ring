@@ -166,8 +166,8 @@ def _find_and_execute_task(
     except Exception as e:
         db.rollback()
         task.status = TaskStatus.FAILED
-        db.commit()
         task.message = str(e)
+        db.commit()
         logger.info("Failed to execute task {}: {}".format(task_id, e))
         raise e
     else:
