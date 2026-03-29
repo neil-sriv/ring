@@ -2,6 +2,7 @@ import { Box, Button, Flex, Heading, Modal, ModalBody, ModalCloseButton, ModalCo
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { AxiosError } from "axios";
 import { useEffect, useRef, useState } from "react";
+import { useAutoResizeTextarea } from "../../hooks/useAutoResizeTextarea";
 import { FaTrash } from "react-icons/fa";
 import {
   deleteImageResponsesResponseResponseApiIdDeleteImageDelete,
@@ -41,6 +42,7 @@ function ResponseBlock(props: ResponseBlockProps) {
   const debounceTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const savingStartTimeRef = useRef<number | null>(null);
   const showToast = useCustomToast();
+  const textareaRef = useAutoResizeTextarea(responseText);
 
   // Update local state when response prop changes
   useEffect(() => {
@@ -92,6 +94,7 @@ function ResponseBlock(props: ResponseBlockProps) {
   return (
     <Box my="10px">
       <Textarea
+        ref={textareaRef}
         size="md"
         variant="filled"
         value={responseText}
@@ -100,6 +103,8 @@ function ResponseBlock(props: ResponseBlockProps) {
         placeholder={isSaving ? "Saving..." : "Type your response..."}
         opacity={isSaving ? 0.7 : 1}
         transition="opacity 0.2s ease"
+        overflow="hidden"
+        resize="none"
       />
       {isSaving && (
         <Box fontSize="sm" color="gray.500" mt={1}>

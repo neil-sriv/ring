@@ -2,6 +2,7 @@ import { Box, Button, Heading, Textarea, useColorModeValue } from "@chakra-ui/re
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { AxiosError } from "axios";
 import { useState } from "react";
+import { useAutoResizeTextarea } from "../../hooks/useAutoResizeTextarea";
 import {
     PublicQuestion,
     upsertResponseQuestionsQuestionQuestionApiIdUpsertResponsePost,
@@ -30,6 +31,7 @@ function LateAnswerQuestion({
     const showToast = useCustomToast();
     const [responseText, setResponseText] = useState("");
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const textareaRef = useAutoResizeTextarea(responseText);
 
     if (!currentUser) {
         return <Box>Loading...</Box>;
@@ -115,12 +117,15 @@ function LateAnswerQuestion({
 
             <Box mb="3">
                 <Textarea
+                    ref={textareaRef}
                     size="md"
                     variant="filled"
                     value={responseText}
                     onChange={handleResponseChange}
                     placeholder="Add your late answer here..."
                     minH="100px"
+                    overflow="hidden"
+                    resize="none"
                 />
             </Box>
 
