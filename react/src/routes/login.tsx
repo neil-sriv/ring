@@ -76,10 +76,8 @@ export const Route = createFileRoute("/login")({
           throw e;
         }
       }
-      // Ensure next is a string (not an object) to avoid [object Object] in URL
-      const redirectTo = typeof search.next === "string" && search.next ? search.next : "/";
       throw redirect({
-        to: redirectTo,
+        to: "/",
       });
     }
   },
