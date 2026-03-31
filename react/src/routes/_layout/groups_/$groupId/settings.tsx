@@ -1,12 +1,4 @@
-import {
-  Container,
-  Heading,
-  Tab,
-  TabList,
-  TabPanel,
-  TabPanels,
-  Tabs,
-} from "@chakra-ui/react"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { createFileRoute } from "@tanstack/react-router"
 import type { GroupLinked } from "../../../../client"
 import { readGroupPartiesGroupGroupApiIdGetOptions } from "../../../../client/@tanstack/react-query.gen"
@@ -32,9 +24,21 @@ export const Route = createFileRoute("/_layout/groups/$groupId/settings")({
 })
 
 const tabsConfig = [
-  { title: "Group Information", component: GroupInformation },
-  { title: "Membership", component: GroupMembershipSettings },
-  { title: "Loop Settings", component: GroupLoopSettings },
+  {
+    title: "Group Information",
+    value: "group-information",
+    component: GroupInformation,
+  },
+  {
+    title: "Membership",
+    value: "membership",
+    component: GroupMembershipSettings,
+  },
+  {
+    title: "Loop Settings",
+    value: "loop-settings",
+    component: GroupLoopSettings,
+  },
 ]
 
 function GroupSettings() {
@@ -45,24 +49,24 @@ function GroupSettings() {
   }
 
   return (
-    <Container maxW="full">
-      <Heading size="lg" textAlign={{ base: "center", md: "left" }} py={12}>
+    <div className="w-full">
+      <h2 className="py-12 text-center text-2xl font-semibold md:text-left">
         Group Settings
-      </Heading>
-      <Tabs variant="enclosed">
-        <TabList>
-          {finalTabs.map((tab, index) => (
-            <Tab key={index}>{tab.title}</Tab>
+      </h2>
+      <Tabs defaultValue={finalTabs[0].value}>
+        <TabsList>
+          {finalTabs.map((tab) => (
+            <TabsTrigger key={tab.value} value={tab.value}>
+              {tab.title}
+            </TabsTrigger>
           ))}
-        </TabList>
-        <TabPanels>
-          {finalTabs.map((tab, index) => (
-            <TabPanel key={index}>
-              <tab.component groupId={loadedGroup.api_identifier} />
-            </TabPanel>
-          ))}
-        </TabPanels>
+        </TabsList>
+        {finalTabs.map((tab) => (
+          <TabsContent key={tab.value} value={tab.value}>
+            <tab.component groupId={loadedGroup.api_identifier} />
+          </TabsContent>
+        ))}
       </Tabs>
-    </Container>
+    </div>
   )
 }

@@ -1,20 +1,9 @@
-import {
-  Box,
-  Button,
-  Container,
-  Flex,
-  Heading,
-  Icon,
-  Text,
-  VStack,
-  useColorModeValue,
-  useDisclosure,
-} from "@chakra-ui/react"
+import { Button } from "@/components/ui/button"
 import { useQueryClient, useSuspenseQuery } from "@tanstack/react-query"
 import { Link, createFileRoute } from "@tanstack/react-router"
-import { Suspense } from "react"
+import { Plus } from "lucide-react"
+import { Suspense, useState } from "react"
 import { ErrorBoundary } from "react-error-boundary"
-import { FaPlus } from "react-icons/fa"
 import type { PublicLetter, UserLinked } from "../../../client"
 import {
   readGroupPartiesGroupGroupApiIdGetOptions,
@@ -62,134 +51,72 @@ function IssueContent() {
     readUserMePartiesMeGetQueryKey(),
   )
   const localDueDate = new Date(loop.send_at)
-  const textColor = useColorModeValue("ui.dark", "ui.light")
-  const subtextColor = useColorModeValue("ui.dim", "ui.dim")
-  const editLoopModal = useDisclosure()
-  const addQuestionModal = useDisclosure()
-  const generateQuestionModal = useDisclosure()
+  const [editLoopOpen, setEditLoopOpen] = useState(false)
+  const [addQuestionOpen, setAddQuestionOpen] = useState(false)
+  const [generateQuestionOpen, setGenerateQuestionOpen] = useState(false)
 
   return (
-    <Flex justify="center" w="100%">
-      <Box maxW="1200px" w="100%" px={[2, 4]}>
-        <VStack spacing={[4, 6, 8]} align="center" w="100%">
-          <Box
-            w="100%"
-            bg="ui.glass.light.background"
-            backdropFilter="blur(10px)"
-            border="1px solid"
-            borderColor="ui.glass.light.border"
-            _dark={{
-              bg: "ui.glass.dark.background",
-              borderColor: "ui.glass.dark.border",
-            }}
-            p={6}
-            borderRadius="xl"
-            boxShadow="md"
-          >
-            <VStack spacing={4} align="center">
-              <Box position="relative" w="100%">
-                <Heading
-                  size={["md", "lg"]}
-                  textAlign="center"
-                  color={textColor}
-                >
+    <div className="flex w-full justify-center">
+      <div className="w-full max-w-[1200px] px-2 sm:px-4">
+        <div className="flex w-full flex-col items-center gap-4 sm:gap-6 lg:gap-8">
+          <div className="w-full rounded-xl border border-border/50 bg-background/80 p-6 shadow-md backdrop-blur-sm dark:border-border/30 dark:bg-background/60">
+            <div className="flex flex-col items-center gap-4">
+              <div className="relative w-full">
+                <h2 className="text-center text-lg font-semibold text-foreground sm:text-xl lg:text-2xl">
                   <Link
                     to="/groups/$groupId/loops"
                     params={{ groupId: group!.api_identifier }}
-                    style={{ textDecoration: "underline" }}
+                    className="underline"
                   >
                     {group!.name}
                   </Link>
-                </Heading>
+                </h2>
                 {group.admin.api_identifier === currentUser?.api_identifier &&
                   loop.status !== "SENT" && (
                     <Button
-                      variant="primary"
-                      onClick={editLoopModal.onOpen}
-                      _hover={{
-                        opacity: 0.9,
-                        bg: "ui.primary",
-                      }}
-                      transition="all 0.2s ease-in-out"
-                      position="absolute"
-                      right="0"
-                      top="50%"
-                      transform="translateY(-50%)"
+                      onClick={() => setEditLoopOpen(true)}
+                      className="absolute right-0 top-1/2 -translate-y-1/2"
                     >
                       Edit Loop
                     </Button>
                   )}
-              </Box>
+              </div>
               {loop.title && (
-                <Heading size={["md", "lg"]} color={textColor}>
+                <h2 className="text-lg font-semibold text-foreground sm:text-xl lg:text-2xl">
                   {loop.title}
-                </Heading>
+                </h2>
               )}
               {!loop.title && loop.number && (
-                <Heading size={["md", "lg"]} color={textColor}>
+                <h2 className="text-lg font-semibold text-foreground sm:text-xl lg:text-2xl">
                   Issue #{loop.number}
-                </Heading>
+                </h2>
               )}
               {loop.status === "IN_PROGRESS" && (
-                <Heading
-                  size="md"
-                  textAlign={{ base: "center", md: "left" }}
-                  pt={2}
-                  color={subtextColor}
-                >
+                <h3 className="pt-2 text-center text-base font-semibold text-muted-foreground md:text-left">
                   Due {localDueDate.toLocaleString()}
-                </Heading>
+                </h3>
               )}
-            </VStack>
-          </Box>
+            </div>
+          </div>
 
           {loop.status === "UPCOMING" && (
-            <Flex gap={4} wrap="wrap" w="100%">
+            <div className="flex w-full flex-wrap gap-4">
               <Button
-                variant="primary"
-                gap={1}
-                fontSize={{ base: "sm", md: "inherit" }}
-                onClick={() => addQuestionModal.onOpen()}
-                whiteSpace="normal"
-                textAlign="left"
-                height="auto"
-                py={2}
-                _hover={{ transform: "translateY(-2px)" }}
-                transition="all 0.2s"
+                onClick={() => setAddQuestionOpen(true)}
+                className="h-auto whitespace-normal py-2 text-left transition-all duration-200 hover:-translate-y-0.5"
               >
-                <Icon as={FaPlus} /> Add new question
+                <Plus className="h-4 w-4" /> Add new question
               </Button>
               <Button
-                variant="primary"
-                gap={1}
-                fontSize={{ base: "sm", md: "inherit" }}
-                onClick={() => generateQuestionModal.onOpen()}
-                whiteSpace="normal"
-                textAlign="left"
-                height="auto"
-                py={2}
-                _hover={{ transform: "translateY(-2px)" }}
-                transition="all 0.2s"
+                onClick={() => setGenerateQuestionOpen(true)}
+                className="h-auto whitespace-normal py-2 text-left transition-all duration-200 hover:-translate-y-0.5"
               >
-                <Icon as={FaPlus} /> Ask ChatGPT to generate a question.
+                <Plus className="h-4 w-4" /> Ask ChatGPT to generate a question.
               </Button>
-            </Flex>
+            </div>
           )}
 
-          <Box
-            w="100%"
-            bg="ui.glass.light.background"
-            backdropFilter="blur(10px)"
-            border="1px solid"
-            borderColor="ui.glass.light.border"
-            _dark={{
-              bg: "ui.glass.dark.background",
-              borderColor: "ui.glass.dark.border",
-            }}
-            p={6}
-            borderRadius="xl"
-            boxShadow="md"
-          >
+          <div className="w-full rounded-xl border border-border/50 bg-background/80 p-6 shadow-md backdrop-blur-sm dark:border-border/30 dark:bg-background/60">
             {loop.status === "SENT" ? (
               <PublishedLoop loop={loop} />
             ) : (
@@ -200,45 +127,45 @@ function IssueContent() {
                 }
               />
             )}
-          </Box>
-        </VStack>
-      </Box>
+          </div>
+        </div>
+      </div>
       <EditLetter
-        isOpen={editLoopModal.isOpen}
-        onClose={editLoopModal.onClose}
+        isOpen={editLoopOpen}
+        onClose={() => setEditLoopOpen(false)}
         loop={loop}
       />
       <AddQuestion
-        isOpen={addQuestionModal.isOpen}
-        onClose={addQuestionModal.onClose}
+        isOpen={addQuestionOpen}
+        onClose={() => setAddQuestionOpen(false)}
         loopApiId={loop.api_identifier}
       />
       <GenerateQuestion
-        isOpen={generateQuestionModal.isOpen}
-        onClose={generateQuestionModal.onClose}
+        isOpen={generateQuestionOpen}
+        onClose={() => setGenerateQuestionOpen(false)}
         loopApiId={loop.api_identifier}
       />
-    </Flex>
+    </div>
   )
 }
 
 function Issue() {
   return (
-    <Container maxW="full">
-      <Box pt={[4, 8, 12]} mx={[2, 4]}>
+    <div className="w-full">
+      <div className="mx-2 pt-4 sm:mx-4 sm:pt-8 lg:pt-12">
         <ErrorBoundary
           fallbackRender={({ error }) => (
-            <Box>
-              <Heading>Error</Heading>
-              <Text>{error.message}</Text>
-            </Box>
+            <div>
+              <h2 className="text-xl font-bold">Error</h2>
+              <p>{error.message}</p>
+            </div>
           )}
         >
-          <Suspense fallback={<Box>Loading...</Box>}>
+          <Suspense fallback={<div>Loading...</div>}>
             <IssueContent />
           </Suspense>
         </ErrorBoundary>
-      </Box>
-    </Container>
+      </div>
+    </div>
   )
 }

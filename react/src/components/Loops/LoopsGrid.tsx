@@ -1,4 +1,3 @@
-import { Box, Flex, Heading, VStack } from "@chakra-ui/react"
 import type { MinimalLetter, PublicLetter } from "../../client"
 import { LoopCard } from "./LoopCard"
 
@@ -18,17 +17,16 @@ export function LoopsGrid({
   showResponderCount?: boolean
 }): JSX.Element {
   return (
-    <VStack w="100%" spacing={4} align="center">
-      <Box textAlign="center" w="100%">
-        <Heading size="md">{heading}</Heading>
-        {subheading && <Heading size="sm">{subheading}</Heading>}
-      </Box>
-      <Flex flexWrap="wrap" justifyContent="center" gap={4} w="100%">
+    <div className="flex w-full flex-col items-center gap-4">
+      <div className="w-full text-center">
+        <h3 className="text-lg font-semibold">{heading}</h3>
+        {subheading && <h4 className="text-sm font-medium">{subheading}</h4>}
+      </div>
+      <div className="flex w-full flex-wrap justify-center gap-4">
         {loops.map((loop) => (
-          <Box
+          <div
             key={loop.api_identifier}
-            flex="0 1 calc(25% - 1rem)"
-            minWidth="200px"
+            className="min-w-[200px] flex-[0_1_calc(25%-1rem)]"
           >
             <LoopCard
               loop={loop}
@@ -36,9 +34,9 @@ export function LoopsGrid({
               showLoopTypeLabel={showLoopTypeLabel}
               showResponderCount={showResponderCount}
             />
-          </Box>
+          </div>
         ))}
-      </Flex>
-    </VStack>
+      </div>
+    </div>
   )
 }

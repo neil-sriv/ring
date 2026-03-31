@@ -1,17 +1,7 @@
-import {
-  Box,
-  Container,
-  Heading,
-  Spinner,
-  Tab,
-  TabList,
-  TabPanel,
-  TabPanels,
-  Tabs,
-  useColorModeValue,
-} from "@chakra-ui/react"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { useSuspenseQuery } from "@tanstack/react-query"
 import { createFileRoute } from "@tanstack/react-router"
+import { Loader2 } from "lucide-react"
 import { Suspense, useEffect, useMemo, useState } from "react"
 import type { MinimalLetter } from "../../../../client"
 import {
@@ -67,7 +57,6 @@ export const Route = createFileRoute("/_layout/groups/$groupId/loops")({
 function LoopsContentLoader() {
   const groupId = Route.useParams().groupId
   const props = Route.useLoaderData()
-  const textColor = useColorModeValue("ui.dark", "ui.light")
 
   const { data: group } = useSuspenseQuery({
     ...readGroupPartiesGroupGroupApiIdGetOptions({
@@ -122,46 +111,37 @@ function LoopsContentLoader() {
     },
   ]
 
-  // Map hash fragments to tab indices (memoized for stability)
   const hashToIndex = useMemo(
     () => new Map(tabsConfig.map((tab, index) => [tab.hash, index])),
-    [tabsConfig.length], // Only recreate if number of tabs changes
+    [tabsConfig.length],
   )
 
-  // Get initial tab index from hash fragment
-  const getInitialTabIndex = (): number => {
+  const getInitialTab = (): string => {
     if (typeof window !== "undefined") {
-      const hash = window.location.hash.slice(1) // Remove the '#' character
-      const index = hashToIndex.get(hash)
-      return index !== undefined ? index : 0
+      const hash = window.location.hash.slice(1)
+      if (tabsConfig.some((tab) => tab.hash === hash)) {
+        return hash
+      }
     }
-    return 0
+    return "loops"
   }
 
-  const [tabIndex, setTabIndex] = useState(getInitialTabIndex)
+  const [activeTab, setActiveTab] = useState(getInitialTab)
 
-  // Update hash when tab changes
-  const handleTabChange = (index: number) => {
-    setTabIndex(index)
-    const hash = tabsConfig[index]?.hash
-    if (hash) {
-      window.location.hash = hash
-    }
+  const handleTabChange = (value: string) => {
+    setActiveTab(value)
+    window.location.hash = value
   }
 
-  // Listen for hash changes (e.g., browser back/forward)
   useEffect(() => {
     const handleHashChange = () => {
       const hash = window.location.hash.slice(1)
-      const index = hashToIndex.get(hash)
-      if (index !== undefined) {
-        setTabIndex(index)
+      if (tabsConfig.some((tab) => tab.hash === hash)) {
+        setActiveTab(hash)
       }
     }
 
     window.addEventListener("hashchange", handleHashChange)
-
-    // Also check hash on mount in case it was set before component mounted
     handleHashChange()
 
     return () => {
@@ -170,69 +150,45 @@ function LoopsContentLoader() {
   }, [hashToIndex])
 
   return (
-    <Container maxW="full">
-      <Box
-        bg="ui.glass.light.background"
-        backdropFilter="blur(10px)"
-        border="1px solid"
-        borderColor="ui.glass.light.border"
-        _dark={{
-          bg: "ui.glass.dark.background",
-          borderColor: "ui.glass.dark.border",
-        }}
-        p={6}
-        borderRadius="xl"
-        boxShadow="md"
-        mb={6}
-      >
-        <Heading
-          size="lg"
-          textAlign={{ base: "center", md: "left" }}
-          color={textColor}
-        >
+    <div className="w-full">
+      <div className="mb-6 rounded-xl border border-border/50 bg-background/80 p-6 shadow-md backdrop-blur-sm dark:border-border/30 dark:bg-background/60">
+        <h2 className="text-center text-2xl font-semibold text-foreground md:text-left">
           {group!.name}
-        </Heading>
-      </Box>
-      <Box
-        bg="ui.glass.light.background"
-        backdropFilter="blur(10px)"
-        border="1px solid"
-        borderColor="ui.glass.light.border"
-        _dark={{
-          bg: "ui.glass.dark.background",
-          borderColor: "ui.glass.dark.border",
-        }}
-        p={6}
-        borderRadius="xl"
-        boxShadow="md"
-      >
-        <Tabs variant="enclosed" index={tabIndex} onChange={handleTabChange}>
-          <TabList overflowX="auto" overflowY="hidden" flexWrap="nowrap">
-            {tabsConfig.map((tab, index) => (
-              <Tab
-                key={index}
-                _hover={{ transform: "translateY(-2px)" }}
-                transition="all 0.2s"
-                flexShrink={0}
+        </h2>
+      </div>
+      <div className="rounded-xl border border-border/50 bg-background/80 p-6 shadow-md backdrop-blur-sm dark:border-border/30 dark:bg-background/60">
+        <Tabs value={activeTab} onValueChange={handleTabChange}>
+          <TabsList className="flex-nowrap overflow-x-auto overflow-y-hidden">
+            {tabsConfig.map((tab) => (
+              <TabsTrigger
+                key={tab.hash}
+                value={tab.hash}
+                className="shrink-0 transition-all duration-200 hover:-translate-y-0.5"
               >
                 {tab.title}
-              </Tab>
+              </TabsTrigger>
             ))}
-          </TabList>
-          <TabPanels>
-            {tabsConfig.map((tab, index) => (
-              <TabPanel key={index}>{tab.component()}</TabPanel>
-            ))}
-          </TabPanels>
+          </TabsList>
+          {tabsConfig.map((tab) => (
+            <TabsContent key={tab.hash} value={tab.hash}>
+              {tab.component()}
+            </TabsContent>
+          ))}
         </Tabs>
-      </Box>
-    </Container>
+      </div>
+    </div>
   )
 }
 
 function LoopsContent() {
   return (
-    <Suspense fallback={<Spinner size="xl" />}>
+    <Suspense
+      fallback={
+        <div className="flex justify-center py-12">
+          <Loader2 className="h-8 w-8 animate-spin" />
+        </div>
+      }
+    >
       <LoopsContentLoader />
     </Suspense>
   )
