@@ -58,3 +58,17 @@ sudo docker exec ring-cockroach ./cockroach sql --certs-dir=/root/.cockroach-cer
 - Docker commands require `sudo` in the Cloud Agent VM.
 - The frontend Vite dev server at `https://localhost:5173` communicates with the backend through the Nginx reverse proxy at `https://localhost/api/v1/`.
 - The LLM microservice (`llm/`) is optional and requires additional setup (Ollama or Gemini/OpenAI API keys).
+## Learned User Preferences
+- When extending session authentication, prefer refresh tokens so users are not forced to log in again when the access token expires.
+- Prefer JWT refresh-token rotation and refresh/access token type validation for better security.
+- For comment-like entities that can attach to arbitrary objects, prefer a generic weak-reference design that stores only the target object's `api_identifier` (not a hard foreign key).
+- Prefer hard deletes over soft deletion fields for the comment model.
+- Prefer using the comment API prefix `cmnt`.
+- For large, multi-surface changes, prefer splitting work into multiple PRs (backend first, then frontend) rather than one large PR.
+- For operational resilience (timeouts), prefer existing/popular timeout mechanisms or FastAPI-provided solutions over custom timeout middleware.
+
+## Learned Workspace Facts
+- The system is intended to use short-lived JWT access tokens (~15 minutes) and longer-lived refresh tokens (~30 days) with refresh/access token type validation and rotation.
+- The frontend is expected to auto-refresh access tokens on `401` using the stored refresh token and to clear both tokens on logout.
+- Image upload handling should have timeouts configured to avoid long hangs (nginx proxy timeouts for `/api/v1/` and botocore/boto3 S3 client timeouts for uploads/downloads).
+- The comment model is intended to be generic, attaching to targets via `target_api_id` (storing the target's `api_identifier`) and using `cmnt` as the comment API prefix, without soft deletion.
