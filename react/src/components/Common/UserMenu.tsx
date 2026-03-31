@@ -1,61 +1,58 @@
-import {
-  Box,
-  IconButton,
-  Menu,
-  MenuButton,
-  MenuItem,
-  MenuList,
-} from "@chakra-ui/react";
-import { Link } from "@tanstack/react-router";
-import { FaUserAstronaut } from "react-icons/fa";
-import { FiLogOut, FiUser } from "react-icons/fi";
+import { useQueryClient } from "@tanstack/react-query"
+import { Link } from "@tanstack/react-router"
+import { LogOut, User, UserCircle } from "lucide-react"
 
-import useAuth from "../../hooks/useAuth";
-import { useQueryClient } from "@tanstack/react-query";
+import useAuth from "../../hooks/useAuth"
+import { Button } from "@/components/ui/button"
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
 
 const UserMenu = () => {
-  const queryClient = useQueryClient();
-  const { logout } = useAuth();
+  const queryClient = useQueryClient()
+  const { logout } = useAuth()
 
   const handleLogout = async () => {
-    logout();
-    queryClient.clear();
-  };
+    logout()
+    queryClient.clear()
+  }
 
   return (
-    <>
-      {/* Desktop */}
-      <Box
-        display={{ base: "none", md: "block" }}
-        position="fixed"
-        top={4}
-        right={4}
-      >
-        <Menu>
-          <MenuButton
-            as={IconButton}
-            aria-label="Options"
-            icon={<FaUserAstronaut color="white" fontSize="18px" />}
-            bg="ui.main"
-            isRound
-          />
-          <MenuList>
-            <MenuItem icon={<FiUser fontSize="18px" />} as={Link} to="settings">
+    <div className="hidden md:block fixed top-4 right-4 z-40">
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <Button
+            variant="default"
+            size="icon"
+            className="rounded-full"
+          >
+            <UserCircle className="h-5 w-5" />
+            <span className="sr-only">User menu</span>
+          </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="end" className="w-48">
+          <DropdownMenuItem asChild>
+            <Link to="/settings" className="flex items-center gap-2 cursor-pointer">
+              <User className="h-4 w-4" />
               My profile
-            </MenuItem>
-            <MenuItem
-              icon={<FiLogOut fontSize="18px" />}
-              onClick={handleLogout}
-              color="ui.danger"
-              fontWeight="bold"
-            >
-              Log out
-            </MenuItem>
-          </MenuList>
-        </Menu>
-      </Box>
-    </>
-  );
-};
+            </Link>
+          </DropdownMenuItem>
+          <DropdownMenuSeparator />
+          <DropdownMenuItem
+            onClick={handleLogout}
+            className="text-destructive focus:text-destructive cursor-pointer"
+          >
+            <LogOut className="h-4 w-4" />
+            Log out
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
+    </div>
+  )
+}
 
-export default UserMenu;
+export default UserMenu

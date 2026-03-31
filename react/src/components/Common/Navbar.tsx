@@ -1,50 +1,40 @@
-import { Button, Flex, Icon, useDisclosure } from "@chakra-ui/react";
-import { FaPlus } from "react-icons/fa";
+import { Plus } from "lucide-react"
+import { useState } from "react"
 
-import AddUser from "../Admin/AddUser";
-import AddGroup from "../Groups/AddGroup";
+import { Button } from "@/components/ui/button"
+import AddUser from "../Admin/AddUser"
+import AddGroup from "../Groups/AddGroup"
 
 interface NavbarProps {
-  type: string;
+  type: string
 }
 
 const Navbar = ({ type }: NavbarProps) => {
-  const addUserModal = useDisclosure();
-  const addGroupModal = useDisclosure();
+  const [isAddUserOpen, setIsAddUserOpen] = useState(false)
+  const [isAddGroupOpen, setIsAddGroupOpen] = useState(false)
 
   const onClick = (type: string): void => {
     if (type === "User") {
-      addUserModal.onOpen();
+      setIsAddUserOpen(true)
     } else if (type === "Group") {
-      addGroupModal.onOpen();
+      setIsAddGroupOpen(true)
     }
-  };
+  }
   return (
     <>
-      <Flex py={8} gap={4}>
+      <div className="flex items-center gap-4 py-6">
         {/* TODO: Complete search functionality */}
-        {/* <InputGroup w={{ base: '100%', md: 'auto' }}>
-                    <InputLeftElement pointerEvents='none'>
-                        <Icon as={FaSearch} color='ui.dim' />
-                    </InputLeftElement>
-                    <Input type='text' placeholder='Search' fontSize={{ base: 'sm', md: 'inherit' }} borderRadius='8px' />
-                </InputGroup> */}
-        <Button
-          variant="primary"
-          gap={1}
-          fontSize={{ base: "sm", md: "inherit" }}
-          onClick={() => onClick(type)}
-        >
-          <Icon as={FaPlus} /> Add {type}
+        <Button onClick={() => onClick(type)} className="gap-1">
+          <Plus className="h-4 w-4" /> Add {type}
         </Button>
-        <AddUser isOpen={addUserModal.isOpen} onClose={addUserModal.onClose} />
+        <AddUser isOpen={isAddUserOpen} onClose={() => setIsAddUserOpen(false)} />
         <AddGroup
-          isOpen={addGroupModal.isOpen}
-          onClose={addGroupModal.onClose}
+          isOpen={isAddGroupOpen}
+          onClose={() => setIsAddGroupOpen(false)}
         />
-      </Flex>
+      </div>
     </>
-  );
-};
+  )
+}
 
-export default Navbar;
+export default Navbar

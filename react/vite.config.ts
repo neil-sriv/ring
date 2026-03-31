@@ -43,6 +43,9 @@ const pwaOptions: Partial<VitePWAOptions> = {
     type: "module",
     navigateFallback: "index.html",
   },
+  injectManifest: {
+    maximumFileSizeToCacheInBytes: 3 * 1024 * 1024,
+  },
 };
 
 // const replaceOptions = { __DATE__: new Date().toISOString() };

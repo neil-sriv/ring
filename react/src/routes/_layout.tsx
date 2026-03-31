@@ -1,15 +1,15 @@
-import { Flex, Spinner } from "@chakra-ui/react";
-import { Outlet, createFileRoute, redirect } from "@tanstack/react-router";
+import { Outlet, createFileRoute, redirect } from "@tanstack/react-router"
+import { Loader2 } from "lucide-react"
 
-import Sidebar from "../components/Common/Sidebar";
-import UserMenu from "../components/Common/UserMenu";
+import Sidebar from "../components/Common/Sidebar"
+import UserMenu from "../components/Common/UserMenu"
 import {
   readUserMePartiesMeGetOptions,
   readUserMePartiesMeGetQueryKey,
-} from "../client/@tanstack/react-query.gen";
-import { subscribeToPush } from "../util/notifications";
-import { useQueryClient } from "@tanstack/react-query";
-import { UserLinked } from "../client/types.gen";
+} from "../client/@tanstack/react-query.gen"
+import { subscribeToPush } from "../util/notifications"
+import { useQueryClient } from "@tanstack/react-query"
+import { UserLinked } from "../client/types.gen"
 
 export const Route = createFileRoute("/_layout")({
   component: Layout,
@@ -17,49 +17,51 @@ export const Route = createFileRoute("/_layout")({
     try {
       const user = await context.queryClient.ensureQueryData({
         ...readUserMePartiesMeGetOptions(),
-      });
-      context.auth.user = user;
+      })
+      context.auth.user = user
     } catch (error) {
       // If authentication fails, redirect to login with the current path as next parameter
       // Only add next parameter if we're not already on the login page
       if (location.pathname !== "/login") {
-        const hash = typeof window !== "undefined" ? window.location.hash : "";
-        const currentPath = location.pathname + location.searchStr + hash;
+        const hash = typeof window !== "undefined" ? window.location.hash : ""
+        const currentPath = location.pathname + location.searchStr + hash
         throw redirect({
           to: "/login",
           search: {
             next: currentPath,
           },
-        });
+        })
       } else {
         // Already on login page, just redirect without next parameter
         throw redirect({
           to: "/login",
-        });
+        })
       }
     }
   },
-});
+})
 
 function Layout() {
-  const queryClient = useQueryClient();
+  const queryClient = useQueryClient()
   const currentUser = queryClient.getQueryData<UserLinked>(
-    readUserMePartiesMeGetQueryKey()
-  );
-  subscribeToPush(currentUser?.api_identifier!);
-  const isLoading = false;
+    readUserMePartiesMeGetQueryKey(),
+  )
+  subscribeToPush(currentUser?.api_identifier!)
+  const isLoading = false
 
   return (
-    <Flex maxW="large" h="auto" position="relative">
+    <div className="flex min-h-screen">
       <Sidebar />
       {isLoading ? (
-        <Flex justify="center" align="center" height="100vh" width="full">
-          <Spinner size="xl" color="ui.main" />
-        </Flex>
+        <div className="flex flex-1 items-center justify-center">
+          <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        </div>
       ) : (
-        <Outlet />
+        <main className="flex-1 overflow-auto">
+          <Outlet />
+        </main>
       )}
       <UserMenu />
-    </Flex>
-  );
+    </div>
+  )
 }
