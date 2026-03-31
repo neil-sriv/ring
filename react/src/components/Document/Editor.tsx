@@ -1,30 +1,33 @@
+import { Button } from "@/components/ui/button"
 import {
-  Box,
-  Button,
-  ButtonGroup,
-  HStack,
-  Icon,
   Tooltip,
-} from "@chakra-ui/react"
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip"
 import Placeholder from "@tiptap/extension-placeholder"
 import { TextStyleKit } from "@tiptap/extension-text-style"
 import type { Editor } from "@tiptap/react"
 import { EditorContent, useEditor, useEditorState } from "@tiptap/react"
 import StarterKit from "@tiptap/starter-kit"
+import {
+  Bold,
+  Code,
+  Heading1,
+  Heading2,
+  Heading3,
+  Italic,
+  List,
+  ListOrdered,
+  Minus,
+  Pilcrow,
+  Quote,
+  Redo,
+  Strikethrough,
+  Undo,
+} from "lucide-react"
 import type React from "react"
 import { useEffect, useRef } from "react"
-import {
-  FaBold,
-  FaCode,
-  FaItalic,
-  FaListOl,
-  FaListUl,
-  FaMinus,
-  FaQuoteLeft,
-  FaRedo,
-  FaStrikethrough,
-  FaUndo,
-} from "react-icons/fa"
 
 function MenuBar({ editor }: { editor: Editor }) {
   const editorState = useEditorState({
@@ -54,175 +57,242 @@ function MenuBar({ editor }: { editor: Editor }) {
   })
 
   return (
-    <Box
-      p={3}
-      borderBottom="1px solid"
-      borderColor="gray.200"
-      bg="gray.50"
-      _dark={{
-        bg: "gray.700",
-        borderColor: "gray.600",
-      }}
-    >
-      <HStack spacing={2} wrap="wrap">
-        {/* Text Formatting */}
-        <ButtonGroup size="sm" variant="outline" spacing={1}>
-          <Tooltip label="Bold">
-            <Button
-              onClick={() => editor.chain().focus().toggleBold().run()}
-              isDisabled={!editorState.canBold}
-              colorScheme={editorState.isBold ? "blue" : "gray"}
-              variant={editorState.isBold ? "solid" : "outline"}
-            >
-              <Icon as={FaBold} />
-            </Button>
-          </Tooltip>
-          <Tooltip label="Italic">
-            <Button
-              onClick={() => editor.chain().focus().toggleItalic().run()}
-              isDisabled={!editorState.canItalic}
-              colorScheme={editorState.isItalic ? "blue" : "gray"}
-              variant={editorState.isItalic ? "solid" : "outline"}
-            >
-              <Icon as={FaItalic} />
-            </Button>
-          </Tooltip>
-          <Tooltip label="Strikethrough">
-            <Button
-              onClick={() => editor.chain().focus().toggleStrike().run()}
-              isDisabled={!editorState.canStrike}
-              colorScheme={editorState.isStrike ? "blue" : "gray"}
-              variant={editorState.isStrike ? "solid" : "outline"}
-            >
-              <Icon as={FaStrikethrough} />
-            </Button>
-          </Tooltip>
-          <Tooltip label="Code">
-            <Button
-              onClick={() => editor.chain().focus().toggleCode().run()}
-              isDisabled={!editorState.canCode}
-              colorScheme={editorState.isCode ? "blue" : "gray"}
-              variant={editorState.isCode ? "solid" : "outline"}
-            >
-              <Icon as={FaCode} />
-            </Button>
-          </Tooltip>
-        </ButtonGroup>
+    <div className="p-3 border-b border-gray-200 bg-gray-50 dark:bg-gray-700 dark:border-gray-600">
+      <TooltipProvider>
+        <div className="flex flex-wrap gap-2">
+          {/* Text Formatting */}
+          <div className="flex gap-1">
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  type="button"
+                  size="sm"
+                  variant={editorState.isBold ? "default" : "outline"}
+                  onClick={() => editor.chain().focus().toggleBold().run()}
+                  disabled={!editorState.canBold}
+                >
+                  <Bold className="h-4 w-4" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>Bold</TooltipContent>
+            </Tooltip>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  type="button"
+                  size="sm"
+                  variant={editorState.isItalic ? "default" : "outline"}
+                  onClick={() => editor.chain().focus().toggleItalic().run()}
+                  disabled={!editorState.canItalic}
+                >
+                  <Italic className="h-4 w-4" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>Italic</TooltipContent>
+            </Tooltip>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  type="button"
+                  size="sm"
+                  variant={editorState.isStrike ? "default" : "outline"}
+                  onClick={() => editor.chain().focus().toggleStrike().run()}
+                  disabled={!editorState.canStrike}
+                >
+                  <Strikethrough className="h-4 w-4" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>Strikethrough</TooltipContent>
+            </Tooltip>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  type="button"
+                  size="sm"
+                  variant={editorState.isCode ? "default" : "outline"}
+                  onClick={() => editor.chain().focus().toggleCode().run()}
+                  disabled={!editorState.canCode}
+                >
+                  <Code className="h-4 w-4" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>Code</TooltipContent>
+            </Tooltip>
+          </div>
 
-        {/* Headings */}
-        <ButtonGroup size="sm" variant="outline" spacing={1}>
-          <Tooltip label="Paragraph">
-            <Button
-              onClick={() => editor.chain().focus().setParagraph().run()}
-              colorScheme={editorState.isParagraph ? "blue" : "gray"}
-              variant={editorState.isParagraph ? "solid" : "outline"}
-            >
-              P
-            </Button>
-          </Tooltip>
-          <Tooltip label="Heading 1">
-            <Button
-              onClick={() =>
-                editor.chain().focus().toggleHeading({ level: 1 }).run()
-              }
-              colorScheme={editorState.isHeading1 ? "blue" : "gray"}
-              variant={editorState.isHeading1 ? "solid" : "outline"}
-            >
-              H1
-            </Button>
-          </Tooltip>
-          <Tooltip label="Heading 2">
-            <Button
-              onClick={() =>
-                editor.chain().focus().toggleHeading({ level: 2 }).run()
-              }
-              colorScheme={editorState.isHeading2 ? "blue" : "gray"}
-              variant={editorState.isHeading2 ? "solid" : "outline"}
-            >
-              H2
-            </Button>
-          </Tooltip>
-          <Tooltip label="Heading 3">
-            <Button
-              onClick={() =>
-                editor.chain().focus().toggleHeading({ level: 3 }).run()
-              }
-              colorScheme={editorState.isHeading3 ? "blue" : "gray"}
-              variant={editorState.isHeading3 ? "solid" : "outline"}
-            >
-              H3
-            </Button>
-          </Tooltip>
-        </ButtonGroup>
+          {/* Headings */}
+          <div className="flex gap-1">
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  type="button"
+                  size="sm"
+                  variant={editorState.isParagraph ? "default" : "outline"}
+                  onClick={() => editor.chain().focus().setParagraph().run()}
+                >
+                  <Pilcrow className="h-4 w-4" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>Paragraph</TooltipContent>
+            </Tooltip>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  type="button"
+                  size="sm"
+                  variant={editorState.isHeading1 ? "default" : "outline"}
+                  onClick={() =>
+                    editor.chain().focus().toggleHeading({ level: 1 }).run()
+                  }
+                >
+                  <Heading1 className="h-4 w-4" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>Heading 1</TooltipContent>
+            </Tooltip>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  type="button"
+                  size="sm"
+                  variant={editorState.isHeading2 ? "default" : "outline"}
+                  onClick={() =>
+                    editor.chain().focus().toggleHeading({ level: 2 }).run()
+                  }
+                >
+                  <Heading2 className="h-4 w-4" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>Heading 2</TooltipContent>
+            </Tooltip>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  type="button"
+                  size="sm"
+                  variant={editorState.isHeading3 ? "default" : "outline"}
+                  onClick={() =>
+                    editor.chain().focus().toggleHeading({ level: 3 }).run()
+                  }
+                >
+                  <Heading3 className="h-4 w-4" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>Heading 3</TooltipContent>
+            </Tooltip>
+          </div>
 
-        {/* Lists and Blocks */}
-        <ButtonGroup size="sm" variant="outline" spacing={1}>
-          <Tooltip label="Bullet List">
-            <Button
-              onClick={() => editor.chain().focus().toggleBulletList().run()}
-              colorScheme={editorState.isBulletList ? "blue" : "gray"}
-              variant={editorState.isBulletList ? "solid" : "outline"}
-            >
-              <Icon as={FaListUl} />
-            </Button>
-          </Tooltip>
-          <Tooltip label="Ordered List">
-            <Button
-              onClick={() => editor.chain().focus().toggleOrderedList().run()}
-              colorScheme={editorState.isOrderedList ? "blue" : "gray"}
-              variant={editorState.isOrderedList ? "solid" : "outline"}
-            >
-              <Icon as={FaListOl} />
-            </Button>
-          </Tooltip>
-          <Tooltip label="Code Block">
-            <Button
-              onClick={() => editor.chain().focus().toggleCodeBlock().run()}
-              colorScheme={editorState.isCodeBlock ? "blue" : "gray"}
-              variant={editorState.isCodeBlock ? "solid" : "outline"}
-            >
-              <Icon as={FaCode} />
-            </Button>
-          </Tooltip>
-          <Tooltip label="Blockquote">
-            <Button
-              onClick={() => editor.chain().focus().toggleBlockquote().run()}
-              colorScheme={editorState.isBlockquote ? "blue" : "gray"}
-              variant={editorState.isBlockquote ? "solid" : "outline"}
-            >
-              <Icon as={FaQuoteLeft} />
-            </Button>
-          </Tooltip>
-          <Tooltip label="Horizontal Rule">
-            <Button
-              onClick={() => editor.chain().focus().setHorizontalRule().run()}
-            >
-              <Icon as={FaMinus} />
-            </Button>
-          </Tooltip>
-        </ButtonGroup>
+          {/* Lists and Blocks */}
+          <div className="flex gap-1">
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  type="button"
+                  size="sm"
+                  variant={editorState.isBulletList ? "default" : "outline"}
+                  onClick={() =>
+                    editor.chain().focus().toggleBulletList().run()
+                  }
+                >
+                  <List className="h-4 w-4" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>Bullet List</TooltipContent>
+            </Tooltip>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  type="button"
+                  size="sm"
+                  variant={editorState.isOrderedList ? "default" : "outline"}
+                  onClick={() =>
+                    editor.chain().focus().toggleOrderedList().run()
+                  }
+                >
+                  <ListOrdered className="h-4 w-4" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>Ordered List</TooltipContent>
+            </Tooltip>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  type="button"
+                  size="sm"
+                  variant={editorState.isCodeBlock ? "default" : "outline"}
+                  onClick={() => editor.chain().focus().toggleCodeBlock().run()}
+                >
+                  <Code className="h-4 w-4" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>Code Block</TooltipContent>
+            </Tooltip>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  type="button"
+                  size="sm"
+                  variant={editorState.isBlockquote ? "default" : "outline"}
+                  onClick={() =>
+                    editor.chain().focus().toggleBlockquote().run()
+                  }
+                >
+                  <Quote className="h-4 w-4" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>Blockquote</TooltipContent>
+            </Tooltip>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="outline"
+                  onClick={() =>
+                    editor.chain().focus().setHorizontalRule().run()
+                  }
+                >
+                  <Minus className="h-4 w-4" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>Horizontal Rule</TooltipContent>
+            </Tooltip>
+          </div>
 
-        {/* History */}
-        <ButtonGroup size="sm" variant="outline" spacing={1}>
-          <Tooltip label="Undo">
-            <Button
-              onClick={() => editor.chain().focus().undo().run()}
-              isDisabled={!editorState.canUndo}
-            >
-              <Icon as={FaUndo} />
-            </Button>
-          </Tooltip>
-          <Tooltip label="Redo">
-            <Button
-              onClick={() => editor.chain().focus().redo().run()}
-              isDisabled={!editorState.canRedo}
-            >
-              <Icon as={FaRedo} />
-            </Button>
-          </Tooltip>
-        </ButtonGroup>
-      </HStack>
-    </Box>
+          {/* History */}
+          <div className="flex gap-1">
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="outline"
+                  onClick={() => editor.chain().focus().undo().run()}
+                  disabled={!editorState.canUndo}
+                >
+                  <Undo className="h-4 w-4" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>Undo</TooltipContent>
+            </Tooltip>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="outline"
+                  onClick={() => editor.chain().focus().redo().run()}
+                  disabled={!editorState.canRedo}
+                >
+                  <Redo className="h-4 w-4" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>Redo</TooltipContent>
+            </Tooltip>
+          </div>
+        </div>
+      </TooltipProvider>
+    </div>
   )
 }
 
@@ -473,32 +543,12 @@ export const CollabEditor: React.FC<{
   })
 
   if (!editor) {
-    return (
-      <Box textAlign="center" py={8}>
-        Initializing editor...
-      </Box>
-    )
+    return <div className="text-center py-8">Initializing editor...</div>
   }
 
   return (
-    <Box minH="100vh">
-      <Box
-        bg="gray.50"
-        borderRadius="lg"
-        p={6}
-        border="1px solid"
-        borderColor="gray.200"
-        boxShadow="sm"
-        transition="all 0.2s"
-        _dark={{
-          bg: "gray.800",
-          borderColor: "gray.600",
-        }}
-        _focusWithin={{
-          borderColor: "blue.400",
-          boxShadow: "0 0 0 1px var(--chakra-colors-blue-400)",
-        }}
-      >
+    <div className="min-h-screen">
+      <div className="bg-gray-50 rounded-lg p-6 border border-gray-200 shadow-sm transition-all duration-200 dark:bg-gray-800 dark:border-gray-600 focus-within:border-blue-400 focus-within:ring-1 focus-within:ring-blue-400">
         <MenuBar editor={editor} />
         <EditorContent
           editor={editor}
@@ -617,7 +667,7 @@ export const CollabEditor: React.FC<{
                     `,
           }}
         />
-      </Box>
-    </Box>
+      </div>
+    </div>
   )
 }
