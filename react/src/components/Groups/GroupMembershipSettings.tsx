@@ -1,14 +1,11 @@
 import {
-  Container,
-  Heading,
   Table,
-  TableContainer,
-  Tbody,
-  Td,
-  Th,
-  Thead,
-  Tr,
-} from "@chakra-ui/react"
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table"
 import { useQueryClient } from "@tanstack/react-query"
 
 import type { GroupLinked } from "../../client"
@@ -27,33 +24,29 @@ function GroupMembershipSettings({ groupId }: { groupId: string }) {
   }
   return (
     <>
-      <Container maxW="full">
-        <Heading size="sm" py={4}>
-          Group Membership
-        </Heading>
-        <TableContainer>
-          <Table variant="striped" colorScheme="teal">
-            <Thead>
-              <Tr>
-                <Th>Name</Th>
-                <Th>Email</Th>
-                <Th>Role</Th>
-              </Tr>
-            </Thead>
-            <Tbody>
-              {group.members.map((member) => {
-                return (
-                  <Tr key={member.email}>
-                    <Td>{member.name}</Td>
-                    <Td>{member.email}</Td>
-                    <Td>Member</Td>
-                  </Tr>
-                )
-              })}
-            </Tbody>
-          </Table>
-        </TableContainer>
-      </Container>
+      <div className="w-full">
+        <h3 className="text-sm font-semibold py-4">Group Membership</h3>
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>Name</TableHead>
+              <TableHead>Email</TableHead>
+              <TableHead>Role</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {group.members.map((member) => {
+              return (
+                <TableRow key={member.email}>
+                  <TableCell>{member.name}</TableCell>
+                  <TableCell>{member.email}</TableCell>
+                  <TableCell>Member</TableCell>
+                </TableRow>
+              )
+            })}
+          </TableBody>
+        </Table>
+      </div>
     </>
   )
 }

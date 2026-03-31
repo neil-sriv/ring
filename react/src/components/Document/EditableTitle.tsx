@@ -1,12 +1,8 @@
-import {
-  Box,
-  Heading,
-  Input,
-  Spinner,
-  useColorModeValue,
-  useToast,
-} from "@chakra-ui/react"
+import { Input } from "@/components/ui/input"
+import { cn } from "@/lib/utils"
+import { Loader2 } from "lucide-react"
 import { useEffect, useRef, useState } from "react"
+import useCustomToast from "../../hooks/useCustomToast"
 
 interface EditableTitleProps {
   title: string
@@ -28,11 +24,7 @@ export function EditableTitle({
   const [isEditing, setIsEditing] = useState(false)
   const [editValue, setEditValue] = useState(title)
   const inputRef = useRef<HTMLInputElement>(null)
-  const toast = useToast()
-
-  const textColor = useColorModeValue("gray.800", "white")
-  const hoverBorderColor = useColorModeValue("blue.300", "blue.400")
-  const focusBorderColor = useColorModeValue("blue.400", "blue.500")
+  const showToast = useCustomToast()
 
   // Update editValue when title prop changes
   useEffect(() => {
@@ -64,12 +56,7 @@ export function EditableTitle({
     }
 
     if (!editValue.trim()) {
-      toast({
-        title: "Title cannot be empty",
-        status: "error",
-        duration: 3000,
-        isClosable: true,
-      })
+      showToast("Title cannot be empty", "", "error")
       setEditValue(title) // Reset to original value
       setIsEditing(false)
       return
@@ -80,13 +67,7 @@ export function EditableTitle({
       setIsEditing(false)
     } catch (error) {
       console.error("Failed to update title:", error)
-      toast({
-        title: "Failed to update title",
-        description: "Please try again",
-        status: "error",
-        duration: 3000,
-        isClosable: true,
-      })
+      showToast("Failed to update title", "Please try again", "error")
       setEditValue(title) // Reset to original value
       setIsEditing(false)
     }
@@ -102,6 +83,20 @@ export function EditableTitle({
     }
   }
 
+  const sizeClasses = {
+    sm: "text-xl",
+    md: "text-2xl",
+    lg: "text-3xl",
+    xl: "text-4xl",
+    "2xl": "text-5xl",
+  }
+
+  const alignClasses = {
+    left: "text-left",
+    center: "text-center",
+    right: "text-right",
+  }
+
   if (isEditing) {
     return (
       <Input
@@ -110,72 +105,38 @@ export function EditableTitle({
         onChange={(e) => setEditValue(e.target.value)}
         onKeyDown={handleKeyDown}
         onBlur={handleSaveEdit}
-        size={size}
-        fontSize={
-          size === "lg" ? "1.5rem" : size === "xl" ? "1.875rem" : "1.25rem"
-        }
-        fontWeight="bold"
-        textAlign={textAlign}
-        color={color || textColor}
-        border="2px solid"
-        borderColor={focusBorderColor}
-        borderRadius="md"
-        px={3}
-        py={2}
-        bg="transparent"
-        _focus={{
-          borderColor: focusBorderColor,
-          boxShadow: `0 0 0 1px ${focusBorderColor}`,
-        }}
-        isDisabled={isLoading}
+        className={cn(
+          sizeClasses[size],
+          alignClasses[textAlign],
+          "font-bold border-2 border-blue-400 dark:border-blue-500 bg-transparent px-3 py-2 h-auto focus-visible:ring-blue-400",
+          color,
+        )}
+        disabled={isLoading}
       />
     )
   }
 
   return (
-    <Box
-      position="relative"
-      w="full"
-      cursor="pointer"
-      _hover={{
-        "&::after": {
-          content: '""',
-          position: "absolute",
-          bottom: "-2px",
-          left: 0,
-          right: 0,
-          height: "2px",
-          bg: hoverBorderColor,
-          borderRadius: "1px",
-          opacity: 0.6,
-        },
-      }}
+    <div
+      className="relative w-full cursor-pointer group"
       onClick={handleStartEdit}
     >
-      <Heading
-        size={size}
-        textAlign={textAlign}
-        color={color || textColor}
-        fontWeight="bold"
-        lineHeight="shorter"
-        wordBreak="break-word"
-        _hover={{
-          color: hoverBorderColor,
-        }}
-        transition="color 0.2s ease"
+      <h2
+        className={cn(
+          sizeClasses[size],
+          alignClasses[textAlign],
+          "font-bold leading-tight break-words transition-colors duration-200 text-gray-800 dark:text-white group-hover:text-blue-400 dark:group-hover:text-blue-400",
+          color,
+        )}
       >
         {title}
-      </Heading>
+      </h2>
+      <div className="absolute bottom-[-2px] left-0 right-0 h-0.5 bg-blue-300 dark:bg-blue-400 rounded-sm opacity-0 group-hover:opacity-60 transition-opacity duration-200" />
       {isLoading && (
-        <Box
-          position="absolute"
-          top="50%"
-          right="-2rem"
-          transform="translateY(-50%)"
-        >
-          <Spinner size="sm" color="blue.500" />
-        </Box>
+        <div className="absolute top-1/2 -right-8 -translate-y-1/2">
+          <Loader2 className="h-4 w-4 animate-spin text-blue-500" />
+        </div>
       )}
-    </Box>
+    </div>
   )
 }

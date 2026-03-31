@@ -1,22 +1,19 @@
+import { Button } from "@/components/ui/button"
 import {
-  Button,
-  FormControl,
-  FormErrorMessage,
-  Modal,
-  ModalBody,
-  ModalCloseButton,
-  ModalContent,
-  ModalFooter,
-  ModalHeader,
-  ModalOverlay,
-  Textarea,
-  useColorModeValue,
-} from "@chakra-ui/react"
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog"
+import { Textarea } from "@/components/ui/textarea"
 import { useMutation, useQueryClient } from "@tanstack/react-query"
 import { type SubmitHandler, useForm } from "react-hook-form"
 
 import { useRouter } from "@tanstack/react-router"
 import type { AxiosError } from "axios"
+import { Loader2 } from "lucide-react"
 import { useState } from "react"
 import type {
   AddQuestionLettersLetterLetterApiIdAddQuestionPostError,
@@ -61,7 +58,6 @@ const GenerateQuestion = ({
     mode: "onBlur",
     criteriaMode: "all",
   })
-  const textColor = useColorModeValue("ui.dark", "ui.light")
 
   const generateQuestionMutation = useMutation({
     ...generateQuestionLettersLetterLetterApiIdGenerateQuestionPostMutation({
@@ -139,99 +135,68 @@ const GenerateQuestion = ({
   }
 
   return (
-    <Modal
-      isOpen={isOpen}
-      onClose={handleClose}
-      size={{ base: "sm", md: "md" }}
-      isCentered
-    >
-      <ModalOverlay backdropFilter="blur(4px)" />
-      <ModalContent
-        as="form"
-        onSubmit={handleSubmit(onGenerateQuestion)}
-        bg="ui.glass.light.background"
-        backdropFilter="blur(10px)"
-        border="1px solid"
-        borderColor="ui.glass.light.border"
-        _dark={{
-          bg: "ui.glass.dark.background",
-          borderColor: "ui.glass.dark.border",
-        }}
-      >
-        <ModalHeader color={textColor}>Generate question</ModalHeader>
-        <ModalCloseButton color={textColor} />
-        <ModalBody pb={6}>
-          <FormControl isInvalid={!!errors.questionPrompt}>
-            <Textarea
-              id="questionPrompt"
-              placeholder="Enter a prompt to generate a question..."
-              {...register("questionPrompt", {
-                required: "Question prompt is required.",
-              })}
-              bg="ui.glass.light.background"
-              borderColor="ui.glass.light.border"
-              _dark={{
-                bg: "ui.glass.dark.background",
-                borderColor: "ui.glass.dark.border",
-              }}
-              _hover={{
-                borderColor: "ui.primary",
-              }}
-              _focus={{
-                borderColor: "ui.primary",
-                boxShadow: "0 0 0 1px var(--chakra-colors-ui-primary)",
-              }}
-              minH="100px"
-            />
-            {errors.questionPrompt && (
-              <FormErrorMessage>
-                {errors.questionPrompt.message}
-              </FormErrorMessage>
-            )}
-          </FormControl>
-          {generatedQuestion && (
-            <FormControl mt={4}>
+    <Dialog open={isOpen} onOpenChange={(open) => !open && handleClose()}>
+      <DialogContent className="backdrop-blur-md bg-white/80 border border-white/20 dark:bg-gray-900/80 dark:border-gray-700/50 sm:max-w-md">
+        <form onSubmit={handleSubmit(onGenerateQuestion)}>
+          <DialogHeader>
+            <DialogTitle className="text-foreground">
+              Generate question
+            </DialogTitle>
+            <DialogDescription className="sr-only">
+              Generate a question using AI
+            </DialogDescription>
+          </DialogHeader>
+          <div className="pb-6 pt-4 space-y-4">
+            <div>
               <Textarea
-                id="generatedQuestion"
-                value={generatedQuestion}
-                readOnly
-                placeholder="Generated question will appear here..."
-                minH="100px"
-                bg="ui.glass.light.background"
-                borderColor="ui.glass.light.border"
-                _dark={{
-                  bg: "ui.glass.dark.background",
-                  borderColor: "ui.glass.dark.border",
-                }}
+                id="questionPrompt"
+                placeholder="Enter a prompt to generate a question..."
+                {...register("questionPrompt", {
+                  required: "Question prompt is required.",
+                })}
+                className="min-h-[100px] bg-white/50 border-white/20 dark:bg-gray-900/50 dark:border-gray-700/50 hover:border-primary focus-visible:border-primary focus-visible:ring-primary"
               />
-            </FormControl>
-          )}
-        </ModalBody>
+              {errors.questionPrompt && (
+                <p className="text-sm text-destructive mt-1">
+                  {errors.questionPrompt.message}
+                </p>
+              )}
+            </div>
+            {generatedQuestion && (
+              <div>
+                <Textarea
+                  id="generatedQuestion"
+                  value={generatedQuestion}
+                  readOnly
+                  placeholder="Generated question will appear here..."
+                  className="min-h-[100px] bg-white/50 border-white/20 dark:bg-gray-900/50 dark:border-gray-700/50"
+                />
+              </div>
+            )}
+          </div>
 
-        <ModalFooter gap={3}>
-          <Button
-            variant="primary"
-            type="submit"
-            isLoading={generateQuestionMutation.isPending}
-            _hover={{
-              opacity: 0.9,
-              bg: "ui.primary",
-            }}
-            transition="all 0.2s ease-in-out"
-          >
-            Generate
-          </Button>
-          <Button
-            onClick={onSaveQuestion}
-            isLoading={addQuestionMutation.isPending}
-            isDisabled={!generatedQuestion}
-            variant="glass"
-          >
-            Save
-          </Button>
-        </ModalFooter>
-      </ModalContent>
-    </Modal>
+          <DialogFooter className="gap-3">
+            <Button type="submit" disabled={generateQuestionMutation.isPending}>
+              {generateQuestionMutation.isPending && (
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              )}
+              Generate
+            </Button>
+            <Button
+              type="button"
+              onClick={onSaveQuestion}
+              disabled={addQuestionMutation.isPending || !generatedQuestion}
+              variant="outline"
+            >
+              {addQuestionMutation.isPending && (
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              )}
+              Save
+            </Button>
+          </DialogFooter>
+        </form>
+      </DialogContent>
+    </Dialog>
   )
 }
 

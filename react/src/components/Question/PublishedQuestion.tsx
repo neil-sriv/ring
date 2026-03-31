@@ -1,11 +1,5 @@
-import {
-  Badge,
-  Box,
-  Heading,
-  Link,
-  Text,
-  useColorModeValue,
-} from "@chakra-ui/react"
+import { Badge } from "@/components/ui/badge"
+import { cn } from "@/lib/utils"
 import type { PublicQuestion, ResponseWithParticipant } from "../../client"
 import { URLMatch, splitText } from "../../util/URLParse"
 import { S3Image, S3Video } from "../Common/SingleUploadImage"
@@ -21,15 +15,21 @@ function TextBlockWithUrls({
   texts.forEach((text, index) => {
     if (URLMatch(text) != null) {
       elements.push(
-        <Link key={`${index}${responseApiId}`} href={text} isExternal={true}>
+        <a
+          key={`${index}${responseApiId}`}
+          href={text}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="text-primary underline hover:opacity-80"
+        >
           {text}
-        </Link>,
+        </a>,
       )
     } else {
       elements.push(
-        <Text whiteSpace="pre-line" key={`${index}${responseApiId}`}>
+        <p className="whitespace-pre-line" key={`${index}${responseApiId}`}>
           {text}
-        </Text>,
+        </p>,
       )
     }
   })
@@ -46,32 +46,26 @@ function ResponseBlock({
     responseText = splitText(response.response_text)
   }
 
-  const bgColor = useColorModeValue(
-    isLateAnswer ? "purple.50" : "transparent",
-    isLateAnswer ? "purple.900" : "transparent",
-  )
-  const borderColor = useColorModeValue(
-    isLateAnswer ? "purple.200" : "transparent",
-    isLateAnswer ? "purple.600" : "transparent",
-  )
-
   return (
-    <Box
-      my="10px"
-      p={isLateAnswer ? "3" : "0"}
-      bg={bgColor}
-      border={isLateAnswer ? "1px" : "none"}
-      borderColor={borderColor}
-      borderRadius={isLateAnswer ? "md" : "0"}
+    <div
+      className={cn(
+        "my-2.5",
+        isLateAnswer
+          ? "p-3 bg-purple-50 border border-purple-200 rounded-md dark:bg-purple-900 dark:border-purple-600"
+          : "",
+      )}
     >
-      <Box display="flex" alignItems="center" gap="2" mb="2">
-        <Heading size="md">{response.participant.name}</Heading>
+      <div className="flex items-center gap-2 mb-2">
+        <h3 className="text-lg font-semibold">{response.participant.name}</h3>
         {isLateAnswer && (
-          <Badge colorScheme="purple" variant="subtle" fontSize="xs">
+          <Badge
+            variant="secondary"
+            className="text-xs bg-purple-100 text-purple-800 dark:bg-purple-800 dark:text-purple-200"
+          >
             Late Answer
           </Badge>
         )}
-      </Box>
+      </div>
       {/* <Text>{responseText}</Text> */}
       <TextBlockWithUrls
         texts={responseText}
@@ -84,7 +78,7 @@ function ResponseBlock({
           <S3Video s3Key={image.s3_url} key={image.s3_url} />
         )
       })}
-    </Box>
+    </div>
   )
 }
 
@@ -100,13 +94,13 @@ function PublishedQuestion({
   const letterSendDate = letterSendAt ? new Date(letterSendAt) : null
 
   return (
-    <Box my="20px">
+    <div className="my-5">
       {question.author == null ? (
-        <Heading size="lg">{question.question_text}</Heading>
+        <h2 className="text-2xl font-bold">{question.question_text}</h2>
       ) : (
-        <Heading size="lg">
+        <h2 className="text-2xl font-bold">
           {question.author.name} asked: {question.question_text}
-        </Heading>
+        </h2>
       )}
       {question.responses.map((response) => {
         const responseCreatedAt = new Date(response.created_at)
@@ -122,7 +116,7 @@ function PublishedQuestion({
           />
         )
       })}
-    </Box>
+    </div>
   )
 }
 

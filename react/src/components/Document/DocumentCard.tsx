@@ -26,10 +26,7 @@ export function DocumentCard(props: {
       className="block h-full no-underline"
     >
       <div className="h-full backdrop-blur-md bg-white/80 border border-white/20 dark:bg-gray-900/80 dark:border-gray-700/50 p-6 rounded-xl shadow-md transition-all duration-200 hover:-translate-y-1 hover:shadow-xl hover:border-primary relative">
-        <Badge
-          variant="secondary"
-          className="text-xs absolute top-2 right-2"
-        >
+        <Badge variant="secondary" className="text-xs absolute top-2 right-2">
           v{props.document.latest_snapshot_version}
         </Badge>
 

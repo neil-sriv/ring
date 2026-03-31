@@ -1,17 +1,6 @@
-import {
-  Box,
-  Center,
-  Icon,
-  IconButton,
-  Image,
-  Input,
-  Spinner,
-  VStack,
-  chakra,
-} from "@chakra-ui/react"
+import { Button } from "@/components/ui/button"
+import { ImagePlus, Loader2, X } from "lucide-react"
 import { useState } from "react"
-import { FaTimes } from "react-icons/fa"
-import { MdAddPhotoAlternate } from "react-icons/md"
 
 /**
  * SingleUploadImage Component
@@ -84,41 +73,32 @@ export function SingleUploadImage({
   }
 
   return (
-    <Center
-      w={size}
-      h={size}
-      as={chakra.label}
+    <label
       htmlFor={name}
-      cursor="pointer"
-      overflow="hidden"
-      position="relative"
+      className="flex items-center justify-center cursor-pointer overflow-hidden relative"
+      style={{ width: size, height: size }}
     >
-      <Center
-        position="absolute"
-        w="100%"
-        h="100%"
-        _hover={{ bg: "blackAlpha.600" }}
-      >
-        <VStack>
+      <div className="absolute w-full h-full flex items-center justify-center hover:bg-black/40 transition-colors">
+        <div className="flex flex-col items-center">
           {isUploading ? (
-            <Spinner size="sm" />
+            <Loader2 className="h-4 w-4 animate-spin" />
           ) : (
-            <Icon as={MdAddPhotoAlternate} />
+            <ImagePlus className="h-4 w-4" />
           )}
-        </VStack>
-      </Center>
+        </div>
+      </div>
 
-      <Input
+      <input
         style={{ display: "none" }}
         type="file"
         id={name}
         name={name}
         multiple
         onChange={handleFileChange}
-        isDisabled={isUploading}
+        disabled={isUploading}
         accept="image/*, video/*"
       />
-    </Center>
+    </label>
   )
 }
 
@@ -130,21 +110,9 @@ interface S3MediaProps {
 
 function S3MediaContainer({ children }: { children: React.ReactNode }) {
   return (
-    <Box
-      borderRadius="md"
-      _hover={{
-        boxShadow: "md",
-        transition: "all 0.2s ease-in-out",
-      }}
-      transition="all 0.2s ease-in-out"
-      boxShadow="sm"
-      overflow="hidden"
-      display="inline-block"
-      p={2}
-      position="relative"
-    >
+    <div className="rounded-md hover:shadow-md transition-all duration-200 shadow-sm overflow-hidden inline-block p-2 relative">
       {children}
-    </Box>
+    </div>
   )
 }
 
@@ -152,33 +120,21 @@ export function S3Image({ s3Key, alt, handleDelete }: S3MediaProps) {
   const url = `https://du32exnxihxuf.cloudfront.net/${s3Key}`
   return (
     <S3MediaContainer>
-      <Image
+      <img
         src={url}
         alt={alt}
-        maxW="400px"
-        maxH="300px"
-        objectFit="contain"
-        _hover={{
-          transform: "scale(1.02)",
-          transition: "all 0.2s ease-in-out",
-        }}
-        transition="all 0.2s ease-in-out"
+        className="max-w-[400px] max-h-[300px] object-contain hover:scale-[1.02] transition-all duration-200"
       />
       {handleDelete && (
-        <IconButton
-          aria-label="Delete image"
-          icon={<FaTimes />}
-          size="sm"
-          colorScheme="red"
-          variant="solid"
-          position="absolute"
-          top={3}
-          right={3}
-          opacity={0.7}
-          _hover={{ opacity: 1 }}
+        <Button
+          variant="destructive"
+          size="icon"
+          className="absolute top-3 right-3 opacity-70 hover:opacity-100 h-8 w-8"
           onClick={handleDelete}
-          zIndex={1}
-        />
+          aria-label="Delete image"
+        >
+          <X className="h-4 w-4" />
+        </Button>
       )}
     </S3MediaContainer>
   )
@@ -191,29 +147,21 @@ export function S3Video({
   const url = `https://du32exnxihxuf.cloudfront.net/${s3Key}`
   return (
     <S3MediaContainer>
-      <Box
-        as="video"
+      <video
         src={url}
         controls
-        maxW="400px"
-        maxH="300px"
-        objectFit="contain"
+        className="max-w-[400px] max-h-[300px] object-contain"
       />
       {handleDelete && (
-        <IconButton
-          aria-label="Delete video"
-          icon={<FaTimes />}
-          size="sm"
-          colorScheme="red"
-          variant="solid"
-          position="absolute"
-          top={3}
-          right={3}
-          opacity={0.7}
-          _hover={{ opacity: 1 }}
+        <Button
+          variant="destructive"
+          size="icon"
+          className="absolute top-3 right-3 opacity-70 hover:opacity-100 h-8 w-8"
           onClick={handleDelete}
-          zIndex={1}
-        />
+          aria-label="Delete video"
+        >
+          <X className="h-4 w-4" />
+        </Button>
       )}
     </S3MediaContainer>
   )

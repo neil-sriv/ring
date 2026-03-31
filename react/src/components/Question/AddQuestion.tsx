@@ -1,22 +1,19 @@
-import {
-  Button,
-  FormControl,
-  FormErrorMessage,
-  Modal,
-  ModalBody,
-  ModalCloseButton,
-  ModalContent,
-  ModalFooter,
-  ModalHeader,
-  ModalOverlay,
-  Textarea,
-  useColorModeValue,
-} from "@chakra-ui/react"
 import { useMutation, useQueryClient } from "@tanstack/react-query"
 import { type SubmitHandler, useForm } from "react-hook-form"
 
+import { Button } from "@/components/ui/button"
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog"
+import { Textarea } from "@/components/ui/textarea"
 import { useRouter } from "@tanstack/react-router"
 import type { AxiosError } from "axios"
+import { Loader2 } from "lucide-react"
 import type {
   AddQuestionLettersLetterLetterApiIdAddQuestionPostError,
   UserLinked,
@@ -89,82 +86,50 @@ const AddQuestion = ({ isOpen, onClose, loopApiId }: AddQuestionProps) => {
     })
   }
 
-  const textColor = useColorModeValue("ui.dark", "ui.light")
-
   return (
-    <>
-      <Modal
-        isOpen={isOpen}
-        onClose={onClose}
-        size={{ base: "sm", md: "md" }}
-        isCentered
-      >
-        <ModalOverlay backdropFilter="blur(4px)" />
-        <ModalContent
-          as="form"
-          onSubmit={handleSubmit(onSubmit)}
-          bg="ui.glass.light.background"
-          backdropFilter="blur(10px)"
-          border="1px solid"
-          borderColor="ui.glass.light.border"
-          _dark={{
-            bg: "ui.glass.dark.background",
-            borderColor: "ui.glass.dark.border",
-          }}
-        >
-          <ModalHeader color={textColor}>Add new question</ModalHeader>
-          <ModalCloseButton color={textColor} />
-          <ModalBody pb={6}>
-            <FormControl>
+    <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
+      <DialogContent className="backdrop-blur-md bg-white/80 border border-white/20 dark:bg-gray-900/80 dark:border-gray-700/50 sm:max-w-md">
+        <form onSubmit={handleSubmit(onSubmit)}>
+          <DialogHeader>
+            <DialogTitle className="text-foreground">
+              Add new question
+            </DialogTitle>
+            <DialogDescription className="sr-only">
+              Add a new question to the loop
+            </DialogDescription>
+          </DialogHeader>
+          <div className="pb-6 pt-4">
+            <div>
               <Textarea
                 id="questionText"
                 {...register("questionText", {
                   required: "Question text is required.",
                 })}
-                bg="ui.glass.light.background"
-                borderColor="ui.glass.light.border"
-                _dark={{
-                  bg: "ui.glass.dark.background",
-                  borderColor: "ui.glass.dark.border",
-                }}
-                _hover={{
-                  borderColor: "ui.primary",
-                }}
-                _focus={{
-                  borderColor: "ui.primary",
-                  boxShadow: "0 0 0 1px var(--chakra-colors-ui-primary)",
-                }}
+                className="min-h-[100px] bg-white/50 border-white/20 dark:bg-gray-900/50 dark:border-gray-700/50 hover:border-primary focus-visible:border-primary focus-visible:ring-primary"
                 placeholder="Enter your question here..."
-                minH="100px"
               />
               {errors.questionText && (
-                <FormErrorMessage>
+                <p className="text-sm text-destructive mt-1">
                   {errors.questionText.message}
-                </FormErrorMessage>
+                </p>
               )}
-            </FormControl>
-          </ModalBody>
+            </div>
+          </div>
 
-          <ModalFooter gap={3}>
-            <Button
-              variant="primary"
-              type="submit"
-              isLoading={isSubmitting}
-              _hover={{
-                opacity: 0.9,
-                bg: "ui.primary",
-              }}
-              transition="all 0.2s ease-in-out"
-            >
+          <DialogFooter className="gap-3">
+            <Button type="submit" disabled={isSubmitting}>
+              {isSubmitting && (
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              )}
               Save
             </Button>
-            <Button onClick={onClose} variant="glass">
+            <Button type="button" onClick={onClose} variant="outline">
               Cancel
             </Button>
-          </ModalFooter>
-        </ModalContent>
-      </Modal>
-    </>
+          </DialogFooter>
+        </form>
+      </DialogContent>
+    </Dialog>
   )
 }
 

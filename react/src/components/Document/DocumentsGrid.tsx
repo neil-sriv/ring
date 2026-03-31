@@ -1,18 +1,10 @@
-import {
-  Box,
-  Button,
-  Grid,
-  HStack,
-  Heading,
-  Text,
-  VStack,
-  useColorModeValue,
-} from "@chakra-ui/react"
+import { Button } from "@/components/ui/button"
 import {
   useMutation,
   useQueryClient,
   useSuspenseQuery,
 } from "@tanstack/react-query"
+import { Loader2 } from "lucide-react"
 import type { DocumentResponse } from "../../client"
 import {
   createDocumentEndpointNotebookDocumentsPostMutation,
@@ -24,8 +16,6 @@ import { DocumentCard } from "./DocumentCard"
 export function DocumentsGrid(props: {
   groupApiId: string
 }): JSX.Element {
-  const textColor = useColorModeValue("ui.dark", "ui.light")
-
   const { data: documents } = useSuspenseQuery({
     ...listDocumentsNotebookDocumentsGetOptions({
       query: {
@@ -48,17 +38,14 @@ export function DocumentsGrid(props: {
   })
 
   return (
-    <Box p={4}>
-      <VStack align="start" spacing={6}>
-        <HStack justify="space-between" w="full">
-          <Heading size="lg" color={textColor}>
-            Documents
-          </Heading>
-          <HStack spacing={3}>
+    <div className="p-4">
+      <div className="flex flex-col items-start gap-6">
+        <div className="flex justify-between items-center w-full">
+          <h2 className="text-2xl font-bold text-foreground">Documents</h2>
+          <div className="flex gap-3">
             <Button
-              colorScheme="blue"
               size="sm"
-              isLoading={createDocumentMutation.isPending}
+              disabled={createDocumentMutation.isPending}
               onClick={() => {
                 createDocumentMutation.mutate({
                   body: {
@@ -69,35 +56,22 @@ export function DocumentsGrid(props: {
                 })
               }}
             >
+              {createDocumentMutation.isPending && (
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              )}
               New Document
             </Button>
-          </HStack>
-        </HStack>
+          </div>
+        </div>
 
         {documents.length === 0 ? (
-          <Box
-            textAlign="center"
-            py={12}
-            w="full"
-            bg="ui.glass.light.background"
-            backdropFilter="blur(10px)"
-            border="1px solid"
-            borderColor="ui.glass.light.border"
-            _dark={{
-              bg: "ui.glass.dark.background",
-              borderColor: "ui.glass.dark.border",
-            }}
-            borderRadius="xl"
-          >
-            <VStack spacing={4}>
-              <Text color={textColor} fontSize="lg">
-                No documents yet
-              </Text>
-              <Text color="ui.dim" fontSize="sm">
+          <div className="text-center py-12 w-full backdrop-blur-md bg-white/80 border border-white/20 dark:bg-gray-900/80 dark:border-gray-700/50 rounded-xl">
+            <div className="flex flex-col items-center gap-4">
+              <p className="text-lg text-foreground">No documents yet</p>
+              <p className="text-sm text-muted-foreground">
                 Create your first collaborative document to get started
-              </Text>
+              </p>
               <Button
-                colorScheme="blue"
                 onClick={() => {
                   createDocumentMutation.mutate({
                     body: {
@@ -110,24 +84,16 @@ export function DocumentsGrid(props: {
               >
                 Create Document
               </Button>
-            </VStack>
-          </Box>
+            </div>
+          </div>
         ) : (
-          <Grid
-            templateColumns={{
-              base: "1fr",
-              md: "repeat(2, 1fr)",
-              lg: "repeat(3, 1fr)",
-            }}
-            gap={6}
-            w="full"
-          >
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 w-full">
             {documents.map((document: DocumentResponse) => (
               <DocumentCard key={document.api_identifier} document={document} />
             ))}
-          </Grid>
+          </div>
         )}
-      </VStack>
-    </Box>
+      </div>
+    </div>
   )
 }

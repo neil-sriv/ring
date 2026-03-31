@@ -1,17 +1,6 @@
-import {
-  Box,
-  Button,
-  Container,
-  Flex,
-  FormControl,
-  FormErrorMessage,
-  FormLabel,
-  Heading,
-  Input,
-  List,
-  Text,
-  useColorModeValue,
-} from "@chakra-ui/react"
+import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
 import { useMutation, useQueryClient } from "@tanstack/react-query"
 import { useState } from "react"
 import {
@@ -23,7 +12,7 @@ import {
 
 import { useRouter } from "@tanstack/react-router"
 import type { AxiosError } from "axios"
-import { FiPlus } from "react-icons/fi"
+import { Loader2, Plus } from "lucide-react"
 import type { GroupLinked } from "../../client"
 import {
   readGroupPartiesGroupGroupApiIdGetQueryKey,
@@ -47,7 +36,6 @@ type FormData = {
 
 function GroupLoopSettings({ groupId }: { groupId: string }) {
   const queryClient = useQueryClient()
-  const color = useColorModeValue("inherit", "ui.light")
   const showToast = useCustomToast()
   const [editMode, setEditMode] = useState(false)
   const group = queryClient.getQueryData<GroupLinked>(
@@ -169,111 +157,119 @@ function GroupLoopSettings({ groupId }: { groupId: string }) {
 
   return (
     <>
-      <Container maxW="full">
-        <Heading size="sm" py={4}>
-          Loop Settings
-        </Heading>
-        <Box
-          w={{ sm: "full", md: "50%" }}
-          as="form"
-          onSubmit={handleSubmit(onSubmit)}
-        >
-          <FormControl isInvalid={!!errors.cycle_length}>
-            <FormLabel color={color} htmlFor="cycle_length">
-              Loop Cycle (days)
-            </FormLabel>
-            {editMode ? (
-              <Input
-                id="cycle_length"
-                {...register("cycle_length", {
-                  valueAsNumber: true,
-                  required: "Cycle length is required",
-                  min: {
-                    value: 1,
-                    message: "Cycle length must be greater than 0",
-                  },
-                })}
-                type="number"
-                size="md"
-              />
-            ) : (
-              <Text size="md" py={2} color={color}>
-                {group.cycle_length} days
-              </Text>
-            )}
-            <FormErrorMessage>{errors.cycle_length?.message}</FormErrorMessage>
-          </FormControl>
-          <FormControl mt={4}>
-            <FormLabel color={color} htmlFor="defaultQuestions">
-              Default Questions
-            </FormLabel>
-            <List>
-              {fields.map((field, index) => (
-                <Box key={field.id}>
-                  <Flex>
-                    {editMode ? (
-                      <>
-                        <Controller
-                          control={control}
-                          name={`questions.${index}.question_text`}
-                          render={({ field }) => (
-                            <Input
-                              {...register(`questions.${index}.question_text`)}
-                              {...field}
-                              size="md"
-                            />
-                          )}
-                        />
-                        <Button
-                          onClick={() => remove(index)}
-                          ml={2}
-                          size="sm"
-                          variant="outline"
-                        >
-                          Remove
-                        </Button>
-                      </>
-                    ) : (
-                      <Text size="md" py={2} color="inherit">
-                        {field.question_text}
-                      </Text>
-                    )}
-                  </Flex>
-                </Box>
-              ))}
+      <div className="w-full">
+        <h3 className="text-sm font-semibold py-4">Loop Settings</h3>
+        <div className="w-full md:w-1/2">
+          <form onSubmit={handleSubmit(onSubmit)}>
+            <div className="space-y-1">
+              <Label htmlFor="cycle_length">Loop Cycle (days)</Label>
+              {editMode ? (
+                <Input
+                  id="cycle_length"
+                  {...register("cycle_length", {
+                    valueAsNumber: true,
+                    required: "Cycle length is required",
+                    min: {
+                      value: 1,
+                      message: "Cycle length must be greater than 0",
+                    },
+                  })}
+                  type="number"
+                />
+              ) : (
+                <p className="py-2 text-foreground">
+                  {group.cycle_length} days
+                </p>
+              )}
+              {errors.cycle_length && (
+                <p className="text-sm text-destructive">
+                  {errors.cycle_length.message}
+                </p>
+              )}
+            </div>
+            <div className="mt-4 space-y-1">
+              <Label htmlFor="defaultQuestions">Default Questions</Label>
+              <ul className="space-y-2">
+                {fields.map((field, index) => (
+                  <li key={field.id}>
+                    <div className="flex gap-2">
+                      {editMode ? (
+                        <>
+                          <Controller
+                            control={control}
+                            name={`questions.${index}.question_text`}
+                            render={({ field }) => (
+                              <Input
+                                {...register(
+                                  `questions.${index}.question_text`,
+                                )}
+                                {...field}
+                              />
+                            )}
+                          />
+                          <Button
+                            type="button"
+                            onClick={() => remove(index)}
+                            size="sm"
+                            variant="outline"
+                          >
+                            Remove
+                          </Button>
+                        </>
+                      ) : (
+                        <p className="py-2 text-foreground">
+                          {field.question_text}
+                        </p>
+                      )}
+                    </div>
+                  </li>
+                ))}
+                {editMode && (
+                  <li>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => append({ question_text: "" })}
+                    >
+                      <Plus className="h-4 w-4" />
+                    </Button>
+                  </li>
+                )}
+                {errors.questions?.root && (
+                  <li>
+                    <p className="text-sm text-destructive">
+                      {errors.questions.root?.message}
+                    </p>
+                  </li>
+                )}
+              </ul>
+            </div>
+            <div className="flex mt-4 gap-3">
+              <Button
+                onClick={editMode ? undefined : toggleEditMode}
+                type={editMode ? "submit" : "button"}
+                disabled={editMode ? !isDirty || isSubmitting : false}
+              >
+                {editMode && isSubmitting && (
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                )}
+                {editMode ? "Save" : "Edit"}
+              </Button>
               {editMode && (
                 <Button
                   type="button"
-                  onClick={() => append({ question_text: "" })}
+                  variant="outline"
+                  onClick={onCancel}
+                  disabled={isSubmitting}
                 >
-                  <FiPlus />
+                  Cancel
                 </Button>
               )}
-              {errors.questions?.root && (
-                <Text color="ui.error" fontSize="sm">
-                  {errors.questions.root?.message}
-                </Text>
-              )}
-            </List>
-          </FormControl>
-          <Flex mt={4} gap={3}>
-            <Button
-              variant="primary"
-              onClick={editMode ? undefined : toggleEditMode}
-              type={editMode ? "submit" : "button"}
-              isLoading={editMode ? isSubmitting : false}
-              isDisabled={editMode ? !isDirty : false}
-            >
-              {editMode ? "Save" : "Edit"}
-            </Button>
-            {editMode && (
-              <Button onClick={onCancel} isDisabled={isSubmitting}>
-                Cancel
-              </Button>
-            )}
-          </Flex>
-        </Box>
-      </Container>
+            </div>
+          </form>
+        </div>
+      </div>
     </>
   )
 }

@@ -1,13 +1,6 @@
-import {
-  Box,
-  Container,
-  HStack,
-  Spinner,
-  Text,
-  useColorModeValue,
-} from "@chakra-ui/react"
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import { createFileRoute } from "@tanstack/react-router"
+import { Loader2 } from "lucide-react"
 import { Suspense, useRef, useState } from "react"
 import type { DocumentResponse } from "../../../client"
 import {
@@ -41,7 +34,6 @@ export const Route = createFileRoute("/_layout/documents/$documentId")({
 
 function DocumentContentLoader() {
   const documentId = Route.useParams().documentId
-  const textColor = useColorModeValue("ui.dark", "ui.light")
   const [isSaving, setIsSaving] = useState(false)
   const [isEditing, setIsEditing] = useState(false)
   const savingStartTimeRef = useRef<number | null>(null)
@@ -92,119 +84,69 @@ function DocumentContentLoader() {
 
   if (isDocumentLoading) {
     return (
-      <Container maxW="full" mt={8}>
-        <Box textAlign="center" py={8}>
-          <Spinner size="xl" />
-        </Box>
-      </Container>
+      <div className="w-full mt-8">
+        <div className="text-center py-8">
+          <Loader2 className="h-8 w-8 animate-spin mx-auto" />
+        </div>
+      </div>
     )
   }
 
   if (!document) {
     return (
-      <Container maxW="full" mt={8}>
-        <Box textAlign="center" py={8}>
-          <Text>Document not found</Text>
-        </Box>
-      </Container>
+      <div className="w-full mt-8">
+        <div className="text-center py-8">
+          <p>Document not found</p>
+        </div>
+      </div>
     )
   }
 
   return (
-    <Container maxW="full" mt={8}>
-      <Box
-        bg="ui.glass.light.background"
-        backdropFilter="blur(10px)"
-        border="1px solid"
-        borderColor="ui.glass.light.border"
-        _dark={{
-          bg: "ui.glass.dark.background",
-          borderColor: "ui.glass.dark.border",
-        }}
-        p={6}
-        borderRadius="xl"
-        boxShadow="md"
-        mb={6}
-      >
-        <HStack justify="space-between" align="center">
+    <div className="w-full mt-8 px-4">
+      <div className="backdrop-blur-md bg-white/80 border border-white/20 dark:bg-gray-900/80 dark:border-gray-700/50 p-6 rounded-xl shadow-md mb-6">
+        <div className="flex justify-between items-center">
           <EditableTitle
             title={document.name}
             onTitleChange={handleTitleChange}
             isLoading={updateDocumentMutation.isPending}
             size="lg"
             textAlign="left"
-            color={textColor}
           />
-          <HStack
-            spacing={2}
-            bg="whiteAlpha.200"
-            px={3}
-            py={1}
-            borderRadius="md"
-            borderWidth="1px"
-            borderColor="whiteAlpha.300"
-            _dark={{
-              bg: "whiteAlpha.100",
-              borderColor: "whiteAlpha.200",
-            }}
-          >
+          <div className="flex items-center gap-2 bg-white/20 px-3 py-1 rounded-md border border-white/30 dark:bg-white/10 dark:border-white/20">
             {isSaving ? (
               <>
-                <Spinner size="sm" color="blue.400" />
-                <Text
-                  fontSize="sm"
-                  color="gray.700"
-                  _dark={{ color: "gray.300" }}
-                >
+                <Loader2 className="h-4 w-4 animate-spin text-blue-400" />
+                <span className="text-sm text-gray-700 dark:text-gray-300">
                   Syncing...
-                </Text>
+                </span>
               </>
             ) : isEditing ? (
-              <Text
-                fontSize="sm"
-                color="orange.600"
-                _dark={{ color: "orange.400" }}
-              >
+              <span className="text-sm text-orange-600 dark:text-orange-400">
                 Editing...
-              </Text>
+              </span>
             ) : (
-              <Text
-                fontSize="sm"
-                color="green.600"
-                _dark={{ color: "green.400" }}
-              >
+              <span className="text-sm text-green-600 dark:text-green-400">
                 Saved
-              </Text>
+              </span>
             )}
-          </HStack>
-        </HStack>
-      </Box>
-      <Box
-        bg="ui.glass.light.background"
-        backdropFilter="blur(10px)"
-        border="1px solid"
-        borderColor="ui.glass.light.border"
-        _dark={{
-          bg: "ui.glass.dark.background",
-          borderColor: "ui.glass.dark.border",
-        }}
-        p={6}
-        borderRadius="xl"
-        boxShadow="md"
-      >
+          </div>
+        </div>
+      </div>
+      <div className="backdrop-blur-md bg-white/80 border border-white/20 dark:bg-gray-900/80 dark:border-gray-700/50 p-6 rounded-xl shadow-md">
         <CollabEditor
           docId={documentId}
           onSavingChange={handleSavingChange}
           onEditingChange={setIsEditing}
         />
-      </Box>
-    </Container>
+      </div>
+    </div>
   )
 }
 
 function DocumentContent() {
   return (
-    <Suspense fallback={<Spinner size="xl" />}>
+    <Suspense fallback={<Loader2 className="h-8 w-8 animate-spin" />}>
       <DocumentContentLoader />
     </Suspense>
   )

@@ -1,12 +1,8 @@
-import {
-  Box,
-  Button,
-  Heading,
-  Textarea,
-  useColorModeValue,
-} from "@chakra-ui/react"
+import { Button } from "@/components/ui/button"
+import { Textarea } from "@/components/ui/textarea"
 import { useMutation, useQueryClient } from "@tanstack/react-query"
 import type { AxiosError } from "axios"
+import { Loader2 } from "lucide-react"
 import { useState } from "react"
 import {
   type PublicQuestion,
@@ -40,7 +36,7 @@ function LateAnswerQuestion({
   const textareaRef = useAutoResizeTextarea(responseText)
 
   if (!currentUser) {
-    return <Box>Loading...</Box>
+    return <div>Loading...</div>
   }
 
   // Check if user has already responded to this question
@@ -100,22 +96,9 @@ function LateAnswerQuestion({
     mutation.mutate()
   }
 
-  const textColor = useColorModeValue("ui.dark", "ui.light")
-
   return (
-    <Box
-      my="20px"
-      p="4"
-      border="1px"
-      borderColor="gray.200"
-      borderRadius="md"
-      bg="gray.50"
-      _dark={{
-        borderColor: "gray.600",
-        bg: "gray.700",
-      }}
-    >
-      <Heading size="md" mb="3" color={textColor}>
+    <div className="my-5 p-4 border border-gray-200 rounded-md bg-gray-50 dark:border-gray-600 dark:bg-gray-700">
+      <h3 className="text-lg font-semibold mb-3 text-foreground">
         {question.author == null ? (
           question.question_text
         ) : (
@@ -123,32 +106,26 @@ function LateAnswerQuestion({
             {question.author.name} asked: {question.question_text}
           </>
         )}
-      </Heading>
+      </h3>
 
-      <Box mb="3">
+      <div className="mb-3">
         <Textarea
           ref={textareaRef}
-          size="md"
-          variant="filled"
           value={responseText}
           onChange={handleResponseChange}
           placeholder="Add your late answer here..."
-          minH="100px"
-          overflow="hidden"
-          resize="none"
+          className="min-h-[100px] overflow-hidden resize-none bg-muted"
         />
-      </Box>
+      </div>
 
       <Button
-        colorScheme="blue"
         onClick={handleSubmit}
-        isLoading={isSubmitting}
-        loadingText="Submitting..."
-        isDisabled={!responseText.trim()}
+        disabled={isSubmitting || !responseText.trim()}
       >
-        Submit Late Answer
+        {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+        {isSubmitting ? "Submitting..." : "Submit Late Answer"}
       </Button>
-    </Box>
+    </div>
   )
 }
 
