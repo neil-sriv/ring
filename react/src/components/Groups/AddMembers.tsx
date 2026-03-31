@@ -1,46 +1,42 @@
-import {
-    Button,
-    FormControl,
-    FormErrorMessage,
-    FormLabel,
-    Input,
-    Modal,
-    ModalBody,
-    ModalCloseButton,
-    ModalContent,
-    ModalFooter,
-    ModalHeader,
-    ModalOverlay,
-    Text,
-    useColorModeValue,
-} from "@chakra-ui/react";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { type SubmitHandler, useForm } from "react-hook-form";
+import { useMutation, useQueryClient } from "@tanstack/react-query"
+import { Loader2 } from "lucide-react"
+import { type SubmitHandler, useForm } from "react-hook-form"
 
-import { AxiosError } from "axios";
+import type { AxiosError } from "axios"
+import type {
+  AddMembersPartiesGroupGroupApiIdAddMembersPostError,
+  GroupLinked,
+} from "../../client"
 import {
-    AddMembersPartiesGroupGroupApiIdAddMembersPostError,
-    type GroupLinked,
-} from "../../client";
+  addMembersPartiesGroupGroupApiIdAddMembersPostMutation,
+  listGroupsPartiesGroupsGetQueryKey,
+} from "../../client/@tanstack/react-query.gen"
+import useCustomToast from "../../hooks/useCustomToast"
+
+import { Button } from "@/components/ui/button"
 import {
-    addMembersPartiesGroupGroupApiIdAddMembersPostMutation,
-    listGroupsPartiesGroupsGetQueryKey,
-} from "../../client/@tanstack/react-query.gen";
-import useCustomToast from "../../hooks/useCustomToast";
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
 
 interface AddMembersProps {
-  group: GroupLinked;
-  isOpen: boolean;
-  onClose: () => void;
+  group: GroupLinked
+  isOpen: boolean
+  onClose: () => void
 }
 
 type AddMembersFormType = {
-  member_emails: string;
-};
+  member_emails: string
+}
 
 const AddMembers = ({ group, isOpen, onClose }: AddMembersProps) => {
-  const queryClient = useQueryClient();
-  const showToast = useCustomToast();
+  const queryClient = useQueryClient()
+  const showToast = useCustomToast()
   const {
     register,
     handleSubmit,
@@ -49,140 +45,102 @@ const AddMembers = ({ group, isOpen, onClose }: AddMembersProps) => {
   } = useForm<AddMembersFormType>({
     mode: "onBlur",
     criteriaMode: "all",
-  });
+  })
 
   const mutation = useMutation({
     ...addMembersPartiesGroupGroupApiIdAddMembersPostMutation(),
     onSuccess: () => {
-      showToast("Success!", "Group updated successfully.", "success");
-      reset();
-      onClose();
+      showToast("Success!", "Group updated successfully.", "success")
+      reset()
+      onClose()
     },
     onError: (
-      err: AxiosError<AddMembersPartiesGroupGroupApiIdAddMembersPostError>
+      err: AxiosError<AddMembersPartiesGroupGroupApiIdAddMembersPostError>,
     ) => {
-      console.log(err);
+      console.log(err)
       const errDetail =
-        err.response?.data.detail || "no error detail, please contact support";
-      showToast("Something went wrong.", `${errDetail}`, "error");
+        err.response?.data.detail || "no error detail, please contact support"
+      showToast("Something went wrong.", `${errDetail}`, "error")
     },
     onSettled: () => {
       queryClient.invalidateQueries({
         queryKey: listGroupsPartiesGroupsGetQueryKey({
           query: { user_api_id: group.api_identifier },
         }),
-      });
+      })
     },
-  });
+  })
 
   const onSubmit: SubmitHandler<AddMembersFormType> = async (data) => {
     const memberEmails = data.member_emails
       .split(",")
-      .map((email) => email.trim());
+      .map((email) => email.trim())
     mutation.mutate({
       body: { member_emails: memberEmails },
       path: { group_api_id: group.api_identifier },
-    });
-  };
+    })
+  }
 
   const onCancel = () => {
-    reset();
-    onClose();
-  };
-
-  const textColor = useColorModeValue("ui.dark", "ui.light");
+    reset()
+    onClose()
+  }
 
   return (
-    <>
-      <Modal
-        isOpen={isOpen}
-        onClose={onClose}
-        size={{ base: "sm", md: "md" }}
-        isCentered
-      >
-        <ModalOverlay backdropFilter="blur(4px)" />
-        <ModalContent 
-          as="form" 
-          onSubmit={handleSubmit(onSubmit)}
-          bg="ui.glass.light.background"
-          backdropFilter="blur(10px)"
-          border="1px solid"
-          borderColor="ui.glass.light.border"
-          _dark={{
-            bg: "ui.glass.dark.background",
-            borderColor: "ui.glass.dark.border",
-          }}
-        >
-          <ModalHeader color={textColor}>Add new members</ModalHeader>
-          <ModalCloseButton color={textColor} />
-          <ModalBody pb={6}>
-            <FormControl isInvalid={!!errors.member_emails}>
-              <FormLabel htmlFor="name" color={textColor}>New Member Emails</FormLabel>
-              <Text color={textColor}>
+    <Dialog
+      open={isOpen}
+      onOpenChange={(open) => {
+        if (!open) onClose()
+      }}
+    >
+      <DialogContent>
+        <form onSubmit={handleSubmit(onSubmit)}>
+          <DialogHeader>
+            <DialogTitle>Add new members</DialogTitle>
+          </DialogHeader>
+          <div className="py-4">
+            <div className="space-y-2">
+              <Label htmlFor="name">New Member Emails</Label>
+              <p className="text-sm text-muted-foreground">
                 Enter the email addresses of the new members you want to add to
                 this group. Separate multiple emails with a comma.
-              </Text>
+              </p>
               <Input
                 id="name"
                 {...register("member_emails", {
                   required: "New member emails are required",
                 })}
                 type="text"
-                bg="ui.glass.light.background"
-                borderColor="ui.glass.light.border"
-                _dark={{
-                  bg: "ui.glass.dark.background",
-                  borderColor: "ui.glass.dark.border",
-                }}
-                _hover={{
-                  borderColor: "ui.primary",
-                }}
-                _focus={{
-                  borderColor: "ui.primary",
-                  boxShadow: "0 0 0 1px var(--chakra-colors-ui-primary)",
-                }}
               />
               {errors.member_emails && (
-                <FormErrorMessage>
+                <p className="text-sm text-destructive">
                   {errors.member_emails.message}
-                </FormErrorMessage>
+                </p>
               )}
-            </FormControl>
-            {/* <FormControl mt={4}>
-              <FormLabel htmlFor="description">Description</FormLabel>
+            </div>
+            {/* <div className="mt-4 space-y-2">
+              <Label htmlFor="description">Description</Label>
               <Input
                 id="description"
                 {...register("description")}
                 placeholder="Description"
                 type="text"
               />
-            </FormControl> */}
-          </ModalBody>
-          <ModalFooter gap={3}>
-            <Button
-              variant="primary"
-              type="submit"
-              isLoading={isSubmitting}
-              isDisabled={!isDirty}
-              _hover={{ 
-                opacity: 0.9,
-                bg: "ui.primary",
-              }}
-              transition="all 0.2s ease-in-out"
-            >
-              Save
-            </Button>
-            <Button 
-              onClick={onCancel}
-              variant="glass"
-            >
+            </div> */}
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={onCancel} type="button">
               Cancel
             </Button>
-          </ModalFooter>
-        </ModalContent>
-      </Modal>
-    </>
-  );
-};
+            <Button type="submit" disabled={isSubmitting || !isDirty}>
+              {isSubmitting && <Loader2 className="h-4 w-4 animate-spin" />}
+              Save
+            </Button>
+          </DialogFooter>
+        </form>
+      </DialogContent>
+    </Dialog>
+  )
+}
 
-export default AddMembers;
+export default AddMembers

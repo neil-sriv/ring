@@ -1,45 +1,42 @@
-import {
-  Button,
-  FormControl,
-  FormErrorMessage,
-  FormLabel,
-  Input,
-  Modal,
-  ModalBody,
-  ModalCloseButton,
-  ModalContent,
-  ModalFooter,
-  ModalHeader,
-  ModalOverlay,
-  useColorModeValue,
-} from "@chakra-ui/react";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { type SubmitHandler, useForm } from "react-hook-form";
+import { useMutation, useQueryClient } from "@tanstack/react-query"
+import { Loader2 } from "lucide-react"
+import { type SubmitHandler, useForm } from "react-hook-form"
 
-import { AxiosError } from "axios";
-import {
+import type { AxiosError } from "axios"
+import type {
   CreateGroupPartiesGroupPostError,
-  type GroupCreate,
+  GroupCreate,
   UserLinked,
-} from "../../client";
+} from "../../client"
 import {
   createGroupPartiesGroupPostMutation,
   listGroupsPartiesGroupsGetQueryKey,
   readUserMePartiesMeGetQueryKey,
-} from "../../client/@tanstack/react-query.gen";
-import useCustomToast from "../../hooks/useCustomToast";
+} from "../../client/@tanstack/react-query.gen"
+import useCustomToast from "../../hooks/useCustomToast"
+
+import { Button } from "@/components/ui/button"
+import {
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
 
 interface AddGroupProps {
-  isOpen: boolean;
-  onClose: () => void;
+  isOpen: boolean
+  onClose: () => void
 }
 
 const AddGroup = ({ isOpen, onClose }: AddGroupProps) => {
-  const queryClient = useQueryClient();
+  const queryClient = useQueryClient()
   const currentUser = queryClient.getQueryData<UserLinked>(
-    readUserMePartiesMeGetQueryKey()
-  );
-  const showToast = useCustomToast();
+    readUserMePartiesMeGetQueryKey(),
+  )
+  const showToast = useCustomToast()
   const {
     register,
     handleSubmit,
@@ -51,19 +48,19 @@ const AddGroup = ({ isOpen, onClose }: AddGroupProps) => {
     defaultValues: {
       name: "",
     },
-  });
+  })
 
   const mutation = useMutation({
     ...createGroupPartiesGroupPostMutation(),
     onSuccess: () => {
-      showToast("Success!", "Group created successfully.", "success");
-      reset();
-      onClose();
+      showToast("Success!", "Group created successfully.", "success")
+      reset()
+      onClose()
     },
     onError: (err: AxiosError<CreateGroupPartiesGroupPostError>) => {
       const errDetail =
-        err.response?.data.detail || "no error detail, please contact support";
-      showToast("Something went wrong.", `${errDetail}`, "error");
+        err.response?.data.detail || "no error detail, please contact support"
+      showToast("Something went wrong.", `${errDetail}`, "error")
     },
     onSettled: (data) => {
       if (data) {
@@ -71,10 +68,10 @@ const AddGroup = ({ isOpen, onClose }: AddGroupProps) => {
           queryKey: listGroupsPartiesGroupsGetQueryKey({
             query: { user_api_id: currentUser!.api_identifier },
           }),
-        });
+        })
       }
     },
-  });
+  })
 
   const onSubmit: SubmitHandler<GroupCreate> = (data) => {
     mutation.mutate({
@@ -82,37 +79,24 @@ const AddGroup = ({ isOpen, onClose }: AddGroupProps) => {
         admin_api_identifier: currentUser!.api_identifier,
         name: data.name,
       },
-    });
-  };
-
-  const textColor = useColorModeValue("ui.dark", "ui.light");
+    })
+  }
 
   return (
-    <>
-      <Modal
-        isOpen={isOpen}
-        onClose={onClose}
-        size={{ base: "sm", md: "md" }}
-        isCentered
-      >
-        <ModalOverlay backdropFilter="blur(4px)" />
-        <ModalContent 
-          as="form" 
-          onSubmit={handleSubmit(onSubmit)}
-          bg="ui.glass.light.background"
-          backdropFilter="blur(10px)"
-          border="1px solid"
-          borderColor="ui.glass.light.border"
-          _dark={{
-            bg: "ui.glass.dark.background",
-            borderColor: "ui.glass.dark.border",
-          }}
-        >
-          <ModalHeader color={textColor}>Add Group</ModalHeader>
-          <ModalCloseButton color={textColor} />
-          <ModalBody pb={6}>
-            <FormControl isRequired isInvalid={!!errors.name}>
-              <FormLabel htmlFor="name" color={textColor}>Name</FormLabel>
+    <Dialog
+      open={isOpen}
+      onOpenChange={(open) => {
+        if (!open) onClose()
+      }}
+    >
+      <DialogContent>
+        <form onSubmit={handleSubmit(onSubmit)}>
+          <DialogHeader>
+            <DialogTitle>Add Group</DialogTitle>
+          </DialogHeader>
+          <div className="py-4">
+            <div className="space-y-2">
+              <Label htmlFor="name">Name</Label>
               <Input
                 id="name"
                 {...register("name", {
@@ -120,59 +104,36 @@ const AddGroup = ({ isOpen, onClose }: AddGroupProps) => {
                 })}
                 placeholder="Name"
                 type="text"
-                bg="ui.glass.light.background"
-                borderColor="ui.glass.light.border"
-                _dark={{
-                  bg: "ui.glass.dark.background",
-                  borderColor: "ui.glass.dark.border",
-                }}
-                _hover={{
-                  borderColor: "ui.primary",
-                }}
-                _focus={{
-                  borderColor: "ui.primary",
-                  boxShadow: "0 0 0 1px var(--chakra-colors-ui-primary)",
-                }}
               />
               {errors.name && (
-                <FormErrorMessage>{errors.name.message}</FormErrorMessage>
+                <p className="text-sm text-destructive">
+                  {errors.name.message}
+                </p>
               )}
-            </FormControl>
-            {/* <FormControl mt={4}>
-              <FormLabel htmlFor="description">Description</FormLabel>
+            </div>
+            {/* <div className="mt-4 space-y-2">
+              <Label htmlFor="description">Description</Label>
               <Input
                 id="description"
                 {...register("description")}
                 placeholder="Description"
                 type="text"
               />
-            </FormControl> */}
-          </ModalBody>
-
-          <ModalFooter gap={3}>
-            <Button 
-              variant="primary" 
-              type="submit" 
-              isLoading={isSubmitting}
-              _hover={{ 
-                opacity: 0.9,
-                bg: "ui.primary",
-              }}
-              transition="all 0.2s ease-in-out"
-            >
-              Save
-            </Button>
-            <Button 
-              onClick={onClose}
-              variant="glass"
-            >
+            </div> */}
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={onClose} type="button">
               Cancel
             </Button>
-          </ModalFooter>
-        </ModalContent>
-      </Modal>
-    </>
-  );
-};
+            <Button type="submit" disabled={isSubmitting}>
+              {isSubmitting && <Loader2 className="h-4 w-4 animate-spin" />}
+              Save
+            </Button>
+          </DialogFooter>
+        </form>
+      </DialogContent>
+    </Dialog>
+  )
+}
 
-export default AddGroup;
+export default AddGroup

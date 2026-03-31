@@ -1,39 +1,36 @@
 import {
-    AlertDialog,
-    AlertDialogBody,
-    AlertDialogContent,
-    AlertDialogFooter,
-    AlertDialogHeader,
-    AlertDialogOverlay,
-    Button,
-    useColorModeValue,
-} from "@chakra-ui/react";
-import { useMutation } from "@tanstack/react-query";
-import React from "react";
-import { useForm } from "react-hook-form";
+  AlertDialog,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog"
+import { Button } from "@/components/ui/button"
+import { useMutation } from "@tanstack/react-query"
+import { Loader2 } from "lucide-react"
+import { useForm } from "react-hook-form"
 
 // import { LettersService, PartiesService } from "../../client";
-import useCustomToast from "../../hooks/useCustomToast";
+import useCustomToast from "../../hooks/useCustomToast"
 
 interface DeleteProps {
-  type: string;
-  id: string;
-  isOpen: boolean;
-  onClose: () => void;
+  type: string
+  id: string
+  isOpen: boolean
+  onClose: () => void
 }
 
 const Delete = ({ type, isOpen, onClose }: DeleteProps) => {
   // const queryClient = useQueryClient();
-  const showToast = useCustomToast();
-  const cancelRef = React.useRef<HTMLButtonElement | null>(null);
+  const showToast = useCustomToast()
   const {
     handleSubmit,
     formState: { isSubmitting },
-  } = useForm();
-  const textColor = useColorModeValue("ui.dark", "ui.light");
+  } = useForm()
 
   const deleteEntity = async () => {
-    throw new Error("Not implemented");
+    throw new Error("Not implemented")
     // if (type === "Item") {
     //   await LettersService.readLetterLettersLetterLetterApiIdGet({
     //     letterApiId: id,
@@ -43,7 +40,7 @@ const Delete = ({ type, isOpen, onClose }: DeleteProps) => {
     // } else {
     //   throw new Error(`Unexpected type: ${type}`);
     // }
-  };
+  }
 
   const mutation = useMutation({
     mutationFn: deleteEntity,
@@ -51,16 +48,16 @@ const Delete = ({ type, isOpen, onClose }: DeleteProps) => {
       showToast(
         "Success",
         `The ${type.toLowerCase()} was deleted successfully.`,
-        "success"
-      );
-      onClose();
+        "success",
+      )
+      onClose()
     },
     onError: () => {
       showToast(
         "An error occurred.",
         `An error occurred while deleting the ${type.toLowerCase()}.`,
-        "error"
-      );
+        "error",
+      )
     },
     onSettled: () => {
       // const queryKey =
@@ -69,72 +66,51 @@ const Delete = ({ type, isOpen, onClose }: DeleteProps) => {
       //   queryKey: [type === "Group" ? "groups" : "users"],
       // });
     },
-  });
+  })
 
   const onSubmit = async () => {
-    mutation.mutate();
-  };
+    mutation.mutate()
+  }
 
   return (
-    <>
-      <AlertDialog
-        isOpen={isOpen}
-        onClose={onClose}
-        leastDestructiveRef={cancelRef}
-        size={{ base: "sm", md: "md" }}
-        isCentered
-      >
-        <AlertDialogOverlay backdropFilter="blur(4px)" />
-        <AlertDialogContent 
-          as="form" 
-          onSubmit={handleSubmit(onSubmit)}
-          bg="ui.glass.light.background"
-          backdropFilter="blur(10px)"
-          border="1px solid"
-          borderColor="ui.glass.light.border"
-          _dark={{
-            bg: "ui.glass.dark.background",
-            borderColor: "ui.glass.dark.border",
-          }}
-        >
-          <AlertDialogHeader color={textColor}>Delete {type}</AlertDialogHeader>
-
-          <AlertDialogBody color={textColor}>
-            {type === "User" && (
-              <span>
-                All items associated with this user will also be{" "}
-                <strong>permantly deleted. </strong>
-              </span>
-            )}
-            Are you sure? You will not be able to undo this action.
-          </AlertDialogBody>
-
-          <AlertDialogFooter gap={3}>
-            <Button 
-              variant="danger" 
-              type="submit" 
-              isLoading={isSubmitting}
-              _hover={{ 
-                opacity: 0.9,
-                bg: "ui.danger",
-              }}
-              transition="all 0.2s ease-in-out"
-            >
-              Delete
-            </Button>
+    <AlertDialog
+      open={isOpen}
+      onOpenChange={(open) => {
+        if (!open) onClose()
+      }}
+    >
+      <AlertDialogContent>
+        <form onSubmit={handleSubmit(onSubmit)}>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete {type}</AlertDialogTitle>
+            <AlertDialogDescription>
+              {type === "User" && (
+                <span>
+                  All items associated with this user will also be{" "}
+                  <strong>permantly deleted. </strong>
+                </span>
+              )}
+              Are you sure? You will not be able to undo this action.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter className="mt-4">
             <Button
-              ref={cancelRef}
+              variant="outline"
               onClick={onClose}
-              isDisabled={isSubmitting}
-              variant="glass"
+              disabled={isSubmitting}
+              type="button"
             >
               Cancel
             </Button>
+            <Button variant="destructive" type="submit" disabled={isSubmitting}>
+              {isSubmitting && <Loader2 className="h-4 w-4 animate-spin" />}
+              Delete
+            </Button>
           </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
-    </>
-  );
-};
+        </form>
+      </AlertDialogContent>
+    </AlertDialog>
+  )
+}
 
-export default Delete;
+export default Delete

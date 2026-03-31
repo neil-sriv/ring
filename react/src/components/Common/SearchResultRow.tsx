@@ -1,179 +1,201 @@
-import { Badge, Flex, Td, Text, Tr } from "@chakra-ui/react";
-import { Link } from "@tanstack/react-router";
-import { LetterUnlinked, type GroupLinked, type PublicLetter, type QuestionLinked, type ResponseLinked, type SearchResult, type UserLinked } from "../../client";
+import { Badge } from "@/components/ui/badge"
+import { TableCell, TableRow } from "@/components/ui/table"
+import { Link } from "@tanstack/react-router"
+import type {
+  GroupLinked,
+  LetterUnlinked,
+  PublicLetter,
+  QuestionLinked,
+  ResponseLinked,
+  SearchResult,
+  UserLinked,
+} from "../../client"
 
 interface SearchResultRowProps {
-    result: SearchResult;
+  result: SearchResult
 }
 
 function ResponseSearchResultRow({ result }: { result: SearchResult }) {
-    const model = result.model as ResponseLinked;
+  const model = result.model as ResponseLinked
 
-    return (
-        <Tr _hover={{ bg: "gray.200" }} cursor="pointer">
-            <Td>
-                <Link
-                    to="/loops/$loopId"
-                    params={{ loopId: model.letter?.api_identifier ?? "" }}
-                    style={{ textDecoration: "none" }}
-                >
-                    <Flex direction="column" gap={2}>
-                        <Flex gap={2} align="center">
-                            <Badge colorScheme="blue">Response</Badge>
-                            <Text fontWeight="medium">
-                                {model.group?.name} - Letter {model.letter?.number}
-                            </Text>
-                        </Flex>
-                        <Flex gap={2} align="center">
-                            <Text fontWeight="medium">Q: {model.question.question_text}</Text>
-                        </Flex>
-                        <Flex gap={2} align="center">
-                            <Text fontWeight="medium">by {model.participant.name}</Text>
-                        </Flex>
-                        <Text fontSize="sm" color="gray.600" noOfLines={2}>
-                            {model.response_text}
-                        </Text>
-                    </Flex>
-                </Link>
-            </Td>
-        </Tr>
-    );
+  return (
+    <TableRow className="cursor-pointer">
+      <TableCell>
+        <Link
+          to="/loops/$loopId"
+          params={{ loopId: model.letter?.api_identifier ?? "" }}
+          style={{ textDecoration: "none" }}
+        >
+          <div className="flex flex-col gap-2">
+            <div className="flex gap-2 items-center">
+              <Badge className="bg-blue-500 text-white hover:bg-blue-600">
+                Response
+              </Badge>
+              <span className="font-medium">
+                {model.group?.name} - Letter {model.letter?.number}
+              </span>
+            </div>
+            <div className="flex gap-2 items-center">
+              <span className="font-medium">
+                Q: {model.question.question_text}
+              </span>
+            </div>
+            <div className="flex gap-2 items-center">
+              <span className="font-medium">by {model.participant.name}</span>
+            </div>
+            <p className="text-sm text-muted-foreground line-clamp-2">
+              {model.response_text}
+            </p>
+          </div>
+        </Link>
+      </TableCell>
+    </TableRow>
+  )
 }
 
 function UserSearchResultRow({ result }: { result: SearchResult }) {
-    const model = result.model as UserLinked;
+  const model = result.model as UserLinked
 
-    return (
-        <Tr _hover={{ bg: "gray.200" }} cursor="pointer">
-            <Td>
-                <Flex direction="column" gap={2}>
-                    <Flex gap={2} align="center">
-                        <Badge colorScheme="green">User</Badge>
-                        <Text fontWeight="medium">{model.name}</Text>
-                    </Flex>
-                    <Text fontSize="sm" color="gray.600">
-                        Member of {model.groups.length} groups
-                    </Text>
-                </Flex>
-            </Td>
-        </Tr>
-    );
+  return (
+    <TableRow className="cursor-pointer">
+      <TableCell>
+        <div className="flex flex-col gap-2">
+          <div className="flex gap-2 items-center">
+            <Badge className="bg-green-500 text-white hover:bg-green-600">
+              User
+            </Badge>
+            <span className="font-medium">{model.name}</span>
+          </div>
+          <p className="text-sm text-muted-foreground">
+            Member of {model.groups.length} groups
+          </p>
+        </div>
+      </TableCell>
+    </TableRow>
+  )
 }
 
 function GroupSearchResultRow({ result }: { result: SearchResult }) {
-    const model = result.model as GroupLinked;
+  const model = result.model as GroupLinked
 
-    return (
-        <Tr _hover={{ bg: "gray.200" }} cursor="pointer">
-            <Td>
-                <Link
-                    to="/groups/$groupId/loops"
-                    params={{ groupId: model.api_identifier }}
-                    style={{ textDecoration: "none" }}
-                >
-                    <Flex direction="column" gap={2}>
-                        <Flex gap={2} align="center">
-                            <Badge colorScheme="purple">Group</Badge>
-                            <Text fontWeight="medium">{model.name}</Text>
-                        </Flex>
-                        <Text fontSize="sm" color="gray.600">
-                            {model.members.length} members • {model.letters.length} letters
-                        </Text>
-                    </Flex>
-                </Link>
-            </Td>
-        </Tr>
-    );
+  return (
+    <TableRow className="cursor-pointer">
+      <TableCell>
+        <Link
+          to="/groups/$groupId/loops"
+          params={{ groupId: model.api_identifier }}
+          style={{ textDecoration: "none" }}
+        >
+          <div className="flex flex-col gap-2">
+            <div className="flex gap-2 items-center">
+              <Badge className="bg-purple-500 text-white hover:bg-purple-600">
+                Group
+              </Badge>
+              <span className="font-medium">{model.name}</span>
+            </div>
+            <p className="text-sm text-muted-foreground">
+              {model.members.length} members • {model.letters.length} letters
+            </p>
+          </div>
+        </Link>
+      </TableCell>
+    </TableRow>
+  )
 }
 
 function QuestionSearchResultRow({ result }: { result: SearchResult }) {
-    const model = result.model as QuestionLinked;
-    const letter = model.letter as LetterUnlinked;
+  const model = result.model as QuestionLinked
+  const letter = model.letter as LetterUnlinked
 
-    return (
-        <Tr _hover={{ bg: "gray.200" }} cursor="pointer">
-            <Td>
-                <Link
-                    to="/loops/$loopId"
-                    params={{ loopId: letter.api_identifier }}
-                    style={{ textDecoration: "none" }}
-                >
-                    <Flex direction="column" gap={2}>
-                        <Flex gap={2} align="center">
-                            <Badge colorScheme="orange">Question</Badge>
-                            <Text fontWeight="medium">
-                                {model.group.name} - Letter {letter.number}
-                            </Text>
-                        </Flex>
-                        <Text fontSize="sm" color="gray.600" noOfLines={2}>
-                            {model.question_text}
-                        </Text>
-                        <Text fontSize="sm" color="gray.500">
-                            {model.responses.length} responses
-                        </Text>
-                    </Flex>
-                </Link>
-            </Td>
-        </Tr>
-    );
+  return (
+    <TableRow className="cursor-pointer">
+      <TableCell>
+        <Link
+          to="/loops/$loopId"
+          params={{ loopId: letter.api_identifier }}
+          style={{ textDecoration: "none" }}
+        >
+          <div className="flex flex-col gap-2">
+            <div className="flex gap-2 items-center">
+              <Badge className="bg-orange-500 text-white hover:bg-orange-600">
+                Question
+              </Badge>
+              <span className="font-medium">
+                {model.group.name} - Letter {letter.number}
+              </span>
+            </div>
+            <p className="text-sm text-muted-foreground line-clamp-2">
+              {model.question_text}
+            </p>
+            <p className="text-sm text-muted-foreground/70">
+              {model.responses.length} responses
+            </p>
+          </div>
+        </Link>
+      </TableCell>
+    </TableRow>
+  )
 }
 
 function LetterSearchResultRow({ result }: { result: SearchResult }) {
-    const model = result.model as PublicLetter;
+  const model = result.model as PublicLetter
 
-    return (
-        <Tr _hover={{ bg: "gray.200" }} cursor="pointer">
-            <Td>
-                <Link
-                    to="/loops/$loopId"
-                    params={{ loopId: model.api_identifier }}
-                    style={{ textDecoration: "none" }}
-                >
-                    <Flex direction="column" gap={2}>
-                        <Flex gap={2} align="center">
-                            <Badge colorScheme="teal">Letter</Badge>
-                            <Text fontWeight="medium">
-                                {model.group.name} - Letter {model.number}
-                            </Text>
-                        </Flex>
-                        <Text fontSize="sm" color="gray.600">
-                            {model.participants.length} participants • {model.questions.length} questions
-                        </Text>
-                    </Flex>
-                </Link>
-            </Td>
-        </Tr>
-    );
+  return (
+    <TableRow className="cursor-pointer">
+      <TableCell>
+        <Link
+          to="/loops/$loopId"
+          params={{ loopId: model.api_identifier }}
+          style={{ textDecoration: "none" }}
+        >
+          <div className="flex flex-col gap-2">
+            <div className="flex gap-2 items-center">
+              <Badge className="bg-teal-500 text-white hover:bg-teal-600">
+                Letter
+              </Badge>
+              <span className="font-medium">
+                {model.group.name} - Letter {model.number}
+              </span>
+            </div>
+            <p className="text-sm text-muted-foreground">
+              {model.participants.length} participants •{" "}
+              {model.questions.length} questions
+            </p>
+          </div>
+        </Link>
+      </TableCell>
+    </TableRow>
+  )
 }
 
 function DefaultSearchResultRow({ result }: { result: SearchResult }) {
-    return (
-        <Tr _hover={{ bg: "gray.200" }} cursor="pointer">
-            <Td>
-                <Flex direction="column" gap={1}>
-                    <Text fontWeight="medium">{result.model.api_identifier}</Text>
-                    <Badge colorScheme="blue" width="fit-content">
-                        {result.type.replace('Linked', '')}
-                    </Badge>
-                </Flex>
-            </Td>
-        </Tr>
-    );
+  return (
+    <TableRow className="cursor-pointer">
+      <TableCell>
+        <div className="flex flex-col gap-1">
+          <span className="font-medium">{result.model.api_identifier}</span>
+          <Badge className="w-fit bg-blue-500 text-white hover:bg-blue-600">
+            {result.type.replace("Linked", "")}
+          </Badge>
+        </div>
+      </TableCell>
+    </TableRow>
+  )
 }
 
 export function SearchResultRow({ result }: SearchResultRowProps) {
-    switch (result.type) {
-        case 'ResponseLinked':
-            return <ResponseSearchResultRow result={result} />;
-        case 'UserLinked':
-            return <UserSearchResultRow result={result} />;
-        case 'GroupLinked':
-            return <GroupSearchResultRow result={result} />;
-        case 'QuestionLinked':
-            return <QuestionSearchResultRow result={result} />;
-        case 'PublicLetter':
-            return <LetterSearchResultRow result={result} />;
-        default:
-            return <DefaultSearchResultRow result={result} />;
-    }
-} 
+  switch (result.type) {
+    case "ResponseLinked":
+      return <ResponseSearchResultRow result={result} />
+    case "UserLinked":
+      return <UserSearchResultRow result={result} />
+    case "GroupLinked":
+      return <GroupSearchResultRow result={result} />
+    case "QuestionLinked":
+      return <QuestionSearchResultRow result={result} />
+    case "PublicLetter":
+      return <LetterSearchResultRow result={result} />
+    default:
+      return <DefaultSearchResultRow result={result} />
+  }
+}

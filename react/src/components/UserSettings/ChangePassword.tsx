@@ -1,34 +1,27 @@
-import {
-    Box,
-    Button,
-    Container,
-    FormControl,
-    FormErrorMessage,
-    FormLabel,
-    Heading,
-    Input,
-    useColorModeValue,
-    VStack,
-} from "@chakra-ui/react";
-import { useMutation } from "@tanstack/react-query";
-import { type SubmitHandler, useForm } from "react-hook-form";
+import { useMutation } from "@tanstack/react-query"
+import { Loader2 } from "lucide-react"
+import { type SubmitHandler, useForm } from "react-hook-form"
 
-import { AxiosError } from "axios";
-import {
-    type UserUpdatePassword,
-    UpdatePasswordMePartiesMePasswordPatchError,
-} from "../../client";
-import { updatePasswordMePartiesMePasswordPatchMutation } from "../../client/@tanstack/react-query.gen";
-import useCustomToast from "../../hooks/useCustomToast";
-import { confirmPasswordRules, passwordRules } from "../../util/misc";
+import type { AxiosError } from "axios"
+import type {
+  UpdatePasswordMePartiesMePasswordPatchError,
+  UserUpdatePassword,
+} from "../../client"
+import { updatePasswordMePartiesMePasswordPatchMutation } from "../../client/@tanstack/react-query.gen"
+import useCustomToast from "../../hooks/useCustomToast"
+import { confirmPasswordRules, passwordRules } from "../../util/misc"
+
+import { Button } from "@/components/ui/button"
+import { Card, CardContent } from "@/components/ui/card"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
 
 interface UpdatePasswordForm extends UserUpdatePassword {
-  confirm_password: string;
+  confirm_password: string
 }
 
 const ChangePassword = () => {
-  const textColor = useColorModeValue("ui.dark", "ui.light");
-  const showToast = useCustomToast();
+  const showToast = useCustomToast()
   const {
     register,
     handleSubmit,
@@ -38,120 +31,91 @@ const ChangePassword = () => {
   } = useForm<UpdatePasswordForm>({
     mode: "onBlur",
     criteriaMode: "all",
-  });
+  })
 
   const mutation = useMutation({
     ...updatePasswordMePartiesMePasswordPatchMutation(),
     onSuccess: () => {
-      showToast("Success!", "Password updated.", "success");
-      reset();
+      showToast("Success!", "Password updated.", "success")
+      reset()
     },
     onError: (err: AxiosError<UpdatePasswordMePartiesMePasswordPatchError>) => {
       const errDetail =
-        err.response?.data.detail || "no error detail, please contact support";
-      showToast("Something went wrong.", `${errDetail}`, "error");
+        err.response?.data.detail || "no error detail, please contact support"
+      showToast("Something went wrong.", `${errDetail}`, "error")
     },
-  });
+  })
 
   const onSubmit: SubmitHandler<UpdatePasswordForm> = async (data) => {
     mutation.mutate({
       body: data,
-    });
-  };
+    })
+  }
 
   return (
-    <Container maxW="full">
-      <VStack spacing={6} align="stretch">
-        <Heading size="sm" color={textColor}>
+    <div className="w-full">
+      <div className="flex flex-col gap-6">
+        <h3 className="text-sm font-semibold text-foreground">
           Change Password
-        </Heading>
-        <Box
-          w={{ sm: "full", md: "50%" }}
-          as="form"
-          onSubmit={handleSubmit(onSubmit)}
-          bg="ui.glass.light.background"
-          backdropFilter="blur(10px)"
-          border="1px solid"
-          borderColor="ui.glass.light.border"
-          _dark={{
-            bg: "ui.glass.dark.background",
-            borderColor: "ui.glass.dark.border",
-          }}
-          p={6}
-          borderRadius="xl"
-          boxShadow="md"
-        >
-          <VStack spacing={4} align="stretch">
-            <FormControl isRequired isInvalid={!!errors.current_password}>
-              <FormLabel color={textColor} htmlFor="current_password">
-                Current Password
-              </FormLabel>
-              <Input
-                id="current_password"
-                {...register("current_password")}
-                placeholder="Password"
-                type="password"
-                bg="whiteAlpha.900"
-                _hover={{ bg: "whiteAlpha.800" }}
-                _focus={{ bg: "whiteAlpha.900" }}
-                transition="all 0.2s"
-              />
-              {errors.current_password && (
-                <FormErrorMessage>
-                  {errors.current_password.message}
-                </FormErrorMessage>
-              )}
-            </FormControl>
-            <FormControl isRequired isInvalid={!!errors.new_password}>
-              <FormLabel color={textColor} htmlFor="password">
-                Set Password
-              </FormLabel>
-              <Input
-                id="password"
-                {...register("new_password", passwordRules())}
-                placeholder="Password"
-                type="password"
-                bg="whiteAlpha.900"
-                _hover={{ bg: "whiteAlpha.800" }}
-                _focus={{ bg: "whiteAlpha.900" }}
-                transition="all 0.2s"
-              />
-              {errors.new_password && (
-                <FormErrorMessage>{errors.new_password.message}</FormErrorMessage>
-              )}
-            </FormControl>
-            <FormControl isRequired isInvalid={!!errors.confirm_password}>
-              <FormLabel color={textColor} htmlFor="confirm_password">
-                Confirm Password
-              </FormLabel>
-              <Input
-                id="confirm_password"
-                {...register("confirm_password", confirmPasswordRules(getValues))}
-                placeholder="Password"
-                type="password"
-                bg="whiteAlpha.900"
-                _hover={{ bg: "whiteAlpha.800" }}
-                _focus={{ bg: "whiteAlpha.900" }}
-                transition="all 0.2s"
-              />
-              {errors.confirm_password && (
-                <FormErrorMessage>
-                  {errors.confirm_password.message}
-                </FormErrorMessage>
-              )}
-            </FormControl>
-            <Button
-              variant="primary"
-              type="submit"
-              isLoading={isSubmitting}
-            >
-              Save
-            </Button>
-          </VStack>
-        </Box>
-      </VStack>
-    </Container>
-  );
-};
+        </h3>
+        <Card className="w-full md:w-1/2">
+          <CardContent className="pt-6">
+            <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="current_password">Current Password</Label>
+                <Input
+                  id="current_password"
+                  {...register("current_password")}
+                  placeholder="Password"
+                  type="password"
+                />
+                {errors.current_password && (
+                  <p className="text-sm text-destructive">
+                    {errors.current_password.message}
+                  </p>
+                )}
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="password">Set Password</Label>
+                <Input
+                  id="password"
+                  {...register("new_password", passwordRules())}
+                  placeholder="Password"
+                  type="password"
+                />
+                {errors.new_password && (
+                  <p className="text-sm text-destructive">
+                    {errors.new_password.message}
+                  </p>
+                )}
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="confirm_password">Confirm Password</Label>
+                <Input
+                  id="confirm_password"
+                  {...register(
+                    "confirm_password",
+                    confirmPasswordRules(getValues),
+                  )}
+                  placeholder="Password"
+                  type="password"
+                />
+                {errors.confirm_password && (
+                  <p className="text-sm text-destructive">
+                    {errors.confirm_password.message}
+                  </p>
+                )}
+              </div>
+              <Button type="submit" disabled={isSubmitting}>
+                {isSubmitting && <Loader2 className="h-4 w-4 animate-spin" />}
+                Save
+              </Button>
+            </form>
+          </CardContent>
+        </Card>
+      </div>
+    </div>
+  )
+}
 
-export default ChangePassword;
+export default ChangePassword
