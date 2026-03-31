@@ -16,10 +16,12 @@ class Token(BaseModel):
 
     Attributes:
         access_token (str): The JWT access token string
+        refresh_token (str): The JWT refresh token string for obtaining new access tokens
         token_type (str): The type of token (e.g., "bearer")
     """
 
     access_token: str
+    refresh_token: str
     token_type: str
 
 
@@ -33,3 +35,13 @@ class TokenData(BaseModel):
     """
 
     email: str | None = None
+
+
+class RefreshTokenRequest(BaseModel):
+    """Request schema for refreshing access tokens.
+
+    Attributes:
+        refresh_token (str): The refresh token to use for obtaining new tokens
+    """
+
+    refresh_token: str

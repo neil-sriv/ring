@@ -11,6 +11,7 @@ import {
   readUserMePartiesMeGetOptions,
 } from "../client/@tanstack/react-query.gen";
 import { AxiosError } from "axios";
+import { setTokens, clearTokens, hasAccessToken } from "../util/auth";
 
 export interface AuthContext {
   isAuthenticated?: boolean;
@@ -18,7 +19,7 @@ export interface AuthContext {
 }
 
 const isLoggedIn = () => {
-  return localStorage.getItem("access_token") !== null;
+  return hasAccessToken();
 };
 
 const useAuth = (next?: string) => {
@@ -29,7 +30,7 @@ const useAuth = (next?: string) => {
   const loginMutation = useMutation({
     ...loginAccessTokenLoginAccessTokenPostMutation(),
     onSuccess: (data) => {
-      localStorage.setItem("access_token", data.access_token);
+      setTokens(data.access_token, data.refresh_token);
       queryClient.ensureQueryData({
         ...readUserMePartiesMeGetOptions({}),
       });
@@ -66,13 +67,13 @@ const useAuth = (next?: string) => {
         throw error;
       }
       if (data) {
-        localStorage.setItem("access_token", data.access_token);
+        setTokens(data.access_token, data.refresh_token);
       }
     },
   });
 
   const logout = () => {
-    localStorage.removeItem("access_token");
+    clearTokens();
     navigate({ to: "/login" });
   };
 

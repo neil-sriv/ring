@@ -1,8 +1,8 @@
 """Authentication API endpoints.
 
 This module provides FastAPI endpoints for user authentication, including login,
-password reset, and token validation. It handles user credentials, JWT tokens,
-and password recovery workflows.
+password reset, token validation, and token refresh. It handles user credentials,
+JWT tokens, and password recovery workflows.
 """
 
 from __future__ import annotations
@@ -14,7 +14,7 @@ from fastapi.security import OAuth2PasswordRequestForm
 
 from ring.api_identifier.util import get_model
 from ring.async_scheduler.scheduler import scheduler
-from ring.auth.schemas.token import Token
+from ring.auth.schemas.token import RefreshTokenRequest, Token
 from ring.fastapp.dependencies import (
     RequestDependenciesBase,
     get_request_dependencies,
@@ -33,7 +33,11 @@ from ring.parties.models.one_time_token_model import TokenType
 from ring.parties.models.user_model import User
 from ring.parties.schemas.user import NewPassword
 from ring.ring_pydantic.core import ResponseMessage
-from ring.security import create_access_token
+from ring.security import (
+    create_access_token,
+    create_refresh_token,
+    decode_refresh_token,
+)
 
 router = APIRouter()
 
@@ -45,16 +49,18 @@ async def login_access_token(
         get_unauthenticated_request_dependencies
     ),
 ) -> Token:
-    """Authenticate user and generate access token.
+    """Authenticate user and generate access and refresh tokens.
 
-    Validates user credentials and generates a JWT access token for authenticated sessions.
+    Validates user credentials and generates JWT access and refresh tokens
+    for authenticated sessions. The access token is short-lived (15 minutes)
+    while the refresh token is longer-lived (30 days).
 
     Args:
         form_data (OAuth2PasswordRequestForm): OAuth2 password request form containing username and password
         req_dep (RequestDependenciesBase): Request dependencies including database session
 
     Returns:
-        Token: JWT access token with bearer type
+        Token: JWT access and refresh tokens with bearer type
 
     Raises:
         HTTPException: 400 if credentials are invalid
@@ -71,6 +77,48 @@ async def login_access_token(
         )
     return Token(
         access_token=create_access_token(data={"sub": user.email}),
+        refresh_token=create_refresh_token(data={"sub": user.email}),
+        token_type="bearer",
+    )
+
+
+@router.post("/login/refresh-token")
+async def refresh_access_token(
+    refresh_request: RefreshTokenRequest,
+    req_dep: RequestDependenciesBase = Depends(
+        get_unauthenticated_request_dependencies
+    ),
+) -> Token:
+    """Refresh access token using a valid refresh token.
+
+    Validates the refresh token and generates new access and refresh tokens.
+    This allows users to maintain their session without re-authenticating,
+    as long as their refresh token is still valid.
+
+    Args:
+        refresh_request (RefreshTokenRequest): Request containing the refresh token
+        req_dep (RequestDependenciesBase): Request dependencies including database session
+
+    Returns:
+        Token: New JWT access and refresh tokens with bearer type
+
+    Raises:
+        HTTPException: 401 if refresh token is invalid, expired, or user not found
+    """
+    email = decode_refresh_token(refresh_request.refresh_token)
+
+    # Verify the user still exists and is active
+    user = user_crud.get_user_by_email(req_dep.db, email)
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="User not found",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+
+    return Token(
+        access_token=create_access_token(data={"sub": user.email}),
+        refresh_token=create_refresh_token(data={"sub": user.email}),
         token_type="bearer",
     )
 
@@ -91,6 +139,7 @@ async def impersonate_user_token(
         raise HTTPException(status_code=404, detail="User not found")
     return Token(
         access_token=create_access_token(data={"sub": user.email}),
+        refresh_token=create_refresh_token(data={"sub": user.email}),
         token_type="bearer",
     )
 
