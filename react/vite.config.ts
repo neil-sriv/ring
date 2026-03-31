@@ -1,5 +1,7 @@
+import tailwindcss from "@tailwindcss/vite";
 import { TanStackRouterVite } from "@tanstack/router-vite-plugin";
 import react from "@vitejs/plugin-react-swc";
+import path from "path";
 import { defineConfig } from "vite";
 import { VitePWA, VitePWAOptions } from "vite-plugin-pwa";
 import topLevelAwait from "vite-plugin-top-level-await";
@@ -71,10 +73,16 @@ const pwaOptions: Partial<VitePWAOptions> = {
 // https://vitejs.dev/config/
 export default defineConfig({
   plugins: [
+    tailwindcss(),
     react(),
     TanStackRouterVite(),
     VitePWA({ ...pwaOptions, registerType: "autoUpdate" }),
     wasm(),
     topLevelAwait(),
   ],
+  resolve: {
+    alias: {
+      "@": path.resolve(__dirname, "./src"),
+    },
+  },
 });

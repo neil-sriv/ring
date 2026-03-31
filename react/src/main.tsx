@@ -11,6 +11,8 @@ import { routeTree } from "./routeTree.gen";
 import { StrictMode } from "react";
 import theme from "./theme";
 
+import "./app.css";
+
 import { registerSW } from "virtual:pwa-register";
 import { readUserMePartiesMeGetOptions } from "./client/@tanstack/react-query.gen";
 import { client } from "./client/client.gen";
