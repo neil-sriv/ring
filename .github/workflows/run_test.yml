@@ -1,6 +1,11 @@
 name: Run Unit Tests via pytest
 
-on: [push]
+on:
+  push:
+    branches:
+      - dev
+  pull_request:
+    # Run for all PRs regardless of base to better support stacked PRs
 
 jobs:
   build:

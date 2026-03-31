@@ -1,0 +1,42 @@
+name: Frontend Lint & Build
+
+on:
+  push:
+    branches:
+      - dev
+  pull_request:
+    # Run for all PRs regardless of base to better support stacked PRs
+
+jobs:
+  frontend-lint-build:
+    name: frontend-lint-build
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 18
+          cache: pnpm
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9
+          run_install: false
+
+      - name: Install dependencies
+        working-directory: react
+        run: pnpm install --frozen-lockfile
+
+      - name: Run frontend lint
+        working-directory: react
+        run: pnpm run lint
+
+      - name: Run frontend build
+        working-directory: react
+        run: pnpm run build
+
