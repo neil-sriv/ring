@@ -1,42 +1,32 @@
-import { ViewIcon, ViewOffIcon } from "@chakra-ui/icons";
-import {
-  Box,
-  Button,
-  Center,
-  Container,
-  FormControl,
-  FormErrorMessage,
-  Heading,
-  Icon,
-  Input,
-  InputGroup,
-  InputRightElement,
-  Link,
-  Text,
-  VStack,
-  useBoolean,
-  useColorModeValue,
-} from "@chakra-ui/react";
 import {
   Link as RouterLink,
   createFileRoute,
   redirect,
-} from "@tanstack/react-router";
-import { motion } from "framer-motion";
-import { type SubmitHandler, useForm } from "react-hook-form";
+} from "@tanstack/react-router"
+import { Eye, EyeOff, Loader2 } from "lucide-react"
+import { useState } from "react"
+import { type SubmitHandler, useForm } from "react-hook-form"
 
-import type { BodyLoginAccessTokenLoginAccessTokenPost as AccessToken } from "../client";
-import useAuth from "../hooks/useAuth";
-import { emailPattern } from "../util/misc";
-
-const MotionBox = motion(Box);
+import type { BodyLoginAccessTokenLoginAccessTokenPost as AccessToken } from "../client"
+import useAuth from "../hooks/useAuth"
+import { emailPattern } from "../util/misc"
+import { Button } from "@/components/ui/button"
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
 
 export const Route = createFileRoute("/login")({
   component: Login,
   validateSearch: (search: Record<string, unknown>) => {
     return {
       next: typeof search.next === "string" && search.next ? search.next : undefined,
-    };
+    }
   },
   beforeLoad: async ({ context, search }) => {
     if (
@@ -49,44 +39,42 @@ export const Route = createFileRoute("/login")({
       if (search.next) {
         try {
           // Parse the next URL to extract pathname, search, and hash
-          const baseUrl = typeof window !== "undefined" ? window.location.origin : "http://localhost";
-          const url = new URL(search.next, baseUrl);
-          const pathname = url.pathname;
-          const searchParams = url.search;
-          const hash = url.hash.slice(1); // Remove the '#' character
+          const baseUrl = typeof window !== "undefined" ? window.location.origin : "http://localhost"
+          const url = new URL(search.next, baseUrl)
+          const pathname = url.pathname
+          const searchParams = url.search
+          const hash = url.hash.slice(1)
 
           if (hash) {
             throw redirect({
               to: pathname + searchParams,
               hash: hash,
-            });
+            })
           } else {
             throw redirect({
               to: pathname + searchParams,
-            });
+            })
           }
         } catch (e) {
-          // If URL parsing fails (e.g., relative path), use the next parameter directly
           if (e instanceof TypeError) {
             throw redirect({
               to: search.next,
-            });
+            })
           }
-          // Re-throw redirect exceptions
-          throw e;
+          throw e
         }
       }
       throw redirect({
         to: "/",
-      });
+      })
     }
   },
-});
+})
 
 function Login() {
-  const [show, setShow] = useBoolean();
-  const search = Route.useSearch();
-  const { loginMutation, error, resetError } = useAuth(search.next);
+  const [showPassword, setShowPassword] = useState(false)
+  const search = Route.useSearch()
+  const { loginMutation, error, resetError } = useAuth(search.next)
   const {
     register,
     handleSubmit,
@@ -98,218 +86,92 @@ function Login() {
       username: "",
       password: "",
     },
-  });
-
-  const bgColor = useColorModeValue("rgba(255, 255, 255, 0.8)", "rgba(26, 32, 44, 0.8)");
-  const borderColor = useColorModeValue("rgba(255, 255, 255, 0.2)", "rgba(255, 255, 255, 0.1)");
-  const textColor = useColorModeValue("gray.800", "white");
+  })
 
   const onSubmit: SubmitHandler<AccessToken> = async (data) => {
-    if (isSubmitting) return;
+    if (isSubmitting) return
 
-    resetError();
+    resetError()
 
     try {
       await loginMutation.mutateAsync({
         body: data,
-      });
+      })
     } catch {
       // error is handled by useAuth hook
     }
-  };
+  }
 
   return (
-    <Center
-      minH="100vh"
-      bgGradient="linear(to-br, ui.main, ui.darkSlate)"
-      position="relative"
-      overflow="hidden"
-    >
-      {/* Background animated circles */}
-      <Box
-        position="absolute"
-        w="100%"
-        h="100%"
-        opacity={0.15}
-        zIndex={0}
-      >
-        <MotionBox
-          position="absolute"
-          top="20%"
-          left="10%"
-          w="300px"
-          h="300px"
-          borderRadius="full"
-          bg="ui.main"
-          animate={{
-            scale: [1, 1.3, 1],
-            opacity: [0.4, 0.6, 0.4],
-            x: [0, 30, 0],
-            y: [0, -20, 0],
-          }}
-          transition={{
-            duration: 12,
-            repeat: Infinity,
-            ease: "easeInOut",
-          }}
-        />
-        <MotionBox
-          position="absolute"
-          bottom="20%"
-          right="10%"
-          w="400px"
-          h="400px"
-          borderRadius="full"
-          bg="ui.darkSlate"
-          animate={{
-            scale: [1.2, 1, 1.2],
-            opacity: [0.6, 0.4, 0.6],
-            x: [0, -40, 0],
-            y: [0, 30, 0],
-          }}
-          transition={{
-            duration: 15,
-            repeat: Infinity,
-            ease: "easeInOut",
-          }}
-        />
-        <MotionBox
-          position="absolute"
-          top="50%"
-          left="50%"
-          w="200px"
-          h="200px"
-          borderRadius="full"
-          bg="ui.main"
-          animate={{
-            scale: [1, 1.2, 1],
-            opacity: [0.3, 0.5, 0.3],
-            x: [-100, 100, -100],
-            y: [-50, 50, -50],
-          }}
-          transition={{
-            duration: 18,
-            repeat: Infinity,
-            ease: "easeInOut",
-          }}
-        />
-      </Box>
-
-      <MotionBox
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5 }}
-        zIndex={1}
-      >
-        <Container
-          as="form"
-          onSubmit={handleSubmit(onSubmit)}
-          maxW="sm"
-          p={8}
-          borderRadius="xl"
-          bg={bgColor}
-          backdropFilter="blur(10px)"
-          border="1px solid"
-          borderColor={borderColor}
-          boxShadow="xl"
-        >
-          <VStack spacing={6} align="stretch">
-            <Heading
-              as="h1"
-              size="xl"
-              textAlign="center"
-              color={textColor}
-              fontWeight="bold"
-              letterSpacing="tight"
-            >
-              Login
-            </Heading>
-            <Text textAlign="center" color="ui.dim" fontSize="sm">
-              Enter your credentials
-            </Text>
-
-            <FormControl id="username" isInvalid={!!errors.username || !!error}>
+    <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-primary/10 via-background to-muted p-4">
+      <Card className="w-full max-w-sm">
+        <CardHeader className="text-center">
+          <CardTitle className="text-2xl font-bold tracking-tight">
+            Login
+          </CardTitle>
+          <CardDescription>Enter your credentials</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="username">Email</Label>
               <Input
                 id="username"
                 {...register("username", {
                   pattern: emailPattern,
                 })}
-                placeholder="Email"
+                placeholder="you@example.com"
                 type="email"
                 required
-                size="lg"
-                bg="whiteAlpha.900"
-                _hover={{ bg: "whiteAlpha.800" }}
-                _focus={{ bg: "whiteAlpha.900" }}
-                transition="all 0.2s"
+                className={errors.username || error ? "border-destructive" : ""}
               />
               {errors.username && (
-                <FormErrorMessage>{errors.username.message}</FormErrorMessage>
+                <p className="text-sm text-destructive">{errors.username.message}</p>
               )}
-            </FormControl>
+            </div>
 
-            <FormControl id="password" isInvalid={!!error}>
-              <InputGroup>
+            <div className="space-y-2">
+              <Label htmlFor="password">Password</Label>
+              <div className="relative">
                 <Input
+                  id="password"
                   {...register("password")}
-                  type={show ? "text" : "password"}
+                  type={showPassword ? "text" : "password"}
                   placeholder="Password"
                   required
-                  size="lg"
-                  bg="whiteAlpha.900"
-                  _hover={{ bg: "whiteAlpha.800" }}
-                  _focus={{ bg: "whiteAlpha.900" }}
-                  transition="all 0.2s"
+                  className={error ? "border-destructive pr-10" : "pr-10"}
                 />
-                <InputRightElement h="full">
-                  <Icon
-                    onClick={setShow.toggle}
-                    aria-label={show ? "Hide password" : "Show password"}
-                    cursor="pointer"
-                    color="ui.dim"
-                    _hover={{ color: "ui.main" }}
-                    transition="color 0.2s"
-                  >
-                    {show ? <ViewOffIcon /> : <ViewIcon />}
-                  </Icon>
-                </InputRightElement>
-              </InputGroup>
-              {error && <FormErrorMessage>{error}</FormErrorMessage>}
-            </FormControl>
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                >
+                  {showPassword ? (
+                    <EyeOff className="h-4 w-4" />
+                  ) : (
+                    <Eye className="h-4 w-4" />
+                  )}
+                </button>
+              </div>
+              {error && <p className="text-sm text-destructive">{error}</p>}
+            </div>
 
-            <Center>
-              <Link
-                as={RouterLink}
+            <div className="text-center">
+              <RouterLink
                 to="/reset-password"
-                color="ui.main"
-                fontSize="sm"
-                _hover={{ color: "ui.darkSlate", textDecoration: "none" }}
-                transition="color 0.2s"
+                className="text-sm text-primary hover:text-primary/80 transition-colors"
               >
                 Forgot password?
-              </Link>
-            </Center>
+              </RouterLink>
+            </div>
 
-            <Button
-              variant="primary"
-              type="submit"
-              isLoading={isSubmitting}
-              size="lg"
-              w="full"
-              _hover={{
-                transform: "translateY(-2px)",
-                boxShadow: "lg",
-              }}
-              _active={{
-                transform: "translateY(0)",
-              }}
-              transition="all 0.2s"
-            >
+            <Button type="submit" disabled={isSubmitting} className="w-full">
+              {isSubmitting && <Loader2 className="h-4 w-4 animate-spin" />}
               Sign In
             </Button>
-          </VStack>
-        </Container>
-      </MotionBox>
-    </Center>
-  );
+          </form>
+        </CardContent>
+      </Card>
+    </div>
+  )
 }
