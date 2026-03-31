@@ -1,52 +1,44 @@
-import {
-  Container,
-  Heading,
-  Tab,
-  TabList,
-  TabPanel,
-  TabPanels,
-  Tabs,
-} from "@chakra-ui/react";
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute } from "@tanstack/react-router"
 
-import Appearance from "../../components/UserSettings/Appearance";
-import ChangePassword from "../../components/UserSettings/ChangePassword";
-import DeleteAccount from "../../components/UserSettings/DeleteAccount";
-import UserInformation from "../../components/UserSettings/UserInformation";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import Appearance from "../../components/UserSettings/Appearance"
+import ChangePassword from "../../components/UserSettings/ChangePassword"
+import DeleteAccount from "../../components/UserSettings/DeleteAccount"
+import UserInformation from "../../components/UserSettings/UserInformation"
 
 const tabsConfig = [
-  { title: "My profile", component: UserInformation },
-  { title: "Password", component: ChangePassword },
-  { title: "Appearance", component: Appearance },
-  { title: "Danger zone", component: DeleteAccount },
-];
+  { title: "My profile", component: UserInformation, value: "profile" },
+  { title: "Password", component: ChangePassword, value: "password" },
+  { title: "Appearance", component: Appearance, value: "appearance" },
+  { title: "Danger zone", component: DeleteAccount, value: "danger" },
+]
 
 export const Route = createFileRoute("/_layout/settings")({
   component: UserSettings,
-});
+})
 
 function UserSettings() {
-  const finalTabs = false ? tabsConfig.slice(0, 3) : tabsConfig;
+  const finalTabs = false ? tabsConfig.slice(0, 3) : tabsConfig
 
   return (
-    <Container maxW="full">
-      <Heading size="lg" textAlign={{ base: "center", md: "left" }} py={12}>
+    <div className="w-full">
+      <h2 className="text-2xl font-bold text-center md:text-left py-12">
         User Settings
-      </Heading>
-      <Tabs variant="enclosed">
-        <TabList>
-          {finalTabs.map((tab, index) => (
-            <Tab key={index}>{tab.title}</Tab>
+      </h2>
+      <Tabs defaultValue={finalTabs[0].value}>
+        <TabsList>
+          {finalTabs.map((tab) => (
+            <TabsTrigger key={tab.value} value={tab.value}>
+              {tab.title}
+            </TabsTrigger>
           ))}
-        </TabList>
-        <TabPanels>
-          {finalTabs.map((tab, index) => (
-            <TabPanel key={index}>
-              <tab.component />
-            </TabPanel>
-          ))}
-        </TabPanels>
+        </TabsList>
+        {finalTabs.map((tab) => (
+          <TabsContent key={tab.value} value={tab.value}>
+            <tab.component />
+          </TabsContent>
+        ))}
       </Tabs>
-    </Container>
-  );
+    </div>
+  )
 }

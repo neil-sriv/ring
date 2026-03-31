@@ -1,150 +1,142 @@
-import {
-  Box,
-  Container,
-  Flex,
-  Heading,
-  Skeleton,
-  Table,
-  TableContainer,
-  Tbody,
-  Td,
-  Th,
-  Thead,
-  Text,
-  Tr,
-} from "@chakra-ui/react";
-import { useSuspenseQuery } from "@tanstack/react-query";
-import { Link, createFileRoute } from "@tanstack/react-router";
-import { Link as ChakraLink } from "@chakra-ui/react";
+import { useSuspenseQuery } from "@tanstack/react-query"
+import { Link, createFileRoute } from "@tanstack/react-router"
 
-import { Suspense } from "react";
-import { ErrorBoundary } from "react-error-boundary";
-import { UserLinked } from "../../client";
-import Navbar from "../../components/Common/Navbar";
-import ActionsMenu from "../../components/Common/ActionsMenu";
-import { listGroupsPartiesGroupsGetOptions } from "../../client/@tanstack/react-query.gen";
+import { Skeleton } from "@/components/ui/skeleton"
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table"
+import { Suspense } from "react"
+import { ErrorBoundary } from "react-error-boundary"
+import type { UserLinked } from "../../client"
+import { listGroupsPartiesGroupsGetOptions } from "../../client/@tanstack/react-query.gen"
+import ActionsMenu from "../../components/Common/ActionsMenu"
+import Navbar from "../../components/Common/Navbar"
 
 export const Route = createFileRoute("/_layout/groups")({
   component: Groups,
   loader: async ({ context }) => {
     if (!context.auth.user) {
-      throw new Error("User not authenticated");
+      throw new Error("User not authenticated")
     }
-    return context.auth.user;
+    return context.auth.user
   },
-});
+})
 
 function GroupTableBody() {
-  const currentUser = Route.useLoaderData<UserLinked>();
+  const currentUser = Route.useLoaderData<UserLinked>()
   const { data: groups } = useSuspenseQuery({
     ...listGroupsPartiesGroupsGetOptions({
       query: { user_api_id: currentUser?.api_identifier },
     }),
-  });
+  })
 
   if (!groups) {
-    return null;
+    return null
   }
 
   return (
-    <Tbody>
+    <TableBody>
       {groups.map((group) => (
-        <Tr key={group.api_identifier}>
-          {/* <Td>{group.name}</Td> */}
-          <Td>
-            <ChakraLink
-              as={Link}
+        <TableRow key={group.api_identifier}>
+          {/* <TableCell>{group.name}</TableCell> */}
+          <TableCell>
+            <Link
               to="/groups/$groupId/loops"
               params={{ groupId: group.api_identifier }}
-              textDecoration={"underline"}
+              className="underline"
             >
               {group.name}
-            </ChakraLink>
-          </Td>
-          <Td whiteSpace="normal">
-            <Box>
-              <Text>
+            </Link>
+          </TableCell>
+          <TableCell className="whitespace-normal">
+            <div>
+              <p>
                 {group.members
                   .map((member) => {
-                    return member.name;
+                    return member.name
                   })
                   .sort()
                   .join(", ")}
-              </Text>
-            </Box>
-          </Td>
-          {/* <Td>
+              </p>
+            </div>
+          </TableCell>
+          {/* <TableCell>
             {group.letters
               .map((letter) => {
                 return letter.number;
               })
               .sort()
               .join(", ")}
-          </Td> */}
-          <Td>
+          </TableCell> */}
+          <TableCell>
             <ActionsMenu type={"Group"} value={group} />
-          </Td>
-        </Tr>
+          </TableCell>
+        </TableRow>
       ))}
-    </Tbody>
-  );
+    </TableBody>
+  )
 }
 
 function GroupTable() {
   return (
-    <TableContainer>
-      <Table size={{ base: "sm", md: "md" }} maxW="100%">
-        <Thead>
-          <Tr>
-            <Th>Name</Th>
-            <Th>Members</Th>
-            {/* <Th>Letters</Th> */}
-            <Th>Actions</Th>
-          </Tr>
-        </Thead>
-        <ErrorBoundary
-          fallbackRender={({ error }) => (
-            <Tbody>
-              <Tr>
-                <Td colSpan={4}>Something went wrong: {error.message}</Td>
-              </Tr>
-            </Tbody>
-          )}
+    <Table>
+      <TableHeader>
+        <TableRow>
+          <TableHead>Name</TableHead>
+          <TableHead>Members</TableHead>
+          {/* <TableHead>Letters</TableHead> */}
+          <TableHead>Actions</TableHead>
+        </TableRow>
+      </TableHeader>
+      <ErrorBoundary
+        fallbackRender={({ error }) => (
+          <TableBody>
+            <TableRow>
+              <TableCell colSpan={4}>
+                Something went wrong: {error.message}
+              </TableCell>
+            </TableRow>
+          </TableBody>
+        )}
+      >
+        <Suspense
+          fallback={
+            <TableBody>
+              {new Array(5).fill(null).map((_, index) => (
+                <TableRow key={index}>
+                  {new Array(4).fill(null).map((_, index) => (
+                    <TableCell key={index}>
+                      <div className="flex">
+                        <Skeleton className="h-5 w-5" />
+                      </div>
+                    </TableCell>
+                  ))}
+                </TableRow>
+              ))}
+            </TableBody>
+          }
         >
-          <Suspense
-            fallback={
-              <Tbody>
-                {new Array(5).fill(null).map((_, index) => (
-                  <Tr key={index}>
-                    {new Array(4).fill(null).map((_, index) => (
-                      <Td key={index}>
-                        <Flex>
-                          <Skeleton height="20px" width="20px" />
-                        </Flex>
-                      </Td>
-                    ))}
-                  </Tr>
-                ))}
-              </Tbody>
-            }
-          >
-            <GroupTableBody />
-          </Suspense>
-        </ErrorBoundary>
-      </Table>
-    </TableContainer>
-  );
+          <GroupTableBody />
+        </Suspense>
+      </ErrorBoundary>
+    </Table>
+  )
 }
 
 function Groups() {
   return (
-    <Container maxW="container.xl">
-      <Heading size="lg" textAlign={{ base: "center", md: "left" }} pt={12}>
+    <div className="max-w-screen-xl mx-auto px-4">
+      <h2 className="text-2xl font-bold text-center md:text-left pt-12">
         Groups
-      </Heading>
+      </h2>
 
       <Navbar type={"Group"} />
       <GroupTable />
-    </Container>
-  );
+    </div>
+  )
 }

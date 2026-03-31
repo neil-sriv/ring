@@ -1,123 +1,110 @@
-import {
-  Badge,
-  Box,
-  Container,
-  Flex,
-  Heading,
-  SkeletonText,
-  Table,
-  TableContainer,
-  Tbody,
-  Td,
-  Th,
-  Thead,
-  Tr,
-} from "@chakra-ui/react";
-import { useSuspenseQuery } from "@tanstack/react-query";
-import { createFileRoute } from "@tanstack/react-router";
+import { useSuspenseQuery } from "@tanstack/react-query"
+import { createFileRoute } from "@tanstack/react-router"
 
-import { Suspense } from "react";
-import { type UserLinked } from "../../client";
-import ActionsMenu from "../../components/Common/ActionsMenu";
-import Navbar from "../../components/Common/Navbar";
-import { readUsersPartiesUsersGetOptions } from "../../client/@tanstack/react-query.gen";
+import { Badge } from "@/components/ui/badge"
+import { Skeleton } from "@/components/ui/skeleton"
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table"
+import { Suspense } from "react"
+import type { UserLinked } from "../../client"
+import { readUsersPartiesUsersGetOptions } from "../../client/@tanstack/react-query.gen"
+import ActionsMenu from "../../components/Common/ActionsMenu"
+import Navbar from "../../components/Common/Navbar"
 
 export const Route = createFileRoute("/_layout/admin")({
   component: Admin,
   loader: async ({ context }) => {
     if (!context.auth.user?.admin) {
-      throw new Error("User is not an admin");
+      throw new Error("User is not an admin")
     }
-    return context.auth.user;
+    return context.auth.user
   },
-});
+})
 
 const MembersTableBody = () => {
-  const currentUser = Route.useLoaderData<UserLinked>();
+  const currentUser = Route.useLoaderData<UserLinked>()
 
   const { data: users } = useSuspenseQuery({
     ...readUsersPartiesUsersGetOptions(),
-  });
+  })
 
   return (
-    <Tbody>
+    <TableBody>
       {users.map((user) => (
-        <Tr key={user.api_identifier}>
-          <Td color={!user.name ? "ui.dim" : "inherit"}>
+        <TableRow key={user.api_identifier}>
+          <TableCell className={!user.name ? "text-muted-foreground" : ""}>
             {user.name || "N/A"}
             {currentUser?.api_identifier === user.api_identifier && (
-              <Badge ml="1" colorScheme="teal">
+              <Badge className="ml-1" variant="secondary">
                 You
               </Badge>
             )}
-          </Td>
-          <Td>{user.email}</Td>
-          {/* <Td>{user.is_superuser ? "Superuser" : "User"}</Td> */}
-          {/* <Td>{false ? "Superuser" : "User"}</Td> */}
-          <Td>{user.api_identifier}</Td>
-          <Td>
-            <Flex gap={2}>
-              <Box
-                w="2"
-                h="2"
-                borderRadius="50%"
-                // bg={user.is_active ? "ui.success" : "ui.danger"}
-                bg={true ? "ui.success" : "ui.danger"}
-                alignSelf="center"
+          </TableCell>
+          <TableCell>{user.email}</TableCell>
+          {/* <TableCell>{user.is_superuser ? "Superuser" : "User"}</TableCell> */}
+          {/* <TableCell>{false ? "Superuser" : "User"}</TableCell> */}
+          <TableCell>{user.api_identifier}</TableCell>
+          <TableCell>
+            <div className="flex items-center gap-2">
+              <span
+                className={`inline-block w-2 h-2 rounded-full ${
+                  true ? "bg-green-500" : "bg-red-500"
+                }`}
               />
               {/* {user.is_active ? "Active" : "Inactive"} */}
               {true ? "Active" : "Inactive"}
-            </Flex>
-          </Td>
-          <Td>
-            <ActionsMenu
-              type="User"
-              value={user}
-            />
-          </Td>
-        </Tr>
+            </div>
+          </TableCell>
+          <TableCell>
+            <ActionsMenu type="User" value={user} />
+          </TableCell>
+        </TableRow>
       ))}
-    </Tbody>
-  );
-};
+    </TableBody>
+  )
+}
 
 const MembersBodySkeleton = () => {
   return (
-    <Tbody>
-      <Tr>
+    <TableBody>
+      <TableRow>
         {new Array(5).fill(null).map((_, index) => (
-          <Td key={index}>
-            <SkeletonText noOfLines={1} paddingBlock="16px" />
-          </Td>
+          <TableCell key={index}>
+            <Skeleton className="h-4 w-full my-4" />
+          </TableCell>
         ))}
-      </Tr>
-    </Tbody>
-  );
-};
+      </TableRow>
+    </TableBody>
+  )
+}
 
 function Admin() {
   return (
-    <Container maxW="full">
-      <Heading size="lg" textAlign={{ base: "center", md: "left" }} pt={12}>
+    <div className="w-full">
+      <h2 className="text-2xl font-bold text-center md:text-left pt-12">
         User Management
-      </Heading>
+      </h2>
       <Navbar type={"User"} />
-      <TableContainer>
-        <Table fontSize="md" size={{ base: "sm", md: "md" }}>
-          <Thead>
-            <Tr>
-              <Th width="20%">Full name</Th>
-              <Th width="50%">Email</Th>
-              <Th width="10%">API ID</Th>
-              <Th width="10%">Status</Th>
-              <Th width="10%">Actions</Th>
-            </Tr>
-          </Thead>
-          <Suspense fallback={<MembersBodySkeleton />}>
-            <MembersTableBody />
-          </Suspense>
-        </Table>
-      </TableContainer>
-    </Container>
-  );
+      <Table>
+        <TableHeader>
+          <TableRow>
+            <TableHead className="w-[20%]">Full name</TableHead>
+            <TableHead className="w-[50%]">Email</TableHead>
+            <TableHead className="w-[10%]">API ID</TableHead>
+            <TableHead className="w-[10%]">Status</TableHead>
+            <TableHead className="w-[10%]">Actions</TableHead>
+          </TableRow>
+        </TableHeader>
+        <Suspense fallback={<MembersBodySkeleton />}>
+          <MembersTableBody />
+        </Suspense>
+      </Table>
+    </div>
+  )
 }
