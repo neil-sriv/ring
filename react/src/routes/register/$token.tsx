@@ -1,30 +1,25 @@
 import {
+  Link as RouterLink,
   createFileRoute,
   redirect,
-  Link as RouterLink,
 } from "@tanstack/react-router"
 import { Eye, EyeOff, Loader2 } from "lucide-react"
 import { useState } from "react"
 import { type SubmitHandler, useForm } from "react-hook-form"
 
-import { type UserCreate } from "../../client"
-import { isLoggedIn } from "../../hooks/useAuth"
-import { emailPattern } from "../../util/misc"
-import useRegister from "../../hooks/useRegister"
+import { Button } from "@/components/ui/button"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
 import { useQueryClient } from "@tanstack/react-query"
+import type { UserCreate } from "../../client"
 import {
   validateTokenInvitesTokenTokenGetOptions,
   validateTokenInvitesTokenTokenGetQueryKey,
 } from "../../client/@tanstack/react-query.gen"
-import { Button } from "@/components/ui/button"
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
+import { isLoggedIn } from "../../hooks/useAuth"
+import useRegister from "../../hooks/useRegister"
+import { emailPattern } from "../../util/misc"
 
 export const Route = createFileRoute("/register/$token")({
   component: Register,
@@ -110,7 +105,10 @@ function Register() {
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-4">
+          <form
+            onSubmit={handleSubmit(onSubmit)}
+            className="flex flex-col gap-4"
+          >
             <div className="space-y-2">
               <Label htmlFor="name">Name</Label>
               <Input
@@ -122,7 +120,9 @@ function Register() {
                 className={errors.name ? "border-destructive" : ""}
               />
               {errors.name && (
-                <p className="text-sm text-destructive">{errors.name.message}</p>
+                <p className="text-sm text-destructive">
+                  {errors.name.message}
+                </p>
               )}
             </div>
 
@@ -139,7 +139,9 @@ function Register() {
                 className={errors.email || error ? "border-destructive" : ""}
               />
               {errors.email && (
-                <p className="text-sm text-destructive">{errors.email.message}</p>
+                <p className="text-sm text-destructive">
+                  {errors.email.message}
+                </p>
               )}
             </div>
 

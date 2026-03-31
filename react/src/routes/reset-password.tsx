@@ -2,11 +2,6 @@ import { createFileRoute, redirect } from "@tanstack/react-router"
 import { Loader2 } from "lucide-react"
 import { type SubmitHandler, useForm } from "react-hook-form"
 
-import { isLoggedIn } from "../hooks/useAuth"
-import useCustomToast from "../hooks/useCustomToast"
-import { emailPattern } from "../util/misc"
-import { resetPasswordRequestResetPasswordRequestEmailPost } from "../client/sdk.gen"
-import { ResetPasswordRequestResetPasswordRequestEmailPostError } from "../client"
 import { Button } from "@/components/ui/button"
 import {
   Card,
@@ -17,6 +12,11 @@ import {
 } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
+import type { ResetPasswordRequestResetPasswordRequestEmailPostError } from "../client"
+import { resetPasswordRequestResetPasswordRequestEmailPost } from "../client/sdk.gen"
+import { isLoggedIn } from "../hooks/useAuth"
+import useCustomToast from "../hooks/useCustomToast"
+import { emailPattern } from "../util/misc"
 
 interface FormData {
   email: string
@@ -71,7 +71,10 @@ function ResetPasswordRequest() {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-4">
+          <form
+            onSubmit={handleSubmit(onSubmit)}
+            className="flex flex-col gap-4"
+          >
             <div className="space-y-2">
               <Label htmlFor="email">Email</Label>
               <Input
@@ -85,7 +88,9 @@ function ResetPasswordRequest() {
                 className={errors.email ? "border-destructive" : ""}
               />
               {errors.email && (
-                <p className="text-sm text-destructive">{errors.email.message}</p>
+                <p className="text-sm text-destructive">
+                  {errors.email.message}
+                </p>
               )}
             </div>
 

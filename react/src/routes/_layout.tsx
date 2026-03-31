@@ -1,15 +1,15 @@
 import { Outlet, createFileRoute, redirect } from "@tanstack/react-router"
 import { Loader2 } from "lucide-react"
 
-import Sidebar from "../components/Common/Sidebar"
-import UserMenu from "../components/Common/UserMenu"
+import { useQueryClient } from "@tanstack/react-query"
 import {
   readUserMePartiesMeGetOptions,
   readUserMePartiesMeGetQueryKey,
 } from "../client/@tanstack/react-query.gen"
+import type { UserLinked } from "../client/types.gen"
+import Sidebar from "../components/Common/Sidebar"
+import UserMenu from "../components/Common/UserMenu"
 import { subscribeToPush } from "../util/notifications"
-import { useQueryClient } from "@tanstack/react-query"
-import { UserLinked } from "../client/types.gen"
 
 export const Route = createFileRoute("/_layout")({
   component: Layout,
@@ -31,12 +31,11 @@ export const Route = createFileRoute("/_layout")({
             next: currentPath,
           },
         })
-      } else {
-        // Already on login page, just redirect without next parameter
-        throw redirect({
-          to: "/login",
-        })
       }
+      // Already on login page, just redirect without next parameter
+      throw redirect({
+        to: "/login",
+      })
     }
   },
 })

@@ -3,17 +3,13 @@ import { Link } from "@tanstack/react-router"
 import { LogOut, Menu } from "lucide-react"
 import { useState } from "react"
 
+import { Button } from "@/components/ui/button"
+import { Separator } from "@/components/ui/separator"
+import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet"
+import { cn } from "@/lib/utils"
 import type { UserLinked } from "../../client"
 import { readUserMePartiesMeGetQueryKey } from "../../client/@tanstack/react-query.gen"
 import useAuth from "../../hooks/useAuth"
-import { cn } from "@/lib/utils"
-import { Button } from "@/components/ui/button"
-import {
-  Sheet,
-  SheetContent,
-  SheetTitle,
-} from "@/components/ui/sheet"
-import { Separator } from "@/components/ui/separator"
 import SidebarItems from "./SidebarItems"
 
 const Sidebar = () => {

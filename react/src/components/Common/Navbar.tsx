@@ -27,7 +27,10 @@ const Navbar = ({ type }: NavbarProps) => {
         <Button onClick={() => onClick(type)} className="gap-1">
           <Plus className="h-4 w-4" /> Add {type}
         </Button>
-        <AddUser isOpen={isAddUserOpen} onClose={() => setIsAddUserOpen(false)} />
+        <AddUser
+          isOpen={isAddUserOpen}
+          onClose={() => setIsAddUserOpen(false)}
+        />
         <AddGroup
           isOpen={isAddGroupOpen}
           onClose={() => setIsAddGroupOpen(false)}

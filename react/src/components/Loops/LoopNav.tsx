@@ -1,39 +1,39 @@
-import { Button, Flex, Icon, useDisclosure } from "@chakra-ui/react";
-import { FaPlus } from "react-icons/fa";
+import { Button, Flex, Icon, useDisclosure } from "@chakra-ui/react"
+import { FaPlus } from "react-icons/fa"
 
-import { useQueryClient } from "@tanstack/react-query";
-import { useRouter } from "@tanstack/react-router";
-import { GroupLinked, MinimalLetter, UserLinked } from "../../client";
+import { useQueryClient } from "@tanstack/react-query"
+import { useRouter } from "@tanstack/react-router"
+import type { GroupLinked, MinimalLetter, UserLinked } from "../../client"
 import {
   listLettersLettersLettersGetQueryKey,
   readUserMePartiesMeGetQueryKey,
-} from "../../client/@tanstack/react-query.gen";
-import AddLetter from "./AddLoop";
+} from "../../client/@tanstack/react-query.gen"
+import AddLetter from "./AddLoop"
 
 type LoopNavProps = {
-  loops: MinimalLetter[];
-  group: GroupLinked;
-};
+  loops: MinimalLetter[]
+  group: GroupLinked
+}
 
 function LoopNav(props: LoopNavProps): JSX.Element {
-  const addLetterModal = useDisclosure();
+  const addLetterModal = useDisclosure()
   const enabled =
-    props.loops.filter((loop) => loop.status === "UPCOMING").length === 0;
-  const queryClient = useQueryClient();
-  const router = useRouter();
+    props.loops.filter((loop) => loop.status === "UPCOMING").length === 0
+  const queryClient = useQueryClient()
+  const router = useRouter()
   const currentUser = queryClient.getQueryData<UserLinked>(
-    readUserMePartiesMeGetQueryKey()
-  );
+    readUserMePartiesMeGetQueryKey(),
+  )
 
   const onClick = (): void => {
     queryClient.invalidateQueries({
       queryKey: listLettersLettersLettersGetQueryKey({
         query: { group_api_id: props.group.api_identifier },
       }),
-    });
-    router.invalidate();
-    enabled ? addLetterModal.onOpen() : null;
-  };
+    })
+    router.invalidate()
+    enabled ? addLetterModal.onOpen() : null
+  }
   return (
     <>
       <Flex>
@@ -56,7 +56,7 @@ function LoopNav(props: LoopNavProps): JSX.Element {
         />
       </Flex>
     </>
-  );
+  )
 }
 
-export default LoopNav;
+export default LoopNav

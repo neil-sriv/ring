@@ -1,11 +1,11 @@
-import tailwindcss from "@tailwindcss/vite";
-import { TanStackRouterVite } from "@tanstack/router-vite-plugin";
-import react from "@vitejs/plugin-react-swc";
-import path from "path";
-import { defineConfig } from "vite";
-import { VitePWA, VitePWAOptions } from "vite-plugin-pwa";
-import topLevelAwait from "vite-plugin-top-level-await";
-import wasm from "vite-plugin-wasm";
+import path from "node:path"
+import tailwindcss from "@tailwindcss/vite"
+import { TanStackRouterVite } from "@tanstack/router-vite-plugin"
+import react from "@vitejs/plugin-react-swc"
+import { defineConfig } from "vite"
+import { VitePWA, type VitePWAOptions } from "vite-plugin-pwa"
+import topLevelAwait from "vite-plugin-top-level-await"
+import wasm from "vite-plugin-wasm"
 
 const pwaOptions: Partial<VitePWAOptions> = {
   mode: "development",
@@ -46,7 +46,7 @@ const pwaOptions: Partial<VitePWAOptions> = {
   injectManifest: {
     maximumFileSizeToCacheInBytes: 3 * 1024 * 1024,
   },
-};
+}
 
 // const replaceOptions = { __DATE__: new Date().toISOString() };
 // const claims = process.env.CLAIMS === "true";
@@ -88,4 +88,4 @@ export default defineConfig({
       "@": path.resolve(__dirname, "./src"),
     },
   },
-});
+})

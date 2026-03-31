@@ -1,6 +1,6 @@
+import { cn } from "@/lib/utils"
 import { Link } from "@tanstack/react-router"
 import { Home, Search, Settings, Users } from "lucide-react"
-import { cn } from "@/lib/utils"
 
 interface SidebarItemsProps {
   onClose?: () => void
@@ -26,8 +26,7 @@ export default function SidebarItems({ onClose }: SidebarItemsProps) {
             "transition-colors hover:bg-accent hover:text-accent-foreground",
           )}
           activeProps={{
-            className:
-              "bg-accent text-accent-foreground font-semibold",
+            className: "bg-accent text-accent-foreground font-semibold",
           }}
         >
           <item.icon className="h-4 w-4 shrink-0" />

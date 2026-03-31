@@ -1,10 +1,14 @@
-import { Outlet, createRootRouteWithContext, redirect } from "@tanstack/react-router";
-import React, { Suspense } from "react";
+import {
+  Outlet,
+  createRootRouteWithContext,
+  redirect,
+} from "@tanstack/react-router"
+import React, { Suspense } from "react"
 
-import NotFound from "../components/Common/NotFound";
-import { QueryClient } from "@tanstack/react-query";
-import { AuthContext } from "../hooks/useAuth";
-import { isMaintenanceMode } from "../util/env";
+import type { QueryClient } from "@tanstack/react-query"
+import NotFound from "../components/Common/NotFound"
+import type { AuthContext } from "../hooks/useAuth"
+import { isMaintenanceMode } from "../util/env"
 
 const loadDevtools = () =>
   Promise.all([
@@ -18,15 +22,15 @@ const loadDevtools = () =>
           <reactQueryDevtools.ReactQueryDevtools />
         </>
       ),
-    };
-  });
+    }
+  })
 
 const TanStackDevtools =
-  process.env.NODE_ENV === "production" ? () => null : React.lazy(loadDevtools);
+  process.env.NODE_ENV === "production" ? () => null : React.lazy(loadDevtools)
 
 interface RouterContext {
-  queryClient: QueryClient;
-  auth: Partial<AuthContext>;
+  queryClient: QueryClient
+  auth: Partial<AuthContext>
 }
 
 export const Route = createRootRouteWithContext<RouterContext>()({
@@ -45,8 +49,8 @@ export const Route = createRootRouteWithContext<RouterContext>()({
     if (isMaintenanceMode() && window.location.pathname !== "/maintenance") {
       throw redirect({
         to: "/maintenance",
-      });
+      })
     }
-    return {};
+    return {}
   },
-});
+})

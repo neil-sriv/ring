@@ -7,9 +7,6 @@ import { Eye, EyeOff, Loader2 } from "lucide-react"
 import { useState } from "react"
 import { type SubmitHandler, useForm } from "react-hook-form"
 
-import type { BodyLoginAccessTokenLoginAccessTokenPost as AccessToken } from "../client"
-import useAuth from "../hooks/useAuth"
-import { emailPattern } from "../util/misc"
 import { Button } from "@/components/ui/button"
 import {
   Card,
@@ -20,12 +17,18 @@ import {
 } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
+import type { BodyLoginAccessTokenLoginAccessTokenPost as AccessToken } from "../client"
+import useAuth from "../hooks/useAuth"
+import { emailPattern } from "../util/misc"
 
 export const Route = createFileRoute("/login")({
   component: Login,
   validateSearch: (search: Record<string, unknown>) => {
     return {
-      next: typeof search.next === "string" && search.next ? search.next : undefined,
+      next:
+        typeof search.next === "string" && search.next
+          ? search.next
+          : undefined,
     }
   },
   beforeLoad: async ({ context, search }) => {
@@ -39,7 +42,10 @@ export const Route = createFileRoute("/login")({
       if (search.next) {
         try {
           // Parse the next URL to extract pathname, search, and hash
-          const baseUrl = typeof window !== "undefined" ? window.location.origin : "http://localhost"
+          const baseUrl =
+            typeof window !== "undefined"
+              ? window.location.origin
+              : "http://localhost"
           const url = new URL(search.next, baseUrl)
           const pathname = url.pathname
           const searchParams = url.search
@@ -50,11 +56,10 @@ export const Route = createFileRoute("/login")({
               to: pathname + searchParams,
               hash: hash,
             })
-          } else {
-            throw redirect({
-              to: pathname + searchParams,
-            })
           }
+          throw redirect({
+            to: pathname + searchParams,
+          })
         } catch (e) {
           if (e instanceof TypeError) {
             throw redirect({
@@ -112,7 +117,10 @@ function Login() {
           <CardDescription>Enter your credentials</CardDescription>
         </CardHeader>
         <CardContent>
-          <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-4">
+          <form
+            onSubmit={handleSubmit(onSubmit)}
+            className="flex flex-col gap-4"
+          >
             <div className="space-y-2">
               <Label htmlFor="username">Email</Label>
               <Input
@@ -126,7 +134,9 @@ function Login() {
                 className={errors.username || error ? "border-destructive" : ""}
               />
               {errors.username && (
-                <p className="text-sm text-destructive">{errors.username.message}</p>
+                <p className="text-sm text-destructive">
+                  {errors.username.message}
+                </p>
               )}
             </div>
 

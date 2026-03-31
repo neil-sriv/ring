@@ -3,15 +3,6 @@ import { createFileRoute, redirect, useNavigate } from "@tanstack/react-router"
 import { Loader2 } from "lucide-react"
 import { type SubmitHandler, useForm } from "react-hook-form"
 
-import {
-  ResetPasswordResetPasswordTokenPostError,
-  type NewPassword,
-} from "../../client"
-import { isLoggedIn } from "../../hooks/useAuth"
-import useCustomToast from "../../hooks/useCustomToast"
-import { confirmPasswordRules, passwordRules } from "../../util/misc"
-import { resetPasswordResetPasswordTokenPostMutation } from "../../client/@tanstack/react-query.gen"
-import { AxiosError } from "axios"
 import { Button } from "@/components/ui/button"
 import {
   Card,
@@ -22,6 +13,15 @@ import {
 } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
+import type { AxiosError } from "axios"
+import type {
+  NewPassword,
+  ResetPasswordResetPasswordTokenPostError,
+} from "../../client"
+import { resetPasswordResetPasswordTokenPostMutation } from "../../client/@tanstack/react-query.gen"
+import { isLoggedIn } from "../../hooks/useAuth"
+import useCustomToast from "../../hooks/useCustomToast"
+import { confirmPasswordRules, passwordRules } from "../../util/misc"
 
 interface NewPasswordForm extends NewPassword {
   confirm_password: string
@@ -86,11 +86,15 @@ function ResetPassword() {
             Reset Password
           </CardTitle>
           <CardDescription>
-            Please enter your new password and confirm it to reset your password.
+            Please enter your new password and confirm it to reset your
+            password.
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-4">
+          <form
+            onSubmit={handleSubmit(onSubmit)}
+            className="flex flex-col gap-4"
+          >
             <div className="space-y-2">
               <Label htmlFor="password">New Password</Label>
               <Input
@@ -111,7 +115,10 @@ function ResetPassword() {
               <Label htmlFor="confirm_password">Confirm Password</Label>
               <Input
                 id="confirm_password"
-                {...register("confirm_password", confirmPasswordRules(getValues))}
+                {...register(
+                  "confirm_password",
+                  confirmPasswordRules(getValues),
+                )}
                 placeholder="Confirm password"
                 type="password"
                 className={errors.confirm_password ? "border-destructive" : ""}
@@ -123,8 +130,14 @@ function ResetPassword() {
               )}
             </div>
 
-            <Button type="submit" disabled={mutation.isPending} className="w-full">
-              {mutation.isPending && <Loader2 className="h-4 w-4 animate-spin" />}
+            <Button
+              type="submit"
+              disabled={mutation.isPending}
+              className="w-full"
+            >
+              {mutation.isPending && (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              )}
               Reset Password
             </Button>
           </form>
