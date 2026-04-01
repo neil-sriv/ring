@@ -6,3 +6,7 @@ packages:
   # if required, exclude some directories
   - '!**/test/**'
 
+allowBuilds:
+  "@tailwindcss/oxide": true
+  "@tailwindcss/oxide-linux-x64-gnu": true
+
