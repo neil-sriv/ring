@@ -1,6 +1,13 @@
 import { Button } from "@/components/ui/button"
-import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog"
+import {
+  Dialog,
+  DialogClose,
+  DialogOverlay,
+  DialogPortal,
+  DialogTitle,
+} from "@/components/ui/dialog"
 import { ImagePlus, Loader2, X } from "lucide-react"
+import { Dialog as DialogPrimitive } from "radix-ui"
 import { useState } from "react"
 
 /**
@@ -149,16 +156,26 @@ export function S3Image({
       {expandable ? (
         <Dialog open={lightboxOpen} onOpenChange={setLightboxOpen}>
           {thumbnail}
-          <DialogContent className="fixed left-0 top-0 z-50 flex h-[100dvh] max-h-[100dvh] w-screen max-w-none translate-x-0 translate-y-0 flex-col items-center justify-center gap-0 border-0 bg-transparent p-3 shadow-none sm:rounded-none sm:p-6 data-[state=closed]:slide-out-to-left-0 data-[state=closed]:slide-out-to-top-0 data-[state=open]:slide-in-from-left-0 data-[state=open]:slide-in-from-top-0 [&>button]:text-white [&>button]:drop-shadow-md">
-            <DialogTitle className="sr-only">
-              {alt?.trim() ? alt : "Enlarged image"}
-            </DialogTitle>
-            <img
-              src={url}
-              alt={alt ?? ""}
-              className="max-h-full w-auto max-w-full object-contain"
-            />
-          </DialogContent>
+          <DialogPortal>
+            <DialogOverlay className="bg-black/90" />
+            <DialogPrimitive.Content
+              className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6"
+              aria-describedby={undefined}
+            >
+              <DialogTitle className="sr-only">
+                {alt?.trim() ? alt : "Enlarged image"}
+              </DialogTitle>
+              <img
+                src={url}
+                alt={alt ?? ""}
+                className="max-h-[calc(100dvh-2rem)] max-w-[calc(100vw-2rem)] w-auto object-contain"
+              />
+              <DialogClose className="absolute right-4 top-4 rounded-sm text-white drop-shadow-md opacity-70 hover:opacity-100 transition-opacity focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2">
+                <X className="h-6 w-6" />
+                <span className="sr-only">Close</span>
+              </DialogClose>
+            </DialogPrimitive.Content>
+          </DialogPortal>
         </Dialog>
       ) : (
         thumbnail
