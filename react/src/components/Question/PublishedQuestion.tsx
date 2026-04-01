@@ -83,7 +83,7 @@ function ResponseBlock({
               <div className="rounded-md shadow-sm hover:shadow-md transition-all duration-200 overflow-hidden block w-full max-w-[400px] min-w-0 p-2 relative">
                 <img
                   src={`https://du32exnxihxuf.cloudfront.net/${image.s3_url}`}
-                  alt={`Photo from ${response.participant.name}`}
+                  alt={response.participant.name}
                   className="w-full max-h-[300px] object-contain hover:scale-[1.02] transition-all duration-200"
                 />
               </div>
@@ -115,7 +115,9 @@ function ResponseBlock({
     })
   }
 
-  const handleLightboxKeyDown = (event: React.KeyboardEvent<HTMLDivElement>) => {
+  const handleLightboxKeyDown = (
+    event: React.KeyboardEvent<HTMLDivElement>,
+  ) => {
     if (!images.length) return
     if (event.key === "ArrowLeft") {
       event.preventDefault()
@@ -188,7 +190,7 @@ function ResponseBlock({
               {activeLightboxIndex != null && (
                 <img
                   src={`https://du32exnxihxuf.cloudfront.net/${images[activeLightboxIndex].s3_url}`}
-                  alt={`Photo from ${response.participant.name}`}
+                  alt={response.participant.name}
                   className="max-h-[calc(100dvh-2rem)] max-w-[calc(100vw-2rem)] w-auto object-contain"
                 />
               )}

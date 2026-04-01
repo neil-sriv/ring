@@ -91,11 +91,7 @@ export function MediaCarousel({ items, className }: MediaCarouselProps) {
 
   return (
     <div
-      className={cn(
-        "relative w-full",
-        "pt-2",
-        className,
-      )}
+      className={cn("relative w-full", "pt-2", className)}
       aria-label="Response media carousel"
     >
       <div
@@ -112,10 +108,7 @@ export function MediaCarousel({ items, className }: MediaCarouselProps) {
             ref={(el) => {
               itemRefs.current[index] = el
             }}
-            className={cn(
-              "snap-center shrink-0",
-              "w-auto",
-            )}
+            className={cn("snap-center shrink-0", "w-auto")}
           >
             {item.render()}
           </div>
@@ -157,4 +150,3 @@ export function MediaCarousel({ items, className }: MediaCarouselProps) {
     </div>
   )
 }
-
