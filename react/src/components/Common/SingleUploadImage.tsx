@@ -1,5 +1,13 @@
 import { Button } from "@/components/ui/button"
+import {
+  Dialog,
+  DialogClose,
+  DialogOverlay,
+  DialogPortal,
+  DialogTitle,
+} from "@/components/ui/dialog"
 import { ImagePlus, Loader2, X } from "lucide-react"
+import { Dialog as DialogPrimitive } from "radix-ui"
 import { useState } from "react"
 
 /**
@@ -106,6 +114,8 @@ interface S3MediaProps {
   s3Key: string
   alt?: string
   handleDelete?: () => void
+  /** When set, opens a full-screen style viewer on click or tap. */
+  expandable?: boolean
 }
 
 function S3MediaContainer({ children }: { children: React.ReactNode }) {
@@ -116,15 +126,60 @@ function S3MediaContainer({ children }: { children: React.ReactNode }) {
   )
 }
 
-export function S3Image({ s3Key, alt, handleDelete }: S3MediaProps) {
+export function S3Image({
+  s3Key,
+  alt,
+  handleDelete,
+  expandable,
+}: S3MediaProps) {
   const url = `https://du32exnxihxuf.cloudfront.net/${s3Key}`
+  const [lightboxOpen, setLightboxOpen] = useState(false)
+
+  const imageClassName =
+    "max-w-[400px] max-h-[300px] object-contain hover:scale-[1.02] transition-all duration-200"
+
+  const thumbnail = expandable ? (
+    <button
+      type="button"
+      className="block p-0 m-0 border-0 bg-transparent cursor-zoom-in rounded-[inherit] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+      onClick={() => setLightboxOpen(true)}
+      aria-label="View image full screen"
+    >
+      <img src={url} alt={alt ?? ""} className={imageClassName} />
+    </button>
+  ) : (
+    <img src={url} alt={alt ?? ""} className={imageClassName} />
+  )
+
   return (
     <S3MediaContainer>
-      <img
-        src={url}
-        alt={alt}
-        className="h-auto w-full max-h-[300px] object-contain hover:scale-[1.02] transition-all duration-200"
-      />
+      {expandable ? (
+        <Dialog open={lightboxOpen} onOpenChange={setLightboxOpen}>
+          {thumbnail}
+          <DialogPortal>
+            <DialogOverlay className="bg-black/90" />
+            <DialogPrimitive.Content
+              className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6"
+              aria-describedby={undefined}
+            >
+              <DialogTitle className="sr-only">
+                {alt?.trim() ? alt : "Enlarged image"}
+              </DialogTitle>
+              <img
+                src={url}
+                alt={alt ?? ""}
+                className="max-h-[calc(100dvh-2rem)] max-w-[calc(100vw-2rem)] w-auto object-contain"
+              />
+              <DialogClose className="absolute right-4 top-4 rounded-sm text-white drop-shadow-md opacity-70 hover:opacity-100 transition-opacity focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2">
+                <X className="h-6 w-6" />
+                <span className="sr-only">Close</span>
+              </DialogClose>
+            </DialogPrimitive.Content>
+          </DialogPortal>
+        </Dialog>
+      ) : (
+        thumbnail
+      )}
       {handleDelete && (
         <Button
           variant="destructive"
