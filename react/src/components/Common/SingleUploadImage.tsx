@@ -156,7 +156,7 @@ export function S3Image({
             <img
               src={url}
               alt={alt ?? ""}
-              className="max-h-[min(100dvh,100vh)] w-auto max-w-full object-contain"
+              className="max-h-full w-auto max-w-full object-contain"
             />
           </DialogContent>
         </Dialog>
