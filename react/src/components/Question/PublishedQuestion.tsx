@@ -217,6 +217,11 @@ function ResponseBlock({
               onTouchStart={handleTouchStart}
               onTouchMove={handleTouchMove}
               onTouchEnd={handleTouchEnd}
+              onClick={(event) => {
+                if (event.target === event.currentTarget) {
+                  setActiveLightboxIndex(null)
+                }
+              }}
             >
               <DialogTitle className="sr-only">
                 {activeLightboxIndex != null
