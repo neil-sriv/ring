@@ -22,12 +22,21 @@ def construct_question_html(
     Returns:
         str: HTML string containing the formatted question and responses
     """
-    return f"""
-    <h2>{question}</h2>
-    <ul>
-        {"".join([construct_response_html(response) for response in responses])}
-    </ul>
-"""
+    return """
+<div style="margin-top: 24px;">
+  <h2 style="margin: 0 0 8px; font-size: 18px; line-height: 1.4; color: #2d3748;">
+    {question}
+  </h2>
+  <ul style="margin: 0; padding: 0;">
+    {responses}
+  </ul>
+</div>
+""".format(
+        question=question,
+        responses="".join(
+            [construct_response_html(response) for response in responses]
+        ),
+    )
 
 
 def construct_response_html(response: tuple[str, list[str]]) -> str:
@@ -41,14 +50,25 @@ def construct_response_html(response: tuple[str, list[str]]) -> str:
     """
     image_htmls = "".join(
         [
-            f'<img src="{url}" alt="Image" style="display:block; width:auto; height:auto; max-width:50%;"/>'
+            (
+                '<img src="{url}" alt="Image" '
+                'style="display:block; margin:8px 0 0; width:auto; '
+                'height:auto; max-width:100%; border-radius:6px;" />'
+            ).format(url=url)
             for url in response[1]
         ]
     )
-    return f"""<li>
-<p>{response[0]}</p>
-{image_htmls}
-</li>"""
+    return """
+<li style="margin-bottom: 12px; list-style: none;">
+  <div style="padding: 12px 14px; border-radius: 8px; border: 1px solid #e2e8f0; background-color: #ffffff;">
+    <p style="margin: 0; font-size: 15px; line-height: 1.5; color: #1a202c;">{text}</p>
+    {images}
+  </div>
+</li>
+""".format(
+        text=response[0],
+        images=image_htmls,
+    )
 
 
 def construct_question_text(
@@ -105,15 +125,53 @@ def construct_send_letter_email(
     BODY_TEXT = question_text
 
     # The HTML body of the email.
-    BODY_HTML = """<html>
-    <head></head>
-    <body>
-    <h1>{title}</h1>
-    <h2>Check out the newsletter online at <a href="http://ring.neilsriv.tech/loops/{letter_api_id}">http://ring.neilsriv.tech</a></h2>
-    {question_html}
-    </body>
-    </html>
-                """.format(
+    BODY_HTML = """
+<html>
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>{title}</title>
+  </head>
+  <body style="margin:0; padding:0; background-color:#edf2f7;">
+    <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%%" style="background-color:#edf2f7; padding:24px 0;">
+      <tr>
+        <td align="center">
+          <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%%" style="max-width:640px; background-color:#ffffff; border-radius:12px; border:1px solid #e2e8f0; overflow:hidden;">
+            <tr>
+              <td style="padding:20px 24px 12px; background-color:#2b6cb0; color:#ffffff;">
+                <div style="font-size:13px; letter-spacing:0.08em; text-transform:uppercase; opacity:0.9;">Ring Newsletter</div>
+                <h1 style="margin:6px 0 0; font-size:22px; line-height:1.3; font-weight:600;">{title}</h1>
+              </td>
+            </tr>
+            <tr>
+              <td style="padding:20px 24px 8px;">
+                <p style="margin:0 0 12px; font-size:14px; line-height:1.5; color:#4a5568;">
+                  You can also read and share this newsletter online:
+                </p>
+                <p style="margin:0 0 4px;">
+                  <a href="http://ring.neilsriv.tech/loops/{letter_api_id}" style="color:#2b6cb0; text-decoration:underline; font-size:14px;">http://ring.neilsriv.tech/loops/{letter_api_id}</a>
+                </p>
+              </td>
+            </tr>
+            <tr>
+              <td style="padding:8px 24px 24px;">
+                {question_html}
+              </td>
+            </tr>
+            <tr>
+              <td style="padding:16px 24px 20px; border-top:1px solid #e2e8f0; background-color:#f7fafc;">
+                <p style="margin:0; font-size:12px; line-height:1.5; color:#a0aec0;">
+                  You are receiving this email as a member of a Ring loop.
+                </p>
+              </td>
+            </tr>
+          </table>
+        </td>
+      </tr>
+    </table>
+  </body>
+</html>
+""".format(
         title=title,
         letter_api_id=letter_api_id,
         question_html=question_html,
