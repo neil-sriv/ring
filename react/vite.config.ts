@@ -1,3 +1,5 @@
+import path from "node:path"
+import tailwindcss from "@tailwindcss/vite"
 import { TanStackRouterVite } from "@tanstack/router-vite-plugin"
 import react from "@vitejs/plugin-react-swc"
 import { defineConfig } from "vite"
@@ -41,6 +43,9 @@ const pwaOptions: Partial<VitePWAOptions> = {
     type: "module",
     navigateFallback: "index.html",
   },
+  injectManifest: {
+    maximumFileSizeToCacheInBytes: 3 * 1024 * 1024,
+  },
 }
 
 // const replaceOptions = { __DATE__: new Date().toISOString() };
@@ -71,10 +76,16 @@ const pwaOptions: Partial<VitePWAOptions> = {
 // https://vitejs.dev/config/
 export default defineConfig({
   plugins: [
+    tailwindcss(),
     react(),
     TanStackRouterVite(),
     VitePWA({ ...pwaOptions, registerType: "autoUpdate" }),
     wasm(),
     topLevelAwait(),
   ],
+  resolve: {
+    alias: {
+      "@": path.resolve(__dirname, "./src"),
+    },
+  },
 })

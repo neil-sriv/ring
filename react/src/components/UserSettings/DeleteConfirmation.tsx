@@ -1,15 +1,14 @@
 import {
   AlertDialog,
-  AlertDialogBody,
   AlertDialogContent,
+  AlertDialogDescription,
   AlertDialogFooter,
   AlertDialogHeader,
-  AlertDialogOverlay,
-  Button,
-  useColorModeValue,
-} from "@chakra-ui/react"
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog"
+import { Button } from "@/components/ui/button"
 import { useMutation, useQueryClient } from "@tanstack/react-query"
-import React from "react"
+import { Loader2 } from "lucide-react"
 import { useForm } from "react-hook-form"
 
 import { deleteUserPartiesUserIdDelete } from "../../client"
@@ -25,8 +24,6 @@ interface DeleteProps {
 const DeleteConfirmation = ({ isOpen, onClose }: DeleteProps) => {
   const queryClient = useQueryClient()
   const showToast = useCustomToast()
-  const cancelRef = React.useRef<HTMLButtonElement | null>(null)
-  const textColor = useColorModeValue("ui.dark", "ui.light")
   const {
     handleSubmit,
     formState: { isSubmitting },
@@ -62,54 +59,37 @@ const DeleteConfirmation = ({ isOpen, onClose }: DeleteProps) => {
 
   return (
     <AlertDialog
-      isOpen={isOpen}
-      onClose={onClose}
-      leastDestructiveRef={cancelRef}
-      size={{ base: "sm", md: "md" }}
-      isCentered
+      open={isOpen}
+      onOpenChange={(open) => {
+        if (!open) onClose()
+      }}
     >
-      <AlertDialogOverlay backdropFilter="blur(4px)" />
-      <AlertDialogContent
-        as="form"
-        onSubmit={handleSubmit(onSubmit)}
-        bg="ui.glass.light.background"
-        backdropFilter="blur(10px)"
-        border="1px solid"
-        borderColor="ui.glass.light.border"
-        _dark={{
-          bg: "ui.glass.dark.background",
-          borderColor: "ui.glass.dark.border",
-        }}
-      >
-        <AlertDialogHeader color={textColor}>
-          Confirmation Required
-        </AlertDialogHeader>
-
-        <AlertDialogBody color={textColor}>
-          All your account data will be <strong>permanently deleted.</strong> If
-          you are sure, please click <strong>"Confirm"</strong> to proceed. This
-          action cannot be undone.
-        </AlertDialogBody>
-
-        <AlertDialogFooter gap={3}>
-          <Button
-            variant="danger"
-            type="submit"
-            isLoading={isSubmitting}
-            _hover={{ transform: "translateY(-2px)" }}
-            transition="all 0.2s"
-          >
-            Confirm
-          </Button>
-          <Button
-            ref={cancelRef}
-            onClick={onClose}
-            isDisabled={isSubmitting}
-            variant="glass"
-          >
-            Cancel
-          </Button>
-        </AlertDialogFooter>
+      <AlertDialogContent>
+        <form onSubmit={handleSubmit(onSubmit)}>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Confirmation Required</AlertDialogTitle>
+            <AlertDialogDescription>
+              All your account data will be{" "}
+              <strong>permanently deleted.</strong> If you are sure, please
+              click <strong>"Confirm"</strong> to proceed. This action cannot be
+              undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter className="mt-4">
+            <Button
+              variant="outline"
+              onClick={onClose}
+              disabled={isSubmitting}
+              type="button"
+            >
+              Cancel
+            </Button>
+            <Button variant="destructive" type="submit" disabled={isSubmitting}>
+              {isSubmitting && <Loader2 className="h-4 w-4 animate-spin" />}
+              Confirm
+            </Button>
+          </AlertDialogFooter>
+        </form>
       </AlertDialogContent>
     </AlertDialog>
   )

@@ -1,40 +1,16 @@
-import { Button, Container, Text } from "@chakra-ui/react"
+import { Button } from "@/components/ui/button"
 import { Link } from "@tanstack/react-router"
 
 const NotFound = () => {
   return (
-    <>
-      <Container
-        h="100vh"
-        alignItems="stretch"
-        justifyContent="center"
-        textAlign="center"
-        maxW="sm"
-        centerContent
-      >
-        <Text
-          fontSize="8xl"
-          color="ui.main"
-          fontWeight="bold"
-          lineHeight="1"
-          mb={4}
-        >
-          404
-        </Text>
-        <Text fontSize="md">Oops!</Text>
-        <Text fontSize="md">Page not found.</Text>
-        <Button
-          as={Link}
-          to="/"
-          color="ui.main"
-          borderColor="ui.main"
-          variant="outline"
-          mt={4}
-        >
-          Go back
-        </Button>
-      </Container>
-    </>
+    <div className="flex min-h-screen flex-col items-center justify-center text-center">
+      <p className="text-8xl font-bold leading-none text-primary mb-4">404</p>
+      <p className="text-base text-foreground">Oops!</p>
+      <p className="text-base text-muted-foreground">Page not found.</p>
+      <Button variant="outline" asChild className="mt-4">
+        <Link to="/">Go back</Link>
+      </Button>
+    </div>
   )
 }
 

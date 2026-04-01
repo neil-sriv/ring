@@ -1,18 +1,5 @@
-import {
-  Box,
-  Button,
-  Container,
-  Flex,
-  FormControl,
-  FormErrorMessage,
-  FormLabel,
-  Heading,
-  Input,
-  Text,
-  VStack,
-  useColorModeValue,
-} from "@chakra-ui/react"
 import { useMutation, useQueryClient } from "@tanstack/react-query"
+import { Loader2 } from "lucide-react"
 import { useState } from "react"
 import { type SubmitHandler, useForm } from "react-hook-form"
 
@@ -31,9 +18,13 @@ import useCustomToast from "../../hooks/useCustomToast"
 import { emailPattern } from "../../util/misc"
 import { subscribeToPush } from "../../util/notifications"
 
+import { Button } from "@/components/ui/button"
+import { Card, CardContent } from "@/components/ui/card"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
+
 const UserInformation = () => {
   const queryClient = useQueryClient()
-  const textColor = useColorModeValue("ui.dark", "ui.light")
   const showToast = useCustomToast()
   const [editMode, setEditMode] = useState(false)
   const currentUser = queryClient.getQueryData<UserLinked>(
@@ -89,110 +80,94 @@ const UserInformation = () => {
   }
 
   return (
-    <Container maxW="full">
-      <VStack spacing={6} align="stretch">
-        <Heading size="sm" color={textColor}>
+    <div className="w-full">
+      <div className="flex flex-col gap-6">
+        <h3 className="text-sm font-semibold text-foreground">
           User Information
-        </Heading>
-        <Box
-          w={{ sm: "full", md: "50%" }}
-          as="form"
-          onSubmit={handleSubmit(onSubmit)}
-          bg="ui.glass.light.background"
-          backdropFilter="blur(10px)"
-          border="1px solid"
-          borderColor="ui.glass.light.border"
-          _dark={{
-            bg: "ui.glass.dark.background",
-            borderColor: "ui.glass.dark.border",
-          }}
-          p={6}
-          borderRadius="xl"
-          boxShadow="md"
-        >
-          <VStack spacing={4} align="stretch">
-            <FormControl>
-              <FormLabel color={textColor} htmlFor="name">
-                Full name
-              </FormLabel>
-              {editMode ? (
-                <Input
-                  id="name"
-                  {...register("name", { maxLength: 30 })}
-                  type="text"
-                  size="md"
-                  bg="whiteAlpha.900"
-                  _hover={{ bg: "whiteAlpha.800" }}
-                  _focus={{ bg: "whiteAlpha.900" }}
-                  transition="all 0.2s"
-                />
-              ) : (
-                <Text
-                  size="md"
-                  py={2}
-                  color={!currentUser?.name ? "ui.dim" : textColor}
+        </h3>
+        <Card className="w-full md:w-1/2">
+          <CardContent className="pt-6">
+            <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="name">Full name</Label>
+                {editMode ? (
+                  <Input
+                    id="name"
+                    {...register("name", { maxLength: 30 })}
+                    type="text"
+                  />
+                ) : (
+                  <p
+                    className={`py-2 ${
+                      !currentUser?.name
+                        ? "text-muted-foreground"
+                        : "text-foreground"
+                    }`}
+                  >
+                    {currentUser?.name || "N/A"}
+                  </p>
+                )}
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="email">Email</Label>
+                {editMode ? (
+                  <Input
+                    id="email"
+                    {...register("email", {
+                      required: "Email is required",
+                      pattern: emailPattern,
+                    })}
+                    type="email"
+                  />
+                ) : (
+                  <p className="py-2 text-foreground">{currentUser?.email}</p>
+                )}
+                {errors.email && (
+                  <p className="text-sm text-destructive">
+                    {errors.email.message}
+                  </p>
+                )}
+              </div>
+              <div className="flex gap-3">
+                <Button
+                  onClick={toggleEditMode}
+                  type={editMode ? "button" : "submit"}
+                  disabled={
+                    editMode
+                      ? isSubmitting || !isDirty || !getValues("email")
+                      : false
+                  }
                 >
-                  {currentUser?.name || "N/A"}
-                </Text>
-              )}
-            </FormControl>
-            <FormControl isInvalid={!!errors.email}>
-              <FormLabel color={textColor} htmlFor="email">
-                Email
-              </FormLabel>
-              {editMode ? (
-                <Input
-                  id="email"
-                  {...register("email", {
-                    required: "Email is required",
-                    pattern: emailPattern,
-                  })}
-                  type="email"
-                  size="md"
-                  bg="whiteAlpha.900"
-                  _hover={{ bg: "whiteAlpha.800" }}
-                  _focus={{ bg: "whiteAlpha.900" }}
-                  transition="all 0.2s"
-                />
-              ) : (
-                <Text size="md" py={2} color={textColor}>
-                  {currentUser?.email}
-                </Text>
-              )}
-              {errors.email && (
-                <FormErrorMessage>{errors.email.message}</FormErrorMessage>
-              )}
-            </FormControl>
-            <Flex gap={3}>
-              <Button
-                variant="primary"
-                onClick={toggleEditMode}
-                type={editMode ? "button" : "submit"}
-                isLoading={editMode ? isSubmitting : false}
-                isDisabled={editMode ? !isDirty || !getValues("email") : false}
-              >
-                {editMode ? "Save" : "Edit"}
-              </Button>
-              {editMode && (
-                <Button onClick={onCancel} isDisabled={isSubmitting}>
-                  Cancel
+                  {editMode && isSubmitting && (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  )}
+                  {editMode ? "Save" : "Edit"}
                 </Button>
-              )}
-            </Flex>
-          </VStack>
-        </Box>
-        <Box>
+                {editMode && (
+                  <Button
+                    variant="outline"
+                    onClick={onCancel}
+                    disabled={isSubmitting}
+                  >
+                    Cancel
+                  </Button>
+                )}
+              </div>
+            </form>
+          </CardContent>
+        </Card>
+        <div>
           <Button
-            variant="glass"
+            variant="outline"
             onClick={() => {
               subscribeToPush(currentUser!.api_identifier)
             }}
           >
             Enable Notifications
           </Button>
-        </Box>
-      </VStack>
-    </Container>
+        </div>
+      </div>
+    </div>
   )
 }
 

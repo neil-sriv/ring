@@ -1,4 +1,3 @@
-import { Box, Flex, Heading, VStack, useColorModeValue } from "@chakra-ui/react"
 import { useSuspenseQuery } from "@tanstack/react-query"
 import { listDashboardLettersLettersLettersDashboardGetOptions } from "../../client/@tanstack/react-query.gen"
 import { LoopsGrid } from "../Loops/LoopsGrid"
@@ -11,33 +10,13 @@ export function HomeDashboard() {
   const in_progress = dashboardLoops.data.in_progress
   const upcoming = dashboardLoops.data.upcoming
 
-  const textColor = useColorModeValue("ui.dark", "ui.light")
-  const bgColor = useColorModeValue(
-    "ui.glass.light.background",
-    "ui.glass.dark.background",
-  )
-  const borderColor = useColorModeValue(
-    "ui.glass.light.border",
-    "ui.glass.dark.border",
-  )
-
   return (
-    <Flex justify="center" w="100%" bg={bgColor} backdropFilter="blur(10px)">
-      <Box maxW="1200px" w="100%" px={4} py={8}>
-        <VStack spacing={8} align="stretch" w="100%">
-          <Heading
-            as="h1"
-            textAlign="center"
-            color={textColor}
-            size="xl"
-            fontWeight="bold"
-            letterSpacing="tight"
-            py={4}
-            borderBottom="1px solid"
-            borderColor={borderColor}
-          >
+    <div className="flex justify-center w-full bg-background/60 backdrop-blur-sm">
+      <div className="max-w-[1200px] w-full px-4 py-8">
+        <div className="flex flex-col gap-8 items-stretch w-full">
+          <h1 className="text-center text-foreground text-xl font-bold tracking-tight py-4 border-b border-border">
             Dashboard
-          </Heading>
+          </h1>
           {recently_completed.length > 0 && (
             <LoopsGrid
               loops={recently_completed.sort(
@@ -74,8 +53,8 @@ export function HomeDashboard() {
               showLoopTypeLabel={true}
             />
           )}
-        </VStack>
-      </Box>
-    </Flex>
+        </div>
+      </div>
+    </div>
   )
 }

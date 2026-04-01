@@ -1,15 +1,17 @@
-import {
-  Button,
-  Container,
-  FormControl,
-  FormErrorMessage,
-  Heading,
-  Input,
-  Text,
-} from "@chakra-ui/react"
 import { createFileRoute, redirect } from "@tanstack/react-router"
+import { Loader2 } from "lucide-react"
 import { type SubmitHandler, useForm } from "react-hook-form"
 
+import { Button } from "@/components/ui/button"
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
 import type { ResetPasswordRequestResetPasswordRequestEmailPostError } from "../client"
 import { resetPasswordRequestResetPasswordRequestEmailPost } from "../client/sdk.gen"
 import { isLoggedIn } from "../hooks/useAuth"
@@ -58,39 +60,47 @@ function ResetPasswordRequest() {
   }
 
   return (
-    <Container
-      as="form"
-      onSubmit={handleSubmit(onSubmit)}
-      h="100vh"
-      maxW="sm"
-      alignItems="stretch"
-      justifyContent="center"
-      gap={4}
-      centerContent
-    >
-      <Heading size="xl" color="ui.main" textAlign="center" mb={2}>
-        Password Reset
-      </Heading>
-      <Text align="center">
-        A password reset email will be sent to the registered account.
-      </Text>
-      <FormControl isInvalid={!!errors.email}>
-        <Input
-          id="email"
-          {...register("email", {
-            required: "Email is required",
-            pattern: emailPattern,
-          })}
-          placeholder="Email"
-          type="email"
-        />
-        {errors.email && (
-          <FormErrorMessage>{errors.email.message}</FormErrorMessage>
-        )}
-      </FormControl>
-      <Button variant="primary" type="submit" isLoading={isSubmitting}>
-        Continue
-      </Button>
-    </Container>
+    <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-primary/10 via-background to-muted p-4">
+      <Card className="w-full max-w-sm">
+        <CardHeader className="text-center">
+          <CardTitle className="text-2xl font-bold tracking-tight text-primary">
+            Password Reset
+          </CardTitle>
+          <CardDescription>
+            A password reset email will be sent to the registered account.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <form
+            onSubmit={handleSubmit(onSubmit)}
+            className="flex flex-col gap-4"
+          >
+            <div className="space-y-2">
+              <Label htmlFor="email">Email</Label>
+              <Input
+                id="email"
+                {...register("email", {
+                  required: "Email is required",
+                  pattern: emailPattern,
+                })}
+                placeholder="Email"
+                type="email"
+                className={errors.email ? "border-destructive" : ""}
+              />
+              {errors.email && (
+                <p className="text-sm text-destructive">
+                  {errors.email.message}
+                </p>
+              )}
+            </div>
+
+            <Button type="submit" disabled={isSubmitting} className="w-full">
+              {isSubmitting && <Loader2 className="h-4 w-4 animate-spin" />}
+              Continue
+            </Button>
+          </form>
+        </CardContent>
+      </Card>
+    </div>
   )
 }

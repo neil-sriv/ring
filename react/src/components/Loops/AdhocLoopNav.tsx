@@ -1,7 +1,8 @@
-import { Button, Flex, Icon, useDisclosure } from "@chakra-ui/react"
+import { Button } from "@/components/ui/button"
 import { useQueryClient } from "@tanstack/react-query"
 import { useRouter } from "@tanstack/react-router"
-import { FaPlus } from "react-icons/fa"
+import { Plus } from "lucide-react"
+import { useState } from "react"
 import type { GroupLinked, MinimalLetter } from "../../client"
 import { listLettersLettersLettersGetQueryKey } from "../../client/@tanstack/react-query.gen"
 import AddAdhocLoop from "./AddAdhocLoop"
@@ -12,7 +13,7 @@ type AdhocLoopNavProps = {
 }
 
 function AdhocLoopNav(props: AdhocLoopNavProps): JSX.Element {
-  const addAdhocLoopModal = useDisclosure()
+  const [addAdhocLoopOpen, setAddAdhocLoopOpen] = useState(false)
   const queryClient = useQueryClient()
   const router = useRouter()
 
@@ -25,27 +26,22 @@ function AdhocLoopNav(props: AdhocLoopNavProps): JSX.Element {
       }),
     })
     router.invalidate()
-    addAdhocLoopModal.onOpen()
+    setAddAdhocLoopOpen(true)
   }
 
   return (
     <>
-      <Flex>
-        <Button
-          variant="primary"
-          gap={1}
-          fontSize={{ base: "sm", md: "inherit" }}
-          onClick={() => onClick()}
-        >
-          <Icon as={FaPlus} />
+      <div className="flex">
+        <Button onClick={() => onClick()}>
+          <Plus className="h-4 w-4" />
           Create Adhoc Loop
         </Button>
         <AddAdhocLoop
-          isOpen={addAdhocLoopModal.isOpen}
-          onClose={addAdhocLoopModal.onClose}
+          isOpen={addAdhocLoopOpen}
+          onClose={() => setAddAdhocLoopOpen(false)}
           groupApiId={props.group.api_identifier}
         />
-      </Flex>
+      </div>
     </>
   )
 }

@@ -1,65 +1,65 @@
-import {
-  Badge,
-  Box,
-  Container,
-  Heading,
-  Radio,
-  RadioGroup,
-  Stack,
-  VStack,
-  useColorMode,
-  useColorModeValue,
-} from "@chakra-ui/react"
+import { Badge } from "@/components/ui/badge"
+import { useEffect, useState } from "react"
 
 const Appearance = () => {
-  const { colorMode, toggleColorMode } = useColorMode()
-  const textColor = useColorModeValue("ui.dark", "ui.light")
+  const [theme, setTheme] = useState<string>(() => {
+    if (typeof window !== "undefined") {
+      return (
+        localStorage.getItem("theme") ||
+        (document.documentElement.classList.contains("dark") ? "dark" : "light")
+      )
+    }
+    return "light"
+  })
+
+  useEffect(() => {
+    if (theme === "dark") {
+      document.documentElement.classList.add("dark")
+    } else {
+      document.documentElement.classList.remove("dark")
+    }
+    localStorage.setItem("theme", theme)
+  }, [theme])
+
+  const handleThemeChange = (value: string) => {
+    setTheme(value)
+  }
 
   return (
-    <Container maxW="full">
-      <VStack spacing={6} align="stretch">
-        <Heading size="sm" color={textColor}>
-          Appearance
-        </Heading>
-        <Box
-          bg="ui.glass.light.background"
-          backdropFilter="blur(10px)"
-          border="1px solid"
-          borderColor="ui.glass.light.border"
-          _dark={{
-            bg: "ui.glass.dark.background",
-            borderColor: "ui.glass.dark.border",
-          }}
-          p={6}
-          borderRadius="xl"
-          boxShadow="md"
-        >
-          <RadioGroup onChange={toggleColorMode} value={colorMode}>
-            <Stack spacing={4}>
-              <Radio
+    <div className="w-full">
+      <div className="flex flex-col gap-6">
+        <h3 className="text-sm font-semibold text-foreground">Appearance</h3>
+        <div className="rounded-xl border bg-card p-6 shadow-sm">
+          <div className="flex flex-col gap-4">
+            <label className="flex items-center gap-2 cursor-pointer transition-transform hover:translate-x-1">
+              <input
+                type="radio"
+                name="theme"
                 value="light"
-                colorScheme="teal"
-                _hover={{ transform: "translateX(4px)" }}
-                transition="all 0.2s"
-              >
-                Light Mode
-                <Badge ml="2" colorScheme="teal">
-                  Default
-                </Badge>
-              </Radio>
-              <Radio
+                checked={theme === "light"}
+                onChange={() => handleThemeChange("light")}
+                className="accent-primary h-4 w-4"
+              />
+              <span className="text-sm text-foreground">Light Mode</span>
+              <Badge variant="secondary" className="ml-2">
+                Default
+              </Badge>
+            </label>
+            <label className="flex items-center gap-2 cursor-pointer transition-transform hover:translate-x-1">
+              <input
+                type="radio"
+                name="theme"
                 value="dark"
-                colorScheme="teal"
-                _hover={{ transform: "translateX(4px)" }}
-                transition="all 0.2s"
-              >
-                Dark Mode
-              </Radio>
-            </Stack>
-          </RadioGroup>
-        </Box>
-      </VStack>
-    </Container>
+                checked={theme === "dark"}
+                onChange={() => handleThemeChange("dark")}
+                className="accent-primary h-4 w-4"
+              />
+              <span className="text-sm text-foreground">Dark Mode</span>
+            </label>
+          </div>
+        </div>
+      </div>
+    </div>
   )
 }
 

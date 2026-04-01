@@ -1,25 +1,16 @@
-import { ViewIcon, ViewOffIcon } from "@chakra-ui/icons"
-import {
-  Button,
-  Center,
-  Container,
-  FormControl,
-  FormErrorMessage,
-  Heading,
-  Icon,
-  Input,
-  InputGroup,
-  InputRightElement,
-  Link,
-  useBoolean,
-} from "@chakra-ui/react"
 import {
   Link as RouterLink,
   createFileRoute,
   redirect,
 } from "@tanstack/react-router"
+import { Eye, EyeOff, Loader2 } from "lucide-react"
+import { useState } from "react"
 import { type SubmitHandler, useForm } from "react-hook-form"
 
+import { Button } from "@/components/ui/button"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
 import { useQueryClient } from "@tanstack/react-query"
 import type { UserCreate } from "../../client"
 import {
@@ -65,13 +56,13 @@ function Register() {
       : false
   if (!validToken) {
     return (
-      <Center h="100vh">
-        <Heading as="h1">Invalid token</Heading>
-      </Center>
+      <div className="flex min-h-screen items-center justify-center">
+        <h1 className="text-2xl font-bold">Invalid token</h1>
+      </div>
     )
   }
 
-  const [show, setShow] = useBoolean()
+  const [showPassword, setShowPassword] = useState(false)
   const { registerMutation, error, resetError } = useRegister()
   const {
     register,
@@ -106,86 +97,96 @@ function Register() {
   }
 
   return (
-    <>
-      <Container
-        as="form"
-        onSubmit={handleSubmit(onSubmit)}
-        h="100vh"
-        maxW="sm"
-        alignItems="stretch"
-        justifyContent="center"
-        gap={4}
-        centerContent
-      >
-        {/* <Image
-          src={Logo}
-          alt="Ring logo"
-          height="auto"
-          maxW="2xs"
-          alignSelf="center"
-          mb={4}
-        /> */}
-        <Heading as="h1" size="lg" textAlign="center">
-          Ring
-        </Heading>
-        <FormControl id="name" isInvalid={!!errors.name}>
-          <Input
-            {...register("name")}
-            placeholder="Name"
-            type="text"
-            required
-          />
-          {errors.name && (
-            <FormErrorMessage>{errors.name.message}</FormErrorMessage>
-          )}
-        </FormControl>
-        <FormControl id="email" isInvalid={!!errors.email || !!error}>
-          <Input
-            id="email"
-            {...register("email", {
-              pattern: emailPattern,
-            })}
-            placeholder="Email"
-            type="email"
-            required
-          />
-          {errors.email && (
-            <FormErrorMessage>{errors.email.message}</FormErrorMessage>
-          )}
-        </FormControl>
-        <FormControl id="password" isInvalid={!!error}>
-          <InputGroup>
-            <Input
-              {...register("password")}
-              type={show ? "text" : "password"}
-              placeholder="Password"
-              required
-            />
-            <InputRightElement
-              color="ui.dim"
-              _hover={{
-                cursor: "pointer",
-              }}
-            >
-              <Icon
-                onClick={setShow.toggle}
-                aria-label={show ? "Hide password" : "Show password"}
+    <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-primary/10 via-background to-muted p-4">
+      <Card className="w-full max-w-sm">
+        <CardHeader className="text-center">
+          <CardTitle className="text-2xl font-bold tracking-tight">
+            Ring
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <form
+            onSubmit={handleSubmit(onSubmit)}
+            className="flex flex-col gap-4"
+          >
+            <div className="space-y-2">
+              <Label htmlFor="name">Name</Label>
+              <Input
+                id="name"
+                {...register("name")}
+                placeholder="Name"
+                type="text"
+                required
+                className={errors.name ? "border-destructive" : ""}
+              />
+              {errors.name && (
+                <p className="text-sm text-destructive">
+                  {errors.name.message}
+                </p>
+              )}
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="email">Email</Label>
+              <Input
+                id="email"
+                {...register("email", {
+                  pattern: emailPattern,
+                })}
+                placeholder="Email"
+                type="email"
+                required
+                className={errors.email || error ? "border-destructive" : ""}
+              />
+              {errors.email && (
+                <p className="text-sm text-destructive">
+                  {errors.email.message}
+                </p>
+              )}
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="password">Password</Label>
+              <div className="relative">
+                <Input
+                  id="password"
+                  {...register("password")}
+                  type={showPassword ? "text" : "password"}
+                  placeholder="Password"
+                  required
+                  className={error ? "border-destructive pr-10" : "pr-10"}
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                >
+                  {showPassword ? (
+                    <EyeOff className="h-4 w-4" />
+                  ) : (
+                    <Eye className="h-4 w-4" />
+                  )}
+                </button>
+              </div>
+              {error && <p className="text-sm text-destructive">{error}</p>}
+            </div>
+
+            <div className="text-center">
+              <RouterLink
+                to="/login"
+                className="text-sm text-primary hover:text-primary/80 transition-colors"
               >
-                {show ? <ViewOffIcon /> : <ViewIcon />}
-              </Icon>
-            </InputRightElement>
-          </InputGroup>
-          {error && <FormErrorMessage>{error}</FormErrorMessage>}
-        </FormControl>
-        <Center>
-          <Link as={RouterLink} to="/login" color="blue.500">
-            Already have an account?
-          </Link>
-        </Center>
-        <Button variant="primary" type="submit" isLoading={isSubmitting}>
-          Register
-        </Button>
-      </Container>
-    </>
+                Already have an account?
+              </RouterLink>
+            </div>
+
+            <Button type="submit" disabled={isSubmitting} className="w-full">
+              {isSubmitting && <Loader2 className="h-4 w-4 animate-spin" />}
+              Register
+            </Button>
+          </form>
+        </CardContent>
+      </Card>
+    </div>
   )
 }

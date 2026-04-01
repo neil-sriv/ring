@@ -1,4 +1,3 @@
-import { Box, Heading, Text, VStack, useColorModeValue } from "@chakra-ui/react"
 import type { GroupLinked, MinimalLetter } from "../../client"
 import AdhocLoopNav from "./AdhocLoopNav"
 import { LoopsGrid } from "./LoopsGrid"
@@ -7,9 +6,6 @@ export function AdhocLoopsTab({
   loops,
   group,
 }: { loops: MinimalLetter[]; group: GroupLinked }) {
-  const textColor = useColorModeValue("ui.dark", "ui.light")
-  const subtextColor = useColorModeValue("ui.dim", "ui.dim")
-
   const inProgressLoops = loops.filter((loop) => loop.status === "IN_PROGRESS")
   const upcomingLoops = loops.filter(
     (loop) => loop.status !== "SENT" && loop.status !== "IN_PROGRESS",
@@ -17,30 +13,30 @@ export function AdhocLoopsTab({
   const publishedLoops = loops.filter((loop) => loop.status === "SENT")
 
   return (
-    <VStack spacing={8} w="100%">
-      <Box w="100%">
+    <div className="flex w-full flex-col gap-8">
+      <div className="w-full">
         <AdhocLoopNav loops={loops} group={group} />
-      </Box>
+      </div>
 
-      <Box w="100%">
-        <VStack spacing={4} align="center">
-          <Heading size="md" color={textColor}>
+      <div className="w-full">
+        <div className="flex flex-col items-center gap-4">
+          <h3 className="text-lg font-semibold text-foreground dark:text-foreground">
             Adhoc Loops
-          </Heading>
-          <Text color={subtextColor} textAlign="center" maxW="600px">
+          </h3>
+          <p className="max-w-[600px] text-center text-muted-foreground">
             Adhoc loops are one-time loops that can be created outside of the
             regular cycle.
-          </Text>
-        </VStack>
-      </Box>
+          </p>
+        </div>
+      </div>
 
       {loops.length > 0 ? (
-        <VStack spacing={6} w="100%">
-          <Box w="100%">
-            <Text color={subtextColor} textAlign="center" fontSize="sm" mb={4}>
+        <div className="flex w-full flex-col gap-6">
+          <div className="w-full">
+            <p className="mb-4 text-center text-sm text-muted-foreground">
               Currently showing all adhoc loops.
-            </Text>
-          </Box>
+            </p>
+          </div>
 
           {inProgressLoops.length > 0 && (
             <LoopsGrid
@@ -67,14 +63,14 @@ export function AdhocLoopsTab({
               heading="Published Issues"
             />
           )}
-        </VStack>
+        </div>
       ) : (
-        <Box w="100%" textAlign="center">
-          <Text color={subtextColor}>
+        <div className="w-full text-center">
+          <p className="text-muted-foreground">
             No adhoc loops found. Create your first adhoc loop to get started!
-          </Text>
-        </Box>
+          </p>
+        </div>
       )}
-    </VStack>
+    </div>
   )
 }

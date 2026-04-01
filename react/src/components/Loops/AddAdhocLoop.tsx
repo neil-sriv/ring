@@ -1,21 +1,18 @@
-import {
-  Button,
-  FormControl,
-  FormErrorMessage,
-  FormLabel,
-  Input,
-  Modal,
-  ModalBody,
-  ModalCloseButton,
-  ModalContent,
-  ModalFooter,
-  ModalHeader,
-  ModalOverlay,
-} from "@chakra-ui/react"
 import { useMutation, useQueryClient } from "@tanstack/react-query"
 import { type SubmitHandler, useForm } from "react-hook-form"
 
+import { Button } from "@/components/ui/button"
+import {
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
 import type { AxiosError } from "axios"
+import { Loader2 } from "lucide-react"
 import type { AddNextLetterLettersLetterLetterTypePostError } from "../../client"
 import {
   addNextLetterLettersLetterLetterTypePostMutation,
@@ -95,20 +92,20 @@ const AddAdhocLoop = ({ isOpen, onClose, groupApiId }: AddAdhocLoopProps) => {
   }
 
   return (
-    <>
-      <Modal
-        isOpen={isOpen}
-        onClose={onClose}
-        size={{ base: "sm", md: "md" }}
-        isCentered
-      >
-        <ModalOverlay />
-        <ModalContent as="form" onSubmit={handleSubmit(onSubmit)}>
-          <ModalHeader>Create Adhoc Loop</ModalHeader>
-          <ModalCloseButton />
-          <ModalBody pb={6}>
-            <FormControl mb={4}>
-              <FormLabel htmlFor="title">Title (Optional)</FormLabel>
+    <Dialog
+      open={isOpen}
+      onOpenChange={(open) => {
+        if (!open) onClose()
+      }}
+    >
+      <DialogContent className="sm:max-w-md">
+        <form onSubmit={handleSubmit(onSubmit)}>
+          <DialogHeader>
+            <DialogTitle>Create Adhoc Loop</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label htmlFor="title">Title (Optional)</Label>
               <Input
                 id="title"
                 {...register("title", {
@@ -120,12 +117,16 @@ const AddAdhocLoop = ({ isOpen, onClose, groupApiId }: AddAdhocLoopProps) => {
                 placeholder="Enter a title for this adhoc loop"
               />
               {errors.title && (
-                <FormErrorMessage>{errors.title.message}</FormErrorMessage>
+                <p className="text-sm text-destructive">
+                  {errors.title.message}
+                </p>
               )}
-            </FormControl>
+            </div>
 
-            <FormControl isRequired>
-              <FormLabel htmlFor="sendAt">Send at</FormLabel>
+            <div className="space-y-2">
+              <Label htmlFor="sendAt">
+                Send at <span className="text-destructive">*</span>
+              </Label>
               <Input
                 id="sendAt"
                 {...register("sendAt", {
@@ -136,20 +137,27 @@ const AddAdhocLoop = ({ isOpen, onClose, groupApiId }: AddAdhocLoopProps) => {
                 min={toISOLocal(new Date()).slice(0, 16)}
               />
               {errors.sendAt && (
-                <FormErrorMessage>{errors.sendAt.message}</FormErrorMessage>
+                <p className="text-sm text-destructive">
+                  {errors.sendAt.message}
+                </p>
               )}
-            </FormControl>
-          </ModalBody>
+            </div>
+          </div>
 
-          <ModalFooter gap={3}>
-            <Button variant="primary" type="submit" isLoading={isSubmitting}>
+          <DialogFooter className="gap-2">
+            <Button type="submit" disabled={isSubmitting}>
+              {isSubmitting && (
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              )}
               Create Adhoc Loop
             </Button>
-            <Button onClick={onClose}>Cancel</Button>
-          </ModalFooter>
-        </ModalContent>
-      </Modal>
-    </>
+            <Button type="button" variant="outline" onClick={onClose}>
+              Cancel
+            </Button>
+          </DialogFooter>
+        </form>
+      </DialogContent>
+    </Dialog>
   )
 }
 

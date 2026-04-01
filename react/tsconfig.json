@@ -21,7 +21,13 @@
     "noFallthroughCasesInSwitch": true,
 
     /* vite-plugin-pwa */
-    "types": ["vite-plugin-pwa/client", "node"]
+    "types": ["vite-plugin-pwa/client", "node"],
+
+    /* Path aliases */
+    "baseUrl": ".",
+    "paths": {
+      "@/*": ["./src/*"]
+    }
   },
   "include": ["src"],
   "references": [{ "path": "./tsconfig.node.json" }]

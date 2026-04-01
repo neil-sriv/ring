@@ -1,80 +1,38 @@
-import { Box, Flex, Text, useColorModeValue } from "@chakra-ui/react"
+import { cn } from "@/lib/utils"
 import { Link } from "@tanstack/react-router"
-import { FiHome, FiSearch, FiSettings, FiUsers } from "react-icons/fi"
+import { Home, Search, Settings, Users } from "lucide-react"
 
 interface SidebarItemsProps {
   onClose?: () => void
 }
 
+const items = [
+  { name: "Home", icon: Home, path: "/" as const },
+  { name: "Groups", icon: Users, path: "/groups" as const },
+  { name: "Search", icon: Search, path: "/search" as const },
+  { name: "Settings", icon: Settings, path: "/settings" as const },
+]
+
 export default function SidebarItems({ onClose }: SidebarItemsProps) {
-  const textColor = useColorModeValue("ui.dark", "ui.light")
-  const hoverBg = useColorModeValue(
-    "ui.glass.light.background",
-    "ui.glass.dark.background",
-  )
-  const activeBg = useColorModeValue(
-    "ui.glass.light.background",
-    "ui.glass.dark.background",
-  )
-  const activeColor = useColorModeValue("ui.main", "ui.main")
-
-  const items = [
-    {
-      name: "Home",
-      icon: FiHome,
-      path: "/",
-    },
-    {
-      name: "Groups",
-      icon: FiUsers,
-      path: "/groups",
-    },
-    {
-      name: "Search",
-      icon: FiSearch,
-      path: "/search",
-    },
-    {
-      name: "Settings",
-      icon: FiSettings,
-      path: "/settings",
-    },
-  ]
-
   return (
-    <Box>
+    <nav className="flex flex-col gap-0.5">
       {items.map((item) => (
-        <Flex
+        <Link
           key={item.name}
-          as={Link}
           to={item.path}
-          p={3}
-          mb={2}
-          alignItems="center"
-          borderRadius="md"
-          color={textColor}
-          transition="all 0.2s"
-          _hover={{
-            bg: hoverBg,
-            textDecoration: "none",
-            transform: "translateX(4px)",
-            opacity: 0.9,
-          }}
-          activeProps={{
-            style: {
-              background: activeBg,
-              color: activeColor,
-              transform: "translateX(4px)",
-            },
-          }}
           onClick={onClose}
+          className={cn(
+            "flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium text-foreground/70",
+            "transition-colors hover:bg-accent hover:text-accent-foreground",
+          )}
+          activeProps={{
+            className: "bg-accent text-accent-foreground font-semibold",
+          }}
         >
-          <item.icon />
-          <Text ml={3} fontWeight="medium">
-            {item.name}
-          </Text>
-        </Flex>
+          <item.icon className="h-4 w-4 shrink-0" />
+          {item.name}
+        </Link>
       ))}
-    </Box>
+    </nav>
   )
 }

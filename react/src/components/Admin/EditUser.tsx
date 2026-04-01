@@ -1,20 +1,5 @@
-import {
-  Button,
-  // Checkbox,
-  Flex,
-  FormControl,
-  FormErrorMessage,
-  FormLabel,
-  Input,
-  Modal,
-  ModalBody,
-  ModalCloseButton,
-  ModalContent,
-  ModalFooter,
-  ModalHeader,
-  ModalOverlay,
-} from "@chakra-ui/react"
 import { useMutation, useQueryClient } from "@tanstack/react-query"
+import { Loader2 } from "lucide-react"
 import { type SubmitHandler, useForm } from "react-hook-form"
 
 import type { UserLinked, UserUpdate } from "../../client"
@@ -24,6 +9,17 @@ import {
 } from "../../client/@tanstack/react-query.gen"
 import useCustomToast from "../../hooks/useCustomToast"
 import { emailPattern } from "../../util/misc"
+
+import { Button } from "@/components/ui/button"
+import {
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
 
 interface EditUserProps {
   user: UserLinked
@@ -79,20 +75,20 @@ const EditUser = ({ user, isOpen, onClose }: EditUserProps) => {
   }
 
   return (
-    <>
-      <Modal
-        isOpen={isOpen}
-        onClose={onClose}
-        size={{ base: "sm", md: "md" }}
-        isCentered
-      >
-        <ModalOverlay />
-        <ModalContent as="form" onSubmit={handleSubmit(onSubmit)}>
-          <ModalHeader>Edit User</ModalHeader>
-          <ModalCloseButton />
-          <ModalBody pb={6}>
-            <FormControl isInvalid={!!errors.email}>
-              <FormLabel htmlFor="email">Email</FormLabel>
+    <Dialog
+      open={isOpen}
+      onOpenChange={(open) => {
+        if (!open) onClose()
+      }}
+    >
+      <DialogContent>
+        <form onSubmit={handleSubmit(onSubmit)}>
+          <DialogHeader>
+            <DialogTitle>Edit User</DialogTitle>
+          </DialogHeader>
+          <div className="py-4 space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="email">Email</Label>
               <Input
                 id="email"
                 {...register("email", {
@@ -103,15 +99,17 @@ const EditUser = ({ user, isOpen, onClose }: EditUserProps) => {
                 type="email"
               />
               {errors.email && (
-                <FormErrorMessage>{errors.email.message}</FormErrorMessage>
+                <p className="text-sm text-destructive">
+                  {errors.email.message}
+                </p>
               )}
-            </FormControl>
-            <FormControl mt={4}>
-              <FormLabel htmlFor="name">Full name</FormLabel>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="name">Full name</Label>
               <Input id="name" {...register("name")} type="text" />
-            </FormControl>
-            {/* <FormControl mt={4} isInvalid={!!errors.password}>
-              <FormLabel htmlFor="password">Set Password</FormLabel>
+            </div>
+            {/* <div className="space-y-2">
+              <Label htmlFor="password">Set Password</Label>
               <Input
                 id="password"
                 {...register("password", {
@@ -124,11 +122,11 @@ const EditUser = ({ user, isOpen, onClose }: EditUserProps) => {
                 type="password"
               />
               {errors.password && (
-                <FormErrorMessage>{errors.password.message}</FormErrorMessage>
+                <p className="text-sm text-destructive">{errors.password.message}</p>
               )}
-            </FormControl> */}
-            {/* <FormControl mt={4} isInvalid={!!errors.confirm_password}>
-              <FormLabel htmlFor="confirm_password">Confirm Password</FormLabel>
+            </div> */}
+            {/* <div className="space-y-2">
+              <Label htmlFor="confirm_password">Confirm Password</Label>
               <Input
                 id="confirm_password"
                 {...register("confirm_password", {
@@ -140,39 +138,36 @@ const EditUser = ({ user, isOpen, onClose }: EditUserProps) => {
                 type="password"
               />
               {errors.confirm_password && (
-                <FormErrorMessage>
+                <p className="text-sm text-destructive">
                   {errors.confirm_password.message}
-                </FormErrorMessage>
+                </p>
               )}
-            </FormControl> */}
-            <Flex>
-              <FormControl mt={4}>
+            </div> */}
+            <div className="flex gap-4">
+              <div>
                 {/* <Checkbox {...register("is_superuser")} colorScheme="teal">
                   Is superuser?
                 </Checkbox> */}
-              </FormControl>
-              <FormControl mt={4}>
+              </div>
+              <div>
                 {/* <Checkbox {...register("is_active")} colorScheme="teal">
                   Is active?
                 </Checkbox> */}
-              </FormControl>
-            </Flex>
-          </ModalBody>
-
-          <ModalFooter gap={3}>
-            <Button
-              variant="primary"
-              type="submit"
-              isLoading={isSubmitting}
-              isDisabled={!isDirty}
-            >
+              </div>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={onCancel} type="button">
+              Cancel
+            </Button>
+            <Button type="submit" disabled={isSubmitting || !isDirty}>
+              {isSubmitting && <Loader2 className="h-4 w-4 animate-spin" />}
               Save
             </Button>
-            <Button onClick={onCancel}>Cancel</Button>
-          </ModalFooter>
-        </ModalContent>
-      </Modal>
-    </>
+          </DialogFooter>
+        </form>
+      </DialogContent>
+    </Dialog>
   )
 }
 

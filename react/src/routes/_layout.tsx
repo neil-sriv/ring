@@ -1,5 +1,5 @@
-import { Flex, Spinner } from "@chakra-ui/react"
 import { Outlet, createFileRoute, redirect } from "@tanstack/react-router"
+import { Loader2 } from "lucide-react"
 
 import { useQueryClient } from "@tanstack/react-query"
 import {
@@ -49,16 +49,18 @@ function Layout() {
   const isLoading = false
 
   return (
-    <Flex maxW="large" h="auto" position="relative">
+    <div className="flex min-h-screen">
       <Sidebar />
       {isLoading ? (
-        <Flex justify="center" align="center" height="100vh" width="full">
-          <Spinner size="xl" color="ui.main" />
-        </Flex>
+        <div className="flex flex-1 items-center justify-center">
+          <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        </div>
       ) : (
-        <Outlet />
+        <main className="flex-1 overflow-auto">
+          <Outlet />
+        </main>
       )}
       <UserMenu />
-    </Flex>
+    </div>
   )
 }

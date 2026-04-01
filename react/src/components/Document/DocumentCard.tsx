@@ -1,22 +1,10 @@
-import {
-  Badge,
-  Box,
-  Heading,
-  LinkBox,
-  LinkOverlay,
-  Text,
-  VStack,
-  useColorModeValue,
-} from "@chakra-ui/react"
+import { Badge } from "@/components/ui/badge"
 import { Link } from "@tanstack/react-router"
 import type { DocumentResponse } from "../../client"
 
 export function DocumentCard(props: {
   document: DocumentResponse
 }): JSX.Element {
-  const textColor = useColorModeValue("ui.dark", "ui.light")
-  const subtextColor = useColorModeValue("ui.dim", "ui.dim")
-
   const createdDate = new Date(props.document.created_at)
   const updatedDate = props.document.updated_at
     ? new Date(props.document.updated_at)
@@ -32,66 +20,37 @@ export function DocumentCard(props: {
   }
 
   return (
-    <LinkBox height="100%">
-      <Box
-        h="100%"
-        bg="ui.glass.light.background"
-        backdropFilter="blur(10px)"
-        border="1px solid"
-        borderColor="ui.glass.light.border"
-        _dark={{
-          bg: "ui.glass.dark.background",
-          borderColor: "ui.glass.dark.border",
-        }}
-        p={6}
-        borderRadius="xl"
-        boxShadow="md"
-        transition="all 0.2s"
-        _hover={{
-          transform: "translateY(-4px)",
-          boxShadow: "xl",
-          borderColor: "ui.main",
-        }}
-        position="relative"
-      >
-        <Badge
-          colorScheme="blue"
-          variant="subtle"
-          fontSize="xs"
-          position="absolute"
-          top={2}
-          right={2}
-        >
+    <Link
+      to="/documents/$documentId"
+      params={{ documentId: props.document.api_identifier }}
+      className="block h-full no-underline"
+    >
+      <div className="h-full backdrop-blur-md bg-white/80 border border-white/20 dark:bg-gray-900/80 dark:border-gray-700/50 p-6 rounded-xl shadow-md transition-all duration-200 hover:-translate-y-1 hover:shadow-xl hover:border-primary relative">
+        <Badge variant="secondary" className="text-xs absolute top-2 right-2">
           v{props.document.latest_snapshot_version}
         </Badge>
 
-        <LinkOverlay
-          as={Link}
-          to={`/documents/${props.document.api_identifier}`}
-          _hover={{ textDecoration: "none" }}
-        >
-          <VStack align="start" spacing={3}>
-            <Heading size="md" color={textColor}>
-              {props.document.name}
-            </Heading>
+        <div className="flex flex-col items-start gap-3">
+          <h3 className="text-lg font-semibold text-foreground">
+            {props.document.name}
+          </h3>
 
-            <Text color={subtextColor} fontSize="sm" noOfLines={3}>
-              {getContentPreview()}
-            </Text>
+          <p className="text-sm text-muted-foreground line-clamp-3">
+            {getContentPreview()}
+          </p>
 
-            <VStack align="start" spacing={1} w="full">
-              <Text color={subtextColor} fontSize="xs">
-                Created: {createdDate.toLocaleDateString()}
-              </Text>
-              {updatedDate && (
-                <Text color={subtextColor} fontSize="xs">
-                  Updated: {updatedDate.toLocaleDateString()}
-                </Text>
-              )}
-            </VStack>
-          </VStack>
-        </LinkOverlay>
-      </Box>
-    </LinkBox>
+          <div className="flex flex-col items-start gap-1 w-full">
+            <span className="text-xs text-muted-foreground">
+              Created: {createdDate.toLocaleDateString()}
+            </span>
+            {updatedDate && (
+              <span className="text-xs text-muted-foreground">
+                Updated: {updatedDate.toLocaleDateString()}
+              </span>
+            )}
+          </div>
+        </div>
+      </div>
+    </Link>
   )
 }

@@ -1,4 +1,3 @@
-import { ChakraProvider } from "@chakra-ui/react"
 import {
   QueryClient,
   QueryClientProvider,
@@ -6,14 +5,28 @@ import {
 } from "@tanstack/react-query"
 import { RouterProvider, createRouter } from "@tanstack/react-router"
 import ReactDOM from "react-dom/client"
+import { Toaster } from "sonner"
 import { routeTree } from "./routeTree.gen"
 
 import { StrictMode } from "react"
-import theme from "./theme"
+
+import "./app.css"
 
 import { registerSW } from "virtual:pwa-register"
 import { readUserMePartiesMeGetOptions } from "./client/@tanstack/react-query.gen"
 import { client } from "./client/client.gen"
+
+/* Dark mode initialization */
+const savedTheme = localStorage.getItem("theme")
+if (
+  savedTheme === "dark" ||
+  (!savedTheme && window.matchMedia("(prefers-color-scheme: dark)").matches)
+) {
+  document.documentElement.classList.add("dark")
+} else {
+  document.documentElement.classList.remove("dark")
+}
+/**/
 
 /* PWA */
 const updateSW = registerSW({
@@ -93,10 +106,9 @@ function App() {
 
 ReactDOM.createRoot(document.getElementById("root")!).render(
   <StrictMode>
-    <ChakraProvider theme={theme}>
-      <QueryClientProvider client={queryClient}>
-        <App />
-      </QueryClientProvider>
-    </ChakraProvider>
+    <QueryClientProvider client={queryClient}>
+      <App />
+      <Toaster position="bottom-right" richColors closeButton />
+    </QueryClientProvider>
   </StrictMode>,
 )

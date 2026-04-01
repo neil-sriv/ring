@@ -1,60 +1,30 @@
-import {
-  Box,
-  Button,
-  Container,
-  Heading,
-  Text,
-  VStack,
-  useColorModeValue,
-  useDisclosure,
-} from "@chakra-ui/react"
-
+import { Button } from "@/components/ui/button"
+import { useState } from "react"
 import DeleteConfirmation from "./DeleteConfirmation"
 
 const DeleteAccount = () => {
-  const confirmationModal = useDisclosure()
-  const textColor = useColorModeValue("ui.dark", "ui.light")
+  const [isOpen, setIsOpen] = useState(false)
 
   return (
-    <Container maxW="full">
-      <VStack spacing={6} align="stretch">
-        <Heading size="sm" color={textColor}>
+    <div className="w-full">
+      <div className="flex flex-col gap-6">
+        <h3 className="text-sm font-semibold text-foreground">
           Delete Account
-        </Heading>
-        <Box
-          bg="ui.glass.light.background"
-          backdropFilter="blur(10px)"
-          border="1px solid"
-          borderColor="ui.glass.light.border"
-          _dark={{
-            bg: "ui.glass.dark.background",
-            borderColor: "ui.glass.dark.border",
-          }}
-          p={6}
-          borderRadius="xl"
-          boxShadow="md"
-        >
-          <VStack spacing={4} align="stretch">
-            <Text color={textColor}>
+        </h3>
+        <div className="rounded-xl border bg-card p-6 shadow-sm">
+          <div className="flex flex-col gap-4">
+            <p className="text-foreground">
               Permanently delete your data and everything associated with your
               account.
-            </Text>
-            <Button
-              variant="danger"
-              onClick={confirmationModal.onOpen}
-              _hover={{ transform: "translateY(-2px)" }}
-              transition="all 0.2s"
-            >
+            </p>
+            <Button variant="destructive" onClick={() => setIsOpen(true)}>
               Delete
             </Button>
-          </VStack>
-        </Box>
-        <DeleteConfirmation
-          isOpen={confirmationModal.isOpen}
-          onClose={confirmationModal.onClose}
-        />
-      </VStack>
-    </Container>
+          </div>
+        </div>
+        <DeleteConfirmation isOpen={isOpen} onClose={() => setIsOpen(false)} />
+      </div>
+    </div>
   )
 }
 

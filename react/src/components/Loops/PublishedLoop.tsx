@@ -1,11 +1,4 @@
-import {
-  Box,
-  Button,
-  Container,
-  Flex,
-  Text,
-  useColorModeValue,
-} from "@chakra-ui/react"
+import { Button } from "@/components/ui/button"
 import { useQueryClient } from "@tanstack/react-query"
 import { useState } from "react"
 import type { PublicLetter, UserLinked } from "../../client"
@@ -20,11 +13,8 @@ function PublishedLoop({ loop }: { loop: PublicLetter }) {
     readUserMePartiesMeGetQueryKey(),
   )
 
-  const textColor = useColorModeValue("ui.dark", "ui.light")
-  const borderColor = useColorModeValue("gray.200", "gray.600")
-
   if (!currentUser) {
-    return <Container maxW="full">Loading...</Container>
+    return <div className="w-full">Loading...</div>
   }
 
   // Get questions the user hasn't answered
@@ -38,48 +28,37 @@ function PublishedLoop({ loop }: { loop: PublicLetter }) {
   const hasUnansweredQuestions = unansweredQuestions.length > 0
 
   return (
-    <Container maxW="full">
+    <div className="w-full">
       {/* Late Answers Toggle */}
       {hasUnansweredQuestions && (
-        <Box
-          mb="6"
-          p="4"
-          border="1px"
-          borderColor={borderColor}
-          borderRadius="md"
-          bg={useColorModeValue("blue.50", "blue.900")}
-        >
-          <Flex justify="space-between" align="center">
-            <Box>
-              <Text fontWeight="bold" color={textColor}>
+        <div className="mb-6 rounded-md border border-border bg-blue-50 p-4 dark:bg-blue-950">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="font-bold text-foreground dark:text-foreground">
                 Late Answers Available
-              </Text>
-              <Text
-                fontSize="sm"
-                color={useColorModeValue("gray.600", "gray.300")}
-              >
+              </p>
+              <p className="text-sm text-muted-foreground">
                 You have {unansweredQuestions.length} question
                 {unansweredQuestions.length !== 1 ? "s" : ""} you haven't
                 answered yet.
-              </Text>
-            </Box>
+              </p>
+            </div>
             <Button
-              colorScheme="blue"
-              variant={showLateAnswers ? "solid" : "outline"}
+              variant={showLateAnswers ? "default" : "outline"}
               onClick={() => setShowLateAnswers(!showLateAnswers)}
             >
               {showLateAnswers ? "Hide Late Answers" : "Show Late Answers"}
             </Button>
-          </Flex>
-        </Box>
+          </div>
+        </div>
       )}
 
       {/* Late Answer Questions */}
       {showLateAnswers && hasUnansweredQuestions && (
-        <Box mb="6">
-          <Text fontSize="lg" fontWeight="bold" mb="4" color={textColor}>
+        <div className="mb-6">
+          <p className="mb-4 text-lg font-bold text-foreground dark:text-foreground">
             Questions You Haven't Answered:
-          </Text>
+          </p>
           {unansweredQuestions.map((question) => (
             <LateAnswerQuestion
               key={question.api_identifier}
@@ -87,14 +66,14 @@ function PublishedLoop({ loop }: { loop: PublicLetter }) {
               loopApiId={loop.api_identifier}
             />
           ))}
-        </Box>
+        </div>
       )}
 
       {/* All Questions (Published) */}
-      <Box>
-        <Text fontSize="lg" fontWeight="bold" mb="4" color={textColor}>
+      <div>
+        <p className="mb-4 text-lg font-bold text-foreground dark:text-foreground">
           All Questions and Responses:
-        </Text>
+        </p>
         {loop.questions
           .sort(
             (a, b) =>
@@ -110,8 +89,8 @@ function PublishedLoop({ loop }: { loop: PublicLetter }) {
               />
             )
           })}
-      </Box>
-    </Container>
+      </div>
+    </div>
   )
 }
 

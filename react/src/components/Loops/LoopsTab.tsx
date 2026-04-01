@@ -1,4 +1,3 @@
-import { Box, VStack } from "@chakra-ui/react"
 import type { GroupLinked, MinimalLetter } from "../../client"
 import LoopNav from "./LoopNav"
 import { LoopsGrid } from "./LoopsGrid"
@@ -14,10 +13,10 @@ export function LoopsTab({
   )
 
   return (
-    <VStack spacing={8} w="100%">
-      <Box w="100%">
+    <div className="flex w-full flex-col gap-8">
+      <div className="w-full">
         <LoopNav loops={loops} group={group} />
-      </Box>
+      </div>
       {inProgressLoops.length > 0 && (
         <LoopsGrid
           loops={inProgressLoops}
@@ -43,6 +42,6 @@ export function LoopsTab({
           heading="Published Issues"
         />
       )}
-    </VStack>
+    </div>
   )
 }

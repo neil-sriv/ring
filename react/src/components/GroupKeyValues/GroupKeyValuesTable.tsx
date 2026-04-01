@@ -1,4 +1,3 @@
-import { Box, Text, VStack } from "@chakra-ui/react"
 import { useMutation, useQueryClient } from "@tanstack/react-query"
 import type { AxiosError } from "axios"
 import { useState } from "react"
@@ -56,12 +55,9 @@ export function GroupKeyValuesTable({
   }
 
   return (
-    <VStack w="100%" spacing={4} align="stretch">
-      <Text>
-        Group Key Values; use this as a fast data store for the group.
-      </Text>
-      (
-      <Box border="1px solid" borderColor="gray.200" borderRadius="md" p={4}>
+    <div className="w-full flex flex-col gap-4">
+      <p>Group Key Values; use this as a fast data store for the group.</p>(
+      <div className="border border-gray-200 rounded-md p-4">
         <ReactJson
           src={editableData}
           onEdit={handleEdit}
@@ -73,8 +69,8 @@ export function GroupKeyValuesTable({
           collapsed={false}
           name={false}
         />
-      </Box>
+      </div>
       )
-    </VStack>
+    </div>
   )
 }

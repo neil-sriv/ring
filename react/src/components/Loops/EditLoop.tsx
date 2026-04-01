@@ -1,25 +1,18 @@
-import {
-  Button,
-  Flex,
-  FormControl,
-  FormErrorMessage,
-  FormLabel,
-  Input,
-  Modal,
-  ModalBody,
-  ModalCloseButton,
-  ModalContent,
-  ModalFooter,
-  ModalHeader,
-  ModalOverlay,
-  Switch,
-  Text,
-  useColorModeValue,
-} from "@chakra-ui/react"
 import { useMutation, useQueryClient } from "@tanstack/react-query"
 import { type SubmitHandler, useForm } from "react-hook-form"
 
+import { Button } from "@/components/ui/button"
+import {
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
 import type { AxiosError } from "axios"
+import { Loader2 } from "lucide-react"
 import type {
   EditLetterLettersLetterLetterApiIdEditLetterPostError,
   LetterStatus,
@@ -127,90 +120,65 @@ const EditLetter = ({ isOpen, onClose, loop }: EditLetterProps) => {
     }
   }
 
-  const textColor = useColorModeValue("ui.dark", "ui.light")
-
   return (
-    <>
-      <Modal
-        isOpen={isOpen}
-        onClose={onClose}
-        size={{ base: "sm", md: "md" }}
-        isCentered
-      >
-        <ModalOverlay backdropFilter="blur(4px)" />
-        <ModalContent
-          as="form"
-          onSubmit={handleSubmit(onSubmit)}
-          bg="ui.glass.light.background"
-          backdropFilter="blur(10px)"
-          border="1px solid"
-          borderColor="ui.glass.light.border"
-          _dark={{
-            bg: "ui.glass.dark.background",
-            borderColor: "ui.glass.dark.border",
-          }}
-        >
-          <ModalHeader color={textColor}>Edit Loop</ModalHeader>
-          <ModalCloseButton color={textColor} />
-          <ModalBody pb={6}>
-            <FormControl mb={4}>
-              <FormLabel htmlFor="title" color={textColor}>
-                Title
-              </FormLabel>
+    <Dialog
+      open={isOpen}
+      onOpenChange={(open) => {
+        if (!open) onClose()
+      }}
+    >
+      <DialogContent className="sm:max-w-md">
+        <form onSubmit={handleSubmit(onSubmit)}>
+          <DialogHeader>
+            <DialogTitle>Edit Loop</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label htmlFor="title">Title</Label>
               <Input
                 id="title"
                 {...register("title")}
                 placeholder="Enter letter title"
-                bg="ui.glass.light.background"
-                borderColor="ui.glass.light.border"
-                _dark={{
-                  bg: "ui.glass.dark.background",
-                  borderColor: "ui.glass.dark.border",
-                }}
-                _hover={{
-                  borderColor: "ui.primary",
-                }}
-                _focus={{
-                  borderColor: "ui.primary",
-                  boxShadow: "0 0 0 1px var(--chakra-colors-ui-primary)",
-                }}
               />
-            </FormControl>
+            </div>
 
-            <FormControl mb={4}>
-              <FormLabel htmlFor="isInProgress" color={textColor}>
-                Status
-              </FormLabel>
-              <Flex align="center" gap={4}>
-                <Text
-                  color={textColor}
-                  fontSize="sm"
-                  fontWeight={!watch("isInProgress") ? "bold" : "normal"}
-                  opacity={!watch("isInProgress") ? 1 : 0.6}
+            <div className="space-y-2">
+              <Label htmlFor="isInProgress">Status</Label>
+              <div className="flex items-center gap-4">
+                <span
+                  className={`text-sm ${
+                    !watch("isInProgress")
+                      ? "font-bold opacity-100"
+                      : "font-normal opacity-60"
+                  }`}
                 >
                   Upcoming
-                </Text>
-                <Switch
-                  id="isInProgress"
-                  {...register("isInProgress")}
-                  colorScheme="teal"
-                  size="lg"
-                />
-                <Text
-                  color={textColor}
-                  fontSize="sm"
-                  fontWeight={watch("isInProgress") ? "bold" : "normal"}
-                  opacity={watch("isInProgress") ? 1 : 0.6}
+                </span>
+                <label className="relative inline-flex cursor-pointer items-center">
+                  <input
+                    type="checkbox"
+                    id="isInProgress"
+                    {...register("isInProgress")}
+                    className="peer sr-only"
+                  />
+                  <div className="peer h-6 w-11 rounded-full bg-muted after:absolute after:left-[2px] after:top-[2px] after:h-5 after:w-5 after:rounded-full after:border after:border-border after:bg-background after:transition-all after:content-[''] peer-checked:bg-primary peer-checked:after:translate-x-full peer-focus:ring-2 peer-focus:ring-ring" />
+                </label>
+                <span
+                  className={`text-sm ${
+                    watch("isInProgress")
+                      ? "font-bold opacity-100"
+                      : "font-normal opacity-60"
+                  }`}
                 >
                   In Progress
-                </Text>
-              </Flex>
-            </FormControl>
+                </span>
+              </div>
+            </div>
 
-            <FormControl isRequired>
-              <FormLabel htmlFor="sendAt" color={textColor}>
-                Send at
-              </FormLabel>
+            <div className="space-y-2">
+              <Label htmlFor="sendAt">
+                Send at <span className="text-destructive">*</span>
+              </Label>
               <Input
                 id="sendAt"
                 {...register("sendAt", {
@@ -219,46 +187,29 @@ const EditLetter = ({ isOpen, onClose, loop }: EditLetterProps) => {
                 })}
                 type="datetime-local"
                 min={toISOLocal(new Date()).slice(0, 16)}
-                bg="ui.glass.light.background"
-                borderColor="ui.glass.light.border"
-                _dark={{
-                  bg: "ui.glass.dark.background",
-                  borderColor: "ui.glass.dark.border",
-                }}
-                _hover={{
-                  borderColor: "ui.primary",
-                }}
-                _focus={{
-                  borderColor: "ui.primary",
-                  boxShadow: "0 0 0 1px var(--chakra-colors-ui-primary)",
-                }}
               />
               {errors.sendAt && (
-                <FormErrorMessage>{errors.sendAt.message}</FormErrorMessage>
+                <p className="text-sm text-destructive">
+                  {errors.sendAt.message}
+                </p>
               )}
-            </FormControl>
-          </ModalBody>
+            </div>
+          </div>
 
-          <ModalFooter gap={3}>
-            <Button
-              variant="primary"
-              type="submit"
-              isLoading={isSubmitting}
-              _hover={{
-                opacity: 0.9,
-                bg: "ui.primary",
-              }}
-              transition="all 0.2s ease-in-out"
-            >
+          <DialogFooter className="gap-2">
+            <Button type="submit" disabled={isSubmitting}>
+              {isSubmitting && (
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              )}
               Save
             </Button>
-            <Button onClick={onClose} variant="glass">
+            <Button type="button" variant="outline" onClick={onClose}>
               Cancel
             </Button>
-          </ModalFooter>
-        </ModalContent>
-      </Modal>
-    </>
+          </DialogFooter>
+        </form>
+      </DialogContent>
+    </Dialog>
   )
 }
 

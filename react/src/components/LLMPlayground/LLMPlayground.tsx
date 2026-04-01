@@ -1,24 +1,16 @@
-import {
-  Box,
-  Button,
-  Container,
-  Flex,
-  FormControl,
-  FormLabel,
-  Heading,
-  Text,
-  Textarea,
-  VStack,
-  useToast,
-} from "@chakra-ui/react"
+import { Button } from "@/components/ui/button"
+import { Label } from "@/components/ui/label"
+import { Textarea } from "@/components/ui/textarea"
 import { useMutation } from "@tanstack/react-query"
 import type { AxiosError } from "axios"
+import { Loader2 } from "lucide-react"
 import { useState } from "react"
 import type {
   GenerateCompletionLlmCompletionPostError,
   GenerateCompletionLlmCompletionPostResponse,
 } from "../../client"
 import { generateCompletionLlmCompletionPostMutation } from "../../client/@tanstack/react-query.gen"
+import useCustomToast from "../../hooks/useCustomToast"
 
 interface Message {
   role: "user" | "assistant"
@@ -29,7 +21,7 @@ interface Message {
 export function LLMPlayground(): JSX.Element {
   const [message, setMessage] = useState("")
   const [messages, setMessages] = useState<Message[]>([])
-  const toast = useToast()
+  const showToast = useCustomToast()
 
   const { mutate: sendMessage, isPending } = useMutation({
     ...generateCompletionLlmCompletionPostMutation({
@@ -61,14 +53,11 @@ export function LLMPlayground(): JSX.Element {
       setMessage("")
     },
     onError: (error: AxiosError<GenerateCompletionLlmCompletionPostError>) => {
-      toast({
-        title: "Error",
-        description:
-          error.response?.data.detail?.[0].msg || "Failed to send message",
-        status: "error",
-        duration: 3000,
-        isClosable: true,
-      })
+      showToast(
+        "Error",
+        error.response?.data.detail?.[0].msg || "Failed to send message",
+        "error",
+      )
     },
   })
 
@@ -84,73 +73,67 @@ export function LLMPlayground(): JSX.Element {
   }
 
   return (
-    <Container maxW="container.md" py={8}>
-      <VStack spacing={6} align="stretch">
-        <Heading size="lg">LLM Playground</Heading>
-        <Text>
+    <div className="max-w-2xl mx-auto py-8 px-4">
+      <div className="flex flex-col gap-6">
+        <h2 className="text-2xl font-bold">LLM Playground</h2>
+        <p>
           This is a playground for talking to LLMs. I don't have chat history or
           memory, so it's not very useful yet.
-        </Text>
+        </p>
 
         {/* Message History */}
-        <Box
-          flex="1"
-          overflowY="auto"
-          maxH="60vh"
-          borderWidth="1px"
-          borderRadius="md"
-          p={4}
-        >
-          <VStack spacing={4} align="stretch">
+        <div className="flex-1 overflow-y-auto max-h-[60vh] border rounded-md p-4">
+          <div className="flex flex-col gap-4">
             {messages.map((msg, index) => (
-              <Flex
+              <div
                 key={index}
-                justify={msg.role === "user" ? "flex-end" : "flex-start"}
+                className={`flex ${
+                  msg.role === "user" ? "justify-end" : "justify-start"
+                }`}
               >
-                <Box
-                  maxW="70%"
-                  bg={msg.role === "user" ? "blue.500" : "gray.100"}
-                  color={msg.role === "user" ? "white" : "black"}
-                  p={3}
-                  borderRadius="lg"
+                <div
+                  className={`max-w-[70%] p-3 rounded-lg ${
+                    msg.role === "user"
+                      ? "bg-primary text-primary-foreground"
+                      : "bg-muted text-foreground"
+                  }`}
                 >
-                  <Text>{msg.content}</Text>
-                  <Text
-                    fontSize="xs"
-                    color={msg.role === "user" ? "whiteAlpha.700" : "gray.500"}
+                  <p>{msg.content}</p>
+                  <p
+                    className={`text-xs ${
+                      msg.role === "user"
+                        ? "text-primary-foreground/70"
+                        : "text-muted-foreground"
+                    }`}
                   >
                     {msg.timestamp.toLocaleTimeString()}
-                  </Text>
-                </Box>
-              </Flex>
+                  </p>
+                </div>
+              </div>
             ))}
-          </VStack>
-        </Box>
+          </div>
+        </div>
 
         {/* Message Input */}
-        <Box as="form" onSubmit={handleSubmit}>
-          <FormControl isRequired>
-            <FormLabel>Message</FormLabel>
+        <form onSubmit={handleSubmit}>
+          <div className="space-y-2">
+            <Label htmlFor="message">Message</Label>
             <Textarea
+              id="message"
               value={message}
               onChange={(e) => setMessage(e.target.value)}
               placeholder="Type your message here..."
-              size="lg"
               rows={3}
+              required
             />
-          </FormControl>
+          </div>
 
-          <Button
-            mt={4}
-            type="submit"
-            colorScheme="blue"
-            isLoading={isPending}
-            loadingText="Sending..."
-          >
-            Send Message
+          <Button className="mt-4" type="submit" disabled={isPending}>
+            {isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+            {isPending ? "Sending..." : "Send Message"}
           </Button>
-        </Box>
-      </VStack>
-    </Container>
+        </form>
+      </div>
+    </div>
   )
 }

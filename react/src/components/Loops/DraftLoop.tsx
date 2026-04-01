@@ -1,4 +1,3 @@
-import { Container } from "@chakra-ui/react"
 import type { PublicLetter } from "../../client"
 import DraftQuestion from "../Question/DraftQuestion"
 
@@ -7,7 +6,7 @@ function DraftLoop({
   isGroupAdmin,
 }: { loop: PublicLetter; isGroupAdmin: boolean }) {
   return (
-    <Container maxW="full">
+    <div className="w-full">
       {loop.questions
         .sort(
           (a, b) =>
@@ -24,7 +23,7 @@ function DraftLoop({
             />
           )
         })}
-    </Container>
+    </div>
   )
 }
 

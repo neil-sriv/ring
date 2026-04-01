@@ -1,22 +1,19 @@
 import {
-  Box,
-  Button,
-  Flex,
-  Heading,
-  Modal,
-  ModalBody,
-  ModalCloseButton,
-  ModalContent,
-  ModalFooter,
-  ModalHeader,
-  ModalOverlay,
-  Textarea,
-  useDisclosure,
-} from "@chakra-ui/react"
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog"
+import { Button } from "@/components/ui/button"
+import { Textarea } from "@/components/ui/textarea"
 import { useMutation, useQueryClient } from "@tanstack/react-query"
 import type { AxiosError } from "axios"
+import { Loader2, Trash2 } from "lucide-react"
 import { useEffect, useRef, useState } from "react"
-import { FaTrash } from "react-icons/fa"
 import {
   type DeleteQuestionQuestionsQuestionQuestionApiIdDeleteError,
   type PublicQuestion,
@@ -106,24 +103,19 @@ function ResponseBlock(props: ResponseBlockProps) {
   }, [])
 
   return (
-    <Box my="10px">
+    <div className="my-2.5">
       <Textarea
         ref={textareaRef}
-        size="md"
-        variant="filled"
         value={responseText}
         onChange={handleResponseChange}
-        isDisabled={props.readOnly}
+        disabled={props.readOnly}
         placeholder={isSaving ? "Saving..." : "Type your response..."}
-        opacity={isSaving ? 0.7 : 1}
-        transition="opacity 0.2s ease"
-        overflow="hidden"
-        resize="none"
+        className={`overflow-hidden resize-none bg-muted transition-opacity duration-200 ${
+          isSaving ? "opacity-70" : "opacity-100"
+        }`}
       />
       {isSaving && (
-        <Box fontSize="sm" color="gray.500" mt={1}>
-          Saving...
-        </Box>
+        <div className="text-sm text-muted-foreground mt-1">Saving...</div>
       )}
       {!props.readOnly && (
         <SingleUploadImage
@@ -147,7 +139,7 @@ function ResponseBlock(props: ResponseBlockProps) {
           />
         )
       })}
-    </Box>
+    </div>
   )
 }
 
@@ -167,10 +159,10 @@ function DraftQuestion({
     readUserMePartiesMeGetQueryKey(),
   )
   const showToast = useCustomToast()
-  const deleteModal = useDisclosure()
+  const [deleteOpen, setDeleteOpen] = useState(false)
 
   if (!currentUser) {
-    return <Box>loading...</Box>
+    return <div>loading...</div>
   }
   const response = question.responses.find(
     (response) =>
@@ -204,7 +196,7 @@ function DraftQuestion({
     await deleteMutation.mutateAsync({
       path: { question_api_id: question.api_identifier },
     })
-    deleteModal.onClose()
+    setDeleteOpen(false)
   }
 
   const handleUpsert = async (responseText: string): Promise<void> => {
@@ -293,27 +285,27 @@ function DraftQuestion({
   }
 
   return (
-    <Box my="20px">
-      <Flex justify="space-between" align="center">
+    <div className="my-5">
+      <div className="flex justify-between items-center">
         {question.author == null ? (
-          <Heading size="md">{question.question_text}</Heading>
+          <h3 className="text-lg font-semibold">{question.question_text}</h3>
         ) : (
-          <Heading size="md">
+          <h3 className="text-lg font-semibold">
             {question.author.name} asked: {question.question_text}
-          </Heading>
+          </h3>
         )}
         {canDelete && readOnly && (
           <Button
             variant="ghost"
-            colorScheme="red"
             size="sm"
-            onClick={deleteModal.onOpen}
-            leftIcon={<FaTrash />}
+            className="text-destructive hover:text-destructive hover:bg-destructive/10"
+            onClick={() => setDeleteOpen(true)}
           >
+            <Trash2 className="mr-2 h-4 w-4" />
             Delete
           </Button>
         )}
-      </Flex>
+      </div>
       <ResponseBlock
         questionApiId={question.api_identifier}
         response={response}
@@ -324,30 +316,31 @@ function DraftQuestion({
         readOnly={readOnly}
       />
 
-      <Modal isOpen={deleteModal.isOpen} onClose={deleteModal.onClose}>
-        <ModalOverlay />
-        <ModalContent>
-          <ModalHeader>Delete Question</ModalHeader>
-          <ModalCloseButton />
-          <ModalBody>
-            Are you sure you want to delete this question? This action cannot be
-            undone.
-          </ModalBody>
-          <ModalFooter>
-            <Button variant="ghost" mr={3} onClick={deleteModal.onClose}>
-              Cancel
-            </Button>
-            <Button
-              colorScheme="red"
+      <AlertDialog open={deleteOpen} onOpenChange={setDeleteOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Question</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete this question? This action cannot
+              be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
               onClick={handleDelete}
-              isLoading={deleteMutation.isPending}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              disabled={deleteMutation.isPending}
             >
+              {deleteMutation.isPending && (
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              )}
               Delete
-            </Button>
-          </ModalFooter>
-        </ModalContent>
-      </Modal>
-    </Box>
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </div>
   )
 }
 

@@ -1,13 +1,19 @@
+import { Button } from "@/components/ui/button"
 import {
-  Button,
-  Menu,
-  MenuButton,
-  MenuItem,
-  MenuList,
-  useDisclosure,
-} from "@chakra-ui/react"
-import { BsThreeDotsVertical } from "react-icons/bs"
-import { FiEdit, FiSettings, FiTrash, FiUser } from "react-icons/fi"
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
+import {
+  Edit,
+  MoreVertical,
+  Settings,
+  Trash2,
+  User,
+  UserPlus,
+} from "lucide-react"
+import { useState } from "react"
 
 import { useNavigate } from "@tanstack/react-router"
 import type { GroupLinked, UserLinked } from "../../client"
@@ -24,54 +30,48 @@ interface ActionsMenuProps {
 }
 
 const ActionsMenu = ({ type, value, disabled }: ActionsMenuProps) => {
-  const editUserModal = useDisclosure()
-  const deleteModal = useDisclosure()
-  const addMembersModal = useDisclosure()
-  const impersonateUserModal = useDisclosure()
+  const [isEditOpen, setIsEditOpen] = useState(false)
+  const [isDeleteOpen, setIsDeleteOpen] = useState(false)
+  const [isAddMembersOpen, setIsAddMembersOpen] = useState(false)
+  const [isImpersonateOpen, setIsImpersonateOpen] = useState(false)
   const navigate = useNavigate()
 
   return (
     <>
-      <Menu>
-        <MenuButton
-          isDisabled={disabled}
-          as={Button}
-          rightIcon={<BsThreeDotsVertical />}
-          variant="unstyled"
-        />
-        <MenuList>
-          <MenuItem
-            onClick={editUserModal.onOpen}
-            icon={<FiEdit fontSize="16px" />}
-          >
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <Button variant="ghost" size="icon" disabled={disabled}>
+            <MoreVertical className="h-4 w-4" />
+          </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="end">
+          <DropdownMenuItem onClick={() => setIsEditOpen(true)}>
+            <Edit className="h-4 w-4" />
             Edit {type}
-          </MenuItem>
+          </DropdownMenuItem>
           {type === "User" && (
-            <MenuItem
-              onClick={impersonateUserModal.onOpen}
-              icon={<FiUser fontSize="16px" />}
-              color="ui.danger"
+            <DropdownMenuItem
+              onClick={() => setIsImpersonateOpen(true)}
+              className="text-destructive"
             >
+              <User className="h-4 w-4" />
               Impersonate User
-            </MenuItem>
+            </DropdownMenuItem>
           )}
-          <MenuItem
-            onClick={deleteModal.onOpen}
-            icon={<FiTrash fontSize="16px" />}
-            color="ui.danger"
+          <DropdownMenuItem
+            onClick={() => setIsDeleteOpen(true)}
+            className="text-destructive"
           >
+            <Trash2 className="h-4 w-4" />
             Delete {type}
-          </MenuItem>
+          </DropdownMenuItem>
           {type === "Group" && (
             <>
-              <MenuItem
-                icon={<FiEdit fontSize="16px" />}
-                onClick={addMembersModal.onOpen}
-              >
+              <DropdownMenuItem onClick={() => setIsAddMembersOpen(true)}>
+                <UserPlus className="h-4 w-4" />
                 Add Members
-              </MenuItem>
-              <MenuItem
-                icon={<FiSettings fontSize="16px" />}
+              </DropdownMenuItem>
+              <DropdownMenuItem
                 onClick={() =>
                   navigate({
                     to: "/groups/$groupId/settings",
@@ -79,45 +79,46 @@ const ActionsMenu = ({ type, value, disabled }: ActionsMenuProps) => {
                   })
                 }
               >
+                <Settings className="h-4 w-4" />
                 Settings
-              </MenuItem>
+              </DropdownMenuItem>
             </>
           )}
-        </MenuList>
-        {type === "User" ? (
-          <>
-            <EditUser
-              user={value as UserLinked}
-              isOpen={editUserModal.isOpen}
-              onClose={editUserModal.onClose}
-            />
-            <ImpersonateUser
-              user={value as UserLinked}
-              isOpen={impersonateUserModal.isOpen}
-              onClose={impersonateUserModal.onClose}
-            />
-          </>
-        ) : (
-          <>
-            <EditGroup
-              group={value as GroupLinked}
-              isOpen={editUserModal.isOpen}
-              onClose={editUserModal.onClose}
-            />
-            <AddMembers
-              group={value as GroupLinked}
-              isOpen={addMembersModal.isOpen}
-              onClose={addMembersModal.onClose}
-            />
-          </>
-        )}
-        <Delete
-          type={type}
-          id={value.api_identifier}
-          isOpen={deleteModal.isOpen}
-          onClose={deleteModal.onClose}
-        />
-      </Menu>
+        </DropdownMenuContent>
+      </DropdownMenu>
+      {type === "User" ? (
+        <>
+          <EditUser
+            user={value as UserLinked}
+            isOpen={isEditOpen}
+            onClose={() => setIsEditOpen(false)}
+          />
+          <ImpersonateUser
+            user={value as UserLinked}
+            isOpen={isImpersonateOpen}
+            onClose={() => setIsImpersonateOpen(false)}
+          />
+        </>
+      ) : (
+        <>
+          <EditGroup
+            group={value as GroupLinked}
+            isOpen={isEditOpen}
+            onClose={() => setIsEditOpen(false)}
+          />
+          <AddMembers
+            group={value as GroupLinked}
+            isOpen={isAddMembersOpen}
+            onClose={() => setIsAddMembersOpen(false)}
+          />
+        </>
+      )}
+      <Delete
+        type={type}
+        id={value.api_identifier}
+        isOpen={isDeleteOpen}
+        onClose={() => setIsDeleteOpen(false)}
+      />
     </>
   )
 }

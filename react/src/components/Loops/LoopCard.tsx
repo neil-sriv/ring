@@ -1,13 +1,4 @@
-import {
-  Badge,
-  Box,
-  Heading,
-  LinkBox,
-  LinkOverlay,
-  Text,
-  VStack,
-  useColorModeValue,
-} from "@chakra-ui/react"
+import { Badge } from "@/components/ui/badge"
 import { useQueryClient } from "@tanstack/react-query"
 import { Link } from "@tanstack/react-router"
 import type { MinimalLetter, PublicLetter, UserLinked } from "../../client"
@@ -25,10 +16,7 @@ export function LoopCard(props: {
   )
 
   const sendDate = new Date(props.loop.send_at)
-  const textColor = useColorModeValue("ui.dark", "ui.light")
-  const subtextColor = useColorModeValue("ui.dim", "ui.dim")
 
-  // Determine the main heading text
   const getHeadingText = () => {
     if (props.loop.title) {
       return props.loop.title
@@ -39,7 +27,6 @@ export function LoopCard(props: {
     return "Untitled Loop"
   }
 
-  // Get loop type label
   const getLoopTypeLabel = () => {
     if (!props.showLoopTypeLabel) return null
 
@@ -47,12 +34,8 @@ export function LoopCard(props: {
     if (loopType === "ADHOC") {
       return (
         <Badge
-          colorScheme="purple"
-          variant="subtle"
-          fontSize="xs"
-          position="absolute"
-          top={2}
-          right={2}
+          variant="secondary"
+          className="absolute top-2 right-2 bg-purple-100 text-purple-800 text-xs dark:bg-purple-900 dark:text-purple-200"
         >
           One-off
         </Badge>
@@ -61,12 +44,8 @@ export function LoopCard(props: {
     if (loopType === "CYCLIC") {
       return (
         <Badge
-          colorScheme="blue"
-          variant="subtle"
-          fontSize="xs"
-          position="absolute"
-          top={2}
-          right={2}
+          variant="secondary"
+          className="absolute top-2 right-2 bg-blue-100 text-blue-800 text-xs dark:bg-blue-900 dark:text-blue-200"
         >
           Recurring
         </Badge>
@@ -75,7 +54,6 @@ export function LoopCard(props: {
     return null
   }
 
-  // Check if responders attribute exists and get responder count
   const getResponderCount = () => {
     if (
       props.showResponderCount &&
@@ -87,7 +65,6 @@ export function LoopCard(props: {
     return null
   }
 
-  // Check if user has unanswered questions in this published loop
   const getUnansweredQuestionsCount = () => {
     if (
       props.loop.status === "SENT" &&
@@ -110,60 +87,40 @@ export function LoopCard(props: {
   const unansweredCount = getUnansweredQuestionsCount()
 
   return (
-    <LinkBox height="100%">
-      <Box
-        h="100%"
-        bg="ui.glass.light.background"
-        backdropFilter="blur(10px)"
-        border="1px solid"
-        borderColor="ui.glass.light.border"
-        _dark={{
-          bg: "ui.glass.dark.background",
-          borderColor: "ui.glass.dark.border",
-        }}
-        p={6}
-        borderRadius="xl"
-        boxShadow="md"
-        transition="all 0.2s"
-        _hover={{
-          transform: "translateY(-4px)",
-          boxShadow: "xl",
-          borderColor: "ui.main",
-        }}
-        position="relative"
+    <div className="h-full">
+      <Link
+        to="/loops/$loopId"
+        params={{ loopId: props.loop.api_identifier }}
+        className="block h-full no-underline"
       >
-        {getLoopTypeLabel()}
-        <LinkOverlay
-          as={Link}
-          to={`/loops/${props.loop.api_identifier}`}
-          _hover={{ textDecoration: "none" }}
-        >
-          <VStack align="start" spacing={2}>
-            <Heading size="md" color={textColor}>
+        <div className="relative h-full rounded-xl border border-border/50 bg-background/80 p-6 shadow-md backdrop-blur-sm transition-all duration-200 hover:-translate-y-1 hover:border-primary hover:shadow-xl dark:border-border/30 dark:bg-background/60">
+          {getLoopTypeLabel()}
+          <div className="flex flex-col items-start gap-2">
+            <h3 className="text-lg font-semibold text-foreground">
               {getHeadingText()}
-            </Heading>
+            </h3>
             {props.includeGroupName && (
-              <Text color={subtextColor} fontSize="sm">
+              <p className="text-sm text-muted-foreground">
                 {props.loop.group.name}
-              </Text>
+              </p>
             )}
-            <Text color={subtextColor} fontSize="sm">
+            <p className="text-sm text-muted-foreground">
               {sendDate.toLocaleDateString()}
-            </Text>
+            </p>
             {responderCount !== null && (
-              <Text color={subtextColor} fontSize="sm">
+              <p className="text-sm text-muted-foreground">
                 {responderCount} responder{responderCount !== 1 ? "s" : ""}
-              </Text>
+              </p>
             )}
             {unansweredCount > 0 && (
-              <Text color="orange.500" fontSize="sm" fontWeight="medium">
+              <p className="text-sm font-medium text-orange-500">
                 You have {unansweredCount} unanswered question
                 {unansweredCount !== 1 ? "s" : ""}
-              </Text>
+              </p>
             )}
-          </VStack>
-        </LinkOverlay>
-      </Box>
-    </LinkBox>
+          </div>
+        </div>
+      </Link>
+    </div>
   )
 }
