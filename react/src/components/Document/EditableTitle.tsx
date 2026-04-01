@@ -120,6 +120,14 @@ export function EditableTitle({
     <div
       className="relative w-full cursor-pointer group"
       onClick={handleStartEdit}
+      onKeyDown={(e) => {
+        if (e.key === "Enter" || e.key === " ") {
+          e.preventDefault()
+          handleStartEdit()
+        }
+      }}
+      role="button"
+      tabIndex={0}
     >
       <h2
         className={cn(

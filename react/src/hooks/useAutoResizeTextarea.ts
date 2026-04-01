@@ -20,7 +20,7 @@ export function useAutoResizeTextarea(value: string) {
     textarea.style.height = "auto"
     const minH = minHeightRef.current ?? 0
     textarea.style.height = `${Math.max(textarea.scrollHeight, minH)}px`
-  }, [value])
+  }, [])
 
   return captureMinHeight
 }

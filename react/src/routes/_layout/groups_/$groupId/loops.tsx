@@ -111,10 +111,9 @@ function LoopsContentLoader() {
     },
   ]
 
-  const hashToIndex = useMemo(
-    () => new Map(tabsConfig.map((tab, index) => [tab.hash, index])),
-    [tabsConfig.length],
-  )
+  const hashToIndex = useMemo(() => {
+    return new Map(tabsConfig.map((tab, index) => [tab.hash, index]))
+  }, [tabsConfig])
 
   const getInitialTab = (): string => {
     if (typeof window !== "undefined") {
@@ -147,7 +146,7 @@ function LoopsContentLoader() {
     return () => {
       window.removeEventListener("hashchange", handleHashChange)
     }
-  }, [hashToIndex])
+  }, [tabsConfig])
 
   return (
     <div className="w-full">

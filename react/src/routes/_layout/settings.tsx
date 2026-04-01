@@ -18,7 +18,7 @@ export const Route = createFileRoute("/_layout/settings")({
 })
 
 function UserSettings() {
-  const finalTabs = false ? tabsConfig.slice(0, 3) : tabsConfig
+  const finalTabs = tabsConfig
 
   return (
     <div className="w-full">

@@ -151,7 +151,9 @@ export function S3Video({
         src={url}
         controls
         className="max-w-[400px] max-h-[300px] object-contain"
-      />
+      >
+        <track kind="captions" />
+      </video>
       {handleDelete && (
         <Button
           variant="destructive"

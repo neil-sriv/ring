@@ -54,11 +54,11 @@ const MembersTableBody = () => {
             <div className="flex items-center gap-2">
               <span
                 className={`inline-block w-2 h-2 rounded-full ${
-                  true ? "bg-green-500" : "bg-red-500"
+                  user.is_active ? "bg-green-500" : "bg-red-500"
                 }`}
               />
               {/* {user.is_active ? "Active" : "Inactive"} */}
-              {true ? "Active" : "Inactive"}
+              {user.is_active ? "Active" : "Inactive"}
             </div>
           </TableCell>
           <TableCell>

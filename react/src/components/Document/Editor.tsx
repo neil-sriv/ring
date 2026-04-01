@@ -353,7 +353,7 @@ export const CollabEditor: React.FC<{
       wsRef.current.onmessage = (event) => {
         try {
           // Handle both text and binary data
-          let messageData
+          let messageData: unknown
           if (typeof event.data === "string") {
             messageData = JSON.parse(event.data)
           } else if (event.data instanceof ArrayBuffer) {
@@ -560,6 +560,7 @@ export const CollabEditor: React.FC<{
           }}
         />
         <style
+          // biome-ignore lint/security/noDangerouslySetInnerHtml: Required to style ProseMirror document content reliably.
           dangerouslySetInnerHTML={{
             __html: `
                         .prosemirror-editor {
