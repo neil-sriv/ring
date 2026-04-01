@@ -110,7 +110,7 @@ interface S3MediaProps {
 
 function S3MediaContainer({ children }: { children: React.ReactNode }) {
   return (
-    <div className="rounded-md hover:shadow-md transition-all duration-200 shadow-sm overflow-hidden inline-block p-2 relative">
+    <div className="rounded-md hover:shadow-md transition-all duration-200 shadow-sm overflow-hidden block w-full max-w-[400px] min-w-0 p-2 relative">
       {children}
     </div>
   )
@@ -123,7 +123,7 @@ export function S3Image({ s3Key, alt, handleDelete }: S3MediaProps) {
       <img
         src={url}
         alt={alt}
-        className="max-w-[400px] max-h-[300px] object-contain hover:scale-[1.02] transition-all duration-200"
+        className="h-auto w-full max-h-[300px] object-contain hover:scale-[1.02] transition-all duration-200"
       />
       {handleDelete && (
         <Button
@@ -150,7 +150,7 @@ export function S3Video({
       <video
         src={url}
         controls
-        className="max-w-[400px] max-h-[300px] object-contain"
+        className="h-auto w-full max-h-[300px] object-contain"
       >
         <track kind="captions" />
       </video>
