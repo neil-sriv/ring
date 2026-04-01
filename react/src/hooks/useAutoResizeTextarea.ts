@@ -14,13 +14,14 @@ export function useAutoResizeTextarea(value: string) {
   }, [])
 
   useEffect(() => {
+    void value
     const textarea = textareaRef.current
     if (!textarea) return
 
     textarea.style.height = "auto"
     const minH = minHeightRef.current ?? 0
     textarea.style.height = `${Math.max(textarea.scrollHeight, minH)}px`
-  }, [])
+  }, [value])
 
   return captureMinHeight
 }

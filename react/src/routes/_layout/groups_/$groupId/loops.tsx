@@ -111,9 +111,7 @@ function LoopsContentLoader() {
     },
   ]
 
-  const hashToIndex = useMemo(() => {
-    return new Map(tabsConfig.map((tab, index) => [tab.hash, index]))
-  }, [tabsConfig])
+  void useMemo
 
   const getInitialTab = (): string => {
     if (typeof window !== "undefined") {

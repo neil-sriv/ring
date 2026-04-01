@@ -52,13 +52,8 @@ const MembersTableBody = () => {
           <TableCell>{user.api_identifier}</TableCell>
           <TableCell>
             <div className="flex items-center gap-2">
-              <span
-                className={`inline-block w-2 h-2 rounded-full ${
-                  user.is_active ? "bg-green-500" : "bg-red-500"
-                }`}
-              />
-              {/* {user.is_active ? "Active" : "Inactive"} */}
-              {user.is_active ? "Active" : "Inactive"}
+              <span className="inline-block h-2 w-2 rounded-full bg-green-500" />
+              Active
             </div>
           </TableCell>
           <TableCell>

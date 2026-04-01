@@ -353,7 +353,11 @@ export const CollabEditor: React.FC<{
       wsRef.current.onmessage = (event) => {
         try {
           // Handle both text and binary data
-          let messageData: unknown
+          let messageData: {
+            type?: unknown
+            content?: unknown
+            messageId?: unknown
+          }
           if (typeof event.data === "string") {
             messageData = JSON.parse(event.data)
           } else if (event.data instanceof ArrayBuffer) {
@@ -401,11 +405,12 @@ export const CollabEditor: React.FC<{
 
           if (
             messageData.type === "content_update" &&
+            typeof messageData.content === "string" &&
             messageData.content !== lastContentRef.current
           ) {
             // Skip if this is our own message to prevent infinite loop
             if (
-              messageData.messageId &&
+              typeof messageData.messageId === "string" &&
               messageData.messageId === lastSentMessageIdRef.current
             ) {
               return
