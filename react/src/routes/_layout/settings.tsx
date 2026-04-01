@@ -6,27 +6,27 @@ import {
   TabPanel,
   TabPanels,
   Tabs,
-} from "@chakra-ui/react";
-import { createFileRoute } from "@tanstack/react-router";
+} from "@chakra-ui/react"
+import { createFileRoute } from "@tanstack/react-router"
 
-import Appearance from "../../components/UserSettings/Appearance";
-import ChangePassword from "../../components/UserSettings/ChangePassword";
-import DeleteAccount from "../../components/UserSettings/DeleteAccount";
-import UserInformation from "../../components/UserSettings/UserInformation";
+import Appearance from "../../components/UserSettings/Appearance"
+import ChangePassword from "../../components/UserSettings/ChangePassword"
+import DeleteAccount from "../../components/UserSettings/DeleteAccount"
+import UserInformation from "../../components/UserSettings/UserInformation"
 
 const tabsConfig = [
   { title: "My profile", component: UserInformation },
   { title: "Password", component: ChangePassword },
   { title: "Appearance", component: Appearance },
   { title: "Danger zone", component: DeleteAccount },
-];
+]
 
 export const Route = createFileRoute("/_layout/settings")({
   component: UserSettings,
-});
+})
 
 function UserSettings() {
-  const finalTabs = false ? tabsConfig.slice(0, 3) : tabsConfig;
+  const finalTabs = false ? tabsConfig.slice(0, 3) : tabsConfig
 
   return (
     <Container maxW="full">
@@ -48,5 +48,5 @@ function UserSettings() {
         </TabPanels>
       </Tabs>
     </Container>
-  );
+  )
 }

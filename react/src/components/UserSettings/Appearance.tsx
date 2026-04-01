@@ -1,22 +1,22 @@
 import {
   Badge,
-    Box,
+  Box,
   Container,
   Heading,
   Radio,
   RadioGroup,
   Stack,
+  VStack,
   useColorMode,
-    useColorModeValue,
-    VStack,
-} from "@chakra-ui/react";
+  useColorModeValue,
+} from "@chakra-ui/react"
 
 const Appearance = () => {
   const { colorMode, toggleColorMode } = useColorMode()
-  const textColor = useColorModeValue("ui.dark", "ui.light");
+  const textColor = useColorModeValue("ui.dark", "ui.light")
 
   return (
-      <Container maxW="full">
+    <Container maxW="full">
       <VStack spacing={6} align="stretch">
         <Heading size="sm" color={textColor}>
           Appearance
@@ -34,32 +34,32 @@ const Appearance = () => {
           borderRadius="xl"
           boxShadow="md"
         >
-        <RadioGroup onChange={toggleColorMode} value={colorMode}>
+          <RadioGroup onChange={toggleColorMode} value={colorMode}>
             <Stack spacing={4}>
-              <Radio 
-                value="light" 
+              <Radio
+                value="light"
                 colorScheme="teal"
                 _hover={{ transform: "translateX(4px)" }}
                 transition="all 0.2s"
               >
-              Light Mode
+                Light Mode
                 <Badge ml="2" colorScheme="teal">
-                Default
-              </Badge>
-            </Radio>
-              <Radio 
-                value="dark" 
+                  Default
+                </Badge>
+              </Radio>
+              <Radio
+                value="dark"
                 colorScheme="teal"
                 _hover={{ transform: "translateX(4px)" }}
                 transition="all 0.2s"
               >
-              Dark Mode
-            </Radio>
-          </Stack>
-        </RadioGroup>
+                Dark Mode
+              </Radio>
+            </Stack>
+          </RadioGroup>
         </Box>
       </VStack>
-      </Container>
+    </Container>
   )
 }
 

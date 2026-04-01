@@ -1,4 +1,4 @@
-import { ViewIcon, ViewOffIcon } from "@chakra-ui/icons";
+import { ViewIcon, ViewOffIcon } from "@chakra-ui/icons"
 import {
   Box,
   Button,
@@ -16,27 +16,30 @@ import {
   VStack,
   useBoolean,
   useColorModeValue,
-} from "@chakra-ui/react";
+} from "@chakra-ui/react"
 import {
   Link as RouterLink,
   createFileRoute,
   redirect,
-} from "@tanstack/react-router";
-import { motion } from "framer-motion";
-import { type SubmitHandler, useForm } from "react-hook-form";
+} from "@tanstack/react-router"
+import { motion } from "framer-motion"
+import { type SubmitHandler, useForm } from "react-hook-form"
 
-import type { BodyLoginAccessTokenLoginAccessTokenPost as AccessToken } from "../client";
-import useAuth from "../hooks/useAuth";
-import { emailPattern } from "../util/misc";
+import type { BodyLoginAccessTokenLoginAccessTokenPost as AccessToken } from "../client"
+import useAuth from "../hooks/useAuth"
+import { emailPattern } from "../util/misc"
 
-const MotionBox = motion(Box);
+const MotionBox = motion(Box)
 
 export const Route = createFileRoute("/login")({
   component: Login,
   validateSearch: (search: Record<string, unknown>) => {
     return {
-      next: typeof search.next === "string" && search.next ? search.next : undefined,
-    };
+      next:
+        typeof search.next === "string" && search.next
+          ? search.next
+          : undefined,
+    }
   },
   beforeLoad: async ({ context, search }) => {
     if (
@@ -49,44 +52,46 @@ export const Route = createFileRoute("/login")({
       if (search.next) {
         try {
           // Parse the next URL to extract pathname, search, and hash
-          const baseUrl = typeof window !== "undefined" ? window.location.origin : "http://localhost";
-          const url = new URL(search.next, baseUrl);
-          const pathname = url.pathname;
-          const searchParams = url.search;
-          const hash = url.hash.slice(1); // Remove the '#' character
+          const baseUrl =
+            typeof window !== "undefined"
+              ? window.location.origin
+              : "http://localhost"
+          const url = new URL(search.next, baseUrl)
+          const pathname = url.pathname
+          const searchParams = url.search
+          const hash = url.hash.slice(1) // Remove the '#' character
 
           if (hash) {
             throw redirect({
               to: pathname + searchParams,
               hash: hash,
-            });
-          } else {
-            throw redirect({
-              to: pathname + searchParams,
-            });
+            })
           }
+          throw redirect({
+            to: pathname + searchParams,
+          })
         } catch (e) {
           // If URL parsing fails (e.g., relative path), use the next parameter directly
           if (e instanceof TypeError) {
             throw redirect({
               to: search.next,
-            });
+            })
           }
           // Re-throw redirect exceptions
-          throw e;
+          throw e
         }
       }
       throw redirect({
         to: "/",
-      });
+      })
     }
   },
-});
+})
 
 function Login() {
-  const [show, setShow] = useBoolean();
-  const search = Route.useSearch();
-  const { loginMutation, error, resetError } = useAuth(search.next);
+  const [show, setShow] = useBoolean()
+  const search = Route.useSearch()
+  const { loginMutation, error, resetError } = useAuth(search.next)
   const {
     register,
     handleSubmit,
@@ -98,25 +103,31 @@ function Login() {
       username: "",
       password: "",
     },
-  });
+  })
 
-  const bgColor = useColorModeValue("rgba(255, 255, 255, 0.8)", "rgba(26, 32, 44, 0.8)");
-  const borderColor = useColorModeValue("rgba(255, 255, 255, 0.2)", "rgba(255, 255, 255, 0.1)");
-  const textColor = useColorModeValue("gray.800", "white");
+  const bgColor = useColorModeValue(
+    "rgba(255, 255, 255, 0.8)",
+    "rgba(26, 32, 44, 0.8)",
+  )
+  const borderColor = useColorModeValue(
+    "rgba(255, 255, 255, 0.2)",
+    "rgba(255, 255, 255, 0.1)",
+  )
+  const textColor = useColorModeValue("gray.800", "white")
 
   const onSubmit: SubmitHandler<AccessToken> = async (data) => {
-    if (isSubmitting) return;
+    if (isSubmitting) return
 
-    resetError();
+    resetError()
 
     try {
       await loginMutation.mutateAsync({
         body: data,
-      });
+      })
     } catch {
       // error is handled by useAuth hook
     }
-  };
+  }
 
   return (
     <Center
@@ -126,13 +137,7 @@ function Login() {
       overflow="hidden"
     >
       {/* Background animated circles */}
-      <Box
-        position="absolute"
-        w="100%"
-        h="100%"
-        opacity={0.15}
-        zIndex={0}
-      >
+      <Box position="absolute" w="100%" h="100%" opacity={0.15} zIndex={0}>
         <MotionBox
           position="absolute"
           top="20%"
@@ -149,7 +154,7 @@ function Login() {
           }}
           transition={{
             duration: 12,
-            repeat: Infinity,
+            repeat: Number.POSITIVE_INFINITY,
             ease: "easeInOut",
           }}
         />
@@ -169,7 +174,7 @@ function Login() {
           }}
           transition={{
             duration: 15,
-            repeat: Infinity,
+            repeat: Number.POSITIVE_INFINITY,
             ease: "easeInOut",
           }}
         />
@@ -189,7 +194,7 @@ function Login() {
           }}
           transition={{
             duration: 18,
-            repeat: Infinity,
+            repeat: Number.POSITIVE_INFINITY,
             ease: "easeInOut",
           }}
         />
@@ -311,5 +316,5 @@ function Login() {
         </Container>
       </MotionBox>
     </Center>
-  );
+  )
 }

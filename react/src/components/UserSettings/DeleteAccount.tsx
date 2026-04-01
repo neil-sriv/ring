@@ -1,19 +1,19 @@
 import {
-    Box,
-    Button,
-    Container,
-    Heading,
-    Text,
-    useColorModeValue,
-    useDisclosure,
-    VStack,
-} from "@chakra-ui/react";
+  Box,
+  Button,
+  Container,
+  Heading,
+  Text,
+  VStack,
+  useColorModeValue,
+  useDisclosure,
+} from "@chakra-ui/react"
 
-import DeleteConfirmation from "./DeleteConfirmation";
+import DeleteConfirmation from "./DeleteConfirmation"
 
 const DeleteAccount = () => {
   const confirmationModal = useDisclosure()
-  const textColor = useColorModeValue("ui.dark", "ui.light");
+  const textColor = useColorModeValue("ui.dark", "ui.light")
 
   return (
     <Container maxW="full">
@@ -39,8 +39,8 @@ const DeleteAccount = () => {
               Permanently delete your data and everything associated with your
               account.
             </Text>
-            <Button 
-              variant="danger" 
+            <Button
+              variant="danger"
               onClick={confirmationModal.onOpen}
               _hover={{ transform: "translateY(-2px)" }}
               transition="all 0.2s"

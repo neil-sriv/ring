@@ -1,16 +1,22 @@
-import { Box, Flex, Text, useColorModeValue } from "@chakra-ui/react";
-import { Link } from "@tanstack/react-router";
-import { FiHome, FiSearch, FiSettings, FiUsers } from "react-icons/fi";
+import { Box, Flex, Text, useColorModeValue } from "@chakra-ui/react"
+import { Link } from "@tanstack/react-router"
+import { FiHome, FiSearch, FiSettings, FiUsers } from "react-icons/fi"
 
 interface SidebarItemsProps {
-  onClose?: () => void;
+  onClose?: () => void
 }
 
 export default function SidebarItems({ onClose }: SidebarItemsProps) {
-  const textColor = useColorModeValue("ui.dark", "ui.light");
-  const hoverBg = useColorModeValue("ui.glass.light.background", "ui.glass.dark.background");
-  const activeBg = useColorModeValue("ui.glass.light.background", "ui.glass.dark.background");
-  const activeColor = useColorModeValue("ui.main", "ui.main");
+  const textColor = useColorModeValue("ui.dark", "ui.light")
+  const hoverBg = useColorModeValue(
+    "ui.glass.light.background",
+    "ui.glass.dark.background",
+  )
+  const activeBg = useColorModeValue(
+    "ui.glass.light.background",
+    "ui.glass.dark.background",
+  )
+  const activeColor = useColorModeValue("ui.main", "ui.main")
 
   const items = [
     {
@@ -33,7 +39,7 @@ export default function SidebarItems({ onClose }: SidebarItemsProps) {
       icon: FiSettings,
       path: "/settings",
     },
-  ];
+  ]
 
   return (
     <Box>
@@ -70,5 +76,5 @@ export default function SidebarItems({ onClose }: SidebarItemsProps) {
         </Flex>
       ))}
     </Box>
-  );
+  )
 }

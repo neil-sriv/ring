@@ -1,50 +1,50 @@
 import {
-    Button,
-    FormControl,
-    FormErrorMessage,
-    Modal,
-    ModalBody,
-    ModalCloseButton,
-    ModalContent,
-    ModalFooter,
-    ModalHeader,
-    ModalOverlay,
-    Textarea,
-    useColorModeValue,
-} from "@chakra-ui/react";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { type SubmitHandler, useForm } from "react-hook-form";
+  Button,
+  FormControl,
+  FormErrorMessage,
+  Modal,
+  ModalBody,
+  ModalCloseButton,
+  ModalContent,
+  ModalFooter,
+  ModalHeader,
+  ModalOverlay,
+  Textarea,
+  useColorModeValue,
+} from "@chakra-ui/react"
+import { useMutation, useQueryClient } from "@tanstack/react-query"
+import { type SubmitHandler, useForm } from "react-hook-form"
 
-import { useRouter } from "@tanstack/react-router";
-import { AxiosError } from "axios";
+import { useRouter } from "@tanstack/react-router"
+import type { AxiosError } from "axios"
+import type {
+  AddQuestionLettersLetterLetterApiIdAddQuestionPostError,
+  UserLinked,
+} from "../../client"
 import {
-    AddQuestionLettersLetterLetterApiIdAddQuestionPostError,
-    UserLinked,
-} from "../../client";
-import {
-    addQuestionLettersLetterLetterApiIdAddQuestionPostMutation,
-    readLetterLettersLetterLetterApiIdGetQueryKey,
-    readUserMePartiesMeGetQueryKey,
-} from "../../client/@tanstack/react-query.gen";
-import useCustomToast from "../../hooks/useCustomToast";
+  addQuestionLettersLetterLetterApiIdAddQuestionPostMutation,
+  readLetterLettersLetterLetterApiIdGetQueryKey,
+  readUserMePartiesMeGetQueryKey,
+} from "../../client/@tanstack/react-query.gen"
+import useCustomToast from "../../hooks/useCustomToast"
 
 type QuestionFormProps = {
-  questionText: string;
-};
+  questionText: string
+}
 
 interface AddQuestionProps {
-  isOpen: boolean;
-  onClose: () => void;
-  loopApiId: string;
+  isOpen: boolean
+  onClose: () => void
+  loopApiId: string
 }
 
 const AddQuestion = ({ isOpen, onClose, loopApiId }: AddQuestionProps) => {
-  const queryClient = useQueryClient();
+  const queryClient = useQueryClient()
   const currentUser = queryClient.getQueryData<UserLinked>(
-    readUserMePartiesMeGetQueryKey()
-  );
-  const router = useRouter();
-  const showToast = useCustomToast();
+    readUserMePartiesMeGetQueryKey(),
+  )
+  const router = useRouter()
+  const showToast = useCustomToast()
   const {
     register,
     handleSubmit,
@@ -53,31 +53,31 @@ const AddQuestion = ({ isOpen, onClose, loopApiId }: AddQuestionProps) => {
   } = useForm<QuestionFormProps>({
     mode: "onBlur",
     criteriaMode: "all",
-  });
+  })
 
   const mutation = useMutation({
     ...addQuestionLettersLetterLetterApiIdAddQuestionPostMutation(),
     onSuccess: () => {
-      showToast("Success!", "New question created successfully.", "success");
-      reset();
-      onClose();
+      showToast("Success!", "New question created successfully.", "success")
+      reset()
+      onClose()
     },
     onError: (
-      err: AxiosError<AddQuestionLettersLetterLetterApiIdAddQuestionPostError>
+      err: AxiosError<AddQuestionLettersLetterLetterApiIdAddQuestionPostError>,
     ) => {
       const errDetail =
-        err.response?.data.detail || "no error detail, please contact support";
-      showToast("Something went wrong.", `${errDetail}`, "error");
+        err.response?.data.detail || "no error detail, please contact support"
+      showToast("Something went wrong.", `${errDetail}`, "error")
     },
     onSettled: () => {
       queryClient.invalidateQueries({
         queryKey: readLetterLettersLetterLetterApiIdGetQueryKey({
           path: { letter_api_id: loopApiId },
         }),
-      });
-      router.invalidate();
+      })
+      router.invalidate()
     },
-  });
+  })
 
   const onSubmit: SubmitHandler<QuestionFormProps> = (data) => {
     mutation.mutate({
@@ -86,10 +86,10 @@ const AddQuestion = ({ isOpen, onClose, loopApiId }: AddQuestionProps) => {
         author_api_id: currentUser!.api_identifier,
       },
       path: { letter_api_id: loopApiId },
-    });
-  };
+    })
+  }
 
-  const textColor = useColorModeValue("ui.dark", "ui.light");
+  const textColor = useColorModeValue("ui.dark", "ui.light")
 
   return (
     <>
@@ -100,8 +100,8 @@ const AddQuestion = ({ isOpen, onClose, loopApiId }: AddQuestionProps) => {
         isCentered
       >
         <ModalOverlay backdropFilter="blur(4px)" />
-        <ModalContent 
-          as="form" 
+        <ModalContent
+          as="form"
           onSubmit={handleSubmit(onSubmit)}
           bg="ui.glass.light.background"
           backdropFilter="blur(10px)"
@@ -146,11 +146,11 @@ const AddQuestion = ({ isOpen, onClose, loopApiId }: AddQuestionProps) => {
           </ModalBody>
 
           <ModalFooter gap={3}>
-            <Button 
-              variant="primary" 
-              type="submit" 
+            <Button
+              variant="primary"
+              type="submit"
               isLoading={isSubmitting}
-              _hover={{ 
+              _hover={{
                 opacity: 0.9,
                 bg: "ui.primary",
               }}
@@ -158,17 +158,14 @@ const AddQuestion = ({ isOpen, onClose, loopApiId }: AddQuestionProps) => {
             >
               Save
             </Button>
-            <Button 
-              onClick={onClose}
-              variant="glass"
-            >
+            <Button onClick={onClose} variant="glass">
               Cancel
             </Button>
           </ModalFooter>
         </ModalContent>
       </Modal>
     </>
-  );
-};
+  )
+}
 
-export default AddQuestion;
+export default AddQuestion

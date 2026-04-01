@@ -1,4 +1,4 @@
-import { ViewIcon, ViewOffIcon } from "@chakra-ui/icons";
+import { ViewIcon, ViewOffIcon } from "@chakra-ui/icons"
 import {
   Button,
   Center,
@@ -12,23 +12,23 @@ import {
   InputRightElement,
   Link,
   useBoolean,
-} from "@chakra-ui/react";
+} from "@chakra-ui/react"
 import {
+  Link as RouterLink,
   createFileRoute,
   redirect,
-  Link as RouterLink,
-} from "@tanstack/react-router";
-import { type SubmitHandler, useForm } from "react-hook-form";
+} from "@tanstack/react-router"
+import { type SubmitHandler, useForm } from "react-hook-form"
 
-import { type UserCreate } from "../../client";
-import { isLoggedIn } from "../../hooks/useAuth";
-import { emailPattern } from "../../util/misc";
-import useRegister from "../../hooks/useRegister";
-import { useQueryClient } from "@tanstack/react-query";
+import { useQueryClient } from "@tanstack/react-query"
+import type { UserCreate } from "../../client"
 import {
   validateTokenInvitesTokenTokenGetOptions,
   validateTokenInvitesTokenTokenGetQueryKey,
-} from "../../client/@tanstack/react-query.gen";
+} from "../../client/@tanstack/react-query.gen"
+import { isLoggedIn } from "../../hooks/useAuth"
+import useRegister from "../../hooks/useRegister"
+import { emailPattern } from "../../util/misc"
 
 export const Route = createFileRoute("/register/$token")({
   component: Register,
@@ -36,7 +36,7 @@ export const Route = createFileRoute("/register/$token")({
     if (isLoggedIn()) {
       throw redirect({
         to: "/groups",
-      });
+      })
     }
   },
   loader: async ({ params, context }) => {
@@ -47,32 +47,32 @@ export const Route = createFileRoute("/register/$token")({
         }),
       })
       .catch(() => {
-        console.log("Invalid token");
-      });
+        console.log("Invalid token")
+      })
   },
-});
+})
 
 function Register() {
-  const { token } = Route.useParams();
-  const queryClient = useQueryClient();
+  const { token } = Route.useParams()
+  const queryClient = useQueryClient()
   const validToken =
     queryClient.getQueryData(
       validateTokenInvitesTokenTokenGetQueryKey({
         path: { token: token },
-      })
+      }),
     ) ?? false
       ? true
-      : false;
+      : false
   if (!validToken) {
     return (
       <Center h="100vh">
         <Heading as="h1">Invalid token</Heading>
       </Center>
-    );
+    )
   }
 
-  const [show, setShow] = useBoolean();
-  const { registerMutation, error, resetError } = useRegister();
+  const [show, setShow] = useBoolean()
+  const { registerMutation, error, resetError } = useRegister()
   const {
     register,
     handleSubmit,
@@ -85,25 +85,25 @@ function Register() {
       name: "",
       password: "",
     },
-  });
+  })
 
   const onSubmit: SubmitHandler<UserCreate> = async (data) => {
-    if (isSubmitting) return;
+    if (isSubmitting) return
 
-    resetError();
+    resetError()
 
     const formData = {
       body: data,
       path: { token: token },
-    };
+    }
 
     try {
-      console.log(formData);
-      await registerMutation.mutateAsync(formData);
+      console.log(formData)
+      await registerMutation.mutateAsync(formData)
     } catch {
       // error is handled by useAuth hook
     }
-  };
+  }
 
   return (
     <>
@@ -187,5 +187,5 @@ function Register() {
         </Button>
       </Container>
     </>
-  );
+  )
 }

@@ -11,29 +11,29 @@ import {
   Text,
   useColorModeValue,
   useDisclosure,
-} from "@chakra-ui/react";
-import { useQueryClient } from "@tanstack/react-query";
-import { FiLogOut, FiMenu } from "react-icons/fi";
+} from "@chakra-ui/react"
+import { useQueryClient } from "@tanstack/react-query"
+import { FiLogOut, FiMenu } from "react-icons/fi"
 
-import { Link } from "@tanstack/react-router";
-import type { UserLinked } from "../../client";
-import { readUserMePartiesMeGetQueryKey } from "../../client/@tanstack/react-query.gen";
-import useAuth from "../../hooks/useAuth";
-import SidebarItems from "./SidebarItems";
+import { Link } from "@tanstack/react-router"
+import type { UserLinked } from "../../client"
+import { readUserMePartiesMeGetQueryKey } from "../../client/@tanstack/react-query.gen"
+import useAuth from "../../hooks/useAuth"
+import SidebarItems from "./SidebarItems"
 
 const Sidebar = () => {
-  const queryClient = useQueryClient();
-  const textColor = useColorModeValue("ui.dark", "ui.light");
+  const queryClient = useQueryClient()
+  const textColor = useColorModeValue("ui.dark", "ui.light")
   const currentUser = queryClient.getQueryData<UserLinked>(
-    readUserMePartiesMeGetQueryKey()
-  );
-  const { isOpen, onOpen, onClose } = useDisclosure();
-  const { logout } = useAuth();
+    readUserMePartiesMeGetQueryKey(),
+  )
+  const { isOpen, onOpen, onClose } = useDisclosure()
+  const { logout } = useAuth()
 
   const handleLogout = async () => {
-    logout();
-    queryClient.clear();
-  };
+    logout()
+    queryClient.clear()
+  }
 
   return (
     <>
@@ -62,8 +62,8 @@ const Sidebar = () => {
       />
       <Drawer isOpen={isOpen} placement="left" onClose={onClose}>
         <DrawerOverlay backdropFilter="blur(4px)" />
-        <DrawerContent 
-          maxW="240px" 
+        <DrawerContent
+          maxW="240px"
           bg="ui.glass.light.background"
           backdropFilter="blur(10px)"
           border="1px solid"
@@ -77,9 +77,9 @@ const Sidebar = () => {
           <DrawerBody py={8}>
             <Flex flexDir="column" justify="space-between" h="100%">
               <Box>
-                <Heading 
-                  size="lg" 
-                  textAlign="center" 
+                <Heading
+                  size="lg"
+                  textAlign="center"
                   p={4}
                   color={textColor}
                   fontWeight="bold"
@@ -105,15 +105,15 @@ const Sidebar = () => {
                 </Flex>
               </Box>
               {currentUser?.email && (
-                <Text 
-                  color={textColor} 
-                  noOfLines={2} 
-                  fontSize="sm" 
+                <Text
+                  color={textColor}
+                  noOfLines={2}
+                  fontSize="sm"
                   p={4}
                   borderTop="1px solid"
                   borderColor="ui.glass.light.border"
                   _dark={{
-                    borderColor: "ui.glass.dark.border"
+                    borderColor: "ui.glass.dark.border",
                   }}
                 >
                   Logged in as: {currentUser.email}
@@ -150,9 +150,9 @@ const Sidebar = () => {
           borderRadius="xl"
         >
           <Box>
-            <Heading 
-              size="lg" 
-              textAlign="center" 
+            <Heading
+              size="lg"
+              textAlign="center"
               p={4}
               color={textColor}
               fontWeight="bold"
@@ -178,15 +178,15 @@ const Sidebar = () => {
             </Flex>
           </Box>
           {currentUser?.email && (
-            <Text 
-              color={textColor} 
-              noOfLines={2} 
-              fontSize="sm" 
+            <Text
+              color={textColor}
+              noOfLines={2}
+              fontSize="sm"
               p={4}
               borderTop="1px solid"
               borderColor="ui.glass.light.border"
               _dark={{
-                borderColor: "ui.glass.dark.border"
+                borderColor: "ui.glass.dark.border",
               }}
             >
               Logged in as: {currentUser.email}
@@ -195,7 +195,7 @@ const Sidebar = () => {
         </Flex>
       </Box>
     </>
-  );
-};
+  )
+}
 
-export default Sidebar;
+export default Sidebar

@@ -1,26 +1,26 @@
-import { Button, Flex, Icon, useDisclosure } from "@chakra-ui/react";
-import { FaPlus } from "react-icons/fa";
+import { Button, Flex, Icon, useDisclosure } from "@chakra-ui/react"
+import { FaPlus } from "react-icons/fa"
 
-import { GroupLinked, PublicLetter } from "../../client";
-import AddQuestion from "./AddQuestion";
-import GenerateQuestion from "./GenerateQuestion";
+import type { GroupLinked, PublicLetter } from "../../client"
+import AddQuestion from "./AddQuestion"
+import GenerateQuestion from "./GenerateQuestion"
 
 type QuestionNavProps = {
-  loop: PublicLetter;
-  group: GroupLinked;
-};
+  loop: PublicLetter
+  group: GroupLinked
+}
 
 function QuestionNav(props: QuestionNavProps): JSX.Element {
-  const addQuestionModal = useDisclosure();
-  const generateQuestionModal = useDisclosure();
+  const addQuestionModal = useDisclosure()
+  const generateQuestionModal = useDisclosure()
 
   const onClickAddQuestion = (): void => {
-    addQuestionModal.onOpen();
-  };
+    addQuestionModal.onOpen()
+  }
 
   const onClickGenerateQuestion = (): void => {
-    generateQuestionModal.onOpen();
-  };
+    generateQuestionModal.onOpen()
+  }
   return (
     <>
       <Flex gap={4} wrap="wrap">
@@ -37,8 +37,7 @@ function QuestionNav(props: QuestionNavProps): JSX.Element {
             _hover={{ transform: "translateY(-2px)" }}
             transition="all 0.2s"
           >
-            <Icon as={FaPlus} />{" "}
-            Add new question
+            <Icon as={FaPlus} /> Add new question
           </Button>
         )}
         {props.loop.status === "UPCOMING" && (
@@ -54,8 +53,7 @@ function QuestionNav(props: QuestionNavProps): JSX.Element {
             _hover={{ transform: "translateY(-2px)" }}
             transition="all 0.2s"
           >
-            <Icon as={FaPlus} />{" "}
-            Ask ChatGPT to generate a question.
+            <Icon as={FaPlus} /> Ask ChatGPT to generate a question.
           </Button>
         )}
 
@@ -71,7 +69,7 @@ function QuestionNav(props: QuestionNavProps): JSX.Element {
         />
       </Flex>
     </>
-  );
+  )
 }
 
-export default QuestionNav;
+export default QuestionNav

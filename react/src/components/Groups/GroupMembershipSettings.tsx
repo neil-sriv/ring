@@ -8,22 +8,22 @@ import {
   Th,
   Thead,
   Tr,
-} from "@chakra-ui/react";
-import { useQueryClient } from "@tanstack/react-query";
+} from "@chakra-ui/react"
+import { useQueryClient } from "@tanstack/react-query"
 
-import { GroupLinked } from "../../client";
-import { readGroupPartiesGroupGroupApiIdGetQueryKey } from "../../client/@tanstack/react-query.gen";
+import type { GroupLinked } from "../../client"
+import { readGroupPartiesGroupGroupApiIdGetQueryKey } from "../../client/@tanstack/react-query.gen"
 
 function GroupMembershipSettings({ groupId }: { groupId: string }) {
-  const queryClient = useQueryClient();
+  const queryClient = useQueryClient()
   const group = queryClient.getQueryData<GroupLinked>(
     readGroupPartiesGroupGroupApiIdGetQueryKey({
       path: { group_api_id: groupId },
-    })
-  );
+    }),
+  )
 
   if (group === undefined) {
-    return null;
+    return null
   }
   return (
     <>
@@ -48,14 +48,14 @@ function GroupMembershipSettings({ groupId }: { groupId: string }) {
                     <Td>{member.email}</Td>
                     <Td>Member</Td>
                   </Tr>
-                );
+                )
               })}
             </Tbody>
           </Table>
         </TableContainer>
       </Container>
     </>
-  );
+  )
 }
 
-export default GroupMembershipSettings;
+export default GroupMembershipSettings
