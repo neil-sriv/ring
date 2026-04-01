@@ -73,7 +73,12 @@ function ResponseBlock({
       />
       {response.images.map((image) => {
         return image.media_type === "image" ? (
-          <S3Image s3Key={image.s3_url} alt="IMAGE HERE" key={image.s3_url} />
+          <S3Image
+            s3Key={image.s3_url}
+            alt={`Photo from ${response.participant.name}`}
+            key={image.s3_url}
+            expandable
+          />
         ) : (
           <S3Video s3Key={image.s3_url} key={image.s3_url} />
         )

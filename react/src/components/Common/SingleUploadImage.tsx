@@ -1,4 +1,5 @@
 import { Button } from "@/components/ui/button"
+import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog"
 import { ImagePlus, Loader2, X } from "lucide-react"
 import { useState } from "react"
 
@@ -106,6 +107,8 @@ interface S3MediaProps {
   s3Key: string
   alt?: string
   handleDelete?: () => void
+  /** When set, opens a full-screen style viewer on click or tap. */
+  expandable?: boolean
 }
 
 function S3MediaContainer({ children }: { children: React.ReactNode }) {
@@ -116,15 +119,50 @@ function S3MediaContainer({ children }: { children: React.ReactNode }) {
   )
 }
 
-export function S3Image({ s3Key, alt, handleDelete }: S3MediaProps) {
+export function S3Image({
+  s3Key,
+  alt,
+  handleDelete,
+  expandable,
+}: S3MediaProps) {
   const url = `https://du32exnxihxuf.cloudfront.net/${s3Key}`
+  const [lightboxOpen, setLightboxOpen] = useState(false)
+
+  const imageClassName =
+    "max-w-[400px] max-h-[300px] object-contain hover:scale-[1.02] transition-all duration-200"
+
+  const thumbnail = expandable ? (
+    <button
+      type="button"
+      className="block p-0 m-0 border-0 bg-transparent cursor-zoom-in rounded-[inherit] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+      onClick={() => setLightboxOpen(true)}
+      aria-label="View image full screen"
+    >
+      <img src={url} alt={alt ?? ""} className={imageClassName} />
+    </button>
+  ) : (
+    <img src={url} alt={alt ?? ""} className={imageClassName} />
+  )
+
   return (
     <S3MediaContainer>
-      <img
-        src={url}
-        alt={alt}
-        className="h-auto w-full max-h-[300px] object-contain hover:scale-[1.02] transition-all duration-200"
-      />
+      {expandable ? (
+        <Dialog open={lightboxOpen} onOpenChange={setLightboxOpen}>
+          {thumbnail}
+          <DialogContent className="fixed left-0 top-0 z-50 flex h-[100dvh] max-h-[100dvh] w-screen max-w-none translate-x-0 translate-y-0 flex-col items-center justify-center gap-0 border-0 bg-transparent p-3 shadow-none sm:rounded-none sm:p-6 data-[state=closed]:slide-out-to-left-0 data-[state=closed]:slide-out-to-top-0 data-[state=open]:slide-in-from-left-0 data-[state=open]:slide-in-from-top-0 [&>button]:text-white [&>button]:drop-shadow-md">
+            <DialogTitle className="sr-only">
+              {alt?.trim() ? alt : "Enlarged image"}
+            </DialogTitle>
+            <img
+              src={url}
+              alt={alt ?? ""}
+              className="max-h-[min(100dvh,100vh)] w-auto max-w-full object-contain"
+            />
+          </DialogContent>
+        </Dialog>
+      ) : (
+        thumbnail
+      )}
       {handleDelete && (
         <Button
           variant="destructive"
