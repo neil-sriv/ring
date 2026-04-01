@@ -5,22 +5,22 @@ import {
   MenuButton,
   MenuItem,
   MenuList,
-} from "@chakra-ui/react";
-import { Link } from "@tanstack/react-router";
-import { FaUserAstronaut } from "react-icons/fa";
-import { FiLogOut, FiUser } from "react-icons/fi";
+} from "@chakra-ui/react"
+import { Link } from "@tanstack/react-router"
+import { FaUserAstronaut } from "react-icons/fa"
+import { FiLogOut, FiUser } from "react-icons/fi"
 
-import useAuth from "../../hooks/useAuth";
-import { useQueryClient } from "@tanstack/react-query";
+import { useQueryClient } from "@tanstack/react-query"
+import useAuth from "../../hooks/useAuth"
 
 const UserMenu = () => {
-  const queryClient = useQueryClient();
-  const { logout } = useAuth();
+  const queryClient = useQueryClient()
+  const { logout } = useAuth()
 
   const handleLogout = async () => {
-    logout();
-    queryClient.clear();
-  };
+    logout()
+    queryClient.clear()
+  }
 
   return (
     <>
@@ -55,7 +55,7 @@ const UserMenu = () => {
         </Menu>
       </Box>
     </>
-  );
-};
+  )
+}
 
-export default UserMenu;
+export default UserMenu

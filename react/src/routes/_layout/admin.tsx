@@ -12,32 +12,32 @@ import {
   Th,
   Thead,
   Tr,
-} from "@chakra-ui/react";
-import { useSuspenseQuery } from "@tanstack/react-query";
-import { createFileRoute } from "@tanstack/react-router";
+} from "@chakra-ui/react"
+import { useSuspenseQuery } from "@tanstack/react-query"
+import { createFileRoute } from "@tanstack/react-router"
 
-import { Suspense } from "react";
-import { type UserLinked } from "../../client";
-import ActionsMenu from "../../components/Common/ActionsMenu";
-import Navbar from "../../components/Common/Navbar";
-import { readUsersPartiesUsersGetOptions } from "../../client/@tanstack/react-query.gen";
+import { Suspense } from "react"
+import type { UserLinked } from "../../client"
+import { readUsersPartiesUsersGetOptions } from "../../client/@tanstack/react-query.gen"
+import ActionsMenu from "../../components/Common/ActionsMenu"
+import Navbar from "../../components/Common/Navbar"
 
 export const Route = createFileRoute("/_layout/admin")({
   component: Admin,
   loader: async ({ context }) => {
     if (!context.auth.user?.admin) {
-      throw new Error("User is not an admin");
+      throw new Error("User is not an admin")
     }
-    return context.auth.user;
+    return context.auth.user
   },
-});
+})
 
 const MembersTableBody = () => {
-  const currentUser = Route.useLoaderData<UserLinked>();
+  const currentUser = Route.useLoaderData<UserLinked>()
 
   const { data: users } = useSuspenseQuery({
     ...readUsersPartiesUsersGetOptions(),
-  });
+  })
 
   return (
     <Tbody>
@@ -61,25 +61,22 @@ const MembersTableBody = () => {
                 w="2"
                 h="2"
                 borderRadius="50%"
-                // bg={user.is_active ? "ui.success" : "ui.danger"}
+                // biome-ignore lint/correctness/noConstantCondition: placeholder until user status is wired
                 bg={true ? "ui.success" : "ui.danger"}
                 alignSelf="center"
               />
-              {/* {user.is_active ? "Active" : "Inactive"} */}
+              {/* biome-ignore lint/correctness/noConstantCondition: placeholder until user status is wired */}
               {true ? "Active" : "Inactive"}
             </Flex>
           </Td>
           <Td>
-            <ActionsMenu
-              type="User"
-              value={user}
-            />
+            <ActionsMenu type="User" value={user} />
           </Td>
         </Tr>
       ))}
     </Tbody>
-  );
-};
+  )
+}
 
 const MembersBodySkeleton = () => {
   return (
@@ -92,8 +89,8 @@ const MembersBodySkeleton = () => {
         ))}
       </Tr>
     </Tbody>
-  );
-};
+  )
+}
 
 function Admin() {
   return (
@@ -119,5 +116,5 @@ function Admin() {
         </Table>
       </TableContainer>
     </Container>
-  );
+  )
 }

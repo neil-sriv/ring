@@ -1,49 +1,59 @@
-import { Badge, Box, Heading, Link, Text, useColorModeValue } from "@chakra-ui/react";
-import { PublicQuestion, ResponseWithParticipant } from "../../client";
-import { splitText, URLMatch } from "../../util/URLParse";
-import { S3Image, S3Video } from "../Common/SingleUploadImage";
+import {
+  Badge,
+  Box,
+  Heading,
+  Link,
+  Text,
+  useColorModeValue,
+} from "@chakra-ui/react"
+import type { PublicQuestion, ResponseWithParticipant } from "../../client"
+import { URLMatch, splitText } from "../../util/URLParse"
+import { S3Image, S3Video } from "../Common/SingleUploadImage"
 
 function TextBlockWithUrls({
   texts,
   responseApiId,
 }: {
-  texts: string[];
-  responseApiId: string;
+  texts: string[]
+  responseApiId: string
 }): JSX.Element {
-  const elements = new Array<JSX.Element>();
+  const elements = new Array<JSX.Element>()
   texts.forEach((text, index) => {
     if (URLMatch(text) != null) {
       elements.push(
-        <Link key={"" + index + responseApiId} href={text} isExternal={true}>
+        <Link key={`${index}${responseApiId}`} href={text} isExternal={true}>
           {text}
-        </Link>
-      );
+        </Link>,
+      )
     } else {
       elements.push(
-        <Text whiteSpace="pre-line" key={"" + index + responseApiId}>
+        <Text whiteSpace="pre-line" key={`${index}${responseApiId}`}>
           {text}
-        </Text>
-      );
+        </Text>,
+      )
     }
-  });
-  return <>{elements}</>;
+  })
+  return <>{elements}</>
 }
 
-function ResponseBlock({ response, isLateAnswer }: { response: ResponseWithParticipant; isLateAnswer?: boolean }) {
-  let responseText = [response.response_text];
-  const urlMatches = URLMatch(response.response_text);
+function ResponseBlock({
+  response,
+  isLateAnswer,
+}: { response: ResponseWithParticipant; isLateAnswer?: boolean }) {
+  let responseText = [response.response_text]
+  const urlMatches = URLMatch(response.response_text)
   if (urlMatches != null) {
-    responseText = splitText(response.response_text);
+    responseText = splitText(response.response_text)
   }
 
   const bgColor = useColorModeValue(
     isLateAnswer ? "purple.50" : "transparent",
-    isLateAnswer ? "purple.900" : "transparent"
-  );
+    isLateAnswer ? "purple.900" : "transparent",
+  )
   const borderColor = useColorModeValue(
     isLateAnswer ? "purple.200" : "transparent",
-    isLateAnswer ? "purple.600" : "transparent"
-  );
+    isLateAnswer ? "purple.600" : "transparent",
+  )
 
   return (
     <Box
@@ -72,22 +82,22 @@ function ResponseBlock({ response, isLateAnswer }: { response: ResponseWithParti
           <S3Image s3Key={image.s3_url} alt="IMAGE HERE" key={image.s3_url} />
         ) : (
           <S3Video s3Key={image.s3_url} key={image.s3_url} />
-        );
+        )
       })}
     </Box>
-  );
+  )
 }
 
 function PublishedQuestion({
   question,
   letterSendAt,
 }: {
-  question: PublicQuestion;
-  letterSendAt?: string;
+  question: PublicQuestion
+  letterSendAt?: string
 }): JSX.Element {
   // Determine which responses are late answers
   // A response is considered "late" if it was submitted after the letter was scheduled to be sent
-  const letterSendDate = letterSendAt ? new Date(letterSendAt) : null;
+  const letterSendDate = letterSendAt ? new Date(letterSendAt) : null
 
   return (
     <Box my="20px">
@@ -99,8 +109,10 @@ function PublishedQuestion({
         </Heading>
       )}
       {question.responses.map((response) => {
-        const responseCreatedAt = new Date(response.created_at);
-        const isLateAnswer = letterSendDate ? responseCreatedAt > letterSendDate : false;
+        const responseCreatedAt = new Date(response.created_at)
+        const isLateAnswer = letterSendDate
+          ? responseCreatedAt > letterSendDate
+          : false
 
         return (
           <ResponseBlock
@@ -108,10 +120,10 @@ function PublishedQuestion({
             key={response.api_identifier}
             isLateAnswer={isLateAnswer}
           />
-        );
+        )
       })}
     </Box>
-  );
+  )
 }
 
-export default PublishedQuestion;
+export default PublishedQuestion

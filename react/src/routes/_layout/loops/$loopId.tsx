@@ -1,24 +1,35 @@
-import { Box, Button, Container, Flex, Heading, Icon, Text, useColorModeValue, useDisclosure, VStack } from "@chakra-ui/react";
-import { useQueryClient, useSuspenseQuery } from "@tanstack/react-query";
-import { createFileRoute, Link } from "@tanstack/react-router";
-import { Suspense } from "react";
-import { ErrorBoundary } from "react-error-boundary";
-import { FaPlus } from "react-icons/fa";
-import { PublicLetter, UserLinked } from "../../../client";
+import {
+  Box,
+  Button,
+  Container,
+  Flex,
+  Heading,
+  Icon,
+  Text,
+  VStack,
+  useColorModeValue,
+  useDisclosure,
+} from "@chakra-ui/react"
+import { useQueryClient, useSuspenseQuery } from "@tanstack/react-query"
+import { Link, createFileRoute } from "@tanstack/react-router"
+import { Suspense } from "react"
+import { ErrorBoundary } from "react-error-boundary"
+import { FaPlus } from "react-icons/fa"
+import type { PublicLetter, UserLinked } from "../../../client"
 import {
   readGroupPartiesGroupGroupApiIdGetOptions,
   readLetterLettersLetterLetterApiIdGetOptions,
   readUserMePartiesMeGetQueryKey,
-} from "../../../client/@tanstack/react-query.gen";
-import DraftLoop from "../../../components/Loops/DraftLoop";
-import EditLetter from "../../../components/Loops/EditLoop";
-import PublishedLoop from "../../../components/Loops/PublishedLoop";
-import AddQuestion from "../../../components/Question/AddQuestion";
-import GenerateQuestion from "../../../components/Question/GenerateQuestion";
+} from "../../../client/@tanstack/react-query.gen"
+import DraftLoop from "../../../components/Loops/DraftLoop"
+import EditLetter from "../../../components/Loops/EditLoop"
+import PublishedLoop from "../../../components/Loops/PublishedLoop"
+import AddQuestion from "../../../components/Question/AddQuestion"
+import GenerateQuestion from "../../../components/Question/GenerateQuestion"
 
 type IssueLoaderProps = {
-  loop: PublicLetter;
-};
+  loop: PublicLetter
+}
 
 export const Route = createFileRoute("/_layout/loops/$loopId")({
   loader: async ({ params, context }): Promise<IssueLoaderProps> => {
@@ -26,36 +37,36 @@ export const Route = createFileRoute("/_layout/loops/$loopId")({
       ...readLetterLettersLetterLetterApiIdGetOptions({
         path: { letter_api_id: params.loopId },
       }),
-    });
+    })
     return {
       loop,
-    };
+    }
   },
   component: Issue,
-});
+})
 
 function IssueContent() {
-  const routeParams = Route.useParams();
+  const routeParams = Route.useParams()
   const { data: loop } = useSuspenseQuery({
     ...readLetterLettersLetterLetterApiIdGetOptions({
       path: { letter_api_id: routeParams.loopId },
     }),
-  });
+  })
   const { data: group } = useSuspenseQuery({
     ...readGroupPartiesGroupGroupApiIdGetOptions({
       path: { group_api_id: loop.group.api_identifier },
     }),
-  });
-  const queryClient = useQueryClient();
+  })
+  const queryClient = useQueryClient()
   const currentUser = queryClient.getQueryData<UserLinked>(
-    readUserMePartiesMeGetQueryKey()
-  );
-  const localDueDate = new Date(loop.send_at);
-  const textColor = useColorModeValue("ui.dark", "ui.light");
-  const subtextColor = useColorModeValue("ui.dim", "ui.dim");
-  const editLoopModal = useDisclosure();
-  const addQuestionModal = useDisclosure();
-  const generateQuestionModal = useDisclosure();
+    readUserMePartiesMeGetQueryKey(),
+  )
+  const localDueDate = new Date(loop.send_at)
+  const textColor = useColorModeValue("ui.dark", "ui.light")
+  const subtextColor = useColorModeValue("ui.dim", "ui.dim")
+  const editLoopModal = useDisclosure()
+  const addQuestionModal = useDisclosure()
+  const generateQuestionModal = useDisclosure()
 
   return (
     <Flex justify="center" w="100%">
@@ -77,7 +88,11 @@ function IssueContent() {
           >
             <VStack spacing={4} align="center">
               <Box position="relative" w="100%">
-                <Heading size={["md", "lg"]} textAlign="center" color={textColor}>
+                <Heading
+                  size={["md", "lg"]}
+                  textAlign="center"
+                  color={textColor}
+                >
                   <Link
                     to="/groups/$groupId/loops"
                     params={{ groupId: group!.api_identifier }}
@@ -86,23 +101,24 @@ function IssueContent() {
                     {group!.name}
                   </Link>
                 </Heading>
-                {group.admin.api_identifier === currentUser?.api_identifier && loop.status !== "SENT" && (
-                  <Button
-                    variant="primary"
-                    onClick={editLoopModal.onOpen}
-                    _hover={{
-                      opacity: 0.9,
-                      bg: "ui.primary",
-                    }}
-                    transition="all 0.2s ease-in-out"
-                    position="absolute"
-                    right="0"
-                    top="50%"
-                    transform="translateY(-50%)"
-                  >
-                    Edit Loop
-                  </Button>
-                )}
+                {group.admin.api_identifier === currentUser?.api_identifier &&
+                  loop.status !== "SENT" && (
+                    <Button
+                      variant="primary"
+                      onClick={editLoopModal.onOpen}
+                      _hover={{
+                        opacity: 0.9,
+                        bg: "ui.primary",
+                      }}
+                      transition="all 0.2s ease-in-out"
+                      position="absolute"
+                      right="0"
+                      top="50%"
+                      transform="translateY(-50%)"
+                    >
+                      Edit Loop
+                    </Button>
+                  )}
               </Box>
               {loop.title && (
                 <Heading size={["md", "lg"]} color={textColor}>
@@ -141,8 +157,7 @@ function IssueContent() {
                 _hover={{ transform: "translateY(-2px)" }}
                 transition="all 0.2s"
               >
-                <Icon as={FaPlus} />{" "}
-                Add new question
+                <Icon as={FaPlus} /> Add new question
               </Button>
               <Button
                 variant="primary"
@@ -156,8 +171,7 @@ function IssueContent() {
                 _hover={{ transform: "translateY(-2px)" }}
                 transition="all 0.2s"
               >
-                <Icon as={FaPlus} />{" "}
-                Ask ChatGPT to generate a question.
+                <Icon as={FaPlus} /> Ask ChatGPT to generate a question.
               </Button>
             </Flex>
           )}
@@ -179,7 +193,12 @@ function IssueContent() {
             {loop.status === "SENT" ? (
               <PublishedLoop loop={loop} />
             ) : (
-              <DraftLoop loop={loop} isGroupAdmin={group.admin.api_identifier === currentUser?.api_identifier} />
+              <DraftLoop
+                loop={loop}
+                isGroupAdmin={
+                  group.admin.api_identifier === currentUser?.api_identifier
+                }
+              />
             )}
           </Box>
         </VStack>
@@ -200,7 +219,7 @@ function IssueContent() {
         loopApiId={loop.api_identifier}
       />
     </Flex>
-  );
+  )
 }
 
 function Issue() {
@@ -221,5 +240,5 @@ function Issue() {
         </ErrorBoundary>
       </Box>
     </Container>
-  );
+  )
 }

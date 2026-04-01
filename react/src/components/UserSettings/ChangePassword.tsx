@@ -1,34 +1,34 @@
 import {
-    Box,
-    Button,
-    Container,
-    FormControl,
-    FormErrorMessage,
-    FormLabel,
-    Heading,
-    Input,
-    useColorModeValue,
-    VStack,
-} from "@chakra-ui/react";
-import { useMutation } from "@tanstack/react-query";
-import { type SubmitHandler, useForm } from "react-hook-form";
+  Box,
+  Button,
+  Container,
+  FormControl,
+  FormErrorMessage,
+  FormLabel,
+  Heading,
+  Input,
+  VStack,
+  useColorModeValue,
+} from "@chakra-ui/react"
+import { useMutation } from "@tanstack/react-query"
+import { type SubmitHandler, useForm } from "react-hook-form"
 
-import { AxiosError } from "axios";
-import {
-    type UserUpdatePassword,
-    UpdatePasswordMePartiesMePasswordPatchError,
-} from "../../client";
-import { updatePasswordMePartiesMePasswordPatchMutation } from "../../client/@tanstack/react-query.gen";
-import useCustomToast from "../../hooks/useCustomToast";
-import { confirmPasswordRules, passwordRules } from "../../util/misc";
+import type { AxiosError } from "axios"
+import type {
+  UpdatePasswordMePartiesMePasswordPatchError,
+  UserUpdatePassword,
+} from "../../client"
+import { updatePasswordMePartiesMePasswordPatchMutation } from "../../client/@tanstack/react-query.gen"
+import useCustomToast from "../../hooks/useCustomToast"
+import { confirmPasswordRules, passwordRules } from "../../util/misc"
 
 interface UpdatePasswordForm extends UserUpdatePassword {
-  confirm_password: string;
+  confirm_password: string
 }
 
 const ChangePassword = () => {
-  const textColor = useColorModeValue("ui.dark", "ui.light");
-  const showToast = useCustomToast();
+  const textColor = useColorModeValue("ui.dark", "ui.light")
+  const showToast = useCustomToast()
   const {
     register,
     handleSubmit,
@@ -38,26 +38,26 @@ const ChangePassword = () => {
   } = useForm<UpdatePasswordForm>({
     mode: "onBlur",
     criteriaMode: "all",
-  });
+  })
 
   const mutation = useMutation({
     ...updatePasswordMePartiesMePasswordPatchMutation(),
     onSuccess: () => {
-      showToast("Success!", "Password updated.", "success");
-      reset();
+      showToast("Success!", "Password updated.", "success")
+      reset()
     },
     onError: (err: AxiosError<UpdatePasswordMePartiesMePasswordPatchError>) => {
       const errDetail =
-        err.response?.data.detail || "no error detail, please contact support";
-      showToast("Something went wrong.", `${errDetail}`, "error");
+        err.response?.data.detail || "no error detail, please contact support"
+      showToast("Something went wrong.", `${errDetail}`, "error")
     },
-  });
+  })
 
   const onSubmit: SubmitHandler<UpdatePasswordForm> = async (data) => {
     mutation.mutate({
       body: data,
-    });
-  };
+    })
+  }
 
   return (
     <Container maxW="full">
@@ -117,7 +117,9 @@ const ChangePassword = () => {
                 transition="all 0.2s"
               />
               {errors.new_password && (
-                <FormErrorMessage>{errors.new_password.message}</FormErrorMessage>
+                <FormErrorMessage>
+                  {errors.new_password.message}
+                </FormErrorMessage>
               )}
             </FormControl>
             <FormControl isRequired isInvalid={!!errors.confirm_password}>
@@ -126,7 +128,10 @@ const ChangePassword = () => {
               </FormLabel>
               <Input
                 id="confirm_password"
-                {...register("confirm_password", confirmPasswordRules(getValues))}
+                {...register(
+                  "confirm_password",
+                  confirmPasswordRules(getValues),
+                )}
                 placeholder="Password"
                 type="password"
                 bg="whiteAlpha.900"
@@ -140,18 +145,14 @@ const ChangePassword = () => {
                 </FormErrorMessage>
               )}
             </FormControl>
-            <Button
-              variant="primary"
-              type="submit"
-              isLoading={isSubmitting}
-            >
+            <Button variant="primary" type="submit" isLoading={isSubmitting}>
               Save
             </Button>
           </VStack>
         </Box>
       </VStack>
     </Container>
-  );
-};
+  )
+}
 
-export default ChangePassword;
+export default ChangePassword

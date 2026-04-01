@@ -1,24 +1,24 @@
-import { Button, Flex, Icon, useDisclosure } from "@chakra-ui/react";
-import { FaPlus } from "react-icons/fa";
+import { Button, Flex, Icon, useDisclosure } from "@chakra-ui/react"
+import { FaPlus } from "react-icons/fa"
 
-import AddUser from "../Admin/AddUser";
-import AddGroup from "../Groups/AddGroup";
+import AddUser from "../Admin/AddUser"
+import AddGroup from "../Groups/AddGroup"
 
 interface NavbarProps {
-  type: string;
+  type: string
 }
 
 const Navbar = ({ type }: NavbarProps) => {
-  const addUserModal = useDisclosure();
-  const addGroupModal = useDisclosure();
+  const addUserModal = useDisclosure()
+  const addGroupModal = useDisclosure()
 
   const onClick = (type: string): void => {
     if (type === "User") {
-      addUserModal.onOpen();
+      addUserModal.onOpen()
     } else if (type === "Group") {
-      addGroupModal.onOpen();
+      addGroupModal.onOpen()
     }
-  };
+  }
   return (
     <>
       <Flex py={8} gap={4}>
@@ -44,7 +44,7 @@ const Navbar = ({ type }: NavbarProps) => {
         />
       </Flex>
     </>
-  );
-};
+  )
+}
 
-export default Navbar;
+export default Navbar

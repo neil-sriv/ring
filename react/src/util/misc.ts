@@ -1,12 +1,12 @@
 export const emailPattern = {
   value: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i,
   message: "Invalid email address",
-};
+}
 
 export const namePattern = {
   value: /^[A-Za-z\s\u00C0-\u017F]{1,30}$/,
   message: "Invalid name",
-};
+}
 
 export const passwordRules = (isRequired = true) => {
   const rules: any = {
@@ -14,57 +14,43 @@ export const passwordRules = (isRequired = true) => {
       value: 8,
       message: "Password must be at least 8 characters",
     },
-  };
-
-  if (isRequired) {
-    rules.required = "Password is required";
   }
 
-  return rules;
-};
+  if (isRequired) {
+    rules.required = "Password is required"
+  }
+
+  return rules
+}
 
 export const confirmPasswordRules = (
   getValues: () => any,
-  isRequired = true
+  isRequired = true,
 ) => {
   const rules: any = {
     validate: (value: string) => {
-      const password = getValues().password || getValues().new_password;
-      return value === password ? true : "The passwords do not match";
+      const password = getValues().password || getValues().new_password
+      return value === password ? true : "The passwords do not match"
     },
-  };
-
-  if (isRequired) {
-    rules.required = "Password confirmation is required";
   }
 
-  return rules;
-};
+  if (isRequired) {
+    rules.required = "Password confirmation is required"
+  }
+
+  return rules
+}
 
 export function toISOLocal(d: Date): string {
-  var z = (n: number) => ("0" + n).slice(-2);
-  var zz = (n: number) => ("00" + n).slice(-3);
-  var off = d.getTimezoneOffset();
-  var sign = off > 0 ? "-" : "+";
-  off = Math.abs(off);
+  const z = (n: number) => `0${n}`.slice(-2)
+  const zz = (n: number) => `00${n}`.slice(-3)
+  let off = d.getTimezoneOffset()
+  const sign = off > 0 ? "-" : "+"
+  off = Math.abs(off)
 
-  return (
-    d.getFullYear() +
-    "-" +
-    z(d.getMonth() + 1) +
-    "-" +
-    z(d.getDate()) +
-    "T" +
-    z(d.getHours()) +
-    ":" +
-    z(d.getMinutes()) +
-    ":" +
-    z(d.getSeconds()) +
-    "." +
-    zz(d.getMilliseconds()) +
-    sign +
-    z((off / 60) | 0) +
-    ":" +
-    z(off % 60)
-  );
+  return `${d.getFullYear()}-${z(d.getMonth() + 1)}-${z(d.getDate())}T${z(
+    d.getHours(),
+  )}:${z(d.getMinutes())}:${z(d.getSeconds())}.${zz(
+    d.getMilliseconds(),
+  )}${sign}${z((off / 60) | 0)}:${z(off % 60)}`
 }

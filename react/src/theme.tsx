@@ -1,11 +1,11 @@
-import { extendTheme } from "@chakra-ui/react";
-import { colors } from "./constants/colors";
+import { extendTheme } from "@chakra-ui/react"
+import { colors } from "./constants/colors"
 
 const disabledStyles = {
   _disabled: {
     backgroundColor: colors.primary.main,
   },
-};
+}
 
 const theme = extendTheme({
   colors: {
@@ -163,31 +163,42 @@ const theme = extendTheme({
   },
   styles: {
     global: (props: { colorMode: string }) => ({
-      'html, body': {
-        bg: props.colorMode === 'dark' ? colors.background.dark : colors.background.light,
-        color: props.colorMode === 'dark' ? colors.text.primary.dark : colors.text.primary.light,
-        minHeight: '100vh',
-        overflowX: 'hidden',
-        overscrollBehavior: 'none',
-        '&::-webkit-scrollbar': {
-          width: '4px',
+      "html, body": {
+        bg:
+          props.colorMode === "dark"
+            ? colors.background.dark
+            : colors.background.light,
+        color:
+          props.colorMode === "dark"
+            ? colors.text.primary.dark
+            : colors.text.primary.light,
+        minHeight: "100vh",
+        overflowX: "hidden",
+        overscrollBehavior: "none",
+        "&::-webkit-scrollbar": {
+          width: "4px",
         },
-        '&::-webkit-scrollbar-track': {
-          width: '6px',
+        "&::-webkit-scrollbar-track": {
+          width: "6px",
         },
-        '&::-webkit-scrollbar-thumb': {
-          background: props.colorMode === 'dark' ? colors.neutral[600] : colors.neutral[400],
-          borderRadius: '24px',
+        "&::-webkit-scrollbar-thumb": {
+          background:
+            props.colorMode === "dark"
+              ? colors.neutral[600]
+              : colors.neutral[400],
+          borderRadius: "24px",
         },
       },
-      '#root': {
-        minHeight: '100vh',
-        bg: props.colorMode === 'dark' ? colors.background.dark : colors.background.light,
-        overscrollBehavior: 'none',
-      }
+      "#root": {
+        minHeight: "100vh",
+        bg:
+          props.colorMode === "dark"
+            ? colors.background.dark
+            : colors.background.light,
+        overscrollBehavior: "none",
+      },
     }),
   },
-});
+})
 
-export default theme;
-
+export default theme

@@ -1,9 +1,9 @@
-import { TanStackRouterVite } from "@tanstack/router-vite-plugin";
-import react from "@vitejs/plugin-react-swc";
-import { defineConfig } from "vite";
-import { VitePWA, VitePWAOptions } from "vite-plugin-pwa";
-import topLevelAwait from "vite-plugin-top-level-await";
-import wasm from "vite-plugin-wasm";
+import { TanStackRouterVite } from "@tanstack/router-vite-plugin"
+import react from "@vitejs/plugin-react-swc"
+import { defineConfig } from "vite"
+import { VitePWA, type VitePWAOptions } from "vite-plugin-pwa"
+import topLevelAwait from "vite-plugin-top-level-await"
+import wasm from "vite-plugin-wasm"
 
 const pwaOptions: Partial<VitePWAOptions> = {
   mode: "development",
@@ -41,7 +41,7 @@ const pwaOptions: Partial<VitePWAOptions> = {
     type: "module",
     navigateFallback: "index.html",
   },
-};
+}
 
 // const replaceOptions = { __DATE__: new Date().toISOString() };
 // const claims = process.env.CLAIMS === "true";
@@ -77,4 +77,4 @@ export default defineConfig({
     wasm(),
     topLevelAwait(),
   ],
-});
+})

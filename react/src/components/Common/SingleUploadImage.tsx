@@ -1,17 +1,17 @@
 import {
   Box,
   Center,
-  chakra,
   Icon,
   IconButton,
   Image,
   Input,
   Spinner,
   VStack,
-} from "@chakra-ui/react";
-import { useState } from "react";
-import { FaTimes } from "react-icons/fa";
-import { MdAddPhotoAlternate } from "react-icons/md";
+  chakra,
+} from "@chakra-ui/react"
+import { useState } from "react"
+import { FaTimes } from "react-icons/fa"
+import { MdAddPhotoAlternate } from "react-icons/md"
 
 /**
  * SingleUploadImage Component
@@ -54,36 +54,34 @@ import { MdAddPhotoAlternate } from "react-icons/md";
  * };
  */
 type SingleUploadImageProps = {
-  size?: string;
-  onUpdateFile(file: File): Promise<void>;
-  name: string;
-};
+  size?: string
+  onUpdateFile(file: File): Promise<void>
+  name: string
+}
 
 export function SingleUploadImage({
   size = "50px",
   onUpdateFile,
   name,
 }: SingleUploadImageProps): JSX.Element {
-  const [isUploading, setIsUploading] = useState(false);
+  const [isUploading, setIsUploading] = useState(false)
 
   const handleFileChange = async (
-    event: React.ChangeEvent<HTMLInputElement>
+    event: React.ChangeEvent<HTMLInputElement>,
   ) => {
-    const { files } = event.target;
+    const { files } = event.target
     if (!files || files.length === 0) {
-      return;
+      return
     }
-    setIsUploading(true);
+    setIsUploading(true)
     try {
-      const uploadPromises = Array.from(files).map((file) =>
-        onUpdateFile(file)
-      );
-      await Promise.all(uploadPromises);
+      const uploadPromises = Array.from(files).map((file) => onUpdateFile(file))
+      await Promise.all(uploadPromises)
     } finally {
-      setIsUploading(false);
-      event.target.value = "";
+      setIsUploading(false)
+      event.target.value = ""
     }
-  };
+  }
 
   return (
     <Center
@@ -102,7 +100,11 @@ export function SingleUploadImage({
         _hover={{ bg: "blackAlpha.600" }}
       >
         <VStack>
-          {isUploading ? <Spinner size="sm" /> : <Icon as={MdAddPhotoAlternate} />}
+          {isUploading ? (
+            <Spinner size="sm" />
+          ) : (
+            <Icon as={MdAddPhotoAlternate} />
+          )}
         </VStack>
       </Center>
 
@@ -117,13 +119,13 @@ export function SingleUploadImage({
         accept="image/*, video/*"
       />
     </Center>
-  );
+  )
 }
 
 interface S3MediaProps {
-  s3Key: string;
-  alt?: string;
-  handleDelete?: () => void;
+  s3Key: string
+  alt?: string
+  handleDelete?: () => void
 }
 
 function S3MediaContainer({ children }: { children: React.ReactNode }) {
@@ -143,11 +145,11 @@ function S3MediaContainer({ children }: { children: React.ReactNode }) {
     >
       {children}
     </Box>
-  );
+  )
 }
 
 export function S3Image({ s3Key, alt, handleDelete }: S3MediaProps) {
-  const url = `https://du32exnxihxuf.cloudfront.net/${s3Key}`;
+  const url = `https://du32exnxihxuf.cloudfront.net/${s3Key}`
   return (
     <S3MediaContainer>
       <Image
@@ -162,26 +164,31 @@ export function S3Image({ s3Key, alt, handleDelete }: S3MediaProps) {
         }}
         transition="all 0.2s ease-in-out"
       />
-      {handleDelete && <IconButton
-        aria-label="Delete image"
-        icon={<FaTimes />}
-        size="sm"
-        colorScheme="red"
-        variant="solid"
-        position="absolute"
-        top={3}
-        right={3}
-        opacity={0.7}
-        _hover={{ opacity: 1 }}
-        onClick={handleDelete}
-        zIndex={1}
-      />}
+      {handleDelete && (
+        <IconButton
+          aria-label="Delete image"
+          icon={<FaTimes />}
+          size="sm"
+          colorScheme="red"
+          variant="solid"
+          position="absolute"
+          top={3}
+          right={3}
+          opacity={0.7}
+          _hover={{ opacity: 1 }}
+          onClick={handleDelete}
+          zIndex={1}
+        />
+      )}
     </S3MediaContainer>
-  );
+  )
 }
 
-export function S3Video({ s3Key, handleDelete }: { s3Key: string; handleDelete?: () => void }) {
-  const url = `https://du32exnxihxuf.cloudfront.net/${s3Key}`;
+export function S3Video({
+  s3Key,
+  handleDelete,
+}: { s3Key: string; handleDelete?: () => void }) {
+  const url = `https://du32exnxihxuf.cloudfront.net/${s3Key}`
   return (
     <S3MediaContainer>
       <Box
@@ -192,20 +199,22 @@ export function S3Video({ s3Key, handleDelete }: { s3Key: string; handleDelete?:
         maxH="300px"
         objectFit="contain"
       />
-      {handleDelete && <IconButton
-        aria-label="Delete video"
-        icon={<FaTimes />}
-        size="sm"
-        colorScheme="red"
-        variant="solid"
-        position="absolute"
-        top={3}
-        right={3}
-        opacity={0.7}
-        _hover={{ opacity: 1 }}
-        onClick={handleDelete}
-        zIndex={1}
-      />}
+      {handleDelete && (
+        <IconButton
+          aria-label="Delete video"
+          icon={<FaTimes />}
+          size="sm"
+          colorScheme="red"
+          variant="solid"
+          position="absolute"
+          top={3}
+          right={3}
+          opacity={0.7}
+          _hover={{ opacity: 1 }}
+          onClick={handleDelete}
+          zIndex={1}
+        />
+      )}
     </S3MediaContainer>
-  );
+  )
 }

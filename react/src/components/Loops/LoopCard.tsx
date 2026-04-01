@@ -5,45 +5,45 @@ import {
   LinkBox,
   LinkOverlay,
   Text,
+  VStack,
   useColorModeValue,
-  VStack
-} from "@chakra-ui/react";
-import { useQueryClient } from "@tanstack/react-query";
-import { Link } from "@tanstack/react-router";
-import { MinimalLetter, PublicLetter, UserLinked } from "../../client";
-import { readUserMePartiesMeGetQueryKey } from "../../client/@tanstack/react-query.gen";
+} from "@chakra-ui/react"
+import { useQueryClient } from "@tanstack/react-query"
+import { Link } from "@tanstack/react-router"
+import type { MinimalLetter, PublicLetter, UserLinked } from "../../client"
+import { readUserMePartiesMeGetQueryKey } from "../../client/@tanstack/react-query.gen"
 
 export function LoopCard(props: {
-  loop: MinimalLetter | PublicLetter;
-  includeGroupName?: boolean;
-  showLoopTypeLabel?: boolean;
-  showResponderCount?: boolean;
+  loop: MinimalLetter | PublicLetter
+  includeGroupName?: boolean
+  showLoopTypeLabel?: boolean
+  showResponderCount?: boolean
 }): JSX.Element {
-  const queryClient = useQueryClient();
+  const queryClient = useQueryClient()
   const currentUser = queryClient.getQueryData<UserLinked>(
-    readUserMePartiesMeGetQueryKey()
-  );
+    readUserMePartiesMeGetQueryKey(),
+  )
 
-  const sendDate = new Date(props.loop.send_at);
-  const textColor = useColorModeValue("ui.dark", "ui.light");
-  const subtextColor = useColorModeValue("ui.dim", "ui.dim");
+  const sendDate = new Date(props.loop.send_at)
+  const textColor = useColorModeValue("ui.dark", "ui.light")
+  const subtextColor = useColorModeValue("ui.dim", "ui.dim")
 
   // Determine the main heading text
   const getHeadingText = () => {
     if (props.loop.title) {
-      return props.loop.title;
+      return props.loop.title
     }
     if (props.loop.number) {
-      return `Issue #${props.loop.number}`;
+      return `Issue #${props.loop.number}`
     }
-    return "Untitled Loop";
-  };
+    return "Untitled Loop"
+  }
 
   // Get loop type label
   const getLoopTypeLabel = () => {
-    if (!props.showLoopTypeLabel) return null;
+    if (!props.showLoopTypeLabel) return null
 
-    const loopType = props.loop.letter_type;
+    const loopType = props.loop.letter_type
     if (loopType === "ADHOC") {
       return (
         <Badge
@@ -56,8 +56,9 @@ export function LoopCard(props: {
         >
           One-off
         </Badge>
-      );
-    } else if (loopType === "CYCLIC") {
+      )
+    }
+    if (loopType === "CYCLIC") {
       return (
         <Badge
           colorScheme="blue"
@@ -69,39 +70,44 @@ export function LoopCard(props: {
         >
           Recurring
         </Badge>
-      );
+      )
     }
-    return null;
-  };
+    return null
+  }
 
   // Check if responders attribute exists and get responder count
   const getResponderCount = () => {
-    if (props.showResponderCount && 'responders' in props.loop && props.loop.responders) {
-      return props.loop.responders.length;
+    if (
+      props.showResponderCount &&
+      "responders" in props.loop &&
+      props.loop.responders
+    ) {
+      return props.loop.responders.length
     }
-    return null;
-  };
+    return null
+  }
 
   // Check if user has unanswered questions in this published loop
   const getUnansweredQuestionsCount = () => {
     if (
       props.loop.status === "SENT" &&
       currentUser &&
-      'questions' in props.loop &&
+      "questions" in props.loop &&
       props.loop.questions
     ) {
       const unansweredQuestions = props.loop.questions.filter((question) => {
         return !question.responses.some(
-          (response) => response.participant.api_identifier === currentUser.api_identifier
-        );
-      });
-      return unansweredQuestions.length;
+          (response) =>
+            response.participant.api_identifier === currentUser.api_identifier,
+        )
+      })
+      return unansweredQuestions.length
     }
-    return 0;
-  };
+    return 0
+  }
 
-  const responderCount = getResponderCount();
-  const unansweredCount = getUnansweredQuestionsCount();
+  const responderCount = getResponderCount()
+  const unansweredCount = getUnansweredQuestionsCount()
 
   return (
     <LinkBox height="100%">
@@ -146,17 +152,18 @@ export function LoopCard(props: {
             </Text>
             {responderCount !== null && (
               <Text color={subtextColor} fontSize="sm">
-                {responderCount} responder{responderCount !== 1 ? 's' : ''}
+                {responderCount} responder{responderCount !== 1 ? "s" : ""}
               </Text>
             )}
             {unansweredCount > 0 && (
               <Text color="orange.500" fontSize="sm" fontWeight="medium">
-                You have {unansweredCount} unanswered question{unansweredCount !== 1 ? 's' : ''}
+                You have {unansweredCount} unanswered question
+                {unansweredCount !== 1 ? "s" : ""}
               </Text>
             )}
           </VStack>
         </LinkOverlay>
       </Box>
     </LinkBox>
-  );
+  )
 }

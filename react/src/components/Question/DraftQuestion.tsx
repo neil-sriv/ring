@@ -1,95 +1,109 @@
-import { Box, Button, Flex, Heading, Modal, ModalBody, ModalCloseButton, ModalContent, ModalFooter, ModalHeader, ModalOverlay, Textarea, useDisclosure } from "@chakra-ui/react";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { AxiosError } from "axios";
-import { useEffect, useRef, useState } from "react";
-import { useAutoResizeTextarea } from "../../hooks/useAutoResizeTextarea";
-import { FaTrash } from "react-icons/fa";
 import {
+  Box,
+  Button,
+  Flex,
+  Heading,
+  Modal,
+  ModalBody,
+  ModalCloseButton,
+  ModalContent,
+  ModalFooter,
+  ModalHeader,
+  ModalOverlay,
+  Textarea,
+  useDisclosure,
+} from "@chakra-ui/react"
+import { useMutation, useQueryClient } from "@tanstack/react-query"
+import type { AxiosError } from "axios"
+import { useEffect, useRef, useState } from "react"
+import { FaTrash } from "react-icons/fa"
+import {
+  type DeleteQuestionQuestionsQuestionQuestionApiIdDeleteError,
+  type PublicQuestion,
+  type ResponseWithParticipant,
+  type UserLinked,
   deleteImageResponsesResponseResponseApiIdDeleteImageDelete,
-  DeleteQuestionQuestionsQuestionQuestionApiIdDeleteError,
-  PublicQuestion,
-  ResponseWithParticipant,
   uploadImageQuestionsQuestionQuestionApiIdUploadImagePost,
   upsertResponseQuestionsQuestionQuestionApiIdUpsertResponsePost,
-  UserLinked,
-} from "../../client";
+} from "../../client"
 import {
   deleteQuestionQuestionsQuestionQuestionApiIdDeleteMutation,
   readLetterLettersLetterLetterApiIdGetQueryKey,
   readUserMePartiesMeGetQueryKey,
-} from "../../client/@tanstack/react-query.gen";
-import useCustomToast from "../../hooks/useCustomToast";
+} from "../../client/@tanstack/react-query.gen"
+import { useAutoResizeTextarea } from "../../hooks/useAutoResizeTextarea"
+import useCustomToast from "../../hooks/useCustomToast"
 import {
   S3Image,
   S3Video,
   SingleUploadImage,
-} from "../Common/SingleUploadImage";
+} from "../Common/SingleUploadImage"
 
 type ResponseBlockProps = {
-  uploadFunction: (file: File) => Promise<void>;
-  deleteImage: (s3Url: string) => Promise<void>;
-  questionApiId: string;
-  response?: ResponseWithParticipant;
-  submitResponse: (responseText: string) => Promise<void>;
-  readOnly?: boolean;
-};
+  uploadFunction: (file: File) => Promise<void>
+  deleteImage: (s3Url: string) => Promise<void>
+  questionApiId: string
+  response?: ResponseWithParticipant
+  submitResponse: (responseText: string) => Promise<void>
+  readOnly?: boolean
+}
 
 function ResponseBlock(props: ResponseBlockProps) {
   const [responseText, setResponseText] = useState(
-    props.response?.response_text ?? ""
-  );
-  const [isSaving, setIsSaving] = useState(false);
-  const debounceTimeoutRef = useRef<NodeJS.Timeout | null>(null);
-  const savingStartTimeRef = useRef<number | null>(null);
-  const showToast = useCustomToast();
-  const textareaRef = useAutoResizeTextarea(responseText);
+    props.response?.response_text ?? "",
+  )
+  const [isSaving, setIsSaving] = useState(false)
+  const debounceTimeoutRef = useRef<NodeJS.Timeout | null>(null)
+  const savingStartTimeRef = useRef<number | null>(null)
+  const showToast = useCustomToast()
+  const textareaRef = useAutoResizeTextarea(responseText)
 
   // Update local state when response prop changes
   useEffect(() => {
-    setResponseText(props.response?.response_text ?? "");
-  }, [props.response?.response_text]);
+    setResponseText(props.response?.response_text ?? "")
+  }, [props.response?.response_text])
 
   const handleResponseChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
-    const newValue = e.target.value;
-    setResponseText(newValue);
+    const newValue = e.target.value
+    setResponseText(newValue)
 
     // Clear existing timeout
     if (debounceTimeoutRef.current) {
-      clearTimeout(debounceTimeoutRef.current);
+      clearTimeout(debounceTimeoutRef.current)
     }
 
     // Set new timeout for debounced save
     debounceTimeoutRef.current = setTimeout(async () => {
       if (newValue !== (props.response?.response_text ?? "")) {
-        savingStartTimeRef.current = Date.now();
-        setIsSaving(true);
+        savingStartTimeRef.current = Date.now()
+        setIsSaving(true)
         try {
-          await props.submitResponse(newValue);
-          showToast("Success!", "Answer saved.", "success");
+          await props.submitResponse(newValue)
+          showToast("Success!", "Answer saved.", "success")
         } catch (error) {
-          console.error("Failed to save response:", error);
-          showToast("Error!", "Failed to save answer.", "error");
+          console.error("Failed to save response:", error)
+          showToast("Error!", "Failed to save answer.", "error")
         } finally {
           // Ensure saving animation shows for at least 250ms
-          const elapsed = Date.now() - (savingStartTimeRef.current || 0);
-          const remainingTime = Math.max(0, 250 - elapsed);
+          const elapsed = Date.now() - (savingStartTimeRef.current || 0)
+          const remainingTime = Math.max(0, 250 - elapsed)
 
           setTimeout(() => {
-            setIsSaving(false);
-          }, remainingTime);
+            setIsSaving(false)
+          }, remainingTime)
         }
       }
-    }, 1000); // 1 second debounce
-  };
+    }, 1000) // 1 second debounce
+  }
 
   // Cleanup timeout on unmount
   useEffect(() => {
     return () => {
       if (debounceTimeoutRef.current) {
-        clearTimeout(debounceTimeoutRef.current);
+        clearTimeout(debounceTimeoutRef.current)
       }
-    };
-  }, []);
+    }
+  }, [])
 
   return (
     <Box my="10px">
@@ -119,14 +133,22 @@ function ResponseBlock(props: ResponseBlockProps) {
       )}
       {props.response?.images.map((image, index) => {
         return image.media_type === "image" ? (
-          <S3Image s3Key={image.s3_url} alt="response" key={index} handleDelete={() => props.deleteImage(image.s3_url)} />
+          <S3Image
+            s3Key={image.s3_url}
+            alt="response"
+            key={index}
+            handleDelete={() => props.deleteImage(image.s3_url)}
+          />
         ) : (
-          <S3Video s3Key={image.s3_url} key={index} handleDelete={() => props.deleteImage(image.s3_url)} />
-        );
+          <S3Video
+            s3Key={image.s3_url}
+            key={index}
+            handleDelete={() => props.deleteImage(image.s3_url)}
+          />
+        )
       })}
-
     </Box>
-  );
+  )
 }
 
 function DraftQuestion({
@@ -135,52 +157,55 @@ function DraftQuestion({
   readOnly = false,
   isGroupAdmin = false,
 }: {
-  question: PublicQuestion;
-  loopApiId: string;
-  readOnly?: boolean;
-  isGroupAdmin?: boolean;
+  question: PublicQuestion
+  loopApiId: string
+  readOnly?: boolean
+  isGroupAdmin?: boolean
 }): JSX.Element {
-  const queryClient = useQueryClient();
+  const queryClient = useQueryClient()
   const currentUser = queryClient.getQueryData<UserLinked>(
-    readUserMePartiesMeGetQueryKey()
-  );
-  const showToast = useCustomToast();
-  const deleteModal = useDisclosure();
+    readUserMePartiesMeGetQueryKey(),
+  )
+  const showToast = useCustomToast()
+  const deleteModal = useDisclosure()
 
   if (!currentUser) {
-    return <Box>loading...</Box>;
+    return <Box>loading...</Box>
   }
   const response = question.responses.find(
     (response) =>
-      response.participant.api_identifier === currentUser.api_identifier
-  );
+      response.participant.api_identifier === currentUser.api_identifier,
+  )
 
-  const isAuthor = question.author?.api_identifier === currentUser.api_identifier;
-  const canDelete = isAuthor || isGroupAdmin;
+  const isAuthor =
+    question.author?.api_identifier === currentUser.api_identifier
+  const canDelete = isAuthor || isGroupAdmin
 
   const deleteMutation = useMutation({
     ...deleteQuestionQuestionsQuestionQuestionApiIdDeleteMutation(),
     onSuccess: () => {
-      showToast("Success!", "Question deleted successfully.", "success");
+      showToast("Success!", "Question deleted successfully.", "success")
       queryClient.invalidateQueries({
         queryKey: readLetterLettersLetterLetterApiIdGetQueryKey({
           path: { letter_api_id: loopApiId },
         }),
-      });
+      })
     },
-    onError: (error: AxiosError<DeleteQuestionQuestionsQuestionQuestionApiIdDeleteError>) => {
+    onError: (
+      error: AxiosError<DeleteQuestionQuestionsQuestionQuestionApiIdDeleteError>,
+    ) => {
       const errDetail =
-        error.response?.data.detail || "no error detail, please contact support";
-      showToast("Something went wrong.", `${errDetail}`, "error");
-    }
-  });
+        error.response?.data.detail || "no error detail, please contact support"
+      showToast("Something went wrong.", `${errDetail}`, "error")
+    },
+  })
 
   const handleDelete = async () => {
     await deleteMutation.mutateAsync({
       path: { question_api_id: question.api_identifier },
-    });
-    deleteModal.onClose();
-  };
+    })
+    deleteModal.onClose()
+  }
 
   const handleUpsert = async (responseText: string): Promise<void> => {
     try {
@@ -191,12 +216,12 @@ function DraftQuestion({
           participant_api_identifier: currentUser.api_identifier,
         },
         throwOnError: true, // This will make the function throw on HTTP error status codes
-      });
+      })
     } catch (error) {
-      console.error("Error in handleUpsert:", error);
-      throw error; // Re-throw to be caught by the calling function
+      console.error("Error in handleUpsert:", error)
+      throw error // Re-throw to be caught by the calling function
     }
-  };
+  }
 
   const newHandleUpload = async (file: File) => {
     await uploadImageQuestionsQuestionQuestionApiIdUploadImagePost({
@@ -204,13 +229,13 @@ function DraftQuestion({
       body: {
         response_image: file,
       },
-    });
+    })
     queryClient.invalidateQueries({
       queryKey: readLetterLettersLetterLetterApiIdGetQueryKey({
         path: { letter_api_id: loopApiId },
       }),
-    });
-  };
+    })
+  }
 
   const handleDeleteImage = async (s3Url: string) => {
     try {
@@ -220,27 +245,29 @@ function DraftQuestion({
           path: { letter_api_id: loopApiId },
         }),
         (oldData: any) => {
-          if (!oldData) return oldData;
+          if (!oldData) return oldData
 
           // Create a deep copy and remove the image
-          const updatedData = JSON.parse(JSON.stringify(oldData));
+          const updatedData = JSON.parse(JSON.stringify(oldData))
 
           // Find the response and remove the image
           updatedData.questions = updatedData.questions.map((q: any) => {
             if (q.api_identifier === question.api_identifier) {
               q.responses = q.responses.map((r: any) => {
-                if (r.participant.api_identifier === currentUser.api_identifier) {
-                  r.images = r.images.filter((img: any) => img.s3_url !== s3Url);
+                if (
+                  r.participant.api_identifier === currentUser.api_identifier
+                ) {
+                  r.images = r.images.filter((img: any) => img.s3_url !== s3Url)
                 }
-                return r;
-              });
+                return r
+              })
             }
-            return q;
-          });
+            return q
+          })
 
-          return updatedData;
-        }
-      );
+          return updatedData
+        },
+      )
 
       // Make the API call
       await deleteImageResponsesResponseResponseApiIdDeleteImageDelete({
@@ -248,22 +275,22 @@ function DraftQuestion({
         query: {
           s3_url: s3Url,
         },
-      });
+      })
 
-      showToast("Success!", "Image deleted successfully.", "success");
+      showToast("Success!", "Image deleted successfully.", "success")
     } catch (error) {
-      console.error("Error deleting image:", error);
+      console.error("Error deleting image:", error)
 
       // Revert optimistic update on error
       queryClient.invalidateQueries({
         queryKey: readLetterLettersLetterLetterApiIdGetQueryKey({
           path: { letter_api_id: loopApiId },
         }),
-      });
+      })
 
-      showToast("Error!", "Failed to delete image.", "error");
+      showToast("Error!", "Failed to delete image.", "error")
     }
-  };
+  }
 
   return (
     <Box my="20px">
@@ -303,7 +330,8 @@ function DraftQuestion({
           <ModalHeader>Delete Question</ModalHeader>
           <ModalCloseButton />
           <ModalBody>
-            Are you sure you want to delete this question? This action cannot be undone.
+            Are you sure you want to delete this question? This action cannot be
+            undone.
           </ModalBody>
           <ModalFooter>
             <Button variant="ghost" mr={3} onClick={deleteModal.onClose}>
@@ -320,7 +348,7 @@ function DraftQuestion({
         </ModalContent>
       </Modal>
     </Box>
-  );
+  )
 }
 
-export default DraftQuestion;
+export default DraftQuestion

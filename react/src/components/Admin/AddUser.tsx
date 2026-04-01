@@ -13,31 +13,31 @@ import {
   ModalFooter,
   ModalHeader,
   ModalOverlay,
-} from "@chakra-ui/react";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { type SubmitHandler, useForm } from "react-hook-form";
+} from "@chakra-ui/react"
+import { useMutation, useQueryClient } from "@tanstack/react-query"
+import { type SubmitHandler, useForm } from "react-hook-form"
 
-import { CreateUserPartiesUserPostError, type UserCreate } from "../../client";
-import useCustomToast from "../../hooks/useCustomToast";
-import { emailPattern } from "../../util/misc";
+import type { AxiosError } from "axios"
+import type { CreateUserPartiesUserPostError, UserCreate } from "../../client"
 import {
   createUserPartiesUserPostMutation,
   readUsersPartiesUsersGetQueryKey,
-} from "../../client/@tanstack/react-query.gen";
-import { AxiosError } from "axios";
+} from "../../client/@tanstack/react-query.gen"
+import useCustomToast from "../../hooks/useCustomToast"
+import { emailPattern } from "../../util/misc"
 
 interface AddUserProps {
-  isOpen: boolean;
-  onClose: () => void;
+  isOpen: boolean
+  onClose: () => void
 }
 
 interface UserCreateForm extends UserCreate {
-  confirm_password: string;
+  confirm_password: string
 }
 
 const AddUser = ({ isOpen, onClose }: AddUserProps) => {
-  const queryClient = useQueryClient();
-  const showToast = useCustomToast();
+  const queryClient = useQueryClient()
+  const showToast = useCustomToast()
   const {
     register,
     handleSubmit,
@@ -55,33 +55,32 @@ const AddUser = ({ isOpen, onClose }: AddUserProps) => {
       // is_superuser: false,
       // is_active: false,
     },
-  });
+  })
 
   const mutation = useMutation({
     ...createUserPartiesUserPostMutation(),
     onSuccess: () => {
-      showToast("Success!", "User created successfully.", "success");
-      reset();
-      onClose();
+      showToast("Success!", "User created successfully.", "success")
+      reset()
+      onClose()
     },
     onError: (error: AxiosError<CreateUserPartiesUserPostError>) => {
       const errDetail =
-        error.response?.data.detail ||
-        "no error detail, please contact support";
-      showToast("Something went wrong.", `${errDetail}`, "error");
+        error.response?.data.detail || "no error detail, please contact support"
+      showToast("Something went wrong.", `${errDetail}`, "error")
     },
     onSettled: () => {
       queryClient.invalidateQueries({
         queryKey: readUsersPartiesUsersGetQueryKey(),
-      });
+      })
     },
-  });
+  })
 
   const onSubmit: SubmitHandler<UserCreateForm> = (data) => {
     mutation.mutate({
       body: data,
-    });
-  };
+    })
+  }
 
   return (
     <>
@@ -186,7 +185,7 @@ const AddUser = ({ isOpen, onClose }: AddUserProps) => {
         </ModalContent>
       </Modal>
     </>
-  );
-};
+  )
+}
 
-export default AddUser;
+export default AddUser

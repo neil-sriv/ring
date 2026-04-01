@@ -15,39 +15,39 @@ import {
   Switch,
   Text,
   useColorModeValue,
-} from "@chakra-ui/react";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { type SubmitHandler, useForm } from "react-hook-form";
+} from "@chakra-ui/react"
+import { useMutation, useQueryClient } from "@tanstack/react-query"
+import { type SubmitHandler, useForm } from "react-hook-form"
 
-import { AxiosError } from "axios";
-import {
+import type { AxiosError } from "axios"
+import type {
   EditLetterLettersLetterLetterApiIdEditLetterPostError,
   LetterStatus,
   PublicLetter,
-} from "../../client";
+} from "../../client"
 import {
   editLetterLettersLetterLetterApiIdEditLetterPostMutation,
   readLetterLettersLetterLetterApiIdGetQueryKey,
-} from "../../client/@tanstack/react-query.gen";
-import useCustomToast from "../../hooks/useCustomToast";
-import { toISOLocal } from "../../util/misc";
+} from "../../client/@tanstack/react-query.gen"
+import useCustomToast from "../../hooks/useCustomToast"
+import { toISOLocal } from "../../util/misc"
 
 type LetterFormProps = {
-  sendAt: Date | string;
-  title: string;
-  isInProgress: boolean;
-};
+  sendAt: Date | string
+  title: string
+  isInProgress: boolean
+}
 
 interface EditLetterProps {
-  isOpen: boolean;
-  onClose: () => void;
-  loop: PublicLetter;
+  isOpen: boolean
+  onClose: () => void
+  loop: PublicLetter
 }
 
 const EditLetter = ({ isOpen, onClose, loop }: EditLetterProps) => {
-  const queryClient = useQueryClient();
-  const showToast = useCustomToast();
-  const previousSendAt = new Date(loop.send_at);
+  const queryClient = useQueryClient()
+  const showToast = useCustomToast()
+  const previousSendAt = new Date(loop.send_at)
   const {
     register,
     handleSubmit,
@@ -57,55 +57,62 @@ const EditLetter = ({ isOpen, onClose, loop }: EditLetterProps) => {
   } = useForm<LetterFormProps>({
     mode: "onBlur",
     criteriaMode: "all",
-    values: isOpen ? {
-      sendAt: toISOLocal(new Date(loop.send_at)).slice(0, 16),
-      title: loop.title || "",
-      isInProgress: loop.status === "IN_PROGRESS",
-    } : undefined,
-  });
+    values: isOpen
+      ? {
+          sendAt: toISOLocal(new Date(loop.send_at)).slice(0, 16),
+          title: loop.title || "",
+          isInProgress: loop.status === "IN_PROGRESS",
+        }
+      : undefined,
+  })
 
   const mutation = useMutation({
     ...editLetterLettersLetterLetterApiIdEditLetterPostMutation(),
     onSuccess: () => {
-      showToast("Success!", "Letter updated successfully.", "success");
-      reset();
-      onClose();
+      showToast("Success!", "Letter updated successfully.", "success")
+      reset()
+      onClose()
     },
     onError: (
-      err: AxiosError<EditLetterLettersLetterLetterApiIdEditLetterPostError>
+      err: AxiosError<EditLetterLettersLetterLetterApiIdEditLetterPostError>,
     ) => {
       const errDetail =
-        err.response?.data.detail || "no error detail, please contact support";
-      showToast("Something went wrong.", `${errDetail}`, "error");
+        err.response?.data.detail || "no error detail, please contact support"
+      showToast("Something went wrong.", `${errDetail}`, "error")
     },
     onSettled: () => {
       queryClient.invalidateQueries({
         queryKey: readLetterLettersLetterLetterApiIdGetQueryKey({
           path: { letter_api_id: loop.api_identifier },
         }),
-      });
+      })
     },
-  });
+  })
 
   const onSubmit: SubmitHandler<LetterFormProps> = (data) => {
     const updateData: {
-      send_at?: string;
-      title?: string;
-      status?: LetterStatus;
-    } = {};
+      send_at?: string
+      title?: string
+      status?: LetterStatus
+    } = {}
 
     // Only include fields that have changed
-    if (data.sendAt instanceof Date ? toISOLocal(data.sendAt) : data.sendAt !== toISOLocal(previousSendAt).slice(0, 16)) {
-      updateData.send_at = data.sendAt instanceof Date ? toISOLocal(data.sendAt) : data.sendAt;
+    if (
+      data.sendAt instanceof Date
+        ? toISOLocal(data.sendAt)
+        : data.sendAt !== toISOLocal(previousSendAt).slice(0, 16)
+    ) {
+      updateData.send_at =
+        data.sendAt instanceof Date ? toISOLocal(data.sendAt) : data.sendAt
     }
 
     if (data.title !== (loop.title || "")) {
-      updateData.title = data.title || undefined;
+      updateData.title = data.title || undefined
     }
 
-    const newStatus = data.isInProgress ? "IN_PROGRESS" : "UPCOMING";
+    const newStatus = data.isInProgress ? "IN_PROGRESS" : "UPCOMING"
     if (newStatus !== loop.status) {
-      updateData.status = newStatus;
+      updateData.status = newStatus
     }
 
     // Only submit if there are changes
@@ -113,14 +120,14 @@ const EditLetter = ({ isOpen, onClose, loop }: EditLetterProps) => {
       mutation.mutate({
         body: updateData,
         path: { letter_api_id: loop.api_identifier },
-      });
+      })
     } else {
-      showToast("No changes", "No changes were made to the letter.", "success");
-      onClose();
+      showToast("No changes", "No changes were made to the letter.", "success")
+      onClose()
     }
-  };
+  }
 
-  const textColor = useColorModeValue("ui.dark", "ui.light");
+  const textColor = useColorModeValue("ui.dark", "ui.light")
 
   return (
     <>
@@ -147,7 +154,9 @@ const EditLetter = ({ isOpen, onClose, loop }: EditLetterProps) => {
           <ModalCloseButton color={textColor} />
           <ModalBody pb={6}>
             <FormControl mb={4}>
-              <FormLabel htmlFor="title" color={textColor}>Title</FormLabel>
+              <FormLabel htmlFor="title" color={textColor}>
+                Title
+              </FormLabel>
               <Input
                 id="title"
                 {...register("title")}
@@ -169,7 +178,9 @@ const EditLetter = ({ isOpen, onClose, loop }: EditLetterProps) => {
             </FormControl>
 
             <FormControl mb={4}>
-              <FormLabel htmlFor="isInProgress" color={textColor}>Status</FormLabel>
+              <FormLabel htmlFor="isInProgress" color={textColor}>
+                Status
+              </FormLabel>
               <Flex align="center" gap={4}>
                 <Text
                   color={textColor}
@@ -197,7 +208,9 @@ const EditLetter = ({ isOpen, onClose, loop }: EditLetterProps) => {
             </FormControl>
 
             <FormControl isRequired>
-              <FormLabel htmlFor="sendAt" color={textColor}>Send at</FormLabel>
+              <FormLabel htmlFor="sendAt" color={textColor}>
+                Send at
+              </FormLabel>
               <Input
                 id="sendAt"
                 {...register("sendAt", {
@@ -239,17 +252,14 @@ const EditLetter = ({ isOpen, onClose, loop }: EditLetterProps) => {
             >
               Save
             </Button>
-            <Button
-              onClick={onClose}
-              variant="glass"
-            >
+            <Button onClick={onClose} variant="glass">
               Cancel
             </Button>
           </ModalFooter>
         </ModalContent>
       </Modal>
     </>
-  );
-};
+  )
+}
 
-export default EditLetter;
+export default EditLetter

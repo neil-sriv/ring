@@ -6,13 +6,13 @@ import {
   TabPanel,
   TabPanels,
   Tabs,
-} from "@chakra-ui/react";
-import { createFileRoute } from "@tanstack/react-router";
-import { GroupLinked } from "../../../../client";
-import GroupInformation from "../../../../components/Groups/GroupInformation";
-import GroupMembershipSettings from "../../../../components/Groups/GroupMembershipSettings";
-import GroupLoopSettings from "../../../../components/Groups/GroupLoopSettings";
-import { readGroupPartiesGroupGroupApiIdGetOptions } from "../../../../client/@tanstack/react-query.gen";
+} from "@chakra-ui/react"
+import { createFileRoute } from "@tanstack/react-router"
+import type { GroupLinked } from "../../../../client"
+import { readGroupPartiesGroupGroupApiIdGetOptions } from "../../../../client/@tanstack/react-query.gen"
+import GroupInformation from "../../../../components/Groups/GroupInformation"
+import GroupLoopSettings from "../../../../components/Groups/GroupLoopSettings"
+import GroupMembershipSettings from "../../../../components/Groups/GroupMembershipSettings"
 
 export const Route = createFileRoute("/_layout/groups/$groupId/settings")({
   beforeLoad: async ({ context, params }): Promise<{ group?: GroupLinked }> => {
@@ -20,28 +20,29 @@ export const Route = createFileRoute("/_layout/groups/$groupId/settings")({
       ...readGroupPartiesGroupGroupApiIdGetOptions({
         path: { group_api_id: params.groupId },
       }),
-    });
-    const currentUser = context.auth.user;
+    })
+    const currentUser = context.auth.user
     if (currentUser?.api_identifier !== group.admin.api_identifier) {
-      throw new Error("You are not authorized to view this page");
+      throw new Error("You are not authorized to view this page")
     }
-    return { group: group };
+    return { group: group }
   },
   loader: async ({ context: { group } }) => group,
   component: GroupSettings,
-});
+})
 
 const tabsConfig = [
   { title: "Group Information", component: GroupInformation },
   { title: "Membership", component: GroupMembershipSettings },
   { title: "Loop Settings", component: GroupLoopSettings },
-];
+]
 
 function GroupSettings() {
-  const finalTabs = false ? tabsConfig.slice(0, 3) : tabsConfig;
-  const loadedGroup = Route.useLoaderData();
+  // biome-ignore lint/correctness/noConstantCondition: intentional placeholder toggle
+  const finalTabs = false ? tabsConfig.slice(0, 3) : tabsConfig
+  const loadedGroup = Route.useLoaderData()
   if (!loadedGroup) {
-    return null;
+    return null
   }
 
   return (
@@ -64,5 +65,5 @@ function GroupSettings() {
         </TabPanels>
       </Tabs>
     </Container>
-  );
+  )
 }

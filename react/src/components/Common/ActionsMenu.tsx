@@ -5,30 +5,30 @@ import {
   MenuItem,
   MenuList,
   useDisclosure,
-} from "@chakra-ui/react";
-import { BsThreeDotsVertical } from "react-icons/bs";
-import { FiEdit, FiSettings, FiTrash, FiUser } from "react-icons/fi";
+} from "@chakra-ui/react"
+import { BsThreeDotsVertical } from "react-icons/bs"
+import { FiEdit, FiSettings, FiTrash, FiUser } from "react-icons/fi"
 
-import type { GroupLinked, UserLinked } from "../../client";
-import EditUser from "../Admin/EditUser";
-import Delete from "./DeleteAlert";
-import EditGroup from "../Groups/EditGroup";
-import AddMembers from "../Groups/AddMembers";
-import { useNavigate } from "@tanstack/react-router";
-import ImpersonateUser from "../Admin/ImpersonateUser";
+import { useNavigate } from "@tanstack/react-router"
+import type { GroupLinked, UserLinked } from "../../client"
+import EditUser from "../Admin/EditUser"
+import ImpersonateUser from "../Admin/ImpersonateUser"
+import AddMembers from "../Groups/AddMembers"
+import EditGroup from "../Groups/EditGroup"
+import Delete from "./DeleteAlert"
 
 interface ActionsMenuProps {
-  type: string;
-  value: GroupLinked | UserLinked;
-  disabled?: boolean;
+  type: string
+  value: GroupLinked | UserLinked
+  disabled?: boolean
 }
 
 const ActionsMenu = ({ type, value, disabled }: ActionsMenuProps) => {
-  const editUserModal = useDisclosure();
-  const deleteModal = useDisclosure();
-  const addMembersModal = useDisclosure();
-  const impersonateUserModal = useDisclosure();
-  const navigate = useNavigate();
+  const editUserModal = useDisclosure()
+  const deleteModal = useDisclosure()
+  const addMembersModal = useDisclosure()
+  const impersonateUserModal = useDisclosure()
+  const navigate = useNavigate()
 
   return (
     <>
@@ -89,11 +89,13 @@ const ActionsMenu = ({ type, value, disabled }: ActionsMenuProps) => {
             <EditUser
               user={value as UserLinked}
               isOpen={editUserModal.isOpen}
-              onClose={editUserModal.onClose} />
+              onClose={editUserModal.onClose}
+            />
             <ImpersonateUser
               user={value as UserLinked}
               isOpen={impersonateUserModal.isOpen}
-              onClose={impersonateUserModal.onClose} />
+              onClose={impersonateUserModal.onClose}
+            />
           </>
         ) : (
           <>
@@ -117,7 +119,7 @@ const ActionsMenu = ({ type, value, disabled }: ActionsMenuProps) => {
         />
       </Menu>
     </>
-  );
-};
+  )
+}
 
-export default ActionsMenu;
+export default ActionsMenu
