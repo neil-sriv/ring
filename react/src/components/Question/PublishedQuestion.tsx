@@ -229,11 +229,16 @@ function ResponseBlock({
                   : "Enlarged image"}
               </DialogTitle>
               {activeLightboxIndex != null && (
-                <img
-                  src={`https://du32exnxihxuf.cloudfront.net/${images[activeLightboxIndex].s3_url}`}
-                  alt={response.participant.name}
-                  className="max-h-[calc(100dvh-2rem)] max-w-[calc(100vw-2rem)] w-auto object-contain"
-                />
+                <div
+                  key={images[activeLightboxIndex].s3_url}
+                  className="max-h-[calc(100dvh-2rem)] max-w-[calc(100vw-2rem)] w-auto animate-in fade-in-0 zoom-in-95 duration-200"
+                >
+                  <img
+                    src={`https://du32exnxihxuf.cloudfront.net/${images[activeLightboxIndex].s3_url}`}
+                    alt={response.participant.name}
+                    className="max-h-[calc(100dvh-2rem)] max-w-[calc(100vw-2rem)] w-auto object-contain"
+                  />
+                </div>
               )}
               {images.length > 1 && (
                 <>
