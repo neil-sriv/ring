@@ -38,6 +38,7 @@ const tabsConfig = [
 ]
 
 function GroupSettings() {
+  // biome-ignore lint/correctness/noConstantCondition: intentional placeholder toggle
   const finalTabs = false ? tabsConfig.slice(0, 3) : tabsConfig
   const loadedGroup = Route.useLoaderData()
   if (!loadedGroup) {

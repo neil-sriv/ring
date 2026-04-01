@@ -61,11 +61,11 @@ const MembersTableBody = () => {
                 w="2"
                 h="2"
                 borderRadius="50%"
-                // bg={user.is_active ? "ui.success" : "ui.danger"}
+                // biome-ignore lint/correctness/noConstantCondition: placeholder until user status is wired
                 bg={true ? "ui.success" : "ui.danger"}
                 alignSelf="center"
               />
-              {/* {user.is_active ? "Active" : "Inactive"} */}
+              {/* biome-ignore lint/correctness/noConstantCondition: placeholder until user status is wired */}
               {true ? "Active" : "Inactive"}
             </Flex>
           </Td>

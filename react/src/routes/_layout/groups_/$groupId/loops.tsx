@@ -125,7 +125,7 @@ function LoopsContentLoader() {
   // Map hash fragments to tab indices (memoized for stability)
   const hashToIndex = useMemo(
     () => new Map(tabsConfig.map((tab, index) => [tab.hash, index])),
-    [tabsConfig.length], // Only recreate if number of tabs changes
+    [tabsConfig], // Recreate when tab config mapping changes
   )
 
   // Get initial tab index from hash fragment

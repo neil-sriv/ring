@@ -26,6 +26,30 @@ import {
   FaUndo,
 } from "react-icons/fa"
 
+interface EditorMessagePayload {
+  type?: string
+  content?: string
+  messageId?: string
+}
+
+function parseMessagePayload(raw: unknown): EditorMessagePayload | null {
+  if (typeof raw !== "string") {
+    return null
+  }
+
+  try {
+    const parsed = JSON.parse(raw) as unknown
+    if (!parsed || typeof parsed !== "object") {
+      return null
+    }
+
+    return parsed as EditorMessagePayload
+  } catch (error) {
+    console.error("Failed to parse WebSocket message:", error)
+    return null
+  }
+}
+
 function MenuBar({ editor }: { editor: Editor }) {
   const editorState = useEditorState({
     editor,
@@ -283,44 +307,45 @@ export const CollabEditor: React.FC<{
       wsRef.current.onmessage = (event) => {
         try {
           // Handle both text and binary data
-          let messageData
+          let messageData: EditorMessagePayload | null = null
           if (typeof event.data === "string") {
-            messageData = JSON.parse(event.data)
+            messageData = parseMessagePayload(event.data)
           } else if (event.data instanceof ArrayBuffer) {
             // Convert ArrayBuffer to string
             const decoder = new TextDecoder()
             const text = decoder.decode(event.data)
-            messageData = JSON.parse(text)
+            messageData = parseMessagePayload(text)
           } else if (event.data instanceof Blob) {
             // Handle Blob data
             event.data.text().then((text: string) => {
-              try {
-                const data = JSON.parse(text)
-                if (
-                  data.type === "content_update" &&
-                  data.content !== lastContentRef.current
-                ) {
-                  // Skip if this is our own message to prevent infinite loop
-                  if (
-                    data.messageId &&
-                    data.messageId === lastSentMessageIdRef.current
-                  ) {
-                    return
-                  }
+              const data = parseMessagePayload(text)
+              if (!data) {
+                return
+              }
 
-                  if (editorRef.current) {
-                    // Set flag to prevent onUpdate from firing
-                    isUpdatingFromWebSocketRef.current = true
-                    editorRef.current.commands.setContent(data.content)
-                    lastContentRef.current = data.content
-                    // Reset flag after a brief delay
-                    setTimeout(() => {
-                      isUpdatingFromWebSocketRef.current = false
-                    }, 50)
-                  }
+              if (
+                data.type === "content_update" &&
+                typeof data.content === "string" &&
+                data.content !== lastContentRef.current
+              ) {
+                // Skip if this is our own message to prevent infinite loop
+                if (
+                  data.messageId &&
+                  data.messageId === lastSentMessageIdRef.current
+                ) {
+                  return
                 }
-              } catch (error) {
-                console.error("Failed to parse WebSocket Blob message:", error)
+
+                if (editorRef.current) {
+                  // Set flag to prevent onUpdate from firing
+                  isUpdatingFromWebSocketRef.current = true
+                  editorRef.current.commands.setContent(data.content)
+                  lastContentRef.current = data.content
+                  // Reset flag after a brief delay
+                  setTimeout(() => {
+                    isUpdatingFromWebSocketRef.current = false
+                  }, 50)
+                }
               }
             })
             return // Exit early for async Blob handling
@@ -329,8 +354,13 @@ export const CollabEditor: React.FC<{
             return
           }
 
+          if (!messageData) {
+            return
+          }
+
           if (
             messageData.type === "content_update" &&
+            typeof messageData.content === "string" &&
             messageData.content !== lastContentRef.current
           ) {
             // Skip if this is our own message to prevent infinite loop
@@ -509,9 +539,7 @@ export const CollabEditor: React.FC<{
             outline: "none",
           }}
         />
-        <style
-          dangerouslySetInnerHTML={{
-            __html: `
+        <style>{`
                         .prosemirror-editor {
                             min-height: 400px;
                             padding: 1rem;
@@ -614,9 +642,7 @@ export const CollabEditor: React.FC<{
                         .prosemirror-editor s {
                             text-decoration: line-through;
                         }
-                    `,
-          }}
-        />
+                    `}</style>
       </Box>
     </Box>
   )

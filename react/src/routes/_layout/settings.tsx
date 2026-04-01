@@ -26,6 +26,7 @@ export const Route = createFileRoute("/_layout/settings")({
 })
 
 function UserSettings() {
+  // biome-ignore lint/correctness/noConstantCondition: intentional placeholder during incremental rollout
   const finalTabs = false ? tabsConfig.slice(0, 3) : tabsConfig
 
   return (

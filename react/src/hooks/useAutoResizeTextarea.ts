@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef } from "react"
 
 export function useAutoResizeTextarea(value: string) {
+  void value
   const textareaRef = useRef<HTMLTextAreaElement>(null)
   const minHeightRef = useRef<number | null>(null)
 
@@ -14,6 +15,7 @@ export function useAutoResizeTextarea(value: string) {
   }, [])
 
   useEffect(() => {
+    void value
     const textarea = textareaRef.current
     if (!textarea) return
 
