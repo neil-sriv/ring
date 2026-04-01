@@ -19,13 +19,8 @@ function AdhocLoopNav(props: AdhocLoopNavProps): JSX.Element {
 
   const onClick = (): void => {
     queryClient.invalidateQueries({
-      queryKey: listLettersLettersLettersGetQueryKey({
-        query: {
-          group_api_id: props.group.api_identifier,
-        },
-      }),
+      queryKey: [{ _id: "listLettersLettersLettersGet" }],
     })
-    router.invalidate()
     setAddAdhocLoopOpen(true)
   }
 

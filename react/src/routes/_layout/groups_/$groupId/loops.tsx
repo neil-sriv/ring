@@ -2,8 +2,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { useSuspenseQuery } from "@tanstack/react-query"
 import { createFileRoute } from "@tanstack/react-router"
 import { Loader2 } from "lucide-react"
-import { Suspense, useEffect, useMemo, useState } from "react"
-import type { MinimalLetter } from "../../../../client"
+import { Suspense, useEffect, useState } from "react"
 import {
   listLettersLettersLettersGetOptions,
   readGroupPartiesGroupGroupApiIdGetOptions,
@@ -20,10 +19,6 @@ type LoopsSearchParams = {
   limit?: number
 }
 
-type LoopsLoaderProps = {
-  loops: MinimalLetter[]
-}
-
 export const Route = createFileRoute("/_layout/groups/$groupId/loops")({
   validateSearch: (search: Record<string, string>): LoopsSearchParams => {
     return {
@@ -31,32 +26,22 @@ export const Route = createFileRoute("/_layout/groups/$groupId/loops")({
       limit: Number.parseInt(search.limit) || undefined,
     }
   },
-  loaderDeps: ({ search: { offset, limit } }) => ({ offset, limit }),
-  loader: async ({
-    params,
-    context,
-    deps: { offset, limit },
-  }): Promise<LoopsLoaderProps> => {
-    const loops = await context.queryClient.ensureQueryData({
-      ...listLettersLettersLettersGetOptions({
-        query: {
-          group_api_id: params.groupId,
-          skip: offset,
-          limit: limit,
-        },
-      }),
-    })
-
-    return {
-      loops,
-    }
-  },
   component: LoopsContent,
 })
 
 function LoopsContentLoader() {
   const groupId = Route.useParams().groupId
-  const props = Route.useLoaderData()
+  const { offset, limit } = Route.useSearch()
+
+  const { data: loops } = useSuspenseQuery({
+    ...listLettersLettersLettersGetOptions({
+      query: {
+        group_api_id: groupId,
+        skip: offset,
+        limit: limit,
+      },
+    }),
+  })
 
   const { data: group } = useSuspenseQuery({
     ...readGroupPartiesGroupGroupApiIdGetOptions({
@@ -72,7 +57,7 @@ function LoopsContentLoader() {
       hash: "loops",
       component: () => (
         <LoopsTab
-          loops={props.loops.filter((loop) => loop.letter_type === "CYCLIC")}
+          loops={loops.filter((loop) => loop.letter_type === "CYCLIC")}
           group={group}
         />
       ),
@@ -82,7 +67,7 @@ function LoopsContentLoader() {
       hash: "adhoc-loops",
       component: () => (
         <AdhocLoopsTab
-          loops={props.loops.filter((loop) => loop.letter_type === "ADHOC")}
+          loops={loops.filter((loop) => loop.letter_type === "ADHOC")}
           group={group}
         />
       ),
@@ -110,8 +95,6 @@ function LoopsContentLoader() {
       component: () => <DocumentsGrid groupApiId={groupId} />,
     },
   ]
-
-  void useMemo
 
   const getInitialTab = (): string => {
     if (typeof window !== "undefined") {
