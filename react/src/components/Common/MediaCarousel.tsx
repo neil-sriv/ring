@@ -123,7 +123,6 @@ export function MediaCarousel({ items, className }: MediaCarouselProps) {
             variant="outline"
             className={cn(
               "absolute left-1 top-1/2 -translate-y-1/2",
-              "hidden md:inline-flex",
             )}
             onClick={handlePrevious}
             aria-label="Previous media"
@@ -137,7 +136,6 @@ export function MediaCarousel({ items, className }: MediaCarouselProps) {
             variant="outline"
             className={cn(
               "absolute right-1 top-1/2 -translate-y-1/2",
-              "hidden md:inline-flex",
             )}
             onClick={handleNext}
             aria-label="Next media"

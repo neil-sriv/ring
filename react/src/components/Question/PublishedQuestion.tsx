@@ -55,6 +55,8 @@ function ResponseBlock({
     null,
   )
   const dialogContentRef = useRef<HTMLDivElement | null>(null)
+  const touchStartXRef = useRef<number | null>(null)
+  const touchEndXRef = useRef<number | null>(null)
 
   let responseText = [response.response_text]
   const urlMatches = URLMatch(response.response_text)
@@ -128,6 +130,37 @@ function ResponseBlock({
     }
   }
 
+  const handleTouchStart = (event: React.TouchEvent<HTMLDivElement>) => {
+    if (event.touches.length !== 1) return
+    touchStartXRef.current = event.touches[0].clientX
+    touchEndXRef.current = null
+  }
+
+  const handleTouchMove = (event: React.TouchEvent<HTMLDivElement>) => {
+    if (event.touches.length !== 1) return
+    touchEndXRef.current = event.touches[0].clientX
+  }
+
+  const handleTouchEnd = () => {
+    if (touchStartXRef.current == null || touchEndXRef.current == null) return
+
+    const deltaX = touchEndXRef.current - touchStartXRef.current
+    const threshold = 40
+
+    if (Math.abs(deltaX) < threshold) return
+
+    if (deltaX < 0) {
+      // swipe left -> next image
+      showNextImage()
+    } else {
+      // swipe right -> previous image
+      showPreviousImage()
+    }
+
+    touchStartXRef.current = null
+    touchEndXRef.current = null
+  }
+
   useEffect(() => {
     if (activeLightboxIndex != null && dialogContentRef.current) {
       dialogContentRef.current.focus()
@@ -181,6 +214,9 @@ function ResponseBlock({
               className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6"
               aria-describedby={undefined}
               onKeyDown={handleLightboxKeyDown}
+              onTouchStart={handleTouchStart}
+              onTouchMove={handleTouchMove}
+              onTouchEnd={handleTouchEnd}
             >
               <DialogTitle className="sr-only">
                 {activeLightboxIndex != null
