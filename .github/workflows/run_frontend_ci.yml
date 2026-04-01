@@ -11,6 +11,8 @@ jobs:
   frontend-lint-build:
     name: frontend-lint-build
     runs-on: ubuntu-latest
+    env:
+      NPM_CONFIG_OPTIONAL: "true"
 
     steps:
       - name: Checkout repository
