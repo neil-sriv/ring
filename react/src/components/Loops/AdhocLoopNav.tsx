@@ -1,10 +1,8 @@
 import { Button } from "@/components/ui/button"
 import { useQueryClient } from "@tanstack/react-query"
-import { useRouter } from "@tanstack/react-router"
 import { Plus } from "lucide-react"
 import { useState } from "react"
 import type { GroupLinked, MinimalLetter } from "../../client"
-import { listLettersLettersLettersGetQueryKey } from "../../client/@tanstack/react-query.gen"
 import AddAdhocLoop from "./AddAdhocLoop"
 
 type AdhocLoopNavProps = {
@@ -15,7 +13,6 @@ type AdhocLoopNavProps = {
 function AdhocLoopNav(props: AdhocLoopNavProps): JSX.Element {
   const [addAdhocLoopOpen, setAddAdhocLoopOpen] = useState(false)
   const queryClient = useQueryClient()
-  const router = useRouter()
 
   const onClick = (): void => {
     queryClient.invalidateQueries({
