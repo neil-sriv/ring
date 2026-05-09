@@ -7,6 +7,7 @@ It includes both synchronous execution functions and their asynchronous job wrap
 
 from __future__ import annotations
 
+import math
 from datetime import timedelta
 from typing import Any, Callable
 
@@ -32,6 +33,20 @@ from ring.tasks.models.task_model import (
     TaskStatus,
     TaskType,
 )
+
+MIN_RESPONDER_RATIO_TO_SEND = 0.5
+LETTER_SEND_DEFERRAL_DAYS = 1
+
+
+def _minimum_responders_required(participant_count: int) -> int:
+    """Return the minimum unique responder count required to send.
+
+    We currently require at least half the participants (rounded up) to have
+    submitted at least one response before a letter is sent.
+    """
+    if participant_count <= 0:
+        return 0
+    return max(1, math.ceil(participant_count * MIN_RESPONDER_RATIO_TO_SEND))
 
 
 def execute_reminder_email_task(
@@ -117,6 +132,29 @@ def execute_send_email_task(
         group = task.schedule.group
         letter_to_send = group.in_progress_letters[0]
     assert letter_to_send
+
+    if letter_to_send.status == LetterStatus.IN_PROGRESS:
+        required_responders = _minimum_responders_required(
+            len(letter_to_send.participants)
+        )
+        responder_count = len(letter_to_send.responders)
+        if responder_count < required_responders:
+            new_send_at = letter_to_send.send_at + timedelta(
+                days=LETTER_SEND_DEFERRAL_DAYS
+            )
+            logger.info(
+                "Deferring letter {} send from {} to {}: responders {}/{}".format(
+                    letter_to_send.id,
+                    letter_to_send.send_at,
+                    new_send_at,
+                    responder_count,
+                    required_responders,
+                )
+            )
+            letter_crud.edit_letter(db, letter_to_send, send_at=new_send_at)
+            db.commit()
+            return
+
     title = f"Ring Newsletter {("#" + str(letter_to_send.number)) if not letter_to_send.title else str(letter_to_send.title)} for {letter_to_send.group.name}"
     message_id = send_email(
         construct_send_letter_email(
