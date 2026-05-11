@@ -108,3 +108,123 @@ class TestTaskCrud:
         db_session.refresh(letter)
         assert letter.status == LetterStatus.SENT
         assert letter.send_at == send_at
+
+    def test_execute_send_email_task_respects_configured_min_responders(
+        self, db_session: Session
+    ) -> None:
+        """Use per-group configured minimum responder count when provided."""
+        admin = UserFactory.create()
+        members = [admin] + [UserFactory.create() for _ in range(3)]
+        group = GroupFactory.create(admin=admin, members=members)
+        group.key_values.set_value(task_crud.GROUP_SETTING_MIN_RESPONDERS_KEY, 3)
+        send_at = datetime.now(tz=UTC) + timedelta(days=1)
+        letter = LetterFactory.create(
+            group=group,
+            status=LetterStatus.IN_PROGRESS,
+            send_at=send_at,
+        )
+        question = QuestionFactory.create(letter=letter)
+        ResponseFactory.create(question=question, participant=members[0])
+        ResponseFactory.create(question=question, participant=members[1])
+        db_session.commit()
+
+        send_task = db_session.scalars(
+            select(Task).where(
+                Task.schedule_id == group.schedule.id,
+                Task.type == TaskType.SEND_EMAIL,
+                Task.arguments == {"letter_id": letter.id},
+            )
+        ).one()
+        send_task.status = TaskStatus.IN_PROGRESS
+        db_session.commit()
+
+        with patch(
+            "ring.tasks.crud.task.send_email", return_value="message-id"
+        ) as mock_send_email:
+            task_crud.execute_send_email_task(db_session, send_task)
+
+        mock_send_email.assert_not_called()
+        db_session.refresh(letter)
+        assert letter.send_at == send_at + timedelta(
+            days=task_crud.LETTER_SEND_DEFERRAL_DAYS
+        )
+
+    def test_execute_send_email_task_ignores_invalid_threshold_config(
+        self, db_session: Session
+    ) -> None:
+        """Fallback to default threshold when config value is invalid."""
+        admin = UserFactory.create()
+        members = [admin] + [UserFactory.create() for _ in range(3)]
+        group = GroupFactory.create(admin=admin, members=members)
+        group.key_values.set_value(
+            task_crud.GROUP_SETTING_MIN_RESPONDERS_KEY, "not-a-number"
+        )
+        send_at = datetime.now(tz=UTC) + timedelta(days=1)
+        letter = LetterFactory.create(
+            group=group,
+            status=LetterStatus.IN_PROGRESS,
+            send_at=send_at,
+        )
+        question = QuestionFactory.create(letter=letter)
+        ResponseFactory.create(question=question, participant=members[0])
+        ResponseFactory.create(question=question, participant=members[1])
+        db_session.commit()
+
+        send_task = db_session.scalars(
+            select(Task).where(
+                Task.schedule_id == group.schedule.id,
+                Task.type == TaskType.SEND_EMAIL,
+                Task.arguments == {"letter_id": letter.id},
+            )
+        ).one()
+
+        with patch(
+            "ring.tasks.crud.task.send_email", return_value="message-id"
+        ) as mock_send_email:
+            task_crud.execute_send_email_task(db_session, send_task)
+
+        mock_send_email.assert_called_once()
+        db_session.refresh(letter)
+        assert letter.status == LetterStatus.SENT
+
+    def test_execute_send_email_task_respects_configured_ratio(
+        self, db_session: Session
+    ) -> None:
+        """Use per-group responder ratio config when min responders unset."""
+        admin = UserFactory.create()
+        members = [admin] + [UserFactory.create() for _ in range(3)]
+        group = GroupFactory.create(admin=admin, members=members)
+        group.key_values.set_value(
+            task_crud.GROUP_SETTING_MIN_RESPONDER_RATIO_KEY, 0.75
+        )
+        send_at = datetime.now(tz=UTC) + timedelta(days=1)
+        letter = LetterFactory.create(
+            group=group,
+            status=LetterStatus.IN_PROGRESS,
+            send_at=send_at,
+        )
+        question = QuestionFactory.create(letter=letter)
+        ResponseFactory.create(question=question, participant=members[0])
+        ResponseFactory.create(question=question, participant=members[1])
+        db_session.commit()
+
+        send_task = db_session.scalars(
+            select(Task).where(
+                Task.schedule_id == group.schedule.id,
+                Task.type == TaskType.SEND_EMAIL,
+                Task.arguments == {"letter_id": letter.id},
+            )
+        ).one()
+        send_task.status = TaskStatus.IN_PROGRESS
+        db_session.commit()
+
+        with patch(
+            "ring.tasks.crud.task.send_email", return_value="message-id"
+        ) as mock_send_email:
+            task_crud.execute_send_email_task(db_session, send_task)
+
+        mock_send_email.assert_not_called()
+        db_session.refresh(letter)
+        assert letter.send_at == send_at + timedelta(
+            days=task_crud.LETTER_SEND_DEFERRAL_DAYS
+        )
