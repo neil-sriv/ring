@@ -7,7 +7,9 @@ It includes both synchronous execution functions and their asynchronous job wrap
 
 from __future__ import annotations
 
+import math
 from datetime import timedelta
+from numbers import Real
 from typing import Any, Callable
 
 import sqlalchemy
@@ -32,6 +34,77 @@ from ring.tasks.models.task_model import (
     TaskStatus,
     TaskType,
 )
+
+GROUP_SETTING_MIN_RESPONDERS_KEY = "letter_send_min_responders"
+GROUP_SETTING_MIN_RESPONDER_RATIO_KEY = "letter_send_min_responder_ratio"
+DEFAULT_MIN_RESPONDER_RATIO_TO_SEND = 0.5
+LETTER_SEND_DEFERRAL_DAYS = 1
+
+
+def _parse_positive_int(value: Any) -> int | None:
+    """Parse a value into a positive integer, returning None if invalid."""
+    if isinstance(value, bool):
+        return None
+    if isinstance(value, int):
+        return value if value > 0 else None
+    if isinstance(value, float):
+        if value.is_integer() and value > 0:
+            return int(value)
+        return None
+    if isinstance(value, str):
+        try:
+            parsed = float(value)
+        except ValueError:
+            return None
+        if parsed.is_integer() and parsed > 0:
+            return int(parsed)
+    return None
+
+
+def _parse_ratio(value: Any) -> float | None:
+    """Parse a value into a ratio in the (0, 1] range."""
+    if isinstance(value, bool) or not isinstance(value, Real):
+        if isinstance(value, str):
+            try:
+                value = float(value)
+            except ValueError:
+                return None
+        else:
+            return None
+    ratio = float(value)
+    if ratio <= 0 or ratio > 1:
+        return None
+    return ratio
+
+
+def _minimum_responders_required(letter: Letter) -> int:
+    """Return the minimum unique responder count required to send.
+
+    Group-level configuration (stored in group key-values):
+    - `letter_send_min_responders`: positive integer responder count
+    - `letter_send_min_responder_ratio`: ratio in (0, 1]
+    """
+    participant_count = len(letter.participants)
+    if participant_count <= 0:
+        return 0
+
+    min_responders_setting = letter.group.key_values.get_value(
+        GROUP_SETTING_MIN_RESPONDERS_KEY
+    )
+    configured_min_responders = _parse_positive_int(min_responders_setting)
+    if configured_min_responders is not None:
+        return min(participant_count, configured_min_responders)
+
+    ratio_setting = letter.group.key_values.get_value(
+        GROUP_SETTING_MIN_RESPONDER_RATIO_KEY
+    )
+    configured_ratio = _parse_ratio(ratio_setting)
+    ratio = (
+        configured_ratio
+        if configured_ratio is not None
+        else DEFAULT_MIN_RESPONDER_RATIO_TO_SEND
+    )
+    return max(1, math.ceil(participant_count * ratio))
 
 
 def execute_reminder_email_task(
@@ -117,6 +190,27 @@ def execute_send_email_task(
         group = task.schedule.group
         letter_to_send = group.in_progress_letters[0]
     assert letter_to_send
+
+    if letter_to_send.status == LetterStatus.IN_PROGRESS:
+        required_responders = _minimum_responders_required(letter_to_send)
+        responder_count = len(letter_to_send.responders)
+        if responder_count < required_responders:
+            new_send_at = letter_to_send.send_at + timedelta(
+                days=LETTER_SEND_DEFERRAL_DAYS
+            )
+            logger.info(
+                "Deferring letter {} send from {} to {}: responders {}/{}".format(
+                    letter_to_send.id,
+                    letter_to_send.send_at,
+                    new_send_at,
+                    responder_count,
+                    required_responders,
+                )
+            )
+            letter_crud.edit_letter(db, letter_to_send, send_at=new_send_at)
+            db.commit()
+            return
+
     title = f"Ring Newsletter {("#" + str(letter_to_send.number)) if not letter_to_send.title else str(letter_to_send.title)} for {letter_to_send.group.name}"
     message_id = send_email(
         construct_send_letter_email(
