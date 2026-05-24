@@ -116,7 +116,9 @@ class TestTaskCrud:
         admin = UserFactory.create()
         members = [admin] + [UserFactory.create() for _ in range(3)]
         group = GroupFactory.create(admin=admin, members=members)
-        group.key_values.set_value(task_crud.GROUP_SETTING_MIN_RESPONDERS_KEY, 3)
+        group.key_values.set_value(
+            task_crud.GROUP_SETTING_MIN_RESPONDERS_KEY, 3
+        )
         send_at = datetime.now(tz=UTC) + timedelta(days=1)
         letter = LetterFactory.create(
             group=group,
