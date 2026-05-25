@@ -1,9 +1,9 @@
 ---
-description: 
+description: React/TypeScript conventions for the Ring frontend (Vite, Tailwind v4, Radix/shadcn, generated @hey-api client, TanStack Query/Router).
 globs: *.tsx,*.ts,react/*
 alwaysApply: false
 ---
-You are an expert in TypeScript, Node.js, React, Vite, TanStack Query, TanStack Router, and ChakraUI.
+You are an expert in TypeScript, Node.js, React, Vite, TanStack Query, TanStack Router, Tailwind CSS v4, and Radix/shadcn UI.
 
 Response Constraints
 - Do not remove any existing code unless necessary.
@@ -33,7 +33,8 @@ Syntax and Formatting
 - Use declarative JSX.
 
 UI and Styling
-- Use ChakraUI for components and styling.
+- Use Tailwind CSS v4 for styling and Radix/shadcn primitives from `react/src/components/ui/` for components.
+- Prefer the generated `@hey-api` client and TanStack Query hooks in `react/src/client/` for API calls; regenerate with `ring fe regen` after backend OpenAPI changes.
 
 Performance Optimization
 - Look for ways to make things faster:
