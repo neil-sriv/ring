@@ -1,74 +1,189 @@
 # AGENTS.md
 
-## Cursor Cloud specific instructions
+Project guide for AI coding agents working on **Ring**, a collaborative
+letter/newsletter platform (LetterLoop-style). Human-oriented setup lives in
+[README.md](README.md); this file focuses on what agents need to be productive.
 
-### Architecture overview
+---
 
-Ring is a collaborative letter/newsletter platform (LetterLoop clone) with three main components:
+## Overview
 
-| Component | Tech | Port |
-|-----------|------|------|
-| **Backend API** | FastAPI + SQLAlchemy + CockroachDB | 8001 (via Docker) |
-| **Frontend** | React + Vite + ChakraUI + TanStack | 5173 (Vite dev server) |
-| **Nginx** | Reverse proxy for API + SSL | 443/80 (via Docker) |
-| **CockroachDB** | Database (PostgreSQL-compatible) | 26257 (via Docker) |
+Ring lets a group of people answer prompts on a cadence, then publishes the
+collected responses as a "letter." It is built as a FastAPI backend with a
+React/Vite frontend, fronted by Nginx, backed by CockroachDB, with an optional
+LLM microservice.
 
-The `ring` CLI (installed via `uv sync`) provides dev workflow commands — see `README.md` for the full list.
+## Architecture
 
-### Starting services
+| Component       | Tech                                         | Default port  |
+|-----------------|----------------------------------------------|---------------|
+| Backend API     | FastAPI + SQLAlchemy 2 + Alembic             | 8001 (Docker) |
+| Frontend        | React + Vite + Tailwind v4 + Radix/shadcn + TanStack | 5173 (Vite dev)|
+| Reverse proxy   | Nginx (TLS, `/api/v1/`)                      | 443/80        |
+| Database        | CockroachDB (Postgres-compatible)            | 26257         |
+| LLM (optional)  | Local microservice in [llm/](llm/)           | varies        |
 
-All backend services run via Docker Compose. The `ring` CLI wraps docker compose commands:
+The frontend talks to the backend via the Nginx proxy at
+`https://localhost/api/v1/`. Direct access to the API container on `:8001` is
+used only by tooling (e.g. OpenAPI spec fetching).
+
+## Codebase map
+
+### Backend (`ring/`)
+
+Domain packages each follow the same internal shape:
+
+```
+ring/<domain>/
+  api/        # FastAPI routers
+  crud/       # SQLAlchemy queries / mutations
+  models/     # SQLAlchemy ORM models
+  schemas/    # Pydantic request/response schemas
+```
+
+Important domains and shared modules:
+
+- `ring/parties/` — users, groups, invites, group key/values
+- `ring/letters/` — letters, questions, responses, default questions
+- `ring/tasks/` — scheduling
+- `ring/notifications/` — push/email subscriptions
+- `ring/notebook/` — collaborative notebook (Automerge / Y.js)
+- `ring/search/` — search endpoints (CockroachDB vector index)
+- `ring/auth/` — authentication routes
+- `ring/authz/` — Casbin-based authorization ([authz.py](ring/authz/authz.py))
+- `ring/api_identifier/` — `APIIdentified` mixin + `APIPrefix` enum
+- `ring/fastapp/` — app factory; routers are wired in
+  [ring/fastapp/routes.py](ring/fastapp/routes.py)
+- `ring/security.py` — password hashing, JWT access tokens
+- `ring/alembic/` — migrations
+
+### Frontend (`react/src/`)
+
+- `client/` — generated `@hey-api` SDK + TanStack Query hooks
+  (`sdk.gen.ts`, `types.gen.ts`, `client.gen.ts`, `@tanstack/`)
+- `components/` — feature components; `components/ui/` holds shadcn primitives
+- `routes/` — TanStack Router file-based routes; `routeTree.gen.ts` is generated
+- `hooks/`, `lib/`, `util/` — shared frontend code
+
+## Key conventions
+
+- **API identifiers.** Models that are addressable through the API extend
+  `APIIdentified` (see
+  [ring/api_identifier/api_identified_model.py](ring/api_identifier/api_identified_model.py)),
+  declare an `API_ID_PREFIX` from `APIPrefix`, and register with
+  `@register_api_class(APIPrefix.X)`. IDs look like `grp_<uuid>`, `lttr_<uuid>`,
+  etc. Use `bulk_get_models` / `get_model` to look them up by prefix.
+- **Authz.** Use `ring/authz/authz.py` helpers (`load_and_check`,
+  `bulk_load_and_check`, `check`, `filter_to_authorized`,
+  `bulk_can_or_inaccessible`) for permission checks. Follow patterns in sibling
+  routes inside the same domain rather than inventing new flows.
+- **Routers.** All routers are registered in
+  [ring/fastapp/routes.py](ring/fastapp/routes.py); add new ones there.
+- **Generated frontend client.** The frontend never hand-writes API calls.
+  After backend changes that touch the OpenAPI surface, regenerate with
+  `ring fe regen` and use the generated TanStack Query hooks under
+  `react/src/client/`.
+- **Generic attachable entities.** Secondary entities that can attach to many
+  parent types should use a **weak reference** — store the parent's
+  `api_identifier` in a `target_api_id` column, look it up with
+  `bulk_get_models`, and skip polymorphic FKs. Prefer **hard deletes** over
+  soft-delete columns unless a specific feature requires undo. Pick a new
+  3–6 character prefix in `APIPrefix` when adding such an entity.
+
+## Dev workflow
+
+The `ring` CLI (installed via `uv sync`) wraps Docker Compose and common
+commands. See [README.md](README.md) for the full list and one-time setup.
+
+Common loop:
 
 ```bash
-# Activate venv first
+source .venv/bin/activate
+ring compose up           # CockroachDB + API + Nginx
+ring db upgrade           # apply migrations
+ring fe dev               # Vite at https://localhost:5173
+```
+
+When backend API shape changes:
+
+```bash
+ring db generate "<message>"  # create alembic revision (autogenerate)
+ring db upgrade               # apply
+ring fe regen                 # refresh react/src/client/ from OpenAPI
+```
+
+### Cursor Cloud Agent VM
+
+In the Cloud Agent VM, `ring` is not always wired up the same way, and Docker
+requires `sudo`. Use the raw compose commands instead:
+
+```bash
 source .venv/bin/activate
 
-# Start CockroachDB + API + Nginx
-sudo docker compose -f compose.core.yml -f compose.dev.yml --profile dev up --build --detach
+sudo docker compose -f compose.core.yml -f compose.dev.yml --profile dev \
+  up --build --detach
 
-# Run database migrations (runs inside the API container)
-sudo docker compose -f compose.core.yml -f compose.dev.yml --profile dev exec -w /src/ring api alembic upgrade head
+sudo docker compose -f compose.core.yml -f compose.dev.yml --profile dev \
+  exec -w /src/ring api alembic upgrade head
 
-# Start frontend dev server
 cd react && pnpm run dev
 ```
 
-**Gotcha:** CockroachDB requires vector indexes to be enabled before migrations will succeed. Run this once after the CockroachDB container first starts:
+**Vector index gotcha.** CockroachDB requires the vector index cluster setting
+to be enabled before migrations succeed. Run this once after the
+`ring-cockroach` container first starts:
+
 ```bash
-sudo docker exec ring-cockroach ./cockroach sql --certs-dir=/root/.cockroach-certs -d ring -e "SET CLUSTER SETTING feature.vector_index.enabled = true;"
+sudo docker exec ring-cockroach ./cockroach sql \
+  --certs-dir=/root/.cockroach-certs -d ring \
+  -e "SET CLUSTER SETTING feature.vector_index.enabled = true;"
 ```
 
-### Lint, test, build
+Other Cloud-specific notes:
 
-- **Python lint:** `uv run ruff format --diff && uv run ruff check`
-- **Frontend lint:** `cd react && pnpm run lint` (uses Biome with `--apply-unsafe`; ~21 pre-existing security warnings are expected)
-- **TypeScript check:** `cd react && npx tsc --noEmit`
-- **Backend tests:** Run via Docker using `compose.test.yml`:
-  ```bash
-  sudo docker compose -f compose.test.yml --profile test up --build --detach
-  sudo docker logs -f ring-test-runner
-  ```
-  Tests use a separate CockroachDB instance on port 8008. 242/243 tests pass; 1 pre-existing `IntegrityError` in `TestGroupApi::test_list_groups`.
-- **Frontend build:** `cd react && pnpm run build`
+- `.env` is required at the repo root and is `.gitignore`d; keys are documented
+  in [README.md](README.md).
+- SSL certs come from `bash dev_util/ssl.sh` (`localhost.crt`/`localhost.key`
+  for Nginx, `certs/` for CockroachDB). `certs/node.key` must be `chmod 600`.
 
-### Important notes
+A personal skill (`~/.cursor/skills/ring-cloud-dev/`) captures these commands
+in a form that auto-applies inside the Cloud VM.
 
-- The `.env` file is required at the repo root with keys documented in `README.md`. It is `.gitignore`d.
-- SSL certificates are generated via `bash dev_util/ssl.sh` and stored in `localhost.crt`, `localhost.key` (for Nginx) and `certs/` (for CockroachDB). Cert `certs/node.key` must have `chmod 600`.
-- Docker commands require `sudo` in the Cloud Agent VM.
-- The frontend Vite dev server at `https://localhost:5173` communicates with the backend through the Nginx reverse proxy at `https://localhost/api/v1/`.
-- The LLM microservice (`llm/`) is optional and requires additional setup (Ollama or Gemini/OpenAI API keys).
-## Learned User Preferences
-- When extending session authentication, prefer refresh tokens so users are not forced to log in again when the access token expires.
-- Prefer JWT refresh-token rotation and refresh/access token type validation for better security.
-- For comment-like entities that can attach to arbitrary objects, prefer a generic weak-reference design that stores only the target object's `api_identifier` (not a hard foreign key).
-- Prefer hard deletes over soft deletion fields for the comment model.
-- Prefer using the comment API prefix `cmnt`.
-- For large, multi-surface changes, prefer splitting work into multiple PRs (backend first, then frontend) rather than one large PR.
-- For operational resilience (timeouts), prefer existing/popular timeout mechanisms or FastAPI-provided solutions over custom timeout middleware.
+## Quality gates
 
-## Learned Workspace Facts
-- The system is intended to use short-lived JWT access tokens (~15 minutes) and longer-lived refresh tokens (~30 days) with refresh/access token type validation and rotation.
-- The frontend is expected to auto-refresh access tokens on `401` using the stored refresh token and to clear both tokens on logout.
-- Image upload handling should have timeouts configured to avoid long hangs (nginx proxy timeouts for `/api/v1/` and botocore/boto3 S3 client timeouts for uploads/downloads).
-- The comment model is intended to be generic, attaching to targets via `target_api_id` (storing the target's `api_identifier`) and using `cmnt` as the comment API prefix, without soft deletion.
+| Check                | Command                                                        |
+|----------------------|----------------------------------------------------------------|
+| Python lint/format   | `ring check lint` (`uv run ruff format --diff && ruff check`)  |
+| Frontend lint        | `cd react && pnpm run lint` (Biome; ~21 pre-existing warnings) |
+| TypeScript           | `cd react && npx tsc --noEmit`                                 |
+| Frontend build       | `cd react && pnpm run build`                                   |
+| Backend tests        | `ring test run` (Compose `compose.test.yml`, profile `test`)   |
+
+Backend tests run inside a dedicated `ring-test-runner` container against a
+separate CockroachDB instance on port 8008. There is one pre-existing flake:
+`TestGroupApi::test_list_groups` raises `IntegrityError` (242/243 pass).
+
+## Design preferences
+
+- **Split big changes into PRs.** Land backend (models, migrations, API,
+  tests, OpenAPI) first; follow with `ring fe regen` + UI in a second PR. Each
+  PR should pass `ring check lint` and the relevant tests on its own.
+- **Prefer existing timeout mechanisms.** For operational resilience (e.g.
+  long-running image uploads), use Nginx proxy timeouts and the
+  botocore/boto3 / FastAPI built-in timeouts rather than rolling custom
+  middleware.
+- **Don't assume features that aren't there.** Today the JWT access token is
+  long-lived (~1 week, see [ring/security.py](ring/security.py)) and there is
+  no refresh-token flow. Don't invent one as a "preference" — implement it
+  explicitly if asked, and document the change at that point.
+
+## Agent resources
+
+- [.cursor/rules/](.cursor/rules/) — file-scoped style rules (`python.mdc`,
+  `react.mdc`).
+- [.cursor/skills/](.cursor/skills/) — repeatable task playbooks:
+  - `ring-add-backend-resource/` — new domain endpoint/model/CRUD
+  - `ring-regen-frontend-client/` — refresh `react/src/client/` after API
+    changes
+  - `ring-authz-checklist/` — permission-check patterns for new routes
+  - `ring-split-pr/` — splitting backend + frontend work into separate PRs
