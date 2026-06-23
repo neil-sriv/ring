@@ -107,10 +107,11 @@ def create_hybrid_search_document(
     model_api_identifier: str,
     model_type: SearchableType,
 ) -> HybridSearchDocument:
-    text_embedding = _generate_text_embedding(raw_text)
+    # Embedding/semantic search is deprecated. Documents are indexed for
+    # keyword search only (via the computed `text_tsv` column derived from
+    # `raw_text`), so we no longer call the embedding service on write.
     db_hybrid_search_document = HybridSearchDocument.create(
         raw_text=raw_text,
-        text_embedding_768=text_embedding,
     )
     association = HybridSearchDocumentAssociation.create(
         model_api_identifier=model_api_identifier,
@@ -221,9 +222,19 @@ def search(
     query: str,
     user: User,
     limit: int = 10,
-    search_type: SearchType = SearchType.DUAL,
+    search_type: SearchType = SearchType.KEYWORD,
 ) -> list[APIIdentified]:
-    search_results = dual_search_hybrid_search_document(db, query, limit)
+    # Resolve the search function at call time (rather than via a module-level
+    # dict) so the names stay patchable in tests.
+    search_dispatch: dict[
+        SearchType,
+        Callable[[Session, str, int], list[HybridSearchDocument]],
+    ] = {
+        SearchType.SEMANTIC: semantic_search_hybrid_search_document,
+        SearchType.KEYWORD: keyword_search_hybrid_search_document,
+        SearchType.DUAL: dual_search_hybrid_search_document,
+    }
+    search_results = search_dispatch[search_type](db, query, limit)
     model_ids_by_type = get_model_ids_from_hybrid_search_documents(
         db, search_results
     )

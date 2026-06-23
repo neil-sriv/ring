@@ -48,11 +48,11 @@ class TestHybridSearchCRUD:
     ) -> None:
         """Test creating a hybrid search document.
 
-        This test verifies that:
+        Semantic/embedding search is deprecated, so document creation indexes
+        for keyword search only. This test verifies that:
         1. A document can be created with raw text and model info
-        2. The document has the correct raw text and embedding
+        2. No embedding is generated (the embedding service is not called)
         3. The association is properly created and linked
-        4. Both document and association are stored in the database
 
         Args:
             mock_generate_embedding (MagicMock): Mock for embedding generation
@@ -60,8 +60,6 @@ class TestHybridSearchCRUD:
             db_session (Session): Database session
         """
         raw_text = faker.text()
-        mock_embedding = [0.1] * 768
-        mock_generate_embedding.return_value = mock_embedding
 
         document = create_hybrid_search_document(
             db_session,
@@ -71,7 +69,8 @@ class TestHybridSearchCRUD:
         )
 
         assert document.raw_text == raw_text
-        assert len(document.text_embedding_768) == 768
+        assert document.text_embedding_768 is None
+        mock_generate_embedding.assert_not_called()
         assert len(document.associations) == 1
         assert document.associations[0].model_api_identifier == "test_id"
         assert document.associations[0].model_type == SearchableType.USER.value
@@ -95,20 +94,26 @@ class TestHybridSearchCRUD:
             faker (Faker): Faker instance for generating test data
             db_session (Session): Database session
         """
-        # Create test documents with different embeddings
+        # Create test documents with different embeddings. Embeddings are set
+        # directly here because document creation no longer generates them
+        # (semantic search is deprecated); semantic search still works for any
+        # documents that do carry an embedding.
         documents = []
         base_embedding = [0.1] * 768
         for i in range(3):
             # Create embeddings that are increasingly different from the query
             # but still within the L2 distance threshold of 0.5
             doc_embedding = [x + (i * 0.01) for x in base_embedding]
-            mock_generate_embedding.return_value = doc_embedding
-            document = create_hybrid_search_document(
-                db_session,
+            document = HybridSearchDocument.create(
                 raw_text=f"test document {i}",
-                model_api_identifier=f"test_id_{i}",
-                model_type=SearchableType.USER,
+                text_embedding_768=doc_embedding,
             )
+            association = HybridSearchDocumentAssociation.create(
+                model_api_identifier=f"test_id_{i}",
+                model_type=SearchableType.USER.value,
+                hybrid_search_document=document,
+            )
+            db_session.add_all([document, association])
             documents.append(document)
         db_session.commit()
 
