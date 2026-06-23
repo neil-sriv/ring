@@ -521,12 +521,21 @@ def postpend_upcoming_letters(db: Session, letter_ids: list[int]) -> None:
     This task is triggered when letters need to be moved from IN_PROGRESS to
     SENT status. It also creates a new upcoming letter for the affected groups.
 
+    Letters below the responder send threshold are deferred instead of marked
+    SENT without an email.
+
     Args:
         db (Session): Database session
         letter_ids (list[int]): IDs of letters to postpend
     """
+    from ring.letters.send_threshold import (
+        defer_letter_send_if_below_threshold,
+    )
+
     letters = db.scalars(select(Letter).where(Letter.id.in_(letter_ids))).all()
     for letter in letters:
+        if defer_letter_send_if_below_threshold(db, letter):
+            continue
         letter.status = LetterStatus.SENT
         create_letter_with_questions(
             db,

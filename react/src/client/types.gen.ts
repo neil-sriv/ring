@@ -208,6 +208,7 @@ export type GroupLinked = {
     api_identifier: string;
     created_at: string;
     cycle_length: number;
+    min_responder_ratio?: number | null;
     members: Array<UserUnlinked>;
     letters: Array<LetterUnlinked>;
     schedule: ScheduleUnlinked | null;
@@ -225,6 +226,7 @@ export type GroupUnlinked = {
     api_identifier: string;
     created_at: string;
     cycle_length: number;
+    min_responder_ratio?: number | null;
 };
 
 /**
@@ -237,6 +239,7 @@ export type GroupUnlinked = {
 export type GroupUpdate = {
     name?: string | null;
     cycle_length?: number | null;
+    min_responder_ratio?: number | null;
 };
 
 export type HttpValidationError = {
@@ -377,6 +380,9 @@ export type MinimalLetter = {
     letter_type: LetterType;
     group: GroupUnlinked;
     responders: Array<UserUnlinked>;
+    required_responders: number;
+    responder_count: number;
+    send_threshold_ratio?: number | null;
 };
 
 /**
@@ -413,6 +419,9 @@ export type PublicLetter = {
     questions: Array<PublicQuestion>;
     responders: Array<UserUnlinked>;
     participants: Array<UserUnlinked>;
+    required_responders: number;
+    responder_count: number;
+    send_threshold_ratio?: number | null;
 };
 
 /**

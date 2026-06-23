@@ -32,6 +32,16 @@ type QuestionField = {
 type FormData = {
   questions: QuestionField[]
   cycle_length: number
+  min_responder_percent: number
+}
+
+const DEFAULT_MIN_RESPONDER_PERCENT = 50
+
+function displayMinResponderPercent(ratio: number | null | undefined): number {
+  if (ratio == null) {
+    return DEFAULT_MIN_RESPONDER_PERCENT
+  }
+  return Math.round(ratio * 100)
 }
 
 function GroupLoopSettings({ groupId }: { groupId: string }) {
@@ -63,6 +73,9 @@ function GroupLoopSettings({ groupId }: { groupId: string }) {
         question_text: question.question_text,
       })),
       cycle_length: group.cycle_length,
+      min_responder_percent: displayMinResponderPercent(
+        group.min_responder_ratio,
+      ),
     },
   })
 
@@ -140,6 +153,18 @@ function GroupLoopSettings({ groupId }: { groupId: string }) {
       })
     }
 
+    const currentMinResponderPercent = displayMinResponderPercent(
+      group.min_responder_ratio,
+    )
+    if (data.min_responder_percent !== currentMinResponderPercent) {
+      cycleUpdateMutation.mutate({
+        body: {
+          min_responder_ratio: data.min_responder_percent / 100,
+        },
+        path: { group_api_id: groupId },
+      })
+    }
+
     defaultQuestionsMutation.mutate({
       body: {
         questions: data.questions.map((question) => question.question_text),
@@ -184,6 +209,45 @@ function GroupLoopSettings({ groupId }: { groupId: string }) {
               {errors.cycle_length && (
                 <p className="text-sm text-destructive">
                   {errors.cycle_length.message}
+                </p>
+              )}
+            </div>
+            <div className="mt-4 space-y-1">
+              <Label htmlFor="min_responder_percent">
+                Minimum responses before send
+              </Label>
+              {editMode ? (
+                <Input
+                  id="min_responder_percent"
+                  {...register("min_responder_percent", {
+                    valueAsNumber: true,
+                    required: "Minimum response percentage is required",
+                    min: {
+                      value: 0,
+                      message: "Percentage must be at least 0",
+                    },
+                    max: {
+                      value: 100,
+                      message: "Percentage must be at most 100",
+                    },
+                  })}
+                  type="number"
+                  step={5}
+                />
+              ) : (
+                <p className="py-2 text-foreground">
+                  {displayMinResponderPercent(group.min_responder_ratio)}%
+                  {group.min_responder_ratio === 0 ? " (disabled)" : ""}
+                </p>
+              )}
+              <p className="text-sm text-muted-foreground">
+                If not enough members have responded by the send date, the issue
+                is delayed by one day and retried. Set to 0% to send on schedule
+                regardless of responses.
+              </p>
+              {errors.min_responder_percent && (
+                <p className="text-sm text-destructive">
+                  {errors.min_responder_percent.message}
                 </p>
               )}
             </div>

@@ -10,6 +10,7 @@ from __future__ import annotations
 from datetime import datetime
 from typing import TYPE_CHECKING
 
+from pydantic import BaseModel
 from sqlalchemy import (
     Column,
     Constraint,
@@ -178,3 +179,22 @@ class Letter(Base, APIIdentified, PydanticModel, CreatedAtMixin):
             for response in question.responses
         }
         return list(respondents)
+
+    def to_pydantic(self) -> BaseModel:
+        """Convert to PublicLetter including send-threshold progress fields."""
+        from ring.letters.send_threshold import (
+            effective_send_threshold_ratio,
+            letter_responder_count,
+            minimum_responders_required,
+        )
+
+        model = self.PYDANTIC_MODEL.model_validate(self)
+        return model.model_copy(
+            update={
+                "required_responders": minimum_responders_required(self),
+                "responder_count": letter_responder_count(self),
+                "send_threshold_ratio": effective_send_threshold_ratio(
+                    self.group
+                ),
+            }
+        )

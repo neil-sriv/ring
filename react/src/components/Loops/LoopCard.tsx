@@ -54,14 +54,26 @@ export function LoopCard(props: {
     return null
   }
 
-  const getResponderCount = () => {
-    if (
-      props.showResponderCount &&
-      "responders" in props.loop &&
-      props.loop.responders
-    ) {
-      return props.loop.responders.length
+  const getResponderCount = (): string | null => {
+    if (!props.showResponderCount) {
+      return null
     }
+
+    const loop = props.loop
+    if (
+      loop.status === "IN_PROGRESS" &&
+      "required_responders" in loop &&
+      "responder_count" in loop &&
+      loop.required_responders > 0
+    ) {
+      return `${loop.responder_count} of ${loop.required_responders} responses needed`
+    }
+
+    if ("responders" in loop) {
+      const count = loop.responders.length
+      return `${count} responder${count !== 1 ? "s" : ""}`
+    }
+
     return null
   }
 
@@ -108,9 +120,7 @@ export function LoopCard(props: {
               {sendDate.toLocaleDateString()}
             </p>
             {responderCount !== null && (
-              <p className="text-sm text-muted-foreground">
-                {responderCount} responder{responderCount !== 1 ? "s" : ""}
-              </p>
+              <p className="text-sm text-muted-foreground">{responderCount}</p>
             )}
             {unansweredCount > 0 && (
               <p className="text-sm font-medium text-orange-500">

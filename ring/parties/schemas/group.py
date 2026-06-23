@@ -30,10 +30,14 @@ class GroupUpdate(BaseModel):
     Attributes:
         name (str | None): New name for the group, optional
         cycle_length (int | None): New cycle length in days, optional
+        min_responder_ratio (float | None): Minimum share of participants who
+            must respond before send (0-1). Use 0 to disable deferral. Omit or
+            set null to use the default (0.5).
     """
 
     name: str | None = None
     cycle_length: int | None = None
+    min_responder_ratio: float | None = None
 
 
 class AddMembers(BaseModel):
@@ -64,6 +68,8 @@ class Group(GroupBase):
         api_identifier (str): Unique API identifier for the group
         created_at (AwareDatetime): Timestamp of group creation
         cycle_length (int): Number of days between letters
+        min_responder_ratio (float | None): Configured minimum responder ratio
+            (0-1), or null when using the default (0.5)
     """
 
     model_config = ConfigDict(from_attributes=True)
@@ -71,6 +77,7 @@ class Group(GroupBase):
     api_identifier: str
     created_at: AwareDatetime
     cycle_length: int
+    min_responder_ratio: float | None = None
 
 
 class GroupUnlinked(Group):
