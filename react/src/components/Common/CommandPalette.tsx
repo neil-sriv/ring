@@ -135,11 +135,12 @@ export function CommandPalette({ open, onOpenChange }: CommandPaletteProps) {
   })
 
   const searchItems = useMemo<CommandItem[]>(() => {
-    if (!searchData?.results.length) {
+    const results = searchData?.results
+    if (!results?.length) {
       return []
     }
 
-    return searchData.results.map((result) => {
+    return results.map((result) => {
       const searchItem = searchResultToCommandItem(result, navigate)
       return {
         id: searchItem.id,

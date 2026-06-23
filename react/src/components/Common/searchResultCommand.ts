@@ -39,7 +39,7 @@ export function searchResultToCommandItem(
       return {
         id: `search-${model.api_identifier}`,
         label: `${model.group?.name ?? "Group"} · Letter ${model.letter?.number ?? "?"}`,
-        description: `Q: ${model.question.question_text} · ${model.participant.name}`,
+        description: `Q: ${model.question?.question_text ?? "Question"} · ${model.participant?.name ?? "Unknown"}`,
         icon: MessageSquare,
         badge: "Response",
         action: loopId
