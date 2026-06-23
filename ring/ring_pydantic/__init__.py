@@ -13,11 +13,13 @@ from __future__ import annotations
 from .linked_schemas import *
 
 GroupLinked.model_rebuild()
+GroupSummary.model_rebuild()
 LetterLinked.model_rebuild()
 PublicLetter.model_rebuild()
 QuestionLinked.model_rebuild()
 # ResponseLinked.model_rebuild()
 UserLinked.model_rebuild()
+UserMe.model_rebuild()
 ScheduleUnlinked.model_rebuild()
 InviteLinked.model_rebuild()
 # SubscriptionLinked.model_rebuild()

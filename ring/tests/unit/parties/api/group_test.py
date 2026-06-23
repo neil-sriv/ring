@@ -13,6 +13,7 @@ from sqlalchemy.orm import Session
 
 from ring.parties.models.group_model import Group
 from ring.parties.models.user_model import User
+from ring.ring_pydantic.linked_schemas import GroupSummary
 from ring.tests.factories.parties.group_factory import GroupFactory
 from ring.tests.factories.parties.user_factory import UserFactory
 from ring.tests.lib.utils import (
@@ -145,6 +146,7 @@ class TestGroupApi:
         assert_pydantic_models_json_dump_in_response_dict(
             admin_groups + member_groups,
             data,
+            override_pydantic_model=GroupSummary,
         )
 
     def test_read_group(

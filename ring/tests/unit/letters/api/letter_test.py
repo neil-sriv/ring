@@ -257,11 +257,15 @@ class TestLetterAPI:
         data = response.json()
         assert len(data["upcoming"]) == 1
         assert_pydantic_model_json_dump_equivalent_to_response_dict(
-            letters[0], data["upcoming"][0]
+            letters[0],
+            data["upcoming"][0],
+            override_pydantic_model=MinimalLetter,
         )
         assert len(data["in_progress"]) == 1
         assert_pydantic_model_json_dump_equivalent_to_response_dict(
-            letters[1], data["in_progress"][0]
+            letters[1],
+            data["in_progress"][0],
+            override_pydantic_model=MinimalLetter,
         )
         assert len(data["recently_completed"]) == 1
         assert_pydantic_model_json_dump_equivalent_to_response_dict(

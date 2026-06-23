@@ -30,13 +30,13 @@ from ring.parties.schemas.user import (
     UserUpdate,
     UserUpdatePassword,
 )
-from ring.ring_pydantic import UserLinked as UserSchema
 from ring.ring_pydantic.core import ResponseMessage
+from ring.ring_pydantic.linked_schemas import UserMe, UserUnlinked
 
 router = APIRouter()
 
 
-@router.get("/me", response_model=UserSchema)
+@router.get("/me", response_model=UserMe)
 async def read_user_me(
     req_dep: AuthenticatedRequestDependencies = Depends(
         get_request_dependencies,
@@ -54,7 +54,7 @@ async def read_user_me(
 
 
 @router.post(
-    "/user", response_model=UserSchema, deprecated=True, status_code=201
+    "/user", response_model=UserUnlinked, deprecated=True, status_code=201
 )
 async def create_user(
     user: UserCreate,
@@ -90,7 +90,7 @@ async def create_user(
     return db_user
 
 
-@router.post("/register/{token}", response_model=UserSchema)
+@router.post("/register/{token}", response_model=UserUnlinked)
 async def register_user(
     token: str,
     user: UserCreate,
@@ -137,7 +137,7 @@ async def register_user(
     return db_user
 
 
-@router.get("/users", response_model=Sequence[UserSchema])
+@router.get("/users", response_model=Sequence[UserUnlinked])
 async def read_users(
     skip: int = 0,
     limit: int = 100,
@@ -159,7 +159,7 @@ async def read_users(
     return users
 
 
-@router.get("/user/{user_api_id}", response_model=UserSchema)
+@router.get("/user/{user_api_id}", response_model=UserUnlinked)
 async def read_user_by_id(
     user_api_id: str,
     req_dep: AuthenticatedRequestDependencies = Depends(
@@ -188,7 +188,7 @@ async def read_user_by_id(
 
 @router.patch(
     "/me",
-    response_model=UserSchema,
+    response_model=UserMe,
 )
 async def update_user_me(
     current_user_update_data: UserUpdate,
