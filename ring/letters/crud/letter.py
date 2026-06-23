@@ -514,12 +514,13 @@ def promote_and_create_new_letters(db: Session, letter_ids: list[int]) -> None:
     db.commit()
 
 
-@job_factory("postpend_upcoming_letters")
-def postpend_upcoming_letters(db: Session, letter_ids: list[int]) -> None:
+def postpend_upcoming_letters_with_session(
+    db: Session, letter_ids: list[int]
+) -> None:
     """Move letters to SENT status.
 
-    This task is triggered when letters need to be moved from IN_PROGRESS to
-    SENT status. It also creates a new upcoming letter for the affected groups.
+    This helper is used by the scheduled postpend job and tests that need to
+    provide their own transaction-scoped session.
 
     Letters below the responder send threshold are deferred instead of marked
     SENT without an email.
@@ -543,6 +544,20 @@ def postpend_upcoming_letters(db: Session, letter_ids: list[int]) -> None:
             letter.send_at + timedelta(days=letter.group.cycle_length),
         )
     db.commit()
+
+
+@job_factory("postpend_upcoming_letters")
+def postpend_upcoming_letters(db: Session, letter_ids: list[int]) -> None:
+    """Move letters to SENT status.
+
+    This task is triggered when letters need to be moved from IN_PROGRESS to
+    SENT status. It also creates a new upcoming letter for the affected groups.
+
+    Args:
+        db (Session): Database session
+        letter_ids (list[int]): IDs of letters to postpend
+    """
+    postpend_upcoming_letters_with_session(db, letter_ids)
 
 
 def add_participants(

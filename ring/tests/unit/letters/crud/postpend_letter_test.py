@@ -22,7 +22,7 @@ class TestPostpendLetters:
     def run_postpend_job(
         self, db_session: Session, letter_ids: list[int]
     ) -> None:
-        letter_crud.postpend_upcoming_letters.__wrapped__(
+        letter_crud.postpend_upcoming_letters_with_session(
             db_session, letter_ids
         )
 
