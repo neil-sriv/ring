@@ -7,7 +7,38 @@ in both HTML and plain text versions.
 
 from __future__ import annotations
 
+import html
+import re
+
 from ring.email_util import EmailDraft, construct_email_draft
+
+_URL_RE = re.compile(r"https?://[^\s<>\"]+")
+
+
+def _split_response_display(response_text: str) -> tuple[str | None, str]:
+    """Split a compiled response into participant name and body text."""
+    if ": " in response_text:
+        name, _, body = response_text.partition(": ")
+        return name, body
+    return None, response_text
+
+
+def _linkify_escaped_text(escaped_text: str) -> str:
+    """Turn http(s) URLs in already-escaped text into anchor tags."""
+
+    def replacer(match: re.Match[str]) -> str:
+        url = match.group(0)
+        return (
+            f'<a href="{url}" style="color:#2b6cb0;text-decoration:underline;">'
+            f"{url}</a>"
+        )
+
+    return _URL_RE.sub(replacer, escaped_text)
+
+
+def _format_response_body_html(text: str) -> str:
+    """Format response body text for HTML email bodies."""
+    return _linkify_escaped_text(html.escape(text))
 
 
 def construct_question_html(
@@ -32,7 +63,7 @@ def construct_question_html(
   </ul>
 </div>
 """.format(
-        question=question,
+        question=html.escape(question),
         responses="".join(
             [construct_response_html(response) for response in responses]
         ),
@@ -48,25 +79,40 @@ def construct_response_html(response: tuple[str, list[str]]) -> str:
     Returns:
         str: HTML string containing the formatted response and images
     """
+    participant_name, body = _split_response_display(response[0])
+    name_html = (
+        (
+            '<div style="font-weight:600;font-size:15px;color:#2d3748;'
+            'margin-bottom:4px;">{name}</div>'
+        ).format(name=html.escape(participant_name))
+        if participant_name
+        else ""
+    )
+    body_html = (
+        '<p style="margin:0;font-size:15px;line-height:1.5;color:#1a202c;'
+        'white-space:pre-line;">{text}</p>'
+    ).format(text=_format_response_body_html(body))
     image_htmls = "".join(
         [
             (
                 '<img src="{url}" alt="Image" '
                 'style="display:block; margin:8px 0 0; width:auto; '
                 'height:auto; max-width:100%; border-radius:6px;" />'
-            ).format(url=url)
+            ).format(url=html.escape(url, quote=True))
             for url in response[1]
         ]
     )
     return """
 <li style="margin-bottom: 12px; list-style: none;">
   <div style="padding: 12px 14px; border-radius: 8px; border: 1px solid #e2e8f0; background-color: #ffffff;">
-    <p style="margin: 0; font-size: 15px; line-height: 1.5; color: #1a202c;">{text}</p>
+    {name_html}
+    {body_html}
     {images}
   </div>
 </li>
 """.format(
-        text=response[0],
+        name_html=name_html,
+        body_html=body_html,
         images=image_htmls,
     )
 
