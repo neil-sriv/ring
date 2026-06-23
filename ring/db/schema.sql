@@ -207,7 +207,7 @@ CREATE TABLE public.hybrid_search_document (
 	raw_text VARCHAR NOT NULL,
 	created_at TIMESTAMPTZ NOT NULL DEFAULT now():::TIMESTAMPTZ,
 	text_tsv TSVECTOR NULL AS (to_tsvector('english':::STRING, raw_text)) STORED,
-	text_embedding_768 VECTOR(768) NOT NULL,
+	text_embedding_768 VECTOR(768) NULL,
 	CONSTRAINT hybrid_search_document_pkey PRIMARY KEY (id ASC),
 	INDEX ix_hybrid_search_document_created_at (created_at ASC),
 	INVERTED INDEX content_search_inverted_idx (text_tsv),
