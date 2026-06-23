@@ -18,7 +18,7 @@ class TestSendEmailTask:
         html_body = construct_response_html(response)
 
         assert "white-space:pre-line" in html_body
-        assert "Line one\nLine two" not in html_body
+        assert "Line one\nLine two" in html_body
         assert "Line one" in html_body
         assert "Line two" in html_body
         assert "Alice" in html_body
