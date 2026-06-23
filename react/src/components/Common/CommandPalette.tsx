@@ -1,6 +1,7 @@
+import { useQuery } from "@tanstack/react-query"
 import { useQueryClient } from "@tanstack/react-query"
 import { useNavigate } from "@tanstack/react-router"
-import { Home, LogOut, Search, Settings, Users } from "lucide-react"
+import { Home, Loader2, LogOut, Search, Settings, Users } from "lucide-react"
 import { useEffect, useMemo, useRef, useState } from "react"
 
 import {
@@ -13,10 +14,11 @@ import {
 import { Input } from "@/components/ui/input"
 import { cn } from "@/lib/utils"
 import type { UserLinked } from "../../client"
+import { performSearchSearchSearchGetOptions } from "../../client/@tanstack/react-query.gen"
 import { readUserMePartiesMeGetQueryKey } from "../../client/@tanstack/react-query.gen"
 import useAuth from "../../hooks/useAuth"
-import { NAV_ITEM_SHORTCUTS, modifierKeyLabel } from "../../lib/keyboard"
-import { KeyboardShortcutsReference } from "./KeyboardShortcutsReference"
+import { modifierKeyLabel } from "../../lib/keyboard"
+import { searchResultToCommandItem } from "./searchResultCommand"
 
 interface CommandPaletteProps {
   open: boolean
@@ -26,18 +28,24 @@ interface CommandPaletteProps {
 interface CommandItem {
   id: string
   label: string
+  description?: string
   keywords: string
   icon: React.ComponentType<{ className?: string }>
   action: () => void
-  section: "Navigation" | "Groups" | "Actions"
-  shortcut?: string
+  section: "Navigation" | "Groups" | "Actions" | "Search results"
+  disabled?: boolean
 }
+
+const SEARCH_DEBOUNCE_MS = 300
+const SEARCH_MIN_QUERY_LENGTH = 2
+const SEARCH_RESULT_LIMIT = 8
 
 export function CommandPalette({ open, onOpenChange }: CommandPaletteProps) {
   const navigate = useNavigate()
   const queryClient = useQueryClient()
   const { logout } = useAuth()
   const [query, setQuery] = useState("")
+  const [debouncedQuery, setDebouncedQuery] = useState("")
   const [selectedIndex, setSelectedIndex] = useState(0)
   const inputRef = useRef<HTMLInputElement>(null)
   const listRef = useRef<HTMLDivElement>(null)
@@ -56,7 +64,6 @@ export function CommandPalette({ open, onOpenChange }: CommandPaletteProps) {
         keywords: "home dashboard",
         icon: Home,
         section: "Navigation",
-        shortcut: NAV_ITEM_SHORTCUTS["/"],
         action: () => navigate({ to: "/" }),
       },
       {
@@ -65,7 +72,6 @@ export function CommandPalette({ open, onOpenChange }: CommandPaletteProps) {
         keywords: "groups",
         icon: Users,
         section: "Navigation",
-        shortcut: NAV_ITEM_SHORTCUTS["/groups"],
         action: () => navigate({ to: "/groups" }),
       },
       {
@@ -74,7 +80,6 @@ export function CommandPalette({ open, onOpenChange }: CommandPaletteProps) {
         keywords: "search find",
         icon: Search,
         section: "Navigation",
-        shortcut: NAV_ITEM_SHORTCUTS["/search"],
         action: () => navigate({ to: "/search" }),
       },
       {
@@ -83,7 +88,6 @@ export function CommandPalette({ open, onOpenChange }: CommandPaletteProps) {
         keywords: "settings profile preferences",
         icon: Settings,
         section: "Navigation",
-        shortcut: NAV_ITEM_SHORTCUTS["/settings"],
         action: () => navigate({ to: "/settings" }),
       },
     ]
@@ -118,6 +122,36 @@ export function CommandPalette({ open, onOpenChange }: CommandPaletteProps) {
     return [...navigationItems, ...groupItems, ...actionItems]
   }, [groups, logout, navigate, queryClient])
 
+  const { data: searchData, isFetching: isSearchFetching } = useQuery({
+    ...performSearchSearchSearchGetOptions({
+      query: {
+        query: debouncedQuery,
+        limit: SEARCH_RESULT_LIMIT,
+      },
+    }),
+    enabled: open && debouncedQuery.length >= SEARCH_MIN_QUERY_LENGTH,
+  })
+
+  const searchItems = useMemo<CommandItem[]>(() => {
+    if (!searchData?.results.length) {
+      return []
+    }
+
+    return searchData.results.map((result) => {
+      const searchItem = searchResultToCommandItem(result, navigate)
+      return {
+        id: searchItem.id,
+        label: searchItem.label,
+        description: searchItem.description,
+        keywords: "",
+        icon: searchItem.icon,
+        section: "Search results" as const,
+        disabled: searchItem.action === null,
+        action: searchItem.action ?? (() => {}),
+      }
+    })
+  }, [navigate, searchData?.results])
+
   const filteredItems = useMemo(() => {
     const normalizedQuery = query.trim().toLowerCase()
     if (!normalizedQuery) {
@@ -130,15 +164,42 @@ export function CommandPalette({ open, onOpenChange }: CommandPaletteProps) {
     )
   }, [items, query])
 
-  const showShortcutHelp = query.trim().length === 0
+  const displayItems = useMemo(
+    () => [...filteredItems, ...searchItems],
+    [filteredItems, searchItems],
+  )
+
+  const sections = useMemo(() => {
+    const orderedSections: CommandItem["section"][] = [
+      "Navigation",
+      "Groups",
+      "Search results",
+      "Actions",
+    ]
+    return orderedSections.filter((section) =>
+      displayItems.some((item) => item.section === section),
+    )
+  }, [displayItems])
+
+  useEffect(() => {
+    const timer = window.setTimeout(() => {
+      setDebouncedQuery(query.trim())
+    }, SEARCH_DEBOUNCE_MS)
+    return () => window.clearTimeout(timer)
+  }, [query])
 
   useEffect(() => {
     if (open) {
       setQuery("")
+      setDebouncedQuery("")
       setSelectedIndex(0)
       window.requestAnimationFrame(() => inputRef.current?.focus())
     }
   }, [open])
+
+  useEffect(() => {
+    setSelectedIndex(0)
+  }, [debouncedQuery])
 
   useEffect(() => {
     const selectedElement = listRef.current?.querySelector(
@@ -148,6 +209,9 @@ export function CommandPalette({ open, onOpenChange }: CommandPaletteProps) {
   }, [selectedIndex])
 
   function runItem(item: CommandItem) {
+    if (item.disabled) {
+      return
+    }
     item.action()
     onOpenChange(false)
   }
@@ -156,9 +220,9 @@ export function CommandPalette({ open, onOpenChange }: CommandPaletteProps) {
     if (event.key === "ArrowDown") {
       event.preventDefault()
       setSelectedIndex((index) =>
-        filteredItems.length === 0
+        displayItems.length === 0
           ? 0
-          : Math.min(index + 1, filteredItems.length - 1),
+          : Math.min(index + 1, displayItems.length - 1),
       )
       return
     }
@@ -169,13 +233,14 @@ export function CommandPalette({ open, onOpenChange }: CommandPaletteProps) {
       return
     }
 
-    if (event.key === "Enter" && filteredItems[selectedIndex]) {
+    if (event.key === "Enter" && displayItems[selectedIndex]) {
       event.preventDefault()
-      runItem(filteredItems[selectedIndex])
+      runItem(displayItems[selectedIndex])
     }
   }
 
-  const sections = ["Navigation", "Groups", "Actions"] as const
+  const showSearchPending =
+    query.trim().length >= SEARCH_MIN_QUERY_LENGTH && isSearchFetching
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -183,7 +248,7 @@ export function CommandPalette({ open, onOpenChange }: CommandPaletteProps) {
         <DialogHeader className="sr-only">
           <DialogTitle>Command menu</DialogTitle>
           <DialogDescription>
-            Search pages, groups, and actions
+            Search pages, groups, content, and actions
           </DialogDescription>
         </DialogHeader>
         <div className="border-b border-border px-3 py-2">
@@ -199,64 +264,69 @@ export function CommandPalette({ open, onOpenChange }: CommandPaletteProps) {
             className="h-10 border-0 bg-transparent px-1 shadow-none focus-visible:ring-0"
           />
         </div>
-        <div className="flex max-h-[min(32rem,80vh)] flex-col">
-          <div ref={listRef} className="flex-1 overflow-y-auto p-2">
-            {filteredItems.length === 0 ? (
-              <p className="px-3 py-6 text-center text-sm text-muted-foreground">
-                No results found.
-              </p>
-            ) : (
-              sections.map((section) => {
-                const sectionItems = filteredItems.filter(
-                  (item) => item.section === section,
-                )
-                if (sectionItems.length === 0) {
-                  return null
-                }
+        <div ref={listRef} className="max-h-80 overflow-y-auto p-2">
+          {showSearchPending && displayItems.length === 0 ? (
+            <div className="flex items-center justify-center gap-2 px-3 py-6 text-sm text-muted-foreground">
+              <Loader2 className="h-4 w-4 animate-spin" />
+              Searching…
+            </div>
+          ) : displayItems.length === 0 ? (
+            <p className="px-3 py-6 text-center text-sm text-muted-foreground">
+              No results found.
+            </p>
+          ) : (
+            sections.map((section) => {
+              const sectionItems = displayItems.filter(
+                (item) => item.section === section,
+              )
+              if (sectionItems.length === 0) {
+                return null
+              }
 
-                return (
-                  <div key={section} className="mb-2 last:mb-0">
-                    <p className="px-2 py-1.5 text-xs font-medium text-muted-foreground">
+              return (
+                <div key={section} className="mb-2 last:mb-0">
+                  <div className="flex items-center gap-2 px-2 py-1.5">
+                    <p className="text-xs font-medium text-muted-foreground">
                       {section}
                     </p>
-                    {sectionItems.map((item) => {
-                      const itemIndex = filteredItems.indexOf(item)
-                      const Icon = item.icon
-                      return (
-                        <button
-                          key={item.id}
-                          type="button"
-                          data-command-index={itemIndex}
-                          onClick={() => runItem(item)}
-                          className={cn(
-                            "flex w-full items-center gap-3 rounded-md px-2 py-2 text-left text-sm",
-                            itemIndex === selectedIndex
+                    {section === "Search results" && showSearchPending ? (
+                      <Loader2 className="h-3 w-3 animate-spin text-muted-foreground" />
+                    ) : null}
+                  </div>
+                  {sectionItems.map((item) => {
+                    const itemIndex = displayItems.indexOf(item)
+                    const Icon = item.icon
+                    return (
+                      <button
+                        key={item.id}
+                        type="button"
+                        data-command-index={itemIndex}
+                        onClick={() => runItem(item)}
+                        disabled={item.disabled}
+                        className={cn(
+                          "flex w-full items-center gap-3 rounded-md px-2 py-2 text-left text-sm",
+                          item.disabled
+                            ? "cursor-default opacity-60"
+                            : itemIndex === selectedIndex
                               ? "bg-accent text-accent-foreground"
                               : "text-foreground hover:bg-accent/60",
-                          )}
-                        >
-                          <Icon className="h-4 w-4 shrink-0 opacity-70" />
-                          <span className="flex-1 truncate">{item.label}</span>
-                          {item.shortcut && (
-                            <kbd className="shrink-0 rounded border border-border bg-muted px-1.5 py-0.5 font-mono text-[10px] text-muted-foreground">
-                              {item.shortcut}
-                            </kbd>
-                          )}
-                        </button>
-                      )
-                    })}
-                  </div>
-                )
-              })
-            )}
-          </div>
-          {showShortcutHelp && (
-            <div className="border-t border-border bg-muted/30 px-3 py-3">
-              <p className="mb-2 text-xs font-medium text-foreground">
-                Keyboard shortcuts
-              </p>
-              <KeyboardShortcutsReference compact />
-            </div>
+                        )}
+                      >
+                        <Icon className="h-4 w-4 shrink-0 opacity-70" />
+                        <span className="min-w-0 flex-1">
+                          <span className="block truncate">{item.label}</span>
+                          {item.description ? (
+                            <span className="block truncate text-xs text-muted-foreground">
+                              {item.description}
+                            </span>
+                          ) : null}
+                        </span>
+                      </button>
+                    )
+                  })}
+                </div>
+              )
+            })
           )}
         </div>
       </DialogContent>
