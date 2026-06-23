@@ -1,4 +1,3 @@
-import { useNavigate } from "@tanstack/react-router"
 import { useEffect, useRef, useState } from "react"
 
 import {
@@ -9,85 +8,30 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog"
 import { cn } from "@/lib/utils"
-import {
-  GO_TO_SHORTCUTS,
-  isEditableTarget,
-  modifierKeyLabel,
-} from "../../lib/keyboard"
-import {
-  completeGoSequence,
-  isGoSequencePending,
-  resolveGoSequenceKey,
-  startGoSequence,
-  subscribeGoSequencePending,
-} from "../../lib/keyboardSequence"
+import { registerKeyboardShortcutHandlers } from "../../lib/globalKeyboardShortcuts"
+import { GO_TO_SHORTCUTS, modifierKeyLabel } from "../../lib/keyboard"
+import { subscribeGoSequencePending } from "../../lib/keyboardSequence"
 import { CommandPalette } from "./CommandPalette"
 
-const GO_SEQUENCE_TIMEOUT_MS = 1000
-
 export function KeyboardShortcuts() {
-  const navigate = useNavigate()
-  const navigateRef = useRef(navigate)
   const [paletteOpen, setPaletteOpen] = useState(false)
   const [helpOpen, setHelpOpen] = useState(false)
   const [goPending, setGoPending] = useState(false)
-  const shortcutsEnabled = !paletteOpen && !helpOpen
+  const paletteOpenRef = useRef(paletteOpen)
+  const helpOpenRef = useRef(helpOpen)
 
-  navigateRef.current = navigate
+  paletteOpenRef.current = paletteOpen
+  helpOpenRef.current = helpOpen
 
   useEffect(() => subscribeGoSequencePending(setGoPending), [])
 
   useEffect(() => {
-    function handleKeyDown(event: KeyboardEvent) {
-      if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === "k") {
-        event.preventDefault()
-        completeGoSequence()
-        setPaletteOpen((open) => !open)
-        return
-      }
-
-      if (!shortcutsEnabled || isEditableTarget(event.target)) {
-        if (isGoSequencePending()) {
-          completeGoSequence()
-        }
-        return
-      }
-
-      if (
-        event.key === "?" &&
-        !event.metaKey &&
-        !event.ctrlKey &&
-        !event.altKey
-      ) {
-        event.preventDefault()
-        completeGoSequence()
-        setHelpOpen(true)
-        return
-      }
-
-      const key = event.key.toLowerCase()
-
-      if (isGoSequencePending()) {
-        const destination = resolveGoSequenceKey(key)
-        completeGoSequence()
-        if (destination) {
-          event.preventDefault()
-          navigateRef.current({ to: destination })
-        }
-        return
-      }
-
-      if (key === "g") {
-        event.preventDefault()
-        startGoSequence(() => {}, GO_SEQUENCE_TIMEOUT_MS)
-      }
-    }
-
-    document.addEventListener("keydown", handleKeyDown, true)
-    return () => {
-      document.removeEventListener("keydown", handleKeyDown, true)
-    }
-  }, [shortcutsEnabled])
+    registerKeyboardShortcutHandlers({
+      togglePalette: () => setPaletteOpen((open) => !open),
+      openHelp: () => setHelpOpen(true),
+      isModalOpen: () => paletteOpenRef.current || helpOpenRef.current,
+    })
+  }, [])
 
   return (
     <>
