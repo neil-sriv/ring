@@ -130,6 +130,8 @@ export function CommandPalette({ open, onOpenChange }: CommandPaletteProps) {
       },
     }),
     enabled: open && debouncedQuery.length >= SEARCH_MIN_QUERY_LENGTH,
+    staleTime: 0,
+    retry: 1,
   })
 
   const searchItems = useMemo<CommandItem[]>(() => {
@@ -150,7 +152,7 @@ export function CommandPalette({ open, onOpenChange }: CommandPaletteProps) {
         action: searchItem.action ?? (() => {}),
       }
     })
-  }, [navigate, searchData?.results])
+  }, [navigate, searchData])
 
   const filteredItems = useMemo(() => {
     const normalizedQuery = query.trim().toLowerCase()

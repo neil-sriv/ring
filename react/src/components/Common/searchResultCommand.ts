@@ -52,7 +52,7 @@ export function searchResultToCommandItem(
       return {
         id: `search-${model.api_identifier}`,
         label: model.name,
-        description: `Member of ${model.groups.length} groups`,
+        description: `Member of ${model.groups?.length ?? 0} groups`,
         icon: Users,
         badge: "User",
         action: null,
@@ -63,7 +63,7 @@ export function searchResultToCommandItem(
       return {
         id: `search-${model.api_identifier}`,
         label: model.name,
-        description: `${model.members.length} members · ${model.letters.length} letters`,
+        description: `${model.members?.length ?? 0} members · ${model.letters?.length ?? 0} letters`,
         icon: Users,
         badge: "Group",
         action: () =>
@@ -92,7 +92,7 @@ export function searchResultToCommandItem(
       return {
         id: `search-${model.api_identifier}`,
         label: `${model.group.name} · Letter ${model.number ?? "?"}`,
-        description: `${model.participants.length} participants · ${model.questions.length} questions`,
+        description: `${model.participants?.length ?? 0} participants · ${model.questions?.length ?? 0} questions`,
         icon: Mail,
         badge: "Letter",
         action: () =>
