@@ -4,7 +4,7 @@
     "dockerfile": "Dockerfile",
     "context": ".."
   },
-  "install": "uv sync --group dev --group ai && cd react && pnpm install && (test -f localhost.crt || bash dev_util/ssl.sh) && (test -f certs/node.key && chmod 600 certs/node.key || true)",
+  "install": "uv sync --group dev --group ai && (cd react && pnpm install) && (test -f localhost.crt || bash dev_util/ssl.sh) && (test -f certs/node.key && chmod 600 certs/node.key || true)",
   "start": "sudo service docker start && bash .cursor/cloud-start.sh --bootstrap-only",
   "terminals": [
     {
