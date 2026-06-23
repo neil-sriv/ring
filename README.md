@@ -193,10 +193,15 @@ ring run shell      # Start a shell
 
 ## Deployment
 
+Prod runs Docker Compose on a single EC2 instance. Images are stored in **ECR
+Public** (`public.ecr.aws/z2k1e8p1/`); the database is **CockroachDB Cloud**
+(`ring-db`). See [docs/infrastructure.md](docs/infrastructure.md) for the full
+topology (S3, CloudFront, SES, request flows).
+
 ### Build new images
 
 ```bash
-VITE_API_URL=http://ring.neilsriv.tech ring compose any --prod build
+VITE_API_URL=https://ring.neilsriv.tech ring compose any --prod build
 ```
 
 ### Push to registry
@@ -207,12 +212,12 @@ ring docker tp
 
 ### Deploy
 
-- ssh into the server
+SSH into the EC2 host, then:
 
 ```bash
 cd ring
 git pull
-./dev_util/prod.sh
+./dev_util/prod.sh          # pull ring-api, ring-frontend, ring-llm from ECR
 ring db upgrade
 ring compose any --prod up -d
 # may need to restart nginx

@@ -11,7 +11,7 @@ from dev_util.dev import cmd_run, dev_command, dev_group
 LOCAL_POSTGRES_URI = (
     "postgresql://ring-postgres:ring-postgres@localhost:8004/ring"
 )
-PROD_POSTGRES_URI = "postgresql://ringpostgres:ringpostgres@ring-postgres.c9gw8w2m4ayu.us-east-1.rds.amazonaws.com:5432/ring"
+# Prod DB is CockroachDB Cloud (cluster ring-db), not RDS. See docs/infrastructure.md.
 LOCAL_COCKROACH_URI = "postgresql://root@127.0.0.1:26257/ring"
 COCKROACH_CERT_DIR = "/root/.cockroach-certs"
 COCKROACH_CONNECTION_STRING = f"{LOCAL_COCKROACH_URI}?sslcert={COCKROACH_CERT_DIR}/client.root.crt&sslkey={COCKROACH_CERT_DIR}/client.root.key&sslmode=verify-full&sslrootcert={COCKROACH_CERT_DIR}/ca.crt"
