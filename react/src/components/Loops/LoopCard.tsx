@@ -3,6 +3,7 @@ import { useQueryClient } from "@tanstack/react-query"
 import { Link } from "@tanstack/react-router"
 import type { MinimalLetter, PublicLetter, UserLinked } from "../../client"
 import { readUserMePartiesMeGetQueryKey } from "../../client/@tanstack/react-query.gen"
+import { formatResponderProgress } from "../../util/loopResponderProgress"
 
 export function LoopCard(props: {
   loop: MinimalLetter | PublicLetter
@@ -54,16 +55,9 @@ export function LoopCard(props: {
     return null
   }
 
-  const getResponderCount = () => {
-    if (
-      props.showResponderCount &&
-      "responders" in props.loop &&
-      props.loop.responders
-    ) {
-      return props.loop.responders.length
-    }
-    return null
-  }
+  const responderCount = props.showResponderCount
+    ? formatResponderProgress(props.loop)
+    : null
 
   const getUnansweredQuestionsCount = () => {
     if (
@@ -83,7 +77,6 @@ export function LoopCard(props: {
     return 0
   }
 
-  const responderCount = getResponderCount()
   const unansweredCount = getUnansweredQuestionsCount()
 
   return (
@@ -108,9 +101,7 @@ export function LoopCard(props: {
               {sendDate.toLocaleDateString()}
             </p>
             {responderCount !== null && (
-              <p className="text-sm text-muted-foreground">
-                {responderCount} responder{responderCount !== 1 ? "s" : ""}
-              </p>
+              <p className="text-sm text-muted-foreground">{responderCount}</p>
             )}
             {unansweredCount > 0 && (
               <p className="text-sm font-medium text-orange-500">

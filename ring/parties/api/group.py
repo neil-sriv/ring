@@ -233,7 +233,12 @@ async def update_group(
     Raises:
         HTTPException: If no updates provided, user not authorized, or invalid cycle length
     """
-    if not group.name and group.cycle_length is None:
+    if (
+        not group.name
+        and group.cycle_length is None
+        and group.min_responder_ratio is None
+        and "min_responder_ratio" not in group.model_fields_set
+    ):
         raise HTTPException(status.HTTP_400_BAD_REQUEST, "No updates provided")
     db_group = api_identifier_crud.get_model(
         req_dep.db, Group, api_id=group_api_id
@@ -254,6 +259,16 @@ async def update_group(
         group_crud.update_cycle_length(
             req_dep.db, db_group, group.cycle_length
         )
+    if "min_responder_ratio" in group.model_fields_set:
+        try:
+            group_crud.update_min_responder_ratio(
+                req_dep.db, db_group, group.min_responder_ratio
+            )
+        except ValueError as exc:
+            raise HTTPException(
+                status.HTTP_400_BAD_REQUEST,
+                str(exc),
+            ) from exc
     req_dep.db.commit()
     return db_group
 

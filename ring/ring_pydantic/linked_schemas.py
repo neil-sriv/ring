@@ -7,12 +7,13 @@ entities need to be included in the response.
 
 from __future__ import annotations
 
-from typing import Any, Literal, Optional, Union
+from typing import Any, Literal, Optional, Self, Union
 
 from loguru import logger
 from pydantic import (
     BaseModel,
     Field,
+    ModelWrapValidatorHandler,
     ValidationInfo,
     computed_field,
     field_validator,
@@ -30,6 +31,29 @@ from ring.parties.schemas.user import User, UserUnlinked
 from ring.s3.schemas.image import WithImageMixin
 from ring.tasks.schemas.schedule import Schedule, ScheduleUnlinked
 from ring.tasks.schemas.task import TaskUnlinked
+
+
+def _populate_letter_send_threshold_fields[T: BaseModel](
+    model: T, letter: Any
+) -> T:
+    """Add send-threshold progress fields when serializing a letter ORM object."""
+    if not hasattr(letter, "group"):
+        return model
+    from ring.letters.send_threshold import (
+        effective_send_threshold_ratio,
+        letter_responder_count,
+        minimum_responders_required,
+    )
+
+    return model.model_copy(
+        update={
+            "required_responders": minimum_responders_required(letter),
+            "responder_count": letter_responder_count(letter),
+            "send_threshold_ratio": effective_send_threshold_ratio(
+                letter.group
+            ),
+        }
+    )
 
 
 class UserLinked(User):
@@ -106,10 +130,26 @@ class MinimalLetter(Letter):
     Attributes:
         group (GroupUnlinked): Group the letter belongs to
         responders (list[UserUnlinked]): Users who have responded
+        required_responders (int): Minimum unique responders needed before send
+        responder_count (int): Current unique responder count
+        send_threshold_ratio (float | None): Effective ratio gate, or null if disabled
     """
 
     group: "GroupUnlinked"
     responders: list["UserUnlinked"]
+    required_responders: int = 0
+    responder_count: int = 0
+    send_threshold_ratio: float | None = None
+
+    @model_validator(mode="wrap")
+    @classmethod
+    def populate_send_threshold_progress(
+        cls,
+        data: Any,
+        handler: ModelWrapValidatorHandler[Self],
+    ) -> Self:
+        model = handler(data)
+        return _populate_letter_send_threshold_fields(model, data)
 
 
 class PublicLetter(Letter):
@@ -123,12 +163,29 @@ class PublicLetter(Letter):
         questions (list[PublicQuestion]): Questions with public responses
         responders (list[UserUnlinked]): Users who have responded
         participants (list[UserUnlinked]): All participants in the letter
+        required_responders (int): Minimum unique responders needed before send
+        responder_count (int): Current unique responder count
+        send_threshold_ratio (float | None): Effective ratio gate, or null if disabled
     """
 
     group: "GroupUnlinked"
     questions: list["PublicQuestion"]
     responders: list["UserUnlinked"]
     participants: list["UserUnlinked"]
+    required_responders: int = 0
+    responder_count: int = 0
+    send_threshold_ratio: float | None = None
+
+    @model_validator(mode="wrap")
+    @classmethod
+    def populate_send_threshold_progress(
+        cls,
+        data: Any,
+        handler: ModelWrapValidatorHandler[Self],
+    ) -> Self:
+        """Fill send-threshold progress fields when validating from ORM letters."""
+        model = handler(data)
+        return _populate_letter_send_threshold_fields(model, data)
 
 
 class DashboardLetters(BaseModel):

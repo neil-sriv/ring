@@ -9,6 +9,11 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from ring.letters.constants import LetterStatus
+from ring.letters.send_threshold import (
+    GROUP_SETTING_MIN_RESPONDER_RATIO_KEY,
+    GROUP_SETTING_MIN_RESPONDERS_KEY,
+    LETTER_SEND_DEFERRAL_DAYS,
+)
 from ring.tasks.crud import task as task_crud
 from ring.tasks.models.task_model import Task, TaskStatus, TaskType
 from ring.tests.factories.letters.letter_factory import LetterFactory
@@ -56,9 +61,7 @@ class TestTaskCrud:
         mock_send_email.assert_not_called()
         db_session.refresh(letter)
 
-        expected_send_at = send_at + timedelta(
-            days=task_crud.LETTER_SEND_DEFERRAL_DAYS
-        )
+        expected_send_at = send_at + timedelta(days=LETTER_SEND_DEFERRAL_DAYS)
         assert letter.send_at == expected_send_at
         assert letter.status == LetterStatus.IN_PROGRESS
 
@@ -116,9 +119,7 @@ class TestTaskCrud:
         admin = UserFactory.create()
         members = [admin] + [UserFactory.create() for _ in range(3)]
         group = GroupFactory.create(admin=admin, members=members)
-        group.key_values.set_value(
-            task_crud.GROUP_SETTING_MIN_RESPONDERS_KEY, 3
-        )
+        group.key_values.set_value(GROUP_SETTING_MIN_RESPONDERS_KEY, 3)
         send_at = datetime.now(tz=UTC) + timedelta(days=1)
         letter = LetterFactory.create(
             group=group,
@@ -148,7 +149,7 @@ class TestTaskCrud:
         mock_send_email.assert_not_called()
         db_session.refresh(letter)
         assert letter.send_at == send_at + timedelta(
-            days=task_crud.LETTER_SEND_DEFERRAL_DAYS
+            days=LETTER_SEND_DEFERRAL_DAYS
         )
 
     def test_execute_send_email_task_ignores_invalid_threshold_config(
@@ -159,7 +160,7 @@ class TestTaskCrud:
         members = [admin] + [UserFactory.create() for _ in range(3)]
         group = GroupFactory.create(admin=admin, members=members)
         group.key_values.set_value(
-            task_crud.GROUP_SETTING_MIN_RESPONDERS_KEY, "not-a-number"
+            GROUP_SETTING_MIN_RESPONDERS_KEY, "not-a-number"
         )
         send_at = datetime.now(tz=UTC) + timedelta(days=1)
         letter = LetterFactory.create(
@@ -196,9 +197,7 @@ class TestTaskCrud:
         admin = UserFactory.create()
         members = [admin] + [UserFactory.create() for _ in range(3)]
         group = GroupFactory.create(admin=admin, members=members)
-        group.key_values.set_value(
-            task_crud.GROUP_SETTING_MIN_RESPONDER_RATIO_KEY, 0.75
-        )
+        group.key_values.set_value(GROUP_SETTING_MIN_RESPONDER_RATIO_KEY, 0.75)
         send_at = datetime.now(tz=UTC) + timedelta(days=1)
         letter = LetterFactory.create(
             group=group,
@@ -228,5 +227,39 @@ class TestTaskCrud:
         mock_send_email.assert_not_called()
         db_session.refresh(letter)
         assert letter.send_at == send_at + timedelta(
-            days=task_crud.LETTER_SEND_DEFERRAL_DAYS
+            days=LETTER_SEND_DEFERRAL_DAYS
         )
+
+    def test_execute_send_email_task_sends_when_threshold_disabled(
+        self, db_session: Session
+    ) -> None:
+        """Send on schedule when responder ratio is explicitly set to zero."""
+        admin = UserFactory.create()
+        members = [admin] + [UserFactory.create() for _ in range(3)]
+        group = GroupFactory.create(admin=admin, members=members)
+        group.key_values.set_value(GROUP_SETTING_MIN_RESPONDER_RATIO_KEY, 0)
+        send_at = datetime.now(tz=UTC) + timedelta(days=1)
+        letter = LetterFactory.create(
+            group=group,
+            status=LetterStatus.IN_PROGRESS,
+            send_at=send_at,
+        )
+        QuestionFactory.create(letter=letter)
+        db_session.commit()
+
+        send_task = db_session.scalars(
+            select(Task).where(
+                Task.schedule_id == group.schedule.id,
+                Task.type == TaskType.SEND_EMAIL,
+                Task.arguments == {"letter_id": letter.id},
+            )
+        ).one()
+
+        with patch(
+            "ring.tasks.crud.task.send_email", return_value="message-id"
+        ) as mock_send_email:
+            task_crud.execute_send_email_task(db_session, send_task)
+
+        mock_send_email.assert_called_once()
+        db_session.refresh(letter)
+        assert letter.status == LetterStatus.SENT

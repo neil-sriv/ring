@@ -15,6 +15,7 @@ from ring.api_identifier import util as api_identifier_crud
 from ring.letters.constants import DEFAULT_QUESTIONS, LetterStatus
 from ring.letters.crud.default_question import replace_default_questions
 from ring.letters.models.letter_model import Letter
+from ring.letters.send_threshold import set_group_min_responder_ratio
 from ring.parties.models.group_model import Group
 from ring.parties.models.user_model import User
 from ring.search.crud.hybrid_search import (
@@ -25,10 +26,6 @@ from ring.search.models.hybrid_search import (
     HybridSearchDocument,
     SearchableType,
 )
-from ring.tasks.crud import (
-    schedule as schedule_crud,
-)
-from ring.tasks.models.task_model import TaskType
 
 if TYPE_CHECKING:
     from sqlalchemy.orm import Session
@@ -95,6 +92,23 @@ def update_cycle_length(db: Session, group: Group, cycle_length: int) -> Group:
         Group: Updated group
     """
     group.cycle_length = cycle_length
+    return group
+
+
+def update_min_responder_ratio(
+    db: Session, group: Group, min_responder_ratio: float | None
+) -> Group:
+    """Update the minimum responder ratio for letter sends.
+
+    Args:
+        db (Session): Database session
+        group (Group): Group to update
+        min_responder_ratio (float | None): Ratio in [0, 1], or None for default
+
+    Returns:
+        Group: Updated group
+    """
+    set_group_min_responder_ratio(group, min_responder_ratio)
     return group
 
 

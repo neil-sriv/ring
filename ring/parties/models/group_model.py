@@ -19,6 +19,7 @@ from ring.created_at import CreatedAtMixin
 from ring.letters.constants import LetterStatus, LetterType
 from ring.letters.models.default_question_model import DefaultQuestion
 from ring.letters.models.letter_model import Letter
+from ring.letters.send_threshold import get_group_min_responder_ratio
 from ring.parties.models.group_key_value import GroupKeyValue
 from ring.parties.models.user_group_assocation import user_group_association
 from ring.ring_pydantic.linked_schemas import GroupLinked
@@ -130,6 +131,11 @@ class Group(Base, PydanticModel, APIIdentified, CreatedAtMixin):
             self._admin = admin
         else:
             raise ValueError("Admin must be a member of the group")
+
+    @hybrid_property
+    def min_responder_ratio(self) -> float | None:
+        """Configured minimum responder ratio before send, or None for default."""
+        return get_group_min_responder_ratio(self)
 
     @hybrid_property
     def cyclic_letters(self) -> list[Letter]:

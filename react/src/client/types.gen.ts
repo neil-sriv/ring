@@ -208,6 +208,7 @@ export type GroupLinked = {
     api_identifier: string;
     created_at: string;
     cycle_length: number;
+    min_responder_ratio?: number | null;
     members: Array<UserUnlinked>;
     letters: Array<LetterUnlinked>;
     schedule: ScheduleUnlinked | null;
@@ -225,6 +226,7 @@ export type GroupUnlinked = {
     api_identifier: string;
     created_at: string;
     cycle_length: number;
+    min_responder_ratio?: number | null;
 };
 
 /**
@@ -233,10 +235,14 @@ export type GroupUnlinked = {
  * Attributes:
  * name (str | None): New name for the group, optional
  * cycle_length (int | None): New cycle length in days, optional
+ * min_responder_ratio (float | None): Minimum share of participants who
+ * must respond before send (0-1). Use 0 to disable deferral. Omit or
+ * set null to use the default (0.5).
  */
 export type GroupUpdate = {
     name?: string | null;
     cycle_length?: number | null;
+    min_responder_ratio?: number | null;
 };
 
 export type HttpValidationError = {
@@ -366,6 +372,9 @@ export type MediaType = 'image' | 'video';
  * Attributes:
  * group (GroupUnlinked): Group the letter belongs to
  * responders (list[UserUnlinked]): Users who have responded
+ * required_responders (int): Minimum unique responders needed before send
+ * responder_count (int): Current unique responder count
+ * send_threshold_ratio (float | None): Effective ratio gate, or null if disabled
  */
 export type MinimalLetter = {
     api_identifier: string;
@@ -377,6 +386,9 @@ export type MinimalLetter = {
     letter_type: LetterType;
     group: GroupUnlinked;
     responders: Array<UserUnlinked>;
+    required_responders?: number;
+    responder_count?: number;
+    send_threshold_ratio?: number | null;
 };
 
 /**
@@ -400,6 +412,9 @@ export type NewPassword = {
  * questions (list[PublicQuestion]): Questions with public responses
  * responders (list[UserUnlinked]): Users who have responded
  * participants (list[UserUnlinked]): All participants in the letter
+ * required_responders (int): Minimum unique responders needed before send
+ * responder_count (int): Current unique responder count
+ * send_threshold_ratio (float | None): Effective ratio gate, or null if disabled
  */
 export type PublicLetter = {
     api_identifier: string;
@@ -413,6 +428,9 @@ export type PublicLetter = {
     questions: Array<PublicQuestion>;
     responders: Array<UserUnlinked>;
     participants: Array<UserUnlinked>;
+    required_responders?: number;
+    responder_count?: number;
+    send_threshold_ratio?: number | null;
 };
 
 /**

@@ -514,6 +514,38 @@ def promote_and_create_new_letters(db: Session, letter_ids: list[int]) -> None:
     db.commit()
 
 
+def postpend_upcoming_letters_with_session(
+    db: Session, letter_ids: list[int]
+) -> None:
+    """Move letters to SENT status.
+
+    This helper is used by the scheduled postpend job and tests that need to
+    provide their own transaction-scoped session.
+
+    Letters below the responder send threshold are deferred instead of marked
+    SENT without an email.
+
+    Args:
+        db (Session): Database session
+        letter_ids (list[int]): IDs of letters to postpend
+    """
+    from ring.letters.send_threshold import (
+        defer_letter_send_if_below_threshold,
+    )
+
+    letters = db.scalars(select(Letter).where(Letter.id.in_(letter_ids))).all()
+    for letter in letters:
+        if defer_letter_send_if_below_threshold(db, letter):
+            continue
+        letter.status = LetterStatus.SENT
+        create_letter_with_questions(
+            db,
+            letter.group.api_identifier,
+            letter.send_at + timedelta(days=letter.group.cycle_length),
+        )
+    db.commit()
+
+
 @job_factory("postpend_upcoming_letters")
 def postpend_upcoming_letters(db: Session, letter_ids: list[int]) -> None:
     """Move letters to SENT status.
@@ -525,15 +557,7 @@ def postpend_upcoming_letters(db: Session, letter_ids: list[int]) -> None:
         db (Session): Database session
         letter_ids (list[int]): IDs of letters to postpend
     """
-    letters = db.scalars(select(Letter).where(Letter.id.in_(letter_ids))).all()
-    for letter in letters:
-        letter.status = LetterStatus.SENT
-        create_letter_with_questions(
-            db,
-            letter.group.api_identifier,
-            letter.send_at + timedelta(days=letter.group.cycle_length),
-        )
-    db.commit()
+    postpend_upcoming_letters_with_session(db, letter_ids)
 
 
 def add_participants(
