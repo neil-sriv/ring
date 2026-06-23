@@ -16,7 +16,7 @@ import {
 import { useState } from "react"
 
 import { useNavigate } from "@tanstack/react-router"
-import type { GroupLinked, UserLinked } from "../../client"
+import type { GroupLinked, GroupSummary, UserLinked, UserMe, UserUnlinked } from "../../client"
 import EditUser from "../Admin/EditUser"
 import ImpersonateUser from "../Admin/ImpersonateUser"
 import AddMembers from "../Groups/AddMembers"
@@ -25,7 +25,7 @@ import Delete from "./DeleteAlert"
 
 interface ActionsMenuProps {
   type: string
-  value: GroupLinked | UserLinked
+  value: GroupLinked | GroupSummary | UserLinked | UserMe | UserUnlinked
   disabled?: boolean
 }
 

@@ -12,7 +12,7 @@ import {
   TableRow,
 } from "@/components/ui/table"
 import { Suspense } from "react"
-import type { UserLinked } from "../../client"
+import type { UserMe } from "../../client"
 import { readUsersPartiesUsersGetOptions } from "../../client/@tanstack/react-query.gen"
 import ActionsMenu from "../../components/Common/ActionsMenu"
 import Navbar from "../../components/Common/Navbar"
@@ -28,7 +28,7 @@ export const Route = createFileRoute("/_layout/admin")({
 })
 
 const MembersTableBody = () => {
-  const currentUser = Route.useLoaderData<UserLinked>()
+  const currentUser = Route.useLoaderData<UserMe>()
 
   const { data: users } = useSuspenseQuery({
     ...readUsersPartiesUsersGetOptions(),

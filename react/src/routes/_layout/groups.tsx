@@ -12,7 +12,7 @@ import {
 } from "@/components/ui/table"
 import { Suspense } from "react"
 import { ErrorBoundary } from "react-error-boundary"
-import type { UserLinked } from "../../client"
+import type { UserMe } from "../../client"
 import { listGroupsPartiesGroupsGetOptions } from "../../client/@tanstack/react-query.gen"
 import ActionsMenu from "../../components/Common/ActionsMenu"
 import Navbar from "../../components/Common/Navbar"
@@ -28,7 +28,7 @@ export const Route = createFileRoute("/_layout/groups")({
 })
 
 function GroupTableBody() {
-  const currentUser = Route.useLoaderData<UserLinked>()
+  const currentUser = Route.useLoaderData<UserMe>()
   const { data: groups } = useSuspenseQuery({
     ...listGroupsPartiesGroupsGetOptions({
       query: { user_api_id: currentUser?.api_identifier },
