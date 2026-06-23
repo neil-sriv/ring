@@ -235,5 +235,10 @@ def create_question_search_document(
     author_name = question.author.name if question.author else ""
     raw_text = f"{question.question_text} {author_name}"
     return create_hybrid_search_document(
-        db, raw_text, question.api_identifier, SearchableType.QUESTION
+        db,
+        raw_text,
+        question.api_identifier,
+        SearchableType.QUESTION,
+        entity_created_at=question.created_at,
+        group_api_id=question.letter.group.api_identifier,
     )

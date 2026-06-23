@@ -650,6 +650,8 @@ export type SearchResult = {
     type: string;
 };
 
+export type SearchSort = 'relevance' | 'created_at_desc' | 'created_at_asc';
+
 export type SearchType = 'semantic' | 'keyword' | 'dual';
 
 /**
@@ -2075,6 +2077,9 @@ export type RawSearchSearchRawSearchGetData = {
         query: string;
         search_type?: SearchType;
         limit?: number;
+        group_api_id?: string | null;
+        participant_api_id?: string | null;
+        sort?: SearchSort;
     };
     url: '/search/raw-search';
 };
@@ -2104,6 +2109,9 @@ export type PerformSearchSearchSearchGetData = {
         query: string;
         search_type?: SearchType;
         limit?: number;
+        group_api_id?: string | null;
+        participant_api_id?: string | null;
+        sort?: SearchSort;
     };
     url: '/search/search';
 };

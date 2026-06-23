@@ -201,7 +201,13 @@ def create_response_search_document(
     """
     raw_text = f"{response.response_text} {response.participant.name}"
     return create_hybrid_search_document(
-        db, raw_text, response.api_identifier, SearchableType.RESPONSE
+        db,
+        raw_text,
+        response.api_identifier,
+        SearchableType.RESPONSE,
+        entity_created_at=response.created_at,
+        group_api_id=response.question.letter.group.api_identifier,
+        participant_api_id=response.participant.api_identifier,
     )
 
 

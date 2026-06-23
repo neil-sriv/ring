@@ -218,8 +218,14 @@ CREATE TABLE public.hybrid_search_document_association (
 	hybrid_search_document_id INT8 NOT NULL,
 	model_api_identifier VARCHAR NOT NULL,
 	model_type VARCHAR NOT NULL,
+	group_api_id VARCHAR NULL,
+	participant_api_id VARCHAR NULL,
+	entity_created_at TIMESTAMPTZ NOT NULL,
 	CONSTRAINT hybrid_search_document_association_pkey PRIMARY KEY (id ASC),
-	UNIQUE INDEX uq_model_api_identifier_model_type (model_api_identifier ASC, model_type ASC)
+	UNIQUE INDEX uq_model_api_identifier_model_type (model_api_identifier ASC, model_type ASC),
+	INDEX ix_hybrid_search_document_association_entity_created_at (entity_created_at ASC),
+	INDEX ix_hybrid_search_document_association_group_api_id (group_api_id ASC),
+	INDEX ix_hybrid_search_document_association_participant_api_id (participant_api_id ASC)
 );
 CREATE TABLE public.documents (
 	id INT8 NOT NULL DEFAULT unique_rowid(),

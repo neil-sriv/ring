@@ -233,5 +233,10 @@ def create_group_search_document(
     )
     raw_text = f"{group.name} {member_names} {key_values}"
     return create_hybrid_search_document(
-        db, raw_text, group.api_identifier, SearchableType.GROUP
+        db,
+        raw_text,
+        group.api_identifier,
+        SearchableType.GROUP,
+        entity_created_at=group.created_at,
+        group_api_id=group.api_identifier,
     )

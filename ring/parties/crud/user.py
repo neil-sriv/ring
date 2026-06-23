@@ -103,7 +103,11 @@ def create_user_search_document(
     """
     raw_text = f"{user.name} {user.email}"
     return create_hybrid_search_document(
-        db, raw_text, user.api_identifier, SearchableType.USER
+        db,
+        raw_text,
+        user.api_identifier,
+        SearchableType.USER,
+        entity_created_at=user.created_at,
     )
 
 

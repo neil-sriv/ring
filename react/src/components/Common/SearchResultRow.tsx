@@ -13,9 +13,27 @@ import type {
 
 interface SearchResultRowProps {
   result: SearchResult
+  showTimestamp?: boolean
 }
 
-function ResponseSearchResultRow({ result }: { result: SearchResult }) {
+function formatTimestamp(value?: string) {
+  if (!value) return null
+  return new Date(value).toLocaleString()
+}
+
+function TimestampLine({ value }: { value?: string }) {
+  const formatted = formatTimestamp(value)
+  if (!formatted) return null
+  return <p className="text-xs text-muted-foreground">{formatted}</p>
+}
+
+function ResponseSearchResultRow({
+  result,
+  showTimestamp,
+}: {
+  result: SearchResult
+  showTimestamp?: boolean
+}) {
   const model = result.model as ResponseLinked
 
   return (
@@ -46,6 +64,7 @@ function ResponseSearchResultRow({ result }: { result: SearchResult }) {
             <p className="text-sm text-muted-foreground line-clamp-2">
               {model.response_text}
             </p>
+            {showTimestamp ? <TimestampLine value={model.created_at} /> : null}
           </div>
         </Link>
       </TableCell>
@@ -75,7 +94,13 @@ function UserSearchResultRow({ result }: { result: SearchResult }) {
   )
 }
 
-function GroupSearchResultRow({ result }: { result: SearchResult }) {
+function GroupSearchResultRow({
+  result,
+  showTimestamp,
+}: {
+  result: SearchResult
+  showTimestamp?: boolean
+}) {
   const model = result.model as GroupLinked
 
   return (
@@ -96,6 +121,7 @@ function GroupSearchResultRow({ result }: { result: SearchResult }) {
             <p className="text-sm text-muted-foreground">
               {model.members.length} members • {model.letters.length} letters
             </p>
+            {showTimestamp ? <TimestampLine value={model.created_at} /> : null}
           </div>
         </Link>
       </TableCell>
@@ -103,7 +129,13 @@ function GroupSearchResultRow({ result }: { result: SearchResult }) {
   )
 }
 
-function QuestionSearchResultRow({ result }: { result: SearchResult }) {
+function QuestionSearchResultRow({
+  result,
+  showTimestamp,
+}: {
+  result: SearchResult
+  showTimestamp?: boolean
+}) {
   const model = result.model as QuestionLinked
   const letter = model.letter as LetterUnlinked
 
@@ -130,6 +162,7 @@ function QuestionSearchResultRow({ result }: { result: SearchResult }) {
             <p className="text-sm text-muted-foreground/70">
               {model.responses.length} responses
             </p>
+            {showTimestamp ? <TimestampLine value={model.created_at} /> : null}
           </div>
         </Link>
       </TableCell>
@@ -137,7 +170,13 @@ function QuestionSearchResultRow({ result }: { result: SearchResult }) {
   )
 }
 
-function LetterSearchResultRow({ result }: { result: SearchResult }) {
+function LetterSearchResultRow({
+  result,
+  showTimestamp,
+}: {
+  result: SearchResult
+  showTimestamp?: boolean
+}) {
   const model = result.model as PublicLetter
 
   return (
@@ -161,6 +200,7 @@ function LetterSearchResultRow({ result }: { result: SearchResult }) {
               {model.participants.length} participants •{" "}
               {model.questions.length} questions
             </p>
+            {showTimestamp ? <TimestampLine value={model.created_at} /> : null}
           </div>
         </Link>
       </TableCell>
@@ -183,18 +223,35 @@ function DefaultSearchResultRow({ result }: { result: SearchResult }) {
   )
 }
 
-export function SearchResultRow({ result }: SearchResultRowProps) {
+export function SearchResultRow({
+  result,
+  showTimestamp = false,
+}: SearchResultRowProps) {
   switch (result.type) {
     case "ResponseLinked":
-      return <ResponseSearchResultRow result={result} />
+      return (
+        <ResponseSearchResultRow
+          result={result}
+          showTimestamp={showTimestamp}
+        />
+      )
     case "UserLinked":
       return <UserSearchResultRow result={result} />
     case "GroupLinked":
-      return <GroupSearchResultRow result={result} />
+      return (
+        <GroupSearchResultRow result={result} showTimestamp={showTimestamp} />
+      )
     case "QuestionLinked":
-      return <QuestionSearchResultRow result={result} />
+      return (
+        <QuestionSearchResultRow
+          result={result}
+          showTimestamp={showTimestamp}
+        />
+      )
     case "PublicLetter":
-      return <LetterSearchResultRow result={result} />
+      return (
+        <LetterSearchResultRow result={result} showTimestamp={showTimestamp} />
+      )
     default:
       return <DefaultSearchResultRow result={result} />
   }

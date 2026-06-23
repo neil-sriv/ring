@@ -7,6 +7,7 @@ It verifies both model attributes and relationships with other models.
 
 from __future__ import annotations
 
+from datetime import UTC, datetime
 from logging import Logger
 
 import sqlalchemy
@@ -18,6 +19,8 @@ from ring.search.models.hybrid_search import (
     HybridSearchDocumentAssociation,
     SearchableType,
 )
+
+TEST_CREATED_AT = datetime(2024, 6, 1, tzinfo=UTC)
 
 
 class TestHybridSearchDocument:
@@ -93,6 +96,7 @@ class TestHybridSearchDocument:
             model_api_identifier="test_id",
             model_type=SearchableType.USER.value,
             hybrid_search_document=document,
+            entity_created_at=TEST_CREATED_AT,
         )
         db_session.add(association)
         db_session.commit()
@@ -136,6 +140,7 @@ class TestHybridSearchDocumentAssociation:
             model_api_identifier="test_id",
             model_type=SearchableType.USER.value,
             hybrid_search_document=document,
+            entity_created_at=TEST_CREATED_AT,
         )
         db_session.add(association)
         db_session.commit()

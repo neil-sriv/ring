@@ -1,9 +1,16 @@
 from __future__ import annotations
 
+from datetime import datetime
 from enum import Enum
 
 from pgvector.sqlalchemy import Vector
-from sqlalchemy import ForeignKey, UniqueConstraint, literal_column, select
+from sqlalchemy import (
+    DateTime,
+    ForeignKey,
+    UniqueConstraint,
+    literal_column,
+    select,
+)
 from sqlalchemy.dialects.postgresql import TSVECTOR
 from sqlalchemy.orm import Mapped, Session, mapped_column, relationship
 
@@ -33,6 +40,15 @@ class HybridSearchDocumentAssociation(Base):
     )
     model_api_identifier: Mapped[str] = mapped_column(nullable=False)
     model_type: Mapped[str] = mapped_column(nullable=False)
+    group_api_id: Mapped[str | None] = mapped_column(nullable=True, index=True)
+    participant_api_id: Mapped[str | None] = mapped_column(
+        nullable=True, index=True
+    )
+    entity_created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        nullable=False,
+        index=True,
+    )
 
     document: Mapped["HybridSearchDocument"] = relationship(
         back_populates="associations",
@@ -51,10 +67,16 @@ class HybridSearchDocumentAssociation(Base):
         model_api_identifier: str,
         model_type: str,
         hybrid_search_document: HybridSearchDocument,
+        entity_created_at: datetime,
+        group_api_id: str | None = None,
+        participant_api_id: str | None = None,
     ) -> None:
         self.model_api_identifier = model_api_identifier
         self.model_type = model_type
         self.document = hybrid_search_document
+        self.entity_created_at = entity_created_at
+        self.group_api_id = group_api_id
+        self.participant_api_id = participant_api_id
 
     @classmethod
     def create(
@@ -62,11 +84,17 @@ class HybridSearchDocumentAssociation(Base):
         model_api_identifier: str,
         model_type: str,
         hybrid_search_document: HybridSearchDocument,
+        entity_created_at: datetime,
+        group_api_id: str | None = None,
+        participant_api_id: str | None = None,
     ) -> HybridSearchDocumentAssociation:
         association = cls(
             model_api_identifier=model_api_identifier,
             model_type=model_type,
             hybrid_search_document=hybrid_search_document,
+            entity_created_at=entity_created_at,
+            group_api_id=group_api_id,
+            participant_api_id=participant_api_id,
         )
         return association
 
