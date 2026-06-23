@@ -27,7 +27,7 @@ router = APIRouter()
 @router.get("/raw-search", response_model=RawSearchResponse)
 async def raw_search(
     query: str,
-    search_type: SearchType = SearchType.DUAL,
+    search_type: SearchType = SearchType.KEYWORD,
     limit: int = 10,
     db: Session = Depends(get_db),
 ) -> RawSearchResponse:
@@ -72,7 +72,7 @@ async def raw_search(
 @router.get("/search", response_model=SearchResponse)
 async def perform_search(
     query: str,
-    search_type: SearchType = SearchType.DUAL,
+    search_type: SearchType = SearchType.KEYWORD,
     limit: int = 10,
     req_dep: AuthenticatedRequestDependencies = Depends(
         get_request_dependencies,

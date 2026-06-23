@@ -80,21 +80,25 @@ class HybridSearchDocument(Base, CreatedAtMixin):
     # use a computed column instead
     # this is a literal column that is not mapped or included in the insert/update
     text_tsv_expr_literal = literal_column("text_tsv", type_=TSVECTOR)
-    text_embedding_768: Mapped[Vector] = mapped_column(
-        Vector(dim=768), nullable=False
+    # Nullable: semantic/embedding search is deprecated, so documents are now
+    # indexed for keyword search only and may be created without an embedding.
+    text_embedding_768: Mapped[Vector | None] = mapped_column(
+        Vector(dim=768), nullable=True
     )
 
     associations: Mapped[list[HybridSearchDocumentAssociation]] = relationship(
         "HybridSearchDocumentAssociation", back_populates="document"
     )
 
-    def __init__(self, raw_text: str, text_embedding_768: Vector):
+    def __init__(
+        self, raw_text: str, text_embedding_768: Vector | None = None
+    ):
         self.raw_text = raw_text
         self.text_embedding_768 = text_embedding_768
 
     @classmethod
     def create(
-        cls, raw_text: str, text_embedding_768: Vector
+        cls, raw_text: str, text_embedding_768: Vector | None = None
     ) -> HybridSearchDocument:
         hybrid_search_document = cls(
             raw_text=raw_text,
