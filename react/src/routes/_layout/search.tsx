@@ -78,9 +78,13 @@ function SearchContent() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {searchResults.results.map((result: SearchResult) => (
+              {searchResults.results.map((result: SearchResult, index) => (
                 <SearchResultRow
-                  key={result.model.api_identifier}
+                  key={
+                    "api_identifier" in result.model
+                      ? `${result.type}:${result.model.api_identifier}`
+                      : `${result.type}:${index}`
+                  }
                   result={result}
                 />
               ))}

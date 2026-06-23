@@ -258,5 +258,5 @@ class TestHybridSearchCRUD:
         mock_get_model_ids.assert_called_once_with(db_session, mock_documents)
         mock_hydrate.assert_called_once()
         mock_filter_authorized.assert_called_once_with(
-            db_session, user, Action.READ, mock_hydrated
+            db_session, user, Action.READ, mock_hydrated, enforcer=None
         )

@@ -6,6 +6,7 @@ from enum import Enum
 from functools import wraps
 from typing import Callable
 
+from casbin import Enforcer
 from llm_service import (
     ApiClient,
     EmbeddingRequest,
@@ -223,6 +224,7 @@ def search(
     user: User,
     limit: int = 10,
     search_type: SearchType = SearchType.KEYWORD,
+    enforcer: Enforcer | None = None,
 ) -> list[APIIdentified]:
     # Resolve the search function at call time (rather than via a module-level
     # dict) so the names stay patchable in tests.
@@ -244,6 +246,6 @@ def search(
             hydrate_results(db, model_type, model_api_identifiers)
         )
     hydrated_results = filter_to_authorized(
-        db, user, Action.READ, hydrated_results
+        db, user, Action.READ, hydrated_results, enforcer=enforcer
     )
     return hydrated_results

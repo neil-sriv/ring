@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from casbin import Enforcer
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
@@ -8,13 +9,14 @@ from ring.fastapp.dependencies import (
     get_db,
     get_request_dependencies,
 )
-from ring.ring_pydantic.linked_schemas import SearchResponse, SearchResult
+from ring.ring_pydantic.linked_schemas import SearchResponse
 from ring.search.crud.hybrid_search import (
     dual_search_hybrid_search_document,
     keyword_search_hybrid_search_document,
     search,
     semantic_search_hybrid_search_document,
 )
+from ring.search.crud.search_serialization import build_search_results
 from ring.search.schemas.search import (
     RawSearchResponse,
     RawSearchResult,
@@ -84,8 +86,9 @@ async def perform_search(
         user=req_dep.current_user,
         limit=limit,
         search_type=search_type,
+        enforcer=req_dep.get_enforcer(),
     )
     return SearchResponse(
-        results=[SearchResult.from_model(result) for result in results],
+        results=build_search_results(req_dep.db, results),
         total=len(results),
     )

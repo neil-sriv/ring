@@ -7,7 +7,7 @@ FastAPI's dependency injection system to provide these dependencies to route han
 
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import TYPE_CHECKING
 
 import boto3
@@ -16,12 +16,14 @@ from fastapi import Depends, HTTPException, WebSocket, status
 from loguru import logger
 from mypy_boto3_s3 import S3Client
 
+from ring.authz.enforcer import build_stateless_enforcer
 from ring.parties.crud import user as user_crud
 from ring.parties.models.user_model import User
 from ring.security import decode_token, oauth2_scheme
 from ring.sqlalchemy_base import get_db
 
 if TYPE_CHECKING:
+    from casbin import Enforcer
     from sqlalchemy.orm import Session
 
 
@@ -51,6 +53,15 @@ class AuthenticatedRequestDependencies(RequestDependenciesBase):
     """
 
     current_user: User
+    _enforcer: Enforcer | None = field(default=None, init=False, repr=False)
+
+    def get_enforcer(self) -> Enforcer:
+        """Return a request-scoped Casbin enforcer, building it once if needed."""
+        if self._enforcer is None:
+            self._enforcer = build_stateless_enforcer(
+                self.db, self.current_user.api_identifier
+            )
+        return self._enforcer
 
 
 async def get_current_user(
