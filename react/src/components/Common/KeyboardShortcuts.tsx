@@ -10,11 +10,17 @@ import {
 } from "@/components/ui/dialog"
 import { cn } from "@/lib/utils"
 import {
-  GO_TO_ROUTE_KEYS,
   GO_TO_SHORTCUTS,
   isEditableTarget,
   modifierKeyLabel,
 } from "../../lib/keyboard"
+import {
+  completeGoSequence,
+  isGoSequencePending,
+  resolveGoSequenceKey,
+  startGoSequence,
+  subscribeGoSequencePending,
+} from "../../lib/keyboardSequence"
 import { CommandPalette } from "./CommandPalette"
 
 const GO_SEQUENCE_TIMEOUT_MS = 1000
@@ -22,8 +28,6 @@ const GO_SEQUENCE_TIMEOUT_MS = 1000
 export function KeyboardShortcuts() {
   const navigate = useNavigate()
   const navigateRef = useRef(navigate)
-  const pendingGoKeyRef = useRef(false)
-  const goTimeoutRef = useRef<number | null>(null)
   const [paletteOpen, setPaletteOpen] = useState(false)
   const [helpOpen, setHelpOpen] = useState(false)
   const [goPending, setGoPending] = useState(false)
@@ -31,26 +35,21 @@ export function KeyboardShortcuts() {
 
   navigateRef.current = navigate
 
-  useEffect(() => {
-    function clearGoSequence() {
-      pendingGoKeyRef.current = false
-      setGoPending(false)
-      if (goTimeoutRef.current !== null) {
-        window.clearTimeout(goTimeoutRef.current)
-        goTimeoutRef.current = null
-      }
-    }
+  useEffect(() => subscribeGoSequencePending(setGoPending), [])
 
+  useEffect(() => {
     function handleKeyDown(event: KeyboardEvent) {
       if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === "k") {
         event.preventDefault()
-        clearGoSequence()
+        completeGoSequence()
         setPaletteOpen((open) => !open)
         return
       }
 
       if (!shortcutsEnabled || isEditableTarget(event.target)) {
-        clearGoSequence()
+        if (isGoSequencePending()) {
+          completeGoSequence()
+        }
         return
       }
 
@@ -61,16 +60,16 @@ export function KeyboardShortcuts() {
         !event.altKey
       ) {
         event.preventDefault()
-        clearGoSequence()
+        completeGoSequence()
         setHelpOpen(true)
         return
       }
 
       const key = event.key.toLowerCase()
 
-      if (pendingGoKeyRef.current) {
-        const destination = GO_TO_ROUTE_KEYS[key]
-        clearGoSequence()
+      if (isGoSequencePending()) {
+        const destination = resolveGoSequenceKey(key)
+        completeGoSequence()
         if (destination) {
           event.preventDefault()
           navigateRef.current({ to: destination })
@@ -80,18 +79,13 @@ export function KeyboardShortcuts() {
 
       if (key === "g") {
         event.preventDefault()
-        pendingGoKeyRef.current = true
-        setGoPending(true)
-        goTimeoutRef.current = window.setTimeout(
-          clearGoSequence,
-          GO_SEQUENCE_TIMEOUT_MS,
-        )
+        startGoSequence(() => {}, GO_SEQUENCE_TIMEOUT_MS)
       }
     }
 
-    window.addEventListener("keydown", handleKeyDown, true)
+    document.addEventListener("keydown", handleKeyDown, true)
     return () => {
-      window.removeEventListener("keydown", handleKeyDown, true)
+      document.removeEventListener("keydown", handleKeyDown, true)
     }
   }, [shortcutsEnabled])
 
