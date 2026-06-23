@@ -192,3 +192,5 @@ node_modules/
 !.cursor/cloud-start.sh
 !.cursor/skills/
 !.cursor/skills/**
+!.cursor/rules/
+!.cursor/rules/**

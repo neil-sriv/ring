@@ -140,6 +140,7 @@ def cmd_run(
 
 from .compose import *  # noqa
 from .database import *  # noqa
+from .deploy import *  # noqa
 from .docker import *  # noqa
 from .run import *  # noqa
 from .frontend import *  # noqa

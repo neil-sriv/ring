@@ -27,6 +27,26 @@ The frontend talks to the backend via the Nginx proxy at
 `https://localhost/api/v1/`. Direct access to the API container on `:8001` is
 used only by tooling (e.g. OpenAPI spec fetching).
 
+### Infrastructure & external services (production)
+
+Local dev uses Docker Compose with a local CockroachDB container. **Production**
+is a single EC2 host running the same Compose stack, plus managed services below.
+Full topology, request flows, and deploy steps:
+[docs/infrastructure.md](docs/infrastructure.md).
+
+| Service | Identifier / endpoint | Code / config |
+|---------|----------------------|---------------|
+| Compute | EC2 + Docker Compose (`ring.neilsriv.tech`) | [compose.prod.yml](compose.prod.yml), [prod.nginx.conf](prod.nginx.conf) |
+| Database | CockroachDB Cloud `ring-db` (not RDS) | `COCKROACH_DATABASE_URI` in server `.env` |
+| S3 uploads | Bucket `rings3files` (`us-east-1`) | [ring/fastapp/config.py](ring/fastapp/config.py) `BUCKET_NAME`; upload in [ring/letters/crud/response.py](ring/letters/crud/response.py) |
+| CDN | `du32exnxihxuf.cloudfront.net` | [ring/s3/models/s3_model.py](ring/s3/models/s3_model.py) `qualified_s3_url` |
+| Email (SES) | `us-east-1`, sender `ring@neilsriv.tech` | [ring/email_util.py](ring/email_util.py) |
+| Container registry | ECR Public `public.ecr.aws/z2k1e8p1/` | [dev_util/docker.py](dev_util/docker.py), [dev_util/prod.sh](dev_util/prod.sh) |
+
+Do not assume ECS, RDS, Route 53, Redis/Celery, Lambda, or Bedrock — none are
+in the current prod path. Embeddings go through the optional `ring-llm`
+microservice; background work uses in-process APScheduler, not Celery.
+
 ## Codebase map
 
 ### Backend (`ring/`)
@@ -165,4 +185,6 @@ separate CockroachDB instance on port 8008. There is one pre-existing flake:
     changes
   - `ring-authz-checklist/` — permission-check patterns for new routes
   - `ring-split-pr/` — splitting backend + frontend work into separate PRs
- - `ring-cloud-dev/` — Cursor Cloud VM bootstrap, health checks, browser testing
+  - `ring-db-migration/` — generate/modify Alembic migrations the correct way
+  - `ring-cloud-dev/` — Cursor Cloud VM bootstrap, health checks, browser testing
+  - `ring-deploy-prod/` — build + push prod images to public ECR (`ring deploy prod`)
