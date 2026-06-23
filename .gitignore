@@ -123,6 +123,7 @@ celerybeat.pid
 # Environments
 .env
 .env*
+!.env.cloud.example
 *.env
 .venv
 env/
@@ -188,3 +189,5 @@ node_modules/
 !.cursor/environment.json
 !.cursor/Dockerfile
 !.cursor/cloud-start.sh
+!.cursor/skills/
+!.cursor/skills/**

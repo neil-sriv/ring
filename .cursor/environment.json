@@ -4,12 +4,12 @@
     "dockerfile": "Dockerfile",
     "context": ".."
   },
-  "install": "uv sync --group dev --group ai && cd react && pnpm install && test -f certs/node.key && chmod 600 certs/node.key || true",
-  "start": "sudo service docker start",
+  "install": "uv sync --group dev --group ai && cd react && pnpm install && (test -f localhost.crt || bash dev_util/ssl.sh) && (test -f certs/node.key && chmod 600 certs/node.key || true)",
+  "start": "sudo service docker start && bash .cursor/cloud-start.sh --bootstrap-only",
   "terminals": [
     {
-      "name": "ring",
-      "command": "bash .cursor/cloud-start.sh"
+      "name": "vite",
+      "command": "bash .cursor/cloud-start.sh --vite-only"
     }
   ]
 }
