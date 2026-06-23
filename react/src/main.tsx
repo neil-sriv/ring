@@ -15,6 +15,7 @@ import "./app.css"
 import { registerSW } from "virtual:pwa-register"
 import { readUserMePartiesMeGetOptions } from "./client/@tanstack/react-query.gen"
 import { client } from "./client/client.gen"
+import { initGlobalKeyboardShortcuts } from "./lib/globalKeyboardShortcuts"
 
 /* Dark mode initialization */
 const savedTheme = localStorage.getItem("theme")
@@ -77,6 +78,7 @@ const router = createRouter({
   routeTree,
   context: { queryClient, auth: undefined! },
 })
+initGlobalKeyboardShortcuts(router)
 declare module "@tanstack/react-router" {
   interface Register {
     router: typeof router

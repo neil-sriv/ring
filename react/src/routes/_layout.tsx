@@ -7,6 +7,7 @@ import {
   readUserMePartiesMeGetQueryKey,
 } from "../client/@tanstack/react-query.gen"
 import type { UserLinked } from "../client/types.gen"
+import { KeyboardShortcuts } from "../components/Common/KeyboardShortcuts"
 import Sidebar from "../components/Common/Sidebar"
 import UserMenu from "../components/Common/UserMenu"
 import { subscribeToPush } from "../util/notifications"
@@ -61,6 +62,7 @@ function Layout() {
         </main>
       )}
       <UserMenu />
+      <KeyboardShortcuts />
     </div>
   )
 }
