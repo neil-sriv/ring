@@ -12,6 +12,7 @@ from typing import TYPE_CHECKING, Any, Sequence
 
 from loguru import logger
 from sqlalchemy import ColumnElement, select
+from sqlalchemy.orm import selectinload
 
 from ring.api_identifier import util as api_identifier_crud
 from ring.async_scheduler.scheduler import job_factory
@@ -24,6 +25,7 @@ from ring.letters.constants import (
 from ring.letters.crud.question import create_question
 from ring.letters.models.letter_model import Letter
 from ring.letters.models.question_model import Question
+from ring.letters.models.response_model import Response
 from ring.parties.models.group_model import Group
 from ring.parties.models.user_model import User
 from ring.search.crud.hybrid_search import (
@@ -64,7 +66,15 @@ def get_letters(
         IDNotFoundException: If group with given API ID is not found
     """
     group = api_identifier_crud.get_model(db, Group, api_id=group_api_id)
-    query = select(Letter).filter(Letter.group == group)
+    query = (
+        select(Letter)
+        .filter(Letter.group == group)
+        .options(
+            selectinload(Letter.questions)
+            .selectinload(Question.responses)
+            .selectinload(Response.participant)
+        )
+    )
     if letter_type:
         query = query.filter(Letter.letter_type == letter_type)
     query = query.offset(skip).limit(limit)

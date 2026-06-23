@@ -22,6 +22,7 @@ export function LoopsTab({
           loops={inProgressLoops}
           heading="In Progress"
           subheading="Add your response now!"
+          showResponderCount={true}
         />
       )}
 
@@ -30,6 +31,7 @@ export function LoopsTab({
           loops={upcomingLoops}
           heading="Upcoming Issues"
           subheading="You can add questions to the upcoming issues before they are available for responses."
+          showResponderCount={true}
         />
       )}
 
@@ -40,6 +42,7 @@ export function LoopsTab({
               new Date(a.send_at).getTime() - new Date(b.send_at).getTime(),
           )}
           heading="Published Issues"
+          showResponderCount={true}
         />
       )}
     </div>
