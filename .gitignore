@@ -184,6 +184,7 @@ certs/client.ringcockroach.*
 ssh-key-2025-05-16*
 
 node_modules/
+.pnpm-store/
 .cursor/*
 !.cursor/environment.json
 !.cursor/Dockerfile

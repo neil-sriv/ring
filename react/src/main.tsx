@@ -29,17 +29,8 @@ if (
 }
 /**/
 
-/* PWA */
-const updateSW = registerSW({
-  onNeedRefresh() {
-    if (confirm("New version available. Reload?")) {
-      updateSW(true)
-    }
-  },
-  onOfflineReady() {
-    console.log("PWA is ready for offline use")
-  },
-})
+/* PWA: auto-reload when a new service worker is ready after deploy */
+registerSW({ immediate: true })
 /**/
 
 /* vite Config */

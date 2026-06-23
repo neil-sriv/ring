@@ -1,21 +1,14 @@
-import { precacheAndRoute } from "workbox-precaching"
-import { registerRoute } from "workbox-routing"
-import { StaleWhileRevalidate } from "workbox-strategies"
+import { cleanupOutdatedCaches, precacheAndRoute } from "workbox-precaching"
 
-// Precache static assets
 precacheAndRoute(self.__WB_MANIFEST || [])
+cleanupOutdatedCaches()
 
-// Cache API requests
-registerRoute(
-  ({ request }) => request.url.startsWith("https://api.yourdomain.com/"),
-  new StaleWhileRevalidate({
-    cacheName: "api-cache",
-  }),
-)
-
-// Clear cache on activate
-caches.keys().then((names) => {
-  for (const name of names) caches.delete(name)
+// Activate a freshly deployed worker immediately and take over open pages
+self.addEventListener("install", () => {
+  self.skipWaiting()
+})
+self.addEventListener("activate", (event) => {
+  event.waitUntil(self.clients.claim())
 })
 
 // Push notification event listener
