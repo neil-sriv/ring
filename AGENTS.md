@@ -187,3 +187,4 @@ separate CockroachDB instance on port 8008. There is one pre-existing flake:
   - `ring-split-pr/` — splitting backend + frontend work into separate PRs
   - `ring-db-migration/` — generate/modify Alembic migrations the correct way
   - `ring-cloud-dev/` — Cursor Cloud VM bootstrap, health checks, browser testing
+  - `ring-deploy-prod/` — build + push prod images to public ECR (`ring deploy prod`)
