@@ -22,6 +22,7 @@ from ring.letters.models.letter_model import Letter
 from ring.letters.send_threshold import get_group_min_responder_ratio
 from ring.parties.models.group_key_value import GroupKeyValue
 from ring.parties.models.user_group_assocation import user_group_association
+from ring.ring_pydantic.linked_schemas import GroupLinked
 from ring.ring_pydantic.pydantic_model import PydanticModel
 from ring.sqlalchemy_base import Base
 from ring.tasks.models.schedule_model import Schedule
