@@ -9,30 +9,42 @@ import {
 } from "./keyboardSequence"
 
 const GO_SEQUENCE_TIMEOUT_MS = 1000
+let initialized = false
 
 interface GlobalShortcutState {
   paletteToggle: (() => void) | null
   helpOpen: (() => void) | null
-  modalOpen: () => boolean
+  isHelpOpen: () => boolean
 }
 
 const state: GlobalShortcutState = {
   paletteToggle: null,
   helpOpen: null,
-  modalOpen: () => false,
+  isHelpOpen: () => false,
 }
 
 export function registerKeyboardShortcutHandlers(handlers: {
   togglePalette: () => void
   openHelp: () => void
-  isModalOpen: () => boolean
+  isHelpOpen: () => boolean
 }) {
   state.paletteToggle = handlers.togglePalette
   state.helpOpen = handlers.openHelp
-  state.modalOpen = handlers.isModalOpen
+  state.isHelpOpen = handlers.isHelpOpen
+}
+
+function shouldIgnoreShortcuts(event: KeyboardEvent) {
+  return (
+    isEditableTarget(event.target) || isEditableTarget(document.activeElement)
+  )
 }
 
 export function initGlobalKeyboardShortcuts(router: RegisteredRouter) {
+  if (initialized) {
+    return
+  }
+  initialized = true
+
   function handleKeyDown(event: KeyboardEvent) {
     if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === "k") {
       event.preventDefault()
@@ -41,26 +53,7 @@ export function initGlobalKeyboardShortcuts(router: RegisteredRouter) {
       return
     }
 
-    if (state.modalOpen()) {
-      return
-    }
-
-    if (isEditableTarget(event.target)) {
-      if (isGoSequencePending()) {
-        completeGoSequence()
-      }
-      return
-    }
-
-    if (
-      event.key === "?" &&
-      !event.metaKey &&
-      !event.ctrlKey &&
-      !event.altKey
-    ) {
-      event.preventDefault()
-      completeGoSequence()
-      state.helpOpen?.()
+    if (state.isHelpOpen()) {
       return
     }
 
@@ -76,7 +69,23 @@ export function initGlobalKeyboardShortcuts(router: RegisteredRouter) {
       return
     }
 
-    if (key === "g") {
+    if (shouldIgnoreShortcuts(event)) {
+      return
+    }
+
+    if (
+      event.key === "?" &&
+      !event.metaKey &&
+      !event.ctrlKey &&
+      !event.altKey
+    ) {
+      event.preventDefault()
+      completeGoSequence()
+      state.helpOpen?.()
+      return
+    }
+
+    if (key === "g" || event.code === "KeyG") {
       event.preventDefault()
       startGoSequence(() => {}, GO_SEQUENCE_TIMEOUT_MS)
     }

@@ -17,10 +17,8 @@ export function KeyboardShortcuts() {
   const [paletteOpen, setPaletteOpen] = useState(false)
   const [helpOpen, setHelpOpen] = useState(false)
   const [goPending, setGoPending] = useState(false)
-  const paletteOpenRef = useRef(paletteOpen)
   const helpOpenRef = useRef(helpOpen)
 
-  paletteOpenRef.current = paletteOpen
   helpOpenRef.current = helpOpen
 
   useEffect(() => subscribeGoSequencePending(setGoPending), [])
@@ -29,7 +27,7 @@ export function KeyboardShortcuts() {
     registerKeyboardShortcutHandlers({
       togglePalette: () => setPaletteOpen((open) => !open),
       openHelp: () => setHelpOpen(true),
-      isModalOpen: () => paletteOpenRef.current || helpOpenRef.current,
+      isHelpOpen: () => helpOpenRef.current,
     })
   }, [])
 
