@@ -2,10 +2,6 @@ from __future__ import annotations
 
 from loguru import logger
 
-from ring.search._gen.all_search_registration import (
-    import_all_search_registrations,
-)
-
 
 def init_app_modules() -> None:
     from ring.fastapp._gen.all_jobs import schedule_all_interval_jobs
@@ -21,12 +17,14 @@ def init_app_modules() -> None:
     init_offline_modules()
     schedule_all_interval_jobs()
 
-    import_all_search_registrations()
-
 
 def init_offline_modules() -> None:
     from ring.fastapp._gen.all_jobs import initialize as initialize_all_jobs
     from ring.fastapp._gen.all_sqla_models import import_all_sqla_models
+    from ring.search._gen.all_search_registration import (
+        import_all_search_registrations,
+    )
 
     import_all_sqla_models()
     initialize_all_jobs()
+    import_all_search_registrations()
