@@ -105,9 +105,11 @@ class MinimalLetter(Letter):
 
     Attributes:
         group (GroupUnlinked): Group the letter belongs to
+        responders (list[UserUnlinked]): Users who have responded
     """
 
     group: "GroupUnlinked"
+    responders: list["UserUnlinked"]
 
 
 class PublicLetter(Letter):

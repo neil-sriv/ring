@@ -365,6 +365,7 @@ export type MediaType = 'image' | 'video';
  *
  * Attributes:
  * group (GroupUnlinked): Group the letter belongs to
+ * responders (list[UserUnlinked]): Users who have responded
  */
 export type MinimalLetter = {
     api_identifier: string;
@@ -375,6 +376,7 @@ export type MinimalLetter = {
     title?: string | null;
     letter_type: LetterType;
     group: GroupUnlinked;
+    responders: Array<UserUnlinked>;
 };
 
 /**
