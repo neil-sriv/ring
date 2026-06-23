@@ -19,6 +19,13 @@ from ring.tests.factories.parties.user_factory import UserFactory
 class TestPostpendLetters:
     """Tests for postpend_upcoming_letters threshold handling."""
 
+    def run_postpend_job(
+        self, db_session: Session, letter_ids: list[int]
+    ) -> None:
+        letter_crud.postpend_upcoming_letters.__wrapped__(
+            db_session, letter_ids
+        )
+
     def test_postpend_defers_when_responders_below_threshold(
         self, db_session: Session
     ) -> None:
@@ -36,7 +43,7 @@ class TestPostpendLetters:
         ResponseFactory.create(question=question, participant=members[0])
         db_session.commit()
 
-        letter_crud.postpend_upcoming_letters(db_session, [letter.id])
+        self.run_postpend_job(db_session, [letter.id])
         db_session.refresh(letter)
 
         assert letter.status == LetterStatus.IN_PROGRESS
@@ -62,7 +69,7 @@ class TestPostpendLetters:
         ResponseFactory.create(question=question, participant=members[1])
         db_session.commit()
 
-        letter_crud.postpend_upcoming_letters(db_session, [letter.id])
+        self.run_postpend_job(db_session, [letter.id])
         db_session.refresh(letter)
 
         assert letter.status == LetterStatus.SENT
