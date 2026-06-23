@@ -114,40 +114,18 @@ ring fe regen                 # refresh react/src/client/ from OpenAPI
 
 ### Cursor Cloud Agent VM
 
-In the Cloud Agent VM, `ring` is not always wired up the same way, and Docker
-requires `sudo`. Use the raw compose commands instead:
+Use the [**ring-cloud-dev** skill](.cursor/skills/ring-cloud-dev/SKILL.md).
+Bootstrap is automated via [`.cursor/cloud-start.sh`](.cursor/cloud-start.sh)
+and [`.cursor/environment.json`](.cursor/environment.json); copy
+[`.env.cloud.example`](.env.cloud.example) for cloud `.env` defaults.
 
 ```bash
-source .venv/bin/activate
-
-sudo docker compose -f compose.core.yml -f compose.dev.yml --profile dev \
-  up --build --detach
-
-sudo docker compose -f compose.core.yml -f compose.dev.yml --profile dev \
-  exec -w /src/ring api alembic upgrade head
-
-cd react && pnpm run dev
+bash .cursor/cloud-start.sh --bootstrap-only
+bash dev_util/cloud-health.sh
 ```
 
-**Vector index gotcha.** CockroachDB requires the vector index cluster setting
-to be enabled before migrations succeed. Run this once after the
-`ring-cockroach` container first starts:
-
-```bash
-sudo docker exec ring-cockroach ./cockroach sql \
-  --certs-dir=/root/.cockroach-certs -d ring \
-  -e "SET CLUSTER SETTING feature.vector_index.enabled = true;"
-```
-
-Other Cloud-specific notes:
-
-- `.env` is required at the repo root and is `.gitignore`d; keys are documented
-  in [README.md](README.md).
-- SSL certs come from `bash dev_util/ssl.sh` (`localhost.crt`/`localhost.key`
-  for Nginx, `certs/` for CockroachDB). `certs/node.key` must be `chmod 600`.
-
-A personal skill (`~/.cursor/skills/ring-cloud-dev/`) captures these commands
-in a form that auto-applies inside the Cloud VM.
+Do not hand-roll compose unless debugging — the start script handles network,
+SSL, vector index, migrations, and a test user seed.
 
 ## Quality gates
 
@@ -187,3 +165,4 @@ separate CockroachDB instance on port 8008. There is one pre-existing flake:
     changes
   - `ring-authz-checklist/` — permission-check patterns for new routes
   - `ring-split-pr/` — splitting backend + frontend work into separate PRs
+ - `ring-cloud-dev/` — Cursor Cloud VM bootstrap, health checks, browser testing

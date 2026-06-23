@@ -112,7 +112,31 @@ API accessible and `localhost/api/v1/docs`
 ring fe dev
 ```
 
-Accessible at `https://localhost:5173`
+Accessible at http://localhost:5173 during Vite dev. The dev server proxies
+`/api/v1` to the API on port 8001, so `VITE_API_URL` can be left empty in
+`.env` (see `.env.cloud.example`). Production builds still use
+`VITE_API_URL=https://localhost` to reach nginx.
+
+### Cursor Cloud Agent
+
+Cloud VMs use [`.cursor/environment.json`](.cursor/environment.json): `install`
+pulls deps, `start` runs `bash .cursor/cloud-start.sh --bootstrap-only`, and a
+`vite` terminal runs the frontend.
+
+```bash
+bash .cursor/cloud-start.sh              # bootstrap + Vite (manual)
+bash dev_util/cloud-health.sh            # verify stack
+```
+
+| | URL |
+|---|---|
+| App | http://localhost:5173 |
+| API docs | http://localhost:8001/api/v1/docs |
+| Test login | `test@example.com` / `testpassword123` |
+
+Agent playbook: [`.cursor/skills/ring-cloud-dev/SKILL.md`](.cursor/skills/ring-cloud-dev/SKILL.md).
+Copy [`.env.cloud.example`](.env.cloud.example) to `.env` if bootstrap has not
+run yet.
 
 ### `ring` commands
 

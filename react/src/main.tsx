@@ -34,8 +34,9 @@ registerSW({ immediate: true })
 /**/
 
 /* vite Config */
+const apiOrigin = import.meta.env.VITE_API_URL ?? ""
 client.setConfig({
-  baseURL: `${import.meta.env.VITE_API_URL}/api/v1`,
+  baseURL: apiOrigin ? `${apiOrigin}/api/v1` : "/api/v1",
   auth: async () => {
     return localStorage.getItem("access_token") || ""
   },
