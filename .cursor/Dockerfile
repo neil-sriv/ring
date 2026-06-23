@@ -13,6 +13,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     openssl \
     git \
     sudo \
+    xz-utils \
     && rm -rf /var/lib/apt/lists/*
 
 ########################################################
@@ -46,14 +47,21 @@ RUN update-alternatives --set iptables /usr/sbin/iptables-legacy && \
     update-alternatives --set ip6tables /usr/sbin/ip6tables-legacy
 
 ########################################################
-# Node.js 22 + pnpm
+# Node.js 22 + pnpm (official binary tarball; avoids deb.nodesource.com)
 ########################################################
 
-RUN curl -fsSL https://deb.nodesource.com/setup_22.x | bash - && \
-    apt-get install -y nodejs && \
-    corepack enable && \
-    corepack prepare pnpm@10.33.3 --activate && \
-    rm -rf /var/lib/apt/lists/*
+ARG NODE_VERSION=22.14.0
+RUN ARCH="$(dpkg --print-architecture)" \
+    && case "$ARCH" in \
+      amd64) NODE_ARCH=x64 ;; \
+      arm64) NODE_ARCH=arm64 ;; \
+      *) echo "unsupported architecture: $ARCH" >&2; exit 1 ;; \
+    esac \
+    && curl --retry 3 --retry-delay 5 -fsSL \
+      "https://nodejs.org/dist/v${NODE_VERSION}/node-v${NODE_VERSION}-linux-${NODE_ARCH}.tar.xz" \
+    | tar -xJ -C /usr/local --strip-components=1 \
+    && corepack enable \
+    && corepack prepare pnpm@10.33.3 --activate
 
 ########################################################
 # Ubuntu user (Cloud Agents run as ubuntu)
