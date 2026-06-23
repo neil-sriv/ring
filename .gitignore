@@ -184,4 +184,7 @@ certs/client.ringcockroach.*
 ssh-key-2025-05-16*
 
 node_modules/
-.cursor/
+.cursor/*
+!.cursor/environment.json
+!.cursor/Dockerfile
+!.cursor/cloud-start.sh
