@@ -7,6 +7,10 @@ packages:
   - '!**/test/**'
 
 allowBuilds:
+  '@biomejs/biome': true
+  '@swc/core': true
   "@tailwindcss/oxide": true
   "@tailwindcss/oxide-linux-x64-gnu": true
-
+  cbor-extract: true
+  esbuild: true
+  sharp: true
