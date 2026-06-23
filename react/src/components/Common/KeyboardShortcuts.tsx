@@ -9,9 +9,9 @@ import {
 } from "@/components/ui/dialog"
 import { cn } from "@/lib/utils"
 import { registerKeyboardShortcutHandlers } from "../../lib/globalKeyboardShortcuts"
-import { GO_TO_SHORTCUTS, modifierKeyLabel } from "../../lib/keyboard"
 import { subscribeGoSequencePending } from "../../lib/keyboardSequence"
 import { CommandPalette } from "./CommandPalette"
+import { KeyboardShortcutsReference } from "./KeyboardShortcutsReference"
 
 export function KeyboardShortcuts() {
   const [paletteOpen, setPaletteOpen] = useState(false)
@@ -67,54 +67,8 @@ function KeyboardShortcutsHelp({
             Navigate quickly without leaving the keyboard.
           </DialogDescription>
         </DialogHeader>
-        <div className="space-y-4 text-sm">
-          <ShortcutSection
-            title="General"
-            shortcuts={[
-              {
-                keys: `${modifierKeyLabel()} K`,
-                description: "Open command menu",
-              },
-              { keys: "?", description: "Show keyboard shortcuts" },
-            ]}
-          />
-          <ShortcutSection
-            title="Go to"
-            shortcuts={GO_TO_SHORTCUTS.map((shortcut) => ({
-              keys: shortcut.keys,
-              description: shortcut.label,
-            }))}
-          />
-        </div>
+        <KeyboardShortcutsReference />
       </DialogContent>
     </Dialog>
-  )
-}
-
-interface ShortcutSectionProps {
-  title: string
-  shortcuts: Array<{ keys: string; description: string }>
-}
-
-function ShortcutSection({ title, shortcuts }: ShortcutSectionProps) {
-  return (
-    <div>
-      <h3 className="mb-2 font-medium text-foreground">{title}</h3>
-      <dl className="space-y-2">
-        {shortcuts.map((shortcut) => (
-          <div
-            key={`${shortcut.keys}-${shortcut.description}`}
-            className="flex items-center justify-between gap-4"
-          >
-            <dt className="text-muted-foreground">{shortcut.description}</dt>
-            <dd>
-              <kbd className="rounded border border-border bg-muted px-2 py-0.5 font-mono text-xs text-foreground">
-                {shortcut.keys}
-              </kbd>
-            </dd>
-          </div>
-        ))}
-      </dl>
-    </div>
   )
 }

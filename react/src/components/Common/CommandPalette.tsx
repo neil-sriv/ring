@@ -15,7 +15,8 @@ import { cn } from "@/lib/utils"
 import type { UserLinked } from "../../client"
 import { readUserMePartiesMeGetQueryKey } from "../../client/@tanstack/react-query.gen"
 import useAuth from "../../hooks/useAuth"
-import { modifierKeyLabel } from "../../lib/keyboard"
+import { NAV_ITEM_SHORTCUTS, modifierKeyLabel } from "../../lib/keyboard"
+import { KeyboardShortcutsReference } from "./KeyboardShortcutsReference"
 
 interface CommandPaletteProps {
   open: boolean
@@ -29,6 +30,7 @@ interface CommandItem {
   icon: React.ComponentType<{ className?: string }>
   action: () => void
   section: "Navigation" | "Groups" | "Actions"
+  shortcut?: string
 }
 
 export function CommandPalette({ open, onOpenChange }: CommandPaletteProps) {
@@ -54,6 +56,7 @@ export function CommandPalette({ open, onOpenChange }: CommandPaletteProps) {
         keywords: "home dashboard",
         icon: Home,
         section: "Navigation",
+        shortcut: NAV_ITEM_SHORTCUTS["/"],
         action: () => navigate({ to: "/" }),
       },
       {
@@ -62,6 +65,7 @@ export function CommandPalette({ open, onOpenChange }: CommandPaletteProps) {
         keywords: "groups",
         icon: Users,
         section: "Navigation",
+        shortcut: NAV_ITEM_SHORTCUTS["/groups"],
         action: () => navigate({ to: "/groups" }),
       },
       {
@@ -70,6 +74,7 @@ export function CommandPalette({ open, onOpenChange }: CommandPaletteProps) {
         keywords: "search find",
         icon: Search,
         section: "Navigation",
+        shortcut: NAV_ITEM_SHORTCUTS["/search"],
         action: () => navigate({ to: "/search" }),
       },
       {
@@ -78,6 +83,7 @@ export function CommandPalette({ open, onOpenChange }: CommandPaletteProps) {
         keywords: "settings profile preferences",
         icon: Settings,
         section: "Navigation",
+        shortcut: NAV_ITEM_SHORTCUTS["/settings"],
         action: () => navigate({ to: "/settings" }),
       },
     ]
@@ -123,6 +129,8 @@ export function CommandPalette({ open, onOpenChange }: CommandPaletteProps) {
         item.keywords.toLowerCase().includes(normalizedQuery),
     )
   }, [items, query])
+
+  const showShortcutHelp = query.trim().length === 0
 
   useEffect(() => {
     if (open) {
@@ -191,49 +199,64 @@ export function CommandPalette({ open, onOpenChange }: CommandPaletteProps) {
             className="h-10 border-0 bg-transparent px-1 shadow-none focus-visible:ring-0"
           />
         </div>
-        <div ref={listRef} className="max-h-80 overflow-y-auto p-2">
-          {filteredItems.length === 0 ? (
-            <p className="px-3 py-6 text-center text-sm text-muted-foreground">
-              No results found.
-            </p>
-          ) : (
-            sections.map((section) => {
-              const sectionItems = filteredItems.filter(
-                (item) => item.section === section,
-              )
-              if (sectionItems.length === 0) {
-                return null
-              }
+        <div className="flex max-h-[min(32rem,80vh)] flex-col">
+          <div ref={listRef} className="flex-1 overflow-y-auto p-2">
+            {filteredItems.length === 0 ? (
+              <p className="px-3 py-6 text-center text-sm text-muted-foreground">
+                No results found.
+              </p>
+            ) : (
+              sections.map((section) => {
+                const sectionItems = filteredItems.filter(
+                  (item) => item.section === section,
+                )
+                if (sectionItems.length === 0) {
+                  return null
+                }
 
-              return (
-                <div key={section} className="mb-2 last:mb-0">
-                  <p className="px-2 py-1.5 text-xs font-medium text-muted-foreground">
-                    {section}
-                  </p>
-                  {sectionItems.map((item) => {
-                    const itemIndex = filteredItems.indexOf(item)
-                    const Icon = item.icon
-                    return (
-                      <button
-                        key={item.id}
-                        type="button"
-                        data-command-index={itemIndex}
-                        onClick={() => runItem(item)}
-                        className={cn(
-                          "flex w-full items-center gap-3 rounded-md px-2 py-2 text-left text-sm",
-                          itemIndex === selectedIndex
-                            ? "bg-accent text-accent-foreground"
-                            : "text-foreground hover:bg-accent/60",
-                        )}
-                      >
-                        <Icon className="h-4 w-4 shrink-0 opacity-70" />
-                        <span className="truncate">{item.label}</span>
-                      </button>
-                    )
-                  })}
-                </div>
-              )
-            })
+                return (
+                  <div key={section} className="mb-2 last:mb-0">
+                    <p className="px-2 py-1.5 text-xs font-medium text-muted-foreground">
+                      {section}
+                    </p>
+                    {sectionItems.map((item) => {
+                      const itemIndex = filteredItems.indexOf(item)
+                      const Icon = item.icon
+                      return (
+                        <button
+                          key={item.id}
+                          type="button"
+                          data-command-index={itemIndex}
+                          onClick={() => runItem(item)}
+                          className={cn(
+                            "flex w-full items-center gap-3 rounded-md px-2 py-2 text-left text-sm",
+                            itemIndex === selectedIndex
+                              ? "bg-accent text-accent-foreground"
+                              : "text-foreground hover:bg-accent/60",
+                          )}
+                        >
+                          <Icon className="h-4 w-4 shrink-0 opacity-70" />
+                          <span className="flex-1 truncate">{item.label}</span>
+                          {item.shortcut && (
+                            <kbd className="shrink-0 rounded border border-border bg-muted px-1.5 py-0.5 font-mono text-[10px] text-muted-foreground">
+                              {item.shortcut}
+                            </kbd>
+                          )}
+                        </button>
+                      )
+                    })}
+                  </div>
+                )
+              })
+            )}
+          </div>
+          {showShortcutHelp && (
+            <div className="border-t border-border bg-muted/30 px-3 py-3">
+              <p className="mb-2 text-xs font-medium text-foreground">
+                Keyboard shortcuts
+              </p>
+              <KeyboardShortcutsReference compact />
+            </div>
           )}
         </div>
       </DialogContent>

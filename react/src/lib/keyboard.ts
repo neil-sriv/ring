@@ -45,3 +45,45 @@ export const GO_TO_ROUTE_KEYS: Record<string, GoToShortcut["path"]> = {
   s: "/search",
   p: "/settings",
 }
+
+export interface ShortcutHelpEntry {
+  keys: string
+  description: string
+}
+
+export interface ShortcutHelpSection {
+  title: string
+  shortcuts: ShortcutHelpEntry[]
+}
+
+export function getKeyboardShortcutSections(): ShortcutHelpSection[] {
+  return [
+    {
+      title: "General",
+      shortcuts: [
+        {
+          keys: `${modifierKeyLabel()} K`,
+          description: "Open command menu",
+        },
+        { keys: "?", description: "Show keyboard shortcuts" },
+      ],
+    },
+    {
+      title: "Go to",
+      shortcuts: GO_TO_SHORTCUTS.map((shortcut) => ({
+        keys: shortcut.keys,
+        description: shortcut.label,
+      })),
+    },
+  ]
+}
+
+export const NAV_ITEM_SHORTCUTS: Record<
+  "/" | "/groups" | "/search" | "/settings",
+  string
+> = {
+  "/": "g h",
+  "/groups": "g g",
+  "/search": "g s",
+  "/settings": "g p",
+}
