@@ -1,0 +1,15 @@
+{
+  "name": "Ring full stack",
+  "build": {
+    "dockerfile": "Dockerfile",
+    "context": ".."
+  },
+  "install": "uv sync --group dev --group ai && cd react && pnpm install && test -f certs/node.key && chmod 600 certs/node.key || true",
+  "start": "sudo service docker start",
+  "terminals": [
+    {
+      "name": "ring",
+      "command": "bash .cursor/cloud-start.sh"
+    }
+  ]
+}
