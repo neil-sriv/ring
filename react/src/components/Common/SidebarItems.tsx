@@ -7,10 +7,15 @@ interface SidebarItemsProps {
 }
 
 const items = [
-  { name: "Home", icon: Home, path: "/" as const },
-  { name: "Groups", icon: Users, path: "/groups" as const },
-  { name: "Search", icon: Search, path: "/search" as const },
-  { name: "Settings", icon: Settings, path: "/settings" as const },
+  { name: "Home", icon: Home, path: "/" as const, shortcut: "g h" },
+  { name: "Groups", icon: Users, path: "/groups" as const, shortcut: "g g" },
+  { name: "Search", icon: Search, path: "/search" as const, shortcut: "g s" },
+  {
+    name: "Settings",
+    icon: Settings,
+    path: "/settings" as const,
+    shortcut: "g p",
+  },
 ]
 
 export default function SidebarItems({ onClose }: SidebarItemsProps) {
@@ -30,7 +35,10 @@ export default function SidebarItems({ onClose }: SidebarItemsProps) {
           }}
         >
           <item.icon className="h-4 w-4 shrink-0" />
-          {item.name}
+          <span className="flex-1">{item.name}</span>
+          <kbd className="hidden text-[10px] font-mono text-muted-foreground lg:inline">
+            {item.shortcut}
+          </kbd>
         </Link>
       ))}
     </nav>
