@@ -214,6 +214,34 @@ class TestLetterSchemaThresholdFields:
             DEFAULT_MIN_RESPONDER_RATIO_TO_SEND
         )
 
+    def test_public_letter_revalidate_preserves_threshold_fields(
+        self, db_session: Session
+    ) -> None:
+        admin = UserFactory.create()
+        members = [admin] + [UserFactory.create() for _ in range(3)]
+        group = GroupFactory.create(admin=admin, members=members)
+        letter = LetterFactory.create(
+            group=group,
+            status=LetterStatus.IN_PROGRESS,
+            send_at=datetime.now(tz=UTC) + timedelta(days=1),
+        )
+        question = QuestionFactory.create(letter=letter)
+        ResponseFactory.create(question=question, participant=members[0])
+        db_session.commit()
+
+        public_letter = PublicLetter.model_validate(letter)
+        revalidated = PublicLetter.model_validate(public_letter)
+
+        assert (
+            revalidated.required_responders
+            == public_letter.required_responders
+        )
+        assert revalidated.responder_count == public_letter.responder_count
+        assert (
+            revalidated.send_threshold_ratio
+            == public_letter.send_threshold_ratio
+        )
+
     def test_minimal_letter_model_validate_includes_threshold_fields(
         self, db_session: Session
     ) -> None:

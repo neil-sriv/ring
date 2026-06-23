@@ -37,7 +37,14 @@ def _populate_letter_send_threshold_fields[T: BaseModel](
     model: T, letter: Any
 ) -> T:
     """Add send-threshold progress fields when serializing a letter ORM object."""
-    if not hasattr(letter, "group"):
+    # Skip when input is already a Pydantic model (e.g. FastAPI response_model
+    # re-validation). Threshold fields are only computable from ORM letters whose
+    # group carries key_values, not from linked schemas like GroupUnlinked.
+    if isinstance(letter, BaseModel):
+        return model
+    if not hasattr(letter, "group") or letter.group is None:
+        return model
+    if not hasattr(letter.group, "key_values"):
         return model
     from ring.letters.send_threshold import (
         effective_send_threshold_ratio,
