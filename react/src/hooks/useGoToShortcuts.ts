@@ -13,11 +13,19 @@ export function useGoToShortcuts({
   enabled = true,
 }: UseGoToShortcutsOptions = {}) {
   const navigate = useNavigate()
+  const navigateRef = useRef(navigate)
   const pendingKeyRef = useRef<string | null>(null)
   const timeoutRef = useRef<number | null>(null)
 
+  navigateRef.current = navigate
+
   useEffect(() => {
     if (!enabled) {
+      pendingKeyRef.current = null
+      if (timeoutRef.current !== null) {
+        window.clearTimeout(timeoutRef.current)
+        timeoutRef.current = null
+      }
       return
     }
 
@@ -45,17 +53,19 @@ export function useGoToShortcuts({
         return
       }
 
+      const key = event.key.toLowerCase()
+
       if (pendingKeyRef.current === "g") {
-        const destination = GO_TO_ROUTE_KEYS[event.key]
+        const destination = GO_TO_ROUTE_KEYS[key]
         clearPending()
         if (destination) {
           event.preventDefault()
-          navigate({ to: destination })
+          navigateRef.current({ to: destination })
         }
         return
       }
 
-      if (event.key === "g") {
+      if (key === "g") {
         event.preventDefault()
         pendingKeyRef.current = "g"
         timeoutRef.current = window.setTimeout(
@@ -65,10 +75,9 @@ export function useGoToShortcuts({
       }
     }
 
-    window.addEventListener("keydown", handleKeyDown)
+    window.addEventListener("keydown", handleKeyDown, true)
     return () => {
-      window.removeEventListener("keydown", handleKeyDown)
-      clearPending()
+      window.removeEventListener("keydown", handleKeyDown, true)
     }
-  }, [enabled, navigate])
+  }, [enabled])
 }
