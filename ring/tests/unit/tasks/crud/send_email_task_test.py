@@ -17,11 +17,17 @@ class TestSendEmailTask:
 
         html_body = construct_response_html(response)
 
-        assert "white-space:pre-line" in html_body
-        assert "Line one\nLine two" in html_body
+        assert "Line one<br />Line two" in html_body
         assert "Line one" in html_body
         assert "Line two" in html_body
         assert "Alice" in html_body
+
+    def test_construct_response_html_preserves_crlf_newlines(self) -> None:
+        response = ("Alice: Line one\r\nLine two", [])
+
+        html_body = construct_response_html(response)
+
+        assert "Line one<br />Line two" in html_body
 
     def test_construct_response_html_linkifies_urls(self) -> None:
         response = (
@@ -73,7 +79,7 @@ class TestSendEmailTask:
         html_body = email_draft.message["Body"]["Html"]["Data"]
         text_body = email_draft.message["Body"]["Text"]["Data"]
 
-        assert "white-space:pre-line" in html_body
+        assert "First line<br />Second line" in html_body
         assert "First line" in html_body
         assert "Second line" in html_body
         assert "Dana: First line\nSecond line" in text_body
