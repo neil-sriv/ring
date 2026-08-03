@@ -16,7 +16,10 @@ class GroupFactory(BaseFactory[Group]):
     class Meta:
         model = Group
 
-    name = factory.Faker("pystr_format", string_format="Group-{{random_int}}")
+    # Sequence avoids unique-constraint flakes on Group.name (unique=True).
+    # Faker("pystr_format", "Group-{{random_int}}") collides under load
+    # (e.g. TestGroupApi::test_list_groups creating many groups).
+    name = factory.Sequence(lambda n: f"Group-{n}")
     admin = factory.SubFactory(
         "ring.tests.factories.parties.user_factory.UserFactory"
     )

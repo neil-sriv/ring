@@ -51,9 +51,22 @@ def fe_regen(
     **kwargs: dict[Any, Any],
 ) -> list[list[str]]:
     spec_result = ctx.invoke(fe_spec)
-    spec_json = json.loads(spec_result[0])
-    with open(FE_DIR / "openapi.json", "w") as f:
-        json.dump(spec_json, f)
+    if not spec_result or not spec_result[0]:
+        raise click.ClickException(
+            "Failed to fetch OpenAPI spec from http://localhost:8001 "
+            "(is the API container running? try `ring compose up`)."
+        )
+    try:
+        spec_json = json.loads(spec_result[0])
+    except json.JSONDecodeError as e:
+        raise click.ClickException(
+            f"OpenAPI response was not valid JSON: {e}"
+        ) from e
+    openapi_path = FE_DIR / "openapi.json"
+    with open(openapi_path, "w") as f:
+        json.dump(spec_json, f, indent=2)
+        f.write("\n")
+    click.echo(f"Wrote OpenAPI spec to {openapi_path}")
     return [
         ["node", "modify-openapi-operationids.js"],
         ["pnpm", "run", "generate-client"],
