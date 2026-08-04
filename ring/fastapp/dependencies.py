@@ -130,10 +130,8 @@ async def get_websocket_request_dependencies(
     Raises:
         HTTPException: If authentication fails
     """
-    logger.info(f"WebSocket request: {websocket}")
-    # Extract token from query parameters
+    # Extract token from query parameters (never log the token value)
     token = websocket.query_params.get("token")
-    logger.info(f"WebSocket auth: token extracted: {token}")
     if not token:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
@@ -142,7 +140,6 @@ async def get_websocket_request_dependencies(
         )
 
     try:
-        # Manually authenticate the user
         user_email = decode_token(token)
         current_user = user_crud.get_user_by_email(db, email=user_email)
 
@@ -157,7 +154,10 @@ async def get_websocket_request_dependencies(
             db=db, current_user=current_user
         )
 
-    except Exception as e:
+    except HTTPException:
+        raise
+    except Exception:
+        logger.exception("Unexpected WebSocket authentication failure")
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Authentication failed",

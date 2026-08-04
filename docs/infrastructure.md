@@ -187,7 +187,7 @@ Helpful for agents so they do not assume these exist:
 | RDS | Decommissioned; migrated to CockroachDB Cloud |
 | Route 53 | DNS at registrar |
 | ACM | TLS via Let's Encrypt on the server |
-| ElastiCache / Redis | No managed Redis; Celery references in README are stale (APScheduler in-process instead) |
+| ElastiCache / Redis | No managed Redis; background work uses in-process APScheduler |
 | Lambda | None |
 | Bedrock | Embeddings via self-hosted `ring-llm` |
 

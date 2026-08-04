@@ -301,6 +301,13 @@ async def update_user_admin(
     return ResponseMessage(message="User admin status updated successfully")
 
 
+def _deprecated_not_implemented() -> None:
+    raise HTTPException(
+        status_code=501,
+        detail="This endpoint is deprecated and not implemented",
+    )
+
+
 @router.delete("/me", deprecated=True)
 async def delete_user_me() -> None:
     """Delete current user (deprecated).
@@ -308,7 +315,7 @@ async def delete_user_me() -> None:
     Note:
         This endpoint is not implemented and is deprecated.
     """
-    raise NotImplementedError()
+    _deprecated_not_implemented()
 
 
 @router.post("/signup", deprecated=True)
@@ -318,7 +325,7 @@ async def signup() -> None:
     Note:
         This endpoint is not implemented and is deprecated.
     """
-    raise NotImplementedError()
+    _deprecated_not_implemented()
 
 
 @router.patch("/{user_id}", deprecated=True)
@@ -328,7 +335,7 @@ async def update_user() -> None:
     Note:
         This endpoint is not implemented and is deprecated.
     """
-    raise NotImplementedError()
+    _deprecated_not_implemented()
 
 
 @router.delete("/{user_id}", deprecated=True)
@@ -338,4 +345,4 @@ async def delete_user() -> None:
     Note:
         This endpoint is not implemented and is deprecated.
     """
-    raise NotImplementedError()
+    _deprecated_not_implemented()

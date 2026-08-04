@@ -166,6 +166,17 @@ def _backfill_search_documents_batched(
         for model in batch_models:
             try:
                 doc = backfill_fn(db, model)
+                # Search wrappers swallow indexing errors and return None so
+                # entity creates are not blocked; treat that as a failed model
+                # here so we never flush null documents into the batch.
+                if doc is None:
+                    logger.error(
+                        f"Failed to create search document for "
+                        f"{searchable_type.value} {model.api_identifier}: "
+                        f"search function returned None"
+                    )
+                    failed_models.append(model)
+                    continue
                 batch_docs.append(doc)
             except Exception as e:
                 logger.error(

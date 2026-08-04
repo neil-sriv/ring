@@ -52,8 +52,6 @@ Add a `.env` file with the following:
 ```bash
 ENVIRONMENT=local
 API_PORT=8001
-CELERY_BROKER_URL=redis://redis:6379/0
-CELERY_RESULT_BACKEND=redis://redis:6379/0
 SQLALCHEMY_DATABASE_URI=postgresql://ring-postgres:ring-postgres@db:5432/ring
 COCKROACH_DATABASE_URI=cockroachdb://ringcockroach:ringcockroach@cockroach:26257/ring?sslmode=require
 JWT_SIGNING_ALGORITHM=HS256
