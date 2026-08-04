@@ -157,7 +157,7 @@ Database management commands:
 ```bash
 ring db upgrade     # Run database migrations
 ring db generate    # Generate new migration
-ring db pgcli       # Open database CLI
+ring db cockroach   # Open CockroachDB SQL shell
 ring db alembic     # Run alembic commands directly
 ```
 
@@ -198,15 +198,19 @@ Public** (`public.ecr.aws/z2k1e8p1/`); the database is **CockroachDB Cloud**
 (`ring-db`). See [docs/infrastructure.md](docs/infrastructure.md) for the full
 topology (S3, CloudFront, SES, request flows).
 
-### Build new images
+### Build and push images
+
+Preferred one-shot from a machine with AWS credentials:
 
 ```bash
-VITE_API_URL=https://ring.neilsriv.tech ring compose any --prod build
+ring deploy prod
 ```
 
-### Push to registry
+Or the manual equivalent:
 
 ```bash
+ring fe build
+VITE_API_URL=https://ring.neilsriv.tech ring compose any --profile prod build
 ring docker tp
 ```
 
@@ -219,7 +223,7 @@ cd ring
 git pull
 ./dev_util/prod.sh          # pull ring-api, ring-frontend, ring-llm from ECR
 ring db upgrade
-ring compose any --prod up -d
+ring compose any --profile prod up -d
 # may need to restart nginx
-ring compose any --prod restart nginx
+ring compose any --profile prod restart nginx
 ```
