@@ -547,32 +547,57 @@ class TestLetterCrud:
         assert promote == []
 
     def test_promote_and_create_new_letters(self, db_session: Session) -> None:
-        """Test promoting and creating new letters.
+        """Test promoting upcoming letters and creating replacements.
 
-        This test verifies that:
+        Verifies that:
         1. Upcoming letters are promoted to in-progress
-        2. New upcoming letters are created
-        3. The letter numbering is maintained
-        4. The database state is updated correctly
-
-        Args:
-            db_session (Session): Database session
+        2. A new upcoming letter is created for the same group
+        3. Email notification scheduling is attempted for each promoted letter
         """
-        # TODO(#110): Implement celery task testing
+        from unittest.mock import MagicMock, patch
 
-    def test_postpend_upcoming_letters(self, db_session: Session) -> None:
-        """Test postpending upcoming letters.
+        from ring.async_scheduler.job_registry import JOB_REGISTRY
 
-        This test verifies that:
-        1. Upcoming letters are postpended correctly
-        2. The send times are updated
-        3. The tasks are updated
-        4. The database state is updated correctly
+        group = GroupFactory.create()
+        send_at = datetime.now(tz=UTC) + timedelta(days=2)
+        letter = LetterFactory.create(
+            group=group,
+            status=LetterStatus.UPCOMING,
+            send_at=send_at,
+        )
+        db_session.commit()
+        letter_id = letter.id
+        group_api_id = group.api_identifier
+        initial_letter_count = len(group.letters)
 
-        Args:
-            db_session (Session): Database session
-        """
-        # TODO(#110): Implement celery task testing
+        promote_fn = JOB_REGISTRY[
+            "promote_and_create_new_letters"
+        ].job_function
+        mock_scheduler = MagicMock()
+        with patch(
+            "ring.async_scheduler.scheduler.scheduler",
+            mock_scheduler,
+        ):
+            promote_fn(db_session, [letter_id])
+
+        db_session.expire_all()
+        promoted = db_session.get(Letter, letter_id)
+        assert promoted is not None
+        assert promoted.status == LetterStatus.IN_PROGRESS
+
+        group_letters = letter_crud.get_letters(db_session, group_api_id)
+        assert len(group_letters) == initial_letter_count + 1
+        upcoming = [
+            letter
+            for letter in group_letters
+            if letter.status == LetterStatus.UPCOMING
+        ]
+        assert len(upcoming) == 1
+        assert upcoming[0].id != letter_id
+        assert upcoming[0].send_at == send_at + timedelta(
+            days=group.cycle_length
+        )
+        mock_scheduler.add_job.assert_called_once()
 
     def test_add_participants(self, db_session: Session) -> None:
         """Test adding participants to a letter.

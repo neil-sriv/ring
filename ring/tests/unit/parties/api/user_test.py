@@ -627,3 +627,21 @@ class TestUserAPI:
         resp = authenticated_client.patch(f"/parties/invalid_id/admin")
         assert resp.status_code == 404
         assert resp.json()["detail"] == "Model ids not found"
+
+    def test_deprecated_endpoints_return_501(
+        self, unauthenticated_client: TestClient
+    ) -> None:
+        """Deprecated user endpoints should return 501, not an unhandled 500."""
+        cases = [
+            ("delete", "/parties/me"),
+            ("post", "/parties/signup"),
+            ("patch", "/parties/usr_example"),
+            ("delete", "/parties/usr_example"),
+        ]
+        for method, path in cases:
+            response = getattr(unauthenticated_client, method)(path)
+            assert response.status_code == 501, path
+            assert (
+                response.json()["detail"]
+                == "This endpoint is deprecated and not implemented"
+            )

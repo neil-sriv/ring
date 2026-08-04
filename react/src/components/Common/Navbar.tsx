@@ -23,7 +23,6 @@ const Navbar = ({ type }: NavbarProps) => {
   return (
     <>
       <div className="flex items-center gap-4 py-6">
-        {/* TODO: Complete search functionality */}
         <Button onClick={() => onClick(type)} className="gap-1">
           <Plus className="h-4 w-4" /> Add {type}
         </Button>
