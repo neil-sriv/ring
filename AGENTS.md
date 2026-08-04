@@ -158,8 +158,7 @@ SSL, vector index, migrations, and a test user seed.
 | Backend tests        | `ring test run` (Compose `compose.test.yml`, profile `test`)   |
 
 Backend tests run inside a dedicated `ring-test-runner` container against a
-separate CockroachDB instance on port 8008. There is one pre-existing flake:
-`TestGroupApi::test_list_groups` raises `IntegrityError` (242/243 pass).
+separate CockroachDB instance on port 8008.
 
 ## Design preferences
 

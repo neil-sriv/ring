@@ -5,6 +5,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip"
+import { apiUrl, wsUrl } from "@/lib/apiUrl"
 import Placeholder from "@tiptap/extension-placeholder"
 import { TextStyleKit } from "@tiptap/extension-text-style"
 import type { Editor } from "@tiptap/react"
@@ -312,24 +313,21 @@ export const CollabEditor: React.FC<{
 
   useEffect(() => {
     const accessToken = localStorage.getItem("access_token") ?? ""
-    const baseUrl = import.meta.env.VITE_API_URL || "http://localhost:8000"
-    const wsUrl = `${baseUrl.replace(
-      "http",
-      "ws",
-    )}/api/v1/ws/notebook/${docId}?token=${encodeURIComponent(accessToken)}`
+    const documentUrl = apiUrl(`/api/v1/notebook/documents/${docId}`)
+    const notebookWsUrl = wsUrl(
+      `/api/v1/ws/notebook/${docId}?token=${encodeURIComponent(accessToken)}`,
+    )
+    let cancelled = false
 
     // Load existing content
     const loadContent = async () => {
       try {
-        const response = await fetch(
-          `${baseUrl}/api/v1/notebook/documents/${docId}`,
-          {
-            method: "GET",
-            headers: {
-              Authorization: `Bearer ${accessToken}`,
-            },
+        const response = await fetch(documentUrl, {
+          method: "GET",
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
           },
-        )
+        })
         if (response.ok) {
           const data = await response.json()
           if (data.content && editorRef.current) {
@@ -344,7 +342,10 @@ export const CollabEditor: React.FC<{
 
     // Setup WebSocket for real-time collaboration
     const setupWebSocket = () => {
-      wsRef.current = new WebSocket(wsUrl)
+      if (cancelled) {
+        return
+      }
+      wsRef.current = new WebSocket(notebookWsUrl)
 
       wsRef.current.onopen = () => {
         console.log("WebSocket connected")
@@ -433,6 +434,9 @@ export const CollabEditor: React.FC<{
       }
 
       wsRef.current.onclose = () => {
+        if (cancelled) {
+          return
+        }
         console.log("WebSocket disconnected, reconnecting...")
         setTimeout(setupWebSocket, 1000)
       }
@@ -446,6 +450,7 @@ export const CollabEditor: React.FC<{
     setupWebSocket()
 
     return () => {
+      cancelled = true
       if (wsRef.current) {
         wsRef.current.close()
       }
@@ -526,10 +531,8 @@ export const CollabEditor: React.FC<{
           onSavingChange?.(true)
           try {
             const accessToken = localStorage.getItem("access_token") ?? ""
-            const baseUrl =
-              import.meta.env.VITE_API_URL || "http://localhost:8000"
 
-            await fetch(`${baseUrl}/api/v1/notebook/documents/${docId}`, {
+            await fetch(apiUrl(`/api/v1/notebook/documents/${docId}`), {
               method: "PUT",
               headers: {
                 "Content-Type": "application/json",

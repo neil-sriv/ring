@@ -94,6 +94,6 @@ unless built). Use Vite for frontend testing.
 
 ## Notebook / WebSocket note
 
-Collaborative notebook WebSockets may still use `VITE_API_URL` for `wss://`
-URLs. If notebook sync fails in cloud, set `VITE_API_URL=http://localhost:8001`
-for those code paths or test notebook features via nginx production build.
+Collaborative notebook HTTP and WebSockets use same-origin `/api/v1` when
+`VITE_API_URL` is empty (Vite proxies both, including `ws`). With an explicit
+`VITE_API_URL` (OrbStack nginx TLS), the notebook client talks to that origin.

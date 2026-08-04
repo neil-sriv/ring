@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import Any
 
-from factory import Faker, post_generation
+from factory import Faker, Sequence, post_generation
 
 from ring.parties.models.user_model import User
 from ring.security import get_password_hash
@@ -21,7 +21,8 @@ class UserFactory(BaseFactory[User]):
         password = extracted or "password"
         obj.hashed_password = get_password_hash(password)
 
-    email = Faker("email")
+    # Sequence avoids unique-constraint flakes on User.email (unique=True).
+    email = Sequence(lambda n: f"user-{n}@example.com")
     name = Faker("name")
 
     # Temporary value until post generation function is called

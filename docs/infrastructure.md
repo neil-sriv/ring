@@ -158,8 +158,10 @@ Embedding generation → ring-llm microservice (not AWS Bedrock)
 Build and push from a dev machine:
 
 ```bash
-VITE_API_URL=https://ring.neilsriv.tech ring compose any --prod build
-ring docker tp   # tag + push to ECR Public
+ring deploy prod
+# or manually:
+# VITE_API_URL=https://ring.neilsriv.tech ring compose any --profile prod build
+# ring docker tp   # tag + push to ECR Public
 ```
 
 On the EC2 host:
@@ -169,8 +171,8 @@ cd ring
 git pull
 ./dev_util/prod.sh          # pull images from ECR, retag as prod-*
 ring db upgrade
-ring compose any --prod up -d
-ring compose any --prod restart nginx   # if needed
+ring compose any --profile prod up -d
+ring compose any --profile prod restart nginx   # if needed
 ```
 
 Compose files: `compose.core.yml` + `compose.prod.yml` (+ `llm/compose.prod.llm.yml` if LLM is enabled).
