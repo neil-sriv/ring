@@ -46,7 +46,7 @@ Cloud Agent egress is restricted. Allow the SQL hostname from the URI (and/or
 the regional parent), for example:
 
 - `gcp-us-east1.cockroachlabs.cloud` (Ring’s Cockroach Cloud region)
-- or the exact host printed by `bash dev_util/cloud-prod-db.sh status`
+- or the exact host printed by `ring cloud prod-db status`
 
 If enable fails with connection timeouts / TLS dial errors, request that domain
 via `cursor-cloud/request-environment-setup-actions`.
@@ -58,23 +58,27 @@ bash .cursor/cloud-start.sh --bootstrap-only
 bash .cursor/cloud-start.sh --vite-only   # or use the vite terminal
 ```
 
+`ring` is available after `uv sync` (Cloud Agent install already runs it). Use
+`ring …` directly; no need to activate the venv first if `.venv/bin` is on
+`PATH` (it is in the default Cloud Agent shell).
+
 ## Enable / disable
 
 Prefer **staging** unless the user explicitly needs prod:
 
 ```bash
-bash dev_util/cloud-prod-db.sh status
-bash dev_util/cloud-prod-db.sh enable --staging --yes
+ring cloud prod-db status
+ring cloud prod-db enable --staging --yes
 # or prod:
-bash dev_util/cloud-prod-db.sh enable --yes
+ring cloud prod-db enable --yes
 
-bash dev_util/cloud-prod-db.sh health
+ring cloud prod-db health
 ```
 
 Restore local Docker Cockroach when done:
 
 ```bash
-bash dev_util/cloud-prod-db.sh disable
+ring cloud prod-db disable
 ```
 
 What `enable` does:
@@ -85,6 +89,9 @@ What `enable` does:
    `DISABLE_SCHEDULER=true`, empty `VITE_API_URL`
 4. Recreates `api` with [compose.cloud-prod-db.yml](../../../compose.cloud-prod-db.yml)
    (mounts CA + forces scheduler off)
+
+Implementation lives in [dev_util/cloud.py](../../../dev_util/cloud.py)
+(`ring cloud prod-db …`).
 
 ## Frontend login
 
@@ -101,7 +108,8 @@ cloud `.env`) — that is fine; password hashes come from the cloud DB.
 - Prefer staging. On prod, avoid destructive writes; treat data as live.
 - Leave APScheduler disabled (`DISABLE_SCHEDULER=true`) — the local API must not
   fire letter/reminder/email jobs against cloud data.
-- When finished testing, run `disable` so the next agent boots on local DB.
+- When finished testing, run `ring cloud prod-db disable` so the next agent
+  boots on local DB.
 
 ## Browser check
 

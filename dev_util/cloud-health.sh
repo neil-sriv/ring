@@ -38,7 +38,7 @@ MODE_FILE="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)/.ring-cloud-prod-db/
 if [[ -f "$MODE_FILE" ]]; then
   mode="$(cat "$MODE_FILE")"
   echo "NOTE cloud-prod-db mode active (${mode}) — skipping local Cockroach check"
-  echo "     use: bash dev_util/cloud-prod-db.sh health"
+  echo "     use: ring cloud prod-db health"
 else
   check "CockroachDB" check_cockroach
 fi

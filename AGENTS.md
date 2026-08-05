@@ -152,13 +152,13 @@ staging) instead of Docker Cockroach, use
 [**ring-cloud-prod-db**](.cursor/skills/ring-cloud-prod-db/SKILL.md):
 
 ```bash
-bash dev_util/cloud-prod-db.sh enable --staging --yes   # or enable --yes for prod
-bash dev_util/cloud-prod-db.sh disable                  # back to local
+ring cloud prod-db enable --staging --yes   # or: ring cloud prod-db enable --yes
+ring cloud prod-db disable                  # back to local
 ```
 
 Requires Cursor secrets `RING_PROD_COCKROACH_DATABASE_URI` /
 `RING_STAGING_COCKROACH_DATABASE_URI` and `RING_COCKROACH_CA_CERT`, plus egress
-for `*.cockroachlabs.cloud`. Never run migrations against the cloud URI from
+for Cockroach Cloud SQL hosts. Never run migrations against the cloud URI from
 this mode.
 
 ## Quality gates

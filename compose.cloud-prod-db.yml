@@ -1,4 +1,4 @@
-# Override used by `dev_util/cloud-prod-db.sh enable`.
+# Override used by `ring cloud prod-db enable`.
 # Points the local cloud-agent API at CockroachDB Cloud while keeping Vite →
 # localhost:8001 same-origin proxy. Do not use for routine local development.
 services:

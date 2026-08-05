@@ -138,9 +138,20 @@ run yet.
 
 To use CockroachDB Cloud data from the local Vite frontend, see
 [`.cursor/skills/ring-cloud-prod-db/SKILL.md`](.cursor/skills/ring-cloud-prod-db/SKILL.md)
-(`bash dev_util/cloud-prod-db.sh enable`).
+(`ring cloud prod-db enable`).
 
 ### `ring` commands
+
+#### `ring cloud`
+
+Cursor Cloud Agent helpers:
+
+```bash
+ring cloud prod-db status
+ring cloud prod-db enable --staging --yes
+ring cloud prod-db disable
+ring cloud prod-db health
+```
 
 #### `ring compose`
 

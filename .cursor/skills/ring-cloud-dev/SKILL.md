@@ -105,8 +105,8 @@ of Docker Cockroach), see
 [ring-cloud-prod-db](../ring-cloud-prod-db/SKILL.md):
 
 ```bash
-bash dev_util/cloud-prod-db.sh enable --staging --yes
-bash dev_util/cloud-prod-db.sh disable
+ring cloud prod-db enable --staging --yes
+ring cloud prod-db disable
 ```
 
 Keep `VITE_API_URL` empty so Vite still proxies to the local API.
