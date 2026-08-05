@@ -136,6 +136,10 @@ Agent playbook: [`.cursor/skills/ring-cloud-dev/SKILL.md`](.cursor/skills/ring-c
 Copy [`.env.cloud.example`](.env.cloud.example) to `.env` if bootstrap has not
 run yet.
 
+To use CockroachDB Cloud data from the local Vite frontend, see
+[`.cursor/skills/ring-cloud-prod-db/SKILL.md`](.cursor/skills/ring-cloud-prod-db/SKILL.md)
+(`bash dev_util/cloud-prod-db.sh enable`).
+
 ### `ring` commands
 
 #### `ring compose`

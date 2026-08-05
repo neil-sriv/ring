@@ -121,6 +121,12 @@ host in `dev_util/database.py` was removed — do not add it back.
 Local dev and tests run CockroachDB in Docker. Connection string:
 `COCKROACH_DATABASE_URI` in `.env`.
 
+Cursor Cloud Agents can optionally point the **local** API (and thus the local
+Vite frontend via the same-origin proxy) at Cockroach Cloud — see
+[ring-cloud-prod-db](../.cursor/skills/ring-cloud-prod-db/SKILL.md) and
+`dev_util/cloud-prod-db.sh`. That mode disables APScheduler and must never run
+migrations against the cloud URI.
+
 ---
 
 ## Request flows

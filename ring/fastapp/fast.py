@@ -23,11 +23,14 @@ from ring.fastapp.routes import router
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    scheduler.start()
+    ring_config = get_config()
+    if not ring_config.DISABLE_SCHEDULER:
+        scheduler.start()
 
     yield
 
-    scheduler.shutdown()
+    if not ring_config.DISABLE_SCHEDULER:
+        scheduler.shutdown()
 
 
 def create_app() -> FastAPI:
