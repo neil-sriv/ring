@@ -126,6 +126,9 @@ celerybeat.pid
 !.env.cloud.example
 *.env
 .venv
+
+# Cloud Agent prod/staging DB mode state (URI backups, markers)
+.ring-cloud-prod-db/
 env/
 venv/
 ENV/

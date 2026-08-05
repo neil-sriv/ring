@@ -147,6 +147,7 @@ from .frontend import *  # noqa
 from .setup import *  # noqa
 from .test import *  # noqa
 from .check import *  # noqa
+from .cloud import *  # noqa
 
 if __name__ == "__main__":
     dev()

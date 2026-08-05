@@ -147,6 +147,20 @@ bash dev_util/cloud-health.sh
 Do not hand-roll compose unless debugging — the start script handles network,
 SSL, vector index, migrations, and a test user seed.
 
+To point the **local Vite frontend + local API** at CockroachDB Cloud (prod or
+staging) instead of Docker Cockroach, use
+[**ring-cloud-prod-db**](.cursor/skills/ring-cloud-prod-db/SKILL.md):
+
+```bash
+ring cloud prod-db enable --staging --yes   # or: ring cloud prod-db enable --yes
+ring cloud prod-db disable                  # back to local
+```
+
+Requires Cursor secrets `RING_PROD_COCKROACH_DATABASE_URI` /
+`RING_STAGING_COCKROACH_DATABASE_URI` and `RING_COCKROACH_CA_CERT`, plus egress
+for Cockroach Cloud SQL hosts. Never run migrations against the cloud URI from
+this mode.
+
 ## Quality gates
 
 | Check                | Command                                                        |
@@ -186,4 +200,5 @@ separate CockroachDB instance on port 8008.
   - `ring-split-pr/` — splitting backend + frontend work into separate PRs
   - `ring-db-migration/` — generate/modify Alembic migrations the correct way
   - `ring-cloud-dev/` — Cursor Cloud VM bootstrap, health checks, browser testing
+  - `ring-cloud-prod-db/` — point cloud Vite/API at CockroachDB Cloud (prod/staging)
   - `ring-deploy-prod/` — build + push prod images to public ECR (`ring deploy prod`)

@@ -97,3 +97,16 @@ unless built). Use Vite for frontend testing.
 Collaborative notebook HTTP and WebSockets use same-origin `/api/v1` when
 `VITE_API_URL` is empty (Vite proxies both, including `ws`). With an explicit
 `VITE_API_URL` (OrbStack nginx TLS), the notebook client talks to that origin.
+
+## Prod / staging database (optional)
+
+To exercise the **local Vite frontend** against CockroachDB Cloud data (instead
+of Docker Cockroach), see
+[ring-cloud-prod-db](../ring-cloud-prod-db/SKILL.md):
+
+```bash
+ring cloud prod-db enable --staging --yes
+ring cloud prod-db disable
+```
+
+Keep `VITE_API_URL` empty so Vite still proxies to the local API.
