@@ -42,9 +42,11 @@ The CA PEM is the same file prod mounts at `$HOME/.postgresql/root.crt`
 
 ### 2. Egress allowlist
 
-Cloud Agent egress is restricted. Allow:
+Cloud Agent egress is restricted. Allow the SQL hostname from the URI (and/or
+the regional parent), for example:
 
-- `*.cockroachlabs.cloud` (or the concrete SQL hostname from the URI)
+- `gcp-us-east1.cockroachlabs.cloud` (Ring’s Cockroach Cloud region)
+- or the exact host printed by `bash dev_util/cloud-prod-db.sh status`
 
 If enable fails with connection timeouts / TLS dial errors, request that domain
 via `cursor-cloud/request-environment-setup-actions`.
