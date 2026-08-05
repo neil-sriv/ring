@@ -1,14 +1,35 @@
 ---
 name: ring-cloud-prod-db
-description: Point a Cursor Cloud Agent local Vite + API stack at CockroachDB Cloud (prod or staging) so frontend work can use real data. Use when the user asks to connect the cloud agent frontend to the prod database, run against staging/prod data, or enable cloud-prod-db mode.
+description: Point a Cursor Cloud Agent local Vite + API stack at CockroachDB Cloud (prod or staging) so frontend work can use real data. Use when working in the "Ring client only" environment, connecting the cloud agent frontend to the prod database, or enabling cloud-prod-db mode.
 ---
 
 # Ring Cloud → Prod / Staging DB
 
-Use this when a **Cloud Agent local frontend** (Vite on `:5173`) should talk to
-**real CockroachDB Cloud data** instead of the local Docker Cockroach.
+## Which Cloud Agent environment?
 
-Topology while enabled:
+| Environment | Purpose |
+|-------------|---------|
+| **Ring full stack** | Default. Local Docker Cockroach + API + Vite. Repo file: [`.cursor/environment.json`](../../../.cursor/environment.json). |
+| **Ring client only** | FE-focused work against **prod** (or staging) data. Create this as a **separate saved environment in the Cursor dashboard** — do **not** add a second `environment.json` to the repo. |
+
+Cursor resolves config in order: repo `.cursor/environment.json` → personal saved env → team saved env. Keep the committed file as **Ring full stack**. Configure **Ring client only** only in the [Cloud Agents dashboard](https://cursor.com/dashboard/cloud-agents#environments) (same Dockerfile/repo, different `install`/`start`/secrets). Attach the Cockroach secrets to **Ring client only**, not to full stack, so ordinary agents do not get prod DB credentials.
+
+Suggested **Ring client only** runtime shape (dashboard fields; tune as needed):
+
+- **install** — same as full stack is fine (`uv sync`, `pnpm install`, SSL), or skip unused bits if you want a thinner Build.
+- **start** — bring up API (and Docker if needed), then `ring cloud prod-db enable --yes`, then Vite. Example:
+
+```bash
+sudo service docker start
+bash .cursor/cloud-start.sh --bootstrap-only
+ring cloud prod-db enable --yes
+```
+
+- **terminals** — Vite: `bash .cursor/cloud-start.sh --vite-only` (or `ring fe dev`)
+
+You still need a **local API** for this workflow. “Client only” means no reliance on local Cockroach data / FE-against-prod — not “Vite with no backend.” Keep `VITE_API_URL` empty so Vite proxies `/api/v1` → `:8001`.
+
+## Topology
 
 ```
 Browser / Vite (:5173)
@@ -17,16 +38,21 @@ Browser / Vite (:5173)
   → CockroachDB Cloud (prod or staging)
 ```
 
-Keep `VITE_API_URL` empty. Do **not** point the browser at
-`https://ring.neilsriv.tech` — that bypasses the local API and hits mixed-origin
-/ CORS issues from the cloud desktop.
+Do **not** point the browser at `https://ring.neilsriv.tech` from the cloud desktop (mixed-origin / CORS pain).
+
+## `ring cloud prod-db` — any environment?
+
+Yes. The CLI is part of the shared `ring` toolchain and works in **any** Cloud Agent (or laptop) that has:
+
+1. `.env` from bootstrap
+2. Docker + `ring-api` running
+3. The secrets below injected
+
+Prefer running it from **Ring client only**. On **Ring full stack**, only enable when you intentionally want cloud data; disable before finishing so the next run is local again.
 
 ## Prerequisites
 
-### 1. Cursor secrets
-
-Add these on the Cloud Agent environment (dashboard secrets), then restart the
-agent so they are injected:
+### Secrets (on **Ring client only**)
 
 | Secret | Required | Purpose |
 |--------|----------|---------|
@@ -34,48 +60,43 @@ agent so they are injected:
 | `RING_STAGING_COCKROACH_DATABASE_URI` | for staging | Full URI for `ring-db-staging` |
 | `RING_COCKROACH_CA_CERT` | yes | PEM body of the Cockroach Cloud CA (`root.crt`) |
 
-Copy the URI from the server `.env` (`COCKROACH_DATABASE_URI`) or the Cockroach
-Cloud console. Prefer a **read-only SQL user** when the task is frontend-only.
+Copy the URI from the server `.env` (`COCKROACH_DATABASE_URI`) or the Cockroach Cloud console. Prefer a **read-only SQL user** when the task is frontend-only. Use **Runtime Secret** so URIs stay redacted in transcripts.
 
 The CA PEM is the same file prod mounts at `$HOME/.postgresql/root.crt`
 (see [compose.prod.yml](../../../compose.prod.yml)).
 
-### 2. Egress allowlist
+### Network
 
-Cloud Agent egress is restricted. Allow the SQL hostname from the URI (and/or
-the regional parent), for example:
+If the environment uses **Allow all network access**, no extra egress config is required. If egress is allowlisted, add the SQL host (e.g. `gcp-us-east1.cockroachlabs.cloud` or the host from `ring cloud prod-db status`).
 
-- `gcp-us-east1.cockroachlabs.cloud` (Ring’s Cockroach Cloud region)
-- or the exact host printed by `ring cloud prod-db status`
+### Local stack
 
-If enable fails with connection timeouts / TLS dial errors, request that domain
-via `cursor-cloud/request-environment-setup-actions`.
-
-### 3. Local stack already up
+On **Ring full stack** (or before first `enable` on client only):
 
 ```bash
 bash .cursor/cloud-start.sh --bootstrap-only
-bash .cursor/cloud-start.sh --vite-only   # or use the vite terminal
+bash .cursor/cloud-start.sh --vite-only   # or the vite terminal
 ```
 
-`ring` is available after `uv sync` (Cloud Agent install already runs it). Use
-`ring …` directly; no need to activate the venv first if `.venv/bin` is on
-`PATH` (it is in the default Cloud Agent shell).
+`ring` is on `PATH` after `uv sync` (Cloud Agent install already runs it).
 
 ## Enable / disable
 
-Prefer **staging** unless the user explicitly needs prod:
+**Ring client only** normally targets **prod**:
 
 ```bash
 ring cloud prod-db status
-ring cloud prod-db enable --staging --yes
-# or prod:
 ring cloud prod-db enable --yes
-
 ring cloud prod-db health
 ```
 
-Restore local Docker Cockroach when done:
+Staging (any env that has the staging secret):
+
+```bash
+ring cloud prod-db enable --staging --yes
+```
+
+Restore local Docker Cockroach:
 
 ```bash
 ring cloud prod-db disable
@@ -90,26 +111,22 @@ What `enable` does:
 4. Recreates `api` with [compose.cloud-prod-db.yml](../../../compose.cloud-prod-db.yml)
    (mounts CA + forces scheduler off)
 
-Implementation lives in [dev_util/cloud.py](../../../dev_util/cloud.py)
-(`ring cloud prod-db …`).
+Implementation: [dev_util/cloud.py](../../../dev_util/cloud.py).
 
 ## Frontend login
 
 The seeded `test@example.com` user exists only on local Cockroach. Against
-cloud DB, log in with a real prod/staging account (or create one via the API if
-appropriate). JWT is still minted by the **local** API (`JWT_SIGNING_KEY` in
-cloud `.env`) — that is fine; password hashes come from the cloud DB.
+cloud DB, log in with a real prod/staging account. JWT is minted by the
+**local** API; password hashes come from the cloud DB.
 
 ## Hard rules (agents)
 
 - **Never** run `ring db upgrade`, `ring db generate`, or alembic against the
   cloud URI from this mode.
 - **Never** commit `.env`, `.ring-cloud-prod-db/`, or `~/.postgresql/root.crt`.
-- Prefer staging. On prod, avoid destructive writes; treat data as live.
-- Leave APScheduler disabled (`DISABLE_SCHEDULER=true`) — the local API must not
-  fire letter/reminder/email jobs against cloud data.
-- When finished testing, run `ring cloud prod-db disable` so the next agent
-  boots on local DB.
+- On prod, avoid destructive writes; treat data as live.
+- Leave APScheduler disabled (`DISABLE_SCHEDULER=true`).
+- On **Ring full stack**, run `ring cloud prod-db disable` when finished.
 
 ## Browser check
 
@@ -119,5 +136,5 @@ cloud `.env`) — that is fine; password hashes come from the cloud DB.
 
 ## Related
 
-- Default cloud bootstrap: [ring-cloud-dev](../ring-cloud-dev/SKILL.md)
+- Full-stack bootstrap: [ring-cloud-dev](../ring-cloud-dev/SKILL.md)
 - Prod topology: [docs/infrastructure.md](../../../docs/infrastructure.md)
