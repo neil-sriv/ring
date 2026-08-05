@@ -147,27 +147,21 @@ bash dev_util/cloud-health.sh
 Do not hand-roll compose unless debugging — the start script handles network,
 SSL, vector index, migrations, and a test user seed.
 
-To point the **local Vite frontend + local API** at the live CockroachDB Cloud
-database instead of Docker Cockroach, use
-[**ring-cloud-prod-db**](.cursor/skills/ring-cloud-prod-db/SKILL.md). Day-to-day
-FE-against-prod work should use the dashboard environment **Ring client only**
-(secrets live there). Keep this repo’s
+For frontend-only work against the deployed production API, use
+[**ring-cloud-client-only**](.cursor/skills/ring-cloud-client-only/SKILL.md)
+and the dashboard environment **Ring client only**. Keep this repo’s
 [`.cursor/environment.json`](.cursor/environment.json) as **Ring full stack** —
-do not add a second `environment.json` for client-only.
+select the saved client-only environment explicitly.
 
 ```bash
-ring cloud prod-db enable --yes   # live data; prompts unless --yes
-ring cloud prod-db disable        # back to local
+ring cloud client-only check
+ring cloud client-only dev
 ```
 
-Requires Cursor secrets `RING_COCKROACH_DATABASE_URI` and
-`RING_COCKROACH_CA_CERT` on the client-only environment. **There is no staging
-cluster** — see the Database section of
-[docs/infrastructure.md](docs/infrastructure.md); every connection is live user
-data, so prefer a read-only SQL user and never run migrations against the cloud
-URI from this mode. The CLI works in any environment that has those secrets and
-a running API; prefer client-only so full-stack agents do not carry live DB
-credentials.
+Client-only starts no local API or database and needs no DB secrets. Vite
+proxies same-origin `/api/v1` and WebSocket requests to
+`https://ring.neilsriv.tech`. Requests still operate on live production data
+through the deployed API.
 
 ## Quality gates
 
@@ -208,5 +202,5 @@ separate CockroachDB instance on port 8008.
   - `ring-split-pr/` — splitting backend + frontend work into separate PRs
   - `ring-db-migration/` — generate/modify Alembic migrations the correct way
   - `ring-cloud-dev/` — Cursor Cloud VM bootstrap, health checks, browser testing
-  - `ring-cloud-prod-db/` — point cloud Vite/API at CockroachDB Cloud (prod/staging)
+  - `ring-cloud-client-only/` — run cloud Vite against the deployed prod API
   - `ring-deploy-prod/` — build + push prod images to public ECR (`ring deploy prod`)

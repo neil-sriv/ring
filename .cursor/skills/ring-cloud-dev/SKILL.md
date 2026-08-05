@@ -98,17 +98,18 @@ Collaborative notebook HTTP and WebSockets use same-origin `/api/v1` when
 `VITE_API_URL` is empty (Vite proxies both, including `ws`). With an explicit
 `VITE_API_URL` (OrbStack nginx TLS), the notebook client talks to that origin.
 
-## Production database (optional)
+## Client-only production API (optional)
 
-To exercise the **local Vite frontend** against live CockroachDB Cloud data
-(instead of Docker Cockroach), see
-[ring-cloud-prod-db](../ring-cloud-prod-db/SKILL.md). Prefer the dashboard
-environment **Ring client only** (prod-backed FE). Full stack remains local
-Cockroach via [`.cursor/environment.json`](../../environment.json).
+For frontend-only work against the deployed production API, use the dashboard
+environment **Ring client only** and see
+[ring-cloud-client-only](../ring-cloud-client-only/SKILL.md). Full stack remains
+local Cockroach + local API via
+[`.cursor/environment.json`](../../environment.json).
 
 ```bash
-ring cloud prod-db enable --yes   # live data — there is no staging cluster
-ring cloud prod-db disable
+ring cloud client-only check
+ring cloud client-only dev
 ```
 
-Keep `VITE_API_URL` empty so Vite still proxies to the local API.
+Client-only needs no DB secrets or Docker services. Vite keeps
+`VITE_API_URL` empty and proxies `/api/v1` to `https://ring.neilsriv.tech`.

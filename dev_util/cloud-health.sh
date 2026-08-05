@@ -34,14 +34,7 @@ check_nginx_api() {
   curl -skf "https://localhost/api/v1/openapi.json" >/dev/null
 }
 
-MODE_FILE="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)/.ring-cloud-prod-db/mode"
-if [[ -f "$MODE_FILE" ]]; then
-  mode="$(cat "$MODE_FILE")"
-  echo "NOTE cloud-prod-db mode active (${mode}) — skipping local Cockroach check"
-  echo "     use: ring cloud prod-db health"
-else
-  check "CockroachDB" check_cockroach
-fi
+check "CockroachDB" check_cockroach
 check "API :8001" check_api
 check "Vite :5173" check_vite
 check "Nginx API :443" check_nginx_api

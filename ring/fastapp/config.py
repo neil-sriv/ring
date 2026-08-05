@@ -43,7 +43,6 @@ class RingConfig(BaseSettings):
         VAPID_PRIVATE_KEY (str): Private key for VAPID web push notifications
         root_path (str): Base path for API routes (default: "/api/v1")
         BUCKET_NAME (str): S3 bucket name for file storage (default: "rings3files")
-        DISABLE_SCHEDULER (bool): Skip APScheduler lifespan start/shutdown
         BACKEND_CORS_ORIGINS (list[AnyUrl] | str): List of allowed CORS origins
     """
 
@@ -55,9 +54,6 @@ class RingConfig(BaseSettings):
     VAPID_PRIVATE_KEY: str
     root_path: str = "/api/v1"
     BUCKET_NAME: str = "rings3files"
-    # When true, skip APScheduler start/shutdown (used by cloud-prod-db mode so a
-    # local API pointed at Cockroach Cloud does not run prod scheduled jobs).
-    DISABLE_SCHEDULER: bool = False
     BACKEND_CORS_ORIGINS: Annotated[
         list[AnyUrl] | str,
         BeforeValidator(parse_cors),

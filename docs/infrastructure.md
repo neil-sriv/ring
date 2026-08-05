@@ -124,11 +124,10 @@ Prod uses **CockroachDB Cloud**, not AWS RDS. The old RDS Postgres host in
 Local dev and tests run CockroachDB in Docker. Connection string:
 `COCKROACH_DATABASE_URI` in `.env`.
 
-Cursor Cloud Agents can optionally point the **local** API (and thus the local
-Vite frontend via the same-origin proxy) at the live cluster — see
-[ring-cloud-prod-db](../.cursor/skills/ring-cloud-prod-db/SKILL.md) and
-`ring cloud prod-db`. That mode disables APScheduler and must never run
-migrations against the cloud URI.
+The **Ring client only** Cloud Agent environment does not connect to Cockroach
+directly. Vite proxies `/api/v1` to the deployed API at
+`ring.neilsriv.tech`; see
+[ring-cloud-client-only](../.cursor/skills/ring-cloud-client-only/SKILL.md).
 
 ---
 
