@@ -88,7 +88,7 @@ def client_only_dev(api_url: str, host: str, port: int) -> None:
         "VITE_API_PROXY_TARGET": api_url.rstrip("/"),
     }
     subprocess_run(
-        ["pnpm", "run", "dev", "--", "--host", host, "--port", str(port)],
+        ["pnpm", "run", "dev", "--host", host, "--port", str(port)],
         cwd=FE_DIR,
         env=env,
     )
