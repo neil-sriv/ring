@@ -260,3 +260,34 @@ class TestHybridSearchCRUD:
         mock_filter_authorized.assert_called_once_with(
             db_session, user, Action.READ, mock_hydrated
         )
+
+    def test_register_search_function_returns_none_on_error(
+        self, db_session: Session
+    ) -> None:
+        """Search wrappers swallow indexing errors so entity creates proceed.
+
+        Verifies that a failing registered search function returns None instead
+        of raising, matching the Optional return type callers must handle.
+        """
+        from ring.parties.models.user_model import User
+        from ring.search.crud import hybrid_search as hybrid_search_crud
+
+        original = hybrid_search_crud.SEARCH_REGISTRY[
+            SearchableType.USER.value
+        ]
+
+        @register_search_function(SearchableType.USER, User)
+        def _failing_search(db: Session, model: User) -> HybridSearchDocument:
+            raise RuntimeError("indexing failed")
+
+        try:
+            user = UserFactory.create()
+            db_session.commit()
+            result = type_to_search_registration(
+                SearchableType.USER
+            ).search_function(db_session, user)
+            assert result is None
+        finally:
+            hybrid_search_crud.SEARCH_REGISTRY[SearchableType.USER.value] = (
+                original
+            )

@@ -62,20 +62,12 @@ cfgv==3.4.0
     # via pre-commit
 charset-normalizer==3.3.2
     # via requests
-cli-helpers==2.4.0
-    # via pgcli
 click==8.1.7
     # via
     #   ring (pyproject.toml)
-    #   pgcli
-    #   pgspecial
     #   rich-toolkit
     #   typer
     #   uvicorn
-configobj==5.0.8
-    # via
-    #   cli-helpers
-    #   pgcli
 cryptography==45.0.3
     # via
     #   http-ece
@@ -220,10 +212,6 @@ parso==0.8.3
     # via jedi
 pexpect==4.9.0
     # via ipython
-pgcli==4.3.0
-    # via ring (pyproject.toml)
-pgspecial==2.1.1
-    # via pgcli
 pgvector==0.4.1
     # via ring (pyproject.toml)
 platformdirs==4.3.6
@@ -235,17 +223,11 @@ pprintpp==0.4.0
 pre-commit==4.0.1
     # via ring (pyproject.toml)
 prompt-toolkit==3.0.43
-    # via
-    #   ipython
-    #   pgcli
+    # via ipython
 propcache==0.2.1
     # via
     #   aiohttp
     #   yarl
-psycopg==3.1.17
-    # via
-    #   pgcli
-    #   pgspecial
 psycopg-binary==3.2.7
     # via ring (pyproject.toml:dev)
 psycopg2-binary==2.9.10
@@ -281,9 +263,7 @@ pydantic-settings==2.1.0
     # via fastapi
 pygments==2.17.2
     # via
-    #   cli-helpers
     #   ipython
-    #   pgcli
     #   rich
 pyjwt==2.8.0
     # via ring (pyproject.toml)
@@ -339,8 +319,6 @@ ruff==0.5.4
     # via ring (pyproject.toml)
 s3transfer==0.10.0
     # via boto3
-setproctitle==1.3.3
-    # via pgcli
 shellingham==1.5.4
     # via typer
 shortuuid==1.0.11
@@ -352,7 +330,6 @@ simpleeval==1.0.3
 six==1.16.0
     # via
     #   asttokens
-    #   configobj
     #   ecdsa
     #   python-dateutil
     #   pywebpush
@@ -371,16 +348,10 @@ sqlalchemy-cockroachdb==2.0.2
     # via ring (pyproject.toml)
 sqlalchemy-json==0.7.0
     # via ring (pyproject.toml)
-sqlparse==0.4.4
-    # via
-    #   pgcli
-    #   pgspecial
 stack-data==0.6.3
     # via ipython
 starlette==0.46.2
     # via fastapi
-tabulate==0.9.0
-    # via cli-helpers
 traitlets==5.14.1
     # via
     #   ipython
@@ -397,7 +368,6 @@ typing-extensions==4.13.2
     #   anyio
     #   fastapi
     #   llm-service
-    #   psycopg
     #   pydantic
     #   pydantic-core
     #   pytest-factoryboy
@@ -410,9 +380,7 @@ typing-inspection==0.4.0
 tzdata==2023.3
     # via faker
 tzlocal==5.3.1
-    # via
-    #   apscheduler
-    #   pgcli
+    # via apscheduler
 ujson==5.9.0
     # via fastapi
 urllib3==2.3.0
@@ -433,9 +401,7 @@ watchdog==4.0.0
 watchfiles==0.21.0
     # via uvicorn
 wcwidth==0.2.12
-    # via
-    #   prompt-toolkit
-    #   tabulate
+    # via prompt-toolkit
 websockets==15.0.1
     # via
     #   ring (pyproject.toml)

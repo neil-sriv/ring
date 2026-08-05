@@ -33,7 +33,11 @@ from ring.search.schemas.search import SearchType
 @dataclass
 class SearchRegistration:
     model_class: type[APIIdentified]
-    search_function: Callable[[Session, APIIdentified], HybridSearchDocument]
+    # Wrappers catch indexing failures and return None so entity creates are
+    # not blocked by search errors; callers (e.g. backfill) must handle None.
+    search_function: Callable[
+        [Session, APIIdentified], HybridSearchDocument | None
+    ]
     search_type: SearchableType
 
 
@@ -50,14 +54,15 @@ def register_search_function(
         search_function: Callable[
             [Session, APIIdentified], HybridSearchDocument
         ],
-    ):
+    ) -> Callable[[Session, APIIdentified], HybridSearchDocument | None]:
         @wraps(search_function)
-        def wrapper(*args, **kwargs):
+        def wrapper(
+            db: Session, model: APIIdentified
+        ) -> HybridSearchDocument | None:
             try:
-                return search_function(*args, **kwargs)
+                return search_function(db, model)
             except Exception as e:
                 logger.error(f"Error in search function: {e}")
-                # raise e
                 return None
 
         SEARCH_REGISTRY[searchable_type.value] = SearchRegistration(
