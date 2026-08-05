@@ -149,7 +149,11 @@ SSL, vector index, migrations, and a test user seed.
 
 To point the **local Vite frontend + local API** at CockroachDB Cloud (prod or
 staging) instead of Docker Cockroach, use
-[**ring-cloud-prod-db**](.cursor/skills/ring-cloud-prod-db/SKILL.md):
+[**ring-cloud-prod-db**](.cursor/skills/ring-cloud-prod-db/SKILL.md). Day-to-day
+FE-against-prod work should use the dashboard environment **Ring client only**
+(secrets live there). Keep this repo’s
+[`.cursor/environment.json`](.cursor/environment.json) as **Ring full stack** —
+do not add a second `environment.json` for client-only.
 
 ```bash
 ring cloud prod-db enable --staging --yes   # or: ring cloud prod-db enable --yes
@@ -157,9 +161,11 @@ ring cloud prod-db disable                  # back to local
 ```
 
 Requires Cursor secrets `RING_PROD_COCKROACH_DATABASE_URI` /
-`RING_STAGING_COCKROACH_DATABASE_URI` and `RING_COCKROACH_CA_CERT`, plus egress
-for Cockroach Cloud SQL hosts. Never run migrations against the cloud URI from
-this mode.
+`RING_STAGING_COCKROACH_DATABASE_URI` and `RING_COCKROACH_CA_CERT` on the
+client-only environment. Never run migrations against the cloud URI from this
+mode. The `ring cloud prod-db` CLI works in any environment that has those
+secrets and a running API; prefer client-only so full-stack agents do not carry
+prod DB credentials.
 
 ## Quality gates
 

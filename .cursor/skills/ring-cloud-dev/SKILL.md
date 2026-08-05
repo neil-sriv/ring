@@ -102,9 +102,12 @@ Collaborative notebook HTTP and WebSockets use same-origin `/api/v1` when
 
 To exercise the **local Vite frontend** against CockroachDB Cloud data (instead
 of Docker Cockroach), see
-[ring-cloud-prod-db](../ring-cloud-prod-db/SKILL.md):
+[ring-cloud-prod-db](../ring-cloud-prod-db/SKILL.md). Prefer the dashboard
+environment **Ring client only** (prod-backed FE). Full stack remains local
+Cockroach via [`.cursor/environment.json`](../../environment.json).
 
 ```bash
+ring cloud prod-db enable --yes              # prod (client only)
 ring cloud prod-db enable --staging --yes
 ring cloud prod-db disable
 ```
