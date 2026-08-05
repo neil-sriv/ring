@@ -75,9 +75,22 @@ def client_only_check(api_url: str) -> None:
 )
 @click.option("--host", default="0.0.0.0", show_default=True)
 @click.option("--port", default=5173, show_default=True, type=int)
-def client_only_dev(api_url: str, host: str, port: int) -> None:
+@click.option(
+    "--skip-check",
+    is_flag=True,
+    default=False,
+    help="Start Vite even if the production API health check fails.",
+)
+def client_only_dev(
+    api_url: str, host: str, port: int, skip_check: bool
+) -> None:
     """Start Vite with /api/v1 proxied to the production API."""
-    _check_prod_api(api_url)
+    if skip_check:
+        click.echo(
+            f"Skipping prod API check; proxy target will be {api_url.rstrip('/')}"
+        )
+    else:
+        _check_prod_api(api_url)
     click.echo(
         f"Starting client-only frontend: http://localhost:{port} "
         f"→ {api_url.rstrip('/')}"
