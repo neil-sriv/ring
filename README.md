@@ -148,7 +148,7 @@ Cursor Cloud Agent helpers:
 
 ```bash
 ring cloud prod-db status
-ring cloud prod-db enable --staging --yes
+ring cloud prod-db enable --yes   # live production data
 ring cloud prod-db disable
 ring cloud prod-db health
 ```
@@ -208,8 +208,9 @@ ring run shell      # Start a shell
 
 Prod runs Docker Compose on a single EC2 instance. Images are stored in **ECR
 Public** (`public.ecr.aws/z2k1e8p1/`); the database is **CockroachDB Cloud**
-(`ring-db`). See [docs/infrastructure.md](docs/infrastructure.md) for the full
-topology (S3, CloudFront, SES, request flows).
+(live cluster `ring-db-staging`, despite the name). See
+[docs/infrastructure.md](docs/infrastructure.md) for the full topology (S3,
+CloudFront, SES, request flows).
 
 ### Build and push images
 

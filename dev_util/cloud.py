@@ -1,7 +1,7 @@
 """Cursor Cloud Agent helpers exposed via the `ring` CLI.
 
 Primary use: point a local Vite + API stack at CockroachDB Cloud so frontend
-work can exercise real prod/staging data without hitting ring.neilsriv.tech
+work can exercise real production data without hitting ring.neilsriv.tech
 from the browser.
 """
 
@@ -34,8 +34,10 @@ CA_PATH = Path.home() / ".postgresql" / "root.crt"
 
 LOCAL_COCKROACH_URI = "cockroachdb://ringcockroach:ringcockroach@cockroach:26257/ring?sslmode=require"
 
-PROD_URI_SECRET = "RING_PROD_COCKROACH_DATABASE_URI"
-STAGING_URI_SECRET = "RING_STAGING_COCKROACH_DATABASE_URI"
+# Ring has one live Cockroach Cloud cluster. Despite its name, `ring-db-staging`
+# is what ring.neilsriv.tech serves from; `ring-db` is stale and unused. There is
+# no safe "staging" copy to fall back to — every connection here is live data.
+COCKROACH_URI_SECRET = "RING_COCKROACH_DATABASE_URI"
 CA_CERT_SECRET = "RING_COCKROACH_CA_CERT"
 
 
@@ -99,11 +101,10 @@ def _uri_host_hint(uri: str) -> str:
     return match.group(1) if match else ""
 
 
-def _resolve_uri(target: str) -> str:
-    secret = STAGING_URI_SECRET if target == "staging" else PROD_URI_SECRET
-    uri = os.environ.get(secret, "").strip()
+def _resolve_uri() -> str:
+    uri = os.environ.get(COCKROACH_URI_SECRET, "").strip()
     if not uri:
-        raise click.ClickException(f"Missing secret {secret}")
+        raise click.ClickException(f"Missing secret {COCKROACH_URI_SECRET}")
     return uri
 
 
@@ -124,15 +125,14 @@ def _ensure_ca_cert() -> None:
     )
 
 
-def _confirm_or_die(target: str, host: str, assume_yes: bool) -> None:
+def _confirm_or_die(host: str, assume_yes: bool) -> None:
     click.echo(
         "\n"
-        "!!! WARNING: cloud-prod-db mode !!!\n"
-        f"  Target:     {target}\n"
+        "!!! WARNING: connecting to LIVE production data !!!\n"
         f"  SQL host:   {host}\n"
-        "  Frontend:   http://localhost:5173  "
-        f"(Vite → local API → {target} DB)\n"
+        "  Frontend:   http://localhost:5173  (Vite → local API → prod DB)\n"
         "  Scheduler:  DISABLED\n"
+        "  There is no staging copy — writes affect real users.\n"
         "  Do NOT run migrations against this database from the cloud agent.\n"
     )
     if assume_yes:
@@ -142,9 +142,9 @@ def _confirm_or_die(target: str, host: str, assume_yes: bool) -> None:
             "Non-interactive shell: pass --yes to confirm."
         )
     answer = click.prompt(
-        f"Type '{target}' to continue", default="", show_default=False
+        "Type 'prod' to continue", default="", show_default=False
     )
-    if answer != target:
+    if answer != "prod":
         raise click.ClickException("Aborted.")
 
 
@@ -234,8 +234,8 @@ def cloud(ctx: click.Context) -> None:
     "prod-db",
     context_settings=UNLIMITED_ARGS_SETTINGS,
     help=(
-        "Point the local Cloud Agent Vite + API stack at CockroachDB Cloud "
-        "(prod or staging)."
+        "Point the local Cloud Agent Vite + API stack at the live CockroachDB "
+        "Cloud database."
     ),
 )
 @click.pass_context
@@ -257,12 +257,8 @@ def prod_db_status() -> None:
     click.echo(f"DISABLE_SCHEDULER: {_read_env_var('DISABLE_SCHEDULER')}")
     click.echo(f"CA cert:           {ca_state} ({CA_PATH})")
     click.echo(
-        "prod secret:       "
-        + ("set" if os.environ.get(PROD_URI_SECRET) else "unset")
-    )
-    click.echo(
-        "staging secret:    "
-        + ("set" if os.environ.get(STAGING_URI_SECRET) else "unset")
+        "URI secret:        "
+        + ("set" if os.environ.get(COCKROACH_URI_SECRET) else "unset")
     )
     click.echo(
         "CA secret:         "
@@ -272,12 +268,6 @@ def prod_db_status() -> None:
 
 @prod_db.command("enable")
 @click.option(
-    "--staging",
-    is_flag=True,
-    default=False,
-    help="Use RING_STAGING_COCKROACH_DATABASE_URI instead of prod.",
-)
-@click.option(
     "--yes",
     "-y",
     "assume_yes",
@@ -285,15 +275,14 @@ def prod_db_status() -> None:
     default=False,
     help="Skip the interactive confirmation prompt.",
 )
-def prod_db_enable(staging: bool, assume_yes: bool) -> None:
+def prod_db_enable(assume_yes: bool) -> None:
     """Point local API at Cockroach Cloud and recreate the API container."""
-    target = "staging" if staging else "prod"
     _require_env_file()
     STATE_DIR.mkdir(parents=True, exist_ok=True)
 
-    uri = _resolve_uri(target)
+    uri = _resolve_uri()
     host = _uri_host_hint(uri)
-    _confirm_or_die(target, host, assume_yes)
+    _confirm_or_die(host, assume_yes)
     _ensure_ca_cert()
 
     if not ENV_BACKUP_PATH.is_file():
@@ -301,23 +290,23 @@ def prod_db_enable(staging: bool, assume_yes: bool) -> None:
         click.echo(f"Backed up .env to {ENV_BACKUP_PATH}")
 
     _upsert_env_var("COCKROACH_DATABASE_URI", uri)
-    _upsert_env_var("ENVIRONMENT", f"cloud-{target}-db")
+    _upsert_env_var("ENVIRONMENT", "cloud-prod-db")
     _upsert_env_var("DISABLE_SCHEDULER", "true")
     # Keep Vite same-origin proxy; do not point the browser at prod nginx.
     _upsert_env_var("VITE_API_URL", "")
 
-    MARKER_PATH.write_text(f"{target}\n", encoding="utf-8")
+    MARKER_PATH.write_text("prod\n", encoding="utf-8")
 
     click.echo("Recreating API with compose.cloud-prod-db.yml…")
     _restart_api(cloud_override=True)
     _wait_for_api()
 
     click.echo(
-        f"\n=== cloud-prod-db enabled ({target}) ===\n"
+        "\n=== cloud-prod-db enabled (prod) ===\n"
         "  App:     http://localhost:5173\n"
         "  API:     http://localhost:8001/api/v1/docs\n"
         f"  DB host: {host}\n"
-        f"  Login:   use a real {target} user "
+        "  Login:   use a real prod user "
         "(seeded test@example.com is local-only)\n"
         "  Disable: ring cloud prod-db disable\n"
         "  Health:  ring cloud prod-db health\n"

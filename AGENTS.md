@@ -37,7 +37,7 @@ Full topology, request flows, and deploy steps:
 | Service | Identifier / endpoint | Code / config |
 |---------|----------------------|---------------|
 | Compute | EC2 + Docker Compose (`ring.neilsriv.tech`) | [compose.prod.yml](compose.prod.yml), [prod.nginx.conf](prod.nginx.conf) |
-| Database | CockroachDB Cloud `ring-db` (not RDS) | `COCKROACH_DATABASE_URI` in server `.env` |
+| Database | CockroachDB Cloud, live cluster `ring-db-staging` (not RDS; `ring-db` is stale) | `COCKROACH_DATABASE_URI` in server `.env` |
 | S3 uploads | Bucket `rings3files` (`us-east-1`) | [ring/fastapp/config.py](ring/fastapp/config.py) `BUCKET_NAME`; upload in [ring/letters/crud/response.py](ring/letters/crud/response.py) |
 | CDN | `du32exnxihxuf.cloudfront.net` | [ring/s3/models/s3_model.py](ring/s3/models/s3_model.py) `qualified_s3_url` |
 | Email (SES) | `us-east-1`, sender `ring@neilsriv.tech` | [ring/email_util.py](ring/email_util.py) |
@@ -147,8 +147,8 @@ bash dev_util/cloud-health.sh
 Do not hand-roll compose unless debugging — the start script handles network,
 SSL, vector index, migrations, and a test user seed.
 
-To point the **local Vite frontend + local API** at CockroachDB Cloud (prod or
-staging) instead of Docker Cockroach, use
+To point the **local Vite frontend + local API** at the live CockroachDB Cloud
+database instead of Docker Cockroach, use
 [**ring-cloud-prod-db**](.cursor/skills/ring-cloud-prod-db/SKILL.md). Day-to-day
 FE-against-prod work should use the dashboard environment **Ring client only**
 (secrets live there). Keep this repo’s
@@ -156,16 +156,18 @@ FE-against-prod work should use the dashboard environment **Ring client only**
 do not add a second `environment.json` for client-only.
 
 ```bash
-ring cloud prod-db enable --staging --yes   # or: ring cloud prod-db enable --yes
-ring cloud prod-db disable                  # back to local
+ring cloud prod-db enable --yes   # live data; prompts unless --yes
+ring cloud prod-db disable        # back to local
 ```
 
-Requires Cursor secrets `RING_PROD_COCKROACH_DATABASE_URI` /
-`RING_STAGING_COCKROACH_DATABASE_URI` and `RING_COCKROACH_CA_CERT` on the
-client-only environment. Never run migrations against the cloud URI from this
-mode. The `ring cloud prod-db` CLI works in any environment that has those
-secrets and a running API; prefer client-only so full-stack agents do not carry
-prod DB credentials.
+Requires Cursor secrets `RING_COCKROACH_DATABASE_URI` and
+`RING_COCKROACH_CA_CERT` on the client-only environment. **There is no staging
+cluster** — see the Database section of
+[docs/infrastructure.md](docs/infrastructure.md); every connection is live user
+data, so prefer a read-only SQL user and never run migrations against the cloud
+URI from this mode. The CLI works in any environment that has those secrets and
+a running API; prefer client-only so full-stack agents do not carry live DB
+credentials.
 
 ## Quality gates
 
