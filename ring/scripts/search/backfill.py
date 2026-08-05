@@ -43,6 +43,11 @@ def run_script(
 ) -> None:
     """Backfill search documents for specified types.
 
+    When ``replace_existing`` is True, associations are recreated with filter and
+    sort metadata (``group_api_id``, ``participant_api_id``, ``entity_created_at``)
+    via each type's search registrar. Run with ``dry_run=False`` on production
+    after deploying the search filter migration.
+
     Args:
         searchable_types (list[SearchableType] | None): Types to backfill. If None, backfills all types.
         replace_existing (bool): Whether to replace existing documents

@@ -594,5 +594,10 @@ def create_letter_search_document(
     )
     raw_text = f"{letter.group.name} {question_texts} {participant_names}"
     return create_hybrid_search_document(
-        db, raw_text, letter.api_identifier, SearchableType.LETTER
+        db,
+        raw_text,
+        letter.api_identifier,
+        SearchableType.LETTER,
+        entity_created_at=letter.created_at,
+        group_api_id=letter.group.api_identifier,
     )

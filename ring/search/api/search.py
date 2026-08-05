@@ -18,6 +18,7 @@ from ring.search.crud.hybrid_search import (
 from ring.search.schemas.search import (
     RawSearchResponse,
     RawSearchResult,
+    SearchSort,
     SearchType,
 )
 
@@ -29,6 +30,9 @@ async def raw_search(
     query: str,
     search_type: SearchType = SearchType.KEYWORD,
     limit: int = 10,
+    group_api_id: str | None = None,
+    participant_api_id: str | None = None,
+    sort: SearchSort = SearchSort.RELEVANCE,
     db: Session = Depends(get_db),
 ) -> RawSearchResponse:
     """
@@ -38,6 +42,9 @@ async def raw_search(
         query: The search query string
         search_type: Type of search to perform (semantic, keyword, or dual)
         limit: Maximum number of results to return
+        group_api_id: Optional group filter
+        participant_api_id: Optional responder filter (responses only)
+        sort: Result ordering
         db: Database session
 
     Returns:
@@ -61,7 +68,14 @@ async def raw_search(
         )
 
     search_func = search_functions[search_type]
-    results = search_func(db=db, query=query, limit=limit)
+    results = search_func(
+        db=db,
+        query=query,
+        limit=limit,
+        group_api_id=group_api_id,
+        participant_api_id=participant_api_id,
+        sort=sort,
+    )
 
     return RawSearchResponse(
         results=[RawSearchResult.model_validate(result) for result in results],
@@ -74,6 +88,9 @@ async def perform_search(
     query: str,
     search_type: SearchType = SearchType.KEYWORD,
     limit: int = 10,
+    group_api_id: str | None = None,
+    participant_api_id: str | None = None,
+    sort: SearchSort = SearchSort.RELEVANCE,
     req_dep: AuthenticatedRequestDependencies = Depends(
         get_request_dependencies,
     ),
@@ -84,6 +101,9 @@ async def perform_search(
         user=req_dep.current_user,
         limit=limit,
         search_type=search_type,
+        group_api_id=group_api_id,
+        participant_api_id=participant_api_id,
+        sort=sort,
     )
     return SearchResponse(
         results=[SearchResult.from_model(result) for result in results],

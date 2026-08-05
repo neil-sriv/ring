@@ -7,6 +7,7 @@ It verifies both successful operations and error cases.
 
 from __future__ import annotations
 
+from datetime import UTC, datetime
 from unittest.mock import MagicMock, patch
 
 from fastapi.testclient import TestClient
@@ -18,12 +19,19 @@ from ring.search.crud.hybrid_search import (
     HybridSearchDocument,
     HybridSearchDocumentAssociation,
     SearchableType,
+    create_hybrid_search_document,
 )
+from ring.search.schemas.search import SearchSort
+from ring.tests.factories.letters.letter_factory import LetterFactory
+from ring.tests.factories.letters.question_factory import QuestionFactory
+from ring.tests.factories.letters.response_factory import ResponseFactory
 from ring.tests.factories.parties.group_factory import GroupFactory
 from ring.tests.factories.parties.user_factory import UserFactory
 from ring.tests.lib.utils import (
     assert_pydantic_schema_json_dump_equivalent_to_response_dict,
 )
+
+TEST_CREATED_AT = datetime(2024, 6, 1, tzinfo=UTC)
 
 
 class TestSearchAPI:
@@ -66,6 +74,7 @@ class TestSearchAPI:
                 model_api_identifier=f"test_id_{i}",
                 model_type=SearchableType.USER.value,
                 hybrid_search_document=document,
+                entity_created_at=TEST_CREATED_AT,
             )
             db_session.add_all([document, association])
         db_session.commit()
@@ -152,6 +161,7 @@ class TestSearchAPI:
                 model_api_identifier=user.api_identifier,
                 model_type=SearchableType.USER.value,
                 hybrid_search_document=document,
+                entity_created_at=TEST_CREATED_AT,
             )
             db_session.add_all([document, association])
         db_session.commit()
@@ -174,4 +184,67 @@ class TestSearchAPI:
                 total=2,
             ),
             data,
+        )
+
+    def test_hydrated_search_with_group_filter(
+        self,
+        authenticated_client: TestClient,
+        current_user: User,
+        db_session: Session,
+    ) -> None:
+        group_a = GroupFactory.create(
+            admin=current_user, members=[current_user]
+        )
+        group_b = GroupFactory.create(
+            admin=current_user, members=[current_user]
+        )
+        letter_a = LetterFactory.create(group=group_a)
+        letter_b = LetterFactory.create(group=group_b)
+        question_a = QuestionFactory.create(
+            letter=letter_a, question_text="delta question"
+        )
+        QuestionFactory.create(letter=letter_b, question_text="delta question")
+        response_a = ResponseFactory.create(
+            question=question_a,
+            participant=current_user,
+            response_text="delta response",
+        )
+        db_session.commit()
+
+        create_hybrid_search_document(
+            db_session,
+            raw_text="delta response content",
+            model_api_identifier=response_a.api_identifier,
+            model_type=SearchableType.RESPONSE,
+            entity_created_at=response_a.created_at,
+            group_api_id=group_a.api_identifier,
+            participant_api_id=current_user.api_identifier,
+        )
+        create_hybrid_search_document(
+            db_session,
+            raw_text="delta response content",
+            model_api_identifier="rsp_other",
+            model_type=SearchableType.RESPONSE,
+            entity_created_at=TEST_CREATED_AT,
+            group_api_id=group_b.api_identifier,
+            participant_api_id=current_user.api_identifier,
+        )
+        db_session.commit()
+
+        response = authenticated_client.get(
+            "/search/search",
+            params={
+                "query": "delta",
+                "group_api_id": group_a.api_identifier,
+                "sort": SearchSort.CREATED_AT_DESC.value,
+            },
+        )
+
+        assert response.status_code == 200
+        data = response.json()
+        assert data["total"] == 1
+        assert data["results"][0]["type"] == "ResponseLinked"
+        assert (
+            data["results"][0]["model"]["api_identifier"]
+            == response_a.api_identifier
         )

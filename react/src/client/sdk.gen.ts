@@ -1392,6 +1392,9 @@ export const generateCompletionLlmCompletionPost = <ThrowOnError extends boolean
  * query: The search query string
  * search_type: Type of search to perform (semantic, keyword, or dual)
  * limit: Maximum number of results to return
+ * group_api_id: Optional group filter
+ * participant_api_id: Optional responder filter (responses only)
+ * sort: Result ordering
  * db: Database session
  *
  * Returns:

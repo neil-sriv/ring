@@ -21,3 +21,9 @@ class SearchType(str, Enum):
     SEMANTIC = "semantic"
     KEYWORD = "keyword"
     DUAL = "dual"
+
+
+class SearchSort(str, Enum):
+    RELEVANCE = "relevance"
+    CREATED_AT_DESC = "created_at_desc"
+    CREATED_AT_ASC = "created_at_asc"

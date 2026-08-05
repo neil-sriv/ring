@@ -7,6 +7,7 @@ It verifies both basic operations and edge cases.
 
 from __future__ import annotations
 
+from datetime import UTC, datetime
 from unittest.mock import MagicMock, patch
 
 from faker import Faker
@@ -17,7 +18,9 @@ from ring.authz.enforcer import Action
 from ring.search.crud.hybrid_search import (
     create_hybrid_search_document,
     get_model_ids_from_hybrid_search_documents,
+    hydrate_ordered_results,
     hydrate_results,
+    keyword_search_hits,
     register_search_function,
     search,
     semantic_search_hybrid_search_document,
@@ -28,8 +31,14 @@ from ring.search.models.hybrid_search import (
     HybridSearchDocumentAssociation,
     SearchableType,
 )
-from ring.search.schemas.search import SearchType
+from ring.search.schemas.search import SearchSort, SearchType
+from ring.tests.factories.letters.letter_factory import LetterFactory
+from ring.tests.factories.letters.question_factory import QuestionFactory
+from ring.tests.factories.letters.response_factory import ResponseFactory
+from ring.tests.factories.parties.group_factory import GroupFactory
 from ring.tests.factories.parties.user_factory import UserFactory
+
+TEST_CREATED_AT = datetime(2024, 6, 1, tzinfo=UTC)
 
 
 class TestHybridSearchCRUD:
@@ -66,6 +75,7 @@ class TestHybridSearchCRUD:
             raw_text=raw_text,
             model_api_identifier="test_id",
             model_type=SearchableType.USER,
+            entity_created_at=TEST_CREATED_AT,
         )
 
         assert document.raw_text == raw_text
@@ -112,6 +122,7 @@ class TestHybridSearchCRUD:
                 model_api_identifier=f"test_id_{i}",
                 model_type=SearchableType.USER.value,
                 hybrid_search_document=document,
+                entity_created_at=TEST_CREATED_AT,
             )
             db_session.add_all([document, association])
             documents.append(document)
@@ -159,6 +170,7 @@ class TestHybridSearchCRUD:
                 model_api_identifier=f"test_id_{i}",
                 model_type=SearchableType.USER.value,
                 hybrid_search_document=document,
+                entity_created_at=TEST_CREATED_AT,
             )
             db_session.add_all([document, association])
             documents.append(document)
@@ -201,18 +213,14 @@ class TestHybridSearchCRUD:
 
         assert results == models
 
-    @patch("ring.search.crud.hybrid_search.dual_search_hybrid_search_document")
-    @patch(
-        "ring.search.crud.hybrid_search.get_model_ids_from_hybrid_search_documents"
-    )
-    @patch("ring.search.crud.hybrid_search.hydrate_results")
+    @patch("ring.search.crud.hybrid_search.dual_search_hits")
+    @patch("ring.search.crud.hybrid_search.hydrate_ordered_results")
     @patch("ring.search.crud.hybrid_search.filter_to_authorized")
     def test_search(
         self,
         mock_filter_authorized: MagicMock,
         mock_hydrate: MagicMock,
-        mock_get_model_ids: MagicMock,
-        mock_dual_search: MagicMock,
+        mock_dual_search_hits: MagicMock,
         faker: Faker,
         db_session: Session,
     ) -> None:
@@ -227,16 +235,15 @@ class TestHybridSearchCRUD:
         Args:
             mock_filter_authorized (MagicMock): Mock for authorization filtering
             mock_hydrate (MagicMock): Mock for result hydration
-            mock_get_model_ids (MagicMock): Mock for model ID extraction
-            mock_dual_search (MagicMock): Mock for dual search
+            mock_dual_search_hits (MagicMock): Mock for dual search hits
             faker (Faker): Faker instance for generating test data
             db_session (Session): Database session
         """
-        mock_documents = [MagicMock(), MagicMock()]
-        mock_dual_search.return_value = mock_documents
-
-        mock_model_ids = {SearchableType.USER: ["test_id_1", "test_id_2"]}
-        mock_get_model_ids.return_value = mock_model_ids
+        mock_ordered_hits = [
+            (SearchableType.USER, "test_id_1"),
+            (SearchableType.USER, "test_id_2"),
+        ]
+        mock_dual_search_hits.return_value = mock_ordered_hits
 
         mock_hydrated = [MagicMock(), MagicMock()]
         mock_hydrate.return_value = mock_hydrated
@@ -254,9 +261,179 @@ class TestHybridSearchCRUD:
         )
 
         assert results == mock_hydrated
-        mock_dual_search.assert_called_once_with(db_session, "test query", 10)
-        mock_get_model_ids.assert_called_once_with(db_session, mock_documents)
-        mock_hydrate.assert_called_once()
+        mock_dual_search_hits.assert_called_once_with(
+            db_session,
+            "test query",
+            limit=30,
+            group_api_id=None,
+            participant_api_id=None,
+            sort=SearchSort.RELEVANCE,
+        )
+        mock_hydrate.assert_called_once_with(db_session, mock_ordered_hits)
         mock_filter_authorized.assert_called_once_with(
             db_session, user, Action.READ, mock_hydrated
         )
+
+    def test_keyword_search_group_filter(
+        self,
+        db_session: Session,
+        current_user,
+    ) -> None:
+        group_a = GroupFactory.create(
+            admin=current_user, members=[current_user]
+        )
+        group_b = GroupFactory.create(
+            admin=current_user, members=[current_user]
+        )
+        letter_a = LetterFactory.create(group=group_a)
+        letter_b = LetterFactory.create(group=group_b)
+        question_a = QuestionFactory.create(
+            letter=letter_a, question_text="alpha question"
+        )
+        QuestionFactory.create(letter=letter_b, question_text="alpha question")
+        response_a = ResponseFactory.create(
+            question=question_a,
+            participant=current_user,
+            response_text="alpha response",
+        )
+        db_session.commit()
+
+        create_hybrid_search_document(
+            db_session,
+            raw_text="alpha response content",
+            model_api_identifier=response_a.api_identifier,
+            model_type=SearchableType.RESPONSE,
+            entity_created_at=response_a.created_at,
+            group_api_id=group_a.api_identifier,
+            participant_api_id=current_user.api_identifier,
+        )
+        create_hybrid_search_document(
+            db_session,
+            raw_text="alpha response content",
+            model_api_identifier="rsp_other",
+            model_type=SearchableType.RESPONSE,
+            entity_created_at=TEST_CREATED_AT,
+            group_api_id=group_b.api_identifier,
+            participant_api_id=current_user.api_identifier,
+        )
+        db_session.commit()
+
+        hits = keyword_search_hits(
+            db_session,
+            "alpha",
+            group_api_id=group_a.api_identifier,
+        )
+
+        assert len(hits) == 1
+        assert hits[0] == (
+            SearchableType.RESPONSE,
+            response_a.api_identifier,
+        )
+
+    def test_keyword_search_participant_filter(
+        self,
+        db_session: Session,
+        current_user,
+    ) -> None:
+        other_user = UserFactory.create()
+        group = GroupFactory.create(
+            admin=current_user, members=[current_user, other_user]
+        )
+        letter = LetterFactory.create(group=group)
+        question = QuestionFactory.create(
+            letter=letter, question_text="bravo question"
+        )
+        response = ResponseFactory.create(
+            question=question,
+            participant=current_user,
+            response_text="bravo response",
+        )
+        db_session.commit()
+
+        create_hybrid_search_document(
+            db_session,
+            raw_text="bravo response content",
+            model_api_identifier=response.api_identifier,
+            model_type=SearchableType.RESPONSE,
+            entity_created_at=response.created_at,
+            group_api_id=group.api_identifier,
+            participant_api_id=current_user.api_identifier,
+        )
+        create_hybrid_search_document(
+            db_session,
+            raw_text="bravo response content",
+            model_api_identifier="rsp_other",
+            model_type=SearchableType.RESPONSE,
+            entity_created_at=TEST_CREATED_AT,
+            group_api_id=group.api_identifier,
+            participant_api_id=other_user.api_identifier,
+        )
+        db_session.commit()
+
+        hits = keyword_search_hits(
+            db_session,
+            "bravo",
+            participant_api_id=current_user.api_identifier,
+        )
+
+        assert len(hits) == 1
+        assert hits[0] == (
+            SearchableType.RESPONSE,
+            response.api_identifier,
+        )
+
+    def test_keyword_search_created_at_sort(
+        self,
+        db_session: Session,
+    ) -> None:
+        older = datetime(2024, 1, 1, tzinfo=UTC)
+        newer = datetime(2024, 6, 1, tzinfo=UTC)
+        create_hybrid_search_document(
+            db_session,
+            raw_text="charlie older document",
+            model_api_identifier="user_old",
+            model_type=SearchableType.USER,
+            entity_created_at=older,
+        )
+        create_hybrid_search_document(
+            db_session,
+            raw_text="charlie newer document",
+            model_api_identifier="user_new",
+            model_type=SearchableType.USER,
+            entity_created_at=newer,
+        )
+        db_session.commit()
+
+        hits_desc = keyword_search_hits(
+            db_session,
+            "charlie",
+            sort=SearchSort.CREATED_AT_DESC,
+        )
+        hits_asc = keyword_search_hits(
+            db_session,
+            "charlie",
+            sort=SearchSort.CREATED_AT_ASC,
+        )
+
+        assert hits_desc[0][1] == "user_new"
+        assert hits_desc[1][1] == "user_old"
+        assert hits_asc[0][1] == "user_old"
+        assert hits_asc[1][1] == "user_new"
+
+    def test_hydrate_ordered_results_preserves_order(
+        self,
+        db_session: Session,
+    ) -> None:
+        users = [UserFactory.create() for _ in range(2)]
+        db_session.commit()
+        ordered_hits = [
+            (SearchableType.USER, users[1].api_identifier),
+            (SearchableType.USER, users[0].api_identifier),
+        ]
+
+        results = hydrate_ordered_results(db_session, ordered_hits)
+
+        assert [model.api_identifier for model in results] == [
+            users[1].api_identifier,
+            users[0].api_identifier,
+        ]
