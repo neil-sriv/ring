@@ -38,7 +38,8 @@ const pwaOptions: Partial<VitePWAOptions> = {
     ],
   },
   devOptions: {
-    enabled: true,
+    // Opt out with SW_DEV=false (cloud HTTP Vite). Default remains enabled when unset.
+    enabled: process.env.SW_DEV !== "false",
     /* when using generateSW the PWA plugin will switch to classic */
     type: "module",
     navigateFallback: "index.html",

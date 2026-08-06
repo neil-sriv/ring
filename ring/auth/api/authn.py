@@ -95,16 +95,20 @@ async def impersonate_user_token(
     )
 
 
+def _deprecated_not_implemented() -> None:
+    raise HTTPException(
+        status_code=501,
+        detail="This endpoint is deprecated and not implemented",
+    )
+
+
 @router.post("/login/test-token", deprecated=True)
 async def test_token() -> None:
     """Test endpoint for validating access tokens.
 
     This endpoint is deprecated and will be removed in future versions.
-
-    Raises:
-        NotImplementedError: Always raises this error as the endpoint is deprecated
     """
-    raise NotImplementedError()
+    _deprecated_not_implemented()
 
 
 @router.post("/reset-password:request/{email}", response_model=ResponseMessage)
@@ -194,8 +198,5 @@ async def recover_password_html_content(email: str) -> None:
 
     Args:
         email (str): User's email address
-
-    Raises:
-        NotImplementedError: Always raises this error as the endpoint is deprecated
     """
-    raise NotImplementedError()
+    _deprecated_not_implemented()

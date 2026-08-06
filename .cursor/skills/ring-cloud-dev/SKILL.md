@@ -49,6 +49,11 @@ Vite proxies `/api/v1` → `http://localhost:8001`. Cloud `.env` uses **empty**
 `VITE_API_URL=https://localhost` with HTTP Vite — browsers block mixed content
 and login fails silently.
 
+`cloud-start.sh --vite-only` and `ring fe dev` (when `CURSOR_AGENT` is set)
+force `VITE_API_URL=""` so Cursor secrets that inject `https://localhost`
+cannot override `.env`. They also default `SW_DEV=false` to skip the PWA
+service worker in HTTP cloud Vite.
+
 Local OrbStack dev may still use `VITE_API_URL=https://localhost` when hitting
 nginx TLS directly (no Vite proxy).
 
