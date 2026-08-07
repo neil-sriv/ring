@@ -47,7 +47,11 @@ Re-seed manually: `bash dev_util/cloud-seed.sh`
 Vite proxies `/api/v1` → `http://localhost:8001`. Cloud `.env` uses **empty**
 `VITE_API_URL` (see `.env.cloud.example`). Do **not** set
 `VITE_API_URL=https://localhost` with HTTP Vite — browsers block mixed content
-and login fails silently.
+and login fails (often as `ERR_CERT_AUTHORITY_INVALID` against nginx).
+
+`cloud-start.sh --vite-only` **forces** `VITE_API_URL=""` so Cursor Cloud
+secrets (which may inject `https://localhost`) cannot override `.env`. Vite
+gives process env priority over `.env` files.
 
 `cloud-start.sh --vite-only` and `ring fe dev` (when `CURSOR_AGENT` is set)
 force `VITE_API_URL=""` so Cursor secrets that inject `https://localhost`

@@ -556,8 +556,6 @@ class TestLetterCrud:
         """
         from unittest.mock import MagicMock, patch
 
-        from ring.async_scheduler.job_registry import JOB_REGISTRY
-
         group = GroupFactory.create()
         send_at = datetime.now(tz=UTC) + timedelta(days=2)
         letter = LetterFactory.create(
@@ -570,15 +568,14 @@ class TestLetterCrud:
         group_api_id = group.api_identifier
         initial_letter_count = len(group.letters)
 
-        promote_fn = JOB_REGISTRY[
-            "promote_and_create_new_letters"
-        ].job_function
         mock_scheduler = MagicMock()
         with patch(
             "ring.async_scheduler.scheduler.scheduler",
             mock_scheduler,
         ):
-            promote_fn(db_session, [letter_id])
+            letter_crud.promote_and_create_new_letters_with_session(
+                db_session, [letter_id]
+            )
 
         db_session.expire_all()
         promoted = db_session.get(Letter, letter_id)
