@@ -481,14 +481,17 @@ def collect_future_letters(
     return letters_to_postpend, letters_to_promote
 
 
-@job_factory("promote_and_create_new_letters")
-def promote_and_create_new_letters(db: Session, letter_ids: list[int]) -> None:
+def promote_and_create_new_letters_with_session(
+    db: Session, letter_ids: list[int]
+) -> None:
     """Promote letters to IN_PROGRESS and create new upcoming letters.
 
-    This task is triggered when letters need to be promoted from UPCOMING to
-    IN_PROGRESS status. It also creates new upcoming letters for the affected groups
-    and schedules email notifications to participants that the newsletter is now
-    open for responses.
+    This helper is used by the scheduled promote job and tests that need to
+    provide their own transaction-scoped session.
+
+    It also creates new upcoming letters for the affected groups and schedules
+    email notifications to participants that the newsletter is now open for
+    responses.
 
     Args:
         db (Session): Database session
@@ -512,6 +515,22 @@ def promote_and_create_new_letters(db: Session, letter_ids: list[int]) -> None:
             args=[letter.id],
         )
     db.commit()
+
+
+@job_factory("promote_and_create_new_letters")
+def promote_and_create_new_letters(db: Session, letter_ids: list[int]) -> None:
+    """Promote letters to IN_PROGRESS and create new upcoming letters.
+
+    This task is triggered when letters need to be promoted from UPCOMING to
+    IN_PROGRESS status. It also creates new upcoming letters for the affected groups
+    and schedules email notifications to participants that the newsletter is now
+    open for responses.
+
+    Args:
+        db (Session): Database session
+        letter_ids (list[int]): IDs of letters to promote
+    """
+    promote_and_create_new_letters_with_session(db, letter_ids)
 
 
 def postpend_upcoming_letters_with_session(

@@ -123,8 +123,11 @@ run_bootstrap() {
 
 run_vite() {
   cd "$ROOT/react"
-  # Empty VITE_API_URL uses same-origin /api/v1 via the Vite dev proxy.
-  export VITE_API_URL="${VITE_API_URL:-}"
+  # Force same-origin /api/v1 via the Vite proxy. Cursor Cloud secrets (and other
+  # shell env) often inject VITE_API_URL=https://localhost for nginx TLS; Vite
+  # prefers process env over .env, which breaks HTTP Vite with CERT errors /
+  # mixed-content. Always clear it for the cloud Vite path.
+  export VITE_API_URL=""
   exec pnpm run dev -- --host 0.0.0.0
 }
 
