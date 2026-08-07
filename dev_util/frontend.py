@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import os
 from pathlib import Path
 from typing import Any
 
@@ -32,6 +33,19 @@ def fe_dev(
     *args: list[Any],
     **kwargs: dict[Any, Any],
 ) -> list[str]:
+    # Cursor Cloud secrets often inject VITE_API_URL=https://localhost for
+    # nginx TLS. Vite prefers process env over .env, which breaks HTTP Vite
+    # login (CERT / mixed-content). Same-origin via the Vite proxy is required.
+    if os.environ.get("CURSOR_AGENT"):
+        if os.environ.get("VITE_API_URL"):
+            click.echo(
+                "CURSOR_AGENT: clearing VITE_API_URL for same-origin Vite proxy",
+                err=True,
+            )
+        os.environ["VITE_API_URL"] = ""
+        # PWA SW in HTTP cloud Vite is unused noise (also defaulted false in
+        # cloud-start / .env.cloud.example).
+        os.environ["SW_DEV"] = "false"
     return ["pnpm", "run", "dev"]
 
 

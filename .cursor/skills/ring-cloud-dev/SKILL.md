@@ -53,6 +53,11 @@ and login fails (often as `ERR_CERT_AUTHORITY_INVALID` against nginx).
 secrets (which may inject `https://localhost`) cannot override `.env`. Vite
 gives process env priority over `.env` files.
 
+`cloud-start.sh --vite-only` and `ring fe dev` (when `CURSOR_AGENT` is set)
+force `VITE_API_URL=""` so Cursor secrets that inject `https://localhost`
+cannot override `.env`. They also default `SW_DEV=false` to skip the PWA
+service worker in HTTP cloud Vite.
+
 Local OrbStack dev may still use `VITE_API_URL=https://localhost` when hitting
 nginx TLS directly (no Vite proxy).
 
