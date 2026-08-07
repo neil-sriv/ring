@@ -21,7 +21,11 @@ import type {
 import { resetPasswordResetPasswordTokenPostMutation } from "../../client/@tanstack/react-query.gen"
 import { isLoggedIn } from "../../hooks/useAuth"
 import useCustomToast from "../../hooks/useCustomToast"
-import { confirmPasswordRules, passwordRules } from "../../util/misc"
+import {
+  confirmPasswordRules,
+  formatApiErrorDetail,
+  passwordRules,
+} from "../../util/misc"
 
 interface NewPasswordForm extends NewPassword {
   confirm_password: string
@@ -64,9 +68,11 @@ function ResetPassword() {
       navigate({ to: "/login" })
     },
     onError: (err: AxiosError<ResetPasswordResetPasswordTokenPostError>) => {
-      const errDetail =
-        err.response?.data.detail || "no error detail, please contact support"
-      showToast("Something went wrong.", `${errDetail}`, "error")
+      showToast(
+        "Something went wrong.",
+        formatApiErrorDetail(err.response?.data?.detail),
+        "error",
+      )
     },
   })
 

@@ -12,11 +12,12 @@ import {
 } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
+import type { AxiosError } from "axios"
 import type { ResetPasswordRequestResetPasswordRequestEmailPostError } from "../client"
 import { resetPasswordRequestResetPasswordRequestEmailPost } from "../client/sdk.gen"
 import { isLoggedIn } from "../hooks/useAuth"
 import useCustomToast from "../hooks/useCustomToast"
-import { emailPattern } from "../util/misc"
+import { emailPattern, formatApiErrorDetail } from "../util/misc"
 
 interface FormData {
   email: string
@@ -42,21 +43,25 @@ function ResetPasswordRequest() {
   const showToast = useCustomToast()
 
   const onSubmit: SubmitHandler<FormData> = async (data) => {
-    await resetPasswordRequestResetPasswordRequestEmailPost({
-      path: { email: data.email },
-    })
-      .then(() => {
-        showToast(
-          "Email sent.",
-          "We sent an email with a link to get back into your account.",
-          "success",
-        )
+    try {
+      await resetPasswordRequestResetPasswordRequestEmailPost({
+        path: { email: data.email },
+        throwOnError: true,
       })
-      .catch((err: ResetPasswordRequestResetPasswordRequestEmailPostError) => {
-        const errDetail =
-          err.detail || "no error detail, please contact support"
-        showToast("Something went wrong.", `${errDetail}`, "error")
-      })
+      showToast(
+        "Email sent.",
+        "We sent an email with a link to get back into your account.",
+        "success",
+      )
+    } catch (err) {
+      const axiosErr =
+        err as AxiosError<ResetPasswordRequestResetPasswordRequestEmailPostError>
+      showToast(
+        "Something went wrong.",
+        formatApiErrorDetail(axiosErr.response?.data?.detail),
+        "error",
+      )
+    }
   }
 
   return (

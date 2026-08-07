@@ -5,6 +5,7 @@ import { useState } from "react"
 import type { AxiosError } from "axios"
 import type { RegisterUserPartiesRegisterTokenPostError } from "../client"
 import { registerUserPartiesRegisterTokenPostMutation } from "../client/@tanstack/react-query.gen"
+import { formatApiErrorDetail } from "../util/misc"
 
 const useRegister = () => {
   const [error, setError] = useState<string | null>(null)
@@ -16,11 +17,12 @@ const useRegister = () => {
       navigate({ to: "/login" })
     },
     onError: (err: AxiosError<RegisterUserPartiesRegisterTokenPostError>) => {
-      const errDetail = err.response?.data.detail
-      if (errDetail === undefined) {
-        return
-      }
-      setError(errDetail[0].msg)
+      setError(
+        formatApiErrorDetail(
+          err.response?.data?.detail,
+          "Registration failed. Please try again.",
+        ),
+      )
     },
   })
 

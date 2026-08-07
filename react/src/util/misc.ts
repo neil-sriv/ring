@@ -1,3 +1,28 @@
+/** Normalize FastAPI `detail` (string or validation error list) for UI display. */
+export function formatApiErrorDetail(
+  detail: unknown,
+  fallback = "Something went wrong. Please try again.",
+): string {
+  if (typeof detail === "string" && detail.length > 0) {
+    return detail
+  }
+  if (Array.isArray(detail) && detail.length > 0) {
+    const first = detail[0]
+    if (typeof first === "string" && first.length > 0) {
+      return first
+    }
+    if (
+      first &&
+      typeof first === "object" &&
+      "msg" in first &&
+      typeof (first as { msg: unknown }).msg === "string"
+    ) {
+      return (first as { msg: string }).msg
+    }
+  }
+  return fallback
+}
+
 export const emailPattern = {
   value: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i,
   message: "Invalid email address",

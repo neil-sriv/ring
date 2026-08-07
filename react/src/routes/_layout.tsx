@@ -1,5 +1,6 @@
 import { Outlet, createFileRoute, redirect } from "@tanstack/react-router"
 import { Loader2 } from "lucide-react"
+import { useEffect } from "react"
 
 import { useQueryClient } from "@tanstack/react-query"
 import {
@@ -46,8 +47,15 @@ function Layout() {
   const currentUser = queryClient.getQueryData<UserLinked>(
     readUserMePartiesMeGetQueryKey(),
   )
-  subscribeToPush(currentUser?.api_identifier!)
+  const userApiId = currentUser?.api_identifier
   const isLoading = false
+
+  useEffect(() => {
+    if (!userApiId) {
+      return
+    }
+    void subscribeToPush(userApiId)
+  }, [userApiId])
 
   return (
     <div className="flex min-h-screen">

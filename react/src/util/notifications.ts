@@ -3,63 +3,58 @@ import {
   type PostSubscriptionNotificationsSubscriptionPostError,
   postSubscriptionNotificationsSubscriptionPost,
 } from "../client"
+import { formatApiErrorDetail } from "./misc"
 
 const generateSubscription = async (): Promise<PushSubscription> => {
   const registration = await navigator.serviceWorker.ready
   const existingSubscription = await registration.pushManager.getSubscription()
   if (existingSubscription) {
-    console.log("Already subscribed to push notifications.")
     return existingSubscription
   }
-  const subscription = await registration.pushManager.subscribe({
+  return registration.pushManager.subscribe({
     userVisibleOnly: true,
     applicationServerKey: import.meta.env.VITE_VAPID_PUBLIC_KEY, // Ensure this is set in .env
   })
-  console.log(subscription.toJSON())
-  return subscription
 }
 
 export async function subscribeToPush(user_api_id: string): Promise<void> {
+  if (!user_api_id) {
+    return
+  }
   if (!("serviceWorker" in navigator)) {
-    console.error("Service Workers are not supported in this browser.")
     return
   }
 
   const permission = await Notification.requestPermission()
 
   if (permission !== "granted") {
-    console.warn("Push notifications permission denied.")
     return
   }
   const subscription = await generateSubscription()
 
   const { endpoint, keys } = subscription.toJSON()
 
-  if (!keys) {
-    console.error("No keys found in the subscription object.")
-    return
-  }
-  if (!endpoint) {
-    console.error("No endpoint found in the subscription object.")
+  if (!keys || !endpoint) {
     return
   }
 
-  //  Send subscription to the server for push notifications
-  await postSubscriptionNotificationsSubscriptionPost({
-    body: {
-      endpoint,
-      keys,
-      user_api_identifier: user_api_id,
-    },
-  })
-    .catch(
-      (err: AxiosError<PostSubscriptionNotificationsSubscriptionPostError>) => {
-        const errDetail =
-          err.response?.data.detail || "no error detail, please contact support"
-        console.error(errDetail)
+  try {
+    await postSubscriptionNotificationsSubscriptionPost({
+      body: {
+        endpoint,
+        keys,
+        user_api_identifier: user_api_id,
       },
-    )
-    .then((resp) => {
-      console.log(resp)
+      throwOnError: true,
     })
+  } catch (err) {
+    const axiosErr =
+      err as AxiosError<PostSubscriptionNotificationsSubscriptionPostError>
+    console.error(
+      formatApiErrorDetail(
+        axiosErr.response?.data?.detail,
+        "Failed to register push subscription",
+      ),
+    )
+  }
 }
