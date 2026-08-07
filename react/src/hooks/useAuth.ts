@@ -11,6 +11,7 @@ import {
   loginAccessTokenLoginAccessTokenPostMutation,
   readUserMePartiesMeGetOptions,
 } from "../client/@tanstack/react-query.gen"
+import { formatApiErrorDetail } from "../util/misc"
 
 export interface AuthContext {
   isAuthenticated?: boolean
@@ -57,17 +58,12 @@ const useAuth = (next?: string) => {
       }
     },
     onError: (err: AxiosError<LoginAccessTokenLoginAccessTokenPostError>) => {
-      const errDetail =
-        err.response?.data.detail || "no error detail, please contact support"
-      console.log(errDetail)
-    },
-    onSettled: (data, error) => {
-      if (error) {
-        throw error
-      }
-      if (data) {
-        localStorage.setItem("access_token", data.access_token)
-      }
+      setError(
+        formatApiErrorDetail(
+          err.response?.data?.detail,
+          "Incorrect email or password",
+        ),
+      )
     },
   })
 

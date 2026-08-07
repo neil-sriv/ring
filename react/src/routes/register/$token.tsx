@@ -89,10 +89,9 @@ function Register() {
     }
 
     try {
-      console.log(formData)
       await registerMutation.mutateAsync(formData)
     } catch {
-      // error is handled by useAuth hook
+      // error is handled by useRegister hook
     }
   }
 
