@@ -541,20 +541,19 @@ def postpend_upcoming_letters_with_session(
     This helper is used by the scheduled postpend job and tests that need to
     provide their own transaction-scoped session.
 
-    Letters below the responder send threshold are deferred instead of marked
-    SENT without an email.
+    Letters below the responder send threshold are left in progress instead of
+    marked SENT without an email, and have their send date deferred once that
+    send date has arrived.
 
     Args:
         db (Session): Database session
         letter_ids (list[int]): IDs of letters to postpend
     """
-    from ring.letters.send_threshold import (
-        defer_letter_send_if_below_threshold,
-    )
+    from ring.letters.send_threshold import hold_letter_for_send_threshold
 
     letters = db.scalars(select(Letter).where(Letter.id.in_(letter_ids))).all()
     for letter in letters:
-        if defer_letter_send_if_below_threshold(db, letter):
+        if hold_letter_for_send_threshold(db, letter):
             continue
         letter.status = LetterStatus.SENT
         create_letter_with_questions(

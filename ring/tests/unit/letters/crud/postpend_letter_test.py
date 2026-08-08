@@ -33,7 +33,7 @@ class TestPostpendLetters:
         admin = UserFactory.create()
         members = [admin] + [UserFactory.create() for _ in range(3)]
         group = GroupFactory.create(admin=admin, members=members)
-        send_at = datetime.now(tz=UTC) + timedelta(days=1)
+        send_at = datetime.now(tz=UTC) - timedelta(minutes=1)
         letter = LetterFactory.create(
             group=group,
             status=LetterStatus.IN_PROGRESS,
@@ -44,6 +44,55 @@ class TestPostpendLetters:
         db_session.commit()
 
         self.run_postpend_job(db_session, [letter.id])
+        db_session.refresh(letter)
+
+        assert letter.status == LetterStatus.IN_PROGRESS
+        assert letter.send_at == send_at + timedelta(
+            days=LETTER_SEND_DEFERRAL_DAYS
+        )
+
+    def test_postpend_does_not_defer_before_send_date(
+        self, db_session: Session
+    ) -> None:
+        """Leave the send date alone when the deadline has not arrived yet."""
+        admin = UserFactory.create()
+        members = [admin] + [UserFactory.create() for _ in range(3)]
+        group = GroupFactory.create(admin=admin, members=members)
+        send_at = datetime.now(tz=UTC) + timedelta(days=5)
+        letter = LetterFactory.create(
+            group=group,
+            status=LetterStatus.IN_PROGRESS,
+            send_at=send_at,
+        )
+        question = QuestionFactory.create(letter=letter)
+        ResponseFactory.create(question=question, participant=members[0])
+        db_session.commit()
+
+        self.run_postpend_job(db_session, [letter.id])
+        db_session.refresh(letter)
+
+        assert letter.status == LetterStatus.IN_PROGRESS
+        assert letter.send_at == send_at
+
+    def test_repeated_postpend_polls_defer_send_date_once(
+        self, db_session: Session
+    ) -> None:
+        """Deferring once moves the deadline out of reach of later polls."""
+        admin = UserFactory.create()
+        members = [admin] + [UserFactory.create() for _ in range(3)]
+        group = GroupFactory.create(admin=admin, members=members)
+        send_at = datetime.now(tz=UTC) - timedelta(minutes=1)
+        letter = LetterFactory.create(
+            group=group,
+            status=LetterStatus.IN_PROGRESS,
+            send_at=send_at,
+        )
+        question = QuestionFactory.create(letter=letter)
+        ResponseFactory.create(question=question, participant=members[0])
+        db_session.commit()
+
+        for _ in range(3):
+            self.run_postpend_job(db_session, [letter.id])
         db_session.refresh(letter)
 
         assert letter.status == LetterStatus.IN_PROGRESS
