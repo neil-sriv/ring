@@ -19,6 +19,7 @@ from ring.async_scheduler.scheduler import scheduler
 from ring.fastapp.config import get_config
 from ring.fastapp.init_app_modules import init_app_modules
 from ring.fastapp.routes import router
+from ring.lib.request_logging import sanitize_request_url
 
 
 @asynccontextmanager
@@ -95,7 +96,8 @@ async def log_requests(
     """Log HTTP request and response details.
 
     This middleware logs the HTTP method and URL for each request,
-    and the status code for each response.
+    and the status code for each response. Sensitive path/query values
+    (invite tokens, password-reset tokens, JWT query params) are redacted.
 
     Args:
         request (Request): The incoming HTTP request
@@ -104,7 +106,8 @@ async def log_requests(
     Returns:
         Response: The HTTP response
     """
-    logger.info(f"Request: {request.method} {request.url}")
+    safe_url = sanitize_request_url(str(request.url))
+    logger.info(f"Request: {request.method} {safe_url}")
     response = await call_next(request)
     logger.info(f"Response: {response.status_code}")
     return response

@@ -129,7 +129,9 @@ run_vite() {
   # mixed-content. Always clear it for the cloud Vite path.
   export VITE_API_URL=""
   # Service worker registration in HTTP cloud Vite is unused noise.
-  export SW_DEV="${SW_DEV:-false}"
+  # Force false: Cursor secrets often inject SW_DEV=true, and
+  # `${SW_DEV:-false}` would keep that injected value.
+  export SW_DEV=false
   exec pnpm run dev -- --host 0.0.0.0
 }
 

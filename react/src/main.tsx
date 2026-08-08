@@ -29,8 +29,12 @@ if (
 }
 /**/
 
-/* PWA: auto-reload when a new service worker is ready after deploy */
-registerSW({ immediate: true })
+/* PWA: auto-reload when a new service worker is ready after deploy.
+   Skip in DEV when SW_DEV=false (cloud HTTP Vite) — VitePWA already disables
+   the dev SW, but calling registerSW still races and noisy-fails. */
+if (!import.meta.env.DEV || import.meta.env.VITE_SW_DEV !== "false") {
+  registerSW({ immediate: true })
+}
 /**/
 
 /* vite Config */

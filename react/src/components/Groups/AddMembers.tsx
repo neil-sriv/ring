@@ -12,6 +12,7 @@ import {
   listGroupsPartiesGroupsGetQueryKey,
 } from "../../client/@tanstack/react-query.gen"
 import useCustomToast from "../../hooks/useCustomToast"
+import { formatApiErrorDetail } from "../../util/misc"
 
 import { Button } from "@/components/ui/button"
 import {
@@ -57,10 +58,11 @@ const AddMembers = ({ group, isOpen, onClose }: AddMembersProps) => {
     onError: (
       err: AxiosError<AddMembersPartiesGroupGroupApiIdAddMembersPostError>,
     ) => {
-      console.log(err)
-      const errDetail =
-        err.response?.data.detail || "no error detail, please contact support"
-      showToast("Something went wrong.", `${errDetail}`, "error")
+      showToast(
+        "Something went wrong.",
+        formatApiErrorDetail(err.response?.data?.detail),
+        "error",
+      )
     },
     onSettled: () => {
       queryClient.invalidateQueries({
