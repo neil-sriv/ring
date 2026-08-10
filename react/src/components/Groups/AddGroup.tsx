@@ -76,6 +76,9 @@ const AddGroup = ({ isOpen, onClose }: AddGroupProps) => {
         queryClient.invalidateQueries({
           queryKey: listDashboardLettersLettersLettersDashboardGetQueryKey(),
         })
+        queryClient.invalidateQueries({
+          queryKey: readUserMePartiesMeGetQueryKey(),
+        })
       }
     },
   })

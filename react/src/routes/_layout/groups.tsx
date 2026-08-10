@@ -74,51 +74,7 @@ function GroupTableBody() {
   }
 
   return (
-    <TableBody>
-      {groups.map((group) => (
-        <TableRow key={group.api_identifier}>
-          {/* <TableCell>{group.name}</TableCell> */}
-          <TableCell>
-            <Link
-              to="/groups/$groupId/loops"
-              params={{ groupId: group.api_identifier }}
-              className="underline"
-            >
-              {group.name}
-            </Link>
-          </TableCell>
-          <TableCell className="whitespace-normal">
-            <div>
-              <p>
-                {group.members
-                  .map((member) => {
-                    return member.name
-                  })
-                  .sort()
-                  .join(", ")}
-              </p>
-            </div>
-          </TableCell>
-          {/* <TableCell>
-            {group.letters
-              .map((letter) => {
-                return letter.number;
-              })
-              .sort()
-              .join(", ")}
-          </TableCell> */}
-          <TableCell>
-            <ActionsMenu type={"Group"} value={group} />
-          </TableCell>
-        </TableRow>
-      ))}
-    </TableBody>
-  )
-}
-
-function GroupTable() {
-  return (
-    <Table>
+    <>
       <TableHeader>
         <TableRow>
           <TableHead>Name</TableHead>
@@ -127,6 +83,52 @@ function GroupTable() {
           <TableHead>Actions</TableHead>
         </TableRow>
       </TableHeader>
+      <TableBody>
+        {groups.map((group) => (
+          <TableRow key={group.api_identifier}>
+            {/* <TableCell>{group.name}</TableCell> */}
+            <TableCell>
+              <Link
+                to="/groups/$groupId/loops"
+                params={{ groupId: group.api_identifier }}
+                className="underline"
+              >
+                {group.name}
+              </Link>
+            </TableCell>
+            <TableCell className="whitespace-normal">
+              <div>
+                <p>
+                  {group.members
+                    .map((member) => {
+                      return member.name
+                    })
+                    .sort()
+                    .join(", ")}
+                </p>
+              </div>
+            </TableCell>
+            {/* <TableCell>
+              {group.letters
+                .map((letter) => {
+                  return letter.number;
+                })
+                .sort()
+                .join(", ")}
+            </TableCell> */}
+            <TableCell>
+              <ActionsMenu type={"Group"} value={group} />
+            </TableCell>
+          </TableRow>
+        ))}
+      </TableBody>
+    </>
+  )
+}
+
+function GroupTable() {
+  return (
+    <Table>
       <ErrorBoundary
         fallbackRender={({ error }) => (
           <TableBody>

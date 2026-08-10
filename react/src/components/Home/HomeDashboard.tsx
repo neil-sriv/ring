@@ -3,7 +3,10 @@ import { useSuspenseQuery } from "@tanstack/react-query"
 import { Link } from "@tanstack/react-router"
 import { Plus } from "lucide-react"
 import { useState } from "react"
-import { listDashboardLettersLettersLettersDashboardGetOptions } from "../../client/@tanstack/react-query.gen"
+import {
+  listDashboardLettersLettersLettersDashboardGetOptions,
+  readUserMePartiesMeGetOptions,
+} from "../../client/@tanstack/react-query.gen"
 import AddGroup from "../Groups/AddGroup"
 import { LoopsGrid } from "../Loops/LoopsGrid"
 
@@ -11,9 +14,13 @@ export function HomeDashboard() {
   const dashboardLoops = useSuspenseQuery({
     ...listDashboardLettersLettersLettersDashboardGetOptions(),
   })
+  const currentUser = useSuspenseQuery({
+    ...readUserMePartiesMeGetOptions(),
+  })
   const recently_completed = dashboardLoops.data.recently_completed
   const in_progress = dashboardLoops.data.in_progress
   const upcoming = dashboardLoops.data.upcoming
+  const hasGroups = currentUser.data.groups.length > 0
   const [isAddGroupOpen, setIsAddGroupOpen] = useState(false)
 
   const isEmpty =
@@ -33,26 +40,31 @@ export function HomeDashboard() {
               <div className="flex flex-col items-center gap-4 px-4">
                 <p className="text-lg text-foreground">No letters yet</p>
                 <p className="text-sm text-muted-foreground max-w-md">
-                  Create a group to start collecting responses, or join one
-                  you&apos;ve been invited to.
+                  {hasGroups
+                    ? "Start a letter loop from one of your groups to collect responses."
+                    : "Create a group to start collecting responses, or join one you've been invited to."}
                 </p>
                 <div className="flex flex-wrap items-center justify-center gap-3">
-                  <Button
-                    onClick={() => setIsAddGroupOpen(true)}
-                    className="gap-1"
-                  >
-                    <Plus className="h-4 w-4" />
-                    Create a group
-                  </Button>
+                  {!hasGroups && (
+                    <Button
+                      onClick={() => setIsAddGroupOpen(true)}
+                      className="gap-1"
+                    >
+                      <Plus className="h-4 w-4" />
+                      Create a group
+                    </Button>
+                  )}
                   <Button variant="outline" asChild>
                     <Link to="/groups">View groups</Link>
                   </Button>
                 </div>
               </div>
-              <AddGroup
-                isOpen={isAddGroupOpen}
-                onClose={() => setIsAddGroupOpen(false)}
-              />
+              {!hasGroups && (
+                <AddGroup
+                  isOpen={isAddGroupOpen}
+                  onClose={() => setIsAddGroupOpen(false)}
+                />
+              )}
             </div>
           ) : (
             <>
