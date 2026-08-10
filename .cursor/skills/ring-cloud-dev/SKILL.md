@@ -55,8 +55,10 @@ gives process env priority over `.env` files.
 
 `cloud-start.sh --vite-only` and `ring fe dev` (when `CURSOR_AGENT` is set)
 force `VITE_API_URL=""` so Cursor secrets that inject `https://localhost`
-cannot override `.env`. They also default `SW_DEV=false` to skip the PWA
-service worker in HTTP cloud Vite.
+cannot override `.env`. They also **force** `SW_DEV=false` (not
+`${SW_DEV:-false}`) so injected `SW_DEV=true` secrets cannot re-enable the
+PWA service worker in HTTP cloud Vite. `main.tsx` skips `registerSW` in DEV
+when `VITE_SW_DEV` is false (mirrored from `SW_DEV` in `vite.config.ts`).
 
 Local OrbStack dev may still use `VITE_API_URL=https://localhost` when hitting
 nginx TLS directly (no Vite proxy).

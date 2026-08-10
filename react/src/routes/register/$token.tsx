@@ -38,7 +38,7 @@ export const Route = createFileRoute("/register/$token")({
         }),
       })
       .catch(() => {
-        console.log("Invalid token")
+        // Invalid/expired/used tokens render the invalid-invite UI below.
       })
   },
 })
@@ -56,8 +56,24 @@ function Register() {
       : false
   if (!validToken) {
     return (
-      <div className="flex min-h-screen items-center justify-center">
-        <h1 className="text-2xl font-bold">Invalid token</h1>
+      <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-primary/10 via-background to-muted p-4">
+        <Card className="w-full max-w-sm">
+          <CardHeader className="text-center">
+            <CardTitle className="text-2xl font-bold tracking-tight">
+              Ring
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="flex flex-col items-center gap-4 text-center">
+            <h1 className="text-xl font-semibold">Invite link invalid</h1>
+            <p className="text-sm text-muted-foreground">
+              This invite may have expired, already been used, or the link is
+              incorrect. Ask a group admin for a new invite.
+            </p>
+            <Button asChild className="w-full">
+              <RouterLink to="/login">Back to login</RouterLink>
+            </Button>
+          </CardContent>
+        </Card>
       </div>
     )
   }

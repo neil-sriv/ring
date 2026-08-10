@@ -74,8 +74,17 @@ const pwaOptions: Partial<VitePWAOptions> = {
 //   replaceOptions.__RELOAD_SW__ = "true";
 // }
 
+// Mirror SW_DEV into the client so main.tsx can skip registerSW when the
+// VitePWA dev service worker is disabled (e.g. Cursor Cloud HTTP Vite).
+const swDevEnabled = process.env.SW_DEV !== "false"
+
 // https://vitejs.dev/config/
 export default defineConfig({
+  define: {
+    "import.meta.env.VITE_SW_DEV": JSON.stringify(
+      swDevEnabled ? "true" : "false",
+    ),
+  },
   plugins: [
     tailwindcss(),
     react(),
