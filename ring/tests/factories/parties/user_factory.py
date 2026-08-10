@@ -8,7 +8,6 @@ from ring.parties.models.user_model import User
 from ring.security import get_password_hash
 from ring.tests.factories.base_factory import BaseFactory, register_factory
 
-
 DEFAULT_PASSWORD_HASH = get_password_hash("password")
 
 
