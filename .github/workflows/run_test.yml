@@ -32,10 +32,14 @@ jobs:
     - name: Docker set-up
       run: |
         docker login ghcr.io -u neil-sriv -p ${{ secrets.GITHUB_TOKEN }}
-        docker pull ghcr.io/neil-sriv/ring/ring-test-runner:latest
+        docker pull ghcr.io/neil-sriv/ring/ring-test-runner:latest &
+        test_runner_pull_pid=$!
+        uv run ring compose any --profile test pull test-cockroach &
+        cockroach_pull_pid=$!
+        wait "$test_runner_pull_pid"
+        wait "$cockroach_pull_pid"
         docker tag ghcr.io/neil-sriv/ring/ring-test-runner:latest ring-test-runner:latest
         docker rmi ghcr.io/neil-sriv/ring/ring-test-runner:latest
-        uv run ring compose any --profile test pull test-cockroach
         docker network create ring-network
 
     - name: Run tests
