@@ -159,10 +159,22 @@ def has_send_date_arrived(letter: Letter, now: datetime | None = None) -> bool:
     return letter.send_at <= (now or datetime.now(tz=UTC))
 
 
-def defer_letter_send(db: Session, letter: Letter) -> None:
-    """Push a letter's send date out by the deferral interval."""
+def defer_letter_send(db: Session, letter: Letter) -> bool:
+    """Push a letter's send date out by the deferral interval.
+
+    Idempotent across callers that may both run at the same deadline moment
+    (send-email task and postpend): once ``send_at`` is in the future, further
+    calls are a no-op.
+
+    Returns:
+        True if the send date was deferred, False if it had not yet arrived
+        (or had already been deferred into the future).
+    """
     # Imported here because ring.letters.crud.letter imports this module.
     from ring.letters.crud import letter as letter_crud
+
+    if not has_send_date_arrived(letter):
+        return False
 
     new_send_at = letter.send_at + timedelta(days=LETTER_SEND_DEFERRAL_DAYS)
     logger.info(
@@ -175,6 +187,7 @@ def defer_letter_send(db: Session, letter: Letter) -> None:
         )
     )
     letter_crud.edit_letter(db, letter, send_at=new_send_at)
+    return True
 
 
 def defer_letter_send_if_below_threshold(db: Session, letter: Letter) -> bool:
@@ -191,8 +204,7 @@ def defer_letter_send_if_below_threshold(db: Session, letter: Letter) -> bool:
     if not is_below_send_threshold(letter):
         return False
 
-    defer_letter_send(db, letter)
-    return True
+    return defer_letter_send(db, letter)
 
 
 def hold_letter_for_send_threshold(db: Session, letter: Letter) -> bool:
@@ -200,7 +212,9 @@ def hold_letter_for_send_threshold(db: Session, letter: Letter) -> bool:
 
     The poll job collects letters up to a week before their send date, so the
     send date is only pushed out once the deadline itself has arrived. Before
-    then the letter is left untouched, still open for responses.
+    then the letter is left untouched, still open for responses. Deferral is
+    idempotent via ``defer_letter_send``, so a concurrent send-email task that
+    already pushed ``send_at`` will not stack a second day.
 
     Returns:
         True if the letter is below its send threshold, False otherwise.
@@ -211,6 +225,5 @@ def hold_letter_for_send_threshold(db: Session, letter: Letter) -> bool:
     if not is_below_send_threshold(letter):
         return False
 
-    if has_send_date_arrived(letter):
-        defer_letter_send(db, letter)
+    defer_letter_send(db, letter)
     return True
