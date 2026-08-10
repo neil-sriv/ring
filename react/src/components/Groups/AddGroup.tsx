@@ -10,10 +10,12 @@ import type {
 } from "../../client"
 import {
   createGroupPartiesGroupPostMutation,
+  listDashboardLettersLettersLettersDashboardGetQueryKey,
   listGroupsPartiesGroupsGetQueryKey,
   readUserMePartiesMeGetQueryKey,
 } from "../../client/@tanstack/react-query.gen"
 import useCustomToast from "../../hooks/useCustomToast"
+import { formatApiErrorDetail } from "../../util/misc"
 
 import { Button } from "@/components/ui/button"
 import {
@@ -58,9 +60,11 @@ const AddGroup = ({ isOpen, onClose }: AddGroupProps) => {
       onClose()
     },
     onError: (err: AxiosError<CreateGroupPartiesGroupPostError>) => {
-      const errDetail =
-        err.response?.data.detail || "no error detail, please contact support"
-      showToast("Something went wrong.", `${errDetail}`, "error")
+      showToast(
+        "Something went wrong.",
+        formatApiErrorDetail(err.response?.data?.detail),
+        "error",
+      )
     },
     onSettled: (data) => {
       if (data) {
@@ -68,6 +72,12 @@ const AddGroup = ({ isOpen, onClose }: AddGroupProps) => {
           queryKey: listGroupsPartiesGroupsGetQueryKey({
             query: { user_api_id: currentUser!.api_identifier },
           }),
+        })
+        queryClient.invalidateQueries({
+          queryKey: listDashboardLettersLettersLettersDashboardGetQueryKey(),
+        })
+        queryClient.invalidateQueries({
+          queryKey: readUserMePartiesMeGetQueryKey(),
         })
       }
     },

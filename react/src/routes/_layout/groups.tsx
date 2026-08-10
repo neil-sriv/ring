@@ -1,6 +1,7 @@
 import { useSuspenseQuery } from "@tanstack/react-query"
 import { Link, createFileRoute } from "@tanstack/react-router"
 
+import { Button } from "@/components/ui/button"
 import { Skeleton } from "@/components/ui/skeleton"
 import {
   Table,
@@ -10,12 +11,14 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table"
-import { Suspense } from "react"
+import { Plus } from "lucide-react"
+import { Suspense, useState } from "react"
 import { ErrorBoundary } from "react-error-boundary"
 import type { UserLinked } from "../../client"
 import { listGroupsPartiesGroupsGetOptions } from "../../client/@tanstack/react-query.gen"
 import ActionsMenu from "../../components/Common/ActionsMenu"
 import Navbar from "../../components/Common/Navbar"
+import AddGroup from "../../components/Groups/AddGroup"
 
 export const Route = createFileRoute("/_layout/groups")({
   component: Groups,
@@ -34,57 +37,44 @@ function GroupTableBody() {
       query: { user_api_id: currentUser?.api_identifier },
     }),
   })
+  const [isAddGroupOpen, setIsAddGroupOpen] = useState(false)
 
   if (!groups) {
     return null
   }
 
-  return (
-    <TableBody>
-      {groups.map((group) => (
-        <TableRow key={group.api_identifier}>
-          {/* <TableCell>{group.name}</TableCell> */}
-          <TableCell>
-            <Link
-              to="/groups/$groupId/loops"
-              params={{ groupId: group.api_identifier }}
-              className="underline"
-            >
-              {group.name}
-            </Link>
-          </TableCell>
-          <TableCell className="whitespace-normal">
-            <div>
-              <p>
-                {group.members
-                  .map((member) => {
-                    return member.name
-                  })
-                  .sort()
-                  .join(", ")}
-              </p>
+  if (groups.length === 0) {
+    return (
+      <TableBody>
+        <TableRow>
+          <TableCell colSpan={3} className="hover:bg-transparent">
+            <div className="text-center py-12 w-full">
+              <div className="flex flex-col items-center gap-4 px-4">
+                <p className="text-lg text-foreground">No groups yet</p>
+                <p className="text-sm text-muted-foreground max-w-md">
+                  Create a group to invite friends and start a letter loop.
+                </p>
+                <Button
+                  onClick={() => setIsAddGroupOpen(true)}
+                  className="gap-1"
+                >
+                  <Plus className="h-4 w-4" />
+                  Create a group
+                </Button>
+              </div>
+              <AddGroup
+                isOpen={isAddGroupOpen}
+                onClose={() => setIsAddGroupOpen(false)}
+              />
             </div>
           </TableCell>
-          {/* <TableCell>
-            {group.letters
-              .map((letter) => {
-                return letter.number;
-              })
-              .sort()
-              .join(", ")}
-          </TableCell> */}
-          <TableCell>
-            <ActionsMenu type={"Group"} value={group} />
-          </TableCell>
         </TableRow>
-      ))}
-    </TableBody>
-  )
-}
+      </TableBody>
+    )
+  }
 
-function GroupTable() {
   return (
-    <Table>
+    <>
       <TableHeader>
         <TableRow>
           <TableHead>Name</TableHead>
@@ -93,6 +83,52 @@ function GroupTable() {
           <TableHead>Actions</TableHead>
         </TableRow>
       </TableHeader>
+      <TableBody>
+        {groups.map((group) => (
+          <TableRow key={group.api_identifier}>
+            {/* <TableCell>{group.name}</TableCell> */}
+            <TableCell>
+              <Link
+                to="/groups/$groupId/loops"
+                params={{ groupId: group.api_identifier }}
+                className="underline"
+              >
+                {group.name}
+              </Link>
+            </TableCell>
+            <TableCell className="whitespace-normal">
+              <div>
+                <p>
+                  {group.members
+                    .map((member) => {
+                      return member.name
+                    })
+                    .sort()
+                    .join(", ")}
+                </p>
+              </div>
+            </TableCell>
+            {/* <TableCell>
+              {group.letters
+                .map((letter) => {
+                  return letter.number;
+                })
+                .sort()
+                .join(", ")}
+            </TableCell> */}
+            <TableCell>
+              <ActionsMenu type={"Group"} value={group} />
+            </TableCell>
+          </TableRow>
+        ))}
+      </TableBody>
+    </>
+  )
+}
+
+function GroupTable() {
+  return (
+    <Table>
       <ErrorBoundary
         fallbackRender={({ error }) => (
           <TableBody>
