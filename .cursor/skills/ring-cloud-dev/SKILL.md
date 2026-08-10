@@ -109,7 +109,9 @@ local Cockroach + local API via
 ```bash
 ring cloud client-only check
 ring cloud client-only dev
+ring cloud client-only dev --skip-check   # if prod API is temporarily unreachable
 ```
 
-Client-only needs no DB secrets or Docker services. Vite keeps
+Client-only needs no DB secrets or Docker services. Leave dashboard **Start**
+empty; reachability lives in `dev` (use `--skip-check` when needed). Vite keeps
 `VITE_API_URL` empty and proxies `/api/v1` to `https://ring.neilsriv.tech`.

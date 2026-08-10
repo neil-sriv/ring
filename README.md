@@ -149,6 +149,7 @@ Cursor Cloud Agent helpers:
 ```bash
 ring cloud client-only check
 ring cloud client-only dev
+ring cloud client-only dev --skip-check   # if prod API is temporarily unreachable
 ```
 
 #### `ring compose`

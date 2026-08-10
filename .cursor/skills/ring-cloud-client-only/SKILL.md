@@ -35,14 +35,21 @@ uv sync --group dev && (cd react && pnpm install)
 
 **Start**
 
-```bash
-ring cloud client-only check
-```
+Leave empty. Do not put `ring cloud client-only check` here — a failed
+reachability check would block environment boot, and **Terminal**’s `dev`
+already runs the same check by default.
 
 **Terminal**
 
 ```bash
 ring cloud client-only dev
+```
+
+If the Cloud VM cannot reach `ring.neilsriv.tech` yet (for example
+`ECONNRESET` before egress/allow-all applies), use:
+
+```bash
+ring cloud client-only dev --skip-check
 ```
 
 The environment does not need Docker startup. `uv sync` installs the shared
@@ -61,14 +68,19 @@ as runtime secrets. Otherwise log in manually with an existing account.
 ```bash
 ring cloud client-only check
 ring cloud client-only dev
+ring cloud client-only dev --skip-check
 ```
 
-`check` verifies the deployed OpenAPI endpoint is reachable. `dev`:
+`check` verifies the deployed OpenAPI endpoint is reachable (manual / optional;
+not a dashboard Start command). `dev`:
 
-1. verifies the production API;
+1. verifies the production API (unless `--skip-check`);
 2. sets `VITE_API_URL` empty so browser requests remain same-origin;
 3. sets `VITE_API_PROXY_TARGET=https://ring.neilsriv.tech`;
 4. starts Vite on `0.0.0.0:5173`.
+
+Use `--skip-check` when you need Vite up even though the prod health check
+fails; the proxy target is still set, so API calls succeed once egress works.
 
 Override the target or port only when explicitly needed:
 
