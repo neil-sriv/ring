@@ -87,6 +87,7 @@ function ResponseBlock({
                   src={`https://du32exnxihxuf.cloudfront.net/${image.s3_url}`}
                   alt={response.participant.name}
                   className="w-full max-h-[300px] object-contain hover:scale-[1.02] transition-all duration-200"
+                  loading="lazy"
                 />
               </div>
             </button>

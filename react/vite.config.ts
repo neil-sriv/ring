@@ -109,4 +109,31 @@ export default defineConfig({
       },
     },
   },
+  build: {
+    rollupOptions: {
+      output: {
+        manualChunks(id) {
+          if (!id.includes("node_modules")) {
+            return
+          }
+          if (
+            id.includes("node_modules/@tiptap/") ||
+            id.includes("node_modules/prosemirror-")
+          ) {
+            return "editor-vendor"
+          }
+          if (id.includes("node_modules/react-json-view/")) {
+            return "json-view"
+          }
+          if (
+            id.includes("node_modules/react/") ||
+            id.includes("node_modules/react-dom/") ||
+            id.includes("node_modules/scheduler/")
+          ) {
+            return "react-vendor"
+          }
+        },
+      },
+    },
+  },
 })
