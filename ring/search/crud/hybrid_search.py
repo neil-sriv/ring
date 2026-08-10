@@ -32,7 +32,6 @@ from ring.search.models.hybrid_search import (
 )
 from ring.search.schemas.search import SearchType
 
-
 SearchModelReference = tuple[SearchableType, str]
 SEARCH_AUTHZ_OVERFETCH_MULTIPLIER = 3
 SEARCH_AUTHZ_OVERFETCH_CAP = 100
