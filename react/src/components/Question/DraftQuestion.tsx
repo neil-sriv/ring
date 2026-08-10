@@ -30,6 +30,7 @@ import {
 } from "../../client/@tanstack/react-query.gen"
 import { useAutoResizeTextarea } from "../../hooks/useAutoResizeTextarea"
 import useCustomToast from "../../hooks/useCustomToast"
+import { formatApiErrorDetail } from "../../util/misc"
 import {
   S3Image,
   S3Video,
@@ -52,12 +53,15 @@ function ResponseBlock(props: ResponseBlockProps) {
   const [isSaving, setIsSaving] = useState(false)
   const debounceTimeoutRef = useRef<NodeJS.Timeout | null>(null)
   const savingStartTimeRef = useRef<number | null>(null)
+  const lastSavedTextRef = useRef(props.response?.response_text ?? "")
   const showToast = useCustomToast()
   const textareaRef = useAutoResizeTextarea(responseText)
 
   // Update local state when response prop changes
   useEffect(() => {
-    setResponseText(props.response?.response_text ?? "")
+    const nextText = props.response?.response_text ?? ""
+    setResponseText(nextText)
+    lastSavedTextRef.current = nextText
   }, [props.response?.response_text])
 
   const handleResponseChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
@@ -71,15 +75,23 @@ function ResponseBlock(props: ResponseBlockProps) {
 
     // Set new timeout for debounced save
     debounceTimeoutRef.current = setTimeout(async () => {
-      if (newValue !== (props.response?.response_text ?? "")) {
+      if (newValue !== lastSavedTextRef.current) {
         savingStartTimeRef.current = Date.now()
         setIsSaving(true)
         try {
           await props.submitResponse(newValue)
-          showToast("Success!", "Answer saved.", "success")
+          lastSavedTextRef.current = newValue
+          // Inline "Saving..." is enough for autosave; avoid toast spam.
         } catch (error) {
-          console.error("Failed to save response:", error)
-          showToast("Error!", "Failed to save answer.", "error")
+          const axiosError = error as AxiosError<{ detail?: unknown }>
+          showToast(
+            "Error!",
+            formatApiErrorDetail(
+              axiosError.response?.data?.detail,
+              "Failed to save answer.",
+            ),
+            "error",
+          )
         } finally {
           // Ensure saving animation shows for at least 250ms
           const elapsed = Date.now() - (savingStartTimeRef.current || 0)
@@ -186,9 +198,11 @@ function DraftQuestion({
     onError: (
       error: AxiosError<DeleteQuestionQuestionsQuestionQuestionApiIdDeleteError>,
     ) => {
-      const errDetail =
-        error.response?.data.detail || "no error detail, please contact support"
-      showToast("Something went wrong.", `${errDetail}`, "error")
+      showToast(
+        "Something went wrong.",
+        formatApiErrorDetail(error.response?.data?.detail),
+        "error",
+      )
     },
   })
 
@@ -200,33 +214,43 @@ function DraftQuestion({
   }
 
   const handleUpsert = async (responseText: string): Promise<void> => {
-    try {
-      await upsertResponseQuestionsQuestionQuestionApiIdUpsertResponsePost({
-        path: { question_api_id: question.api_identifier },
-        body: {
-          response_text: responseText,
-          participant_api_identifier: currentUser.api_identifier,
-        },
-        throwOnError: true, // This will make the function throw on HTTP error status codes
-      })
-    } catch (error) {
-      console.error("Error in handleUpsert:", error)
-      throw error // Re-throw to be caught by the calling function
-    }
+    await upsertResponseQuestionsQuestionQuestionApiIdUpsertResponsePost({
+      path: { question_api_id: question.api_identifier },
+      body: {
+        response_text: responseText,
+        participant_api_identifier: currentUser.api_identifier,
+      },
+      throwOnError: true,
+    })
   }
 
   const newHandleUpload = async (file: File) => {
-    await uploadImageQuestionsQuestionQuestionApiIdUploadImagePost({
-      path: { question_api_id: question.api_identifier },
-      body: {
-        response_image: file,
-      },
-    })
-    queryClient.invalidateQueries({
-      queryKey: readLetterLettersLetterLetterApiIdGetQueryKey({
-        path: { letter_api_id: loopApiId },
-      }),
-    })
+    try {
+      await uploadImageQuestionsQuestionQuestionApiIdUploadImagePost({
+        path: { question_api_id: question.api_identifier },
+        body: {
+          response_image: file,
+        },
+        throwOnError: true,
+      })
+      queryClient.invalidateQueries({
+        queryKey: readLetterLettersLetterLetterApiIdGetQueryKey({
+          path: { letter_api_id: loopApiId },
+        }),
+      })
+      showToast("Success!", "Image uploaded successfully.", "success")
+    } catch (error) {
+      const axiosError = error as AxiosError<{ detail?: unknown }>
+      showToast(
+        "Error!",
+        formatApiErrorDetail(
+          axiosError.response?.data?.detail,
+          "Failed to upload image.",
+        ),
+        "error",
+      )
+      throw error
+    }
   }
 
   const handleDeleteImage = async (s3Url: string) => {
@@ -267,12 +291,11 @@ function DraftQuestion({
         query: {
           s3_url: s3Url,
         },
+        throwOnError: true,
       })
 
       showToast("Success!", "Image deleted successfully.", "success")
     } catch (error) {
-      console.error("Error deleting image:", error)
-
       // Revert optimistic update on error
       queryClient.invalidateQueries({
         queryKey: readLetterLettersLetterLetterApiIdGetQueryKey({
@@ -280,7 +303,15 @@ function DraftQuestion({
         }),
       })
 
-      showToast("Error!", "Failed to delete image.", "error")
+      const axiosError = error as AxiosError<{ detail?: unknown }>
+      showToast(
+        "Error!",
+        formatApiErrorDetail(
+          axiosError.response?.data?.detail,
+          "Failed to delete image.",
+        ),
+        "error",
+      )
     }
   }
 

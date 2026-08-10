@@ -6,10 +6,13 @@ import type { AxiosError } from "axios"
 import type {
   AddMembersPartiesGroupGroupApiIdAddMembersPostError,
   GroupLinked,
+  UserLinked,
 } from "../../client"
 import {
   addMembersPartiesGroupGroupApiIdAddMembersPostMutation,
   listGroupsPartiesGroupsGetQueryKey,
+  readGroupPartiesGroupGroupApiIdGetQueryKey,
+  readUserMePartiesMeGetQueryKey,
 } from "../../client/@tanstack/react-query.gen"
 import useCustomToast from "../../hooks/useCustomToast"
 import { formatApiErrorDetail } from "../../util/misc"
@@ -38,6 +41,9 @@ type AddMembersFormType = {
 const AddMembers = ({ group, isOpen, onClose }: AddMembersProps) => {
   const queryClient = useQueryClient()
   const showToast = useCustomToast()
+  const currentUser = queryClient.getQueryData<UserLinked>(
+    readUserMePartiesMeGetQueryKey(),
+  )
   const {
     register,
     handleSubmit,
@@ -66,10 +72,17 @@ const AddMembers = ({ group, isOpen, onClose }: AddMembersProps) => {
     },
     onSettled: () => {
       queryClient.invalidateQueries({
-        queryKey: listGroupsPartiesGroupsGetQueryKey({
-          query: { user_api_id: group.api_identifier },
+        queryKey: readGroupPartiesGroupGroupApiIdGetQueryKey({
+          path: { group_api_id: group.api_identifier },
         }),
       })
+      if (currentUser) {
+        queryClient.invalidateQueries({
+          queryKey: listGroupsPartiesGroupsGetQueryKey({
+            query: { user_api_id: currentUser.api_identifier },
+          }),
+        })
+      }
     },
   })
 

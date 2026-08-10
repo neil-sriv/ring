@@ -74,6 +74,8 @@ export function SingleUploadImage({
     try {
       const uploadPromises = Array.from(files).map((file) => onUpdateFile(file))
       await Promise.all(uploadPromises)
+    } catch {
+      // Caller surfaces upload failures (e.g. toast); keep input usable.
     } finally {
       setIsUploading(false)
       event.target.value = ""
