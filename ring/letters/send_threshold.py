@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import math
-from datetime import timedelta
+from datetime import UTC, datetime, timedelta
 from numbers import Real
 from typing import TYPE_CHECKING, Any
 
@@ -146,23 +146,34 @@ def letter_responder_count(letter: Letter) -> int:
     return len(letter.responders)
 
 
-def defer_letter_send_if_below_threshold(db: Session, letter: Letter) -> bool:
-    """Defer a letter's send date when the responder threshold is not met.
-
-    Returns:
-        True if the send was deferred, False otherwise.
-    """
-    from ring.letters.crud import letter as letter_crud
-
-    if letter.status != LetterStatus.IN_PROGRESS:
-        return False
-
+def is_below_send_threshold(letter: Letter) -> bool:
+    """Return True when fewer participants responded than required to send."""
     required_responders = minimum_responders_required(letter)
     if required_responders <= 0:
         return False
+    return letter_responder_count(letter) < required_responders
 
-    responder_count = letter_responder_count(letter)
-    if responder_count >= required_responders:
+
+def has_send_date_arrived(letter: Letter, now: datetime | None = None) -> bool:
+    """Return True once the letter's send date has been reached."""
+    return letter.send_at <= (now or datetime.now(tz=UTC))
+
+
+def defer_letter_send(db: Session, letter: Letter) -> bool:
+    """Push a letter's send date out by the deferral interval.
+
+    Idempotent across callers that may both run at the same deadline moment
+    (send-email task and postpend): once ``send_at`` is in the future, further
+    calls are a no-op.
+
+    Returns:
+        True if the send date was deferred, False if it had not yet arrived
+        (or had already been deferred into the future).
+    """
+    # Imported here because ring.letters.crud.letter imports this module.
+    from ring.letters.crud import letter as letter_crud
+
+    if not has_send_date_arrived(letter):
         return False
 
     new_send_at = letter.send_at + timedelta(days=LETTER_SEND_DEFERRAL_DAYS)
@@ -171,9 +182,48 @@ def defer_letter_send_if_below_threshold(db: Session, letter: Letter) -> bool:
             letter.id,
             letter.send_at,
             new_send_at,
-            responder_count,
-            required_responders,
+            letter_responder_count(letter),
+            minimum_responders_required(letter),
         )
     )
     letter_crud.edit_letter(db, letter, send_at=new_send_at)
+    return True
+
+
+def defer_letter_send_if_below_threshold(db: Session, letter: Letter) -> bool:
+    """Defer a letter's send date when the responder threshold is not met.
+
+    Intended for the send-email task, which runs when the send date arrives.
+
+    Returns:
+        True if the send was deferred, False otherwise.
+    """
+    if letter.status != LetterStatus.IN_PROGRESS:
+        return False
+
+    if not is_below_send_threshold(letter):
+        return False
+
+    return defer_letter_send(db, letter)
+
+
+def hold_letter_for_send_threshold(db: Session, letter: Letter) -> bool:
+    """Return True when a letter must not be marked SENT yet.
+
+    The poll job collects letters up to a week before their send date, so the
+    send date is only pushed out once the deadline itself has arrived. Before
+    then the letter is left untouched, still open for responses. Deferral is
+    idempotent via ``defer_letter_send``, so a concurrent send-email task that
+    already pushed ``send_at`` will not stack a second day.
+
+    Returns:
+        True if the letter is below its send threshold, False otherwise.
+    """
+    if letter.status != LetterStatus.IN_PROGRESS:
+        return False
+
+    if not is_below_send_threshold(letter):
+        return False
+
+    defer_letter_send(db, letter)
     return True

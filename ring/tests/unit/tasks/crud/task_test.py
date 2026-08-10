@@ -33,7 +33,7 @@ class TestTaskCrud:
         admin = UserFactory.create()
         members = [admin] + [UserFactory.create() for _ in range(3)]
         group = GroupFactory.create(admin=admin, members=members)
-        send_at = datetime.now(tz=UTC) + timedelta(days=1)
+        send_at = datetime.now(tz=UTC) - timedelta(minutes=1)
         letter = LetterFactory.create(
             group=group,
             status=LetterStatus.IN_PROGRESS,
@@ -120,7 +120,7 @@ class TestTaskCrud:
         members = [admin] + [UserFactory.create() for _ in range(3)]
         group = GroupFactory.create(admin=admin, members=members)
         group.key_values.set_value(GROUP_SETTING_MIN_RESPONDERS_KEY, 3)
-        send_at = datetime.now(tz=UTC) + timedelta(days=1)
+        send_at = datetime.now(tz=UTC) - timedelta(minutes=1)
         letter = LetterFactory.create(
             group=group,
             status=LetterStatus.IN_PROGRESS,
@@ -198,7 +198,7 @@ class TestTaskCrud:
         members = [admin] + [UserFactory.create() for _ in range(3)]
         group = GroupFactory.create(admin=admin, members=members)
         group.key_values.set_value(GROUP_SETTING_MIN_RESPONDER_RATIO_KEY, 0.75)
-        send_at = datetime.now(tz=UTC) + timedelta(days=1)
+        send_at = datetime.now(tz=UTC) - timedelta(minutes=1)
         letter = LetterFactory.create(
             group=group,
             status=LetterStatus.IN_PROGRESS,
