@@ -29,6 +29,7 @@ class HybridSearchDocumentAssociation(Base):
             name="association_hybrid_search_document_id_fkey",
             ondelete="CASCADE",
         ),
+        index=True,
         nullable=False,
     )
     model_api_identifier: Mapped[str] = mapped_column(nullable=False)

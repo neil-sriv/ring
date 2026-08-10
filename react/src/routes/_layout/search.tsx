@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router"
 import { Loader2, Search as SearchIcon } from "lucide-react"
-import { Suspense, useState } from "react"
+import { useState } from "react"
 
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -12,7 +12,7 @@ import {
   TableRow,
 } from "@/components/ui/table"
 import { useQuery } from "@tanstack/react-query"
-import type { SearchResult } from "../../client"
+import type { SearchHit } from "../../client"
 import { performSearchSearchSearchGetOptions } from "../../client/@tanstack/react-query.gen"
 import { SearchResultRow } from "../../components/Common/SearchResultRow"
 
@@ -22,22 +22,40 @@ export const Route = createFileRoute("/_layout/search")({
 
 function SearchContent() {
   const [searchQuery, setSearchQuery] = useState("")
-  const [isSearching, setIsSearching] = useState(false)
+  const [submittedQuery, setSubmittedQuery] = useState("")
+  const [hasSubmittedSearch, setHasSubmittedSearch] = useState(false)
 
-  const { data: searchResults, refetch } = useQuery({
+  const {
+    data: searchResults,
+    error,
+    isError,
+    isFetching,
+    refetch,
+  } = useQuery({
     ...performSearchSearchSearchGetOptions({
       query: {
-        query: searchQuery,
+        query: submittedQuery,
       },
     }),
-    enabled: false,
+    enabled: hasSubmittedSearch && Boolean(submittedQuery),
   })
 
   const handleSearch = async () => {
-    if (!searchQuery.trim()) return
-    setIsSearching(true)
-    await refetch()
+    const trimmedQuery = searchQuery.trim()
+    if (!trimmedQuery || isFetching) {
+      return
+    }
+    setHasSubmittedSearch(true)
+    if (trimmedQuery === submittedQuery) {
+      await refetch()
+      return
+    }
+    setSubmittedQuery(trimmedQuery)
   }
+
+  const hasResults = Boolean(searchResults?.results.length)
+  const hasEmptyResults =
+    hasSubmittedSearch && !isFetching && !isError && !hasResults
 
   return (
     <div className="w-full">
@@ -62,14 +80,39 @@ function SearchContent() {
             variant="ghost"
             size="icon"
             onClick={handleSearch}
+            disabled={isFetching || !searchQuery.trim()}
             className="absolute right-1 top-1/2 -translate-y-1/2"
           >
-            <SearchIcon className="h-5 w-5" />
+            {isFetching ? (
+              <Loader2 className="h-5 w-5 animate-spin" />
+            ) : (
+              <SearchIcon className="h-5 w-5" />
+            )}
           </Button>
         </div>
       </div>
 
-      {isSearching && searchResults && (
+      {hasSubmittedSearch && isFetching && (
+        <div className="flex justify-center items-center gap-2 p-8 text-muted-foreground">
+          <Loader2 className="h-5 w-5 animate-spin" />
+          <span>Searching...</span>
+        </div>
+      )}
+
+      {hasSubmittedSearch && !isFetching && isError && (
+        <div className="px-4 text-sm text-destructive">
+          Search failed
+          {error instanceof Error && error.message ? `: ${error.message}` : "."}
+        </div>
+      )}
+
+      {hasEmptyResults && (
+        <div className="px-4 text-sm text-muted-foreground">
+          No results found for "{submittedQuery}".
+        </div>
+      )}
+
+      {!isFetching && hasResults && searchResults && (
         <div className="px-4 overflow-auto">
           <Table>
             <TableHeader>
@@ -78,11 +121,8 @@ function SearchContent() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {searchResults.results.map((result: SearchResult) => (
-                <SearchResultRow
-                  key={result.model.api_identifier}
-                  result={result}
-                />
+              {searchResults.results.map((result: SearchHit) => (
+                <SearchResultRow key={result.api_identifier} result={result} />
               ))}
             </TableBody>
           </Table>
@@ -93,15 +133,5 @@ function SearchContent() {
 }
 
 function Search() {
-  return (
-    <Suspense
-      fallback={
-        <div className="flex justify-center p-8">
-          <Loader2 className="h-8 w-8 animate-spin" />
-        </div>
-      }
-    >
-      <SearchContent />
-    </Suspense>
-  )
+  return <SearchContent />
 }

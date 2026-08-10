@@ -141,7 +141,7 @@ class TestHybridSearchCRUD:
 
         This test verifies that:
         1. Model IDs are correctly extracted from search documents
-        2. Results are grouped by model type
+        2. Results preserve the incoming document rank order
         3. All associations are properly processed
 
         Args:
@@ -165,13 +165,13 @@ class TestHybridSearchCRUD:
         db_session.commit()
 
         model_ids = get_model_ids_from_hybrid_search_documents(
-            db_session, documents
+            db_session, list(reversed(documents))
         )
 
-        assert SearchableType.USER in model_ids
-        assert len(model_ids[SearchableType.USER]) == 2
-        assert "test_id_0" in model_ids[SearchableType.USER]
-        assert "test_id_1" in model_ids[SearchableType.USER]
+        assert model_ids == [
+            (SearchableType.USER, "test_id_1"),
+            (SearchableType.USER, "test_id_0"),
+        ]
 
     def test_hydrate_results(
         self,
@@ -235,14 +235,27 @@ class TestHybridSearchCRUD:
         mock_documents = [MagicMock(), MagicMock()]
         mock_dual_search.return_value = mock_documents
 
-        mock_model_ids = {SearchableType.USER: ["test_id_1", "test_id_2"]}
+        mock_model_ids = [
+            (SearchableType.USER, "test_id_2"),
+            (SearchableType.GROUP, "group_id_1"),
+            (SearchableType.USER, "test_id_1"),
+        ]
         mock_get_model_ids.return_value = mock_model_ids
 
-        mock_hydrated = [MagicMock(), MagicMock()]
-        mock_hydrate.return_value = mock_hydrated
+        mock_user_2 = MagicMock()
+        mock_user_2.api_identifier = "test_id_2"
+        mock_group = MagicMock()
+        mock_group.api_identifier = "group_id_1"
+        mock_user_1 = MagicMock()
+        mock_user_1.api_identifier = "test_id_1"
+        mock_hydrate.side_effect = [
+            [mock_user_2, mock_user_1],
+            [mock_group],
+        ]
+        mock_ranked_results = [mock_user_2, mock_group, mock_user_1]
 
         # Mock authorization filtering to return the hydrated results
-        mock_filter_authorized.return_value = mock_hydrated
+        mock_filter_authorized.return_value = mock_ranked_results
 
         user = UserFactory.create()
         results = search(
@@ -253,12 +266,21 @@ class TestHybridSearchCRUD:
             search_type=SearchType.DUAL,
         )
 
-        assert results == mock_hydrated
-        mock_dual_search.assert_called_once_with(db_session, "test query", 10)
+        assert results == mock_ranked_results
+        mock_dual_search.assert_called_once_with(db_session, "test query", 30)
         mock_get_model_ids.assert_called_once_with(db_session, mock_documents)
-        mock_hydrate.assert_called_once()
+        assert mock_hydrate.call_args_list[0].args == (
+            db_session,
+            SearchableType.USER,
+            ["test_id_2", "test_id_1"],
+        )
+        assert mock_hydrate.call_args_list[1].args == (
+            db_session,
+            SearchableType.GROUP,
+            ["group_id_1"],
+        )
         mock_filter_authorized.assert_called_once_with(
-            db_session, user, Action.READ, mock_hydrated
+            db_session, user, Action.READ, mock_ranked_results
         )
 
     def test_register_search_function_returns_none_on_error(
