@@ -1,18 +1,25 @@
 from __future__ import annotations
 
 import os
+from pathlib import Path
 from typing import Any
 
 import click
 
 from dev_util.compose import compose_starter
-from dev_util.dev import dev_command, dev_group, subprocess_run
-from dev_util.docker import push, tag
+from dev_util.dev import ROOT_DIR, dev_command, dev_group, subprocess_run
+from dev_util.docker import (
+    COMPOSE_SERVICE_BY_IMAGE,
+    IMAGE_TAG_NAMES,
+    push,
+    tag,
+)
 from dev_util.frontend import fe_build
 
 DEFAULT_VITE_API_URL = "https://ring.neilsriv.tech"
 DEFAULT_AWS_REGION = "us-east-1"
 ECR_PUBLIC_REGISTRY = "public.ecr.aws"
+DEPLOY_HOST_SCRIPT = Path(ROOT_DIR) / "dev_util" / "deploy_host.sh"
 
 
 @dev_group("deploy")
@@ -36,6 +43,23 @@ def _ecr_public_login(region: str) -> None:
             ECR_PUBLIC_REGISTRY,
         ],
         input=password,
+    )
+
+
+def _build_llm_image() -> None:
+    subprocess_run(
+        [
+            "docker",
+            "compose",
+            "-f",
+            "llm/compose.llm.yml",
+            "-f",
+            "llm/compose.prod.llm.yml",
+            "--profile",
+            "prod",
+            "build",
+            "llm",
+        ]
     )
 
 
@@ -72,6 +96,21 @@ def _ecr_public_login(region: str) -> None:
     default=False,
     help="Skip the public ECR `docker login` step.",
 )
+@click.option(
+    "--image",
+    "-i",
+    type=click.Choice(IMAGE_TAG_NAMES),
+    multiple=True,
+    default=IMAGE_TAG_NAMES,
+    help="Images to build and push (default: all).",
+)
+@click.option(
+    "--extra-tag",
+    "-t",
+    multiple=True,
+    default=(),
+    help="Additional image tag(s) besides :latest (e.g. git SHA).",
+)
 def deploy_prod(
     ctx: click.Context,
     vite_api_url: str,
@@ -79,6 +118,8 @@ def deploy_prod(
     region: str,
     skip_fe_build: bool,
     skip_login: bool,
+    image: tuple[str, ...],
+    extra_tag: tuple[str, ...],
     *args: list[Any],
     **kwargs: dict[Any, Any],
 ) -> None:
@@ -90,7 +131,15 @@ def deploy_prod(
       3. aws ecr-public login -> docker login
       4. ring docker tp (tag + push)
     """
-    if not skip_fe_build:
+    images = list(image) or list(IMAGE_TAG_NAMES)
+    compose_services = [
+        COMPOSE_SERVICE_BY_IMAGE[name]
+        for name in images
+        if name in COMPOSE_SERVICE_BY_IMAGE
+    ]
+    build_llm = "ring-llm" in images
+
+    if not skip_fe_build and "ring-frontend" in images:
         ctx.invoke(fe_build)
 
     build_env = {
@@ -98,10 +147,65 @@ def deploy_prod(
         "VITE_API_URL": vite_api_url,
         "VITE_MAINTENANCE_MODE": "true" if maintenance_mode else "false",
     }
-    subprocess_run(compose_starter("prod") + ["build"], env=build_env)
+    if compose_services:
+        subprocess_run(
+            compose_starter("prod") + ["build", *compose_services],
+            env=build_env,
+        )
+    if build_llm:
+        _build_llm_image()
 
     if not skip_login:
         _ecr_public_login(region)
 
-    ctx.invoke(tag)
-    ctx.invoke(push)
+    ctx.invoke(tag, image=images, extra_tag=extra_tag)
+    ctx.invoke(push, image=images, extra_tag=extra_tag)
+
+
+@dev_command("host", deploy)
+@click.option(
+    "--ref",
+    type=str,
+    default=None,
+    help="Git ref/SHA to check out before rolling out (default: leave as-is).",
+)
+@click.option(
+    "--skip-git/--no-skip-git",
+    default=False,
+    show_default=True,
+    help="Skip git fetch/checkout.",
+)
+@click.option(
+    "--skip-migrate/--no-skip-migrate",
+    default=False,
+    show_default=True,
+    help="Skip `ring db upgrade`.",
+)
+@click.option(
+    "--image",
+    "-i",
+    type=click.Choice(IMAGE_TAG_NAMES),
+    multiple=True,
+    default=("ring-api", "ring-frontend"),
+    help="Images to pull from ECR (default: api + frontend).",
+)
+def deploy_host(
+    ctx: click.Context,
+    ref: str | None,
+    skip_git: bool,
+    skip_migrate: bool,
+    image: tuple[str, ...],
+    *args: list[Any],
+    **kwargs: dict[Any, Any],
+) -> None:
+    """Pull ECR images and roll out Compose on the current host (EC2)."""
+    cmd = ["bash", str(DEPLOY_HOST_SCRIPT)]
+    if ref:
+        cmd.extend(["--ref", ref])
+    if skip_git:
+        cmd.append("--skip-git")
+    if skip_migrate:
+        cmd.append("--skip-migrate")
+    for name in image:
+        cmd.extend(["--image", name])
+    subprocess_run(cmd)

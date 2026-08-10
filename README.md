@@ -211,12 +211,32 @@ Public** (`public.ecr.aws/z2k1e8p1/`); the database is **CockroachDB Cloud**
 (`ring-db`). See [docs/infrastructure.md](docs/infrastructure.md) for the full
 topology (S3, CloudFront, SES, request flows).
 
-### Build and push images
+### Continuous deploy (GitHub Actions)
+
+Manual CD is available via **Actions → Deploy Prod → Run workflow**
+(`.github/workflows/deploy_prod.yml`). It builds/pushes images to ECR Public,
+then SSHs to the EC2 host and runs `./dev_util/deploy_host.sh`.
+
+Required GitHub **secrets**:
+
+| Secret | Purpose |
+|--------|---------|
+| `AWS_ACCESS_KEY_ID` / `AWS_SECRET_ACCESS_KEY` | Push to `public.ecr.aws/z2k1e8p1/` |
+| `PROD_SSH_HOST` | EC2 hostname or IP |
+| `PROD_SSH_USER` | SSH user |
+| `PROD_SSH_KEY` | Private key for that user |
+
+Optional repo **variables**: `PROD_APP_DIR` (default `$HOME/ring`),
+`PROD_SSH_PORT` (default `22`).
+
+### Build and push images (local)
 
 Preferred one-shot from a machine with AWS credentials:
 
 ```bash
 ring deploy prod
+# restrict images / add a SHA tag:
+# ring deploy prod -i ring-api -i ring-frontend -t "$(git rev-parse HEAD)"
 ```
 
 Or the manual equivalent:
@@ -227,16 +247,15 @@ VITE_API_URL=https://ring.neilsriv.tech ring compose any --profile prod build
 ring docker tp
 ```
 
-### Deploy
+### Deploy on the host
 
 SSH into the EC2 host, then:
 
 ```bash
 cd ring
-git pull
-./dev_util/prod.sh          # pull ring-api, ring-frontend, ring-llm from ECR
-ring db upgrade
-ring compose any --profile prod up -d
-# may need to restart nginx
-ring compose any --profile prod restart nginx
+./dev_util/deploy_host.sh              # preferred one-shot
+# or: ring deploy host --ref <sha>
 ```
+
+That pulls ECR images, syncs `react/dist` from `prod-ring-frontend` (for the
+nginx SW/manifest mounts), runs `ring db upgrade`, and `compose up -d`.

@@ -1,0 +1,134 @@
+name: Deploy Prod
+
+on:
+  workflow_dispatch:
+    inputs:
+      maintenance_mode:
+        description: Bake VITE_MAINTENANCE_MODE=true into the frontend image
+        type: boolean
+        default: false
+      deploy_host:
+        description: SSH to EC2 and run deploy_host.sh after pushing images
+        type: boolean
+        default: true
+      include_llm:
+        description: Also build and push ring-llm
+        type: boolean
+        default: false
+      skip_migrate:
+        description: Skip ring db upgrade on the host
+        type: boolean
+        default: false
+
+concurrency:
+  group: deploy-prod
+  cancel-in-progress: false
+
+jobs:
+  push-images:
+    name: Build and push ECR images
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    outputs:
+      image_args: ${{ steps.images.outputs.args }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set image list
+        id: images
+        run: |
+          args="-i ring-api -i ring-frontend"
+          if [[ "${{ inputs.include_llm }}" == "true" ]]; then
+            args="$args -i ring-llm"
+          fi
+          echo "args=$args" >> "$GITHUB_OUTPUT"
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v4
+        with:
+          enable-cache: true
+
+      - name: Sync Python deps
+        run: uv sync --frozen --all-extras
+
+      - name: Create stub .env for compose build
+        run: printf 'API_PORT=8001\n' > .env
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: us-east-1
+
+      - name: Login to Amazon ECR Public
+        uses: aws-actions/amazon-ecr-login@v2
+        with:
+          registry-type: public
+
+      - name: Build and push prod images
+        env:
+          VITE_API_URL: https://ring.neilsriv.tech
+        run: |
+          maintenance_flag="--no-maintenance-mode"
+          if [[ "${{ inputs.maintenance_mode }}" == "true" ]]; then
+            maintenance_flag="--maintenance-mode"
+          fi
+          # Frontend image builds its own dist; skip host-side fe build.
+          # shellcheck disable=SC2086
+          uv run ring deploy prod \
+            --skip-fe-build \
+            --skip-login \
+            $maintenance_flag \
+            ${{ steps.images.outputs.args }} \
+            --extra-tag "${GITHUB_SHA}"
+
+  deploy-host:
+    name: Roll out on EC2
+    needs: push-images
+    if: ${{ inputs.deploy_host }}
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Deploy over SSH
+        uses: appleboy/ssh-action@v1.2.2
+        with:
+          host: ${{ secrets.PROD_SSH_HOST }}
+          username: ${{ secrets.PROD_SSH_USER }}
+          key: ${{ secrets.PROD_SSH_KEY }}
+          port: ${{ vars.PROD_SSH_PORT || 22 }}
+          script_stop: true
+          script: |
+            set -euo pipefail
+            APP_DIR="${{ vars.PROD_APP_DIR }}"
+            if [[ -z "$APP_DIR" ]]; then
+              APP_DIR="$HOME/ring"
+            fi
+            cd "$APP_DIR"
+
+            # Fetch the SHA that built the images so deploy_host.sh exists/matches.
+            git fetch --prune origin
+            git checkout --detach "${{ github.sha }}"
+            chmod +x ./dev_util/deploy_host.sh
+
+            migrate_flag=""
+            if [[ "${{ inputs.skip_migrate }}" == "true" ]]; then
+              migrate_flag="--skip-migrate"
+            fi
+
+            image_flags="--image ring-api --image ring-frontend"
+            if [[ "${{ inputs.include_llm }}" == "true" ]]; then
+              image_flags="$image_flags --image ring-llm"
+            fi
+
+            # shellcheck disable=SC2086
+            ./dev_util/deploy_host.sh \
+              --skip-git \
+              $migrate_flag \
+              $image_flags

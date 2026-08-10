@@ -161,6 +161,22 @@ Embedding generation → ring-llm microservice (not AWS Bedrock)
 
 ## Deployment
 
+### GitHub Actions CD
+
+[`.github/workflows/deploy_prod.yml`](../.github/workflows/deploy_prod.yml) runs
+on **workflow_dispatch**:
+
+1. Build/push `ring-api` + `ring-frontend` (optional `ring-llm`) to ECR Public,
+   tagged `:latest` and `:<git-sha>`.
+2. SSH to the EC2 host and run
+   [`dev_util/deploy_host.sh`](../dev_util/deploy_host.sh).
+
+Secrets: `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`, `PROD_SSH_HOST`,
+`PROD_SSH_USER`, `PROD_SSH_KEY`. Variables: `PROD_APP_DIR` (default
+`$HOME/ring`), `PROD_SSH_PORT` (default `22`).
+
+### Manual
+
 Build and push from a dev machine:
 
 ```bash
@@ -174,11 +190,11 @@ On the EC2 host:
 
 ```bash
 cd ring
-git pull
-./dev_util/prod.sh          # pull images from ECR, retag as prod-*
-ring db upgrade
-ring compose any --profile prod up -d
-ring compose any --profile prod restart nginx   # if needed
+./dev_util/deploy_host.sh   # git sync, pull images, migrate, compose up
+# lower-level equivalent:
+# ./dev_util/prod.sh
+# ring db upgrade
+# ring compose any --profile prod up -d
 ```
 
 Compose files: `compose.core.yml` + `compose.prod.yml` (+ `llm/compose.prod.llm.yml` if LLM is enabled).
@@ -208,5 +224,7 @@ Helpful for agents so they do not assume these exist:
 | [compose.prod.yml](../compose.prod.yml) | Prod Compose overrides (images, certbot, Cockroach cert mount) |
 | [prod.nginx.conf](../prod.nginx.conf) | Prod Nginx config (`ring.neilsriv.tech`) |
 | [dev_util/prod.sh](../dev_util/prod.sh) | Pull ECR images on the server |
+| [dev_util/deploy_host.sh](../dev_util/deploy_host.sh) | Full host rollout (git + pull + migrate + up) |
 | [dev_util/docker.py](../dev_util/docker.py) | Tag/push to ECR Public |
+| [.github/workflows/deploy_prod.yml](../.github/workflows/deploy_prod.yml) | Manual CD (build/push + SSH rollout) |
 | [.cursor/cloud-start.sh](../.cursor/cloud-start.sh) | Cursor Cloud Agent VM bootstrap (local Cockroach, not prod) |
