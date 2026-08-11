@@ -226,7 +226,14 @@ ring deploy prod -t "$(git rev-parse HEAD)"   # ring-api only
 
 ### Deploy on the host
 
-SSH into the EC2 host, then:
+Push-button: Actions → **Deploy ring-api** (`workflow_dispatch`). That
+runs backend tests, then SSHs to EC2 and runs
+`./dev_util/deploy_host.sh --rollback-on-fail <sha>`. Needs repo secrets
+`PROD_SSH_HOST` (EC2 public IP or gray-cloud DNS — not the orange-cloud
+`ring.neilsriv.tech`), `PROD_SSH_USER`, `PROD_SSH_KEY`. Optional vars:
+`PROD_SSH_PORT` (default 22), `PROD_APP_DIR` (default `$HOME/ring`).
+
+Or SSH in yourself:
 
 ```bash
 cd ring

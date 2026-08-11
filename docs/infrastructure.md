@@ -189,6 +189,16 @@ ring deploy prod -t "$(git rev-parse HEAD)"
 
 ### Deploy on the EC2 host
 
+Push-button: Actions → **Deploy ring-api**. Tests the target SHA, then
+SSHs and runs `./dev_util/deploy_host.sh --rollback-on-fail <sha>`.
+Concurrency group `prod-deploy` queues (does not cancel) so two clicks
+cannot race migrations.
+
+Secrets: `PROD_SSH_HOST` (raw EC2 IP or gray-cloud name — Cloudflare
+will not forward SSH on the orange `ring.neilsriv.tech`),
+`PROD_SSH_USER`, `PROD_SSH_KEY` (dedicated deploy key, not a laptop
+key). Optional vars: `PROD_SSH_PORT` (22), `PROD_APP_DIR` (`$HOME/ring`).
+
 Prod runs the API **image filesystem** (no `./ring` bind-mount, no
 uvicorn `--reload`). The one-shot host script still checkouts git so
 compose/nginx on disk match the deploy:
@@ -370,5 +380,6 @@ Helpful for agents so they do not assume these exist:
 | [prod.nginx.conf](../prod.nginx.conf) | Prod Nginx config (`ring.neilsriv.tech`) |
 | [dev_util/prod.sh](../dev_util/prod.sh) | Pull ECR images on the server |
 | [dev_util/deploy_host.sh](../dev_util/deploy_host.sh) | Full host rollout (git + pull + migrate + up + verify) |
+| [.github/workflows/deploy_api.yml](../.github/workflows/deploy_api.yml) | Push-button SSH deploy (`workflow_dispatch`) |
 | [dev_util/docker.py](../dev_util/docker.py) | Tag/push to ECR Public |
 | [.cursor/cloud-start.sh](../.cursor/cloud-start.sh) | Cursor Cloud Agent VM bootstrap (local Cockroach, not prod) |
