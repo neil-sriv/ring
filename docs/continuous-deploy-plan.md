@@ -17,7 +17,7 @@ Status legend: `[ ]` todo · `[x]` done. Update this file as phases land.
 | Frontend PR previews | ✅ Cloudflare Workers Builds deploys every branch; PR comments carry preview URLs (see [infrastructure.md](infrastructure.md)) |
 | Frontend prod | ✅ Cloudflare Workers Routes (`/*`); `/api/*` and `/.well-known/*` passthrough to EC2 nginx. Leftover `ring-frontend` container still runs as a rollback hatch (Phase 5 cleanup) |
 | Backend images | ✅ CI publishes `ring-api:latest` + `:<git-sha>` to ECR Public on `dev` pushes (#303) |
-| Backend rollout | Manual: `git pull` + `./dev_util/prod.sh <sha>` + `uv run ring compose … up -d --force-recreate` |
+| Backend rollout | Manual: `./dev_util/deploy_host.sh <sha>` once #308 lands (today still the loose commands) |
 | Migrations | `uv run ring db upgrade` run by hand on EC2 |
 | Version introspection | ✅ `GET /api/v1/version` returns git SHAs + image digests (#298) — verified 2026-08-11 after the #303 swap (`image_build.source=image_env`) |
 | CORS for previews | ✅ `BACKEND_CORS_ORIGIN_REGEX` live on prod (#295) |
@@ -119,21 +119,25 @@ image. Deploys still manual, but from CI artifacts only.
 
 ## Phase 3 — Push-button backend deploy
 
-Outcome: deploying is a `workflow_dispatch` click with a green/red result.
+Outcome: deploying is one script on the box (and later a
+`workflow_dispatch` click that runs that script). Do **not** have
+Actions SSH a pile of commands — the host script is the interface.
 
-- [ ] Deploy job: connect to EC2 (SSH key in repo secrets, or AWS SSM
-      Session Manager for keyless), then on the box:
-      1. `git fetch` + checkout the SHA (required while `./ring` is
-         bind-mounted)
-      2. `./dev_util/prod.sh <sha>` (pull images)
-      3. `uv run ring db upgrade` / `docker compose ... run --rm api alembic upgrade head`
-         (migrations run from the box — the CockroachDB Cloud URI never
-         leaves the server `.env`)
+- [ ] Host script: [`dev_util/deploy_host.sh`](../dev_util/deploy_host.sh)
+      / `uv run ring deploy host [sha]` (#308). On the box it:
+      1. `git fetch` + `git checkout -B dev <sha>` (keep a branch so
+         later `git pull` works; required while `./ring` is bind-mounted)
+      2. `./dev_util/prod.sh <sha>` (image pull only)
+      3. `uv run ring db upgrade` (Cockroach URI never leaves the
+         server `.env`)
       4. `uv run ring compose any --profile prod up -d --force-recreate`
-      5. Gate: curl `GET /api/v1/version`, assert `image_build.sha` (and
-         `git.sha` while the bind-mount remains); on failure,
-         auto-rollback (`git checkout` + `prod.sh` + recreate) and fail
-         the run
+      5. Gate: curl `GET /api/v1/version`, assert `git.sha` and
+         `image_build.sha`; `--rollback-on-fail` re-runs the same
+         script on the pre-deploy SHA
+      Rollback: `./dev_util/deploy_host.sh <previous-sha>`
+- [ ] Deploy job: connect to EC2 (SSH key in repo secrets, or AWS SSM
+      Session Manager for keyless) and run
+      `./dev_util/deploy_host.sh --rollback-on-fail <sha>`
 - [ ] Actions `concurrency` group `prod-deploy` (queue, don't cancel) so
       two merges can't race migrations
 - [ ] Gate deploy on backend tests (suite is ~26s in-container; worth it)
