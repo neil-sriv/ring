@@ -139,20 +139,20 @@ function DocumentContentLoader() {
         </div>
       </div>
       <div className="backdrop-blur-md bg-white/80 border border-white/20 dark:bg-gray-900/80 dark:border-gray-700/50 p-6 rounded-xl shadow-md">
-        <CollabEditor
-          docId={documentId}
-          onSavingChange={handleSavingChange}
-          onEditingChange={setIsEditing}
-        />
+        <Suspense
+          fallback={<Loader2 className="h-8 w-8 animate-spin mx-auto" />}
+        >
+          <CollabEditor
+            docId={documentId}
+            onSavingChange={handleSavingChange}
+            onEditingChange={setIsEditing}
+          />
+        </Suspense>
       </div>
     </div>
   )
 }
 
 function DocumentContent() {
-  return (
-    <Suspense fallback={<Loader2 className="h-8 w-8 animate-spin" />}>
-      <DocumentContentLoader />
-    </Suspense>
-  )
+  return <DocumentContentLoader />
 }
