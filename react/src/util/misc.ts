@@ -79,3 +79,14 @@ export function toISOLocal(d: Date): string {
     d.getMilliseconds(),
   )}${sign}${z((off / 60) | 0)}:${z(off % 60)}`
 }
+
+/** Local `datetime-local` default: N days ahead at the given local hour. */
+export function defaultLocalDateTimeValue(
+  daysFromNow: number,
+  hour = 21,
+): string {
+  const d = new Date()
+  d.setDate(d.getDate() + daysFromNow)
+  d.setHours(hour, 0, 0, 0)
+  return toISOLocal(d).slice(0, 16)
+}

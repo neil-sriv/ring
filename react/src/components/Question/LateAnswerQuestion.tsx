@@ -16,6 +16,7 @@ import {
 } from "../../client/@tanstack/react-query.gen"
 import { useAutoResizeTextarea } from "../../hooks/useAutoResizeTextarea"
 import useCustomToast from "../../hooks/useCustomToast"
+import { formatApiErrorDetail } from "../../util/misc"
 
 interface LateAnswerQuestionProps {
   question: PublicQuestion
@@ -62,6 +63,7 @@ function LateAnswerQuestion({
           response_text: responseText,
           participant_api_identifier: currentUser.api_identifier,
         },
+        throwOnError: true,
       })
     },
     onSuccess: () => {
@@ -77,10 +79,14 @@ function LateAnswerQuestion({
     onError: (
       err: AxiosError<UpsertResponseQuestionsQuestionQuestionApiIdUpsertResponsePostError>,
     ) => {
-      const errDetail =
-        err.response?.data.detail ||
-        "Failed to submit late answer. Please try again."
-      showToast("Something went wrong.", `${errDetail}`, "error")
+      showToast(
+        "Something went wrong.",
+        formatApiErrorDetail(
+          err.response?.data?.detail,
+          "Failed to submit late answer. Please try again.",
+        ),
+        "error",
+      )
     },
     onSettled: () => {
       setIsSubmitting(false)
