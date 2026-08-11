@@ -7,12 +7,18 @@ import click
 
 from dev_util.compose import compose_starter
 from dev_util.dev import dev_command, dev_group, subprocess_run
-from dev_util.docker import push, tag
+from dev_util.docker import (
+    COMPOSE_SERVICE_BY_IMAGE,
+    IMAGE_TAG_NAMES,
+    push,
+    tag,
+)
 from dev_util.frontend import fe_build
 
 DEFAULT_VITE_API_URL = "https://ring.neilsriv.tech"
 DEFAULT_AWS_REGION = "us-east-1"
 ECR_PUBLIC_REGISTRY = "public.ecr.aws"
+DEFAULT_DEPLOY_IMAGES = ("ring-api",)
 
 
 @dev_group("deploy")
@@ -36,6 +42,23 @@ def _ecr_public_login(region: str) -> None:
             ECR_PUBLIC_REGISTRY,
         ],
         input=password,
+    )
+
+
+def _build_llm_image() -> None:
+    subprocess_run(
+        [
+            "docker",
+            "compose",
+            "-f",
+            "llm/compose.llm.yml",
+            "-f",
+            "llm/compose.prod.llm.yml",
+            "--profile",
+            "prod",
+            "build",
+            "llm",
+        ]
     )
 
 
@@ -72,6 +95,21 @@ def _ecr_public_login(region: str) -> None:
     default=False,
     help="Skip the public ECR `docker login` step.",
 )
+@click.option(
+    "--image",
+    "-i",
+    type=click.Choice(IMAGE_TAG_NAMES),
+    multiple=True,
+    default=DEFAULT_DEPLOY_IMAGES,
+    help="Images to build and push (default: ring-api).",
+)
+@click.option(
+    "--extra-tag",
+    "-t",
+    multiple=True,
+    default=(),
+    help="Additional image tag(s) besides :latest (e.g. git SHA).",
+)
 def deploy_prod(
     ctx: click.Context,
     vite_api_url: str,
@@ -79,18 +117,25 @@ def deploy_prod(
     region: str,
     skip_fe_build: bool,
     skip_login: bool,
+    image: tuple[str, ...],
+    extra_tag: tuple[str, ...],
     *args: list[Any],
     **kwargs: dict[Any, Any],
 ) -> None:
-    """Build, tag, and push the production images to public ECR.
+    """Build, tag, and push production images to public ECR.
 
-    Mirrors the manual prod deploy flow:
-      1. ring fe build
-      2. compose --profile prod build (with VITE_* build args)
-      3. aws ecr-public login -> docker login
-      4. ring docker tp (tag + push)
+    Default is ring-api only. Frontend prod is Cloudflare; ring-llm is
+    manual. Laptop builds are the fallback — CI publishes SHA tags on
+    push to dev.
     """
-    if not skip_fe_build:
+    images = list(image) or list(DEFAULT_DEPLOY_IMAGES)
+    compose_services = [
+        COMPOSE_SERVICE_BY_IMAGE[name]
+        for name in images
+        if name in COMPOSE_SERVICE_BY_IMAGE
+    ]
+
+    if not skip_fe_build and "ring-frontend" in images:
         ctx.invoke(fe_build)
 
     build_env = {
@@ -98,10 +143,16 @@ def deploy_prod(
         "VITE_API_URL": vite_api_url,
         "VITE_MAINTENANCE_MODE": "true" if maintenance_mode else "false",
     }
-    subprocess_run(compose_starter("prod") + ["build"], env=build_env)
+    if compose_services:
+        subprocess_run(
+            compose_starter("prod") + ["build", *compose_services],
+            env=build_env,
+        )
+    if "ring-llm" in images:
+        _build_llm_image()
 
     if not skip_login:
         _ecr_public_login(region)
 
-    ctx.invoke(tag)
-    ctx.invoke(push)
+    ctx.invoke(tag, image=images, extra_tag=extra_tag)
+    ctx.invoke(push, image=images, extra_tag=extra_tag)
