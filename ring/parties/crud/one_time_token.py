@@ -26,12 +26,19 @@ class TokenAlreadyUsedError(Exception):
     pass
 
 
-def get_ott_by_token(db: Session, token: str) -> OneTimeToken | None:
-    """Get a one-time token by its token string.
+def get_ott_by_token(
+    db: Session, token: str, type: TokenType
+) -> OneTimeToken | None:
+    """Get a one-time token by its token string and type.
+
+    A token only counts for the flow that minted it: an invite token is emailed
+    to an address before that account exists, so honouring it as a password
+    reset would hand anyone holding the invite link the resulting account.
 
     Args:
         db (Session): Database session
         token (str): Token string to look up
+        type (TokenType): Type the token must have to match
 
     Returns:
         OneTimeToken | None: Found token or None
@@ -39,6 +46,7 @@ def get_ott_by_token(db: Session, token: str) -> OneTimeToken | None:
     return db.scalar(
         select(OneTimeToken).filter(
             OneTimeToken.token == token,
+            OneTimeToken.type == type,
         )
     )
 
