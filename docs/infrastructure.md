@@ -189,29 +189,31 @@ ring deploy prod -t "$(git rev-parse HEAD)"
 
 ### Deploy on the EC2 host
 
-The API bind-mounts `./ring` and runs uvicorn `--reload`, so **the
-checkout on disk is the running API code**. Use the one-shot host
-script (keeps `dev` checked out so later `git pull` still works):
+Prod runs the API **image filesystem** (no `./ring` bind-mount, no
+uvicorn `--reload`). The one-shot host script still checkouts git so
+compose/nginx on disk match the deploy:
 
 ```bash
 cd ring
-./dev_util/deploy_host.sh                 # origin/dev + ring-api:latest
-# ./dev_util/deploy_host.sh <git-sha>     # checkout + matching image
-# ./dev_util/deploy_host.sh --rollback-on-fail <git-sha>
+./dev_util/deploy_host.sh <published-sha>
+# ./dev_util/deploy_host.sh --rollback-on-fail <published-sha>
+# ./dev_util/deploy_host.sh --skip-git <pre-cutover-image-sha>
 ```
 
-`prod.sh` is the image-pull step only. Image-only SHA pull becomes a
-real code rollback in Phase 4 when the bind-mount and `--reload` go
-away.
+The sha must exist as `ring-api:<sha>` (a **Publish ring-api** run).
+`prod.sh` is the image-pull step only. `--rollback-on-fail` reads live
+`image_build.sha` **before** git/image/compose mutate and restores that
+image (`--skip-git`) if verify fails — not `git rev-parse HEAD`.
 
 Confirm what is actually running (no auth):
 
 ```bash
-curl -sS https://ring.neilsriv.tech/api/v1/version
+curl -sS -A 'ring-deploy-host/1.0' https://ring.neilsriv.tech/api/v1/version
 ```
 
-`git` is the host checkout, `image_build` is metadata baked into the API
-image, and `docker.containers[].image_id` / `image_digest` come from a
+`image_build` is metadata baked into the API image (this is the running
+code). `git` is unavailable in prod after the cutover (no `./.git`
+mount). `docker.containers[].image_id` / `image_digest` come from a
 host-written snapshot (`.ring-runtime-version.json`, mounted read-only).
 The API does not talk to the Docker Engine.
 

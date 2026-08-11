@@ -1,7 +1,7 @@
 services:
   api:
     image: prod-ring-api
-    command: "uvicorn ring.fastapp.fast:app --proxy-headers --host 0.0.0.0 --port ${API_PORT} --reload"
+    command: "uvicorn ring.fastapp.fast:app --proxy-headers --host 0.0.0.0 --port ${API_PORT}"
     mem_limit: 300m
     expose:
       - "${API_PORT}"

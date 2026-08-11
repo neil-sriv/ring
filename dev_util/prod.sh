@@ -6,9 +6,9 @@
 #   ./dev_util/prod.sh <git-sha>        # ring-api:<sha> (deps / image pin)
 #   ./dev_util/prod.sh --image ring-api --image ring-frontend <sha>
 #
-# This only swaps the image (deps + RING_BUILD_GIT_*). Prod still
-# bind-mounts ./ring with --reload, so running Python comes from the
-# host checkout. Image-only SHA pull is not a code rollback.
+# This only swaps the image (deps + RING_BUILD_GIT_* + baked Python).
+# Prod no longer bind-mounts ./ring, so a SHA pull is a code rollback.
+# Prefer deploy_host.sh so migrate / compose / verify stay in lockstep.
 
 set -euo pipefail
 

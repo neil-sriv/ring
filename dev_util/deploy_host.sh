@@ -2,15 +2,26 @@
 # Full backend rollout on the prod EC2 host.
 #
 # This is the one command humans and (later) Actions should run on the box.
-# prod.sh only pulls images; this script also syncs git, migrates, recreates
-# Compose, and checks GET /api/v1/version.
+# prod.sh only pulls images; this script also syncs git (compose/nginx),
+# migrates, recreates Compose, and checks GET /api/v1/version.
+# Prod runs the image filesystem (no ./ring bind-mount, no --reload).
 #
 # Usage:
-#   ./dev_util/deploy_host.sh                 # origin/dev tip + :latest
-#   ./dev_util/deploy_host.sh <git-sha>       # checkout + pull that SHA
-#   ./dev_util/deploy_host.sh --rollback-on-fail <sha>
+#   ./dev_util/deploy_host.sh <published-sha>
+#   ./dev_util/deploy_host.sh --rollback-on-fail <published-sha>
 #
-# Rollback is the same command with the previous SHA.
+# The sha must exist as public.ecr.aws/z2k1e8p1/ring-api:<sha> (a
+# publish_api.yml run). Docs-only origin/dev tips have no image tag.
+#
+# First apply of the image-filesystem cutover (old script still on disk):
+#   git fetch origin && git checkout -B dev <this-sha>
+#   ./dev_util/deploy_host.sh --skip-git <this-sha>
+# --rollback-on-fail captures live /version image_build.sha *before*
+# mutating. The pre-cutover script on the box still asserts git.sha and
+# rolls back to HEAD — do not use that flag until this script is on disk.
+#
+# Rollback to a pre-cutover image without remounting ./ring:
+#   ./dev_util/deploy_host.sh --skip-git <previous-image-sha>
 
 set -euo pipefail
 
@@ -34,12 +45,14 @@ Usage: deploy_host.sh [options] [sha]
 
 Full host rollout: git sync, pull ECR image, migrate, compose up, verify.
 
-  sha                   Commit / image tag to deploy (default: origin/dev tip)
-  --skip-git            Do not fetch/checkout
+  sha                   Published image tag / commit (default: origin/dev tip)
+  --skip-git            Do not fetch/checkout (use to roll back the image
+                        without reverting compose to a pre-cutover SHA)
   --skip-pull           Do not run prod.sh
   --skip-migrate        Do not run `uv run ring db upgrade --profile prod`
   --skip-verify         Do not curl GET /api/v1/version
-  --rollback-on-fail    On verify failure, re-run against the pre-deploy SHA
+  --rollback-on-fail    On verify failure, re-run against the pre-deploy
+                        image SHA (live image_build.sha; HEAD if probe fails)
   -h, --help            Show this help
 
 Env:
@@ -47,7 +60,8 @@ Env:
   RING_DEPLOY_BRANCH    Branch to keep checked out (default: dev)
 
 Rollback:
-  ./dev_util/deploy_host.sh <previous-sha>
+  ./dev_util/deploy_host.sh <previous-published-sha>
+  ./dev_util/deploy_host.sh --skip-git <pre-cutover-image-sha>
 EOF
 }
 
@@ -105,7 +119,80 @@ ring_cmd() {
   fi
 }
 
-previous_sha="$(git rev-parse HEAD)"
+# Cloudflare blocks the default Python-urllib User-Agent (1010 / 403).
+version_request_python() {
+  python3 - "$@" <<'PY'
+from __future__ import annotations
+
+import json
+import sys
+import time
+import urllib.error
+import urllib.request
+
+url = sys.argv[1]
+want = sys.argv[2] if len(sys.argv) > 2 else ""
+attempts = int(sys.argv[3]) if len(sys.argv) > 3 else 1
+sleep = float(sys.argv[4]) if len(sys.argv) > 4 else 0.0
+last_error = "no attempts"
+payload: dict[str, object] = {}
+
+for attempt in range(1, attempts + 1):
+    try:
+        request = urllib.request.Request(
+            url,
+            headers={"User-Agent": "ring-deploy-host/1.0"},
+        )
+        with urllib.request.urlopen(request, timeout=10) as response:
+            payload = json.loads(response.read().decode())
+    except (urllib.error.URLError, TimeoutError, json.JSONDecodeError) as exc:
+        last_error = str(exc)
+        if sleep:
+            time.sleep(sleep)
+        continue
+
+    image = (
+        payload.get("image_build")
+        if isinstance(payload.get("image_build"), dict)
+        else {}
+    )
+    image_sha = image.get("sha")
+    if want:
+        print(json.dumps(payload, indent=2))
+        if image_sha == want:
+            sys.exit(0)
+        last_error = (
+            f"version mismatch (attempt {attempt}/{attempts}): "
+            f"image_build.sha={image_sha!r} want={want!r}"
+        )
+        if sleep:
+            time.sleep(sleep)
+        continue
+    if isinstance(image_sha, str) and image_sha.strip():
+        print(image_sha.strip())
+        sys.exit(0)
+    last_error = "image_build.sha missing from /version"
+    break
+
+print(last_error, file=sys.stderr)
+sys.exit(1)
+PY
+}
+
+read_live_image_sha() {
+  version_request_python "$VERSION_URL"
+}
+
+previous_image_sha=""
+if [[ "$ROLLBACK_ON_FAIL" -eq 1 ]]; then
+  echo "==> Capturing live image_build.sha from ${VERSION_URL}"
+  if previous_image_sha="$(read_live_image_sha)"; then
+    echo "==> Rollback target is live image ${previous_image_sha}"
+  else
+    previous_image_sha="$(git rev-parse HEAD)"
+    echo "==> /version probe failed; falling back to checkout ${previous_image_sha}" >&2
+  fi
+fi
 
 if [[ "$SKIP_GIT" -eq 0 ]]; then
   echo "==> Syncing git"
@@ -136,65 +223,16 @@ fi
 echo "==> Recreating Compose (prod)"
 ring_cmd compose any --profile prod up -d --force-recreate
 
-verify_version() {
-  local want="$1"
-  python3 - "$VERSION_URL" "$want" "$VERIFY_ATTEMPTS" "$VERIFY_SLEEP_SECS" <<'PY'
-from __future__ import annotations
-
-import json
-import sys
-import time
-import urllib.error
-import urllib.request
-
-url, want, attempts_s, sleep_s = sys.argv[1:5]
-attempts = int(attempts_s)
-sleep = float(sleep_s)
-last_error = "no attempts"
-payload: dict[str, object] = {}
-
-for attempt in range(1, attempts + 1):
-    try:
-        # Cloudflare blocks the default Python-urllib User-Agent (1010 / 403).
-        request = urllib.request.Request(
-            url,
-            headers={"User-Agent": "ring-deploy-host/1.0"},
-        )
-        with urllib.request.urlopen(request, timeout=10) as response:
-            payload = json.loads(response.read().decode())
-    except (urllib.error.URLError, TimeoutError, json.JSONDecodeError) as exc:
-        last_error = str(exc)
-        time.sleep(sleep)
-        continue
-
-    git = payload.get("git") if isinstance(payload.get("git"), dict) else {}
-    image = (
-        payload.get("image_build")
-        if isinstance(payload.get("image_build"), dict)
-        else {}
-    )
-    git_sha = git.get("sha")
-    image_sha = image.get("sha")
-    print(json.dumps(payload, indent=2))
-    if git_sha == want and image_sha == want:
-        sys.exit(0)
-    last_error = (
-        f"version mismatch (attempt {attempt}/{attempts}): "
-        f"git.sha={git_sha!r} image_build.sha={image_sha!r} want={want!r}"
-    )
-    time.sleep(sleep)
-
-print(last_error, file=sys.stderr)
-sys.exit(1)
-PY
-}
-
 if [[ "$SKIP_VERIFY" -eq 0 ]]; then
-  echo "==> Verifying ${VERSION_URL} == ${SHA}"
-  if ! verify_version "$SHA"; then
-    if [[ "$ROLLBACK_ON_FAIL" -eq 1 && "$previous_sha" != "$SHA" ]]; then
-      echo "==> Verify failed; rolling back to ${previous_sha}" >&2
-      "$0" --no-rollback-on-fail "$previous_sha" || true
+  echo "==> Verifying ${VERSION_URL} image_build.sha == ${SHA}"
+  if ! version_request_python "$VERSION_URL" "$SHA" \
+      "$VERIFY_ATTEMPTS" "$VERIFY_SLEEP_SECS"; then
+    if [[ "$ROLLBACK_ON_FAIL" -eq 1 && -n "$previous_image_sha" &&
+          "$previous_image_sha" != "$SHA" ]]; then
+      echo "==> Verify failed; rolling back to image ${previous_image_sha}" >&2
+      # Image-only restore: do not checkout the old SHA (that can remount
+      # ./ring or target an unpublished checkout tag).
+      "$0" --no-rollback-on-fail --skip-git "$previous_image_sha" || true
     fi
     exit 1
   fi
