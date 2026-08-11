@@ -4,6 +4,7 @@ from sqlalchemy.orm import Session
 
 from ring.async_scheduler.scheduler import job_factory
 from ring.email_util import CHARSET, EmailDraft, send_email
+from ring.lib.app_links import app_url
 from ring.parties.models.user_model import User
 from ring.security import get_password_hash
 
@@ -57,13 +58,13 @@ def construct_password_reset_email(
     <spacer type="" size="">
     <span>Click the link below to reset your password.</span>
     <spacer type="" size="">
-    <h3>Please use this custom URL to reset your password: <a href="http://ring.neilsriv.tech/reset-password/{token}">http://ring.neilsriv.tech/reset-password/{token}</a></h2>
+    <h3>Please use this custom URL to reset your password: <a href="{reset_url}">{reset_url}</a></h2>
     <p>
     A password reset was requested for your Ring account. If you did not request this, please ignore this email.
     </p>
     </body>
     </html>
-                """.format(token=token)
+                """.format(reset_url=app_url(f"reset-password/{token}"))
     return EmailDraft(
         destination={"ToAddresses": [recipient]},
         message={

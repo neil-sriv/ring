@@ -13,6 +13,7 @@ from sqlalchemy import select
 from ring.api_identifier import util as api_identifier_crud
 from ring.async_scheduler.scheduler import job_factory
 from ring.email_util import CHARSET, EmailDraft, send_email
+from ring.lib.app_links import app_url
 from ring.parties.crud.one_time_token import generate_token, validate_token
 from ring.parties.crud.user import get_user_by_email
 from ring.parties.models.group_model import Group
@@ -195,13 +196,15 @@ def construct_invite_email(
     <spacer type="" size="">
     <span>Click the link below to join the group and start creating newsletters!</span>
     <spacer type="" size="">
-    <h3>Please use this custom URL to create an account: <a href="http://ring.neilsriv.tech/register/{token}">http://ring.neilsriv.tech/register/{token}</a></h2>
+    <h3>Please use this custom URL to create an account: <a href="{register_url}">{register_url}</a></h2>
     <p>
     You've been invited to join a Ring Newsletter! Ring is a custom newsletter platform made by Neil Srivastava that allows you to create newsletters with your friends.
     </p>
     </body>
     </html>
-                """.format(group_name=group.name, token=token)
+                """.format(
+        group_name=group.name, register_url=app_url(f"register/{token}")
+    )
     return EmailDraft(
         destination={"ToAddresses": [recipient]},
         message={
