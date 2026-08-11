@@ -45,6 +45,8 @@ class RingConfig(BaseSettings):
         BUCKET_NAME (str): S3 bucket name for file storage (default: "rings3files")
         DISABLE_SCHEDULER (bool): Skip APScheduler lifespan start/shutdown
         BACKEND_CORS_ORIGINS (list[AnyUrl] | str): List of allowed CORS origins
+        BACKEND_CORS_ORIGIN_REGEX (str): Regex matched against the Origin header
+            to allow additional origins (e.g. per-PR preview deploys)
     """
 
     environment: str
@@ -62,6 +64,10 @@ class RingConfig(BaseSettings):
         list[AnyUrl] | str,
         BeforeValidator(parse_cors),
     ] = []
+    # Allows wildcard-style origins that can't be enumerated in
+    # BACKEND_CORS_ORIGINS, e.g. Cloudflare Pages / Vercel PR preview URLs:
+    # BACKEND_CORS_ORIGIN_REGEX="^https://[a-z0-9-]+\.ring-cvq\.pages\.dev$"
+    BACKEND_CORS_ORIGIN_REGEX: str = ""
 
 
 @lru_cache
