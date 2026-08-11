@@ -11,9 +11,19 @@ For local development topology, see the Architecture table in
 
 ## Production topology
 
-Prod is **Docker Compose on one EC2 instance**. Nginx terminates TLS and
-reverse-proxies to the API; the React app is served as static files from the
-same host.
+The **frontend is served by Cloudflare** (Worker `ring-frontend`, static
+assets, auto-deployed on merges to `dev`). The **API runs on one EC2
+instance** behind nginx via Docker Compose. The zone is proxied through
+Cloudflare; Workers Routes split traffic by path:
+
+| Route | Destination |
+|-------|-------------|
+| `ring.neilsriv.tech/api/*` | passthrough → EC2 nginx → `ring-api` |
+| `ring.neilsriv.tech/.well-known/*` | passthrough → EC2 nginx (certbot webroot) |
+| `ring.neilsriv.tech/*` | Worker `ring-frontend` (static assets) |
+
+Never attach the domain to the Worker as a custom domain — that swallows
+`/api/*` (it briefly took prod down on 2026-08-11).
 
 ```mermaid
 flowchart TB
@@ -21,10 +31,14 @@ flowchart TB
         Browser[Browser / PWA]
     end
 
-    subgraph EC2["EC2 (ring.neilsriv.tech)"]
+    subgraph CFEdge["Cloudflare (proxied zone)"]
+        Routes[Workers Routes]
+        FE[ring-frontend Worker static assets]
+    end
+
+    subgraph EC2["EC2 (origin)"]
         Nginx[Nginx + Let's Encrypt]
         API[ring-api FastAPI]
-        FE[ring-frontend static]
         LLM[ring-llm optional]
     end
 
@@ -37,11 +51,11 @@ flowchart TB
 
     subgraph External["Outside AWS"]
         CRDB[CockroachDB Cloud ring-db]
-        DNS[DNS registrar]
     end
 
-    Browser --> DNS --> Nginx
-    Nginx --> FE
+    Browser --> Routes
+    Routes -->|"/*"| FE
+    Routes -->|"/api/* and /.well-known/*"| Nginx
     Nginx --> API
     API --> CRDB
     API --> S3
@@ -49,18 +63,19 @@ flowchart TB
     API --> LLM
     Browser --> CF
     CF --> S3
-    ECR -. pull images .-> EC2
+    ECR -. pull backend images .-> EC2
 ```
 
 | Layer | What runs | Where |
 |-------|-----------|-------|
-| Compute | `ring-api`, `ring-frontend`, Nginx, optional `ring-llm` | EC2 `t2.micro`, Compose (`compose.prod.yml`) |
+| Frontend | Vite static build | Cloudflare Worker `ring-frontend` (Workers Builds, deploys on `dev` merges; PR branches get preview URLs) |
+| Compute | `ring-api`, Nginx (API only), optional `ring-llm` | EC2 `t2.micro`, Compose (`compose.prod.yml`) |
 | Database | CockroachDB | **CockroachDB Cloud** — cluster `ring-db` (GCP `us-east1`). Staging: `ring-db-staging`. |
 | Object storage | User-uploaded response images/videos | S3 bucket `rings3files` (`us-east-1`) |
 | CDN | Public URLs for uploaded media | CloudFront `du32exnxihxuf.cloudfront.net` → S3 origin |
 | Email | Invites, auth, letter notifications | SES (`us-east-1`), domain `neilsriv.tech`, sender `ring@neilsriv.tech` |
-| Container images | Prod Docker images | ECR Public `public.ecr.aws/z2k1e8p1/` |
-| DNS / TLS | `ring.neilsriv.tech` | DNS at registrar (not Route 53). TLS via Let's Encrypt + certbot on the EC2 host. |
+| Container images | Prod backend Docker images | ECR Public `public.ecr.aws/z2k1e8p1/` |
+| DNS / TLS | `ring.neilsriv.tech` | DNS proxied through Cloudflare (edge TLS at Cloudflare; origin TLS via Let's Encrypt + certbot on EC2). |
 
 ---
 
@@ -70,7 +85,7 @@ flowchart TB
 |---------|-----------|------------|
 | Database | CockroachDB in Docker (`compose.dev.yml`) | CockroachDB Cloud (`COCKROACH_DATABASE_URI` in `.env` on server) |
 | API URL | `https://localhost/api/v1/` | `https://ring.neilsriv.tech/api/v1/` |
-| Frontend | Vite dev server `:5173` | Static build behind Nginx on EC2 |
+| Frontend | Vite dev server `:5173` | Cloudflare Worker `ring-frontend` (static assets) |
 | S3 / CloudFront | Same AWS resources (boto3 uses instance/profile creds locally if configured) | EC2 IAM role |
 | LLM | Optional Compose service (`llm/`) | Optional `ring-llm` container from ECR |
 | TLS | Self-signed local certs (`ring setup local-ssl`) | Let's Encrypt (`compose.prod.yml` certbot profile) |
@@ -131,10 +146,16 @@ migrations against the cloud URI.
 
 ## Request flows
 
+### Frontend
+
+```
+Browser → ring.neilsriv.tech (Cloudflare Workers route /*) → ring-frontend Worker static assets
+```
+
 ### Normal API traffic
 
 ```
-Browser → ring.neilsriv.tech (Nginx) → ring-api:8001 → CockroachDB Cloud
+Browser → ring.neilsriv.tech/api/v1/* (Workers route: passthrough) → Nginx → ring-api:8001 → CockroachDB Cloud
 ```
 
 ### Image upload
@@ -161,12 +182,17 @@ Embedding generation → ring-llm microservice (not AWS Bedrock)
 
 ## Deployment
 
-Build and push from a dev machine:
+**Frontend:** merge to `dev`. Cloudflare Workers Builds builds `react/`
+and deploys the `ring-frontend` Worker automatically (~2 min). PR
+branches get preview URLs (section below). Rollback: redeploy a previous
+version from the Worker's Deployments tab.
+
+**Backend:** build and push from a dev machine:
 
 ```bash
 ring deploy prod
 # or manually:
-# VITE_API_URL=https://ring.neilsriv.tech ring compose any --profile prod build
+# ring compose any --profile prod build
 # ring docker tp   # tag + push to ECR Public
 ```
 
@@ -180,8 +206,11 @@ git checkout dev
 git pull origin dev
 ./dev_util/prod.sh          # pull images from ECR, retag as prod-*
 ring db upgrade             # only if this commit has a migration
-ring compose any --profile prod up -d --force-recreate
+ring compose any --profile prod up -d --force-recreate --remove-orphans
 ```
+
+(`--remove-orphans` clears containers whose services were removed, e.g.
+the retired `ring-frontend` container after the Cloudflare cutover.)
 
 Confirm what is actually running (no auth):
 
@@ -205,9 +234,9 @@ Cloudflare's 2026 dashboard is **Workers-first**. The create flow is
 "Connect to Git / Build output directory" form. Use Workers Builds.
 
 The React app is built on every PR and served at a `*.workers.dev`
-preview URL, pointed at the **production API** over CORS. Production
-traffic still serves the static build from nginx on EC2 (see topology
-above). Cloudflare is previews-only unless/until we cut prod over.
+preview URL, pointed at the **production API** over CORS. Merges to
+`dev` deploy the same Worker as the **production frontend** behind the
+`ring.neilsriv.tech/*` Workers route (see topology above).
 
 ### How it fits together
 

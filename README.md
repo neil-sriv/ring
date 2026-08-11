@@ -234,9 +234,13 @@ SSH into the EC2 host, then:
 ```bash
 cd ring
 git pull
-./dev_util/prod.sh          # pull ring-api, ring-frontend, ring-llm from ECR
+./dev_util/prod.sh          # pull ring-api, ring-llm from ECR
 ring db upgrade
-ring compose any --profile prod up -d
+ring compose any --profile prod up -d --remove-orphans
 # may need to restart nginx
 ring compose any --profile prod restart nginx
 ```
+
+The frontend is not deployed from this host — Cloudflare Workers Builds
+deploys it automatically on merges to `dev`
+(see [docs/infrastructure.md](docs/infrastructure.md)).

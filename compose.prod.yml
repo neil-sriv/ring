@@ -14,7 +14,6 @@ services:
   nginx:
     mem_limit: 300m
     volumes:
-      - ./react/dist:/usr/share/nginx/html:ro
       - ./prod.nginx.conf:/etc/nginx/conf.d/default.conf:ro
       - ./etc/letsencrypt:/etc/letsencrypt:ro
       - ./certbot/www:/var/www/certbot
@@ -27,31 +26,6 @@ services:
     volumes:
       - ./etc/letsencrypt:/etc/letsencrypt
       - ./certbot/www:/var/www/certbot
-
-  frontend:
-    restart: unless-stopped
-    mem_limit: 300m
-    container_name: ring-frontend
-    image: prod-ring-frontend
-    env_file:
-      - ./.env
-    build:
-      context: ./react
-      dockerfile: client.Dockerfile
-      args:
-        VITE_API_URL: ${VITE_API_URL:-https://ring.neilsriv.tech}
-        VITE_MAINTENANCE_MODE: ${VITE_MAINTENANCE_MODE:-false}
-        RING_GIT_SHA: ${RING_GIT_SHA:-}
-        RING_GIT_SHORT_SHA: ${RING_GIT_SHORT_SHA:-}
-        RING_GIT_BRANCH: ${RING_GIT_BRANCH:-}
-        RING_GIT_SUBJECT: ${RING_GIT_SUBJECT:-}
-        RING_GIT_AUTHOR_NAME: ${RING_GIT_AUTHOR_NAME:-}
-        RING_GIT_AUTHOR_EMAIL: ${RING_GIT_AUTHOR_EMAIL:-}
-        RING_GIT_COMMITTED_AT: ${RING_GIT_COMMITTED_AT:-}
-        RING_GIT_DIRTY: ${RING_GIT_DIRTY:-}
-    platform: linux/amd64
-    networks:
-      - default
 
 volumes:
   pgdata:
