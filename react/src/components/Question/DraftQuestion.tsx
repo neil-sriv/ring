@@ -150,7 +150,10 @@ function ResponseBlock(props: ResponseBlockProps) {
           ),
           "error",
         )
-        if (saveSeqRef.current === seq && responseTextRef.current === newValue) {
+        if (
+          saveSeqRef.current === seq &&
+          responseTextRef.current === newValue
+        ) {
           setSaveStatus("error")
         }
         return
