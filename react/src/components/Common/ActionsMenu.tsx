@@ -5,14 +5,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import {
-  Edit,
-  MoreVertical,
-  Settings,
-  Trash2,
-  User,
-  UserPlus,
-} from "lucide-react"
+import { Edit, MoreVertical, Settings, User, UserPlus } from "lucide-react"
 import { useState } from "react"
 
 import { useNavigate } from "@tanstack/react-router"
@@ -21,7 +14,6 @@ import EditUser from "../Admin/EditUser"
 import ImpersonateUser from "../Admin/ImpersonateUser"
 import AddMembers from "../Groups/AddMembers"
 import EditGroup from "../Groups/EditGroup"
-import Delete from "./DeleteAlert"
 
 interface ActionsMenuProps {
   type: string
@@ -31,7 +23,6 @@ interface ActionsMenuProps {
 
 const ActionsMenu = ({ type, value, disabled }: ActionsMenuProps) => {
   const [isEditOpen, setIsEditOpen] = useState(false)
-  const [isDeleteOpen, setIsDeleteOpen] = useState(false)
   const [isAddMembersOpen, setIsAddMembersOpen] = useState(false)
   const [isImpersonateOpen, setIsImpersonateOpen] = useState(false)
   const navigate = useNavigate()
@@ -58,13 +49,6 @@ const ActionsMenu = ({ type, value, disabled }: ActionsMenuProps) => {
               Impersonate User
             </DropdownMenuItem>
           )}
-          <DropdownMenuItem
-            onClick={() => setIsDeleteOpen(true)}
-            className="text-destructive"
-          >
-            <Trash2 className="h-4 w-4" />
-            Delete {type}
-          </DropdownMenuItem>
           {type === "Group" && (
             <>
               <DropdownMenuItem onClick={() => setIsAddMembersOpen(true)}>
@@ -113,12 +97,6 @@ const ActionsMenu = ({ type, value, disabled }: ActionsMenuProps) => {
           />
         </>
       )}
-      <Delete
-        type={type}
-        id={value.api_identifier}
-        isOpen={isDeleteOpen}
-        onClose={() => setIsDeleteOpen(false)}
-      />
     </>
   )
 }

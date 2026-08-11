@@ -41,7 +41,7 @@ function LoopNav(props: LoopNavProps): JSX.Element {
         {props.group.admin.api_identifier === currentUser?.api_identifier && (
           <Button onClick={() => onClick()} disabled={!enabled}>
             <Plus className="h-4 w-4" />{" "}
-            {enabled ? "Start Next Loop" : "Loop in progress"}
+            {enabled ? "Start Next Loop" : "Upcoming loop scheduled"}
           </Button>
         )}
         <AddLetter

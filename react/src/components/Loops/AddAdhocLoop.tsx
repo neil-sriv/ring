@@ -19,7 +19,11 @@ import {
   listLettersLettersLettersGetQueryKey,
 } from "../../client/@tanstack/react-query.gen"
 import useCustomToast from "../../hooks/useCustomToast"
-import { toISOLocal } from "../../util/misc"
+import {
+  defaultLocalDateTimeValue,
+  formatApiErrorDetail,
+  toISOLocal,
+} from "../../util/misc"
 
 type AdhocLetterFormProps = {
   title: string
@@ -35,12 +39,6 @@ type AddAdhocLoopProps = {
 const AddAdhocLoop = ({ isOpen, onClose, groupApiId }: AddAdhocLoopProps) => {
   const queryClient = useQueryClient()
   const showToast = useCustomToast()
-  const defaultDate = new Date()
-  defaultDate.setUTCDate(defaultDate.getDate() + 7) // Default to 1 week from now
-  defaultDate.setUTCHours(21)
-  defaultDate.setUTCMinutes(0)
-  defaultDate.setUTCSeconds(0)
-  defaultDate.setUTCMilliseconds(0)
 
   const {
     register,
@@ -52,7 +50,7 @@ const AddAdhocLoop = ({ isOpen, onClose, groupApiId }: AddAdhocLoopProps) => {
     criteriaMode: "all",
     defaultValues: {
       title: "",
-      sendAt: defaultDate.toISOString().slice(0, 16),
+      sendAt: defaultLocalDateTimeValue(7),
     },
   })
 
@@ -66,9 +64,11 @@ const AddAdhocLoop = ({ isOpen, onClose, groupApiId }: AddAdhocLoopProps) => {
     onError: (
       err: AxiosError<AddNextLetterLettersLetterLetterTypePostError>,
     ) => {
-      const errDetail =
-        err.response?.data.detail || "no error detail, please contact support"
-      showToast("Something went wrong.", `${errDetail}`, "error")
+      showToast(
+        "Something went wrong.",
+        formatApiErrorDetail(err.response?.data?.detail),
+        "error",
+      )
     },
     onSettled: () => {
       queryClient.invalidateQueries({
