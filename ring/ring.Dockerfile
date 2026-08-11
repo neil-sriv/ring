@@ -10,8 +10,12 @@ RUN pip install uv
 RUN apt-get update \
     && apt-get install -y --no-install-recommends git \
     && rm -rf /var/lib/apt/lists/*
-COPY ./ ./ring
+# Install deps before copying the rest of the tree so code-only rebuilds
+# reuse this layer (requirements.txt + the path-dep llm_service client).
+COPY requirements.txt ./ring/requirements.txt
+COPY packages/service_clients/llm_service ./ring/packages/service_clients/llm_service
 RUN uv pip install -r ring/requirements.txt --system --no-cache
+COPY ./ ./ring
 
 ARG RING_GIT_SHA
 ARG RING_GIT_SHORT_SHA

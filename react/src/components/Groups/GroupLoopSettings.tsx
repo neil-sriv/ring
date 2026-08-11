@@ -24,6 +24,7 @@ import type {
   UpdateGroupPartiesGroupGroupApiIdPatchError,
 } from "../../client/types.gen"
 import useCustomToast from "../../hooks/useCustomToast"
+import { formatApiErrorDetail } from "../../util/misc"
 
 type QuestionField = {
   question_text: string
@@ -93,86 +94,73 @@ function GroupLoopSettings({ groupId }: { groupId: string }) {
     setEditMode(!editMode)
   }
 
+  const refreshGroup = async () => {
+    queryClient.invalidateQueries({
+      queryKey: readGroupPartiesGroupGroupApiIdGetQueryKey({
+        path: { group_api_id: groupId },
+      }),
+    })
+    router.invalidate()
+    await queryClient.refetchQueries({
+      queryKey: readGroupPartiesGroupGroupApiIdGetQueryKey({
+        path: { group_api_id: groupId },
+      }),
+    })
+  }
+
   const defaultQuestionsMutation = useMutation({
     ...replaceGroupDefaultQuestionsPartiesGroupGroupApiIdReplaceDefaultQuestionsPostMutation(),
-    onSuccess: () => {
-      showToast("Success!", "Loop settings updated successfully.", "success")
-    },
-    onError: (
-      err: AxiosError<ReplaceGroupDefaultQuestionsPartiesGroupGroupApiIdReplaceDefaultQuestionsPostError>,
-    ) => {
-      const errDetail =
-        err.response?.data.detail || "no error detail, please contact support"
-      showToast("Something went wrong.", `${errDetail}`, "error")
-    },
-    onSettled: async () => {
-      queryClient.invalidateQueries({
-        queryKey: readGroupPartiesGroupGroupApiIdGetQueryKey({
-          path: { group_api_id: groupId },
-        }),
-      })
-      router.invalidate()
-      await queryClient.refetchQueries({
-        queryKey: readGroupPartiesGroupGroupApiIdGetQueryKey({
-          path: { group_api_id: groupId },
-        }),
-      })
-    },
   })
 
   const cycleUpdateMutation = useMutation({
     ...updateGroupPartiesGroupGroupApiIdPatchMutation(),
-    onSuccess: () => {
-      showToast("Success!", "Cycle length updated successfully.", "success")
-    },
-    onError: (err: AxiosError<UpdateGroupPartiesGroupGroupApiIdPatchError>) => {
-      const errDetail =
-        err.response?.data.detail || "no error detail, please contact support"
-      showToast("Something went wrong.", `${errDetail}`, "error")
-    },
-    onSettled: async () => {
-      queryClient.invalidateQueries({
-        queryKey: readGroupPartiesGroupGroupApiIdGetQueryKey({
-          path: { group_api_id: groupId },
-        }),
-      })
-      router.invalidate()
-      await queryClient.refetchQueries({
-        queryKey: readGroupPartiesGroupGroupApiIdGetQueryKey({
-          path: { group_api_id: groupId },
-        }),
-      })
-    },
   })
 
   const onSubmit: SubmitHandler<FormData> = async (data) => {
-    if (data.cycle_length !== group.cycle_length) {
-      cycleUpdateMutation.mutate({
-        body: { cycle_length: data.cycle_length },
-        path: { group_api_id: groupId },
-      })
-    }
-
     const currentMinResponderPercent = displayMinResponderPercent(
       group.min_responder_ratio,
     )
+    const groupPatch: {
+      cycle_length?: number
+      min_responder_ratio?: number
+    } = {}
+    if (data.cycle_length !== group.cycle_length) {
+      groupPatch.cycle_length = data.cycle_length
+    }
     if (data.min_responder_percent !== currentMinResponderPercent) {
-      cycleUpdateMutation.mutate({
+      groupPatch.min_responder_ratio = data.min_responder_percent / 100
+    }
+
+    try {
+      if (Object.keys(groupPatch).length > 0) {
+        await cycleUpdateMutation.mutateAsync({
+          body: groupPatch,
+          path: { group_api_id: groupId },
+        })
+      }
+
+      await defaultQuestionsMutation.mutateAsync({
         body: {
-          min_responder_ratio: data.min_responder_percent / 100,
+          questions: data.questions.map((question) => question.question_text),
         },
         path: { group_api_id: groupId },
       })
+
+      showToast("Success!", "Loop settings updated successfully.", "success")
+      setEditMode(false)
+    } catch (err) {
+      const axiosErr = err as AxiosError<
+        | ReplaceGroupDefaultQuestionsPartiesGroupGroupApiIdReplaceDefaultQuestionsPostError
+        | UpdateGroupPartiesGroupGroupApiIdPatchError
+      >
+      showToast(
+        "Something went wrong.",
+        formatApiErrorDetail(axiosErr.response?.data?.detail),
+        "error",
+      )
+    } finally {
+      await refreshGroup()
     }
-
-    defaultQuestionsMutation.mutate({
-      body: {
-        questions: data.questions.map((question) => question.question_text),
-      },
-      path: { group_api_id: groupId },
-    })
-
-    toggleEditMode()
   }
 
   const onCancel = () => {
@@ -313,11 +301,21 @@ function GroupLoopSettings({ groupId }: { groupId: string }) {
               <Button
                 onClick={editMode ? undefined : toggleEditMode}
                 type={editMode ? "submit" : "button"}
-                disabled={editMode ? !isDirty || isSubmitting : false}
+                disabled={
+                  editMode
+                    ? !isDirty ||
+                      isSubmitting ||
+                      cycleUpdateMutation.isPending ||
+                      defaultQuestionsMutation.isPending
+                    : false
+                }
               >
-                {editMode && isSubmitting && (
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                )}
+                {editMode &&
+                  (isSubmitting ||
+                    cycleUpdateMutation.isPending ||
+                    defaultQuestionsMutation.isPending) && (
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  )}
                 {editMode ? "Save" : "Edit"}
               </Button>
               {editMode && (
@@ -325,7 +323,11 @@ function GroupLoopSettings({ groupId }: { groupId: string }) {
                   type="button"
                   variant="outline"
                   onClick={onCancel}
-                  disabled={isSubmitting}
+                  disabled={
+                    isSubmitting ||
+                    cycleUpdateMutation.isPending ||
+                    defaultQuestionsMutation.isPending
+                  }
                 >
                   Cancel
                 </Button>

@@ -12,11 +12,26 @@ IMAGE_TAG_NAMES = [
     "ring-llm",
 ]
 
+# Compose service names for images built via compose.core + compose.prod.
+COMPOSE_SERVICE_BY_IMAGE = {
+    "ring-api": "api",
+    "ring-frontend": "frontend",
+}
+
 
 @dev_group("docker")
 @click.pass_context
 def docker(ctx: click.Context) -> None:
     pass
+
+
+def _ecr_refs(image: str, extra_tags: tuple[str, ...] = ()) -> list[str]:
+    refs = [f"{ECR_URI_BASE}{image}:latest"]
+    for extra in extra_tags:
+        if not extra or extra == "latest":
+            continue
+        refs.append(f"{ECR_URI_BASE}{image}:{extra}")
+    return refs
 
 
 @dev_command("tag", docker)
@@ -27,13 +42,21 @@ def docker(ctx: click.Context) -> None:
     multiple=True,
     default=IMAGE_TAG_NAMES,
 )
-def tag(ctx: click.Context, image: list[str]) -> None:
-    run_cmds = [
-        ["docker", "tag", f"prod-{i}:latest", f"{ECR_URI_BASE}{i}:latest"]
-        for i in image
-    ]
-    for cmd in run_cmds:
-        subprocess_run(cmd)
+@click.option(
+    "--extra-tag",
+    "-t",
+    multiple=True,
+    default=(),
+    help="Additional image tag(s) besides :latest (e.g. git SHA).",
+)
+def tag(
+    ctx: click.Context,
+    image: list[str],
+    extra_tag: tuple[str, ...],
+) -> None:
+    for name in image:
+        for ref in _ecr_refs(name, extra_tag):
+            subprocess_run(["docker", "tag", f"prod-{name}:latest", ref])
 
 
 @dev_command("push", docker)
@@ -44,10 +67,21 @@ def tag(ctx: click.Context, image: list[str]) -> None:
     multiple=True,
     default=IMAGE_TAG_NAMES,
 )
-def push(ctx: click.Context, image: list[str]) -> None:
-    run_cmds = [["docker", "push", f"{ECR_URI_BASE}{i}:latest"] for i in image]
-    for cmd in run_cmds:
-        subprocess_run(cmd)
+@click.option(
+    "--extra-tag",
+    "-t",
+    multiple=True,
+    default=(),
+    help="Additional image tag(s) besides :latest (e.g. git SHA).",
+)
+def push(
+    ctx: click.Context,
+    image: list[str],
+    extra_tag: tuple[str, ...],
+) -> None:
+    for name in image:
+        for ref in _ecr_refs(name, extra_tag):
+            subprocess_run(["docker", "push", ref])
 
 
 @dev_command("tp", docker)
@@ -58,8 +92,17 @@ def push(ctx: click.Context, image: list[str]) -> None:
     multiple=True,
     default=IMAGE_TAG_NAMES,
 )
-def push_and_tag(ctx: click.Context, image: list[str]) -> None:
-    ctx.forward(tag)
-    # ctx.invoke(tag)
-    ctx.forward(push)
-    # ctx.invoke(push)
+@click.option(
+    "--extra-tag",
+    "-t",
+    multiple=True,
+    default=(),
+    help="Additional image tag(s) besides :latest (e.g. git SHA).",
+)
+def push_and_tag(
+    ctx: click.Context,
+    image: list[str],
+    extra_tag: tuple[str, ...],
+) -> None:
+    ctx.invoke(tag, image=image, extra_tag=extra_tag)
+    ctx.invoke(push, image=image, extra_tag=extra_tag)

@@ -102,8 +102,10 @@ flowchart TB
 ### ECR Public — container registry
 
 - **Registry:** `public.ecr.aws/z2k1e8p1/`
-- **Images pushed by deploy:** `ring-api`, `ring-frontend`, `ring-llm` ([dev_util/docker.py](../dev_util/docker.py))
-- **Also in registry (legacy / unused in current deploy):** `ring-worker`, `ring-beat`, `ring-test-runner`, `ring-next`
+- **Images pushed by CD:** `ring-api` (`:latest` and `:<git-sha>`) via
+  [`.github/workflows/publish_api.yml`](../.github/workflows/publish_api.yml)
+- **Still in registry (manual / leftover):** `ring-frontend`, `ring-llm`,
+  plus unused `ring-worker`, `ring-beat`, `ring-test-runner`, `ring-next`
 - **CI tests** use `ghcr.io`, not ECR.
 
 ---
@@ -161,31 +163,51 @@ Embedding generation → ring-llm microservice (not AWS Bedrock)
 
 ## Deployment
 
-> Roadmap: [continuous-deploy-plan.md](continuous-deploy-plan.md) — every
-> merge to `dev` deploys, frontend via Cloudflare, backend via CI-built
-> SHA-tagged images. The steps below are the current manual flow.
+> Roadmap: [continuous-deploy-plan.md](continuous-deploy-plan.md) —
+> frontend via Cloudflare Workers Routes, backend via CI-built
+> SHA-tagged images. `/api/*` and `/.well-known/*` still pass through
+> to this nginx. The steps below are the current backend flow.
 
-Build and push from a dev machine:
+### Publish API images (CI)
+
+Pushes to `dev` that touch `ring/**` (or a manual **Actions → Publish
+ring-api** run) build `linux/amd64` and push to ECR Public:
+
+- `public.ecr.aws/z2k1e8p1/ring-api:latest`
+- `public.ecr.aws/z2k1e8p1/ring-api:<git-sha>`
+
+Requires repo secrets `AWS_ACCESS_KEY_ID` / `AWS_SECRET_ACCESS_KEY` with
+push access to that registry. Use a dedicated IAM user for GitHub Actions,
+not laptop keys.
+
+Laptop fallback (API only by default):
 
 ```bash
-ring deploy prod
-# or manually:
-# VITE_API_URL=https://ring.neilsriv.tech ring compose any --profile prod build
-# ring docker tp   # tag + push to ECR Public
+ring deploy prod -t "$(git rev-parse HEAD)"
 ```
 
-On the EC2 host the API bind-mounts `./ring` and runs uvicorn `--reload`, so
-**the checkout on disk is the running API code**. The host must be on a branch
+### Pull on the EC2 host
+
+The API bind-mounts `./ring` and runs uvicorn `--reload`, so **the
+checkout on disk is the running API code**. The host must be on a branch
 (detached `HEAD` makes `git pull` fail):
 
 ```bash
 cd ring
 git checkout dev
 git pull origin dev
-./dev_util/prod.sh          # pull images from ECR, retag as prod-*
-ring db upgrade             # only if this commit has a migration
+./dev_util/prod.sh                 # pull ring-api:latest → prod-ring-api
+# ./dev_util/prod.sh <git-sha>     # match image/deps to that SHA
+ring db upgrade                    # only if this commit has a migration
 ring compose any --profile prod up -d --force-recreate
 ```
+
+`prod.sh <sha>` only swaps the image (installed deps + baked
+`RING_BUILD_GIT_*`). It does **not** roll back running Python. True
+rollback today is `git checkout <sha>` (or reset `dev` to that commit)
+and `./dev_util/prod.sh <sha>` if deps/image need to match, then
+`up -d --force-recreate`. Image-only SHA pull becomes a real rollback
+in Phase 3/4 when the bind-mount and `--reload` go away.
 
 Confirm what is actually running (no auth):
 

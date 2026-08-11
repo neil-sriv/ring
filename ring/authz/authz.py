@@ -9,11 +9,10 @@ from ring.api_identifier.api_identified_model import APIIdentified
 from ring.api_identifier.util import (
     IDNotFoundException,
     bulk_get_models,
-    get_models,
 )
 from ring.authz.enforcer import (
     Action,
-    build_stateless_enforcer,
+    build_stateless_enforcer_for_resources,
     enforce_stateless,
 )
 from ring.parties.models.user_model import User
@@ -57,7 +56,13 @@ def filter_to_authorized(
     resources: Sequence[APIIdentified],
 ) -> Sequence[APIIdentified]:
     """Filter a sequence of resources to only include those that the user has permission to perform an action on."""
-    enforcer = build_stateless_enforcer(db, user.api_identifier)
+    if not resources:
+        return []
+    enforcer = build_stateless_enforcer_for_resources(
+        db,
+        user.api_identifier,
+        [resource.api_identifier for resource in resources],
+    )
     return [
         resource
         for resource in resources
@@ -72,7 +77,13 @@ def bulk_can_or_inaccessible(
     resources: Sequence[APIIdentified],
 ) -> Sequence[APIIdentified | InaccessibleResource]:
     """Check if a user has permission to perform an action on a sequence of resources."""
-    enforcer = build_stateless_enforcer(db, user.api_identifier)
+    if not resources:
+        return []
+    enforcer = build_stateless_enforcer_for_resources(
+        db,
+        user.api_identifier,
+        [resource.api_identifier for resource in resources],
+    )
     return [
         resource
         if can(db, user, action, resource, enforcer)
