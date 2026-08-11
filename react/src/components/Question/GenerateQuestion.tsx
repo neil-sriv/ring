@@ -26,6 +26,7 @@ import {
   readUserMePartiesMeGetQueryKey,
 } from "../../client/@tanstack/react-query.gen"
 import useCustomToast from "../../hooks/useCustomToast"
+import { formatApiErrorDetail } from "../../util/misc"
 
 type QuestionFormProps = {
   questionPrompt: string
@@ -70,9 +71,11 @@ const GenerateQuestion = ({
     onError: (
       err: AxiosError<AddQuestionLettersLetterLetterApiIdAddQuestionPostError>,
     ) => {
-      const errDetail =
-        err.response?.data.detail || "no error detail, please contact support"
-      showToast("Something went wrong.", `${errDetail}`, "error")
+      showToast(
+        "Something went wrong.",
+        formatApiErrorDetail(err.response?.data?.detail),
+        "error",
+      )
     },
   })
 
@@ -86,9 +89,11 @@ const GenerateQuestion = ({
     onError: (
       err: AxiosError<AddQuestionLettersLetterLetterApiIdAddQuestionPostError>,
     ) => {
-      const errDetail =
-        err.response?.data.detail || "no error detail, please contact support"
-      showToast("Something went wrong.", `${errDetail}`, "error")
+      showToast(
+        "Something went wrong.",
+        formatApiErrorDetail(err.response?.data?.detail),
+        "error",
+      )
     },
     onSettled: () => {
       queryClient.invalidateQueries({

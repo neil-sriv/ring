@@ -10,6 +10,7 @@ import {
   readGroupKeyValuesPartiesGroupGroupApiIdKeyValueGetQueryKey,
 } from "../../client/@tanstack/react-query.gen"
 import useCustomToast from "../../hooks/useCustomToast"
+import { formatApiErrorDetail } from "../../util/misc"
 
 const ReactJson = lazy(() => import("react-json-view"))
 
@@ -32,9 +33,11 @@ export function GroupKeyValuesTable({
     onError: (
       err: AxiosError<FullReplaceGroupKeyValuesPartiesGroupGroupApiIdKeyValuePutError>,
     ) => {
-      const errDetail =
-        err.response?.data.detail || "no error detail, please contact support"
-      showToast("Something went wrong.", `${errDetail}`, "error")
+      showToast(
+        "Something went wrong.",
+        formatApiErrorDetail(err.response?.data?.detail),
+        "error",
+      )
     },
     onSettled: () => {
       queryClient.invalidateQueries({

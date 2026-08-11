@@ -11,10 +11,12 @@ import { useMutation, useQueryClient } from "@tanstack/react-query"
 import { Loader2 } from "lucide-react"
 import { useForm } from "react-hook-form"
 
+import type { AxiosError } from "axios"
 import { deleteUserPartiesUserIdDelete } from "../../client"
 import { readUserMePartiesMeGetQueryKey } from "../../client/@tanstack/react-query.gen"
 import useAuth from "../../hooks/useAuth"
 import useCustomToast from "../../hooks/useCustomToast"
+import { formatApiErrorDetail } from "../../util/misc"
 
 interface DeleteProps {
   isOpen: boolean
@@ -42,9 +44,16 @@ const DeleteConfirmation = ({ isOpen, onClose }: DeleteProps) => {
       queryClient.clear()
       onClose()
     },
-    onError: (err: Error) => {
-      const errDetail = err.message || "no error detail, please contact support"
-      showToast("Something went wrong.", `${errDetail}`, "error")
+    onError: (err: AxiosError<{ detail?: unknown }> | Error) => {
+      const detail = "response" in err ? err.response?.data?.detail : undefined
+      showToast(
+        "Something went wrong.",
+        formatApiErrorDetail(
+          detail,
+          err instanceof Error ? err.message : undefined,
+        ),
+        "error",
+      )
     },
     onSettled: () => {
       queryClient.invalidateQueries({

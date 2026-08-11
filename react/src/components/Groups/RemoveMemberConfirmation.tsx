@@ -25,6 +25,7 @@ import {
   removeUserFromGroupPartiesGroupGroupApiIdRemoveMemberUserApiIdPostMutation,
 } from "../../client/@tanstack/react-query.gen"
 import useCustomToast from "../../hooks/useCustomToast"
+import { formatApiErrorDetail } from "../../util/misc"
 
 interface RemoveMemberConfirmationProps {
   groupId: string
@@ -63,9 +64,11 @@ function RemoveMemberConfirmation({
     onError: (
       err: AxiosError<RemoveUserFromGroupPartiesGroupGroupApiIdRemoveMemberUserApiIdPostError>,
     ) => {
-      const errDetail =
-        err.response?.data.detail || "no error detail, please contact support"
-      showToast("Something went wrong.", `${errDetail}`, "error")
+      showToast(
+        "Something went wrong.",
+        formatApiErrorDetail(err.response?.data?.detail),
+        "error",
+      )
     },
     onSettled: async () => {
       queryClient.invalidateQueries({

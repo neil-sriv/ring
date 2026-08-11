@@ -9,7 +9,11 @@ import type {
 } from "../../client"
 import { updatePasswordMePartiesMePasswordPatchMutation } from "../../client/@tanstack/react-query.gen"
 import useCustomToast from "../../hooks/useCustomToast"
-import { confirmPasswordRules, passwordRules } from "../../util/misc"
+import {
+  confirmPasswordRules,
+  formatApiErrorDetail,
+  passwordRules,
+} from "../../util/misc"
 
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
@@ -40,9 +44,11 @@ const ChangePassword = () => {
       reset()
     },
     onError: (err: AxiosError<UpdatePasswordMePartiesMePasswordPatchError>) => {
-      const errDetail =
-        err.response?.data.detail || "no error detail, please contact support"
-      showToast("Something went wrong.", `${errDetail}`, "error")
+      showToast(
+        "Something went wrong.",
+        formatApiErrorDetail(err.response?.data?.detail),
+        "error",
+      )
     },
   })
 
