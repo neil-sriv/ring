@@ -57,17 +57,31 @@ export type CompletionResponse = {
 /**
  * Model for the letters dashboard view.
  *
- * Groups letters by their status for dashboard display.
+ * Groups letters by their status for dashboard display. Upcoming and
+ * in-progress cards only need summary fields; recently completed cards
+ * may show unanswered-question counts and include full question data.
  *
  * Attributes:
- * upcoming (list[PublicLetter]): Letters scheduled for the future
- * in_progress (list[PublicLetter]): Currently active letters
+ * upcoming (list[MinimalLetter]): Letters scheduled for the future
+ * in_progress (list[MinimalLetter]): Currently active letters
  * recently_completed (list[PublicLetter]): Recently finished letters
  */
 export type DashboardLetters = {
-    upcoming: Array<PublicLetter>;
-    in_progress: Array<PublicLetter>;
+    upcoming: Array<MinimalLetter>;
+    in_progress: Array<MinimalLetter>;
     recently_completed: Array<PublicLetter>;
+};
+
+/**
+ * Schema representing a default question in the system.
+ *
+ * Attributes:
+ * question_text (str): The text content of the default question
+ * api_identifier (str): Unique API identifier for the default question
+ */
+export type DefaultQuestion = {
+    question_text: string;
+    api_identifier: string;
 };
 
 /**
@@ -192,16 +206,15 @@ export type GroupKeyValueBase = {
 };
 
 /**
- * Group model with linked relationships.
+ * Group detail model with membership and settings.
  *
- * Extends the base Group model to include members, letters, and other related data.
+ * Omits nested letters and schedule (fetch those via dedicated endpoints).
  *
  * Attributes:
  * members (list[UserUnlinked]): Users who are members of the group
- * letters (list[LetterUnlinked]): Letters associated with the group
- * schedule (Optional[ScheduleUnlinked]): Group's schedule, if any
  * admin (UserUnlinked): The group administrator
- * default_questions (list[QuestionUnlinked]): Default questions for group letters
+ * default_questions (list[DefaultQuestion]): Default questions for group letters
+ * letter_count (int): Number of letters in the group
  */
 export type GroupLinked = {
     name: string;
@@ -210,10 +223,25 @@ export type GroupLinked = {
     cycle_length: number;
     min_responder_ratio?: number | null;
     members: Array<UserUnlinked>;
-    letters: Array<LetterUnlinked>;
-    schedule: ScheduleUnlinked | null;
     admin: UserUnlinked;
-    default_questions: Array<QuestionUnlinked>;
+    default_questions: Array<DefaultQuestion>;
+    letter_count?: number;
+};
+
+/**
+ * Group list item with membership info only.
+ *
+ * Used for list endpoints where nested letters, schedule, and default
+ * questions are not needed.
+ */
+export type GroupSummary = {
+    name: string;
+    api_identifier: string;
+    created_at: string;
+    cycle_length: number;
+    min_responder_ratio?: number | null;
+    members: Array<UserUnlinked>;
+    admin: UserUnlinked;
 };
 
 /**
@@ -620,19 +648,6 @@ export type ScheduleLinked = {
     tasks: Array<TaskUnlinked>;
 };
 
-/**
- * Schema for schedule data with unlinked task relationships.
- *
- * This schema extends the base Schedule schema and includes a list of tasks,
- * using the unlinked task schema to avoid circular references.
- *
- * Attributes:
- * tasks: List of tasks associated with this schedule
- */
-export type ScheduleUnlinked = {
-    tasks: Array<TaskUnlinked>;
-};
-
 export type SearchResponse = {
     results: Array<SearchResult>;
     total: number;
@@ -743,13 +758,10 @@ export type UserCreate = {
 };
 
 /**
- * User model with linked relationships.
- *
- * Extends the base User model to include related groups and responses.
+ * User model with linked relationships for search and admin views.
  *
  * Attributes:
  * groups (list[GroupUnlinked]): Groups the user is a member of
- * responses (list[ResponseUnlinked]): User's responses to questions
  */
 export type UserLinked = {
     email: string;
@@ -757,7 +769,20 @@ export type UserLinked = {
     api_identifier: string;
     admin: boolean;
     groups: Array<GroupUnlinked>;
-    responses: Array<ResponseUnlinked>;
+};
+
+/**
+ * Current-user profile with group memberships only.
+ *
+ * Lighter than UserLinked: includes group ids/names for navigation but omits
+ * the user's full response history.
+ */
+export type UserMe = {
+    email: string;
+    name: string;
+    api_identifier: string;
+    admin: boolean;
+    groups: Array<GroupUnlinked>;
 };
 
 /**
@@ -978,7 +1003,7 @@ export type ReadUserMePartiesMeGetResponses = {
     /**
      * Successful Response
      */
-    200: UserLinked;
+    200: UserMe;
 };
 
 export type ReadUserMePartiesMeGetResponse = ReadUserMePartiesMeGetResponses[keyof ReadUserMePartiesMeGetResponses];
@@ -1003,7 +1028,7 @@ export type UpdateUserMePartiesMePatchResponses = {
     /**
      * Successful Response
      */
-    200: UserLinked;
+    200: UserMe;
 };
 
 export type UpdateUserMePartiesMePatchResponse = UpdateUserMePartiesMePatchResponses[keyof UpdateUserMePartiesMePatchResponses];
@@ -1028,7 +1053,7 @@ export type CreateUserPartiesUserPostResponses = {
     /**
      * Successful Response
      */
-    201: UserLinked;
+    201: UserUnlinked;
 };
 
 export type CreateUserPartiesUserPostResponse = CreateUserPartiesUserPostResponses[keyof CreateUserPartiesUserPostResponses];
@@ -1055,7 +1080,7 @@ export type RegisterUserPartiesRegisterTokenPostResponses = {
     /**
      * Successful Response
      */
-    200: UserLinked;
+    200: UserUnlinked;
 };
 
 export type RegisterUserPartiesRegisterTokenPostResponse = RegisterUserPartiesRegisterTokenPostResponses[keyof RegisterUserPartiesRegisterTokenPostResponses];
@@ -1083,7 +1108,7 @@ export type ReadUsersPartiesUsersGetResponses = {
     /**
      * Successful Response
      */
-    200: Array<UserLinked>;
+    200: Array<UserUnlinked>;
 };
 
 export type ReadUsersPartiesUsersGetResponse = ReadUsersPartiesUsersGetResponses[keyof ReadUsersPartiesUsersGetResponses];
@@ -1110,7 +1135,7 @@ export type ReadUserByIdPartiesUserUserApiIdGetResponses = {
     /**
      * Successful Response
      */
-    200: UserLinked;
+    200: UserUnlinked;
 };
 
 export type ReadUserByIdPartiesUserUserApiIdGetResponse = ReadUserByIdPartiesUserUserApiIdGetResponses[keyof ReadUserByIdPartiesUserUserApiIdGetResponses];
@@ -1264,7 +1289,7 @@ export type ListGroupsPartiesGroupsGetResponses = {
     /**
      * Successful Response
      */
-    200: Array<GroupLinked>;
+    200: Array<GroupSummary>;
 };
 
 export type ListGroupsPartiesGroupsGetResponse = ListGroupsPartiesGroupsGetResponses[keyof ListGroupsPartiesGroupsGetResponses];

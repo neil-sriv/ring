@@ -13,17 +13,17 @@ class DefaultQuestionBase(BaseModel):
     """Base schema for default question-related operations.
 
     Attributes:
-        question (str): The text content of the default question
+        question_text (str): The text content of the default question
     """
 
-    question: str
+    question_text: str
 
 
 class DefaultQuestion(DefaultQuestionBase):
     """Schema representing a default question in the system.
 
     Attributes:
-        question (str): The text content of the default question
+        question_text (str): The text content of the default question
         api_identifier (str): Unique API identifier for the default question
     """
 

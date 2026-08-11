@@ -26,14 +26,17 @@ from ring.parties.schemas.group import (
     GroupUpdate,
     ReplaceDefaultQuestions,
 )
-from ring.ring_pydantic import GroupLinked as GroupSchema
+from ring.ring_pydantic import GroupLinked as GroupDetailSchema
+from ring.ring_pydantic.linked_schemas import GroupSummary
 from ring.tasks.schemas.schedule import ScheduleSendParam
 
 router = APIRouter()
 
 
 @router.post(
-    "/group", response_model=GroupSchema, status_code=status.HTTP_201_CREATED
+    "/group",
+    response_model=GroupDetailSchema,
+    status_code=status.HTTP_201_CREATED,
 )
 async def create_group(
     group: GroupCreate,
@@ -60,7 +63,7 @@ async def create_group(
     return db_group
 
 
-@router.get("/groups/", response_model=Sequence[GroupSchema])
+@router.get("/groups/", response_model=Sequence[GroupSummary])
 async def list_groups(
     user_api_id: str,
     skip: int = 0,
@@ -89,7 +92,7 @@ async def list_groups(
     return groups
 
 
-@router.get("/group/{group_api_id}", response_model=GroupSchema)
+@router.get("/group/{group_api_id}", response_model=GroupDetailSchema)
 async def read_group(
     group_api_id: str,
     req_dep: AuthenticatedRequestDependencies = Depends(
@@ -123,7 +126,7 @@ async def read_group(
 
 @router.post(
     "/group/{group_api_id}:add_member/{user_api_id}",
-    response_model=GroupSchema,
+    response_model=GroupDetailSchema,
 )
 async def add_user_to_group(
     group_api_id: str,
@@ -154,7 +157,7 @@ async def add_user_to_group(
 
 @router.post(
     "/group/{group_api_id}:remove_member/{user_api_id}",
-    response_model=GroupSchema,
+    response_model=GroupDetailSchema,
 )
 async def remove_user_from_group(
     group_api_id: str,
@@ -211,7 +214,7 @@ async def remove_user_from_group(
 
 @router.patch(
     "/group/{group_api_id}",
-    response_model=GroupSchema,
+    response_model=GroupDetailSchema,
 )
 async def update_group(
     group_api_id: str,
@@ -275,7 +278,7 @@ async def update_group(
 
 @router.post(
     "/group/{group_api_id}:add_members",
-    response_model=GroupSchema,
+    response_model=GroupDetailSchema,
 )
 async def add_members(
     group_api_id: str,
@@ -336,7 +339,7 @@ async def add_members(
 
 @router.post(
     "/group/{group_api_id}:replace_default_questions",
-    response_model=GroupSchema,
+    response_model=GroupDetailSchema,
 )
 async def replace_group_default_questions(
     group_api_id: str,

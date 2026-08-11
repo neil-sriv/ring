@@ -21,6 +21,7 @@ from pydantic import (
     validator,
 )
 
+from ring.letters.schemas.default_question import DefaultQuestion
 from ring.letters.schemas.letter import Letter, LetterUnlinked
 from ring.letters.schemas.question import Question, QuestionUnlinked
 from ring.letters.schemas.response import Response, ResponseUnlinked
@@ -31,6 +32,15 @@ from ring.parties.schemas.user import User, UserUnlinked
 from ring.s3.schemas.image import WithImageMixin
 from ring.tasks.schemas.schedule import Schedule, ScheduleUnlinked
 from ring.tasks.schemas.task import TaskUnlinked
+
+
+def _populate_group_letter_count[T: BaseModel](model: T, group: Any) -> T:
+    """Add letter_count when serializing a group ORM object."""
+    if isinstance(group, BaseModel):
+        return model
+    if not hasattr(group, "letters"):
+        return model
+    return model.model_copy(update={"letter_count": len(group.letters)})
 
 
 def _populate_letter_send_threshold_fields[T: BaseModel](
@@ -63,38 +73,63 @@ def _populate_letter_send_threshold_fields[T: BaseModel](
     )
 
 
-class UserLinked(User):
-    """User model with linked relationships.
+class UserMe(User):
+    """Current-user profile with group memberships only.
 
-    Extends the base User model to include related groups and responses.
-
-    Attributes:
-        groups (list[GroupUnlinked]): Groups the user is a member of
-        responses (list[ResponseUnlinked]): User's responses to questions
+    Lighter than UserLinked: includes group ids/names for navigation but omits
+    the user's full response history.
     """
 
     groups: list["GroupUnlinked"]
-    responses: list["ResponseUnlinked"]
 
 
-class GroupLinked(Group):
-    """Group model with linked relationships.
-
-    Extends the base Group model to include members, letters, and other related data.
+class UserLinked(UserMe):
+    """User model with linked relationships for search and admin views.
 
     Attributes:
-        members (list[UserUnlinked]): Users who are members of the group
-        letters (list[LetterUnlinked]): Letters associated with the group
-        schedule (Optional[ScheduleUnlinked]): Group's schedule, if any
-        admin (UserUnlinked): The group administrator
-        default_questions (list[QuestionUnlinked]): Default questions for group letters
+        groups (list[GroupUnlinked]): Groups the user is a member of
+    """
+
+    pass
+
+
+class GroupSummary(Group):
+    """Group list item with membership info only.
+
+    Used for list endpoints where nested letters, schedule, and default
+    questions are not needed.
     """
 
     members: list["UserUnlinked"]
-    letters: list["LetterUnlinked"]
-    schedule: Optional["ScheduleUnlinked"]
     admin: "UserUnlinked"
-    default_questions: list["QuestionUnlinked"]
+
+
+class GroupLinked(Group):
+    """Group detail model with membership and settings.
+
+    Omits nested letters and schedule (fetch those via dedicated endpoints).
+
+    Attributes:
+        members (list[UserUnlinked]): Users who are members of the group
+        admin (UserUnlinked): The group administrator
+        default_questions (list[DefaultQuestion]): Default questions for group letters
+        letter_count (int): Number of letters in the group
+    """
+
+    members: list["UserUnlinked"]
+    admin: "UserUnlinked"
+    default_questions: list[DefaultQuestion]
+    letter_count: int = 0
+
+    @model_validator(mode="wrap")
+    @classmethod
+    def populate_letter_count(
+        cls,
+        data: Any,
+        handler: ModelWrapValidatorHandler[Self],
+    ) -> Self:
+        model = handler(data)
+        return _populate_group_letter_count(model, data)
 
 
 class ScheduleLinked(Schedule):
@@ -198,16 +233,18 @@ class PublicLetter(Letter):
 class DashboardLetters(BaseModel):
     """Model for the letters dashboard view.
 
-    Groups letters by their status for dashboard display.
+    Groups letters by their status for dashboard display. Upcoming and
+    in-progress cards only need summary fields; recently completed cards
+    may show unanswered-question counts and include full question data.
 
     Attributes:
-        upcoming (list[PublicLetter]): Letters scheduled for the future
-        in_progress (list[PublicLetter]): Currently active letters
+        upcoming (list[MinimalLetter]): Letters scheduled for the future
+        in_progress (list[MinimalLetter]): Currently active letters
         recently_completed (list[PublicLetter]): Recently finished letters
     """
 
-    upcoming: list[PublicLetter]
-    in_progress: list[PublicLetter]
+    upcoming: list[MinimalLetter]
+    in_progress: list[MinimalLetter]
     recently_completed: list[PublicLetter]
 
 

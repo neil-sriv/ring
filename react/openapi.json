@@ -278,7 +278,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/UserLinked"
+                  "$ref": "#/components/schemas/UserMe"
                 }
               }
             }
@@ -335,7 +335,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/UserLinked"
+                  "$ref": "#/components/schemas/UserMe"
                 }
               }
             }
@@ -382,7 +382,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/UserLinked"
+                  "$ref": "#/components/schemas/UserUnlinked"
                 }
               }
             }
@@ -436,7 +436,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/UserLinked"
+                  "$ref": "#/components/schemas/UserUnlinked"
                 }
               }
             }
@@ -497,7 +497,7 @@
                 "schema": {
                   "type": "array",
                   "items": {
-                    "$ref": "#/components/schemas/UserLinked"
+                    "$ref": "#/components/schemas/UserUnlinked"
                   },
                   "title": "Response Read Users Parties Users Get"
                 }
@@ -547,7 +547,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/UserLinked"
+                  "$ref": "#/components/schemas/UserUnlinked"
                 }
               }
             }
@@ -829,7 +829,7 @@
                 "schema": {
                   "type": "array",
                   "items": {
-                    "$ref": "#/components/schemas/GroupLinked"
+                    "$ref": "#/components/schemas/GroupSummary"
                   },
                   "title": "Response List Groups Parties Groups  Get"
                 }
@@ -2487,7 +2487,7 @@
             "required": false,
             "schema": {
               "$ref": "#/components/schemas/SearchType",
-              "default": "dual"
+              "default": "keyword"
             }
           },
           {
@@ -2553,7 +2553,7 @@
             "required": false,
             "schema": {
               "$ref": "#/components/schemas/SearchType",
-              "default": "dual"
+              "default": "keyword"
             }
           },
           {
@@ -2995,14 +2995,14 @@
         "properties": {
           "upcoming": {
             "items": {
-              "$ref": "#/components/schemas/PublicLetter"
+              "$ref": "#/components/schemas/MinimalLetter"
             },
             "type": "array",
             "title": "Upcoming"
           },
           "in_progress": {
             "items": {
-              "$ref": "#/components/schemas/PublicLetter"
+              "$ref": "#/components/schemas/MinimalLetter"
             },
             "type": "array",
             "title": "In Progress"
@@ -3022,7 +3022,26 @@
           "recently_completed"
         ],
         "title": "DashboardLetters",
-        "description": "Model for the letters dashboard view.\n\nGroups letters by their status for dashboard display.\n\nAttributes:\n    upcoming (list[PublicLetter]): Letters scheduled for the future\n    in_progress (list[PublicLetter]): Currently active letters\n    recently_completed (list[PublicLetter]): Recently finished letters"
+        "description": "Model for the letters dashboard view.\n\nGroups letters by their status for dashboard display. Upcoming and\nin-progress cards only need summary fields; recently completed cards\nmay show unanswered-question counts and include full question data.\n\nAttributes:\n    upcoming (list[MinimalLetter]): Letters scheduled for the future\n    in_progress (list[MinimalLetter]): Currently active letters\n    recently_completed (list[PublicLetter]): Recently finished letters"
+      },
+      "DefaultQuestion": {
+        "properties": {
+          "question_text": {
+            "type": "string",
+            "title": "Question Text"
+          },
+          "api_identifier": {
+            "type": "string",
+            "title": "Api Identifier"
+          }
+        },
+        "type": "object",
+        "required": [
+          "question_text",
+          "api_identifier"
+        ],
+        "title": "DefaultQuestion",
+        "description": "Schema representing a default question in the system.\n\nAttributes:\n    question_text (str): The text content of the default question\n    api_identifier (str): Unique API identifier for the default question"
       },
       "DocumentCreate": {
         "properties": {
@@ -3253,32 +3272,20 @@
             "type": "array",
             "title": "Members"
           },
-          "letters": {
-            "items": {
-              "$ref": "#/components/schemas/LetterUnlinked"
-            },
-            "type": "array",
-            "title": "Letters"
-          },
-          "schedule": {
-            "anyOf": [
-              {
-                "$ref": "#/components/schemas/ScheduleUnlinked"
-              },
-              {
-                "type": "null"
-              }
-            ]
-          },
           "admin": {
             "$ref": "#/components/schemas/UserUnlinked"
           },
           "default_questions": {
             "items": {
-              "$ref": "#/components/schemas/QuestionUnlinked"
+              "$ref": "#/components/schemas/DefaultQuestion"
             },
             "type": "array",
             "title": "Default Questions"
+          },
+          "letter_count": {
+            "type": "integer",
+            "title": "Letter Count",
+            "default": 0
           }
         },
         "type": "object",
@@ -3288,13 +3295,64 @@
           "created_at",
           "cycle_length",
           "members",
-          "letters",
-          "schedule",
           "admin",
           "default_questions"
         ],
         "title": "GroupLinked",
-        "description": "Group model with linked relationships.\n\nExtends the base Group model to include members, letters, and other related data.\n\nAttributes:\n    members (list[UserUnlinked]): Users who are members of the group\n    letters (list[LetterUnlinked]): Letters associated with the group\n    schedule (Optional[ScheduleUnlinked]): Group's schedule, if any\n    admin (UserUnlinked): The group administrator\n    default_questions (list[QuestionUnlinked]): Default questions for group letters"
+        "description": "Group detail model with membership and settings.\n\nOmits nested letters and schedule (fetch those via dedicated endpoints).\n\nAttributes:\n    members (list[UserUnlinked]): Users who are members of the group\n    admin (UserUnlinked): The group administrator\n    default_questions (list[DefaultQuestion]): Default questions for group letters\n    letter_count (int): Number of letters in the group"
+      },
+      "GroupSummary": {
+        "properties": {
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "api_identifier": {
+            "type": "string",
+            "title": "Api Identifier"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          },
+          "cycle_length": {
+            "type": "integer",
+            "title": "Cycle Length"
+          },
+          "min_responder_ratio": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Min Responder Ratio"
+          },
+          "members": {
+            "items": {
+              "$ref": "#/components/schemas/UserUnlinked"
+            },
+            "type": "array",
+            "title": "Members"
+          },
+          "admin": {
+            "$ref": "#/components/schemas/UserUnlinked"
+          }
+        },
+        "type": "object",
+        "required": [
+          "name",
+          "api_identifier",
+          "created_at",
+          "cycle_length",
+          "members",
+          "admin"
+        ],
+        "title": "GroupSummary",
+        "description": "Group list item with membership info only.\n\nUsed for list endpoints where nested letters, schedule, and default\nquestions are not needed."
       },
       "GroupUnlinked": {
         "properties": {
@@ -4224,23 +4282,6 @@
         "title": "ScheduleLinked",
         "description": "Schedule model with linked relationships.\n\nExtends the base Schedule model to include the associated group and tasks.\n\nAttributes:\n    group (GroupUnlinked): The group this schedule belongs to\n    tasks (list[TaskUnlinked]): Tasks in the schedule"
       },
-      "ScheduleUnlinked": {
-        "properties": {
-          "tasks": {
-            "items": {
-              "$ref": "#/components/schemas/TaskUnlinked"
-            },
-            "type": "array",
-            "title": "Tasks"
-          }
-        },
-        "type": "object",
-        "required": [
-          "tasks"
-        ],
-        "title": "ScheduleUnlinked",
-        "description": "Schema for schedule data with unlinked task relationships.\n\nThis schema extends the base Schedule schema and includes a list of tasks,\nusing the unlinked task schema to avoid circular references.\n\nAttributes:\n    tasks: List of tasks associated with this schedule"
-      },
       "SearchResponse": {
         "properties": {
           "results": {
@@ -4476,13 +4517,6 @@
             },
             "type": "array",
             "title": "Groups"
-          },
-          "responses": {
-            "items": {
-              "$ref": "#/components/schemas/ResponseUnlinked"
-            },
-            "type": "array",
-            "title": "Responses"
           }
         },
         "type": "object",
@@ -4491,11 +4525,47 @@
           "name",
           "api_identifier",
           "admin",
-          "groups",
-          "responses"
+          "groups"
         ],
         "title": "UserLinked",
-        "description": "User model with linked relationships.\n\nExtends the base User model to include related groups and responses.\n\nAttributes:\n    groups (list[GroupUnlinked]): Groups the user is a member of\n    responses (list[ResponseUnlinked]): User's responses to questions"
+        "description": "User model with linked relationships for search and admin views.\n\nAttributes:\n    groups (list[GroupUnlinked]): Groups the user is a member of"
+      },
+      "UserMe": {
+        "properties": {
+          "email": {
+            "type": "string",
+            "title": "Email"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "api_identifier": {
+            "type": "string",
+            "title": "Api Identifier"
+          },
+          "admin": {
+            "type": "boolean",
+            "title": "Admin"
+          },
+          "groups": {
+            "items": {
+              "$ref": "#/components/schemas/GroupUnlinked"
+            },
+            "type": "array",
+            "title": "Groups"
+          }
+        },
+        "type": "object",
+        "required": [
+          "email",
+          "name",
+          "api_identifier",
+          "admin",
+          "groups"
+        ],
+        "title": "UserMe",
+        "description": "Current-user profile with group memberships only.\n\nLighter than UserLinked: includes group ids/names for navigation but omits\nthe user's full response history."
       },
       "UserUnlinked": {
         "properties": {

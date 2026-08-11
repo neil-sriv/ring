@@ -14,6 +14,7 @@ from fastapi.testclient import TestClient
 from sqlalchemy.orm import Session
 
 from ring.parties.models.user_model import User
+from ring.ring_pydantic.linked_schemas import UserUnlinked
 from ring.tests.factories.parties.group_factory import GroupFactory
 from ring.tests.factories.parties.invite_factory import InviteFactory
 from ring.tests.factories.parties.one_time_token_factory import (
@@ -381,7 +382,9 @@ class TestUserAPI:
         data = resp.json()
         assert len(data) == 11  # 10 users + current user
         assert_pydantic_models_json_dump_in_response_dict(
-            users + group_users + [current_user], data
+            users + group_users + [current_user],
+            data,
+            override_pydantic_model=UserUnlinked,
         )
 
     def test_read_user_by_id(
@@ -407,7 +410,9 @@ class TestUserAPI:
         resp = authenticated_client.get(f"/parties/user/{user.api_identifier}")
         assert resp.status_code == 200
         data = resp.json()
-        assert_pydantic_model_json_dump_equivalent_to_response_dict(user, data)
+        assert_pydantic_model_json_dump_equivalent_to_response_dict(
+            user, data, override_pydantic_model=UserUnlinked
+        )
 
     def test_read_user_by_id_not_found(
         self,

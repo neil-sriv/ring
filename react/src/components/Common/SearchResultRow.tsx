@@ -94,7 +94,7 @@ function GroupSearchResultRow({ result }: { result: SearchResult }) {
               <span className="font-medium">{model.name}</span>
             </div>
             <p className="text-sm text-muted-foreground">
-              {model.members.length} members • {model.letters.length} letters
+              {model.members.length} members • {model.letter_count ?? 0} letters
             </p>
           </div>
         </Link>
