@@ -19,8 +19,9 @@ run [`.github/workflows/publish_api.yml`](../../../.github/workflows/publish_api
 1. Build `linux/amd64` from `ring/ring.Dockerfile` with registry layer cache.
 2. Push `:latest` and `:<git-sha>`.
 
-This does **not** restart EC2. Host pull is still manual (Phase 3 of the
-CD plan).
+This does **not** restart EC2. Host rollout is
+[`dev_util/deploy_host.sh`](../../../dev_util/deploy_host.sh) (Phase 3
+will have Actions call that script).
 
 Requires GitHub secrets `AWS_ACCESS_KEY_ID` / `AWS_SECRET_ACCESS_KEY`
 from a dedicated IAM user — not laptop keys.
@@ -36,36 +37,22 @@ ring deploy prod -t "$(git rev-parse HEAD)"
 Default image is `ring-api`. Pass `-i ring-frontend` / `-i ring-llm` only
 when you really need those images.
 
-## Host pull
+## Host rollout
 
 ```bash
 cd ring
-git checkout dev && git pull origin dev
-./dev_util/prod.sh                 # ring-api:latest
-# ./dev_util/prod.sh <git-sha>     # match image/deps to that SHA
-ring db upgrade                    # if this commit has a migration
-ring compose any --profile prod up -d --force-recreate
+./dev_util/deploy_host.sh                 # origin/dev + :latest
+./dev_util/deploy_host.sh <sha>           # pin / rollback
+# uv run ring deploy host --rollback-on-fail <sha>
 ```
 
-Do not skip `--force-recreate`: compose keeps the old container when the
-local tag name (`prod-ring-api:latest`) is unchanged.
+The script: fetch + `git checkout -B dev <sha>`, `prod.sh <sha>`,
+`uv run ring db upgrade`, compose `up -d --force-recreate`, then gate
+on `GET /api/v1/version` (`git.sha` and `image_build.sha`). Do not skip
+`--force-recreate` yourself — the script already passes it.
 
-Rollback today is the host checkout **plus** the matching image:
-
-```bash
-git checkout <sha>
-./dev_util/prod.sh <sha>
-ring compose any --profile prod up -d --force-recreate
-```
-
-`prod.sh <sha>` alone does not roll back running Python while `./ring`
-is bind-mounted with `--reload`.
-
-Verify:
-
-```bash
-curl -sS https://ring.neilsriv.tech/api/v1/version
-```
+`prod.sh` is image-pull only. Do not treat it as a full rollback while
+`./ring` is bind-mounted with `--reload`.
 
 ## Notes
 

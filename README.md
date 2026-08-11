@@ -224,19 +224,18 @@ Laptop fallback:
 ring deploy prod -t "$(git rev-parse HEAD)"   # ring-api only
 ```
 
-### Pull on the host
+### Deploy on the host
 
 SSH into the EC2 host, then:
 
 ```bash
 cd ring
-git checkout dev && git pull origin dev
-./dev_util/prod.sh                  # or: ./dev_util/prod.sh <sha>
-ring db upgrade
-ring compose any --profile prod up -d --force-recreate
+./dev_util/deploy_host.sh                  # origin/dev + :latest
+# ./dev_util/deploy_host.sh <sha>          # pin / rollback
+# uv run ring deploy host <sha>            # same script
 ```
 
-Prod still bind-mounts `./ring` with `--reload`, so running code is the
-checkout. Rollback is `git checkout <sha>` **and**
-`./dev_util/prod.sh <sha>` if the image/deps must match, then
-`up -d --force-recreate`. Image-only SHA pull is not a code rollback.
+That syncs git, pulls the matching `ring-api` image, runs
+`uv run ring db upgrade`, recreates Compose, and checks
+`GET /api/v1/version`. Prod still bind-mounts `./ring` with `--reload`,
+so the script checks out the SHA (it does not only swap the image).
