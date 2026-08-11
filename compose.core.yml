@@ -18,10 +18,8 @@ services:
       # image: email_circle-api
     command: "uvicorn ring.fastapp.fast:app --proxy-headers"
     volumes:
-      - ./ring:/src/ring
-      # Live checkout SHA for GET /version (prod bind-mounts this tree with --reload).
-      - ./.git:/git:ro
       # Host-written container identity. Never mount docker.sock into the API.
+      # Code bind-mounts live in compose.dev.yml so prod runs the image filesystem.
       - ./.ring-runtime-version.json:/var/ring/runtime-version.json:ro
     environment:
       - PYTHONPATH=.

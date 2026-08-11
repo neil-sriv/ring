@@ -230,12 +230,13 @@ SSH into the EC2 host, then:
 
 ```bash
 cd ring
-./dev_util/deploy_host.sh                  # origin/dev + :latest
-# ./dev_util/deploy_host.sh <sha>          # pin / rollback
+./dev_util/deploy_host.sh <published-sha>  # pin / rollback
 # uv run ring deploy host <sha>            # same script
 ```
 
-That syncs git, pulls the matching `ring-api` image, runs
+That syncs git (compose/nginx), pulls `ring-api:<sha>`, runs
 `uv run ring db upgrade --profile prod`, recreates Compose, and checks
-`GET /api/v1/version`. Prod still bind-mounts `./ring` with `--reload`,
-so the script checks out the SHA (it does not only swap the image).
+`GET /api/v1/version` (`image_build.sha`). Prod runs the image
+filesystem — pass a SHA that `publish_api.yml` actually tagged, not a
+docs-only `HEAD`. To roll back an image without reverting compose to a
+pre-cutover commit: `./dev_util/deploy_host.sh --skip-git <sha>`.

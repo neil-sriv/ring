@@ -2,15 +2,25 @@
 # Full backend rollout on the prod EC2 host.
 #
 # This is the one command humans and (later) Actions should run on the box.
-# prod.sh only pulls images; this script also syncs git, migrates, recreates
-# Compose, and checks GET /api/v1/version.
+# prod.sh only pulls images; this script also syncs git (compose/nginx),
+# migrates, recreates Compose, and checks GET /api/v1/version.
+# Prod runs the image filesystem (no ./ring bind-mount, no --reload).
 #
 # Usage:
-#   ./dev_util/deploy_host.sh                 # origin/dev tip + :latest
-#   ./dev_util/deploy_host.sh <git-sha>       # checkout + pull that SHA
-#   ./dev_util/deploy_host.sh --rollback-on-fail <sha>
+#   ./dev_util/deploy_host.sh <published-sha>
+#   ./dev_util/deploy_host.sh --rollback-on-fail <published-sha>
 #
-# Rollback is the same command with the previous SHA.
+# The sha must exist as public.ecr.aws/z2k1e8p1/ring-api:<sha> (a
+# publish_api.yml run). Docs-only origin/dev tips have no image tag.
+#
+# First apply of the image-filesystem cutover (old script still on disk):
+#   git fetch origin && git checkout -B dev <this-sha>
+#   ./dev_util/deploy_host.sh --skip-git <this-sha>
+# Do not use --rollback-on-fail with the pre-cutover script — it asserts
+# checkout git.sha, which goes away when ./.git is unmounted.
+#
+# Rollback to a pre-cutover image without remounting ./ring:
+#   ./dev_util/deploy_host.sh --skip-git <previous-image-sha>
 
 set -euo pipefail
 
@@ -34,8 +44,9 @@ Usage: deploy_host.sh [options] [sha]
 
 Full host rollout: git sync, pull ECR image, migrate, compose up, verify.
 
-  sha                   Commit / image tag to deploy (default: origin/dev tip)
-  --skip-git            Do not fetch/checkout
+  sha                   Published image tag / commit (default: origin/dev tip)
+  --skip-git            Do not fetch/checkout (use to roll back the image
+                        without reverting compose to a pre-cutover SHA)
   --skip-pull           Do not run prod.sh
   --skip-migrate        Do not run `uv run ring db upgrade --profile prod`
   --skip-verify         Do not curl GET /api/v1/version
@@ -47,7 +58,8 @@ Env:
   RING_DEPLOY_BRANCH    Branch to keep checked out (default: dev)
 
 Rollback:
-  ./dev_util/deploy_host.sh <previous-sha>
+  ./dev_util/deploy_host.sh <previous-published-sha>
+  ./dev_util/deploy_host.sh --skip-git <pre-cutover-image-sha>
 EOF
 }
 
@@ -167,20 +179,20 @@ for attempt in range(1, attempts + 1):
         time.sleep(sleep)
         continue
 
-    git = payload.get("git") if isinstance(payload.get("git"), dict) else {}
     image = (
         payload.get("image_build")
         if isinstance(payload.get("image_build"), dict)
         else {}
     )
-    git_sha = git.get("sha")
     image_sha = image.get("sha")
     print(json.dumps(payload, indent=2))
-    if git_sha == want and image_sha == want:
+    # After the image-filesystem cutover, checkout git.sha tracks host
+    # git pull (or is unavailable). The running API is image_build.sha.
+    if image_sha == want:
         sys.exit(0)
     last_error = (
         f"version mismatch (attempt {attempt}/{attempts}): "
-        f"git.sha={git_sha!r} image_build.sha={image_sha!r} want={want!r}"
+        f"image_build.sha={image_sha!r} want={want!r}"
     )
     time.sleep(sleep)
 
