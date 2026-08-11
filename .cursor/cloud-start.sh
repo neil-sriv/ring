@@ -19,6 +19,26 @@ ensure_ssl() {
   fi
 }
 
+ensure_runtime_snapshot() {
+  # Compose bind-mounts this file; a missing path becomes a directory.
+  local path="$ROOT/.ring-runtime-version.json"
+  if [[ -d "$path" ]]; then
+    rmdir "$path" 2>/dev/null || rm -rf "$path"
+  fi
+  if [[ ! -f "$path" ]]; then
+    printf '%s\n' '{"generated_at":null,"project":null,"containers":[]}' > "$path"
+  fi
+}
+
+write_runtime_snapshot() {
+  local python_bin="${ROOT}/.venv/bin/python"
+  if [[ ! -x "$python_bin" ]]; then
+    python_bin="${PYTHON3:-python3}"
+  fi
+  RING_DOCKER="sudo docker" "$python_bin" \
+    "${ROOT}/dev_util/runtime_version.py" write || true
+}
+
 ensure_env() {
   if [[ -f .env ]]; then
     return
@@ -107,8 +127,10 @@ run_bootstrap() {
     chmod 600 certs/node.key
   fi
   ensure_env
+  ensure_runtime_snapshot
 
   "${COMPOSE[@]}" up --build --detach
+  write_runtime_snapshot
 
   wait_for_cockroach
   enable_vector_index

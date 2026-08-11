@@ -32,6 +32,7 @@ bash dev_util/cloud-health.sh
 | App (Vite) | http://localhost:5173 |
 | API (direct) | http://localhost:8001/api/v1/docs |
 | API (nginx) | https://localhost/api/v1/docs |
+| Version | http://localhost:8001/api/v1/version |
 
 ## Test login
 

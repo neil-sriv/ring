@@ -167,6 +167,9 @@ cython_debug/
 #.idea/
 sql_app.db
 
+# Host-written runtime identity for GET /version
+.ring-runtime-version.json
+
 # ssh
 *.pem
 

@@ -4,11 +4,6 @@
     "title": "FastAPI",
     "version": "0.1.0"
   },
-  "servers": [
-    {
-      "url": "/api/v1"
-    }
-  ],
   "paths": {
     "/login/access-token": {
       "post": {
@@ -257,6 +252,28 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/version": {
+      "get": {
+        "tags": [
+          "meta"
+        ],
+        "summary": "Read Version",
+        "description": "Return git commit metadata and Docker image identities.\n\nUnauthenticated so a host-side `curl` can tell which commit and images\nare actually running after a deploy. Cached briefly in-process so\nrepeated public hits do not shell out to git on every request.",
+        "operationId": "readVersion",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VersionResponse"
                 }
               }
             }
@@ -2996,6 +3013,105 @@
         ],
         "title": "CompletionResponse"
       },
+      "ContainerVersion": {
+        "properties": {
+          "service": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Service"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "container_id": {
+            "type": "string",
+            "title": "Container Id"
+          },
+          "image": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Image"
+          },
+          "image_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Image Id",
+            "description": "Local image id, typically sha256:<digest>"
+          },
+          "image_digest": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Image Digest",
+            "description": "Registry digest (name@sha256:...) when the image was pulled"
+          },
+          "git_sha": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Git Sha",
+            "description": "org.opencontainers.image.revision label baked into the image"
+          },
+          "status": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Status"
+          },
+          "state": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "State"
+          }
+        },
+        "type": "object",
+        "required": [
+          "name",
+          "container_id"
+        ],
+        "title": "ContainerVersion",
+        "description": "Identity of a running (or recently stopped) compose container."
+      },
       "DashboardLetters": {
         "properties": {
           "upcoming": {
@@ -3028,6 +3144,80 @@
         ],
         "title": "DashboardLetters",
         "description": "Model for the letters dashboard view.\n\nGroups letters by their status for dashboard display.\n\nAttributes:\n    upcoming (list[PublicLetter]): Letters scheduled for the future\n    in_progress (list[PublicLetter]): Currently active letters\n    recently_completed (list[PublicLetter]): Recently finished letters"
+      },
+      "DockerInfo": {
+        "properties": {
+          "available": {
+            "type": "boolean",
+            "title": "Available"
+          },
+          "error": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Error"
+          },
+          "source": {
+            "type": "string",
+            "enum": [
+              "snapshot",
+              "unavailable"
+            ],
+            "title": "Source",
+            "default": "unavailable"
+          },
+          "snapshot_path": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Snapshot Path"
+          },
+          "generated_at": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Generated At"
+          },
+          "project": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Project"
+          },
+          "containers": {
+            "items": {
+              "$ref": "#/components/schemas/ContainerVersion"
+            },
+            "type": "array",
+            "title": "Containers"
+          }
+        },
+        "type": "object",
+        "required": [
+          "available"
+        ],
+        "title": "DockerInfo",
+        "description": "Host-written snapshot of this compose project's containers."
       },
       "DocumentCreate": {
         "properties": {
@@ -3165,6 +3355,112 @@
           "generated_text"
         ],
         "title": "GenerateQuestionResponse"
+      },
+      "GitCommitInfo": {
+        "properties": {
+          "sha": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Sha"
+          },
+          "short_sha": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Short Sha"
+          },
+          "branch": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Branch"
+          },
+          "subject": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Subject"
+          },
+          "author_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Author Name"
+          },
+          "author_email": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Author Email"
+          },
+          "committed_at": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Committed At"
+          },
+          "dirty": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Dirty"
+          },
+          "source": {
+            "type": "string",
+            "enum": [
+              "git",
+              "env",
+              "image_env",
+              "unavailable"
+            ],
+            "title": "Source",
+            "default": "unavailable"
+          }
+        },
+        "type": "object",
+        "title": "GitCommitInfo",
+        "description": "Git commit metadata from a live checkout or a baked image."
       },
       "GroupCreate": {
         "properties": {
@@ -4716,6 +5012,32 @@
           "type"
         ],
         "title": "ValidationError"
+      },
+      "VersionResponse": {
+        "properties": {
+          "hostname": {
+            "type": "string",
+            "title": "Hostname"
+          },
+          "git": {
+            "$ref": "#/components/schemas/GitCommitInfo"
+          },
+          "image_build": {
+            "$ref": "#/components/schemas/GitCommitInfo"
+          },
+          "docker": {
+            "$ref": "#/components/schemas/DockerInfo"
+          }
+        },
+        "type": "object",
+        "required": [
+          "hostname",
+          "git",
+          "image_build",
+          "docker"
+        ],
+        "title": "VersionResponse",
+        "description": "Deploy diagnostic payload for GET /version."
       }
     },
     "securitySchemes": {

@@ -170,16 +170,29 @@ ring deploy prod
 # ring docker tp   # tag + push to ECR Public
 ```
 
-On the EC2 host:
+On the EC2 host the API bind-mounts `./ring` and runs uvicorn `--reload`, so
+**the checkout on disk is the running API code**. The host must be on a branch
+(detached `HEAD` makes `git pull` fail):
 
 ```bash
 cd ring
-git pull
+git checkout dev
+git pull origin dev
 ./dev_util/prod.sh          # pull images from ECR, retag as prod-*
-ring db upgrade
-ring compose any --profile prod up -d
-ring compose any --profile prod restart nginx   # if needed
+ring db upgrade             # only if this commit has a migration
+ring compose any --profile prod up -d --force-recreate
 ```
+
+Confirm what is actually running (no auth):
+
+```bash
+curl -sS https://ring.neilsriv.tech/api/v1/version
+```
+
+`git` is the host checkout, `image_build` is metadata baked into the API
+image, and `docker.containers[].image_id` / `image_digest` come from a
+host-written snapshot (`.ring-runtime-version.json`, mounted read-only).
+The API does not talk to the Docker Engine.
 
 Compose files: `compose.core.yml` + `compose.prod.yml` (+ `llm/compose.prod.llm.yml` if LLM is enabled).
 

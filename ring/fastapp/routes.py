@@ -10,6 +10,7 @@ from __future__ import annotations
 from fastapi import APIRouter
 
 from ring.auth.api import authn
+from ring.fastapp.api import version
 from ring.letters.api import letter, question, response
 from ring.llm.api import completion
 from ring.notebook.api import document
@@ -22,6 +23,7 @@ router = APIRouter()
 
 # Authentication routes
 router.include_router(authn.router, tags=["login"])
+router.include_router(version.router, tags=["meta"])
 
 # User and group management routes
 router.include_router(user.router, prefix="/parties", tags=["parties"])
