@@ -1,5 +1,5 @@
 import { useMutation } from "@tanstack/react-query"
-import { createFileRoute, redirect, useNavigate } from "@tanstack/react-router"
+import { createFileRoute, useNavigate } from "@tanstack/react-router"
 import { Loader2 } from "lucide-react"
 import { type SubmitHandler, useForm } from "react-hook-form"
 
@@ -19,7 +19,6 @@ import type {
   ResetPasswordResetPasswordTokenPostError,
 } from "../../client"
 import { resetPasswordResetPasswordTokenPostMutation } from "../../client/@tanstack/react-query.gen"
-import { isLoggedIn } from "../../hooks/useAuth"
 import useCustomToast from "../../hooks/useCustomToast"
 import {
   confirmPasswordRules,
@@ -33,13 +32,6 @@ interface NewPasswordForm extends NewPassword {
 
 export const Route = createFileRoute("/reset-password/$token")({
   component: ResetPassword,
-  beforeLoad: async () => {
-    if (isLoggedIn()) {
-      throw redirect({
-        to: "/",
-      })
-    }
-  },
 })
 
 function ResetPassword() {

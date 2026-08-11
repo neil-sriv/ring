@@ -16,6 +16,7 @@ import { registerSW } from "virtual:pwa-register"
 import { readUserMePartiesMeGetOptions } from "./client/@tanstack/react-query.gen"
 import { client } from "./client/client.gen"
 import { initGlobalKeyboardShortcuts } from "./lib/globalKeyboardShortcuts"
+import { isPublicAuthPath } from "./util/authRoutes"
 
 /* Dark mode initialization */
 const savedTheme = localStorage.getItem("theme")
@@ -53,14 +54,15 @@ client.instance.interceptors.response.use(
   (error) => {
     if (error.response?.status === 401) {
       localStorage.removeItem("access_token")
-      const currentPath =
-        window.location.pathname + window.location.search + window.location.hash
-      // Only add next parameter if we're not already on the login page
-      if (window.location.pathname !== "/login") {
+      // Login, reset-password and register pages need the stale token cleared,
+      // but navigating away would discard the one-time token in their URL.
+      if (!isPublicAuthPath(window.location.pathname)) {
+        const currentPath =
+          window.location.pathname +
+          window.location.search +
+          window.location.hash
         const nextParam = encodeURIComponent(currentPath)
         window.location.href = `/login?next=${nextParam}`
-      } else {
-        window.location.href = "/login"
       }
     }
     return Promise.reject(error)

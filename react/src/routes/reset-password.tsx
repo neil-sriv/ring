@@ -15,7 +15,6 @@ import { Label } from "@/components/ui/label"
 import type { AxiosError } from "axios"
 import type { ResetPasswordRequestResetPasswordRequestEmailPostError } from "../client"
 import { resetPasswordRequestResetPasswordRequestEmailPost } from "../client/sdk.gen"
-import { isLoggedIn } from "../hooks/useAuth"
 import useCustomToast from "../hooks/useCustomToast"
 import { emailPattern, formatApiErrorDetail } from "../util/misc"
 
@@ -25,8 +24,10 @@ interface FormData {
 
 export const Route = createFileRoute("/reset-password")({
   component: ResetPasswordRequest,
-  beforeLoad: async () => {
-    if (isLoggedIn()) {
+  beforeLoad: async ({ context }) => {
+    // Gate on a verified session, not on a leftover localStorage token: users
+    // who need this page usually have an expired one sitting there.
+    if (context.auth.isAuthenticated) {
       throw redirect({
         to: "/",
       })

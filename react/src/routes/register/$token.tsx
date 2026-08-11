@@ -17,14 +17,15 @@ import {
   validateTokenInvitesTokenTokenGetOptions,
   validateTokenInvitesTokenTokenGetQueryKey,
 } from "../../client/@tanstack/react-query.gen"
-import { isLoggedIn } from "../../hooks/useAuth"
 import useRegister from "../../hooks/useRegister"
 import { emailPattern } from "../../util/misc"
 
 export const Route = createFileRoute("/register/$token")({
   component: Register,
-  beforeLoad: async () => {
-    if (isLoggedIn()) {
+  beforeLoad: async ({ context }) => {
+    // Gate on a verified session, not on a leftover localStorage token, so an
+    // expired session cannot swallow the invite token in the URL.
+    if (context.auth.isAuthenticated) {
       throw redirect({
         to: "/groups",
       })
