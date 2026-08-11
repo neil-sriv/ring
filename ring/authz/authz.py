@@ -55,9 +55,11 @@ def filter_to_authorized(
     user: User,
     action: Action,
     resources: Sequence[APIIdentified],
+    enforcer: Enforcer | None = None,
 ) -> Sequence[APIIdentified]:
     """Filter a sequence of resources to only include those that the user has permission to perform an action on."""
-    enforcer = build_stateless_enforcer(db, user.api_identifier)
+    if enforcer is None:
+        enforcer = build_stateless_enforcer(db, user.api_identifier)
     return [
         resource
         for resource in resources

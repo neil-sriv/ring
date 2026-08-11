@@ -633,24 +633,60 @@ export type ScheduleUnlinked = {
     tasks: Array<TaskUnlinked>;
 };
 
+export type SearchGroupSnippet = {
+    api_identifier: string;
+    name: string;
+    member_count: number;
+    letter_count: number;
+};
+
+export type SearchLetterSnippet = {
+    api_identifier: string;
+    number: number | null;
+    group_name: string;
+    participant_count: number;
+    question_count: number;
+};
+
+export type SearchQuestionSnippet = {
+    api_identifier: string;
+    question_text: string;
+    group_name: string;
+    letter_api_identifier: string;
+    letter_number: number | null;
+    response_count: number;
+};
+
 export type SearchResponse = {
     results: Array<SearchResult>;
     total: number;
 };
 
+export type SearchResponseSnippet = {
+    api_identifier: string;
+    response_text: string;
+    question_text: string;
+    letter_api_identifier: string;
+    letter_number: number | null;
+    group_name: string;
+    participant_name: string | null;
+};
+
 /**
- * Search result model that can hold different types of models based on type field.
- *
- * Attributes:
- * model (Any): The model instance
- * type (str): The type of the model
+ * Search result with a slim payload tailored for the search UI.
  */
 export type SearchResult = {
-    model: UserLinked | GroupLinked | QuestionLinked | ResponseLinked | PublicLetter;
+    model: SearchUserSnippet | SearchGroupSnippet | SearchQuestionSnippet | SearchResponseSnippet | SearchLetterSnippet | UnknownSearchResult;
     type: string;
 };
 
 export type SearchType = 'semantic' | 'keyword' | 'dual';
+
+export type SearchUserSnippet = {
+    api_identifier: string;
+    name: string | null;
+    group_count: number;
+};
 
 /**
  * Schema for updating a single group key-value pair.
@@ -726,6 +762,17 @@ export type TaskUnlinked = {
 export type Token = {
     access_token: string;
     token_type: string;
+};
+
+/**
+ * Search result model for unknown types.
+ *
+ * Attributes:
+ * type (str): Type of the model
+ * model (Any): The model instance
+ */
+export type UnknownSearchResult = {
+    model: unknown;
 };
 
 /**

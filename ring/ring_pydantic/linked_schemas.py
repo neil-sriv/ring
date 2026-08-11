@@ -29,6 +29,13 @@ from ring.parties.schemas.group import Group, GroupUnlinked
 from ring.parties.schemas.invite import Invite
 from ring.parties.schemas.user import User, UserUnlinked
 from ring.s3.schemas.image import WithImageMixin
+from ring.search.schemas.search_snippets import (
+    SearchGroupSnippet,
+    SearchLetterSnippet,
+    SearchQuestionSnippet,
+    SearchResponseSnippet,
+    SearchUserSnippet,
+)
 from ring.tasks.schemas.schedule import Schedule, ScheduleUnlinked
 from ring.tasks.schemas.task import TaskUnlinked
 
@@ -325,36 +332,17 @@ class UnknownSearchResult(BaseModel):
 
 
 class SearchResult(BaseModel):
-    """Search result model that can hold different types of models based on type field.
-
-    Attributes:
-        model (Any): The model instance
-        type (str): The type of the model
-    """
+    """Search result with a slim payload tailored for the search UI."""
 
     model: (
-        UserLinked
-        | GroupLinked
-        | QuestionLinked
-        | ResponseLinked
-        | PublicLetter
-        # | UnknownSearchResult
+        SearchUserSnippet
+        | SearchGroupSnippet
+        | SearchQuestionSnippet
+        | SearchResponseSnippet
+        | SearchLetterSnippet
+        | UnknownSearchResult
     )
     type: str
-
-    @classmethod
-    def from_model(cls, model: Any) -> "SearchResult":
-        """Create a SearchResult from a model instance.
-
-        Args:
-            model: Any model instance that has a PYDANTIC_MODEL attribute
-        """
-        if not hasattr(model, "PYDANTIC_MODEL"):
-            return UnknownSearchResult(model=model)
-
-        # Convert SQLAlchemy model to Pydantic model using PYDANTIC_MODEL
-        pydantic_model = model.PYDANTIC_MODEL.model_validate(model)
-        return cls(model=pydantic_model, type=model.PYDANTIC_MODEL.__name__)
 
 
 class SearchResponse(BaseModel):

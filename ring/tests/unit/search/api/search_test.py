@@ -13,12 +13,13 @@ from fastapi.testclient import TestClient
 from sqlalchemy.orm import Session
 
 from ring.parties.models.user_model import User
-from ring.ring_pydantic.linked_schemas import SearchResponse, SearchResult
+from ring.ring_pydantic.linked_schemas import SearchResponse
 from ring.search.crud.hybrid_search import (
     HybridSearchDocument,
     HybridSearchDocumentAssociation,
     SearchableType,
 )
+from ring.search.crud.search_serialization import build_search_results
 from ring.tests.factories.parties.group_factory import GroupFactory
 from ring.tests.factories.parties.user_factory import UserFactory
 from ring.tests.lib.utils import (
@@ -170,7 +171,7 @@ class TestSearchAPI:
         assert len(data["results"]) == 2
         assert_pydantic_schema_json_dump_equivalent_to_response_dict(
             SearchResponse(
-                results=[SearchResult.from_model(user) for user in users[:2]],
+                results=build_search_results(db_session, users[:2]),
                 total=2,
             ),
             data,

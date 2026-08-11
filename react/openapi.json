@@ -2487,7 +2487,7 @@
             "required": false,
             "schema": {
               "$ref": "#/components/schemas/SearchType",
-              "default": "dual"
+              "default": "keyword"
             }
           },
           {
@@ -2553,7 +2553,7 @@
             "required": false,
             "schema": {
               "$ref": "#/components/schemas/SearchType",
-              "default": "dual"
+              "default": "keyword"
             }
           },
           {
@@ -4241,6 +4241,119 @@
         "title": "ScheduleUnlinked",
         "description": "Schema for schedule data with unlinked task relationships.\n\nThis schema extends the base Schedule schema and includes a list of tasks,\nusing the unlinked task schema to avoid circular references.\n\nAttributes:\n    tasks: List of tasks associated with this schedule"
       },
+      "SearchGroupSnippet": {
+        "properties": {
+          "api_identifier": {
+            "type": "string",
+            "title": "Api Identifier"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "member_count": {
+            "type": "integer",
+            "title": "Member Count"
+          },
+          "letter_count": {
+            "type": "integer",
+            "title": "Letter Count"
+          }
+        },
+        "type": "object",
+        "required": [
+          "api_identifier",
+          "name",
+          "member_count",
+          "letter_count"
+        ],
+        "title": "SearchGroupSnippet"
+      },
+      "SearchLetterSnippet": {
+        "properties": {
+          "api_identifier": {
+            "type": "string",
+            "title": "Api Identifier"
+          },
+          "number": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Number"
+          },
+          "group_name": {
+            "type": "string",
+            "title": "Group Name"
+          },
+          "participant_count": {
+            "type": "integer",
+            "title": "Participant Count"
+          },
+          "question_count": {
+            "type": "integer",
+            "title": "Question Count"
+          }
+        },
+        "type": "object",
+        "required": [
+          "api_identifier",
+          "number",
+          "group_name",
+          "participant_count",
+          "question_count"
+        ],
+        "title": "SearchLetterSnippet"
+      },
+      "SearchQuestionSnippet": {
+        "properties": {
+          "api_identifier": {
+            "type": "string",
+            "title": "Api Identifier"
+          },
+          "question_text": {
+            "type": "string",
+            "title": "Question Text"
+          },
+          "group_name": {
+            "type": "string",
+            "title": "Group Name"
+          },
+          "letter_api_identifier": {
+            "type": "string",
+            "title": "Letter Api Identifier"
+          },
+          "letter_number": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Letter Number"
+          },
+          "response_count": {
+            "type": "integer",
+            "title": "Response Count"
+          }
+        },
+        "type": "object",
+        "required": [
+          "api_identifier",
+          "question_text",
+          "group_name",
+          "letter_api_identifier",
+          "letter_number",
+          "response_count"
+        ],
+        "title": "SearchQuestionSnippet"
+      },
       "SearchResponse": {
         "properties": {
           "results": {
@@ -4262,24 +4375,84 @@
         ],
         "title": "SearchResponse"
       },
+      "SearchResponseSnippet": {
+        "properties": {
+          "api_identifier": {
+            "type": "string",
+            "title": "Api Identifier"
+          },
+          "response_text": {
+            "type": "string",
+            "title": "Response Text"
+          },
+          "question_text": {
+            "type": "string",
+            "title": "Question Text"
+          },
+          "letter_api_identifier": {
+            "type": "string",
+            "title": "Letter Api Identifier"
+          },
+          "letter_number": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Letter Number"
+          },
+          "group_name": {
+            "type": "string",
+            "title": "Group Name"
+          },
+          "participant_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Participant Name"
+          }
+        },
+        "type": "object",
+        "required": [
+          "api_identifier",
+          "response_text",
+          "question_text",
+          "letter_api_identifier",
+          "letter_number",
+          "group_name",
+          "participant_name"
+        ],
+        "title": "SearchResponseSnippet"
+      },
       "SearchResult": {
         "properties": {
           "model": {
             "anyOf": [
               {
-                "$ref": "#/components/schemas/UserLinked"
+                "$ref": "#/components/schemas/SearchUserSnippet"
               },
               {
-                "$ref": "#/components/schemas/GroupLinked"
+                "$ref": "#/components/schemas/SearchGroupSnippet"
               },
               {
-                "$ref": "#/components/schemas/QuestionLinked"
+                "$ref": "#/components/schemas/SearchQuestionSnippet"
               },
               {
-                "$ref": "#/components/schemas/ResponseLinked"
+                "$ref": "#/components/schemas/SearchResponseSnippet"
               },
               {
-                "$ref": "#/components/schemas/PublicLetter"
+                "$ref": "#/components/schemas/SearchLetterSnippet"
+              },
+              {
+                "$ref": "#/components/schemas/UnknownSearchResult"
               }
             ],
             "title": "Model"
@@ -4295,7 +4468,7 @@
           "type"
         ],
         "title": "SearchResult",
-        "description": "Search result model that can hold different types of models based on type field.\n\nAttributes:\n    model (Any): The model instance\n    type (str): The type of the model"
+        "description": "Search result with a slim payload tailored for the search UI."
       },
       "SearchType": {
         "type": "string",
@@ -4305,6 +4478,36 @@
           "dual"
         ],
         "title": "SearchType"
+      },
+      "SearchUserSnippet": {
+        "properties": {
+          "api_identifier": {
+            "type": "string",
+            "title": "Api Identifier"
+          },
+          "name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Name"
+          },
+          "group_count": {
+            "type": "integer",
+            "title": "Group Count"
+          }
+        },
+        "type": "object",
+        "required": [
+          "api_identifier",
+          "name",
+          "group_count"
+        ],
+        "title": "SearchUserSnippet"
       },
       "SingleGroupKeyValueUpdate": {
         "properties": {
@@ -4427,6 +4630,19 @@
         ],
         "title": "Token",
         "description": "Authentication token schema.\n\nRepresents the structure of an authentication token response.\n\nAttributes:\n    access_token (str): The JWT access token string\n    token_type (str): The type of token (e.g., \"bearer\")"
+      },
+      "UnknownSearchResult": {
+        "properties": {
+          "model": {
+            "title": "Model"
+          }
+        },
+        "type": "object",
+        "required": [
+          "model"
+        ],
+        "title": "UnknownSearchResult",
+        "description": "Search result model for unknown types.\n\nAttributes:\n    type (str): Type of the model\n    model (Any): The model instance"
       },
       "UserCreate": {
         "properties": {
