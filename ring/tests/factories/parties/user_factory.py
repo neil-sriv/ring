@@ -8,6 +8,8 @@ from ring.parties.models.user_model import User
 from ring.security import get_password_hash
 from ring.tests.factories.base_factory import BaseFactory, register_factory
 
+DEFAULT_PASSWORD_HASH = get_password_hash("password")
+
 
 @register_factory
 class UserFactory(BaseFactory[User]):
@@ -18,8 +20,10 @@ class UserFactory(BaseFactory[User]):
     def password(
         obj, create: bool, extracted: str | None, **kwargs: Any
     ) -> None:
-        password = extracted or "password"
-        obj.hashed_password = get_password_hash(password)
+        if extracted is None or extracted == "password":
+            obj.hashed_password = DEFAULT_PASSWORD_HASH
+        else:
+            obj.hashed_password = get_password_hash(extracted)
 
     # Sequence avoids unique-constraint flakes on User.email (unique=True).
     email = Sequence(lambda n: f"user-{n}@example.com")

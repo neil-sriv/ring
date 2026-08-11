@@ -55,6 +55,7 @@ def run(
         "pytest",
         "-c",
         "ring/tests/pytest.ini",
+        "--durations=25",
     ]
 
 
@@ -76,6 +77,7 @@ def server(
         "-f",
         "-c",
         "ring/tests/pytest.ini",
+        "--durations=25",
         "--color=yes",
         "--code-highlight=yes",
     ]

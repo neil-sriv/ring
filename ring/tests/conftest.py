@@ -164,27 +164,30 @@ def db_engine(logger: logging.Logger) -> Generator[Engine, None, None]:
         logger.info("Test database cleanup complete")
 
 
-def _patch_factories(logger: logging.Logger, session: Session) -> None:
+@pytest.fixture(scope="session")
+def initialized_factories() -> None:
+    """Hydrate factory registries once for the whole test session."""
+    from ring.tests.factories.entrypoint.initialize import initialize_factories
+
+    initialize_factories()
+
+
+def _patch_factories(session: Session) -> None:
     """Initialize and patch test factories with the current database session.
 
     This helper function ensures all test factories are properly configured
     with the current database session for test data creation.
 
     Args:
-        logger (logging.Logger): Logger instance for tracking factory operations
         session (Session): Current database session
     """
-    from ring.tests.factories.entrypoint.initialize import initialize_factories
-
-    initialize_factories()
-
     for factory in ALL_FACTORIES:
         factory._meta.sqlalchemy_session = session
 
 
 @pytest.fixture(scope="function")
 def db_session(
-    db_engine: Engine, logger: logging.Logger
+    db_engine: Engine, initialized_factories: None, logger: logging.Logger
 ) -> Generator[Session, None, None]:
     """Create a database session for each test function.
 
@@ -203,7 +206,7 @@ def db_session(
     transaction = connection.begin()
     session = Session(bind=connection)
 
-    _patch_factories(logger, session)
+    _patch_factories(session)
 
     yield session
 
