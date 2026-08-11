@@ -211,6 +211,12 @@ Public** (`public.ecr.aws/z2k1e8p1/`); the database is **CockroachDB Cloud**
 (`ring-db`). See [docs/infrastructure.md](docs/infrastructure.md) for the full
 topology (S3, CloudFront, SES, request flows).
 
+### Deploy the frontend
+
+Nothing to run: Cloudflare Workers Builds redeploys the frontend on every
+push to `dev`, live about a minute later. Watch the **Workers Builds:
+ring-frontend** check on the commit.
+
 ### Publish API images
 
 Pushes to `dev` that touch backend paths publish `ring-api:latest` and
@@ -240,3 +246,15 @@ That syncs git (compose/nginx), pulls `ring-api:<sha>`, runs
 filesystem — pass a SHA that `publish_api.yml` actually tagged, not a
 docs-only `HEAD`. To roll back an image without reverting compose to a
 pre-cutover commit: `./dev_util/deploy_host.sh --skip-git <sha>`.
+
+### See what is live
+
+```bash
+ring deploy status
+# frontend   d615e40  dev  deployed 3m ago    up to date with origin/dev  via workers_ci
+# api        195c464  dev  committed 8h ago   1 commit behind origin/dev  via image_env
+```
+
+Frontend and API report themselves at `/version.json` and
+`/api/v1/version`; the app shows the same thing under
+**Settings → Build**.

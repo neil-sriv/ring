@@ -16,6 +16,10 @@ RUN pnpm install
 
 ARG VITE_API_URL=${VITE_API_URL}
 ARG VITE_MAINTENANCE_MODE=${VITE_MAINTENANCE_MODE}
+# Read by plugins/version-stamp.ts to stamp dist/version.json.
+ARG RING_GIT_SHA
+ARG RING_GIT_SHORT_SHA
+ARG RING_GIT_BRANCH
 RUN pnpm run build
 
 # FROM base as runner

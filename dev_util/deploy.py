@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 import os
 from pathlib import Path
 from typing import Any
@@ -7,6 +8,13 @@ from typing import Any
 import click
 
 from dev_util.compose import compose_starter
+from dev_util.deploy_status import (
+    DEFAULT_BASE_URL,
+    as_dict,
+    collect,
+    commits_behind,
+    format_component,
+)
 from dev_util.dev import ROOT_DIR, dev_command, dev_group, subprocess_run
 from dev_util.docker import (
     COMPOSE_SERVICE_BY_IMAGE,
@@ -158,6 +166,73 @@ def deploy_prod(
 
     ctx.invoke(tag, image=images, extra_tag=extra_tag)
     ctx.invoke(push, image=images, extra_tag=extra_tag)
+
+
+@dev_command("status", deploy)
+@click.option(
+    "--base-url",
+    type=str,
+    default=DEFAULT_BASE_URL,
+    show_default=True,
+    help="Origin to probe.",
+)
+@click.option(
+    "--ref",
+    type=str,
+    default="origin/dev",
+    show_default=True,
+    help="Git ref to measure deployed commits against.",
+)
+@click.option(
+    "--json",
+    "as_json",
+    is_flag=True,
+    default=False,
+    help="Emit machine-readable JSON instead of a table.",
+)
+def deploy_status(
+    ctx: click.Context,
+    base_url: str,
+    ref: str,
+    as_json: bool,
+    *args: list[Any],
+    **kwargs: dict[Any, Any],
+) -> None:
+    """Show which commit is live on prod, and how long ago it shipped.
+
+    The frontend deploys itself on every push to dev (Cloudflare Workers
+    Builds); the API only moves when someone runs `ring deploy host`. This
+    is how you tell the two apart.
+    """
+    components = collect(base_url)
+    behind_by_name = {
+        component.name: (
+            commits_behind(component.sha, ref) if component.sha else None
+        )
+        for component in components
+    }
+
+    if as_json:
+        click.echo(
+            json.dumps(
+                {
+                    "base_url": base_url,
+                    "ref": ref,
+                    "components": [
+                        as_dict(component, behind_by_name[component.name])
+                        for component in components
+                    ],
+                },
+                indent=2,
+            )
+        )
+        return
+
+    click.echo(f"Deployed at {base_url}")
+    for component in components:
+        click.echo(
+            f"  {format_component(component, behind_by_name[component.name], ref)}"
+        )
 
 
 @dev_command("host", deploy)

@@ -166,8 +166,31 @@ Embedding generation → ring-llm microservice (not AWS Bedrock)
 Roadmap: [PR #301](https://github.com/neil-sriv/ring/pull/301) — frontend
 via Cloudflare Workers Routes, backend via CI-built SHA-tagged images.
 Frontend prod traffic already hits the Worker (`/*`); `/api/*` and
-`/.well-known/*` still pass through to this nginx. The steps below are
-the current backend flow.
+`/.well-known/*` still pass through to this nginx.
+
+The two halves ship on **different triggers**, so their commits routinely
+differ:
+
+| | Trigger | Push → live |
+|---|---------|-------------|
+| Frontend | Automatic, every push to `dev` | ~1 minute |
+| API | Manual `deploy_host.sh` on EC2 | whenever someone runs it |
+
+### Deploy the frontend (automatic)
+
+Cloudflare Workers Builds rebuilds and deploys the `ring-frontend` Worker
+on **every** push to `dev` — there is no path filter, so a backend-only
+commit still redeploys an identical bundle. Measured push-to-live across
+recent `dev` pushes: 56s, 57s, 59s, 59s, 65s, 93s.
+
+Nothing to run. To watch one:
+
+- The **Workers Builds: ring-frontend** check on the commit in GitHub. Its
+  summary links to the Cloudflare build and version. The check reports a
+  zero duration (Cloudflare posts it once, on completion), so use its
+  timestamp as the "live at" time, not as a build time.
+- [Cloudflare dashboard](https://dash.cloudflare.com/) → Compute →
+  `ring-frontend` → Builds, for logs and per-step timing.
 
 ### Publish API images (CI)
 
@@ -205,19 +228,36 @@ The sha must exist as `ring-api:<sha>` (a **Publish ring-api** run).
 `image_build.sha` **before** git/image/compose mutate and restores that
 image (`--skip-git`) if verify fails — not `git rev-parse HEAD`.
 
-Confirm what is actually running (no auth):
+Compose files: `compose.core.yml` + `compose.prod.yml` (+ `llm/compose.prod.llm.yml` if LLM is enabled).
+
+### Confirm what is live
 
 ```bash
-curl -sS -A 'ring-deploy-host/1.0' https://ring.neilsriv.tech/api/v1/version
+ring deploy status          # both halves, with age and lag vs origin/dev
+ring deploy status --json
 ```
 
-`image_build` is metadata baked into the API image (this is the running
-code). `git` is unavailable in prod after the cutover (no `./.git`
-mount). `docker.containers[].image_id` / `image_digest` come from a
-host-written snapshot (`.ring-runtime-version.json`, mounted read-only).
-The API does not talk to the Docker Engine.
+It reads two unauthenticated endpoints, either of which you can curl
+directly (Cloudflare rejects the default Python-urllib User-Agent with
+1010 / 403, hence the `-A`):
 
-Compose files: `compose.core.yml` + `compose.prod.yml` (+ `llm/compose.prod.llm.yml` if LLM is enabled).
+```bash
+curl -sS -A 'ring/1.0' https://ring.neilsriv.tech/version.json      # frontend
+curl -sS -A 'ring/1.0' https://ring.neilsriv.tech/api/v1/version    # API
+```
+
+`version.json` is written into the bundle at build time by
+[react/plugins/version-stamp.ts](../react/plugins/version-stamp.ts), from
+`WORKERS_CI_*` on Cloudflare, `RING_GIT_*` in the Docker image build, or
+the git CLI locally. Unknown paths fall through to the SPA's
+`index.html`, so an HTML body means that deploy predates the stamp. The
+same data renders in the app under **Settings → Build**.
+
+For the API, `image_build` is metadata baked into the image (this is the
+running code). `git` is unavailable in prod after the cutover (no
+`./.git` mount). `docker.containers[].image_id` / `image_digest` come
+from a host-written snapshot (`.ring-runtime-version.json`, mounted
+read-only). The API does not talk to the Docker Engine.
 
 ---
 
@@ -228,9 +268,9 @@ Cloudflare's 2026 dashboard is **Workers-first**. The create flow is
 "Connect to Git / Build output directory" form. Use Workers Builds.
 
 The React app is built on every PR and served at a `*.workers.dev`
-preview URL, pointed at the **production API** over CORS. Production
-traffic still serves the static build from nginx on EC2 (see topology
-above). Cloudflare is previews-only unless/until we cut prod over.
+preview URL, pointed at the **production API** over CORS. The same
+project also serves production `/*` from the `dev` branch (see
+[Deployment](#deployment)); the nginx SPA on EC2 is the rollback path.
 
 ### How it fits together
 
