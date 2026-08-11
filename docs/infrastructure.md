@@ -161,6 +161,10 @@ Embedding generation → ring-llm microservice (not AWS Bedrock)
 
 ## Deployment
 
+> Roadmap: [continuous-deploy-plan.md](continuous-deploy-plan.md) — every
+> merge to `dev` deploys, frontend via Cloudflare, backend via CI-built
+> SHA-tagged images. The steps below are the current manual flow.
+
 Build and push from a dev machine:
 
 ```bash
