@@ -66,7 +66,13 @@ the first half of the north star and needs no backend work.
       - `curl -s https://ring.neilsriv.tech/api/v1/version` → JSON from
         FastAPI (route 1 works)
       - `curl -s -o /dev/null -w "%{http_code}" http://ring.neilsriv.tech/.well-known/acme-challenge/probe`
-        → `404` from nginx, **not** HTML from the Worker (route 2 works)
+        → `404` from nginx (route 2 works). Note: over **https** this
+        path returns the app HTML — that is *not* the Worker; nginx's
+        443 server has no acme location, so it falls into the
+        `location /` frontend proxy. Verified via Cloudflare Trace
+        (2026-08-11): the Worker is correctly disabled on the route.
+        Only the http path matters for ACME, and it hits the webroot.
+        Ambiguity disappears after cleanup removes the frontend proxy.
       - Notebook WebSocket + an image upload in the browser
       - PWA: hard-refresh an existing session, confirm it updates
       Rollback = delete route 3 (`/*`); nginx still serves the old
