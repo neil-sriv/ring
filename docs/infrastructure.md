@@ -185,51 +185,121 @@ Compose files: `compose.core.yml` + `compose.prod.yml` (+ `llm/compose.prod.llm.
 
 ---
 
-## Frontend PR previews — Cloudflare Pages
+## Frontend PR previews — Cloudflare Workers Builds
 
-Cloudflare Pages builds the React app on every PR and serves it at a unique
-preview URL, pointed at the **production API** over CORS. Production traffic
-still serves the static build from nginx on EC2 (see topology above); Pages is
-previews-only unless/until we cut prod over.
+Cloudflare's 2026 dashboard is **Workers-first**. The create flow is
+"Import a repository" (Workers Builds), not the older Pages
+"Connect to Git / Build output directory" form. Use Workers Builds.
+
+The React app is built on every PR and served at a `*.workers.dev`
+preview URL, pointed at the **production API** over CORS. Production
+traffic still serves the static build from nginx on EC2 (see topology
+above). Cloudflare is previews-only unless/until we cut prod over.
 
 ### How it fits together
 
 ```
-PR preview:  https://<hash>.<project>.pages.dev  →  https://ring.neilsriv.tech/api/v1/  (CORS)
-Production:  https://ring.neilsriv.tech          →  nginx → ring-frontend + ring-api   (unchanged)
+PR preview:  https://<alias>-ring-frontend.<account>.workers.dev
+             →  https://ring.neilsriv.tech/api/v1/  (CORS)
+Production:  https://ring.neilsriv.tech
+             →  nginx → ring-frontend + ring-api   (unchanged)
 ```
 
-- The build sets `VITE_API_URL=https://ring.neilsriv.tech`, so the preview
-  calls the prod API cross-origin. Auth is a bearer token in localStorage
-  (not cookies), so cross-origin works without SameSite issues.
-- WebSockets (`/api/v1/ws/`, collaborative notebook) connect directly to
-  `wss://ring.neilsriv.tech` — no proxying through Pages.
+- The build sets `VITE_API_URL=https://ring.neilsriv.tech`, so the
+  preview calls the prod API cross-origin. Auth is a bearer token in
+  localStorage (not cookies), so cross-origin works without SameSite
+  issues.
+- WebSockets (`/api/v1/ws/`, collaborative notebook) connect directly
+  to `wss://ring.neilsriv.tech` — do not proxy `/api` through Cloudflare.
 - The API allows preview origins via `BACKEND_CORS_ORIGIN_REGEX`
-  ([ring/fastapp/config.py](../ring/fastapp/config.py)) in the server `.env`,
-  e.g. `^https://[a-z0-9-]+\.<project>\.pages\.dev$`.
-- [react/public/\_redirects](../react/public/_redirects) provides the SPA
-  fallback (`/* /index.html 200`) so deep links to client-side routes work.
-- [react/.nvmrc](../react/.nvmrc) pins the Node version for Pages builds.
+  ([ring/fastapp/config.py](../ring/fastapp/config.py)) in the server
+  `.env`. For Workers preview URLs:
+  `^https://[a-z0-9-]+\.[a-z0-9-]+\.workers\.dev$`
+- [react/wrangler.jsonc](../react/wrangler.jsonc) is what tells
+  Workers where the Vite output lives (`assets.directory = ./dist`) and
+  that unmatched routes should serve `index.html`
+  (`not_found_handling = single-page-application`). There is no
+  "Build output directory" field on the current create screen.
+- [react/public/\_redirects](../react/public/_redirects) is only used
+  if you create a classic Pages project instead; Workers ignores it
+  and uses the wrangler SPA setting.
+- [react/.nvmrc](../react/.nvmrc) pins Node 22.14.0 for the build image.
 
-### Pages project settings
+### Create the project (current dashboard)
 
-| Setting | Value |
-|---------|-------|
+Official flow (Workers Builds, updated 2026-07-03):
+[Connect a new Worker](https://developers.cloudflare.com/workers/ci-cd/builds/).
+
+1. Cloudflare dashboard → **Compute** (or **Workers & Pages**) →
+   **Create** / **Create application**.
+2. Next to **Import a repository**, click **Get started** (this is
+   *not* the Templates gallery).
+3. Connect GitHub if prompted (app name: **Cloudflare Workers and
+   Pages**). Grant access to `neil-sriv/ring` (or the whole account).
+4. Select the `ring` repository.
+5. On the configure screen, set:
+
+| Field you will see | Value |
+|--------------------|-------|
+| Project name | `ring-frontend` (must match [react/wrangler.jsonc](../react/wrangler.jsonc)) |
+| Production branch | `dev` |
 | Root directory | `react` |
 | Build command | `pnpm run build` |
-| Build output directory | `dist` |
-| Env var `VITE_API_URL` | `https://ring.neilsriv.tech` |
-| Env var `VITE_MAINTENANCE_MODE` | `false` |
+| Deploy command | leave default (`npx wrangler deploy`) |
+| Preview / non-production deploy | leave default (`npx wrangler versions upload`) |
+
+You will **not** see "Build output directory", "Framework preset", or
+"Pages". Those belong to the older Pages wizard (see below).
+
+6. Add **build environment variables** (needed at `pnpm run build`
+   time). If they are not on this screen, add them after the first
+   deploy under **Settings → Build** (or **Settings → Variables and
+   Secrets**, environment = Production *and* Preview):
+
+| Name | Value |
+|------|-------|
+| `VITE_API_URL` | `https://ring.neilsriv.tech` |
+| `VITE_MAINTENANCE_MODE` | `false` |
+
+7. Save / deploy. The first production-branch deploy is unused by
+   users; the EC2 nginx frontend remains canonical.
+8. After create: **Settings → Build → Branch control** → enable
+   **Builds for non-production branches**. Without this, PRs will
+   not get preview URLs. Docs:
+   [Build branches](https://developers.cloudflare.com/workers/ci-cd/builds/build-branches/).
+
+Preview URLs look like
+`<alias>-ring-frontend.<account>.workers.dev` and are posted as a
+GitHub PR comment
+([preview URLs](https://developers.cloudflare.com/workers/versions-and-deployments/preview-urls/),
+[GitHub integration](https://developers.cloudflare.com/workers/ci-cd/builds/git-integration/github-integration/)).
+
+### Older Pages wizard (only if you specifically want Pages)
+
+The Pages form still exists but is a side door. On the same Create
+screen, look for a **Pages** / **Looking to deploy a static site?**
+link, or use
+[Create application > Pages > Import from an existing Git repository](https://developers.cloudflare.com/pages/framework-guides/deploy-a-vite3-project/).
+That wizard *does* have Framework preset, **Build command**,
+**Build output directory**, and **Root directory (advanced) → Path**.
+Vite preset: `npm run build` / `dist`. Override the command to
+`pnpm run build`, set Path to `react`, and use a
+`BACKEND_CORS_ORIGIN_REGEX` of
+`^https://[a-z0-9-]+\.<project>\.pages\.dev$`.
+
+Prefer Workers Builds — Pages is still supported but the default
+create path no longer surfaces it.
 
 ### Caveats
 
-- **Previews hit prod data.** A preview frontend logs into the real API and
-  database. Treat preview links as production access.
-- **API contract skew.** A PR that changes the OpenAPI surface will preview
-  against the deployed prod API, which may not have the new endpoints yet.
-  Land backend PRs first (see `ring-split-pr` skill).
-- The PWA service worker registers per-origin; each preview URL gets its own
-  isolated service worker. Harmless, but hard-refresh if a preview looks stale.
+- **Previews hit prod data.** A preview frontend logs into the real
+  API and database. Treat preview links as production access.
+- **API contract skew.** A PR that changes the OpenAPI surface will
+  preview against the deployed prod API, which may not have the new
+  endpoints yet. Land backend PRs first (see `ring-split-pr` skill).
+- The PWA service worker registers per-origin; each preview URL gets
+  its own isolated service worker. Hard-refresh if a preview looks
+  stale.
 
 ---
 
