@@ -198,10 +198,17 @@ cd ring
 git checkout dev
 git pull origin dev
 ./dev_util/prod.sh                 # pull ring-api:latest → prod-ring-api
-# ./dev_util/prod.sh <git-sha>     # pin / rollback to a CI-published SHA
+# ./dev_util/prod.sh <git-sha>     # match image/deps to that SHA
 ring db upgrade                    # only if this commit has a migration
 ring compose any --profile prod up -d --force-recreate
 ```
+
+`prod.sh <sha>` only swaps the image (installed deps + baked
+`RING_BUILD_GIT_*`). It does **not** roll back running Python. True
+rollback today is `git checkout <sha>` (or reset `dev` to that commit)
+and `./dev_util/prod.sh <sha>` if deps/image need to match, then
+`up -d --force-recreate`. Image-only SHA pull becomes a real rollback
+in Phase 3/4 when the bind-mount and `--reload` go away.
 
 Confirm what is actually running (no auth):
 

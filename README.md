@@ -236,4 +236,7 @@ ring db upgrade
 ring compose any --profile prod up -d --force-recreate
 ```
 
-Rollback: `./dev_util/prod.sh <previous-sha>` then the same `up -d --force-recreate`.
+Prod still bind-mounts `./ring` with `--reload`, so running code is the
+checkout. Rollback is `git checkout <sha>` **and**
+`./dev_util/prod.sh <sha>` if the image/deps must match, then
+`up -d --force-recreate`. Image-only SHA pull is not a code rollback.

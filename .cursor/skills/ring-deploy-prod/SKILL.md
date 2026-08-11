@@ -42,13 +42,24 @@ when you really need those images.
 cd ring
 git checkout dev && git pull origin dev
 ./dev_util/prod.sh                 # ring-api:latest
-# ./dev_util/prod.sh <git-sha>     # pin / rollback
+# ./dev_util/prod.sh <git-sha>     # match image/deps to that SHA
 ring db upgrade                    # if this commit has a migration
 ring compose any --profile prod up -d --force-recreate
 ```
 
 Do not skip `--force-recreate`: compose keeps the old container when the
 local tag name (`prod-ring-api:latest`) is unchanged.
+
+Rollback today is the host checkout **plus** the matching image:
+
+```bash
+git checkout <sha>
+./dev_util/prod.sh <sha>
+ring compose any --profile prod up -d --force-recreate
+```
+
+`prod.sh <sha>` alone does not roll back running Python while `./ring`
+is bind-mounted with `--reload`.
 
 Verify:
 
