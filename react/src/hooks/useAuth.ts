@@ -18,10 +18,6 @@ export interface AuthContext {
   user: UserLinked | undefined
 }
 
-const isLoggedIn = () => {
-  return localStorage.getItem("access_token") !== null
-}
-
 const useAuth = (next?: string) => {
   const [error, setError] = useState<string | null>(null)
   const navigate = useNavigate()
@@ -80,5 +76,4 @@ const useAuth = (next?: string) => {
   }
 }
 
-export { isLoggedIn }
 export default useAuth
