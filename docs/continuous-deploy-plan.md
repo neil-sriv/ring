@@ -33,10 +33,10 @@ Known risks of the current flow (both bit us on 2026-08-11):
 Outcome: merges to `dev` deploy the prod frontend automatically. This is
 the first half of the north star and needs no backend work.
 
-- [ ] Set `PYTHON_VERSION=3.13.3` build variable on the `ring-frontend`
+- [x] Set `PYTHON_VERSION=3.13.3` build variable on the `ring-frontend`
       Worker (kills a ~4 min Python install triggered by the repo-root
-      `.python-version`; see infrastructure.md).
-- [ ] **Route split — never attach the domain to the Worker directly.**
+      `.python-version`; see infrastructure.md). *(done 2026-08-11)*
+- [x] **Route split — never attach the domain to the Worker directly.**
       A custom domain would swallow `/api/v1/*` (this took prod down
       briefly on 2026-08-11). Instead, in the Cloudflare zone
       (dash → `neilsriv.tech` → Workers Routes) add, in this order:
@@ -49,6 +49,7 @@ the first half of the north star and needs no backend work.
       3. `ring.neilsriv.tech/*` → `ring-frontend`
       More-specific routes win, but add the exclusions first anyway so
       there is no window where `/*` is live alone.
+      *(done 2026-08-11 — all three routes live and verified)*
 
       Considered and rejected: swapping Let's Encrypt for a Cloudflare
       Origin CA cert (15-year, no certbot). Rejected because Origin CA
@@ -56,10 +57,14 @@ the first half of the north star and needs no backend work.
       HTTPS access (gray-clouding the record, `curl --resolve` at the
       EC2 IP) fails cert validation. Keeping Let's Encrypt preserves a
       browser-valid origin, at the cost of keeping certbot and route 2.
-- [ ] `www.ring.neilsriv.tech`: if its DNS record is proxied, either add
-      the same three routes for `www.` or leave it on nginx during the
-      soak.
-- [ ] Verify:
+- [ ] `www.ring.neilsriv.tech`: routes exist but **no DNS record does**
+      (`www.neilsriv.tech` is a different, unrelated record). Either add
+      a proxied CNAME `www.ring` → `ring.neilsriv.tech`, or delete the
+      three `www.ring.*` routes.
+- [x] Verify: *(curl checks done 2026-08-11 — Worker serves `/*`
+      [content-hash etags match workers.dev], API + version endpoint
+      via route 1, acme webroot reachable over http; browser soak
+      checks — notebook WS, upload, PWA refresh — ongoing)*
       - `curl -s -o /dev/null -w "%{http_code}" -H "Sec-Fetch-Mode: navigate" https://ring.neilsriv.tech/some-spa-route`
         → `200` (Worker SPA fallback; without the header a `404` here is
         normal and confirms the Worker, not nginx, answered)
