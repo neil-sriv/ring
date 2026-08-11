@@ -37,7 +37,7 @@ Full host rollout: git sync, pull ECR image, migrate, compose up, verify.
   sha                   Commit / image tag to deploy (default: origin/dev tip)
   --skip-git            Do not fetch/checkout
   --skip-pull           Do not run prod.sh
-  --skip-migrate        Do not run `uv run ring db upgrade`
+  --skip-migrate        Do not run `uv run ring db upgrade --profile prod`
   --skip-verify         Do not curl GET /api/v1/version
   --rollback-on-fail    On verify failure, re-run against the pre-deploy SHA
   -h, --help            Show this help
@@ -130,7 +130,7 @@ fi
 
 if [[ "$SKIP_MIGRATE" -eq 0 ]]; then
   echo "==> Running migrations"
-  ring_cmd db upgrade
+  ring_cmd db upgrade --profile prod
 fi
 
 echo "==> Recreating Compose (prod)"
@@ -155,7 +155,12 @@ payload: dict[str, object] = {}
 
 for attempt in range(1, attempts + 1):
     try:
-        with urllib.request.urlopen(url, timeout=10) as response:
+        # Cloudflare blocks the default Python-urllib User-Agent (1010 / 403).
+        request = urllib.request.Request(
+            url,
+            headers={"User-Agent": "ring-deploy-host/1.0"},
+        )
+        with urllib.request.urlopen(request, timeout=10) as response:
             payload = json.loads(response.read().decode())
     except (urllib.error.URLError, TimeoutError, json.JSONDecodeError) as exc:
         last_error = str(exc)
