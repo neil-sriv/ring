@@ -17,7 +17,7 @@ Status legend: `[ ]` todo · `[x]` done. Update this file as phases land.
 | Frontend PR previews | ✅ Cloudflare Workers Builds deploys every branch; PR comments carry preview URLs (see [infrastructure.md](infrastructure.md)) |
 | Frontend prod | ✅ Cloudflare Workers Routes (`/*`); `/api/*` and `/.well-known/*` passthrough to EC2 nginx. Leftover `ring-frontend` container still runs as a rollback hatch (Phase 5 cleanup) |
 | Backend images | ✅ CI publishes `ring-api:latest` + `:<git-sha>` to ECR Public on `dev` pushes (#303) |
-| Backend rollout | ✅ Image filesystem (#309, live 2026-08-11: `image_build.sha=195c464`, `git.source=unavailable`). Host script is still run by hand; Actions job not built yet |
+| Backend rollout | ✅ Image filesystem (#309, live 2026-08-11: `image_build.sha=195c464`, `git.source=unavailable`). Push-button job is #310 |
 | Migrations | Run by `deploy_host.sh` (`uv run ring db upgrade --profile prod`) |
 | Version introspection | ✅ `GET /api/v1/version` returns git SHAs + image digests (#298) — verified 2026-08-11 after the #303 swap (`image_build.source=image_env`) |
 | CORS for previews | ✅ `BACKEND_CORS_ORIGIN_REGEX` live on prod (#295) |
@@ -152,12 +152,14 @@ Image-filesystem cutover *(done 2026-08-11 via #309; applied on EC2)*:
       `/version` was `git.sha=0f1871c` (checkout) +
       `image_build.sha=60ca61b` (image). Pass a published SHA, not
       `HEAD`, when `origin/dev` did not touch `ring/**`.
-- [ ] Deploy job: connect to EC2 (SSH key in repo secrets, or AWS SSM
-      Session Manager for keyless) and run
+- [ ] Deploy job: SSH to EC2 (`PROD_SSH_*` secrets) and run
       `./dev_util/deploy_host.sh --rollback-on-fail <sha>`
+      — [`.github/workflows/deploy_api.yml`](../.github/workflows/deploy_api.yml)
+      (#310)
 - [ ] Actions `concurrency` group `prod-deploy` (queue, don't cancel) so
-      two merges can't race migrations
+      two deploys can't race migrations *(#310)*
 - [ ] Gate deploy on backend tests (suite is ~26s in-container; worth it)
+      *(#310; `run_test.yml` now accepts `workflow_call`)*
 
 ## Phase 4 — Flip to continuous (the north star)
 
