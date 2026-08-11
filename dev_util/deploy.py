@@ -177,7 +177,7 @@ def deploy_prod(
     "--skip-migrate/--no-skip-migrate",
     default=False,
     show_default=True,
-    help="Skip `ring db upgrade`.",
+    help="Skip `ring db upgrade --profile prod`.",
 )
 @click.option(
     "--skip-verify/--no-skip-verify",

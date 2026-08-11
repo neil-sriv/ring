@@ -236,6 +236,6 @@ cd ring
 ```
 
 That syncs git, pulls the matching `ring-api` image, runs
-`uv run ring db upgrade`, recreates Compose, and checks
+`uv run ring db upgrade --profile prod`, recreates Compose, and checks
 `GET /api/v1/version`. Prod still bind-mounts `./ring` with `--reload`,
 so the script checks out the SHA (it does not only swap the image).
