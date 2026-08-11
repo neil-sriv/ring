@@ -185,6 +185,54 @@ Compose files: `compose.core.yml` + `compose.prod.yml` (+ `llm/compose.prod.llm.
 
 ---
 
+## Frontend PR previews — Cloudflare Pages
+
+Cloudflare Pages builds the React app on every PR and serves it at a unique
+preview URL, pointed at the **production API** over CORS. Production traffic
+still serves the static build from nginx on EC2 (see topology above); Pages is
+previews-only unless/until we cut prod over.
+
+### How it fits together
+
+```
+PR preview:  https://<hash>.<project>.pages.dev  →  https://ring.neilsriv.tech/api/v1/  (CORS)
+Production:  https://ring.neilsriv.tech          →  nginx → ring-frontend + ring-api   (unchanged)
+```
+
+- The build sets `VITE_API_URL=https://ring.neilsriv.tech`, so the preview
+  calls the prod API cross-origin. Auth is a bearer token in localStorage
+  (not cookies), so cross-origin works without SameSite issues.
+- WebSockets (`/api/v1/ws/`, collaborative notebook) connect directly to
+  `wss://ring.neilsriv.tech` — no proxying through Pages.
+- The API allows preview origins via `BACKEND_CORS_ORIGIN_REGEX`
+  ([ring/fastapp/config.py](../ring/fastapp/config.py)) in the server `.env`,
+  e.g. `^https://[a-z0-9-]+\.<project>\.pages\.dev$`.
+- [react/public/\_redirects](../react/public/_redirects) provides the SPA
+  fallback (`/* /index.html 200`) so deep links to client-side routes work.
+- [react/.nvmrc](../react/.nvmrc) pins the Node version for Pages builds.
+
+### Pages project settings
+
+| Setting | Value |
+|---------|-------|
+| Root directory | `react` |
+| Build command | `pnpm run build` |
+| Build output directory | `dist` |
+| Env var `VITE_API_URL` | `https://ring.neilsriv.tech` |
+| Env var `VITE_MAINTENANCE_MODE` | `false` |
+
+### Caveats
+
+- **Previews hit prod data.** A preview frontend logs into the real API and
+  database. Treat preview links as production access.
+- **API contract skew.** A PR that changes the OpenAPI surface will preview
+  against the deployed prod API, which may not have the new endpoints yet.
+  Land backend PRs first (see `ring-split-pr` skill).
+- The PWA service worker registers per-origin; each preview URL gets its own
+  isolated service worker. Harmless, but hard-refresh if a preview looks stale.
+
+---
+
 ## What we do *not* use
 
 Helpful for agents so they do not assume these exist:
