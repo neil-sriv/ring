@@ -15,16 +15,17 @@ Status legend: `[ ]` todo · `[x]` done. Update this file as phases land.
 | Piece | State |
 |-------|-------|
 | Frontend PR previews | ✅ Cloudflare Workers Builds deploys every branch; PR comments carry preview URLs (see [infrastructure.md](infrastructure.md)) |
-| Frontend prod | Static build served by nginx on EC2; deployed manually via `ring deploy prod` |
-| Backend prod | `ring-api` image built **on a laptop**, pushed to ECR Public `:latest`, pulled + restarted by hand on EC2 |
-| Migrations | `ring db upgrade` run by hand on EC2 |
-| Version introspection | ✅ `GET /api/v1/version` returns git SHAs + image digests (#298) — the smoke-check hook for deploy gating |
+| Frontend prod | ✅ Cloudflare Workers Routes (`/*`); `/api/*` and `/.well-known/*` passthrough to EC2 nginx. Leftover `ring-frontend` container still runs as rollback until Phase 1 cleanup |
+| Backend images | ✅ CI publishes `ring-api:latest` + `:<git-sha>` to ECR Public on `dev` pushes (#303) |
+| Backend rollout | Manual: `git pull` + `./dev_util/prod.sh <sha>` + `uv run ring compose … up -d --force-recreate` |
+| Migrations | `uv run ring db upgrade` run by hand on EC2 |
+| Version introspection | ✅ `GET /api/v1/version` returns git SHAs + image digests (#298) — verified 2026-08-11 after the #303 swap (`image_build.source=image_env`) |
 | CORS for previews | ✅ `BACKEND_CORS_ORIGIN_REGEX` live on prod (#295) |
 
-Known risks of the current flow (both bit us on 2026-08-11):
+Known remaining risks:
 
-- Laptop builds deploy whatever is checked out locally, reviewed or not.
-- `:latest`-only tags mean no rollback artifact.
+- Host pull is still manual; a green publish does not restart prod.
+- Prod still bind-mounts `./ring` with uvicorn `--reload`, so running Python is the checkout, not the image. Image-only `prod.sh <sha>` is not a code rollback (Phase 4 removes this).
 
 ---
 
@@ -100,17 +101,31 @@ Note on same-origin: with the route split, prod frontend and API share
 
 Outcome: every `dev` push produces a reproducible, SHA-tagged `ring-api`
 image. Deploys still manual, but from CI artifacts only.
+*(done 2026-08-11 via #303; first CI image verified on EC2)*
 
-- [ ] GitHub Actions workflow on push to `dev` with
-      `paths: [ring/**, pyproject.toml, uv.lock, ring/ring.Dockerfile, compose*.yml]`
-- [ ] Build with BuildKit + registry cache so the `uv sync` layer is
-      reused unless `uv.lock` changed; code-only merges rebuild one thin
-      layer (~60–90s including push)
-- [ ] Push tags `:latest` **and** `:<git-sha>` (registry: keep ECR
-      Public, or move to GHCR — decide below)
-- [ ] `dev_util/prod.sh` accepts an optional SHA argument and pulls that
-      tag instead of `:latest`
-- [ ] Rollback recipe documented: `prod.sh <previous-sha>` + `up -d`
+- [x] GitHub Actions workflow on push to `dev` with
+      `paths: [ring/**, pyproject.toml, uv.lock, compose.core.yml, compose.prod.yml, .github/workflows/publish_api.yml]`
+      — [`.github/workflows/publish_api.yml`](../.github/workflows/publish_api.yml)
+      (#303, merged 2026-08-11). Also `workflow_dispatch`.
+- [x] Build with BuildKit + registry cache (`:buildcache` with
+      `image-manifest=true,oci-mediatypes=true` so ECR accepts the
+      cache). Deps are copied before the rest of the tree so code-only
+      merges reuse the `requirements.txt` layer.
+- [x] Push tags `:latest` **and** `:<git-sha>` to ECR Public
+      (`public.ecr.aws/z2k1e8p1/ring-api`). Staying on ECR Public
+      (EC2 already pulls it with no extra token).
+- [x] `dev_util/prod.sh` accepts an optional SHA argument and defaults
+      to `ring-api` only. Laptop fallback: `uv run ring deploy prod`
+      (also API-only by default).
+- [x] Rollback recipe documented (README, infrastructure.md, deploy
+      skill, `prod.sh --help`):
+      1. `git checkout <previous-sha>` (running Python is the checkout)
+      2. `./dev_util/prod.sh <previous-sha>` if image/deps must match
+      3. `uv run ring compose any --profile prod up -d --force-recreate`
+- [x] Prod smoke after merge: `GET /api/v1/version` went from
+      `image_build.source=unavailable` to `image_env` with
+      `sha=9e7fd0bf…` and a new API `image_id`. Frontend/llm images
+      unchanged (expected).
 
 ## Phase 3 — Push-button backend deploy
 
@@ -118,13 +133,17 @@ Outcome: deploying is a `workflow_dispatch` click with a green/red result.
 
 - [ ] Deploy job: connect to EC2 (SSH key in repo secrets, or AWS SSM
       Session Manager for keyless), then on the box:
-      1. `dev_util/prod.sh <sha>` (pull images)
-      2. `docker compose ... run --rm api alembic upgrade head`
+      1. `git fetch` + checkout the SHA (required while `./ring` is
+         bind-mounted)
+      2. `./dev_util/prod.sh <sha>` (pull images)
+      3. `uv run ring db upgrade` / `docker compose ... run --rm api alembic upgrade head`
          (migrations run from the box — the CockroachDB Cloud URI never
          leaves the server `.env`)
-      3. `docker compose ... up -d api`
-      4. Gate: curl `GET /api/v1/version`, assert deployed SHA; on
-         failure, auto-rollback to previous SHA and fail the run
+      4. `uv run ring compose any --profile prod up -d --force-recreate`
+      5. Gate: curl `GET /api/v1/version`, assert `image_build.sha` (and
+         `git.sha` while the bind-mount remains); on failure,
+         auto-rollback (`git checkout` + `prod.sh` + recreate) and fail
+         the run
 - [ ] Actions `concurrency` group `prod-deploy` (queue, don't cancel) so
       two merges can't race migrations
 - [ ] Gate deploy on backend tests (suite is ~26s in-container; worth it)
@@ -168,11 +187,11 @@ Outcome: deploying is a `workflow_dispatch` click with a green/red result.
 
 ## Open decisions
 
-- [ ] Registry: stay on ECR Public vs move backend images to GHCR
-      (GHCR needs no AWS creds in Actions — `GITHUB_TOKEN` suffices —
-      but EC2 then needs a pull token for private images)
+- [x] Registry: **stay on ECR Public** (`public.ecr.aws/z2k1e8p1/`).
+      Decided in #303 — EC2 already pulls public images with no token.
+      GHCR would need a pull credential on the box.
 - [ ] EC2 access from Actions: SSH key secret vs AWS SSM Session Manager
-- [ ] Whether `ring-llm` ever joins CD (heavy image; suggest: no, manual)
+- [x] `ring-llm` does **not** join CD (heavy image; still manual / inactive)
 - [ ] Whether to keep an escape hatch (`VITE_MAINTENANCE_MODE` fast path
       or a `deploy:pause` label) for freezing auto-deploys during
       incidents
