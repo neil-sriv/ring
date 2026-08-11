@@ -38,14 +38,32 @@ the first half of the north star and needs no backend work.
       `.python-version`; see infrastructure.md).
 - [ ] **Route split — never attach the domain to the Worker directly.**
       A custom domain would swallow `/api/v1/*` (this took prod down
-      briefly on 2026-08-11). Instead, in the Cloudflare zone add
-      Workers Routes:
-      - `ring.neilsriv.tech/api/*` → Worker: **None** (passthrough to
-        EC2 nginx origin — keeps WebSockets and 500MB uploads on nginx)
-      - `ring.neilsriv.tech/*` → `ring-frontend`
-- [ ] Verify: frontend served by Worker, `/api/v1/` hits FastAPI,
-      notebook WebSocket works, image upload works, PWA updates.
-      Rollback = delete the `/*` route.
+      briefly on 2026-08-11). Instead, in the Cloudflare zone
+      (dash → `neilsriv.tech` → Workers Routes) add, in this order:
+      1. `ring.neilsriv.tech/api/*` → Worker: **None** (passthrough to
+         EC2 nginx — keeps WebSockets and 500MB uploads on nginx)
+      2. `ring.neilsriv.tech/.well-known/*` → Worker: **None**
+         (**required**: certbot's HTTP-01 renewal challenge flows
+         through the proxy to nginx; without this exclusion the
+         Let's Encrypt cert silently stops renewing)
+      3. `ring.neilsriv.tech/*` → `ring-frontend`
+      More-specific routes win, but add the exclusions first anyway so
+      there is no window where `/*` is live alone.
+- [ ] `www.ring.neilsriv.tech`: if its DNS record is proxied, either add
+      the same three routes for `www.` or leave it on nginx during the
+      soak.
+- [ ] Verify:
+      - `curl -s -o /dev/null -w "%{http_code}" -H "Sec-Fetch-Mode: navigate" https://ring.neilsriv.tech/some-spa-route`
+        → `200` (Worker SPA fallback; without the header a `404` here is
+        normal and confirms the Worker, not nginx, answered)
+      - `curl -s https://ring.neilsriv.tech/api/v1/version` → JSON from
+        FastAPI (route 1 works)
+      - `curl -s -o /dev/null -w "%{http_code}" http://ring.neilsriv.tech/.well-known/acme-challenge/probe`
+        → `404` from nginx, **not** HTML from the Worker (route 2 works)
+      - Notebook WebSocket + an image upload in the browser
+      - PWA: hard-refresh an existing session, confirm it updates
+      Rollback = delete route 3 (`/*`); nginx still serves the old
+      frontend underneath throughout the soak.
 - [ ] Soak for a few days, then clean up:
       - [ ] Remove `frontend` service from `compose.prod.yml`
       - [ ] Remove `location / { proxy_pass http://ring-frontend:80/; }`
