@@ -54,9 +54,37 @@ Restrict to specific images with `-i`, e.g. `ring docker tp -i ring-api`.
   `platform: linux/amd64`).
 - A populated `.env` (referenced by the prod compose services).
 
+## After the push: host pull is required
+
+Pushing to ECR does **not** restart prod. On the EC2 host:
+
+```bash
+cd ring
+git checkout dev            # detached HEAD makes `git pull` fail
+git pull origin dev
+./dev_util/prod.sh
+ring compose any --profile prod up -d --force-recreate
+```
+
+The API volume-mounts `./ring` with `--reload`, so the checkout on disk is the
+running Python. Verify with:
+
+```bash
+curl -sS https://ring.neilsriv.tech/api/v1/version
+```
+
+Expect a 200 JSON body with `git.sha`, `image_build.sha`, and
+`docker.containers[].image_id` / `image_digest`. A connection error or missing
+route means the host is still on a pre-version image/checkout.
+
+Do not skip `--force-recreate`: compose keeps the old container when the local
+tag name (`prod-ring-api:latest`) is unchanged.
+
 ## Notes
 
 - Pushing publishes `:latest`; there is no per-release version tag today.
 - Set `--maintenance-mode` to ship a frontend that renders the maintenance page.
 - Image/registry names live in `dev_util/docker.py`; the deploy command lives in
   `dev_util/deploy.py`.
+- Builds bake the current git SHA into image labels (`org.opencontainers.image.revision`)
+  and `RING_BUILD_GIT_*` env vars via `dev_util/git_meta.py`.

@@ -6,9 +6,11 @@ from typing import Any, Callable
 import click
 
 from dev_util.dev import cmd_run, dev_group
+from dev_util.git_meta import apply_git_build_args_to_environ
 
 
 def compose_starter(profile: str) -> list[str]:
+    apply_git_build_args_to_environ()
     profile_string = ["--profile", f"{profile}"]
     compose_file_strings: list[str] = []
     if profile == "test":

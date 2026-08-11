@@ -45,3 +45,23 @@ COPY --from=build-stage /app/dist/ /usr/share/nginx/html
 
 COPY ./nginx.conf /etc/nginx/conf.d/default.conf
 COPY ./nginx-backend-not-found.conf /etc/nginx/extra-conf.d/backend-not-found.conf
+
+ARG RING_GIT_SHA
+ARG RING_GIT_SHORT_SHA
+ARG RING_GIT_BRANCH
+ARG RING_GIT_SUBJECT
+ARG RING_GIT_AUTHOR_NAME
+ARG RING_GIT_AUTHOR_EMAIL
+ARG RING_GIT_COMMITTED_AT
+ARG RING_GIT_DIRTY
+ENV RING_BUILD_GIT_SHA=${RING_GIT_SHA}
+ENV RING_BUILD_GIT_SHORT_SHA=${RING_GIT_SHORT_SHA}
+ENV RING_BUILD_GIT_BRANCH=${RING_GIT_BRANCH}
+ENV RING_BUILD_GIT_SUBJECT=${RING_GIT_SUBJECT}
+ENV RING_BUILD_GIT_AUTHOR_NAME=${RING_GIT_AUTHOR_NAME}
+ENV RING_BUILD_GIT_AUTHOR_EMAIL=${RING_GIT_AUTHOR_EMAIL}
+ENV RING_BUILD_GIT_COMMITTED_AT=${RING_GIT_COMMITTED_AT}
+ENV RING_BUILD_GIT_DIRTY=${RING_GIT_DIRTY}
+LABEL org.opencontainers.image.source="https://github.com/neil-sriv/ring"
+LABEL org.opencontainers.image.revision="${RING_GIT_SHA}"
+LABEL org.opencontainers.image.title="ring-frontend"

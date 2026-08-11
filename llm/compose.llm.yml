@@ -5,6 +5,15 @@ services:
     build:
       context: .
       dockerfile: llm.Dockerfile
+      args:
+        RING_GIT_SHA: ${RING_GIT_SHA:-}
+        RING_GIT_SHORT_SHA: ${RING_GIT_SHORT_SHA:-}
+        RING_GIT_BRANCH: ${RING_GIT_BRANCH:-}
+        RING_GIT_SUBJECT: ${RING_GIT_SUBJECT:-}
+        RING_GIT_AUTHOR_NAME: ${RING_GIT_AUTHOR_NAME:-}
+        RING_GIT_AUTHOR_EMAIL: ${RING_GIT_AUTHOR_EMAIL:-}
+        RING_GIT_COMMITTED_AT: ${RING_GIT_COMMITTED_AT:-}
+        RING_GIT_DIRTY: ${RING_GIT_DIRTY:-}
     command: "uvicorn llm.fast:app --proxy-headers --host 0.0.0.0 --port ${LLM_PORT:-8006} --reload"
     profiles:
       - dev
