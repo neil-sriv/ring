@@ -201,4 +201,3 @@ separate CockroachDB instance on port 8008.
   - `ring-db-migration/` — generate/modify Alembic migrations the correct way
   - `ring-cloud-dev/` — Cursor Cloud VM bootstrap, health checks, browser testing
   - `ring-cloud-prod-db/` — point cloud Vite/API at CockroachDB Cloud (prod/staging)
-  - `ring-deploy-prod/` — publish `ring-api` to ECR Public (CI on `dev`, or `ring deploy prod`)
