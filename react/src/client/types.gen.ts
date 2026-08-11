@@ -95,12 +95,14 @@ export type DashboardLetters = {
 };
 
 /**
- * Docker Engine view of this compose project's containers.
+ * Host-written snapshot of this compose project's containers.
  */
 export type DockerInfo = {
     available: boolean;
     error?: string | null;
-    socket_path?: string | null;
+    source?: 'snapshot' | 'unavailable';
+    snapshot_path?: string | null;
+    generated_at?: string | null;
     project?: string | null;
     containers?: Array<ContainerVersion>;
 };

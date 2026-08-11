@@ -265,7 +265,7 @@
           "meta"
         ],
         "summary": "Read Version",
-        "description": "Return git commit metadata and Docker image identities.\n\nUnauthenticated so a host-side `curl` can tell which commit and images\nare actually running after a deploy.",
+        "description": "Return git commit metadata and Docker image identities.\n\nUnauthenticated so a host-side `curl` can tell which commit and images\nare actually running after a deploy. Cached briefly in-process so\nrepeated public hits do not shell out to git on every request.",
         "operationId": "readVersion",
         "responses": {
           "200": {
@@ -3162,7 +3162,16 @@
             ],
             "title": "Error"
           },
-          "socket_path": {
+          "source": {
+            "type": "string",
+            "enum": [
+              "snapshot",
+              "unavailable"
+            ],
+            "title": "Source",
+            "default": "unavailable"
+          },
+          "snapshot_path": {
             "anyOf": [
               {
                 "type": "string"
@@ -3171,7 +3180,18 @@
                 "type": "null"
               }
             ],
-            "title": "Socket Path"
+            "title": "Snapshot Path"
+          },
+          "generated_at": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Generated At"
           },
           "project": {
             "anyOf": [
@@ -3197,7 +3217,7 @@
           "available"
         ],
         "title": "DockerInfo",
-        "description": "Docker Engine view of this compose project's containers."
+        "description": "Host-written snapshot of this compose project's containers."
       },
       "DocumentCreate": {
         "properties": {

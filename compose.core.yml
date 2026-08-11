@@ -21,8 +21,8 @@ services:
       - ./ring:/src/ring
       # Live checkout SHA for GET /version (prod bind-mounts this tree with --reload).
       - ./.git:/git:ro
-      # Read-only Engine API so /version can report each container's image id/digest.
-      - /var/run/docker.sock:/var/run/docker.sock:ro
+      # Host-written container identity. Never mount docker.sock into the API.
+      - ./.ring-runtime-version.json:/var/ring/runtime-version.json:ro
     environment:
       - PYTHONPATH=.
     networks:

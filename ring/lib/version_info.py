@@ -1,16 +1,15 @@
-"""Collect git and Docker identity for the public /version endpoint."""
+"""Collect git and host-snapshot identity for the public /version endpoint."""
 
 from __future__ import annotations
 
-import http.client
 import json
 import os
 import socket
 import subprocess
-from collections.abc import Callable
+import threading
+import time
 from pathlib import Path
 from typing import Any, Literal
-from urllib.parse import quote
 
 from ring.fastapp.schemas.version import (
     ContainerVersion,
@@ -19,40 +18,17 @@ from ring.fastapp.schemas.version import (
     VersionResponse,
 )
 
-DOCKER_API_PREFIX = "/v1.41"
-DEFAULT_DOCKER_SOCKET = "/var/run/docker.sock"
+DEFAULT_SNAPSHOT_PATH = Path("/var/ring/runtime-version.json")
+HOST_SNAPSHOT_NAME = ".ring-runtime-version.json"
 GIT_DIR_CANDIDATES = ("/git", "/src/.git")
-RING_COMPOSE_PROJECTS = frozenset({"ring"})
-RING_SERVICE_NAMES = frozenset(
-    {
-        "api",
-        "nginx",
-        "frontend",
-        "certbot",
-        "cockroach",
-        "llm",
-        "test-cockroach",
-        "test-runner",
-    }
-)
 GIT_DISCOVERY_ROOTS = (Path.cwd(), Path("/workspace"), Path("/src"))
+VERSION_CACHE_TTL_SECONDS = 15.0
 
-JsonGetter = Callable[[str], Any]
 GitSource = Literal["git", "env", "image_env", "unavailable"]
 
-
-class UnixHTTPConnection(http.client.HTTPConnection):
-    """HTTP client that talks to a Unix domain socket."""
-
-    def __init__(self, socket_path: str, timeout: float = 2.0) -> None:
-        super().__init__("localhost", timeout=timeout)
-        self.socket_path = socket_path
-
-    def connect(self) -> None:
-        sock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
-        sock.settimeout(self.timeout)
-        sock.connect(self.socket_path)
-        self.sock = sock
+_cache_lock = threading.Lock()
+_cached_at: float | None = None
+_cached_version: VersionResponse | None = None
 
 
 def _env(name: str, environ: dict[str, str] | None = None) -> str | None:
@@ -211,163 +187,113 @@ def collect_image_build_git(
     return _git_info_from_prefixed_env("RING_BUILD_GIT_", "image_env", environ)
 
 
-def resolve_docker_socket_path(
+def resolve_snapshot_path(
     environ: dict[str, str] | None = None,
-) -> str | None:
-    docker_host = _env("DOCKER_HOST", environ)
-    if docker_host:
-        if docker_host.startswith("unix://"):
-            return docker_host.removeprefix("unix://")
-        return None
-    if Path(DEFAULT_DOCKER_SOCKET).exists():
-        return DEFAULT_DOCKER_SOCKET
-    return None
+    snapshot_path: Path | str | None = None,
+) -> Path:
+    if snapshot_path is not None:
+        return Path(snapshot_path)
+    configured = _env("RING_RUNTIME_VERSION_PATH", environ)
+    if configured:
+        return Path(configured)
+    if DEFAULT_SNAPSHOT_PATH.is_file():
+        return DEFAULT_SNAPSHOT_PATH
+    for root in GIT_DISCOVERY_ROOTS:
+        for candidate in (
+            root / HOST_SNAPSHOT_NAME,
+            root.parent / HOST_SNAPSHOT_NAME,
+        ):
+            if candidate.is_file():
+                return candidate
+    return DEFAULT_SNAPSHOT_PATH
 
 
-def docker_get_json(socket_path: str, path: str) -> Any:
-    connection = UnixHTTPConnection(socket_path)
-    try:
-        connection.request("GET", path)
-        response = connection.getresponse()
-        body = response.read()
-        if response.status >= 400:
-            raise RuntimeError(
-                f"Docker API {path} returned {response.status}: "
-                f"{body[:200]!r}"
-            )
-        if not body:
-            return None
-        return json.loads(body)
-    finally:
-        connection.close()
-
-
-def _container_name(raw: dict[str, Any]) -> str:
-    names = raw.get("Names") or []
-    if names:
-        return str(names[0]).lstrip("/")
-    return str(raw.get("Id", ""))[:12]
-
-
-def _is_ring_container(raw: dict[str, Any], project: str | None) -> bool:
-    labels = raw.get("Labels") or {}
-    compose_project = labels.get("com.docker.compose.project")
-    service = labels.get("com.docker.compose.service")
-    name = _container_name(raw)
-    if project:
-        return compose_project == project
-    if compose_project in RING_COMPOSE_PROJECTS:
-        return True
-    if service in RING_SERVICE_NAMES:
-        return True
-    return name.startswith("ring-")
-
-
-def _inspect_self_project(
-    request_json: JsonGetter,
-    hostname: str,
-) -> str | None:
-    try:
-        inspected = request_json(
-            f"{DOCKER_API_PREFIX}/containers/{quote(hostname, safe='')}/json"
-        )
-    except Exception:
-        return None
-    if not isinstance(inspected, dict):
-        return None
-    labels = (inspected.get("Config") or {}).get("Labels") or {}
-    project = labels.get("com.docker.compose.project")
-    return str(project) if project else None
-
-
-def _image_revision_and_digest(
-    request_json: JsonGetter, image_id: str | None
-) -> tuple[str | None, str | None]:
-    if not image_id:
-        return None, None
-    try:
-        inspected = request_json(
-            f"{DOCKER_API_PREFIX}/images/{quote(image_id, safe='')}/json"
-        )
-    except Exception:
-        return None, None
-    if not isinstance(inspected, dict):
-        return None, None
-    labels = (inspected.get("Config") or {}).get("Labels") or {}
-    revision = labels.get("org.opencontainers.image.revision") or None
-    digests = inspected.get("RepoDigests") or []
-    digest = str(digests[0]) if digests else None
-    return revision, digest
+def _container_from_raw(raw: dict[str, Any]) -> ContainerVersion:
+    name = str(raw.get("name") or raw.get("container_id") or "")
+    return ContainerVersion(
+        service=raw.get("service"),
+        name=name,
+        container_id=str(raw.get("container_id") or ""),
+        image=raw.get("image"),
+        image_id=raw.get("image_id"),
+        image_digest=raw.get("image_digest"),
+        git_sha=raw.get("git_sha"),
+        status=raw.get("status"),
+        state=raw.get("state"),
+    )
 
 
 def collect_docker_info(
     *,
     environ: dict[str, str] | None = None,
-    hostname: str | None = None,
-    request_json: JsonGetter | None = None,
-    socket_path: str | None = None,
+    snapshot_path: Path | str | None = None,
 ) -> DockerInfo:
-    resolved_socket = socket_path or resolve_docker_socket_path(environ)
-    getter = request_json
-    if getter is None:
-        if resolved_socket is None:
-            return DockerInfo(
-                available=False,
-                error="Docker socket not found",
-                socket_path=None,
-            )
-
-        def getter(path: str) -> Any:
-            return docker_get_json(resolved_socket, path)
-
-    host = hostname or socket.gethostname()
+    path = resolve_snapshot_path(environ, snapshot_path)
+    if not path.is_file():
+        return DockerInfo(
+            available=False,
+            error="Runtime version snapshot not found",
+            source="unavailable",
+            snapshot_path=str(path),
+        )
     try:
-        project = _inspect_self_project(getter, host)
-        listed = getter(f"{DOCKER_API_PREFIX}/containers/json?all=true")
-    except Exception as exc:
+        payload = json.loads(path.read_text())
+    except (OSError, json.JSONDecodeError) as exc:
         return DockerInfo(
             available=False,
             error=str(exc),
-            socket_path=resolved_socket,
+            source="unavailable",
+            snapshot_path=str(path),
         )
-
-    if not isinstance(listed, list):
+    if not isinstance(payload, dict):
         return DockerInfo(
             available=False,
-            error="Docker API returned a non-list container payload",
-            socket_path=resolved_socket,
-            project=project,
+            error="Runtime version snapshot is not an object",
+            source="unavailable",
+            snapshot_path=str(path),
         )
 
+    raw_containers = payload.get("containers") or []
     containers: list[ContainerVersion] = []
-    for raw in listed:
-        if not isinstance(raw, dict):
-            continue
-        if not _is_ring_container(raw, project):
-            continue
-        image_id = raw.get("ImageID")
-        git_sha, image_digest = _image_revision_and_digest(getter, image_id)
-        labels = raw.get("Labels") or {}
-        containers.append(
-            ContainerVersion(
-                service=labels.get("com.docker.compose.service"),
-                name=_container_name(raw),
-                container_id=str(raw.get("Id", "")),
-                image=raw.get("Image"),
-                image_id=image_id,
-                image_digest=image_digest,
-                git_sha=git_sha,
-                status=raw.get("Status"),
-                state=raw.get("State"),
-            )
-        )
+    if isinstance(raw_containers, list):
+        for raw in raw_containers:
+            if isinstance(raw, dict):
+                containers.append(_container_from_raw(raw))
     containers.sort(key=lambda item: (item.service or "", item.name))
+    error = payload.get("error")
     return DockerInfo(
-        available=True,
-        error=None,
-        socket_path=resolved_socket,
-        project=project,
+        available=error is None,
+        error=str(error) if error is not None else None,
+        source="snapshot",
+        snapshot_path=str(path),
+        generated_at=payload.get("generated_at"),
+        project=payload.get("project"),
         containers=containers,
+    )
+
+
+def clear_version_cache() -> None:
+    global _cached_at, _cached_version
+    with _cache_lock:
+        _cached_at = None
+        _cached_version = None
+
+
+def _should_use_cache(
+    *,
+    environ: dict[str, str] | None,
+    hostname: str | None,
+    snapshot_path: Path | str | None,
+    git_dir: Path | None,
+    use_cache: bool | None,
+) -> bool:
+    if use_cache is not None:
+        return use_cache
+    return (
+        environ is None
+        and hostname is None
+        and snapshot_path is None
+        and git_dir is None
     )
 
 
@@ -375,18 +301,39 @@ def get_version(
     *,
     environ: dict[str, str] | None = None,
     hostname: str | None = None,
-    request_json: JsonGetter | None = None,
-    socket_path: str | None = None,
+    snapshot_path: Path | str | None = None,
     git_dir: Path | None = None,
+    use_cache: bool | None = None,
 ) -> VersionResponse:
-    return VersionResponse(
+    global _cached_at, _cached_version
+    use_cached = _should_use_cache(
+        environ=environ,
+        hostname=hostname,
+        snapshot_path=snapshot_path,
+        git_dir=git_dir,
+        use_cache=use_cache,
+    )
+    now = time.monotonic()
+    if use_cached:
+        with _cache_lock:
+            if (
+                _cached_version is not None
+                and _cached_at is not None
+                and now - _cached_at < VERSION_CACHE_TTL_SECONDS
+            ):
+                return _cached_version
+
+    payload = VersionResponse(
         hostname=hostname or socket.gethostname(),
         git=collect_checkout_git(environ, git_dir=git_dir),
         image_build=collect_image_build_git(environ),
         docker=collect_docker_info(
             environ=environ,
-            hostname=hostname,
-            request_json=request_json,
-            socket_path=socket_path,
+            snapshot_path=snapshot_path,
         ),
     )
+    if use_cached:
+        with _cache_lock:
+            _cached_at = time.monotonic()
+            _cached_version = payload
+    return payload

@@ -2,13 +2,15 @@
 
 from __future__ import annotations
 
+import json
 import subprocess
 from pathlib import Path
-from typing import Any
 
 import pytest
 
+from ring.fastapp.schemas.version import GitCommitInfo
 from ring.lib.version_info import (
+    clear_version_cache,
     collect_checkout_git,
     collect_docker_info,
     collect_image_build_git,
@@ -72,130 +74,119 @@ class TestGitCollection:
 
 
 class TestDockerCollection:
-    def test_filters_to_compose_project(self) -> None:
-        payloads = {
-            "/v1.41/containers/ring-api/json": {
-                "Config": {"Labels": {"com.docker.compose.project": "ring"}}
-            },
-            "/v1.41/containers/json?all=true": [
+    def test_reads_host_snapshot(self, tmp_path: Path) -> None:
+        snapshot = tmp_path / ".ring-runtime-version.json"
+        snapshot.write_text(
+            json.dumps(
                 {
-                    "Id": "aaa",
-                    "Names": ["/ring-api"],
-                    "Image": "prod-ring-api:latest",
-                    "ImageID": "sha256:apiimage",
-                    "State": "running",
-                    "Status": "Up 2 hours",
-                    "Labels": {
-                        "com.docker.compose.project": "ring",
-                        "com.docker.compose.service": "api",
-                    },
-                },
-                {
-                    "Id": "bbb",
-                    "Names": ["/unrelated"],
-                    "Image": "nginx:latest",
-                    "ImageID": "sha256:other",
-                    "State": "running",
-                    "Status": "Up 1 hour",
-                    "Labels": {
-                        "com.docker.compose.project": "otherapp",
-                        "com.docker.compose.service": "web",
-                    },
-                },
-                {
-                    "Id": "ccc",
-                    "Names": ["/ring-frontend"],
-                    "Image": "prod-ring-frontend:latest",
-                    "ImageID": "sha256:feimage",
-                    "State": "running",
-                    "Status": "Up 2 hours",
-                    "Labels": {
-                        "com.docker.compose.project": "ring",
-                        "com.docker.compose.service": "frontend",
-                    },
-                },
-            ],
-            "/v1.41/images/sha256%3Aapiimage/json": {
-                "Config": {
-                    "Labels": {"org.opencontainers.image.revision": "abc123"}
-                },
-                "RepoDigests": [
-                    "public.ecr.aws/z2k1e8p1/ring-api@sha256:aaa111"
-                ],
-            },
-            "/v1.41/images/sha256%3Afeimage/json": {
-                "Config": {
-                    "Labels": {"org.opencontainers.image.revision": "abc123"}
-                },
-                "RepoDigests": [
-                    "public.ecr.aws/z2k1e8p1/ring-frontend@sha256:bbb222"
-                ],
-            },
-        }
-
-        def request_json(path: str) -> Any:
-            return payloads[path]
-
-        info = collect_docker_info(
-            hostname="ring-api",
-            request_json=request_json,
-            socket_path="/var/run/docker.sock",
+                    "generated_at": "2026-08-11T03:00:00+00:00",
+                    "project": "ring",
+                    "containers": [
+                        {
+                            "service": "api",
+                            "name": "ring-api",
+                            "container_id": "aaa",
+                            "image": "prod-ring-api:latest",
+                            "image_id": "sha256:apiimage",
+                            "image_digest": (
+                                "public.ecr.aws/z2k1e8p1/ring-api"
+                                "@sha256:aaa111"
+                            ),
+                            "git_sha": "abc123",
+                            "status": "running",
+                            "state": "running",
+                        },
+                        {
+                            "service": "frontend",
+                            "name": "ring-frontend",
+                            "container_id": "ccc",
+                            "image": "prod-ring-frontend:latest",
+                            "image_id": "sha256:feimage",
+                            "image_digest": (
+                                "public.ecr.aws/z2k1e8p1/"
+                                "ring-frontend@sha256:bbb222"
+                            ),
+                            "git_sha": "abc123",
+                            "status": "running",
+                            "state": "running",
+                        },
+                    ],
+                }
+            )
         )
+        info = collect_docker_info(snapshot_path=snapshot)
         assert info.available is True
+        assert info.source == "snapshot"
         assert info.project == "ring"
-        assert [c.service for c in info.containers] == ["api", "frontend"]
+        assert info.generated_at == "2026-08-11T03:00:00+00:00"
+        assert [c.service for c in info.containers] == [
+            "api",
+            "frontend",
+        ]
         assert info.containers[0].image_id == "sha256:apiimage"
-        assert (
-            info.containers[0].image_digest
-            == "public.ecr.aws/z2k1e8p1/ring-api@sha256:aaa111"
+        assert info.containers[0].image_digest == (
+            "public.ecr.aws/z2k1e8p1/ring-api@sha256:aaa111"
         )
         assert info.containers[0].git_sha == "abc123"
 
-    def test_includes_known_services_without_project(self) -> None:
-        def request_json(path: str) -> Any:
-            if path.endswith("/containers/unknown-host/json"):
-                raise RuntimeError("no such container")
-            if path.startswith("/v1.41/containers/json"):
-                return [
-                    {
-                        "Id": "api1",
-                        "Names": ["/whatever-api-1"],
-                        "Image": "prod-ring-api",
-                        "ImageID": "sha256:api",
-                        "State": "running",
-                        "Status": "Up",
-                        "Labels": {
-                            "com.docker.compose.project": "workspace",
-                            "com.docker.compose.service": "api",
-                        },
-                    }
-                ]
-            return {
-                "Config": {"Labels": {}},
-                "RepoDigests": ["prod-ring-api@sha256:abc"],
-            }
-
-        info = collect_docker_info(
-            hostname="unknown-host",
-            request_json=request_json,
-            socket_path="/var/run/docker.sock",
+    def test_snapshot_does_not_include_foreign_stacks(
+        self, tmp_path: Path
+    ) -> None:
+        snapshot = tmp_path / ".ring-runtime-version.json"
+        snapshot.write_text(
+            json.dumps(
+                {
+                    "generated_at": "2026-08-11T03:00:00+00:00",
+                    "project": "workspace",
+                    "containers": [
+                        {
+                            "service": "api",
+                            "name": "ring-api",
+                            "container_id": "api1",
+                            "image": "prod-ring-api",
+                            "image_id": "sha256:api",
+                            "image_digest": "prod-ring-api@sha256:abc",
+                            "git_sha": None,
+                            "status": "running",
+                            "state": "running",
+                        }
+                    ],
+                }
+            )
         )
+        info = collect_docker_info(snapshot_path=snapshot)
         assert info.available is True
-        assert info.project is None
+        assert info.project == "workspace"
         assert len(info.containers) == 1
         assert info.containers[0].service == "api"
-        assert info.containers[0].image_digest == "prod-ring-api@sha256:abc"
+        assert info.containers[0].name == "ring-api"
 
-    def test_missing_socket(self, tmp_path: Path) -> None:
-        info = collect_docker_info(
-            environ={"DOCKER_HOST": "unix://" + str(tmp_path / "missing.sock")}
-        )
+    def test_missing_snapshot(self, tmp_path: Path) -> None:
+        info = collect_docker_info(snapshot_path=tmp_path / "missing.json")
         assert info.available is False
+        assert info.source == "unavailable"
         assert info.error is not None
+
+    def test_invalid_snapshot(self, tmp_path: Path) -> None:
+        snapshot = tmp_path / "bad.json"
+        snapshot.write_text("not-json")
+        info = collect_docker_info(snapshot_path=snapshot)
+        assert info.available is False
+        assert info.source == "unavailable"
 
 
 class TestGetVersion:
-    def test_combines_git_and_docker(self) -> None:
+    def test_combines_git_and_docker(self, tmp_path: Path) -> None:
+        snapshot = tmp_path / "runtime.json"
+        snapshot.write_text(
+            json.dumps(
+                {
+                    "generated_at": "2026-08-11T03:00:00+00:00",
+                    "project": "ring",
+                    "containers": [],
+                }
+            )
+        )
         version = get_version(
             environ={
                 "RING_GIT_SHA": "checkoutsha",
@@ -203,21 +194,64 @@ class TestGetVersion:
                 "RING_BUILD_GIT_SUBJECT": "built",
             },
             hostname="ring-api",
-            request_json=lambda path: (
-                {"Config": {"Labels": {"com.docker.compose.project": "ring"}}}
-                if path.endswith("/json") and "containers/ring-api" in path
-                else []
-                if path.startswith("/v1.41/containers/json")
-                else {}
-            ),
-            socket_path="/var/run/docker.sock",
+            snapshot_path=snapshot,
         )
         assert version.hostname == "ring-api"
         assert version.git.sha == "checkoutsha"
         assert version.image_build.sha == "imagesha"
         assert version.image_build.subject == "built"
         assert version.docker.available is True
+        assert version.docker.source == "snapshot"
         assert version.docker.containers == []
+
+    def test_caches_unparameterized_calls(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        clear_version_cache()
+        calls = {"n": 0}
+
+        def counting_git(*args: object, **kwargs: object) -> GitCommitInfo:
+            calls["n"] += 1
+            return GitCommitInfo(sha="cached", source="env")
+
+        monkeypatch.setattr(
+            "ring.lib.version_info.collect_checkout_git",
+            counting_git,
+        )
+        first = get_version()
+        second = get_version()
+        assert calls["n"] == 1
+        assert first is second
+        clear_version_cache()
+        get_version()
+        assert calls["n"] == 2
+        clear_version_cache()
+
+    def test_cache_expires(self, monkeypatch: pytest.MonkeyPatch) -> None:
+        clear_version_cache()
+        clock = {"t": 100.0}
+        monkeypatch.setattr(
+            "ring.lib.version_info.time.monotonic",
+            lambda: clock["t"],
+        )
+        calls = {"n": 0}
+
+        def counting_git(*args: object, **kwargs: object) -> GitCommitInfo:
+            calls["n"] += 1
+            return GitCommitInfo(sha=f"n{calls['n']}", source="env")
+
+        monkeypatch.setattr(
+            "ring.lib.version_info.collect_checkout_git",
+            counting_git,
+        )
+        get_version()
+        clock["t"] += 14
+        get_version()
+        assert calls["n"] == 1
+        clock["t"] += 2
+        get_version()
+        assert calls["n"] == 2
+        clear_version_cache()
 
 
 def _git_available() -> bool:

@@ -189,8 +189,10 @@ Confirm what is actually running (no auth):
 curl -sS https://ring.neilsriv.tech/api/v1/version
 ```
 
-`git` is the host checkout, `image_build` is metadata baked into the API image,
-and `docker.containers[].image_id` / `image_digest` are the running images.
+`git` is the host checkout, `image_build` is metadata baked into the API
+image, and `docker.containers[].image_id` / `image_digest` come from a
+host-written snapshot (`.ring-runtime-version.json`, mounted read-only).
+The API does not talk to the Docker Engine.
 
 Compose files: `compose.core.yml` + `compose.prod.yml` (+ `llm/compose.prod.llm.yml` if LLM is enabled).
 

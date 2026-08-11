@@ -74,8 +74,10 @@ curl -sS https://ring.neilsriv.tech/api/v1/version
 ```
 
 Expect a 200 JSON body with `git.sha`, `image_build.sha`, and
-`docker.containers[].image_id` / `image_digest`. A connection error or missing
-route means the host is still on a pre-version image/checkout.
+`docker.containers[].image_id` / `image_digest`. Container identity comes
+from `.ring-runtime-version.json` written by `ring compose` / `prod.sh` —
+the API does not mount `docker.sock`. A connection error or missing route
+means the host is still on a pre-version image/checkout.
 
 Do not skip `--force-recreate`: compose keeps the old container when the local
 tag name (`prod-ring-api:latest`) is unchanged.

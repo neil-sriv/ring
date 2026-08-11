@@ -36,7 +36,9 @@ def stubbed_version() -> Generator[VersionResponse, None, None]:
         ),
         docker=DockerInfo(
             available=True,
-            socket_path="/var/run/docker.sock",
+            source="snapshot",
+            snapshot_path="/var/ring/runtime-version.json",
+            generated_at="2026-08-11T03:00:00+00:00",
             project="ring",
             containers=[],
         ),
@@ -82,6 +84,11 @@ class TestVersionAPI:
         }
         assert isinstance(body["docker"]["containers"], list)
         assert isinstance(body["hostname"], str)
+        assert "socket_path" not in body["docker"]
+        assert body["docker"]["source"] in {
+            "snapshot",
+            "unavailable",
+        }
         serialized = str(body)
         assert "JWT_SIGNING_KEY" not in serialized
         assert "VAPID_PRIVATE_KEY" not in serialized

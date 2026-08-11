@@ -1,16 +1,25 @@
 from __future__ import annotations
 
 import functools
+import sys
+from pathlib import Path
 from typing import Any, Callable
 
 import click
 
 from dev_util.dev import cmd_run, dev_group
 from dev_util.git_meta import apply_git_build_args_to_environ
+from dev_util.runtime_version import ensure_snapshot_file
+
+_RUNTIME_VERSION_SCRIPT = Path(__file__).resolve().parent / (
+    "runtime_version.py"
+)
 
 
 def compose_starter(profile: str) -> list[str]:
     apply_git_build_args_to_environ()
+    if profile != "test":
+        ensure_snapshot_file()
     profile_string = ["--profile", f"{profile}"]
     compose_file_strings: list[str] = []
     if profile == "test":
@@ -31,6 +40,18 @@ def compose_starter(profile: str) -> list[str]:
         + compose_file
         + profile_string
     )
+
+
+def _compose_with_snapshot(
+    profile: str,
+    compose_cmd: list[str],
+) -> list[str] | list[list[str]]:
+    if profile == "test":
+        return compose_cmd
+    return [
+        compose_cmd,
+        [sys.executable, str(_RUNTIME_VERSION_SCRIPT), "write"],
+    ]
 
 
 @dev_group("compose")
@@ -54,10 +75,11 @@ def compose_run(
             ctx: click.Context,
             *args: list[Any],
             **kwargs: dict[Any, Any],
-        ) -> list[str]:
+        ) -> list[str] | list[list[str]]:
             profile = kwargs.pop("profile")
             cmd_string = f(ctx, *args, **kwargs)
-            return compose_starter(profile) + cmd_string + ctx.args  # type: ignore
+            compose_cmd = compose_starter(profile) + cmd_string + ctx.args  # type: ignore
+            return _compose_with_snapshot(profile, compose_cmd)
 
         return inner
 
@@ -192,10 +214,11 @@ def compose_cmd_run(
             ctx: click.Context,
             *args: list[Any],
             **kwargs: dict[Any, Any],
-        ) -> list[str]:
+        ) -> list[str] | list[list[str]]:
             profile = kwargs.pop("profile")
             cmd_string = f(ctx, *args, **kwargs)
-            return compose_starter(profile) + cmd_string + ctx.args  # type: ignore
+            compose_cmd = compose_starter(profile) + cmd_string + ctx.args  # type: ignore
+            return _compose_with_snapshot(profile, compose_cmd)
 
         return inner
 

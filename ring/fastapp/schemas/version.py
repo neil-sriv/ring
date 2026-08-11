@@ -34,22 +34,28 @@ class ContainerVersion(BaseModel):
     )
     image_digest: str | None = Field(
         default=None,
-        description="Registry digest (name@sha256:...) when the image was pulled",
+        description=(
+            "Registry digest (name@sha256:...) when the image was pulled"
+        ),
     )
     git_sha: str | None = Field(
         default=None,
-        description="org.opencontainers.image.revision label baked into the image",
+        description=(
+            "org.opencontainers.image.revision label baked into the image"
+        ),
     )
     status: str | None = None
     state: str | None = None
 
 
 class DockerInfo(BaseModel):
-    """Docker Engine view of this compose project's containers."""
+    """Host-written snapshot of this compose project's containers."""
 
     available: bool
     error: str | None = None
-    socket_path: str | None = None
+    source: Literal["snapshot", "unavailable"] = "unavailable"
+    snapshot_path: str | None = None
+    generated_at: str | None = None
     project: str | None = None
     containers: list[ContainerVersion] = Field(default_factory=list)
 
