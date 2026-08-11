@@ -113,6 +113,14 @@ export default defineConfig({
     rollupOptions: {
       output: {
         manualChunks(id) {
+          /* Rollup's CommonJS interop helpers are virtual modules whose ids
+             contain no "node_modules". Left unassigned, Rollup hoisted them
+             into editor-vendor while react-vendor imported them, creating a
+             circular chunk import that evaluated tiptap's use-sync-external-store
+             shim before React initialized — blank page in every prod build. */
+          if (id.includes("commonjsHelpers")) {
+            return "react-vendor"
+          }
           if (!id.includes("node_modules")) {
             return
           }
@@ -128,7 +136,8 @@ export default defineConfig({
           if (
             id.includes("node_modules/react/") ||
             id.includes("node_modules/react-dom/") ||
-            id.includes("node_modules/scheduler/")
+            id.includes("node_modules/scheduler/") ||
+            id.includes("node_modules/use-sync-external-store/")
           ) {
             return "react-vendor"
           }
