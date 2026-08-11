@@ -102,25 +102,34 @@ export function resolveBuildVersion(
  * dev server serves an equivalent response from memory.
  */
 export function versionStamp(): Plugin {
+  // Resolved once so `built_at` names a build, not the moment of the
+  // request — the same thing it means on a real deploy.
   let payload = ""
+  const stamp = () => {
+    if (!payload) {
+      payload = `${JSON.stringify(resolveBuildVersion(), null, 2)}\n`
+    }
+    return payload
+  }
 
   return {
     name: "ring-version-stamp",
     buildStart() {
-      payload = `${JSON.stringify(resolveBuildVersion(), null, 2)}\n`
+      payload = ""
+      stamp()
     },
     generateBundle() {
       this.emitFile({
         type: "asset",
         fileName: VERSION_FILE_NAME,
-        source: payload,
+        source: stamp(),
       })
     },
     configureServer(server) {
       server.middlewares.use(`/${VERSION_FILE_NAME}`, (_req, res) => {
         res.setHeader("Content-Type", "application/json")
         res.setHeader("Cache-Control", "no-store")
-        res.end(`${JSON.stringify(resolveBuildVersion(), null, 2)}\n`)
+        res.end(stamp())
       })
     },
   }

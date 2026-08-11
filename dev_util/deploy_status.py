@@ -85,22 +85,26 @@ def parse_frontend(payload: dict) -> Component:
 
 
 def parse_api(payload: dict) -> Component:
-    """Read image_build out of the API's /version response."""
-    image = payload.get("image_build")
-    if not isinstance(image, dict):
-        return Component(name="api", error="/version has no image_build")
-    component = Component(
-        name="api",
-        sha=image.get("sha"),
-        branch=image.get("branch"),
-        timestamp=image.get("committed_at"),
-        timestamp_label="committed",
-        source=image.get("source"),
-        detail=image.get("subject"),
-    )
-    if component.sha is None:
-        component.error = "API is running an image with no commit stamped"
-    return component
+    """Read the commit out of the API's /version response.
+
+    Prod runs the image filesystem with no `.git`, so `image_build` is the
+    only truthful source there; a bind-mounted dev container is the other
+    way round.
+    """
+    for key in ("image_build", "git"):
+        block = payload.get(key)
+        if not isinstance(block, dict) or not block.get("sha"):
+            continue
+        return Component(
+            name="api",
+            sha=block.get("sha"),
+            branch=block.get("branch"),
+            timestamp=block.get("committed_at"),
+            timestamp_label="committed",
+            source=block.get("source"),
+            detail=block.get("subject"),
+        )
+    return Component(name="api", error="/version reports no commit")
 
 
 def collect(base_url: str = DEFAULT_BASE_URL) -> list[Component]:

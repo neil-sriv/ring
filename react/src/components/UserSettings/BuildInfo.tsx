@@ -77,7 +77,12 @@ const BuildInfo = () => {
     staleTime: 60_000,
   })
   const api = useQuery({ ...readVersionOptions(), retry: false })
-  const apiBuild = api.data?.image_build
+  // Prod runs the image filesystem with no .git, so image_build is the
+  // only truthful source there; a bind-mounted dev container is the
+  // other way round.
+  const apiBuild = api.data?.image_build.sha
+    ? api.data.image_build
+    : api.data?.git
 
   return (
     <div className="w-full">
