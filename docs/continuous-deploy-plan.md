@@ -17,7 +17,7 @@ Status legend: `[ ]` todo · `[x]` done. Update this file as phases land.
 | Frontend PR previews | ✅ Cloudflare Workers Builds deploys every branch; PR comments carry preview URLs (see [infrastructure.md](infrastructure.md)) |
 | Frontend prod | ✅ Cloudflare Workers Routes (`/*`); `/api/*` and `/.well-known/*` passthrough to EC2 nginx. Leftover `ring-frontend` container still runs as a rollback hatch (Phase 5 cleanup) |
 | Backend images | ✅ CI publishes `ring-api:latest` + `:<git-sha>` to ECR Public on `dev` pushes (#303) |
-| Backend rollout | ✅ `./dev_util/deploy_host.sh <published-sha>` (#308). First EC2 run 2026-08-11 pulled `60ca61b` (#306 image). Actions job not built yet |
+| Backend rollout | ✅ Image filesystem (#309, live 2026-08-11: `image_build.sha=195c464`, `git.source=unavailable`). Host script is still run by hand; Actions job not built yet |
 | Migrations | Run by `deploy_host.sh` (`uv run ring db upgrade --profile prod`) |
 | Version introspection | ✅ `GET /api/v1/version` returns git SHAs + image digests (#298) — verified 2026-08-11 after the #303 swap (`image_build.source=image_env`) |
 | CORS for previews | ✅ `BACKEND_CORS_ORIGIN_REGEX` live on prod (#295) |
@@ -25,7 +25,6 @@ Status legend: `[ ]` todo · `[x]` done. Update this file as phases land.
 Known remaining risks:
 
 - Host pull is still manual; a green publish does not restart prod.
-- Prod still bind-mounts `./ring` with uvicorn `--reload`, so running Python is the checkout, not the image. Image-only `prod.sh <sha>` is not a code rollback until the Phase 3 image-filesystem cutover.
 
 ---
 
@@ -112,7 +111,7 @@ image. Deploys still manual, but from CI artifacts only.
 - [x] Rollback recipe documented (README, infrastructure.md,
       `deploy_host.sh` / `prod.sh --help`). Prefer
       `./dev_util/deploy_host.sh <previous-sha>` (#308). Image-only
-      `prod.sh` is not a code rollback while `./ring` is bind-mounted.
+      `prod.sh` is a code rollback after the #309 cutover.
 - [x] Prod smoke after merge: `GET /api/v1/version` went from
       `image_build.source=unavailable` to `image_env` with
       `sha=9e7fd0bf…` and a new API `image_id`. Frontend/llm images
@@ -124,35 +123,28 @@ Outcome: deploying is one script on the box (and later a
 `workflow_dispatch` click that runs that script). Do **not** have
 Actions SSH a pile of commands — the host script is the interface.
 
-Image-filesystem cutover (required before the push-button job can
-treat the image as source of truth — otherwise a green gate can
-still mean "whatever is on disk"):
+Image-filesystem cutover *(done 2026-08-11 via #309; applied on EC2)*:
 
-- [ ] Stop mounting `./ring` and `./.git` into the prod API container
-      (`compose.core.yml` / `compose.prod.yml`) so the image
-      filesystem is what runs
-- [ ] Drop uvicorn `--reload` from `compose.prod.yml` in the same
-      cutover (file-watching also wastes RAM on the 1GB box)
-- [ ] Version gate after the cutover asserts `image_build.sha` / image
-      digest only — not checkout `git.sha`, which would still track
-      host `git pull`
-
-Until that cutover lands, `deploy_host.sh` must still checkout the
-SHA **and** assert both `git.sha` and `image_build.sha`.
+- [x] Stop mounting `./ring` and `./.git` into the prod API container
+      (bind-mounts stay in `compose.dev.yml` for local `--reload`)
+- [x] Drop uvicorn `--reload` from `compose.prod.yml`
+- [x] Version gate asserts `image_build.sha` only. `--rollback-on-fail`
+      captures live `image_build.sha` before mutating and restores
+      that image with `--skip-git`
+      Live `/version` after apply: `image_build.sha=195c464` (#309),
+      `git.source=unavailable`, new API `image_id`.
 
 - [x] Host script: [`dev_util/deploy_host.sh`](../dev_util/deploy_host.sh)
       / `uv run ring deploy host [sha]` (#308, merged 2026-08-11).
       On the box it:
-      1. `git fetch` + `git checkout -B dev <sha>` (only required
-         while `./ring` is bind-mounted)
+      1. `git fetch` + `git checkout -B dev <sha>` (compose/nginx on
+         disk; running Python is the image)
       2. `./dev_util/prod.sh <sha>` (image pull only)
       3. `uv run ring db upgrade --profile prod` (Cockroach URI never
          leaves the server `.env`)
       4. `uv run ring compose any --profile prod up -d --force-recreate`
-      5. Gate: curl `GET /api/v1/version`; today assert `git.sha` and
-         `image_build.sha`, after the cutover assert `image_build.sha`
-         / digest only. `--rollback-on-fail` re-runs the same script
-         on the pre-deploy SHA
+      5. Gate: curl `GET /api/v1/version`, assert `image_build.sha`.
+         `--rollback-on-fail` restores the pre-deploy image SHA
       Rollback: `./dev_util/deploy_host.sh <previous-sha>`
       First EC2 run 2026-08-11: `0f1871c` (#308) has no image
       (docs/script-only; `publish_api.yml` did not run). Deployed
@@ -232,7 +224,9 @@ These only tidy the EC2 fallback and unused `www.ring` routes.
 - [x] Registry: **stay on ECR Public** (`public.ecr.aws/z2k1e8p1/`).
       Decided in #303 — EC2 already pulls public images with no token.
       GHCR would need a pull credential on the box.
-- [ ] EC2 access from Actions: SSH key secret vs AWS SSM Session Manager
+- [x] EC2 access from Actions: **SSH** (`PROD_SSH_HOST` / `PROD_SSH_USER` /
+      `PROD_SSH_KEY`), same shape as superseded #290. SSM still possible
+      later; not required to get push-button deploys.
 - [x] `ring-llm` does **not** join CD (heavy image; still manual / inactive)
 - [ ] Whether to keep an escape hatch (`VITE_MAINTENANCE_MODE` fast path
       or a `deploy:pause` label) for freezing auto-deploys during
