@@ -23,7 +23,7 @@ import {
   readLetterLettersLetterLetterApiIdGetQueryKey,
 } from "../../client/@tanstack/react-query.gen"
 import useCustomToast from "../../hooks/useCustomToast"
-import { toISOLocal } from "../../util/misc"
+import { formatApiErrorDetail, toISOLocal } from "../../util/misc"
 
 type LetterFormProps = {
   sendAt: Date | string
@@ -69,9 +69,11 @@ const EditLetter = ({ isOpen, onClose, loop }: EditLetterProps) => {
     onError: (
       err: AxiosError<EditLetterLettersLetterLetterApiIdEditLetterPostError>,
     ) => {
-      const errDetail =
-        err.response?.data.detail || "no error detail, please contact support"
-      showToast("Something went wrong.", `${errDetail}`, "error")
+      showToast(
+        "Something went wrong.",
+        formatApiErrorDetail(err.response?.data?.detail),
+        "error",
+      )
     },
     onSettled: () => {
       queryClient.invalidateQueries({
@@ -89,12 +91,15 @@ const EditLetter = ({ isOpen, onClose, loop }: EditLetterProps) => {
       status?: LetterStatus
     } = {}
 
-    // Only include fields that have changed
-    if (
+    // valueAsDate yields a Date; compare minute-precision local strings so
+    // an unchanged datetime-local value does not count as a change.
+    const previousSendAtLocal = toISOLocal(previousSendAt).slice(0, 16)
+    const nextSendAtLocal =
       data.sendAt instanceof Date
-        ? toISOLocal(data.sendAt)
-        : data.sendAt !== toISOLocal(previousSendAt).slice(0, 16)
-    ) {
+        ? toISOLocal(data.sendAt).slice(0, 16)
+        : String(data.sendAt).slice(0, 16)
+
+    if (nextSendAtLocal !== previousSendAtLocal) {
       updateData.send_at =
         data.sendAt instanceof Date ? toISOLocal(data.sendAt) : data.sendAt
     }

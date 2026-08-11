@@ -12,7 +12,7 @@ import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
 import { useMutation, useQueryClient } from "@tanstack/react-query"
 import type { AxiosError } from "axios"
-import { Loader2, Trash2 } from "lucide-react"
+import { Check, Loader2, Trash2 } from "lucide-react"
 import { useEffect, useRef, useState } from "react"
 import {
   type DeleteQuestionQuestionsQuestionQuestionApiIdDeleteError,
@@ -30,6 +30,7 @@ import {
 } from "../../client/@tanstack/react-query.gen"
 import { useAutoResizeTextarea } from "../../hooks/useAutoResizeTextarea"
 import useCustomToast from "../../hooks/useCustomToast"
+import { formatApiErrorDetail } from "../../util/misc"
 import {
   S3Image,
   S3Video,
@@ -45,24 +46,80 @@ type ResponseBlockProps = {
   readOnly?: boolean
 }
 
+type DraftSaveStatus = "idle" | "saving" | "saved" | "error"
+
+function DraftSaveStatusLine({ status }: { status: DraftSaveStatus }) {
+  switch (status) {
+    case "idle":
+      return null
+    case "saving":
+      return (
+        <div
+          className="mt-1 flex items-center gap-1.5 text-sm text-muted-foreground"
+          role="status"
+          aria-live="polite"
+        >
+          <Loader2 className="h-3.5 w-3.5 animate-spin" />
+          Saving...
+        </div>
+      )
+    case "saved":
+      return (
+        <div
+          className="mt-1 flex items-center gap-1.5 text-sm text-green-600 dark:text-green-400"
+          role="status"
+          aria-live="polite"
+        >
+          <Check className="h-3.5 w-3.5" />
+          Saved
+        </div>
+      )
+    case "error":
+      return (
+        <div
+          className="mt-1 flex items-center gap-1.5 text-sm text-destructive"
+          role="status"
+          aria-live="polite"
+        >
+          Couldn't save
+        </div>
+      )
+    default: {
+      const _exhaustive: never = status
+      return _exhaustive
+    }
+  }
+}
+
 function ResponseBlock(props: ResponseBlockProps) {
   const [responseText, setResponseText] = useState(
     props.response?.response_text ?? "",
   )
-  const [isSaving, setIsSaving] = useState(false)
+  const [saveStatus, setSaveStatus] = useState<DraftSaveStatus>("idle")
   const debounceTimeoutRef = useRef<NodeJS.Timeout | null>(null)
   const savingStartTimeRef = useRef<number | null>(null)
+  const lastSavedTextRef = useRef(props.response?.response_text ?? "")
+  const responseTextRef = useRef(responseText)
+  const saveSeqRef = useRef(0)
   const showToast = useCustomToast()
   const textareaRef = useAutoResizeTextarea(responseText)
 
-  // Update local state when response prop changes
+  responseTextRef.current = responseText
+
+  // Don't clobber in-progress typing when letter props refresh.
   useEffect(() => {
-    setResponseText(props.response?.response_text ?? "")
+    const nextText = props.response?.response_text ?? ""
+    if (responseTextRef.current !== lastSavedTextRef.current) {
+      return
+    }
+    setResponseText(nextText)
+    lastSavedTextRef.current = nextText
   }, [props.response?.response_text])
 
   const handleResponseChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     const newValue = e.target.value
     setResponseText(newValue)
+    setSaveStatus(newValue === lastSavedTextRef.current ? "saved" : "idle")
 
     // Clear existing timeout
     if (debounceTimeoutRef.current) {
@@ -71,24 +128,45 @@ function ResponseBlock(props: ResponseBlockProps) {
 
     // Set new timeout for debounced save
     debounceTimeoutRef.current = setTimeout(async () => {
-      if (newValue !== (props.response?.response_text ?? "")) {
-        savingStartTimeRef.current = Date.now()
-        setIsSaving(true)
-        try {
-          await props.submitResponse(newValue)
-          showToast("Success!", "Answer saved.", "success")
-        } catch (error) {
-          console.error("Failed to save response:", error)
-          showToast("Error!", "Failed to save answer.", "error")
-        } finally {
-          // Ensure saving animation shows for at least 250ms
-          const elapsed = Date.now() - (savingStartTimeRef.current || 0)
-          const remainingTime = Math.max(0, 250 - elapsed)
+      if (newValue === lastSavedTextRef.current) {
+        return
+      }
 
-          setTimeout(() => {
-            setIsSaving(false)
-          }, remainingTime)
+      const seq = ++saveSeqRef.current
+      savingStartTimeRef.current = Date.now()
+      setSaveStatus("saving")
+      try {
+        await props.submitResponse(newValue)
+        if (saveSeqRef.current === seq) {
+          lastSavedTextRef.current = newValue
         }
+      } catch (error) {
+        const axiosError = error as AxiosError<{ detail?: unknown }>
+        showToast(
+          "Error!",
+          formatApiErrorDetail(
+            axiosError.response?.data?.detail,
+            "Failed to save answer.",
+          ),
+          "error",
+        )
+        if (
+          saveSeqRef.current === seq &&
+          responseTextRef.current === newValue
+        ) {
+          setSaveStatus("error")
+        }
+        return
+      }
+
+      // Ensure saving animation shows for at least 250ms
+      const elapsed = Date.now() - (savingStartTimeRef.current || 0)
+      const remainingTime = Math.max(0, 250 - elapsed)
+      if (remainingTime > 0) {
+        await new Promise((resolve) => setTimeout(resolve, remainingTime))
+      }
+      if (saveSeqRef.current === seq && responseTextRef.current === newValue) {
+        setSaveStatus("saved")
       }
     }, 1000) // 1 second debounce
   }
@@ -102,6 +180,8 @@ function ResponseBlock(props: ResponseBlockProps) {
     }
   }, [])
 
+  const isSaving = saveStatus === "saving"
+
   return (
     <div className="my-2.5">
       <Textarea
@@ -114,9 +194,7 @@ function ResponseBlock(props: ResponseBlockProps) {
           isSaving ? "opacity-70" : "opacity-100"
         }`}
       />
-      {isSaving && (
-        <div className="text-sm text-muted-foreground mt-1">Saving...</div>
-      )}
+      {!props.readOnly && <DraftSaveStatusLine status={saveStatus} />}
       {!props.readOnly && (
         <SingleUploadImage
           onUpdateFile={props.uploadFunction}
@@ -186,9 +264,11 @@ function DraftQuestion({
     onError: (
       error: AxiosError<DeleteQuestionQuestionsQuestionQuestionApiIdDeleteError>,
     ) => {
-      const errDetail =
-        error.response?.data.detail || "no error detail, please contact support"
-      showToast("Something went wrong.", `${errDetail}`, "error")
+      showToast(
+        "Something went wrong.",
+        formatApiErrorDetail(error.response?.data?.detail),
+        "error",
+      )
     },
   })
 
@@ -200,33 +280,43 @@ function DraftQuestion({
   }
 
   const handleUpsert = async (responseText: string): Promise<void> => {
-    try {
-      await upsertResponseQuestionsQuestionQuestionApiIdUpsertResponsePost({
-        path: { question_api_id: question.api_identifier },
-        body: {
-          response_text: responseText,
-          participant_api_identifier: currentUser.api_identifier,
-        },
-        throwOnError: true, // This will make the function throw on HTTP error status codes
-      })
-    } catch (error) {
-      console.error("Error in handleUpsert:", error)
-      throw error // Re-throw to be caught by the calling function
-    }
+    await upsertResponseQuestionsQuestionQuestionApiIdUpsertResponsePost({
+      path: { question_api_id: question.api_identifier },
+      body: {
+        response_text: responseText,
+        participant_api_identifier: currentUser.api_identifier,
+      },
+      throwOnError: true,
+    })
   }
 
   const newHandleUpload = async (file: File) => {
-    await uploadImageQuestionsQuestionQuestionApiIdUploadImagePost({
-      path: { question_api_id: question.api_identifier },
-      body: {
-        response_image: file,
-      },
-    })
-    queryClient.invalidateQueries({
-      queryKey: readLetterLettersLetterLetterApiIdGetQueryKey({
-        path: { letter_api_id: loopApiId },
-      }),
-    })
+    try {
+      await uploadImageQuestionsQuestionQuestionApiIdUploadImagePost({
+        path: { question_api_id: question.api_identifier },
+        body: {
+          response_image: file,
+        },
+        throwOnError: true,
+      })
+      queryClient.invalidateQueries({
+        queryKey: readLetterLettersLetterLetterApiIdGetQueryKey({
+          path: { letter_api_id: loopApiId },
+        }),
+      })
+      showToast("Success!", "Image uploaded successfully.", "success")
+    } catch (error) {
+      const axiosError = error as AxiosError<{ detail?: unknown }>
+      showToast(
+        "Error!",
+        formatApiErrorDetail(
+          axiosError.response?.data?.detail,
+          "Failed to upload image.",
+        ),
+        "error",
+      )
+      throw error
+    }
   }
 
   const handleDeleteImage = async (s3Url: string) => {
@@ -267,12 +357,11 @@ function DraftQuestion({
         query: {
           s3_url: s3Url,
         },
+        throwOnError: true,
       })
 
       showToast("Success!", "Image deleted successfully.", "success")
     } catch (error) {
-      console.error("Error deleting image:", error)
-
       // Revert optimistic update on error
       queryClient.invalidateQueries({
         queryKey: readLetterLettersLetterLetterApiIdGetQueryKey({
@@ -280,7 +369,15 @@ function DraftQuestion({
         }),
       })
 
-      showToast("Error!", "Failed to delete image.", "error")
+      const axiosError = error as AxiosError<{ detail?: unknown }>
+      showToast(
+        "Error!",
+        formatApiErrorDetail(
+          axiosError.response?.data?.detail,
+          "Failed to delete image.",
+        ),
+        "error",
+      )
     }
   }
 
