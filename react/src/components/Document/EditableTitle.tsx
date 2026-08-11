@@ -1,8 +1,10 @@
 import { Input } from "@/components/ui/input"
 import { cn } from "@/lib/utils"
+import type { AxiosError } from "axios"
 import { Loader2 } from "lucide-react"
 import { useEffect, useRef, useState } from "react"
 import useCustomToast from "../../hooks/useCustomToast"
+import { formatApiErrorDetail } from "../../util/misc"
 
 interface EditableTitleProps {
   title: string
@@ -66,8 +68,15 @@ export function EditableTitle({
       await onTitleChange(editValue.trim())
       setIsEditing(false)
     } catch (error) {
-      console.error("Failed to update title:", error)
-      showToast("Failed to update title", "Please try again", "error")
+      const axiosError = error as AxiosError<{ detail?: unknown }>
+      showToast(
+        "Failed to update title",
+        formatApiErrorDetail(
+          axiosError.response?.data?.detail,
+          "Please try again",
+        ),
+        "error",
+      )
       setEditValue(title) // Reset to original value
       setIsEditing(false)
     }
