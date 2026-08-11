@@ -251,10 +251,16 @@ Official flow (Workers Builds, updated 2026-07-03):
 You will **not** see "Build output directory", "Framework preset", or
 "Pages". Those belong to the older Pages wizard (see below).
 
-6. Add **build environment variables** (needed at `pnpm run build`
-   time). If they are not on this screen, add them after the first
-   deploy under **Settings → Build** (or **Settings → Variables and
-   Secrets**, environment = Production *and* Preview):
+6. Add **build-time** variables under **Settings → Build → Build
+   variables and secrets** (available during `pnpm run build`). Do
+   **not** use **Settings → Variables and Secrets** — those are
+   runtime Worker bindings and Vite never sees them. Without
+   `VITE_API_URL` at build time the client falls back to same-origin
+   `/api/v1` on `*.workers.dev` and API calls fail even when CORS
+   is configured. Preview builds do not inherit production build
+   vars; if the dashboard shows two build triggers, set the same
+   values on both. The Preview *runtime* environment tab can stay
+   empty.
 
 | Name | Value |
 |------|-------|
