@@ -12,7 +12,7 @@ import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
 import { useMutation, useQueryClient } from "@tanstack/react-query"
 import type { AxiosError } from "axios"
-import { Loader2, Trash2 } from "lucide-react"
+import { Check, Loader2, Trash2 } from "lucide-react"
 import { useEffect, useRef, useState } from "react"
 import {
   type DeleteQuestionQuestionsQuestionQuestionApiIdDeleteError,
@@ -46,20 +46,72 @@ type ResponseBlockProps = {
   readOnly?: boolean
 }
 
+type DraftSaveStatus = "idle" | "saving" | "saved" | "error"
+
+function DraftSaveStatusLine({ status }: { status: DraftSaveStatus }) {
+  switch (status) {
+    case "idle":
+      return null
+    case "saving":
+      return (
+        <div
+          className="mt-1 flex items-center gap-1.5 text-sm text-muted-foreground"
+          role="status"
+          aria-live="polite"
+        >
+          <Loader2 className="h-3.5 w-3.5 animate-spin" />
+          Saving...
+        </div>
+      )
+    case "saved":
+      return (
+        <div
+          className="mt-1 flex items-center gap-1.5 text-sm text-green-600 dark:text-green-400"
+          role="status"
+          aria-live="polite"
+        >
+          <Check className="h-3.5 w-3.5" />
+          Saved
+        </div>
+      )
+    case "error":
+      return (
+        <div
+          className="mt-1 flex items-center gap-1.5 text-sm text-destructive"
+          role="status"
+          aria-live="polite"
+        >
+          Couldn't save
+        </div>
+      )
+    default: {
+      const _exhaustive: never = status
+      return _exhaustive
+    }
+  }
+}
+
 function ResponseBlock(props: ResponseBlockProps) {
   const [responseText, setResponseText] = useState(
     props.response?.response_text ?? "",
   )
-  const [isSaving, setIsSaving] = useState(false)
+  const [saveStatus, setSaveStatus] = useState<DraftSaveStatus>("idle")
   const debounceTimeoutRef = useRef<NodeJS.Timeout | null>(null)
   const savingStartTimeRef = useRef<number | null>(null)
   const lastSavedTextRef = useRef(props.response?.response_text ?? "")
+  const responseTextRef = useRef(responseText)
+  const saveSeqRef = useRef(0)
   const showToast = useCustomToast()
   const textareaRef = useAutoResizeTextarea(responseText)
 
-  // Update local state when response prop changes
+  responseTextRef.current = responseText
+
+  // Don't clobber in-progress typing when letter props refresh.
   useEffect(() => {
     const nextText = props.response?.response_text ?? ""
+    if (responseTextRef.current !== lastSavedTextRef.current) {
+      return
+    }
     setResponseText(nextText)
     lastSavedTextRef.current = nextText
   }, [props.response?.response_text])
@@ -67,6 +119,7 @@ function ResponseBlock(props: ResponseBlockProps) {
   const handleResponseChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     const newValue = e.target.value
     setResponseText(newValue)
+    setSaveStatus(newValue === lastSavedTextRef.current ? "saved" : "idle")
 
     // Clear existing timeout
     if (debounceTimeoutRef.current) {
@@ -75,32 +128,42 @@ function ResponseBlock(props: ResponseBlockProps) {
 
     // Set new timeout for debounced save
     debounceTimeoutRef.current = setTimeout(async () => {
-      if (newValue !== lastSavedTextRef.current) {
-        savingStartTimeRef.current = Date.now()
-        setIsSaving(true)
-        try {
-          await props.submitResponse(newValue)
-          lastSavedTextRef.current = newValue
-          // Inline "Saving..." is enough for autosave; avoid toast spam.
-        } catch (error) {
-          const axiosError = error as AxiosError<{ detail?: unknown }>
-          showToast(
-            "Error!",
-            formatApiErrorDetail(
-              axiosError.response?.data?.detail,
-              "Failed to save answer.",
-            ),
-            "error",
-          )
-        } finally {
-          // Ensure saving animation shows for at least 250ms
-          const elapsed = Date.now() - (savingStartTimeRef.current || 0)
-          const remainingTime = Math.max(0, 250 - elapsed)
+      if (newValue === lastSavedTextRef.current) {
+        return
+      }
 
-          setTimeout(() => {
-            setIsSaving(false)
-          }, remainingTime)
+      const seq = ++saveSeqRef.current
+      savingStartTimeRef.current = Date.now()
+      setSaveStatus("saving")
+      try {
+        await props.submitResponse(newValue)
+        if (saveSeqRef.current === seq) {
+          lastSavedTextRef.current = newValue
         }
+      } catch (error) {
+        const axiosError = error as AxiosError<{ detail?: unknown }>
+        showToast(
+          "Error!",
+          formatApiErrorDetail(
+            axiosError.response?.data?.detail,
+            "Failed to save answer.",
+          ),
+          "error",
+        )
+        if (saveSeqRef.current === seq && responseTextRef.current === newValue) {
+          setSaveStatus("error")
+        }
+        return
+      }
+
+      // Ensure saving animation shows for at least 250ms
+      const elapsed = Date.now() - (savingStartTimeRef.current || 0)
+      const remainingTime = Math.max(0, 250 - elapsed)
+      if (remainingTime > 0) {
+        await new Promise((resolve) => setTimeout(resolve, remainingTime))
+      }
+      if (saveSeqRef.current === seq && responseTextRef.current === newValue) {
+        setSaveStatus("saved")
       }
     }, 1000) // 1 second debounce
   }
@@ -114,6 +177,8 @@ function ResponseBlock(props: ResponseBlockProps) {
     }
   }, [])
 
+  const isSaving = saveStatus === "saving"
+
   return (
     <div className="my-2.5">
       <Textarea
@@ -126,9 +191,7 @@ function ResponseBlock(props: ResponseBlockProps) {
           isSaving ? "opacity-70" : "opacity-100"
         }`}
       />
-      {isSaving && (
-        <div className="text-sm text-muted-foreground mt-1">Saving...</div>
-      )}
+      {!props.readOnly && <DraftSaveStatusLine status={saveStatus} />}
       {!props.readOnly && (
         <SingleUploadImage
           onUpdateFile={props.uploadFunction}
