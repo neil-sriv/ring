@@ -1,13 +1,19 @@
 ---
 name: ring-deploy-prod
-description: Build and ship Ring's production images to public ECR. Use when the user asks to deploy to prod, push prod images, release, or rebuild/publish the frontend, api, or llm images to public.ecr.aws.
+description: Build and ship Ring's production backend images to public ECR. Use when the user asks to deploy to prod, push prod images, release, or rebuild/publish the api or llm images to public.ecr.aws. The frontend deploys via Cloudflare, not this flow.
 ---
 
 # Deploying Ring to prod
 
-Prod runs from images published to the public ECR registry
-`public.ecr.aws/z2k1e8p1/` (`ring-frontend`, `ring-api`, `ring-llm`). Deploying
-means building those images locally, authenticating to ECR, and pushing them.
+Prod backend runs from images published to the public ECR registry
+`public.ecr.aws/z2k1e8p1/` (`ring-api`, `ring-llm`). Deploying means
+building those images locally, authenticating to ECR, and pushing them.
+
+**The frontend is NOT deployed this way.** It is served by the Cloudflare
+Worker `ring-frontend`, auto-deployed by Cloudflare Workers Builds on
+every merge to `dev` that touches `react/`. See the "Frontend PR
+previews" section of [docs/infrastructure.md](../../../docs/infrastructure.md)
+and [docs/continuous-deploy-plan.md](../../../docs/continuous-deploy-plan.md).
 
 ## One command
 
@@ -17,29 +23,22 @@ ring deploy prod
 
 This runs, in order:
 
-1. `ring fe build` — build the frontend bundle (`react/dist`) served by nginx.
-2. `compose --profile prod build` — build all prod images, passing
-   `VITE_API_URL` / `VITE_MAINTENANCE_MODE` as frontend build args.
-3. `aws ecr-public get-login-password | docker login … public.ecr.aws` —
+1. `compose --profile prod build` — build the prod backend images.
+2. `aws ecr-public get-login-password | docker login … public.ecr.aws` —
    authenticate Docker against public ECR (`us-east-1`).
-4. `ring docker tp` — tag the `prod-*` images and push them to ECR.
+3. `ring docker tp` — tag the `prod-*` images and push them to ECR.
 
 ### Options
 
 | Flag | Default | Purpose |
 |------|---------|---------|
-| `--vite-api-url` | `https://ring.neilsriv.tech` | `VITE_API_URL` baked into the frontend image |
-| `--maintenance-mode` / `--no-maintenance-mode` | off | `VITE_MAINTENANCE_MODE` build arg |
 | `--region` | `us-east-1` | AWS region for the ECR login |
-| `--skip-fe-build` | off | Reuse existing `react/dist`, skip step 1 |
-| `--skip-login` | off | Skip step 3 if already logged in |
+| `--skip-login` | off | Skip step 2 if already logged in |
 
 ## Manual equivalent
 
 ```bash
-uv run ring fe build
-VITE_API_URL=https://ring.neilsriv.tech VITE_MAINTENANCE_MODE=false \
-  uv run ring compose any --profile prod build
+uv run ring compose any --profile prod build
 aws ecr-public get-login-password --region us-east-1 \
   | docker login --username AWS --password-stdin public.ecr.aws
 uv run ring docker tp
@@ -63,8 +62,11 @@ cd ring
 git checkout dev            # detached HEAD makes `git pull` fail
 git pull origin dev
 ./dev_util/prod.sh
-ring compose any --profile prod up -d --force-recreate
+ring compose any --profile prod up -d --force-recreate --remove-orphans
 ```
+
+`--remove-orphans` clears containers whose services were removed from the
+compose files (e.g. the retired `ring-frontend` container).
 
 The API volume-mounts `./ring` with `--reload`, so the checkout on disk is the
 running Python. Verify with:
@@ -82,10 +84,19 @@ means the host is still on a pre-version image/checkout.
 Do not skip `--force-recreate`: compose keeps the old container when the local
 tag name (`prod-ring-api:latest`) is unchanged.
 
+## Frontend deploys (for reference)
+
+- Merge to `dev` → Cloudflare Workers Builds builds `react/` and deploys
+  the `ring-frontend` Worker (~2 min). No ECR, no EC2 involvement.
+- Maintenance mode: set `VITE_MAINTENANCE_MODE=true` in the Worker's
+  build variables (Settings → Build) and retry the latest build; unset
+  to restore.
+- Rollback: redeploy a previous version from the Worker's Deployments
+  tab in the Cloudflare dashboard.
+
 ## Notes
 
 - Pushing publishes `:latest`; there is no per-release version tag today.
-- Set `--maintenance-mode` to ship a frontend that renders the maintenance page.
 - Image/registry names live in `dev_util/docker.py`; the deploy command lives in
   `dev_util/deploy.py`.
 - Builds bake the current git SHA into image labels (`org.opencontainers.image.revision`)

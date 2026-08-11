@@ -6,8 +6,8 @@ from dev_util.dev import dev_command, dev_group, subprocess_run
 
 ECR_URI_BASE = "public.ecr.aws/z2k1e8p1/"
 
+# ring-frontend is deployed by Cloudflare Workers Builds, not via ECR.
 IMAGE_TAG_NAMES = [
-    "ring-frontend",
     "ring-api",
     "ring-llm",
 ]

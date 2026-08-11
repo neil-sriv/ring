@@ -6,7 +6,9 @@ if [[ ! -x "$PYTHON" ]]; then
     PYTHON="${PYTHON3:-python3}"
 fi
 
-declare -a images=("ring-api" "ring-frontend" "ring-llm")
+# ring-frontend is served by Cloudflare Workers (auto-deployed on dev
+# merges), not from an image on this host.
+declare -a images=("ring-api" "ring-llm")
 
 for i in "${images[@]}"
 do
@@ -18,5 +20,5 @@ done
 # Snapshot pulled image identity for GET /version. Compose up refreshes
 # this with running container ids after --force-recreate.
 "$PYTHON" "${ROOT}/dev_util/runtime_version.py" write \
-    --images prod-ring-api,prod-ring-frontend,prod-ring-llm \
+    --images prod-ring-api,prod-ring-llm \
     || true
