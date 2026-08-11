@@ -25,7 +25,7 @@ Status legend: `[ ]` todo · `[x]` done. Update this file as phases land.
 Known remaining risks:
 
 - Host pull is still manual; a green publish does not restart prod.
-- Prod still bind-mounts `./ring` with uvicorn `--reload`, so running Python is the checkout, not the image. Image-only `prod.sh <sha>` is not a code rollback (Phase 4 removes this).
+- Prod still bind-mounts `./ring` with uvicorn `--reload`, so running Python is the checkout, not the image. Image-only `prod.sh <sha>` is not a code rollback until the Phase 3 image-filesystem cutover.
 
 ---
 
@@ -42,8 +42,10 @@ the first half of the north star and needs no backend work.
       A custom domain would swallow `/api/v1/*` (this took prod down
       briefly on 2026-08-11). Instead, in the Cloudflare zone
       (dash → `neilsriv.tech` → Workers Routes) add, in this order:
-      1. `ring.neilsriv.tech/api/*` → Worker: **None** (passthrough to
-         EC2 nginx — keeps WebSockets and 500MB uploads on nginx)
+      1. `ring.neilsriv.tech/api/*` → Worker: **None** (passthrough
+         keeps WebSockets on nginx/origin and avoids Worker handling
+         of `/api/*`; upload size stays the existing Cloudflare plan
+         limit of 100MB — route split does not restore nginx's 500MB)
       2. `ring.neilsriv.tech/.well-known/*` → Worker: **None**
          (**required**: certbot's HTTP-01 renewal challenge flows
          through the proxy to nginx; without this exclusion the
@@ -122,17 +124,34 @@ Outcome: deploying is one script on the box (and later a
 `workflow_dispatch` click that runs that script). Do **not** have
 Actions SSH a pile of commands — the host script is the interface.
 
+Image-filesystem cutover (required before the push-button job can
+treat the image as source of truth — otherwise a green gate can
+still mean "whatever is on disk"):
+
+- [ ] Stop mounting `./ring` and `./.git` into the prod API container
+      (`compose.core.yml` / `compose.prod.yml`) so the image
+      filesystem is what runs
+- [ ] Drop uvicorn `--reload` from `compose.prod.yml` in the same
+      cutover (file-watching also wastes RAM on the 1GB box)
+- [ ] Version gate after the cutover asserts `image_build.sha` / image
+      digest only — not checkout `git.sha`, which would still track
+      host `git pull`
+
+Until that cutover lands, `deploy_host.sh` must still checkout the
+SHA **and** assert both `git.sha` and `image_build.sha`.
+
 - [ ] Host script: [`dev_util/deploy_host.sh`](../dev_util/deploy_host.sh)
       / `uv run ring deploy host [sha]` (#308). On the box it:
-      1. `git fetch` + `git checkout -B dev <sha>` (keep a branch so
-         later `git pull` works; required while `./ring` is bind-mounted)
+      1. `git fetch` + `git checkout -B dev <sha>` (only required
+         while `./ring` is bind-mounted)
       2. `./dev_util/prod.sh <sha>` (image pull only)
-      3. `uv run ring db upgrade` (Cockroach URI never leaves the
-         server `.env`)
+      3. `uv run ring db upgrade --profile prod` (Cockroach URI never
+         leaves the server `.env`)
       4. `uv run ring compose any --profile prod up -d --force-recreate`
-      5. Gate: curl `GET /api/v1/version`, assert `git.sha` and
-         `image_build.sha`; `--rollback-on-fail` re-runs the same
-         script on the pre-deploy SHA
+      5. Gate: curl `GET /api/v1/version`; today assert `git.sha` and
+         `image_build.sha`, after the cutover assert `image_build.sha`
+         / digest only. `--rollback-on-fail` re-runs the same script
+         on the pre-deploy SHA
       Rollback: `./dev_util/deploy_host.sh <previous-sha>`
 - [ ] Deploy job: connect to EC2 (SSH key in repo secrets, or AWS SSM
       Session Manager for keyless) and run
@@ -145,9 +164,8 @@ Actions SSH a pile of commands — the host script is the interface.
 
 - [ ] Change trigger from `workflow_dispatch` to `push: branches: [dev]`
       after several clean push-button runs
-- [ ] Remove `--reload` from the prod uvicorn command in
-      `compose.prod.yml` (file-watching wastes RAM on the 1GB box;
-      deploys are image swaps now)
+- [ ] Stop checking out git on the host during deploy (`deploy_host.sh
+      --skip-git`) once the bind-mount is gone
 - [ ] Retire `ring deploy prod` for everything except `ring-llm`
 - [ ] Update [infrastructure.md](infrastructure.md) deployment section
 
