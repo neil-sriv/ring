@@ -1,7 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import { createFileRoute } from "@tanstack/react-router"
 import { Loader2 } from "lucide-react"
-import { Suspense, useRef, useState } from "react"
+import { Suspense, lazy, useRef, useState } from "react"
 import type { DocumentResponse } from "../../../client"
 import {
   getDocumentEndpointNotebookDocumentsDocumentApiIdGetOptions,
@@ -9,11 +9,16 @@ import {
   updateDocumentEndpointNotebookDocumentsDocumentApiIdPutMutation,
 } from "../../../client/@tanstack/react-query.gen"
 import { EditableTitle } from "../../../components/Document/EditableTitle"
-import { CollabEditor } from "../../../components/Document/Editor"
 
 type DocumentLoaderProps = {
   document: DocumentResponse
 }
+
+const CollabEditor = lazy(() =>
+  import("../../../components/Document/Editor").then((module) => ({
+    default: module.CollabEditor,
+  })),
+)
 
 export const Route = createFileRoute("/_layout/documents/$documentId")({
   loader: async ({ params, context }): Promise<DocumentLoaderProps> => {
@@ -134,20 +139,20 @@ function DocumentContentLoader() {
         </div>
       </div>
       <div className="backdrop-blur-md bg-white/80 border border-white/20 dark:bg-gray-900/80 dark:border-gray-700/50 p-6 rounded-xl shadow-md">
-        <CollabEditor
-          docId={documentId}
-          onSavingChange={handleSavingChange}
-          onEditingChange={setIsEditing}
-        />
+        <Suspense
+          fallback={<Loader2 className="h-8 w-8 animate-spin mx-auto" />}
+        >
+          <CollabEditor
+            docId={documentId}
+            onSavingChange={handleSavingChange}
+            onEditingChange={setIsEditing}
+          />
+        </Suspense>
       </div>
     </div>
   )
 }
 
 function DocumentContent() {
-  return (
-    <Suspense fallback={<Loader2 className="h-8 w-8 animate-spin" />}>
-      <DocumentContentLoader />
-    </Suspense>
-  )
+  return <DocumentContentLoader />
 }

@@ -1,7 +1,6 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query"
 import type { AxiosError } from "axios"
-import { useState } from "react"
-import ReactJson from "react-json-view"
+import { Suspense, lazy, useState } from "react"
 import type {
   FullReplaceGroupKeyValuesPartiesGroupGroupApiIdKeyValuePutError,
   GroupKeyValue,
@@ -11,6 +10,8 @@ import {
   readGroupKeyValuesPartiesGroupGroupApiIdKeyValueGetQueryKey,
 } from "../../client/@tanstack/react-query.gen"
 import useCustomToast from "../../hooks/useCustomToast"
+
+const ReactJson = lazy(() => import("react-json-view"))
 
 export function GroupKeyValuesTable({
   keyValues,
@@ -58,17 +59,19 @@ export function GroupKeyValuesTable({
     <div className="w-full flex flex-col gap-4">
       <p>Group Key Values; use this as a fast data store for the group.</p>(
       <div className="border border-gray-200 rounded-md p-4">
-        <ReactJson
-          src={editableData}
-          onEdit={handleEdit}
-          onAdd={handleEdit}
-          onDelete={handleEdit}
-          theme="monokai"
-          enableClipboard={false}
-          displayDataTypes={false}
-          collapsed={false}
-          name={false}
-        />
+        <Suspense fallback={<div>Loading editor...</div>}>
+          <ReactJson
+            src={editableData}
+            onEdit={handleEdit}
+            onAdd={handleEdit}
+            onDelete={handleEdit}
+            theme="monokai"
+            enableClipboard={false}
+            displayDataTypes={false}
+            collapsed={false}
+            name={false}
+          />
+        </Suspense>
       </div>
       )
     </div>

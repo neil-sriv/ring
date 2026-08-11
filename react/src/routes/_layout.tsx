@@ -4,6 +4,7 @@ import { useEffect } from "react"
 
 import { useQueryClient } from "@tanstack/react-query"
 import {
+  listDashboardLettersLettersLettersDashboardGetOptions,
   readUserMePartiesMeGetOptions,
   readUserMePartiesMeGetQueryKey,
 } from "../client/@tanstack/react-query.gen"
@@ -21,6 +22,9 @@ export const Route = createFileRoute("/_layout")({
         ...readUserMePartiesMeGetOptions(),
       })
       context.auth.user = user
+      void context.queryClient.prefetchQuery({
+        ...listDashboardLettersLettersLettersDashboardGetOptions(),
+      })
     } catch (error) {
       // If authentication fails, redirect to login with the current path as next parameter
       // Only add next parameter if we're not already on the login page
@@ -54,7 +58,15 @@ function Layout() {
     if (!userApiId) {
       return
     }
-    void subscribeToPush(userApiId)
+    const subscribe = () => {
+      void subscribeToPush(userApiId)
+    }
+    if ("requestIdleCallback" in window) {
+      const idleId = window.requestIdleCallback(subscribe)
+      return () => window.cancelIdleCallback(idleId)
+    }
+    const timeoutId = setTimeout(subscribe, 0)
+    return () => clearTimeout(timeoutId)
   }, [userApiId])
 
   return (

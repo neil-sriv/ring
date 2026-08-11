@@ -145,10 +145,15 @@ export function S3Image({
       onClick={() => setLightboxOpen(true)}
       aria-label="View image full screen"
     >
-      <img src={url} alt={alt ?? ""} className={imageClassName} />
+      <img
+        src={url}
+        alt={alt ?? ""}
+        className={imageClassName}
+        loading="lazy"
+      />
     </button>
   ) : (
-    <img src={url} alt={alt ?? ""} className={imageClassName} />
+    <img src={url} alt={alt ?? ""} className={imageClassName} loading="lazy" />
   )
 
   return (

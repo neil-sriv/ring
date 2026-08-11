@@ -68,7 +68,14 @@ client.instance.interceptors.response.use(
 )
 /**/
 
-const queryClient = new QueryClient()
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 30_000,
+      refetchOnWindowFocus: true,
+    },
+  },
+})
 
 const router = createRouter({
   routeTree,
@@ -85,7 +92,6 @@ function App() {
   const resp = useQuery({
     ...readUserMePartiesMeGetOptions({}),
     retry: false,
-    refetchInterval: 5000,
     enabled: localStorage.getItem("access_token") !== null,
   })
 
