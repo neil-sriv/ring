@@ -186,28 +186,22 @@ Laptop fallback (API only by default):
 ring deploy prod -t "$(git rev-parse HEAD)"
 ```
 
-### Pull on the EC2 host
+### Deploy on the EC2 host
 
 The API bind-mounts `./ring` and runs uvicorn `--reload`, so **the
-checkout on disk is the running API code**. The host must be on a branch
-(detached `HEAD` makes `git pull` fail):
+checkout on disk is the running API code**. Use the one-shot host
+script (keeps `dev` checked out so later `git pull` still works):
 
 ```bash
 cd ring
-git checkout dev
-git pull origin dev
-./dev_util/prod.sh                 # pull ring-api:latest → prod-ring-api
-# ./dev_util/prod.sh <git-sha>     # match image/deps to that SHA
-ring db upgrade                    # only if this commit has a migration
-ring compose any --profile prod up -d --force-recreate
+./dev_util/deploy_host.sh                 # origin/dev + ring-api:latest
+# ./dev_util/deploy_host.sh <git-sha>     # checkout + matching image
+# ./dev_util/deploy_host.sh --rollback-on-fail <git-sha>
 ```
 
-`prod.sh <sha>` only swaps the image (installed deps + baked
-`RING_BUILD_GIT_*`). It does **not** roll back running Python. True
-rollback today is `git checkout <sha>` (or reset `dev` to that commit)
-and `./dev_util/prod.sh <sha>` if deps/image need to match, then
-`up -d --force-recreate`. Image-only SHA pull becomes a real rollback
-in Phase 3/4 when the bind-mount and `--reload` go away.
+`prod.sh` is the image-pull step only. Image-only SHA pull becomes a
+real code rollback in Phase 4 when the bind-mount and `--reload` go
+away.
 
 Confirm what is actually running (no auth):
 
@@ -372,5 +366,6 @@ Helpful for agents so they do not assume these exist:
 | [compose.prod.yml](../compose.prod.yml) | Prod Compose overrides (images, certbot, Cockroach cert mount) |
 | [prod.nginx.conf](../prod.nginx.conf) | Prod Nginx config (`ring.neilsriv.tech`) |
 | [dev_util/prod.sh](../dev_util/prod.sh) | Pull ECR images on the server |
+| [dev_util/deploy_host.sh](../dev_util/deploy_host.sh) | Full host rollout (git + pull + migrate + up + verify) |
 | [dev_util/docker.py](../dev_util/docker.py) | Tag/push to ECR Public |
 | [.cursor/cloud-start.sh](../.cursor/cloud-start.sh) | Cursor Cloud Agent VM bootstrap (local Cockroach, not prod) |

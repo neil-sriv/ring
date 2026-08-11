@@ -31,10 +31,11 @@ Pull ECR Public images and retag them as prod-<name>:latest for Compose.
   --image <name>   Image to pull (repeatable). Default: ring-api
   sha              Tag to pull instead of :latest (usually a git SHA)
 
-Rollback (code is the host checkout today):
-  git checkout <previous-sha>
-  ./dev_util/prod.sh <previous-sha>   # only if image/deps must match
-  ring compose any --profile prod up -d --force-recreate
+Prefer the full host rollout (git + pull + migrate + up + verify):
+  ./dev_util/deploy_host.sh <sha>
+  ./dev_util/deploy_host.sh <previous-sha>   # rollback
+
+This script only pulls/retags images.
 EOF
 }
 

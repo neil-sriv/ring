@@ -1,12 +1,13 @@
 from __future__ import annotations
 
 import os
+from pathlib import Path
 from typing import Any
 
 import click
 
 from dev_util.compose import compose_starter
-from dev_util.dev import dev_command, dev_group, subprocess_run
+from dev_util.dev import ROOT_DIR, dev_command, dev_group, subprocess_run
 from dev_util.docker import (
     COMPOSE_SERVICE_BY_IMAGE,
     IMAGE_TAG_NAMES,
@@ -19,6 +20,7 @@ DEFAULT_VITE_API_URL = "https://ring.neilsriv.tech"
 DEFAULT_AWS_REGION = "us-east-1"
 ECR_PUBLIC_REGISTRY = "public.ecr.aws"
 DEFAULT_DEPLOY_IMAGES = ("ring-api",)
+DEPLOY_HOST_SCRIPT = Path(ROOT_DIR) / "dev_util" / "deploy_host.sh"
 
 
 @dev_group("deploy")
@@ -156,3 +158,63 @@ def deploy_prod(
 
     ctx.invoke(tag, image=images, extra_tag=extra_tag)
     ctx.invoke(push, image=images, extra_tag=extra_tag)
+
+
+@dev_command("host", deploy)
+@click.option(
+    "--skip-git/--no-skip-git",
+    default=False,
+    show_default=True,
+    help="Skip git fetch/checkout.",
+)
+@click.option(
+    "--skip-pull/--no-skip-pull",
+    default=False,
+    show_default=True,
+    help="Skip `prod.sh` image pull.",
+)
+@click.option(
+    "--skip-migrate/--no-skip-migrate",
+    default=False,
+    show_default=True,
+    help="Skip `ring db upgrade --profile prod`.",
+)
+@click.option(
+    "--skip-verify/--no-skip-verify",
+    default=False,
+    show_default=True,
+    help="Skip GET /api/v1/version gate.",
+)
+@click.option(
+    "--rollback-on-fail/--no-rollback-on-fail",
+    default=False,
+    show_default=True,
+    help="Re-run against the pre-deploy SHA if version verify fails.",
+)
+@click.argument("sha", required=False, default=None)
+def deploy_host(
+    ctx: click.Context,
+    skip_git: bool,
+    skip_pull: bool,
+    skip_migrate: bool,
+    skip_verify: bool,
+    rollback_on_fail: bool,
+    sha: str | None,
+    *args: list[Any],
+    **kwargs: dict[Any, Any],
+) -> None:
+    """Roll out a SHA-tagged API image on the current host (EC2)."""
+    cmd = ["bash", str(DEPLOY_HOST_SCRIPT)]
+    if skip_git:
+        cmd.append("--skip-git")
+    if skip_pull:
+        cmd.append("--skip-pull")
+    if skip_migrate:
+        cmd.append("--skip-migrate")
+    if skip_verify:
+        cmd.append("--skip-verify")
+    if rollback_on_fail:
+        cmd.append("--rollback-on-fail")
+    if sha:
+        cmd.append(sha)
+    subprocess_run(cmd)
