@@ -43,12 +43,31 @@ the first half of the north star and needs no backend work.
       1. `ring.neilsriv.tech/api/*` → Worker: **None** (passthrough to
          EC2 nginx — keeps WebSockets and 500MB uploads on nginx)
       2. `ring.neilsriv.tech/.well-known/*` → Worker: **None**
-         (**required**: certbot's HTTP-01 renewal challenge flows
-         through the proxy to nginx; without this exclusion the
-         Let's Encrypt cert silently stops renewing)
+         (**required while certbot remains**: the HTTP-01 renewal
+         challenge flows through the proxy to nginx; without this
+         exclusion the Let's Encrypt cert silently stops renewing.
+         Skip/remove this route once the Origin CA swap below is done.)
       3. `ring.neilsriv.tech/*` → `ring-frontend`
       More-specific routes win, but add the exclusions first anyway so
       there is no window where `/*` is live alone.
+- [ ] **Replace Let's Encrypt with a Cloudflare Origin CA cert**
+      (recommended — the domain is orange-clouded, so the origin cert
+      only secures the Cloudflare→EC2 hop and certbot is pure overhead):
+      1. Dash → zone → SSL/TLS → **Origin Server** → Create Certificate
+         (hostnames `ring.neilsriv.tech` + `www.ring.neilsriv.tech`,
+         15-year validity)
+      2. Install cert+key on EC2, point `ssl_certificate` /
+         `ssl_certificate_key` in `prod.nginx.conf` at them, restart
+         nginx
+      3. SSL/TLS overview → set mode to **Full (strict)** (Origin CA
+         certs validate under strict)
+      4. Remove the `certbot` service/profile and letsencrypt mounts
+         from `compose.prod.yml`, the `/.well-known/acme-challenge/`
+         location in `prod.nginx.conf`, and route 2 above
+      Caveat: Origin CA certs are trusted **only by Cloudflare** — any
+      direct-to-origin HTTPS access (gray-clouding the DNS record,
+      `curl --resolve` at the EC2 IP) will fail cert validation. Keep
+      that in mind when debugging.
 - [ ] `www.ring.neilsriv.tech`: if its DNS record is proxied, either add
       the same three routes for `www.` or leave it on nginx during the
       soak.
