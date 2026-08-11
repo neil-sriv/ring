@@ -22,6 +22,7 @@ export const Route = createFileRoute("/_layout/search")({
 
 function SearchContent() {
   const [searchQuery, setSearchQuery] = useState("")
+  const [hasSearched, setHasSearched] = useState(false)
   const [isSearching, setIsSearching] = useState(false)
 
   const { data: searchResults, refetch } = useQuery({
@@ -35,8 +36,13 @@ function SearchContent() {
 
   const handleSearch = async () => {
     if (!searchQuery.trim()) return
+    setHasSearched(true)
     setIsSearching(true)
-    await refetch()
+    try {
+      await refetch()
+    } finally {
+      setIsSearching(false)
+    }
   }
 
   return (
@@ -69,7 +75,13 @@ function SearchContent() {
         </div>
       </div>
 
-      {isSearching && searchResults && (
+      {isSearching && (
+        <div className="flex justify-center p-8">
+          <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+        </div>
+      )}
+
+      {hasSearched && !isSearching && searchResults && (
         <div className="px-4 overflow-auto">
           <Table>
             <TableHeader>
