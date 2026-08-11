@@ -185,6 +185,131 @@ Compose files: `compose.core.yml` + `compose.prod.yml` (+ `llm/compose.prod.llm.
 
 ---
 
+## Frontend PR previews — Cloudflare Workers Builds
+
+Cloudflare's 2026 dashboard is **Workers-first**. The create flow is
+"Import a repository" (Workers Builds), not the older Pages
+"Connect to Git / Build output directory" form. Use Workers Builds.
+
+The React app is built on every PR and served at a `*.workers.dev`
+preview URL, pointed at the **production API** over CORS. Production
+traffic still serves the static build from nginx on EC2 (see topology
+above). Cloudflare is previews-only unless/until we cut prod over.
+
+### How it fits together
+
+```
+PR preview:  https://<alias>-ring-frontend.<account>.workers.dev
+             →  https://ring.neilsriv.tech/api/v1/  (CORS)
+Production:  https://ring.neilsriv.tech
+             →  nginx → ring-frontend + ring-api   (unchanged)
+```
+
+- The build sets `VITE_API_URL=https://ring.neilsriv.tech`, so the
+  preview calls the prod API cross-origin. Auth is a bearer token in
+  localStorage (not cookies), so cross-origin works without SameSite
+  issues.
+- WebSockets (`/api/v1/ws/`, collaborative notebook) connect directly
+  to `wss://ring.neilsriv.tech` — do not proxy `/api` through Cloudflare.
+- The API allows preview origins via `BACKEND_CORS_ORIGIN_REGEX`
+  ([ring/fastapp/config.py](../ring/fastapp/config.py)) in the server
+  `.env`. For Workers preview URLs:
+  `^https://[a-z0-9-]+\.[a-z0-9-]+\.workers\.dev$`
+- [react/wrangler.jsonc](../react/wrangler.jsonc) is what tells
+  Workers where the Vite output lives (`assets.directory = ./dist`) and
+  that unmatched routes should serve `index.html`
+  (`not_found_handling = single-page-application`). Do **not** add a
+  `public/_redirects` `/* /index.html 200` rule — Workers copies
+  that file into `dist/` and the API rejects it as an infinite loop
+  (error 100324) because default HTML handling already strips
+  `.html` / `/index`.
+- [react/.nvmrc](../react/.nvmrc) pins Node 22.14.0 for the build image.
+
+### Create the project (current dashboard)
+
+Official flow (Workers Builds, updated 2026-07-03):
+[Connect a new Worker](https://developers.cloudflare.com/workers/ci-cd/builds/).
+
+1. Cloudflare dashboard → **Compute** (or **Workers & Pages**) →
+   **Create** / **Create application**.
+2. Next to **Import a repository**, click **Get started** (this is
+   *not* the Templates gallery).
+3. Connect GitHub if prompted (app name: **Cloudflare Workers and
+   Pages**). Grant access to `neil-sriv/ring` (or the whole account).
+4. Select the `ring` repository.
+5. On the configure screen, set:
+
+| Field you will see | Value |
+|--------------------|-------|
+| Project name | `ring-frontend` (must match [react/wrangler.jsonc](../react/wrangler.jsonc)) |
+| Production branch | `dev` |
+| Root directory | `react` |
+| Build command | `pnpm run build` |
+| Deploy command | leave default (`npx wrangler deploy`) |
+| Preview / non-production deploy | leave default (`npx wrangler versions upload`) |
+
+You will **not** see "Build output directory", "Framework preset", or
+"Pages". Those belong to the older Pages wizard (see below).
+
+6. Add **build-time** variables under **Settings → Build → Build
+   variables and secrets** (available during `pnpm run build`). Do
+   **not** use **Settings → Variables and Secrets** — those are
+   runtime Worker bindings and Vite never sees them. Without
+   `VITE_API_URL` at build time the client falls back to same-origin
+   `/api/v1` on `*.workers.dev` and API calls fail even when CORS
+   is configured. Preview builds do not inherit production build
+   vars; if the dashboard shows two build triggers, set the same
+   values on both. The Preview *runtime* environment tab can stay
+   empty.
+
+| Name | Value |
+|------|-------|
+| `VITE_API_URL` | `https://ring.neilsriv.tech` |
+| `VITE_MAINTENANCE_MODE` | `false` |
+| `PYTHON_VERSION` | `3.13.3` (image default; skips installing the repo-root `.python-version` pin) |
+
+7. Save / deploy. The first production-branch deploy is unused by
+   users; the EC2 nginx frontend remains canonical.
+8. After create: **Settings → Build → Branch control** → enable
+   **Builds for non-production branches**. Without this, PRs will
+   not get preview URLs. Docs:
+   [Build branches](https://developers.cloudflare.com/workers/ci-cd/builds/build-branches/).
+
+Preview URLs look like
+`<alias>-ring-frontend.<account>.workers.dev` and are posted as a
+GitHub PR comment
+([preview URLs](https://developers.cloudflare.com/workers/versions-and-deployments/preview-urls/),
+[GitHub integration](https://developers.cloudflare.com/workers/ci-cd/builds/git-integration/github-integration/)).
+
+### Older Pages wizard (only if you specifically want Pages)
+
+The Pages form still exists but is a side door. On the same Create
+screen, look for a **Pages** / **Looking to deploy a static site?**
+link, or use
+[Create application > Pages > Import from an existing Git repository](https://developers.cloudflare.com/pages/framework-guides/deploy-a-vite3-project/).
+That wizard *does* have Framework preset, **Build command**,
+**Build output directory**, and **Root directory (advanced) → Path**.
+Vite preset: `npm run build` / `dist`. Override the command to
+`pnpm run build`, set Path to `react`, and use a
+`BACKEND_CORS_ORIGIN_REGEX` of
+`^https://[a-z0-9-]+\.<project>\.pages\.dev$`.
+
+Prefer Workers Builds — Pages is still supported but the default
+create path no longer surfaces it.
+
+### Caveats
+
+- **Previews hit prod data.** A preview frontend logs into the real
+  API and database. Treat preview links as production access.
+- **API contract skew.** A PR that changes the OpenAPI surface will
+  preview against the deployed prod API, which may not have the new
+  endpoints yet. Land backend PRs first (see `ring-split-pr` skill).
+- The PWA service worker registers per-origin; each preview URL gets
+  its own isolated service worker. Hard-refresh if a preview looks
+  stale.
+
+---
+
 ## What we do *not* use
 
 Helpful for agents so they do not assume these exist:
