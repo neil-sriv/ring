@@ -171,7 +171,7 @@ async def reset_password(
     Raises:
         HTTPException: 400 if token is invalid, expired, or already used
     """
-    ott = get_ott_by_token(req_dep.db, token)
+    ott = get_ott_by_token(req_dep.db, token, TokenType.PASSWORD_RESET)
     if not ott:
         raise HTTPException(status_code=400, detail="Invalid token")
     try:
