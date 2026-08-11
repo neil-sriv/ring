@@ -163,11 +163,10 @@ Embedding generation → ring-llm microservice (not AWS Bedrock)
 
 ## Deployment
 
-Roadmap: [PR #301](https://github.com/neil-sriv/ring/pull/301) — frontend
-via Cloudflare Workers Routes, backend via CI-built SHA-tagged images.
-Frontend prod traffic already hits the Worker (`/*`); `/api/*` and
-`/.well-known/*` still pass through to this nginx. The steps below are
-the current backend flow.
+> Roadmap: [continuous-deploy-plan.md](continuous-deploy-plan.md) —
+> frontend via Cloudflare Workers Routes, backend via CI-built
+> SHA-tagged images. `/api/*` and `/.well-known/*` still pass through
+> to this nginx. The steps below are the current backend flow.
 
 ### Publish API images (CI)
 
