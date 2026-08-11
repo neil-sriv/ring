@@ -24,14 +24,11 @@ from ring.lib.request_logging import sanitize_request_url
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    ring_config = get_config()
-    if not ring_config.DISABLE_SCHEDULER:
-        scheduler.start()
+    scheduler.start()
 
     yield
 
-    if not ring_config.DISABLE_SCHEDULER:
-        scheduler.shutdown()
+    scheduler.shutdown()
 
 
 def create_app() -> FastAPI:

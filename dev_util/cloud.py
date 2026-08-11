@@ -1,21 +1,10 @@
-"""Cursor Cloud Agent helpers exposed via the `ring` CLI.
-
-Primary use: point a local Vite + API stack at CockroachDB Cloud so frontend
-work can exercise real prod/staging data without hitting ring.neilsriv.tech
-from the browser.
-"""
+"""Cursor Cloud Agent helpers exposed via the `ring` CLI."""
 
 from __future__ import annotations
 
 import os
-import re
-import shutil
-import subprocess
-import time
 import urllib.error
 import urllib.request
-from pathlib import Path
-from urllib.parse import urlparse
 
 import click
 
@@ -26,202 +15,27 @@ from dev_util.dev import (
     subprocess_run,
 )
 
-STATE_DIR = ROOT_DIR / ".ring-cloud-prod-db"
-MARKER_PATH = STATE_DIR / "mode"
-ENV_BACKUP_PATH = STATE_DIR / ".env.local-backup"
-ENV_PATH = ROOT_DIR / ".env"
-CA_PATH = Path.home() / ".postgresql" / "root.crt"
-
-LOCAL_COCKROACH_URI = "cockroachdb://ringcockroach:ringcockroach@cockroach:26257/ring?sslmode=require"
-
-PROD_URI_SECRET = "RING_PROD_COCKROACH_DATABASE_URI"
-STAGING_URI_SECRET = "RING_STAGING_COCKROACH_DATABASE_URI"
-CA_CERT_SECRET = "RING_COCKROACH_CA_CERT"
+DEFAULT_PROD_API_URL = "https://ring.neilsriv.tech"
+FE_DIR = ROOT_DIR / "react"
 
 
-def _compose_cmd(*, cloud_override: bool) -> list[str]:
-    files = ["compose.core.yml", "compose.dev.yml"]
-    if cloud_override:
-        files.append("compose.cloud-prod-db.yml")
-    cmd = ["docker", "compose"]
-    for path in files:
-        cmd.extend(["-f", path])
-    cmd.extend(["--profile", "dev"])
-    return cmd
+def _openapi_url(api_url: str) -> str:
+    return f"{api_url.rstrip('/')}/api/v1/openapi.json"
 
 
-def _require_env_file() -> None:
-    if not ENV_PATH.is_file():
-        raise click.ClickException(
-            "Missing .env — run bash .cursor/cloud-start.sh --bootstrap-only first"
-        )
-
-
-def _current_mode() -> str:
-    if MARKER_PATH.is_file():
-        return MARKER_PATH.read_text(encoding="utf-8").strip() or "local"
-    return "local"
-
-
-def _read_env_var(key: str, path: Path = ENV_PATH) -> str:
-    if not path.is_file():
-        return ""
-    value = ""
-    for line in path.read_text(encoding="utf-8").splitlines():
-        if line.startswith(f"{key}="):
-            value = line.split("=", 1)[1]
-    return value
-
-
-def _upsert_env_var(key: str, value: str) -> None:
-    lines = ENV_PATH.read_text(encoding="utf-8").splitlines()
-    prefix = f"{key}="
-    replaced = False
-    new_lines: list[str] = []
-    for line in lines:
-        if line.startswith(prefix):
-            new_lines.append(f"{key}={value}")
-            replaced = True
-        else:
-            new_lines.append(line)
-    if not replaced:
-        new_lines.append(f"{key}={value}")
-    ENV_PATH.write_text("\n".join(new_lines) + "\n", encoding="utf-8")
-
-
-def _uri_host_hint(uri: str) -> str:
-    if not uri:
-        return ""
-    parsed = urlparse(uri)
-    if parsed.hostname:
-        return parsed.hostname
-    match = re.match(r"^[a-z0-9+.-]+://(?:[^/@]+@)?([^:/?]+)", uri)
-    return match.group(1) if match else ""
-
-
-def _resolve_uri(target: str) -> str:
-    secret = STAGING_URI_SECRET if target == "staging" else PROD_URI_SECRET
-    uri = os.environ.get(secret, "").strip()
-    if not uri:
-        raise click.ClickException(f"Missing secret {secret}")
-    return uri
-
-
-def _ensure_ca_cert() -> None:
-    CA_PATH.parent.mkdir(parents=True, exist_ok=True)
-    pem = os.environ.get(CA_CERT_SECRET, "").strip()
-    if pem:
-        CA_PATH.write_text(pem + "\n", encoding="utf-8")
-        CA_PATH.chmod(0o600)
-        click.echo(f"Wrote Cockroach CA cert to {CA_PATH}")
-        return
-    if CA_PATH.is_file():
-        click.echo(f"Using existing Cockroach CA cert at {CA_PATH}")
-        return
-    raise click.ClickException(
-        f"Missing Cockroach CA cert at {CA_PATH}. "
-        f"Set Cursor secret {CA_CERT_SECRET} (PEM) or place root.crt at that path."
-    )
-
-
-def _confirm_or_die(target: str, host: str, assume_yes: bool) -> None:
-    click.echo(
-        "\n"
-        "!!! WARNING: cloud-prod-db mode !!!\n"
-        f"  Target:     {target}\n"
-        f"  SQL host:   {host}\n"
-        "  Frontend:   http://localhost:5173  "
-        f"(Vite → local API → {target} DB)\n"
-        "  Scheduler:  DISABLED\n"
-        "  Do NOT run migrations against this database from the cloud agent.\n"
-    )
-    if assume_yes:
-        return
-    if not click.get_text_stream("stdin").isatty():
-        raise click.ClickException(
-            "Non-interactive shell: pass --yes to confirm."
-        )
-    answer = click.prompt(
-        f"Type '{target}' to continue", default="", show_default=False
-    )
-    if answer != target:
-        raise click.ClickException("Aborted.")
-
-
-def _restart_api(*, cloud_override: bool) -> None:
-    subprocess_run(
-        _compose_cmd(cloud_override=cloud_override)
-        + ["up", "--detach", "--force-recreate", "api"],
-        cwd=ROOT_DIR,
-    )
-
-
-def _wait_for_api(timeout_s: int = 90) -> None:
-    deadline = time.time() + timeout_s
-    url = "http://localhost:8001/api/v1/openapi.json"
-    while time.time() < deadline:
-        try:
-            with urllib.request.urlopen(url, timeout=2) as response:
-                if 200 <= response.status < 300:
-                    return
-        except (urllib.error.URLError, TimeoutError):
-            pass
-        time.sleep(2)
-    raise click.ClickException(
-        "API did not become ready after switching DB mode"
-    )
-
-
-def _http_ok(url: str) -> bool:
+def _check_prod_api(api_url: str) -> None:
+    url = _openapi_url(api_url)
     try:
-        with urllib.request.urlopen(url, timeout=5) as response:
-            return 200 <= response.status < 300
-    except (urllib.error.URLError, TimeoutError):
-        return False
-
-
-def _probe_db_via_api() -> bool:
-    result = subprocess.run(
-        [
-            "docker",
-            "exec",
-            "ring-api",
-            "python",
-            "-c",
-            "from sqlalchemy import text\n"
-            "from ring.sqlalchemy_base import engine\n"
-            "with engine.connect() as conn:\n"
-            "    conn.execute(text('SELECT 1'))\n"
-            "print('ok')\n",
-        ],
-        cwd=ROOT_DIR,
-        capture_output=True,
-        text=True,
-        check=False,
-    )
-    return result.returncode == 0
-
-
-def _probe_local_cockroach() -> bool:
-    result = subprocess.run(
-        [
-            "docker",
-            "exec",
-            "ring-cockroach",
-            "./cockroach",
-            "sql",
-            "--certs-dir=/root/.cockroach-certs",
-            "-d",
-            "ring",
-            "-e",
-            "SELECT 1",
-        ],
-        cwd=ROOT_DIR,
-        capture_output=True,
-        text=True,
-        check=False,
-    )
-    return result.returncode == 0
+        with urllib.request.urlopen(url, timeout=10) as response:
+            if not 200 <= response.status < 300:
+                raise click.ClickException(
+                    f"Prod API returned HTTP {response.status}: {url}"
+                )
+    except (urllib.error.URLError, TimeoutError) as exc:
+        raise click.ClickException(
+            f"Cannot reach prod API at {url}: {exc}"
+        ) from exc
+    click.echo(f"OK  prod API: {url}")
 
 
 @dev_group("cloud")
@@ -231,156 +45,63 @@ def cloud(ctx: click.Context) -> None:
 
 
 @cloud.group(
-    "prod-db",
+    "client-only",
     context_settings=UNLIMITED_ARGS_SETTINGS,
-    help=(
-        "Point the local Cloud Agent Vite + API stack at CockroachDB Cloud "
-        "(prod or staging)."
-    ),
+    help="Run the local Vite frontend against Ring's production API.",
 )
 @click.pass_context
-def prod_db(ctx: click.Context) -> None:
+def client_only(ctx: click.Context) -> None:
     pass
 
 
-@prod_db.command("status")
-def prod_db_status() -> None:
-    """Show current mode and secret/cert readiness."""
-    _require_env_file()
-    mode = _current_mode()
-    uri = _read_env_var("COCKROACH_DATABASE_URI")
-    host = _uri_host_hint(uri)
-    ca_state = "present" if CA_PATH.is_file() else "missing"
-    click.echo(f"mode:              {mode}")
-    click.echo(f"COCKROACH host:    {host or '<unset>'}")
-    click.echo(f"ENVIRONMENT:       {_read_env_var('ENVIRONMENT')}")
-    click.echo(f"DISABLE_SCHEDULER: {_read_env_var('DISABLE_SCHEDULER')}")
-    click.echo(f"CA cert:           {ca_state} ({CA_PATH})")
-    click.echo(
-        "prod secret:       "
-        + ("set" if os.environ.get(PROD_URI_SECRET) else "unset")
-    )
-    click.echo(
-        "staging secret:    "
-        + ("set" if os.environ.get(STAGING_URI_SECRET) else "unset")
-    )
-    click.echo(
-        "CA secret:         "
-        + ("set" if os.environ.get(CA_CERT_SECRET) else "unset")
-    )
-
-
-@prod_db.command("enable")
+@client_only.command("check")
 @click.option(
-    "--staging",
+    "--api-url",
+    default=DEFAULT_PROD_API_URL,
+    show_default=True,
+    help="Production API origin.",
+)
+def client_only_check(api_url: str) -> None:
+    """Verify the production API is reachable."""
+    _check_prod_api(api_url)
+
+
+@client_only.command("dev")
+@click.option(
+    "--api-url",
+    default=DEFAULT_PROD_API_URL,
+    show_default=True,
+    help="API origin used by the Vite same-origin proxy.",
+)
+@click.option("--host", default="0.0.0.0", show_default=True)
+@click.option("--port", default=5173, show_default=True, type=int)
+@click.option(
+    "--skip-check",
     is_flag=True,
     default=False,
-    help="Use RING_STAGING_COCKROACH_DATABASE_URI instead of prod.",
+    help="Start Vite even if the production API health check fails.",
 )
-@click.option(
-    "--yes",
-    "-y",
-    "assume_yes",
-    is_flag=True,
-    default=False,
-    help="Skip the interactive confirmation prompt.",
-)
-def prod_db_enable(staging: bool, assume_yes: bool) -> None:
-    """Point local API at Cockroach Cloud and recreate the API container."""
-    target = "staging" if staging else "prod"
-    _require_env_file()
-    STATE_DIR.mkdir(parents=True, exist_ok=True)
-
-    uri = _resolve_uri(target)
-    host = _uri_host_hint(uri)
-    _confirm_or_die(target, host, assume_yes)
-    _ensure_ca_cert()
-
-    if not ENV_BACKUP_PATH.is_file():
-        shutil.copy2(ENV_PATH, ENV_BACKUP_PATH)
-        click.echo(f"Backed up .env to {ENV_BACKUP_PATH}")
-
-    _upsert_env_var("COCKROACH_DATABASE_URI", uri)
-    _upsert_env_var("ENVIRONMENT", f"cloud-{target}-db")
-    _upsert_env_var("DISABLE_SCHEDULER", "true")
-    # Keep Vite same-origin proxy; do not point the browser at prod nginx.
-    _upsert_env_var("VITE_API_URL", "")
-
-    MARKER_PATH.write_text(f"{target}\n", encoding="utf-8")
-
-    click.echo("Recreating API with compose.cloud-prod-db.yml…")
-    _restart_api(cloud_override=True)
-    _wait_for_api()
-
-    click.echo(
-        f"\n=== cloud-prod-db enabled ({target}) ===\n"
-        "  App:     http://localhost:5173\n"
-        "  API:     http://localhost:8001/api/v1/docs\n"
-        f"  DB host: {host}\n"
-        f"  Login:   use a real {target} user "
-        "(seeded test@example.com is local-only)\n"
-        "  Disable: ring cloud prod-db disable\n"
-        "  Health:  ring cloud prod-db health\n"
-    )
-
-
-@prod_db.command("disable")
-def prod_db_disable() -> None:
-    """Restore local Cockroach URI and recreate the API container."""
-    _require_env_file()
-    if _current_mode() == "local" and not ENV_BACKUP_PATH.is_file():
-        click.echo("Already in local mode.")
-        return
-
-    if ENV_BACKUP_PATH.is_file():
-        local_uri = _read_env_var("COCKROACH_DATABASE_URI", ENV_BACKUP_PATH)
-        if not local_uri:
-            local_uri = LOCAL_COCKROACH_URI
-    else:
-        local_uri = LOCAL_COCKROACH_URI
-
-    _upsert_env_var("COCKROACH_DATABASE_URI", local_uri)
-    _upsert_env_var("ENVIRONMENT", "local")
-    _upsert_env_var("DISABLE_SCHEDULER", "false")
-    if MARKER_PATH.is_file():
-        MARKER_PATH.unlink()
-
-    click.echo("Recreating API against local Cockroach…")
-    _restart_api(cloud_override=False)
-    _wait_for_api()
-    click.echo("=== cloud-prod-db disabled (local Cockroach) ===")
-
-
-@prod_db.command("health")
-def prod_db_health() -> None:
-    """Verify API is up and can query the active database."""
-    _require_env_file()
-    mode = _current_mode()
-    errors = 0
-
-    def check(label: str, ok: bool) -> None:
-        nonlocal errors
-        if ok:
-            click.echo(f"OK  {label}")
-        else:
-            click.echo(f"FAIL {label}", err=True)
-            errors += 1
-
-    check("API openapi", _http_ok("http://localhost:8001/api/v1/openapi.json"))
-    check("API docs", _http_ok("http://localhost:8001/api/v1/docs"))
-
-    if mode != "local":
-        check("CA cert present", CA_PATH.is_file())
-        sched = _read_env_var("DISABLE_SCHEDULER")
-        check(
-            f"DISABLE_SCHEDULER={sched}",
-            sched in {"true", "1"},
+def client_only_dev(
+    api_url: str, host: str, port: int, skip_check: bool
+) -> None:
+    """Start Vite with /api/v1 proxied to the production API."""
+    if skip_check:
+        click.echo(
+            f"Skipping prod API check; proxy target will be {api_url.rstrip('/')}"
         )
-        check("cloud DB SELECT 1 via API container", _probe_db_via_api())
     else:
-        check("local Cockroach", _probe_local_cockroach())
-
-    click.echo(f"mode: {mode}")
-    if errors:
-        raise click.ClickException(f"{errors} check(s) failed")
-    click.echo("cloud-prod-db health OK")
+        _check_prod_api(api_url)
+    click.echo(
+        f"Starting client-only frontend: http://localhost:{port} "
+        f"→ {api_url.rstrip('/')}"
+    )
+    env = {
+        **os.environ,
+        "VITE_API_URL": "",
+        "VITE_API_PROXY_TARGET": api_url.rstrip("/"),
+    }
+    subprocess_run(
+        ["pnpm", "run", "dev", "--host", host, "--port", str(port)],
+        cwd=FE_DIR,
+        env=env,
+    )

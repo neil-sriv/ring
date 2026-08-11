@@ -7,7 +7,8 @@ import click
 from dev_util.compose import compose_exec
 from dev_util.dev import dev_command, dev_group
 
-# Prod DB is CockroachDB Cloud (cluster ring-db), not RDS. See docs/infrastructure.md.
+# Prod DB is CockroachDB Cloud (live cluster ring-db-staging, despite the name),
+# not RDS. See docs/infrastructure.md.
 LOCAL_COCKROACH_URI = "postgresql://root@127.0.0.1:26257/ring"
 COCKROACH_CONNECTION_STRING = (
     f"{LOCAL_COCKROACH_URI}"

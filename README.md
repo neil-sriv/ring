@@ -136,9 +136,9 @@ Agent playbook: [`.cursor/skills/ring-cloud-dev/SKILL.md`](.cursor/skills/ring-c
 Copy [`.env.cloud.example`](.env.cloud.example) to `.env` if bootstrap has not
 run yet.
 
-To use CockroachDB Cloud data from the local Vite frontend, see
-[`.cursor/skills/ring-cloud-prod-db/SKILL.md`](.cursor/skills/ring-cloud-prod-db/SKILL.md)
-(`ring cloud prod-db enable`).
+For frontend-only work against the deployed production API, see
+[`.cursor/skills/ring-cloud-client-only/SKILL.md`](.cursor/skills/ring-cloud-client-only/SKILL.md).
+No local API, database, or DB secrets are required.
 
 ### `ring` commands
 
@@ -147,10 +147,9 @@ To use CockroachDB Cloud data from the local Vite frontend, see
 Cursor Cloud Agent helpers:
 
 ```bash
-ring cloud prod-db status
-ring cloud prod-db enable --staging --yes
-ring cloud prod-db disable
-ring cloud prod-db health
+ring cloud client-only check
+ring cloud client-only dev
+ring cloud client-only dev --skip-check   # if prod API is temporarily unreachable
 ```
 
 #### `ring compose`
@@ -208,8 +207,9 @@ ring run shell      # Start a shell
 
 Prod runs Docker Compose on a single EC2 instance. Images are stored in **ECR
 Public** (`public.ecr.aws/z2k1e8p1/`); the database is **CockroachDB Cloud**
-(`ring-db`). See [docs/infrastructure.md](docs/infrastructure.md) for the full
-topology (S3, CloudFront, SES, request flows).
+(live cluster `ring-db-staging`, despite the name). See
+[docs/infrastructure.md](docs/infrastructure.md) for the full topology (S3,
+CloudFront, SES, request flows).
 
 ### Build and push images
 

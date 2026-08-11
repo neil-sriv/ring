@@ -36,7 +36,7 @@ flowchart TB
     end
 
     subgraph External["Outside AWS"]
-        CRDB[CockroachDB Cloud ring-db]
+        CRDB[CockroachDB Cloud ring-db-staging]
         DNS[DNS registrar]
     end
 
@@ -55,7 +55,7 @@ flowchart TB
 | Layer | What runs | Where |
 |-------|-----------|-------|
 | Compute | `ring-api`, `ring-frontend`, Nginx, optional `ring-llm` | EC2 `t2.micro`, Compose (`compose.prod.yml`) |
-| Database | CockroachDB | **CockroachDB Cloud** — cluster `ring-db` (GCP `us-east1`). Staging: `ring-db-staging`. |
+| Database | CockroachDB | **CockroachDB Cloud** — live cluster `ring-db-staging` (GCP `us-east1`), despite the name. `ring-db` is stale/unused; there is no staging environment. |
 | Object storage | User-uploaded response images/videos | S3 bucket `rings3files` (`us-east-1`) |
 | CDN | Public URLs for uploaded media | CloudFront `du32exnxihxuf.cloudfront.net` → S3 origin |
 | Email | Invites, auth, letter notifications | SES (`us-east-1`), domain `neilsriv.tech`, sender `ring@neilsriv.tech` |
@@ -110,22 +110,24 @@ flowchart TB
 
 ## Database
 
-Prod and staging use **CockroachDB Cloud**, not AWS RDS. The old RDS Postgres
-host in `dev_util/database.py` was removed — do not add it back.
+Prod uses **CockroachDB Cloud**, not AWS RDS. The old RDS Postgres host in
+`dev_util/database.py` was removed — do not add it back.
 
-- **Prod cluster:** `ring-db`
-- **Staging cluster:** `ring-db-staging`
+- **Live cluster:** `ring-db-staging` — despite the name, this is what
+  `ring.neilsriv.tech` serves from.
+- **`ring-db`:** stale and unused. Do not connect to it or treat it as prod.
+- **There is no staging environment.** Any connection to the live cluster
+  touches real user data; there is no safe copy to rehearse against.
 - **Migrations:** Alembic (`ring db upgrade`)
 - **Vector search:** `hybrid_search_document` table with CockroachDB vector index (768-dim embeddings from the LLM service)
 
 Local dev and tests run CockroachDB in Docker. Connection string:
 `COCKROACH_DATABASE_URI` in `.env`.
 
-Cursor Cloud Agents can optionally point the **local** API (and thus the local
-Vite frontend via the same-origin proxy) at Cockroach Cloud — see
-[ring-cloud-prod-db](../.cursor/skills/ring-cloud-prod-db/SKILL.md) and
-`ring cloud prod-db`. That mode disables APScheduler and must never run
-migrations against the cloud URI.
+The **Ring client only** Cloud Agent environment does not connect to Cockroach
+directly. Vite proxies `/api/v1` to the deployed API at
+`ring.neilsriv.tech`; see
+[ring-cloud-client-only](../.cursor/skills/ring-cloud-client-only/SKILL.md).
 
 ---
 
