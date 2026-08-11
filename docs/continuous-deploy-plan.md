@@ -107,11 +107,10 @@ image. Deploys still manual, but from CI artifacts only.
 - [x] `dev_util/prod.sh` accepts an optional SHA argument and defaults
       to `ring-api` only. Laptop fallback: `uv run ring deploy prod`
       (also API-only by default).
-- [x] Rollback recipe documented (README, infrastructure.md, deploy
-      skill, `prod.sh --help`):
-      1. `git checkout <previous-sha>` (running Python is the checkout)
-      2. `./dev_util/prod.sh <previous-sha>` if image/deps must match
-      3. `uv run ring compose any --profile prod up -d --force-recreate`
+- [x] Rollback recipe documented (README, infrastructure.md,
+      `deploy_host.sh` / `prod.sh --help`). Prefer
+      `./dev_util/deploy_host.sh <previous-sha>` (#308). Image-only
+      `prod.sh` is not a code rollback while `./ring` is bind-mounted.
 - [x] Prod smoke after merge: `GET /api/v1/version` went from
       `image_build.source=unavailable` to `image_env` with
       `sha=9e7fd0bf…` and a new API `image_id`. Frontend/llm images
