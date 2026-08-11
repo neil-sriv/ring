@@ -201,7 +201,9 @@ cd ring
 ```
 
 The sha must exist as `ring-api:<sha>` (a **Publish ring-api** run).
-`prod.sh` is the image-pull step only.
+`prod.sh` is the image-pull step only. `--rollback-on-fail` reads live
+`image_build.sha` **before** git/image/compose mutate and restores that
+image (`--skip-git`) if verify fails — not `git rev-parse HEAD`.
 
 Confirm what is actually running (no auth):
 

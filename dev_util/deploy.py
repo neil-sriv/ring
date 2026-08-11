@@ -189,7 +189,7 @@ def deploy_prod(
     "--rollback-on-fail/--no-rollback-on-fail",
     default=False,
     show_default=True,
-    help="Re-run against the pre-deploy SHA if version verify fails.",
+    help="Re-run against the pre-deploy image SHA if version verify fails.",
 )
 @click.argument("sha", required=False, default=None)
 def deploy_host(
