@@ -218,11 +218,11 @@ Production:  https://ring.neilsriv.tech
 - [react/wrangler.jsonc](../react/wrangler.jsonc) is what tells
   Workers where the Vite output lives (`assets.directory = ./dist`) and
   that unmatched routes should serve `index.html`
-  (`not_found_handling = single-page-application`). There is no
-  "Build output directory" field on the current create screen.
-- [react/public/\_redirects](../react/public/_redirects) is only used
-  if you create a classic Pages project instead; Workers ignores it
-  and uses the wrangler SPA setting.
+  (`not_found_handling = single-page-application`). Do **not** add a
+  `public/_redirects` `/* /index.html 200` rule — Workers copies
+  that file into `dist/` and the API rejects it as an infinite loop
+  (error 100324) because default HTML handling already strips
+  `.html` / `/index`.
 - [react/.nvmrc](../react/.nvmrc) pins Node 22.14.0 for the build image.
 
 ### Create the project (current dashboard)
@@ -260,6 +260,7 @@ You will **not** see "Build output directory", "Framework preset", or
 |------|-------|
 | `VITE_API_URL` | `https://ring.neilsriv.tech` |
 | `VITE_MAINTENANCE_MODE` | `false` |
+| `PYTHON_VERSION` | `3.13.3` (image default; skips installing the repo-root `.python-version` pin) |
 
 7. Save / deploy. The first production-branch deploy is unused by
    users; the EC2 nginx frontend remains canonical.
