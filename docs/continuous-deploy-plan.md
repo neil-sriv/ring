@@ -17,8 +17,8 @@ Status legend: `[ ]` todo · `[x]` done. Update this file as phases land.
 | Frontend PR previews | ✅ Cloudflare Workers Builds deploys every branch; PR comments carry preview URLs (see [infrastructure.md](infrastructure.md)) |
 | Frontend prod | ✅ Cloudflare Workers Routes (`/*`); `/api/*` and `/.well-known/*` passthrough to EC2 nginx. Leftover `ring-frontend` container still runs as a rollback hatch (Phase 5 cleanup) |
 | Backend images | ✅ CI publishes `ring-api:latest` + `:<git-sha>` to ECR Public on `dev` pushes (#303) |
-| Backend rollout | Manual: `./dev_util/deploy_host.sh <sha>` once #308 lands (today still the loose commands) |
-| Migrations | `uv run ring db upgrade` run by hand on EC2 |
+| Backend rollout | ✅ `./dev_util/deploy_host.sh <published-sha>` (#308). First EC2 run 2026-08-11 pulled `60ca61b` (#306 image). Actions job not built yet |
+| Migrations | Run by `deploy_host.sh` (`uv run ring db upgrade --profile prod`) |
 | Version introspection | ✅ `GET /api/v1/version` returns git SHAs + image digests (#298) — verified 2026-08-11 after the #303 swap (`image_build.source=image_env`) |
 | CORS for previews | ✅ `BACKEND_CORS_ORIGIN_REGEX` live on prod (#295) |
 
@@ -140,8 +140,9 @@ still mean "whatever is on disk"):
 Until that cutover lands, `deploy_host.sh` must still checkout the
 SHA **and** assert both `git.sha` and `image_build.sha`.
 
-- [ ] Host script: [`dev_util/deploy_host.sh`](../dev_util/deploy_host.sh)
-      / `uv run ring deploy host [sha]` (#308). On the box it:
+- [x] Host script: [`dev_util/deploy_host.sh`](../dev_util/deploy_host.sh)
+      / `uv run ring deploy host [sha]` (#308, merged 2026-08-11).
+      On the box it:
       1. `git fetch` + `git checkout -B dev <sha>` (only required
          while `./ring` is bind-mounted)
       2. `./dev_util/prod.sh <sha>` (image pull only)
@@ -153,6 +154,12 @@ SHA **and** assert both `git.sha` and `image_build.sha`.
          / digest only. `--rollback-on-fail` re-runs the same script
          on the pre-deploy SHA
       Rollback: `./dev_util/deploy_host.sh <previous-sha>`
+      First EC2 run 2026-08-11: `0f1871c` (#308) has no image
+      (docs/script-only; `publish_api.yml` did not run). Deployed
+      `60ca61b` (#306, last Publish ring-api SHA). Afterward
+      `/version` was `git.sha=0f1871c` (checkout) +
+      `image_build.sha=60ca61b` (image). Pass a published SHA, not
+      `HEAD`, when `origin/dev` did not touch `ring/**`.
 - [ ] Deploy job: connect to EC2 (SSH key in repo secrets, or AWS SSM
       Session Manager for keyless) and run
       `./dev_util/deploy_host.sh --rollback-on-fail <sha>`
