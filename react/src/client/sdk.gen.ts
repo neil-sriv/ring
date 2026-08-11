@@ -63,9 +63,6 @@ export const impersonateUserTokenImpersonateUserTokenPost = <ThrowOnError extend
  * Test endpoint for validating access tokens.
  *
  * This endpoint is deprecated and will be removed in future versions.
- *
- * Raises:
- * NotImplementedError: Always raises this error as the endpoint is deprecated
  */
 export const testTokenLoginTestTokenPost = <ThrowOnError extends boolean = false>(options?: Options<TestTokenLoginTestTokenPostData, ThrowOnError>) => {
     return (options?.client ?? _heyApiClient).post<TestTokenLoginTestTokenPostResponse, unknown, ThrowOnError>({
@@ -134,9 +131,6 @@ export const resetPasswordResetPasswordTokenPost = <ThrowOnError extends boolean
  *
  * Args:
  * email (str): User's email address
- *
- * Raises:
- * NotImplementedError: Always raises this error as the endpoint is deprecated
  */
 export const recoverPasswordHtmlContentPasswordRecoveryHtmlContentEmailPost = <ThrowOnError extends boolean = false>(options: Options<RecoverPasswordHtmlContentPasswordRecoveryHtmlContentEmailPostData, ThrowOnError>) => {
     return (options.client ?? _heyApiClient).post<RecoverPasswordHtmlContentPasswordRecoveryHtmlContentEmailPostResponse, RecoverPasswordHtmlContentPasswordRecoveryHtmlContentEmailPostError, ThrowOnError>({
@@ -1392,13 +1386,19 @@ export const generateCompletionLlmCompletionPost = <ThrowOnError extends boolean
  * query: The search query string
  * search_type: Type of search to perform (semantic, keyword, or dual)
  * limit: Maximum number of results to return
- * db: Database session
+ * req_dep: Authenticated request dependencies
  *
  * Returns:
  * RawSearchResponse containing matching results and total count
  */
 export const rawSearchSearchRawSearchGet = <ThrowOnError extends boolean = false>(options: Options<RawSearchSearchRawSearchGetData, ThrowOnError>) => {
     return (options.client ?? _heyApiClient).get<RawSearchSearchRawSearchGetResponse, RawSearchSearchRawSearchGetError, ThrowOnError>({
+        security: [
+            {
+                scheme: 'bearer',
+                type: 'http'
+            }
+        ],
         url: '/search/raw-search',
         ...options
     });

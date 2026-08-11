@@ -633,21 +633,25 @@ export type ScheduleUnlinked = {
     tasks: Array<TaskUnlinked>;
 };
 
-export type SearchResponse = {
-    results: Array<SearchResult>;
-    total: number;
+export type SearchHit = {
+    type: 'user' | 'group' | 'letter' | 'question' | 'response';
+    api_identifier: string;
+    title: string;
+    subtitle?: string | null;
+    detail?: string | null;
+    href_loop_id?: string | null;
+    href_group_id?: string | null;
+    member_count?: number | null;
+    letter_count?: number | null;
+    response_count?: number | null;
+    participant_count?: number | null;
+    question_count?: number | null;
+    group_count?: number | null;
 };
 
-/**
- * Search result model that can hold different types of models based on type field.
- *
- * Attributes:
- * model (Any): The model instance
- * type (str): The type of the model
- */
-export type SearchResult = {
-    model: UserLinked | GroupLinked | QuestionLinked | ResponseLinked | PublicLetter;
-    type: string;
+export type SearchResponse = {
+    results: Array<SearchHit>;
+    total: number;
 };
 
 export type SearchType = 'semantic' | 'keyword' | 'dual';

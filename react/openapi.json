@@ -105,7 +105,7 @@
           "login"
         ],
         "summary": "Test Token",
-        "description": "Test endpoint for validating access tokens.\n\nThis endpoint is deprecated and will be removed in future versions.\n\nRaises:\n    NotImplementedError: Always raises this error as the endpoint is deprecated",
+        "description": "Test endpoint for validating access tokens.\n\nThis endpoint is deprecated and will be removed in future versions.",
         "operationId": "test_token_login_test_token_post",
         "responses": {
           "200": {
@@ -225,7 +225,7 @@
           "login"
         ],
         "summary": "Recover Password Html Content",
-        "description": "Generate HTML content for password recovery email.\n\nThis endpoint is deprecated and will be removed in future versions.\n\nArgs:\n    email (str): User's email address\n\nRaises:\n    NotImplementedError: Always raises this error as the endpoint is deprecated",
+        "description": "Generate HTML content for password recovery email.\n\nThis endpoint is deprecated and will be removed in future versions.\n\nArgs:\n    email (str): User's email address",
         "operationId": "recover_password_html_content_password_recovery_html_content__email__post",
         "deprecated": true,
         "parameters": [
@@ -2469,8 +2469,13 @@
           "search"
         ],
         "summary": "Raw Search",
-        "description": "Search the search table for a given query.\n\nArgs:\n    query: The search query string\n    search_type: Type of search to perform (semantic, keyword, or dual)\n    limit: Maximum number of results to return\n    db: Database session\n\nReturns:\n    RawSearchResponse containing matching results and total count",
+        "description": "Search the search table for a given query.\n\nArgs:\n    query: The search query string\n    search_type: Type of search to perform (semantic, keyword, or dual)\n    limit: Maximum number of results to return\n    req_dep: Authenticated request dependencies\n\nReturns:\n    RawSearchResponse containing matching results and total count",
         "operationId": "raw_search_search_raw_search_get",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
         "parameters": [
           {
             "name": "query",
@@ -2487,7 +2492,7 @@
             "required": false,
             "schema": {
               "$ref": "#/components/schemas/SearchType",
-              "default": "dual"
+              "default": "keyword"
             }
           },
           {
@@ -2553,7 +2558,7 @@
             "required": false,
             "schema": {
               "$ref": "#/components/schemas/SearchType",
-              "default": "dual"
+              "default": "keyword"
             }
           },
           {
@@ -4241,11 +4246,151 @@
         "title": "ScheduleUnlinked",
         "description": "Schema for schedule data with unlinked task relationships.\n\nThis schema extends the base Schedule schema and includes a list of tasks,\nusing the unlinked task schema to avoid circular references.\n\nAttributes:\n    tasks: List of tasks associated with this schedule"
       },
+      "SearchHit": {
+        "properties": {
+          "type": {
+            "type": "string",
+            "enum": [
+              "user",
+              "group",
+              "letter",
+              "question",
+              "response"
+            ],
+            "title": "Type"
+          },
+          "api_identifier": {
+            "type": "string",
+            "title": "Api Identifier"
+          },
+          "title": {
+            "type": "string",
+            "title": "Title"
+          },
+          "subtitle": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Subtitle"
+          },
+          "detail": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Detail"
+          },
+          "href_loop_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Href Loop Id"
+          },
+          "href_group_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Href Group Id"
+          },
+          "member_count": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Member Count"
+          },
+          "letter_count": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Letter Count"
+          },
+          "response_count": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Response Count"
+          },
+          "participant_count": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Participant Count"
+          },
+          "question_count": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Question Count"
+          },
+          "group_count": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Group Count"
+          }
+        },
+        "type": "object",
+        "required": [
+          "type",
+          "api_identifier",
+          "title"
+        ],
+        "title": "SearchHit"
+      },
       "SearchResponse": {
         "properties": {
           "results": {
             "items": {
-              "$ref": "#/components/schemas/SearchResult"
+              "$ref": "#/components/schemas/SearchHit"
             },
             "type": "array",
             "title": "Results"
@@ -4261,41 +4406,6 @@
           "total"
         ],
         "title": "SearchResponse"
-      },
-      "SearchResult": {
-        "properties": {
-          "model": {
-            "anyOf": [
-              {
-                "$ref": "#/components/schemas/UserLinked"
-              },
-              {
-                "$ref": "#/components/schemas/GroupLinked"
-              },
-              {
-                "$ref": "#/components/schemas/QuestionLinked"
-              },
-              {
-                "$ref": "#/components/schemas/ResponseLinked"
-              },
-              {
-                "$ref": "#/components/schemas/PublicLetter"
-              }
-            ],
-            "title": "Model"
-          },
-          "type": {
-            "type": "string",
-            "title": "Type"
-          }
-        },
-        "type": "object",
-        "required": [
-          "model",
-          "type"
-        ],
-        "title": "SearchResult",
-        "description": "Search result model that can hold different types of models based on type field.\n\nAttributes:\n    model (Any): The model instance\n    type (str): The type of the model"
       },
       "SearchType": {
         "type": "string",
