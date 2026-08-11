@@ -30,6 +30,7 @@ function SearchContent() {
     error,
     isError,
     isFetching,
+    isPending,
     refetch,
   } = useQuery({
     ...performSearchSearchSearchGetOptions({
@@ -42,7 +43,7 @@ function SearchContent() {
 
   const handleSearch = async () => {
     const trimmedQuery = searchQuery.trim()
-    if (!trimmedQuery || isFetching) {
+    if (!trimmedQuery) {
       return
     }
     setHasSubmittedSearch(true)
@@ -54,8 +55,9 @@ function SearchContent() {
   }
 
   const hasResults = Boolean(searchResults?.results.length)
+  const showInitialLoading = hasSubmittedSearch && isPending
   const hasEmptyResults =
-    hasSubmittedSearch && !isFetching && !isError && !hasResults
+    hasSubmittedSearch && !isPending && !isError && !hasResults
 
   return (
     <div className="w-full">
@@ -80,7 +82,7 @@ function SearchContent() {
             variant="ghost"
             size="icon"
             onClick={handleSearch}
-            disabled={isFetching || !searchQuery.trim()}
+            disabled={!searchQuery.trim()}
             className="absolute right-1 top-1/2 -translate-y-1/2"
           >
             {isFetching ? (
@@ -92,14 +94,14 @@ function SearchContent() {
         </div>
       </div>
 
-      {hasSubmittedSearch && isFetching && (
+      {showInitialLoading && (
         <div className="flex justify-center items-center gap-2 p-8 text-muted-foreground">
           <Loader2 className="h-5 w-5 animate-spin" />
           <span>Searching...</span>
         </div>
       )}
 
-      {hasSubmittedSearch && !isFetching && isError && (
+      {hasSubmittedSearch && !isPending && isError && (
         <div className="px-4 text-sm text-destructive">
           Search failed
           {error instanceof Error && error.message ? `: ${error.message}` : "."}
@@ -112,7 +114,7 @@ function SearchContent() {
         </div>
       )}
 
-      {!isFetching && hasResults && searchResults && (
+      {hasResults && searchResults && (
         <div className="px-4 overflow-auto">
           <Table>
             <TableHeader>
