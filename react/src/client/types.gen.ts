@@ -55,6 +55,30 @@ export type CompletionResponse = {
 };
 
 /**
+ * Identity of a running (or recently stopped) compose container.
+ */
+export type ContainerVersion = {
+    service?: string | null;
+    name: string;
+    container_id: string;
+    image?: string | null;
+    /**
+     * Local image id, typically sha256:<digest>
+     */
+    image_id?: string | null;
+    /**
+     * Registry digest (name@sha256:...) when the image was pulled
+     */
+    image_digest?: string | null;
+    /**
+     * org.opencontainers.image.revision label baked into the image
+     */
+    git_sha?: string | null;
+    status?: string | null;
+    state?: string | null;
+};
+
+/**
  * Model for the letters dashboard view.
  *
  * Groups letters by their status for dashboard display.
@@ -68,6 +92,17 @@ export type DashboardLetters = {
     upcoming: Array<PublicLetter>;
     in_progress: Array<PublicLetter>;
     recently_completed: Array<PublicLetter>;
+};
+
+/**
+ * Docker Engine view of this compose project's containers.
+ */
+export type DockerInfo = {
+    available: boolean;
+    error?: string | null;
+    socket_path?: string | null;
+    project?: string | null;
+    containers?: Array<ContainerVersion>;
 };
 
 /**
@@ -138,6 +173,21 @@ export type GenerateQuestionRequest = {
 
 export type GenerateQuestionResponse = {
     generated_text: string;
+};
+
+/**
+ * Git commit metadata from a live checkout or a baked image.
+ */
+export type GitCommitInfo = {
+    sha?: string | null;
+    short_sha?: string | null;
+    branch?: string | null;
+    subject?: string | null;
+    author_name?: string | null;
+    author_email?: string | null;
+    committed_at?: string | null;
+    dirty?: boolean | null;
+    source?: 'git' | 'env' | 'image_env' | 'unavailable';
 };
 
 /**
@@ -806,6 +856,16 @@ export type ValidationError = {
     type: string;
 };
 
+/**
+ * Deploy diagnostic payload for GET /version.
+ */
+export type VersionResponse = {
+    hostname: string;
+    git: GitCommitInfo;
+    image_build: GitCommitInfo;
+    docker: DockerInfo;
+};
+
 export type LoginAccessTokenLoginAccessTokenPostData = {
     body: BodyLoginAccessTokenLoginAccessTokenPost;
     path?: never;
@@ -954,6 +1014,22 @@ export type RecoverPasswordHtmlContentPasswordRecoveryHtmlContentEmailPostRespon
 };
 
 export type RecoverPasswordHtmlContentPasswordRecoveryHtmlContentEmailPostResponse = RecoverPasswordHtmlContentPasswordRecoveryHtmlContentEmailPostResponses[keyof RecoverPasswordHtmlContentPasswordRecoveryHtmlContentEmailPostResponses];
+
+export type ReadVersionData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/version';
+};
+
+export type ReadVersionResponses = {
+    /**
+     * Successful Response
+     */
+    200: VersionResponse;
+};
+
+export type ReadVersionResponse = ReadVersionResponses[keyof ReadVersionResponses];
 
 export type DeleteUserMePartiesMeDeleteData = {
     body?: never;

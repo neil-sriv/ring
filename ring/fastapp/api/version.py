@@ -10,7 +10,11 @@ from ring.lib.version_info import get_version
 router = APIRouter()
 
 
-@router.get("/version", response_model=VersionResponse)
+@router.get(
+    "/version",
+    response_model=VersionResponse,
+    operation_id="readVersion",
+)
 def read_version() -> VersionResponse:
     """Return git commit metadata and Docker image identities.
 
