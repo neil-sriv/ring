@@ -211,32 +211,32 @@ Public** (`public.ecr.aws/z2k1e8p1/`); the database is **CockroachDB Cloud**
 (`ring-db`). See [docs/infrastructure.md](docs/infrastructure.md) for the full
 topology (S3, CloudFront, SES, request flows).
 
-### Build and push images
+### Publish API images
 
-Preferred one-shot from a machine with AWS credentials:
+Pushes to `dev` that touch backend paths publish `ring-api:latest` and
+`ring-api:<sha>` to ECR Public (Actions → **Publish ring-api**). Frontend
+prod is Cloudflare Workers; do not build `ring-frontend` unless you are
+rolling back to the nginx SPA.
+
+Laptop fallback:
 
 ```bash
-ring deploy prod
+ring deploy prod -t "$(git rev-parse HEAD)"   # ring-api only
 ```
 
-Or the manual equivalent:
-
-```bash
-ring fe build
-VITE_API_URL=https://ring.neilsriv.tech ring compose any --profile prod build
-ring docker tp
-```
-
-### Deploy
+### Pull on the host
 
 SSH into the EC2 host, then:
 
 ```bash
 cd ring
-git pull
-./dev_util/prod.sh          # pull ring-api, ring-frontend, ring-llm from ECR
+git checkout dev && git pull origin dev
+./dev_util/prod.sh                  # or: ./dev_util/prod.sh <sha>
 ring db upgrade
-ring compose any --profile prod up -d
-# may need to restart nginx
-ring compose any --profile prod restart nginx
+ring compose any --profile prod up -d --force-recreate
 ```
+
+Prod still bind-mounts `./ring` with `--reload`, so running code is the
+checkout. Rollback is `git checkout <sha>` **and**
+`./dev_util/prod.sh <sha>` if the image/deps must match, then
+`up -d --force-recreate`. Image-only SHA pull is not a code rollback.

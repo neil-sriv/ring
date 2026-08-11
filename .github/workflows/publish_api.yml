@@ -1,0 +1,88 @@
+name: Publish ring-api
+
+# Phase 2 of the CD plan (see PR #301): every backend-touching push to
+# dev publishes a SHA-tagged image. This does not restart EC2 — pull +
+# swap is still manual until Phase 3.
+
+on:
+  push:
+    branches:
+      - dev
+    paths:
+      - "ring/**"
+      - "pyproject.toml"
+      - "uv.lock"
+      - "compose.core.yml"
+      - "compose.prod.yml"
+      - ".github/workflows/publish_api.yml"
+  workflow_dispatch:
+
+concurrency:
+  group: publish-api-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  ECR_REGISTRY: public.ecr.aws/z2k1e8p1
+  IMAGE_NAME: ring-api
+  AWS_REGION: us-east-1
+
+jobs:
+  publish:
+    name: Build and push ring-api
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Login to Amazon ECR Public
+        uses: aws-actions/amazon-ecr-login@v2
+        with:
+          registry-type: public
+
+      - name: Collect git metadata
+        id: git
+        run: |
+          echo "sha=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
+          echo "short=$(git rev-parse --short HEAD)" >> "$GITHUB_OUTPUT"
+          echo "branch=${GITHUB_REF_NAME}" >> "$GITHUB_OUTPUT"
+          echo "subject=$(git log -1 --pretty=format:%s | tr '\n' ' ' | cut -c1-500)" >> "$GITHUB_OUTPUT"
+          echo "author_name=$(git log -1 --pretty=format:%an)" >> "$GITHUB_OUTPUT"
+          echo "author_email=$(git log -1 --pretty=format:%ae)" >> "$GITHUB_OUTPUT"
+          echo "committed_at=$(git log -1 --pretty=format:%cI)" >> "$GITHUB_OUTPUT"
+
+      - name: Build and push
+        uses: docker/build-push-action@v6
+        with:
+          context: ./ring
+          file: ./ring/ring.Dockerfile
+          target: ring
+          platforms: linux/amd64
+          push: true
+          tags: |
+            ${{ env.ECR_REGISTRY }}/${{ env.IMAGE_NAME }}:latest
+            ${{ env.ECR_REGISTRY }}/${{ env.IMAGE_NAME }}:${{ github.sha }}
+          build-args: |
+            RING_GIT_SHA=${{ steps.git.outputs.sha }}
+            RING_GIT_SHORT_SHA=${{ steps.git.outputs.short }}
+            RING_GIT_BRANCH=${{ steps.git.outputs.branch }}
+            RING_GIT_SUBJECT=${{ steps.git.outputs.subject }}
+            RING_GIT_AUTHOR_NAME=${{ steps.git.outputs.author_name }}
+            RING_GIT_AUTHOR_EMAIL=${{ steps.git.outputs.author_email }}
+            RING_GIT_COMMITTED_AT=${{ steps.git.outputs.committed_at }}
+            RING_GIT_DIRTY=0
+          provenance: false
+          sbom: false
+          cache-from: type=registry,ref=${{ env.ECR_REGISTRY }}/${{ env.IMAGE_NAME }}:buildcache
+          cache-to: type=registry,ref=${{ env.ECR_REGISTRY }}/${{ env.IMAGE_NAME }}:buildcache,mode=max,image-manifest=true,oci-mediatypes=true
