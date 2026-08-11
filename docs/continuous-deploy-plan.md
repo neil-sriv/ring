@@ -15,7 +15,7 @@ Status legend: `[ ]` todo · `[x]` done. Update this file as phases land.
 | Piece | State |
 |-------|-------|
 | Frontend PR previews | ✅ Cloudflare Workers Builds deploys every branch; PR comments carry preview URLs (see [infrastructure.md](infrastructure.md)) |
-| Frontend prod | ✅ Cloudflare Workers Routes (`/*`); `/api/*` and `/.well-known/*` passthrough to EC2 nginx. Leftover `ring-frontend` container still runs as rollback until Phase 1 cleanup |
+| Frontend prod | ✅ Cloudflare Workers Routes (`/*`); `/api/*` and `/.well-known/*` passthrough to EC2 nginx. Leftover `ring-frontend` container still runs as a rollback hatch (Phase 5 cleanup) |
 | Backend images | ✅ CI publishes `ring-api:latest` + `:<git-sha>` to ECR Public on `dev` pushes (#303) |
 | Backend rollout | Manual: `git pull` + `./dev_util/prod.sh <sha>` + `uv run ring compose … up -d --force-recreate` |
 | Migrations | `uv run ring db upgrade` run by hand on EC2 |
@@ -33,6 +33,7 @@ Known remaining risks:
 
 Outcome: merges to `dev` deploy the prod frontend automatically. This is
 the first half of the north star and needs no backend work.
+*(required work done 2026-08-11; leftover nginx SPA is optional Phase 5)*
 
 - [x] Set `PYTHON_VERSION=3.13.3` build variable on the `ring-frontend`
       Worker (kills a ~4 min Python install triggered by the repo-root
@@ -58,10 +59,6 @@ the first half of the north star and needs no backend work.
       HTTPS access (gray-clouding the record, `curl --resolve` at the
       EC2 IP) fails cert validation. Keeping Let's Encrypt preserves a
       browser-valid origin, at the cost of keeping certbot and route 2.
-- [ ] `www.ring.neilsriv.tech`: routes exist but **no DNS record does**
-      (`www.neilsriv.tech` is a different, unrelated record). Either add
-      a proxied CNAME `www.ring` → `ring.neilsriv.tech`, or delete the
-      three `www.ring.*` routes.
 - [x] Verify: *(curl checks done 2026-08-11 — Worker serves `/*`
       [content-hash etags match workers.dev], API + version endpoint
       via route 1, acme webroot reachable over http; browser soak
@@ -82,14 +79,7 @@ the first half of the north star and needs no backend work.
       - Notebook WebSocket + an image upload in the browser
       - PWA: hard-refresh an existing session, confirm it updates
       Rollback = delete route 3 (`/*`); nginx still serves the old
-      frontend underneath throughout the soak.
-- [ ] Soak for a few days, then clean up:
-      - [ ] Remove `frontend` service from `compose.prod.yml`
-      - [ ] Remove `location / { proxy_pass http://ring-frontend:80/; }`
-            from `prod.nginx.conf` (keep the `serviceWorker.js` /
-            `manifest.webmanifest` aliases only if still needed)
-      - [ ] `ring deploy prod` drops the `ring-frontend` image
-      - [ ] Update [infrastructure.md](infrastructure.md) topology
+      frontend underneath (kept on purpose until Phase 5).
 
 Note on same-origin: with the route split, prod frontend and API share
 `ring.neilsriv.tech`, so prod needs **no CORS change**. The
@@ -158,7 +148,7 @@ Outcome: deploying is a `workflow_dispatch` click with a green/red result.
 - [ ] Retire `ring deploy prod` for everything except `ring-llm`
 - [ ] Update [infrastructure.md](infrastructure.md) deployment section
 
-### Per-merge behavior once complete
+### Per-merge behavior once Phase 4 is complete
 
 | Merge touches | What runs | Time to live |
 |---------------|-----------|--------------|
@@ -166,6 +156,30 @@ Outcome: deploying is a `workflow_dispatch` click with a green/red result.
 | `ring/` only | tests → image build → EC2 swap | ~2–3 min |
 | both | both tracks in parallel | ~3 min |
 | docs only | nothing | 0 |
+
+## Phase 5 — Optional frontend leftover cleanup
+
+Not required for CD. Prod already serves the SPA from Cloudflare.
+These only tidy the EC2 fallback and unused `www.ring` routes.
+
+- [ ] `www.ring.neilsriv.tech`: routes exist but **no DNS record does**
+      (`www.neilsriv.tech` is a different, unrelated record). Either add
+      a proxied CNAME `www.ring` → `ring.neilsriv.tech`, or delete the
+      three `www.ring.*` routes.
+- [ ] Remove `frontend` service from `compose.prod.yml` (frees ~300MB
+      on the t2.micro). After this, rollback is "delete route 3" only
+      if you re-add the container, so do this once the Worker soak
+      feels boring.
+- [ ] Remove `location / { proxy_pass http://ring-frontend:80/; }`
+      from `prod.nginx.conf` (keep the `serviceWorker.js` /
+      `manifest.webmanifest` aliases only if still needed). Also add
+      an https `/.well-known/` location if you want ACME to work on
+      443 without falling into `location /`.
+- [ ] `uv run ring deploy prod` / `prod.sh` already default to
+      `ring-api` only; drop `ring-frontend` from `IMAGE_TAG_NAMES` if
+      nothing else references it.
+- [ ] Update [infrastructure.md](infrastructure.md) topology (nginx
+      no longer serves the SPA).
 
 ---
 
