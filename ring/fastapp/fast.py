@@ -40,13 +40,17 @@ def create_app() -> FastAPI:
 
     init_app_modules()
 
-    if ring_config.BACKEND_CORS_ORIGINS:
+    if (
+        ring_config.BACKEND_CORS_ORIGINS
+        or ring_config.BACKEND_CORS_ORIGIN_REGEX
+    ):
         app.add_middleware(
             CORSMiddleware,
             allow_origins=[
                 str(origin).strip("/")
                 for origin in ring_config.BACKEND_CORS_ORIGINS
             ],
+            allow_origin_regex=ring_config.BACKEND_CORS_ORIGIN_REGEX or None,
             allow_credentials=True,
             allow_methods=["*"],
             allow_headers=["*"],
