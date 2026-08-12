@@ -360,8 +360,7 @@ function DraftQuestion({
           }
 
           const existingIdx = q.responses.findIndex(
-            (r) =>
-              r.participant.api_identifier === currentUser.api_identifier,
+            (r) => r.participant.api_identifier === currentUser.api_identifier,
           )
           if (existingIdx >= 0) {
             const responses = [...q.responses]
