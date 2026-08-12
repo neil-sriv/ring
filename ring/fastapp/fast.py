@@ -19,11 +19,17 @@ from ring.async_scheduler.scheduler import scheduler
 from ring.fastapp.config import get_config
 from ring.fastapp.init_app_modules import init_app_modules
 from ring.fastapp.routes import router
-from ring.lib.request_logging import sanitize_request_url
+from ring.lib.request_logging import (
+    install_uvicorn_access_log_redaction,
+    sanitize_request_url,
+)
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
+    # Uvicorn may create its access logger after import; ensure the filter is on.
+    install_uvicorn_access_log_redaction()
+
     ring_config = get_config()
     if not ring_config.DISABLE_SCHEDULER:
         scheduler.start()
@@ -35,6 +41,8 @@ async def lifespan(app: FastAPI):
 
 
 def create_app() -> FastAPI:
+    install_uvicorn_access_log_redaction()
+
     ring_config = get_config()
     app = FastAPI(root_path=ring_config.root_path, lifespan=lifespan)
 

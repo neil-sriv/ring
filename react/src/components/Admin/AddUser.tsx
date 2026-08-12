@@ -9,7 +9,7 @@ import {
   readUsersPartiesUsersGetQueryKey,
 } from "../../client/@tanstack/react-query.gen"
 import useCustomToast from "../../hooks/useCustomToast"
-import { emailPattern } from "../../util/misc"
+import { emailPattern, formatApiErrorDetail } from "../../util/misc"
 
 import { Button } from "@/components/ui/button"
 import {
@@ -61,9 +61,11 @@ const AddUser = ({ isOpen, onClose }: AddUserProps) => {
       onClose()
     },
     onError: (error: AxiosError<CreateUserPartiesUserPostError>) => {
-      const errDetail =
-        error.response?.data.detail || "no error detail, please contact support"
-      showToast("Something went wrong.", `${errDetail}`, "error")
+      showToast(
+        "Something went wrong.",
+        formatApiErrorDetail(error.response?.data?.detail),
+        "error",
+      )
     },
     onSettled: () => {
       queryClient.invalidateQueries({
