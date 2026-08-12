@@ -330,14 +330,78 @@ function DraftQuestion({
     setDeleteOpen(false)
   }
 
+  const letterQueryKey = readLetterLettersLetterLetterApiIdGetQueryKey({
+    path: { letter_api_id: loopApiId },
+  })
+
   const handleUpsert = async (responseText: string): Promise<void> => {
-    await upsertResponseQuestionsQuestionQuestionApiIdUpsertResponsePost({
-      path: { question_api_id: question.api_identifier },
-      body: {
-        response_text: responseText,
-        participant_api_identifier: currentUser.api_identifier,
-      },
-      throwOnError: true,
+    const { data: updatedQuestion } =
+      await upsertResponseQuestionsQuestionQuestionApiIdUpsertResponsePost({
+        path: { question_api_id: question.api_identifier },
+        body: {
+          response_text: responseText,
+          participant_api_identifier: currentUser.api_identifier,
+        },
+        throwOnError: true,
+      })
+
+    // Keep letter cache in sync so navigate-away → return within staleTime
+    // still shows the saved text (debounce and unmount flush).
+    queryClient.setQueryData<PublicLetter>(letterQueryKey, (oldData) => {
+      if (!oldData) {
+        return oldData
+      }
+
+      return {
+        ...oldData,
+        questions: oldData.questions.map((q) => {
+          if (q.api_identifier !== question.api_identifier) {
+            return q
+          }
+
+          const existingIdx = q.responses.findIndex(
+            (r) =>
+              r.participant.api_identifier === currentUser.api_identifier,
+          )
+          if (existingIdx >= 0) {
+            const responses = [...q.responses]
+            responses[existingIdx] = {
+              ...responses[existingIdx],
+              response_text: responseText,
+            }
+            return { ...q, responses }
+          }
+
+          const knownIds = new Set(q.responses.map((r) => r.api_identifier))
+          const created =
+            updatedQuestion?.responses.find(
+              (r) => !knownIds.has(r.api_identifier),
+            ) ??
+            updatedQuestion?.responses.find(
+              (r) => r.response_text === responseText,
+            )
+          if (!created) {
+            return q
+          }
+
+          return {
+            ...q,
+            responses: [
+              ...q.responses,
+              {
+                ...created,
+                participant: {
+                  email: currentUser.email,
+                  name: currentUser.name,
+                  api_identifier: currentUser.api_identifier,
+                  admin: currentUser.admin,
+                },
+                images: [],
+              },
+            ],
+          }
+        }),
+      }
     })
 
     // Keep letter cache in sync so navigate-away → quick return within
