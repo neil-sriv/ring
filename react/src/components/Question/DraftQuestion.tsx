@@ -16,6 +16,7 @@ import { Check, Loader2, Trash2 } from "lucide-react"
 import { useEffect, useRef, useState } from "react"
 import {
   type DeleteQuestionQuestionsQuestionQuestionApiIdDeleteError,
+  type PublicLetter,
   type PublicQuestion,
   type ResponseWithParticipant,
   type UserLinked,
@@ -338,6 +339,48 @@ function DraftQuestion({
       },
       throwOnError: true,
     })
+
+    // Keep letter cache in sync so navigate-away → quick return within
+    // global staleTime does not remount the textarea from pre-flush data.
+    const letterQueryKey = readLetterLettersLetterLetterApiIdGetQueryKey({
+      path: { letter_api_id: loopApiId },
+    })
+    const cachedLetter = queryClient.getQueryData<PublicLetter>(letterQueryKey)
+    const hasExistingResponse = cachedLetter?.questions
+      .find((q) => q.api_identifier === question.api_identifier)
+      ?.responses.some(
+        (r) => r.participant.api_identifier === currentUser.api_identifier,
+      )
+
+    if (hasExistingResponse) {
+      queryClient.setQueryData<PublicLetter>(letterQueryKey, (oldData) => {
+        if (!oldData) {
+          return oldData
+        }
+        return {
+          ...oldData,
+          questions: oldData.questions.map((q) => {
+            if (q.api_identifier !== question.api_identifier) {
+              return q
+            }
+            return {
+              ...q,
+              responses: q.responses.map((r) => {
+                if (
+                  r.participant.api_identifier !== currentUser.api_identifier
+                ) {
+                  return r
+                }
+                return { ...r, response_text: responseText }
+              }),
+            }
+          }),
+        }
+      })
+    } else {
+      // First answer: no ResponseWithParticipant in cache yet — refetch.
+      await queryClient.invalidateQueries({ queryKey: letterQueryKey })
+    }
   }
 
   const newHandleUpload = async (file: File) => {
