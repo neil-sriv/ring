@@ -15,7 +15,7 @@ import {
   updateUserMePartiesMePatchMutation,
 } from "../../client/@tanstack/react-query.gen"
 import useCustomToast from "../../hooks/useCustomToast"
-import { emailPattern } from "../../util/misc"
+import { emailPattern, formatApiErrorDetail } from "../../util/misc"
 import { subscribeToPush } from "../../util/notifications"
 
 import { Button } from "@/components/ui/button"
@@ -56,9 +56,11 @@ const UserInformation = () => {
       reset()
     },
     onError: (err: AxiosError<UpdateUserMePartiesMePatchError>) => {
-      const errDetail =
-        err.response?.data.detail || "no error detail, please contact support"
-      showToast("Something went wrong.", `${errDetail}`, "error")
+      showToast(
+        "Something went wrong.",
+        formatApiErrorDetail(err.response?.data?.detail),
+        "error",
+      )
     },
     onSettled: async () => {
       queryClient.invalidateQueries({

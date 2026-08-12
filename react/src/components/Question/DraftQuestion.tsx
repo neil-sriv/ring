@@ -16,6 +16,7 @@ import { Check, Loader2, Trash2 } from "lucide-react"
 import { useEffect, useRef, useState } from "react"
 import {
   type DeleteQuestionQuestionsQuestionQuestionApiIdDeleteError,
+  type PublicLetter,
   type PublicQuestion,
   type ResponseWithParticipant,
   type UserLinked,
@@ -101,10 +102,13 @@ function ResponseBlock(props: ResponseBlockProps) {
   const lastSavedTextRef = useRef(props.response?.response_text ?? "")
   const responseTextRef = useRef(responseText)
   const saveSeqRef = useRef(0)
+  const flushInFlightRef = useRef<string | null>(null)
+  const submitResponseRef = useRef(props.submitResponse)
   const showToast = useCustomToast()
   const textareaRef = useAutoResizeTextarea(responseText)
 
   responseTextRef.current = responseText
+  submitResponseRef.current = props.submitResponse
 
   // Don't clobber in-progress typing when letter props refresh.
   useEffect(() => {
@@ -116,32 +120,27 @@ function ResponseBlock(props: ResponseBlockProps) {
     lastSavedTextRef.current = nextText
   }, [props.response?.response_text])
 
-  const handleResponseChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
-    const newValue = e.target.value
-    setResponseText(newValue)
-    setSaveStatus(newValue === lastSavedTextRef.current ? "saved" : "idle")
-
-    // Clear existing timeout
-    if (debounceTimeoutRef.current) {
-      clearTimeout(debounceTimeoutRef.current)
+  const persistResponse = async (
+    newValue: string,
+    { showStatus }: { showStatus: boolean },
+  ) => {
+    if (newValue === lastSavedTextRef.current) {
+      return
     }
 
-    // Set new timeout for debounced save
-    debounceTimeoutRef.current = setTimeout(async () => {
-      if (newValue === lastSavedTextRef.current) {
-        return
-      }
-
-      const seq = ++saveSeqRef.current
+    const seq = ++saveSeqRef.current
+    if (showStatus) {
       savingStartTimeRef.current = Date.now()
       setSaveStatus("saving")
-      try {
-        await props.submitResponse(newValue)
-        if (saveSeqRef.current === seq) {
-          lastSavedTextRef.current = newValue
-        }
-      } catch (error) {
-        const axiosError = error as AxiosError<{ detail?: unknown }>
+    }
+    try {
+      await submitResponseRef.current(newValue)
+      if (saveSeqRef.current === seq) {
+        lastSavedTextRef.current = newValue
+      }
+    } catch (error) {
+      const axiosError = error as AxiosError<{ detail?: unknown }>
+      if (showStatus) {
         showToast(
           "Error!",
           formatApiErrorDetail(
@@ -156,27 +155,79 @@ function ResponseBlock(props: ResponseBlockProps) {
         ) {
           setSaveStatus("error")
         }
-        return
       }
+      throw error
+    }
 
-      // Ensure saving animation shows for at least 250ms
-      const elapsed = Date.now() - (savingStartTimeRef.current || 0)
-      const remainingTime = Math.max(0, 250 - elapsed)
-      if (remainingTime > 0) {
-        await new Promise((resolve) => setTimeout(resolve, remainingTime))
-      }
-      if (saveSeqRef.current === seq && responseTextRef.current === newValue) {
-        setSaveStatus("saved")
-      }
+    if (!showStatus) {
+      return
+    }
+
+    // Ensure saving animation shows for at least 250ms
+    const elapsed = Date.now() - (savingStartTimeRef.current || 0)
+    const remainingTime = Math.max(0, 250 - elapsed)
+    if (remainingTime > 0) {
+      await new Promise((resolve) => setTimeout(resolve, remainingTime))
+    }
+    if (saveSeqRef.current === seq && responseTextRef.current === newValue) {
+      setSaveStatus("saved")
+    }
+  }
+
+  const flushPendingSave = () => {
+    if (debounceTimeoutRef.current) {
+      clearTimeout(debounceTimeoutRef.current)
+      debounceTimeoutRef.current = null
+    }
+    const pending = responseTextRef.current
+    if (pending === lastSavedTextRef.current) {
+      return
+    }
+    if (flushInFlightRef.current === pending) {
+      return
+    }
+    flushInFlightRef.current = pending
+    void persistResponse(pending, { showStatus: false })
+      .catch(() => {
+        // Best-effort flush on navigate/unload; status UI may be unmounted.
+      })
+      .finally(() => {
+        if (flushInFlightRef.current === pending) {
+          flushInFlightRef.current = null
+        }
+      })
+  }
+  const flushPendingSaveRef = useRef(flushPendingSave)
+  flushPendingSaveRef.current = flushPendingSave
+
+  const handleResponseChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    const newValue = e.target.value
+    setResponseText(newValue)
+    setSaveStatus(newValue === lastSavedTextRef.current ? "saved" : "idle")
+
+    // Clear existing timeout
+    if (debounceTimeoutRef.current) {
+      clearTimeout(debounceTimeoutRef.current)
+    }
+
+    // Set new timeout for debounced save
+    debounceTimeoutRef.current = setTimeout(() => {
+      void persistResponse(newValue, { showStatus: true }).catch(() => {
+        // Error toast + status handled inside persistResponse when showStatus.
+      })
     }, 1000) // 1 second debounce
   }
 
-  // Cleanup timeout on unmount
+  // Flush pending debounce on navigate away or tab close — clearing alone
+  // previously dropped unsaved draft text typed within the debounce window.
   useEffect(() => {
+    const onPageHide = () => {
+      flushPendingSaveRef.current()
+    }
+    window.addEventListener("pagehide", onPageHide)
     return () => {
-      if (debounceTimeoutRef.current) {
-        clearTimeout(debounceTimeoutRef.current)
-      }
+      window.removeEventListener("pagehide", onPageHide)
+      flushPendingSaveRef.current()
     }
   }, [])
 
@@ -288,6 +339,48 @@ function DraftQuestion({
       },
       throwOnError: true,
     })
+
+    // Keep letter cache in sync so navigate-away → quick return within
+    // global staleTime does not remount the textarea from pre-flush data.
+    const letterQueryKey = readLetterLettersLetterLetterApiIdGetQueryKey({
+      path: { letter_api_id: loopApiId },
+    })
+    const cachedLetter = queryClient.getQueryData<PublicLetter>(letterQueryKey)
+    const hasExistingResponse = cachedLetter?.questions
+      .find((q) => q.api_identifier === question.api_identifier)
+      ?.responses.some(
+        (r) => r.participant.api_identifier === currentUser.api_identifier,
+      )
+
+    if (hasExistingResponse) {
+      queryClient.setQueryData<PublicLetter>(letterQueryKey, (oldData) => {
+        if (!oldData) {
+          return oldData
+        }
+        return {
+          ...oldData,
+          questions: oldData.questions.map((q) => {
+            if (q.api_identifier !== question.api_identifier) {
+              return q
+            }
+            return {
+              ...q,
+              responses: q.responses.map((r) => {
+                if (
+                  r.participant.api_identifier !== currentUser.api_identifier
+                ) {
+                  return r
+                }
+                return { ...r, response_text: responseText }
+              }),
+            }
+          }),
+        }
+      })
+    } else {
+      // First answer: no ResponseWithParticipant in cache yet — refetch.
+      await queryClient.invalidateQueries({ queryKey: letterQueryKey })
+    }
   }
 
   const newHandleUpload = async (file: File) => {
