@@ -11,6 +11,7 @@ import type {
 } from "../../client"
 import { generateCompletionLlmCompletionPostMutation } from "../../client/@tanstack/react-query.gen"
 import useCustomToast from "../../hooks/useCustomToast"
+import { formatApiErrorDetail } from "../../util/misc"
 
 interface Message {
   role: "user" | "assistant"
@@ -55,7 +56,10 @@ export function LLMPlayground(): JSX.Element {
     onError: (error: AxiosError<GenerateCompletionLlmCompletionPostError>) => {
       showToast(
         "Error",
-        error.response?.data.detail?.[0].msg || "Failed to send message",
+        formatApiErrorDetail(
+          error.response?.data?.detail,
+          "Failed to send message",
+        ),
         "error",
       )
     },
