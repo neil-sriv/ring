@@ -70,13 +70,19 @@ def render_unfurl_html(path: str) -> str:
   </head>
   <body>
     <p>{description}</p>
-    <p><a href="{canonical_url}">Open {title} in Ring</a></p>
+    <p><a href="{canonical_url}">{canonical_url}</a></p>
   </body>
 </html>
 """
 
 
-@router.get("/unfurl/{app_path:path}", include_in_schema=False)
+# Some crawlers probe with HEAD before fetching; a 405 there is enough for them
+# to give up on the link.
+@router.api_route(
+    "/unfurl/{app_path:path}",
+    methods=["GET", "HEAD"],
+    include_in_schema=False,
+)
 def unfurl(app_path: str) -> Response:
     """Serve link-preview HTML for a path in the web app.
 

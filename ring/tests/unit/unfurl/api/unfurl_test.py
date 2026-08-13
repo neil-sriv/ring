@@ -23,6 +23,14 @@ class TestUnfurlAPI:
         assert response.headers["content-type"].startswith("text/html")
         assert 'property="og:title"' in response.text
 
+    def test_answers_head_probes(
+        self, unauthenticated_client: TestClient
+    ) -> None:
+        """Crawlers that probe with HEAD give up on a 405."""
+        response = unauthenticated_client.head("/unfurl/loops/lttr_abc123")
+
+        assert response.status_code == 200
+
     def test_letter_path_gets_letter_copy(
         self, unauthenticated_client: TestClient
     ) -> None:
