@@ -4,12 +4,15 @@
     "title": "FastAPI",
     "version": "0.1.0"
   },
+  "servers": [
+    {
+      "url": "/api/v1"
+    }
+  ],
   "paths": {
     "/login/access-token": {
       "post": {
-        "tags": [
-          "login"
-        ],
+        "tags": ["login"],
         "summary": "Login Access Token",
         "description": "Authenticate user and generate access token.\n\nValidates user credentials and generates a JWT access token for authenticated sessions.\n\nArgs:\n    form_data (OAuth2PasswordRequestForm): OAuth2 password request form containing username and password\n    req_dep (RequestDependenciesBase): Request dependencies including database session\n\nReturns:\n    Token: JWT access token with bearer type\n\nRaises:\n    HTTPException: 400 if credentials are invalid",
         "operationId": "login_access_token_login_access_token_post",
@@ -49,9 +52,7 @@
     },
     "/impersonate-user-token": {
       "post": {
-        "tags": [
-          "login"
-        ],
+        "tags": ["login"],
         "summary": "Impersonate User Token",
         "operationId": "impersonate_user_token_impersonate_user_token_post",
         "security": [
@@ -96,9 +97,7 @@
     },
     "/login/test-token": {
       "post": {
-        "tags": [
-          "login"
-        ],
+        "tags": ["login"],
         "summary": "Test Token",
         "description": "Test endpoint for validating access tokens.\n\nThis endpoint is deprecated and will be removed in future versions.",
         "operationId": "test_token_login_test_token_post",
@@ -120,9 +119,7 @@
     },
     "/reset-password:request/{email}": {
       "post": {
-        "tags": [
-          "login"
-        ],
+        "tags": ["login"],
         "summary": "Reset Password Request",
         "description": "Initiate password reset process for a user.\n\nGenerates a one-time token and sends a password reset email to the user.\n\nArgs:\n    email (str): User's email address\n    req_dep (RequestDependenciesBase): Request dependencies including database session\n\nReturns:\n    ResponseMessage: Confirmation message of email sent\n\nRaises:\n    HTTPException: 400 if user with email doesn't exist",
         "operationId": "reset_password_request_reset_password_request__email__post",
@@ -163,9 +160,7 @@
     },
     "/reset-password/{token}": {
       "post": {
-        "tags": [
-          "login"
-        ],
+        "tags": ["login"],
         "summary": "Reset Password",
         "description": "Reset user's password using a valid reset token.\n\nValidates the reset token and updates the user's password if token is valid.\n\nArgs:\n    token (str): Password reset token\n    new_password_data (NewPassword): New password data\n    req_dep (RequestDependenciesBase): Request dependencies including database session\n\nReturns:\n    ResponseMessage: Confirmation message of password update\n\nRaises:\n    HTTPException: 400 if token is invalid, expired, or already used",
         "operationId": "reset_password_reset_password__token__post",
@@ -216,9 +211,7 @@
     },
     "/password-recovery-html-content/{email}": {
       "post": {
-        "tags": [
-          "login"
-        ],
+        "tags": ["login"],
         "summary": "Recover Password Html Content",
         "description": "Generate HTML content for password recovery email.\n\nThis endpoint is deprecated and will be removed in future versions.\n\nArgs:\n    email (str): User's email address",
         "operationId": "recover_password_html_content_password_recovery_html_content__email__post",
@@ -261,9 +254,7 @@
     },
     "/version": {
       "get": {
-        "tags": [
-          "meta"
-        ],
+        "tags": ["meta"],
         "summary": "Read Version",
         "description": "Return git commit metadata and Docker image identities.\n\nUnauthenticated so a host-side `curl` can tell which commit and images\nare actually running after a deploy. Cached briefly in-process so\nrepeated public hits do not shell out to git on every request.",
         "operationId": "readVersion",
@@ -283,9 +274,7 @@
     },
     "/parties/me": {
       "get": {
-        "tags": [
-          "parties"
-        ],
+        "tags": ["parties"],
         "summary": "Read User Me",
         "description": "Get the current authenticated user's information.\n\nArgs:\n    req_dep (AuthenticatedRequestDependencies): Request dependencies\n\nReturns:\n    User: Current user's information",
         "operationId": "read_user_me_parties_me_get",
@@ -308,9 +297,7 @@
         ]
       },
       "delete": {
-        "tags": [
-          "parties"
-        ],
+        "tags": ["parties"],
         "summary": "Delete User Me",
         "description": "Delete current user (deprecated).\n\nNote:\n    This endpoint is not implemented and is deprecated.",
         "operationId": "delete_user_me_parties_me_delete",
@@ -330,9 +317,7 @@
         "deprecated": true
       },
       "patch": {
-        "tags": [
-          "parties"
-        ],
+        "tags": ["parties"],
         "summary": "Update User Me",
         "description": "Update current user's information.\n\nArgs:\n    current_user_update_data (UserUpdate): User update parameters\n    req_dep (AuthenticatedRequestDependencies): Request dependencies\n\nReturns:\n    User: Updated user information\n\nRaises:\n    HTTPException: If new email is already registered by another user",
         "operationId": "update_user_me_parties_me_patch",
@@ -377,9 +362,7 @@
     },
     "/parties/user": {
       "post": {
-        "tags": [
-          "parties"
-        ],
+        "tags": ["parties"],
         "summary": "Create User",
         "description": "Create a new user (deprecated).\n\nArgs:\n    user (UserCreate): User creation parameters\n    req_dep (RequestDependenciesBase): Request dependencies\n\nReturns:\n    User: Created user\n\nRaises:\n    HTTPException: If email is already registered\n\nNote:\n    This endpoint is deprecated. Use /register/{token} instead.",
         "operationId": "create_user_parties_user_post",
@@ -420,9 +403,7 @@
     },
     "/parties/register/{token}": {
       "post": {
-        "tags": [
-          "parties"
-        ],
+        "tags": ["parties"],
         "summary": "Register User",
         "description": "Register a new user with an invite token.\n\nArgs:\n    token (str): Invite token\n    user (UserCreate): User creation parameters\n    req_dep (RequestDependenciesBase): Request dependencies\n\nReturns:\n    User: Created user\n\nRaises:\n    HTTPException: If token is invalid, expired, already used, or email mismatch",
         "operationId": "register_user_parties_register__token__post",
@@ -473,9 +454,7 @@
     },
     "/parties/users": {
       "get": {
-        "tags": [
-          "parties"
-        ],
+        "tags": ["parties"],
         "summary": "Read Users",
         "description": "Get a list of users with pagination.\n\nArgs:\n    skip (int, optional): Number of records to skip. Defaults to 0.\n    limit (int, optional): Maximum number of records to return. Defaults to 100.\n    req_dep (AuthenticatedRequestDependencies): Request dependencies\n\nReturns:\n    Sequence[User]: List of users",
         "operationId": "read_users_parties_users_get",
@@ -536,9 +515,7 @@
     },
     "/parties/user/{user_api_id}": {
       "get": {
-        "tags": [
-          "parties"
-        ],
+        "tags": ["parties"],
         "summary": "Read User By Id",
         "description": "Get a user by their API identifier.\n\nArgs:\n    user_api_id (str): API identifier of the user\n    req_dep (AuthenticatedRequestDependencies): Request dependencies\n\nReturns:\n    User: User information\n\nRaises:\n    HTTPException: If user not found",
         "operationId": "read_user_by_id_parties_user__user_api_id__get",
@@ -584,9 +561,7 @@
     },
     "/parties/me/password": {
       "patch": {
-        "tags": [
-          "parties"
-        ],
+        "tags": ["parties"],
         "summary": "Update Password Me",
         "description": "Update current user's password.\n\nArgs:\n    update_password_data (UserUpdatePassword): Password update parameters\n    req_dep (AuthenticatedRequestDependencies): Request dependencies\n\nReturns:\n    ResponseMessage: Success message\n\nRaises:\n    HTTPException: If current password is incorrect or new password is same as current",
         "operationId": "update_password_me_parties_me_password_patch",
@@ -631,9 +606,7 @@
     },
     "/parties/{user_api_id}/admin": {
       "patch": {
-        "tags": [
-          "parties"
-        ],
+        "tags": ["parties"],
         "summary": "Update User Admin",
         "description": "Update a user's admin status.\n\nArgs:\n    user_api_id (str): API identifier of the user to update\n    req_dep (AuthenticatedRequestDependencies): Request dependencies\n\nReturns:\n    ResponseMessage: Success message\n\nRaises:\n    HTTPException: If user is not an admin",
         "operationId": "update_user_admin_parties__user_api_id__admin_patch",
@@ -679,9 +652,7 @@
     },
     "/parties/signup": {
       "post": {
-        "tags": [
-          "parties"
-        ],
+        "tags": ["parties"],
         "summary": "Signup",
         "description": "Sign up a new user without invitation (deprecated).\n\nNote:\n    This endpoint is not implemented and is deprecated.",
         "operationId": "signup_parties_signup_post",
@@ -703,9 +674,7 @@
     },
     "/parties/{user_id}": {
       "delete": {
-        "tags": [
-          "parties"
-        ],
+        "tags": ["parties"],
         "summary": "Delete User",
         "description": "Delete any user (deprecated).\n\nNote:\n    This endpoint is not implemented and is deprecated.",
         "operationId": "delete_user_parties__user_id__delete",
@@ -725,9 +694,7 @@
         "deprecated": true
       },
       "patch": {
-        "tags": [
-          "parties"
-        ],
+        "tags": ["parties"],
         "summary": "Update User",
         "description": "Update any user (deprecated).\n\nNote:\n    This endpoint is not implemented and is deprecated.",
         "operationId": "update_user_parties__user_id__patch",
@@ -749,9 +716,7 @@
     },
     "/parties/group": {
       "post": {
-        "tags": [
-          "parties"
-        ],
+        "tags": ["parties"],
         "summary": "Create Group",
         "description": "Create a new group.\n\nArgs:\n    group (GroupCreate): Group creation parameters\n    req_dep (AuthenticatedRequestDependencies): Request dependencies\n\nReturns:\n    Group: Created group\n\nRaises:\n    HTTPException: If group creation fails",
         "operationId": "create_group_parties_group_post",
@@ -796,9 +761,7 @@
     },
     "/parties/groups/": {
       "get": {
-        "tags": [
-          "parties"
-        ],
+        "tags": ["parties"],
         "summary": "List Groups",
         "description": "List all groups a user is a member of.\n\nArgs:\n    user_api_id (str): API identifier of the user\n    skip (int, optional): Number of records to skip. Defaults to 0.\n    limit (int, optional): Maximum number of records to return. Defaults to 100.\n    req_dep (AuthenticatedRequestDependencies): Request dependencies\n\nReturns:\n    Sequence[Group]: List of groups",
         "operationId": "list_groups_parties_groups__get",
@@ -868,9 +831,7 @@
     },
     "/parties/group/{group_api_id}": {
       "get": {
-        "tags": [
-          "parties"
-        ],
+        "tags": ["parties"],
         "summary": "Read Group",
         "description": "Get details of a specific group.\n\nArgs:\n    group_api_id (str): API identifier of the group\n    req_dep (AuthenticatedRequestDependencies): Request dependencies\n\nReturns:\n    Group: Group details\n\nRaises:\n    HTTPException: If group not found or user is not a member",
         "operationId": "read_group_parties_group__group_api_id__get",
@@ -914,9 +875,7 @@
         }
       },
       "patch": {
-        "tags": [
-          "parties"
-        ],
+        "tags": ["parties"],
         "summary": "Update Group",
         "description": "Update group information.\n\nArgs:\n    group_api_id (str): API identifier of the group\n    group (GroupUpdate): Group update parameters\n    req_dep (AuthenticatedRequestDependencies): Request dependencies\n\nReturns:\n    Group: Updated group\n\nRaises:\n    HTTPException: If no updates provided, user not authorized, or invalid cycle length",
         "operationId": "update_group_parties_group__group_api_id__patch",
@@ -972,9 +931,7 @@
     },
     "/parties/group/{group_api_id}:add_member/{user_api_id}": {
       "post": {
-        "tags": [
-          "parties"
-        ],
+        "tags": ["parties"],
         "summary": "Add User To Group",
         "description": "Add a user to a group.\n\nArgs:\n    group_api_id (str): API identifier of the group\n    user_api_id (str): API identifier of the user to add\n    req_dep (AuthenticatedRequestDependencies): Request dependencies\n\nReturns:\n    Group: Updated group\n\nRaises:\n    HTTPException: If group or user not found",
         "operationId": "add_user_to_group_parties_group__group_api_id__add_member__user_api_id__post",
@@ -1029,9 +986,7 @@
     },
     "/parties/group/{group_api_id}:remove_member/{user_api_id}": {
       "post": {
-        "tags": [
-          "parties"
-        ],
+        "tags": ["parties"],
         "summary": "Remove User From Group",
         "description": "Remove a user from a group.\n\nArgs:\n    group_api_id (str): API identifier of the group\n    user_api_id (str): API identifier of the user to remove\n    req_dep (AuthenticatedRequestDependencies): Request dependencies\n\nReturns:\n    Group: Updated group\n\nRaises:\n    HTTPException: If group not found, user not authorized, or invalid operation",
         "operationId": "remove_user_from_group_parties_group__group_api_id__remove_member__user_api_id__post",
@@ -1086,9 +1041,7 @@
     },
     "/parties/group/{group_api_id}:add_members": {
       "post": {
-        "tags": [
-          "parties"
-        ],
+        "tags": ["parties"],
         "summary": "Add Members",
         "description": "Add multiple members to a group.\n\nArgs:\n    group_api_id (str): API identifier of the group\n    add_members (AddMembers): List of email addresses to invite\n    req_dep (AuthenticatedRequestDependencies): Request dependencies\n\nReturns:\n    Group: Updated group\n\nNote:\n    - Existing users will be added directly to the group\n    - Non-registered users will receive email invitations\n    - New members are automatically added to in-progress and upcoming letters",
         "operationId": "add_members_parties_group__group_api_id__add_members_post",
@@ -1144,9 +1097,7 @@
     },
     "/parties/group/{group_api_id}:replace_default_questions": {
       "post": {
-        "tags": [
-          "parties"
-        ],
+        "tags": ["parties"],
         "summary": "Replace Group Default Questions",
         "description": "Replace a group's default questions.\n\nArgs:\n    group_api_id (str): API identifier of the group\n    default_questions (ReplaceDefaultQuestions): New list of default questions\n    req_dep (AuthenticatedRequestDependencies): Request dependencies\n\nReturns:\n    Group: Updated group\n\nRaises:\n    HTTPException: If group not found or user not authorized",
         "operationId": "replace_group_default_questions_parties_group__group_api_id__replace_default_questions_post",
@@ -1202,9 +1153,7 @@
     },
     "/parties/group/{group_api_id}/key-value": {
       "get": {
-        "tags": [
-          "parties"
-        ],
+        "tags": ["parties"],
         "summary": "Read Group Key Values",
         "description": "Get all key-value pairs for a group.\n\nArgs:\n    group_api_id (str): API identifier of the group\n    req_dep (AuthenticatedRequestDependencies): Request dependencies\n\nReturns:\n    GroupKeyValue: Dictionary of all key-value pairs\n\nRaises:\n    HTTPException: If group not found or user is not a member",
         "operationId": "read_group_key_values_parties_group__group_api_id__key_value_get",
@@ -1248,9 +1197,7 @@
         }
       },
       "put": {
-        "tags": [
-          "parties"
-        ],
+        "tags": ["parties"],
         "summary": "Full Replace Group Key Values",
         "description": "Replace all key-value pairs for a group.\n\nArgs:\n    group_api_id (str): API identifier of the group\n    updates (GroupKeyValue): New key-value pairs\n    req_dep (AuthenticatedRequestDependencies): Request dependencies\n\nReturns:\n    GroupKeyValue: Updated key-value pairs\n\nRaises:\n    HTTPException: If group not found or user is not a member",
         "operationId": "full_replace_group_key_values_parties_group__group_api_id__key_value_put",
@@ -1306,9 +1253,7 @@
     },
     "/parties/group/{group_api_id}/key-value/{key}": {
       "get": {
-        "tags": [
-          "parties"
-        ],
+        "tags": ["parties"],
         "summary": "Read Group Key Value",
         "description": "Get a specific key-value pair for a group.\n\nArgs:\n    group_api_id (str): API identifier of the group\n    key (str): Key to retrieve\n    req_dep (AuthenticatedRequestDependencies): Request dependencies\n\nReturns:\n    GroupKeyValueBase: Key-value pair\n\nRaises:\n    HTTPException: If group not found or user is not a member",
         "operationId": "read_group_key_value_parties_group__group_api_id__key_value__key__get",
@@ -1363,9 +1308,7 @@
     },
     "/parties/group/{group_api_id}/key-value:update": {
       "post": {
-        "tags": [
-          "parties"
-        ],
+        "tags": ["parties"],
         "summary": "Upsert Group Key Value",
         "description": "Update or delete a single key-value pair for a group.\n\nArgs:\n    group_api_id (str): API identifier of the group\n    update (SingleGroupKeyValueUpdate): Update operation details\n    req_dep (AuthenticatedRequestDependencies): Request dependencies\n\nReturns:\n    GroupKeyValueBase: Updated key-value pair\n\nRaises:\n    HTTPException: If group not found or user is not a member",
         "operationId": "upsert_group_key_value_parties_group__group_api_id__key_value_update_post",
@@ -1421,9 +1364,7 @@
     },
     "/parties/group/{group_api_id}/key-value:bulk-update": {
       "post": {
-        "tags": [
-          "parties"
-        ],
+        "tags": ["parties"],
         "summary": "Bulk Update Group Key Values",
         "description": "Update or delete multiple key-value pairs for a group.\n\nArgs:\n    group_api_id (str): API identifier of the group\n    updates (BulkGroupKeyValueUpdate): List of update operations\n    req_dep (AuthenticatedRequestDependencies): Request dependencies\n\nReturns:\n    GroupKeyValue: All key-value pairs after updates\n\nRaises:\n    HTTPException: If group not found or user is not a member",
         "operationId": "bulk_update_group_key_values_parties_group__group_api_id__key_value_bulk_update_post",
@@ -1479,9 +1420,7 @@
     },
     "/letters/letter": {
       "post": {
-        "tags": [
-          "letters"
-        ],
+        "tags": ["letters"],
         "summary": "Add Next Letter",
         "description": "Create a new letter for a group.\n\nCreates a new letter with default questions if there are no letters\ncurrently in progress or upcoming for the group.\n\nArgs:\n    letter (LetterCreate): Letter creation parameters\n    req_dep (AuthenticatedRequestDependencies): Request dependencies including database session and auth\n\nReturns:\n    Letter: Newly created letter\n\nRaises:\n    ValueError: If there is already a letter in progress or upcoming",
         "operationId": "add_next_letter_letters_letter_post",
@@ -1526,9 +1465,7 @@
     },
     "/letters/letter:{letter_type}": {
       "post": {
-        "tags": [
-          "letters"
-        ],
+        "tags": ["letters"],
         "summary": "Add Next Letter",
         "operationId": "add_next_letter_letters_letter__letter_type__post",
         "security": [
@@ -1582,9 +1519,7 @@
     },
     "/letters/letters/": {
       "get": {
-        "tags": [
-          "letters"
-        ],
+        "tags": ["letters"],
         "summary": "List Letters",
         "description": "List letters for a specific group.\n\nRetrieves a paginated list of letters belonging to the specified group.\n\nArgs:\n    group_api_id (str): API identifier of the group\n    skip (int, optional): Number of records to skip for pagination. Defaults to 0.\n    limit (int, optional): Maximum number of records to return. Defaults to 100.\n    req_dep (AuthenticatedRequestDependencies): Request dependencies including database session and auth\n\nReturns:\n    Sequence[Letter]: List of letters",
         "operationId": "list_letters_letters_letters__get",
@@ -1670,9 +1605,7 @@
     },
     "/letters/letter/{letter_api_id}": {
       "get": {
-        "tags": [
-          "letters"
-        ],
+        "tags": ["letters"],
         "summary": "Read Letter",
         "description": "Retrieve a specific letter by its API identifier.\n\nArgs:\n    letter_api_id (str): API identifier of the letter\n    req_dep (AuthenticatedRequestDependencies): Request dependencies including database session and auth\n\nReturns:\n    Letter: The requested letter\n\nRaises:\n    IDNotFoundException: If letter with given API ID is not found",
         "operationId": "read_letter_letters_letter__letter_api_id__get",
@@ -1718,9 +1651,7 @@
     },
     "/letters/letters:dashboard": {
       "get": {
-        "tags": [
-          "letters"
-        ],
+        "tags": ["letters"],
         "summary": "List Dashboard Letters",
         "description": "List letters for the dashboard view.\n\nRetrieves letters that are upcoming, in progress, or recently completed\n(within the last 8 days) for the current user.\n\nArgs:\n    req_dep (AuthenticatedRequestDependencies): Request dependencies including database session and auth\n\nReturns:\n    dict[str, list[Letter]]: Dictionary containing categorized letters",
         "operationId": "list_dashboard_letters_letters_letters_dashboard_get",
@@ -1745,9 +1676,7 @@
     },
     "/letters/letter/{letter_api_id}:edit_letter": {
       "post": {
-        "tags": [
-          "letters"
-        ],
+        "tags": ["letters"],
         "summary": "Edit Letter",
         "description": "Update a letter's details.\n\nUpdates the send time of a letter. For upcoming letters, ensures the new\nsend time is after any in-progress letter's send time.\n\nArgs:\n    letter_api_id (str): API identifier of the letter to edit\n    letter (LetterUpdate): Updated letter details\n    req_dep (AuthenticatedRequestDependencies): Request dependencies including database session and auth\n\nReturns:\n    Letter: Updated letter\n\nRaises:\n    AssertionError: If new send time violates timing constraints\n    IDNotFoundException: If letter with given API ID is not found",
         "operationId": "edit_letter_letters_letter__letter_api_id__edit_letter_post",
@@ -1803,9 +1732,7 @@
     },
     "/letters/letter/{letter_api_id}:add_question": {
       "post": {
-        "tags": [
-          "letters"
-        ],
+        "tags": ["letters"],
         "summary": "Add Question",
         "description": "Add a new question to a letter.\n\nCreates and adds a new question to the specified letter. The question can\noptionally be associated with an author.\n\n:param letter_api_id: API identifier of the letter\n:type letter_api_id: str\n:param question: Question creation parameters\n:type question: QuestionCreate\n:param req_dep: Request dependencies including database session and auth\n:type req_dep: AuthenticatedRequestDependencies\n:raises IDNotFoundException: If letter or author with given API ID is not found\n:return: Updated letter with the new question\n:rtype: Letter",
         "operationId": "add_question_letters_letter__letter_api_id__add_question_post",
@@ -1861,9 +1788,7 @@
     },
     "/letters/letter/{letter_api_id}:generate_question": {
       "post": {
-        "tags": [
-          "letters"
-        ],
+        "tags": ["letters"],
         "summary": "Generate Question",
         "description": "Generate a question using LLM without saving it.",
         "operationId": "generate_question_letters_letter__letter_api_id__generate_question_post",
@@ -1919,9 +1844,7 @@
     },
     "/schedule/schedule/{group_api_id}": {
       "get": {
-        "tags": [
-          "schedule"
-        ],
+        "tags": ["schedule"],
         "summary": "Get Schedule For Group",
         "description": "Get a group's schedule by its API identifier.\n\nArgs:\n    group_api_id: API identifier of the group\n    req_dep: Request dependencies including database session\n\nReturns:\n    Schedule: The group's schedule with its associated tasks\n\nRaises:\n    HTTPException: If the group is not found or user lacks permission",
         "operationId": "get_schedule_for_group_schedule_schedule__group_api_id__get",
@@ -1967,9 +1890,7 @@
     },
     "/questions/question/{question_api_id}:upsert_response": {
       "post": {
-        "tags": [
-          "questions"
-        ],
+        "tags": ["questions"],
         "summary": "Upsert Response",
         "description": "Create or update a response to a question.\n\nIf a response already exists (identified by api_identifier or participant),\nupdates it. Otherwise, creates a new response.\n\nArgs:\n    question_api_id (str): API identifier of the question\n    response (ResponseUpsert): Response creation/update parameters\n    req_dep (AuthenticatedRequestDependencies): Request dependencies including database session and auth\n\nReturns:\n    Question: Updated question with the new/updated response\n\nRaises:\n    IDNotFoundException: If question or response with given API ID is not found",
         "operationId": "upsert_response_questions_question__question_api_id__upsert_response_post",
@@ -2025,9 +1946,7 @@
     },
     "/questions/question/{question_api_id}:upload_image": {
       "post": {
-        "tags": [
-          "questions"
-        ],
+        "tags": ["questions"],
         "summary": "Upload Image",
         "description": "Upload an image as part of a response to a question.\n\nCreates a new response if one doesn't exist for the current user,\nthen attaches the uploaded image to it.\n\nArgs:\n    question_api_id (str): API identifier of the question\n    response_image (UploadFile): Image file to upload\n    req_dep (AuthenticatedRequestDependencies): Request dependencies including database session and auth\n\nReturns:\n    Question: Updated question with the response containing the new image\n\nRaises:\n    IDNotFoundException: If question with given API ID is not found",
         "operationId": "upload_image_questions_question__question_api_id__upload_image_post",
@@ -2083,9 +2002,7 @@
     },
     "/questions/question/{question_api_id}": {
       "delete": {
-        "tags": [
-          "questions"
-        ],
+        "tags": ["questions"],
         "summary": "Delete Question",
         "description": "Delete a question.\n\nOnly the question author or group admin can delete a question.\nQuestions with responses cannot be deleted.\n\nArgs:\n    question_api_id (str): API identifier of the question to delete\n    req_dep (AuthenticatedRequestDependencies): Request dependencies including database session and auth\n\nRaises:\n    HTTPException: If question not found, user not authorized, or question has responses",
         "operationId": "delete_question_questions_question__question_api_id__delete",
@@ -2124,9 +2041,7 @@
     },
     "/responses/response/{response_api_id}:edit_response": {
       "post": {
-        "tags": [
-          "responses"
-        ],
+        "tags": ["responses"],
         "summary": "Edit Response",
         "description": "Update the text content of a response.\n\nArgs:\n    response_api_id (str): API identifier of the response to edit\n    response (ResponseCreateBase): Updated response content\n    req_dep (AuthenticatedRequestDependencies): Request dependencies including database session and auth\n\nReturns:\n    Response: Updated response\n\nRaises:\n    IDNotFoundException: If response with given API ID is not found",
         "operationId": "edit_response_responses_response__response_api_id__edit_response_post",
@@ -2182,9 +2097,7 @@
     },
     "/responses/response/{response_api_id}:upload_image": {
       "post": {
-        "tags": [
-          "responses"
-        ],
+        "tags": ["responses"],
         "summary": "Upload Image",
         "description": "Upload images to attach to a response.\n\nThis endpoint is deprecated. Use the question-level image upload endpoint instead.\n\nArgs:\n    response_api_id (str): API identifier of the response\n    response_images (list[UploadFile]): List of image files to upload\n    req_dep (AuthenticatedRequestDependencies): Request dependencies including database session and auth\n\nReturns:\n    Response: Updated response with attached images\n\nRaises:\n    IDNotFoundException: If response with given API ID is not found",
         "operationId": "upload_image_responses_response__response_api_id__upload_image_post",
@@ -2241,9 +2154,7 @@
     },
     "/responses/response/{response_api_id}:delete_image": {
       "delete": {
-        "tags": [
-          "responses"
-        ],
+        "tags": ["responses"],
         "summary": "Delete Image",
         "description": "Delete an image from a response.\n\nRemoves the image association and deletes the Image model row.\nThe S3 file is not deleted to avoid data loss.\n\nArgs:\n    response_api_id (str): API identifier of the response\n    s3_url (str): S3 URL of the image to delete\n    req_dep (AuthenticatedRequestDependencies): Request dependencies including database session and auth\n\nReturns:\n    Response: Updated response without the deleted image\n\nRaises:\n    IDNotFoundException: If response with given API ID is not found\n    ValueError: If image is not found in the response",
         "operationId": "delete_image_responses_response__response_api_id__delete_image_delete",
@@ -2296,11 +2207,139 @@
         }
       }
     },
+    "/links/short-link": {
+      "post": {
+        "tags": ["links"],
+        "summary": "Create Short Link",
+        "description": "Create (or reuse) a short link for a shareable resource.\n\nArgs:\n    payload (ShortLinkCreate): Target resource to share.\n    req_dep (AuthenticatedRequestDependencies): Request dependencies.\n\nReturns:\n    ShortLink: The new or pre-existing short link.\n\nRaises:\n    HTTPException: 400 if the target type is not shareable; 404/permission\n        errors surface from the authorization check.",
+        "operationId": "create_short_link_links_short_link_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ShortLinkCreate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ShortLink"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ]
+      }
+    },
+    "/links/short-link/{token}": {
+      "get": {
+        "tags": ["links"],
+        "summary": "Resolve Short Link",
+        "description": "Resolve a short link token to its target resource.\n\nReturns only the target identifier and type; access to the underlying\nresource is still enforced by that resource's own endpoint.\n\nArgs:\n    token (str): The short link token.\n    req_dep (AuthenticatedRequestDependencies): Request dependencies.\n\nReturns:\n    ShortLinkResolution: The resolved target identifier and type.\n\nRaises:\n    HTTPException: 404 if the token does not resolve to a shareable target.",
+        "operationId": "resolve_short_link_links_short_link__token__get",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "token",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Token"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ShortLinkResolution"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/links/short-link/{short_link_api_id}": {
+      "delete": {
+        "tags": ["links"],
+        "summary": "Delete Short Link",
+        "description": "Revoke (hard-delete) a short link.\n\nOnly the creator of the link may revoke it.\n\nArgs:\n    short_link_api_id (str): API identifier of the short link to revoke.\n    req_dep (AuthenticatedRequestDependencies): Request dependencies.\n\nReturns:\n    Response: An empty 204 response on success.\n\nRaises:\n    HTTPException: 404 if the link is not found or not owned by the caller.",
+        "operationId": "delete_short_link_links_short_link__short_link_api_id__delete",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "short_link_api_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Short Link Api Id"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/invites/": {
       "post": {
-        "tags": [
-          "invites"
-        ],
+        "tags": ["invites"],
         "summary": "Create Invite",
         "description": "Create a new invite for a user to join a group.\n\nArgs:\n    invite (InviteCreate): Invite creation parameters including email and group_api_id\n    req_dep (AuthenticatedRequestDependencies): Request dependencies\n\nReturns:\n    Invite: Created invite\n\nRaises:\n    HTTPException: If email is already invited, already registered, or group not found",
         "operationId": "create_invite_invites__post",
@@ -2345,9 +2384,7 @@
     },
     "/invites/token/{token}": {
       "get": {
-        "tags": [
-          "invites"
-        ],
+        "tags": ["invites"],
         "summary": "Validate Token",
         "description": "Validate an invite token and return the associated invite.\n\nArgs:\n    token (str): The invite token to validate\n    req_dep (RequestDependenciesBase): Request dependencies\n\nReturns:\n    Invite: The invite associated with the token\n\nRaises:\n    HTTPException: If token is invalid, expired, or already used",
         "operationId": "validate_token_invites_token__token__get",
@@ -2388,9 +2425,7 @@
     },
     "/notifications/subscription": {
       "post": {
-        "tags": [
-          "notifications"
-        ],
+        "tags": ["notifications"],
         "summary": "Post Subscription",
         "description": "Create a new web push notification subscription.\n\nCreates a subscription for the authenticated user to receive web push\nnotifications. If a subscription with the same endpoint already exists,\nreturns a message indicating this instead of creating a duplicate.\n\nArgs:\n    subscription (SubscriptionCreate): Subscription details including endpoint and keys\n    req_dep (AuthenticatedRequestDependencies): Request dependencies including database session\n\nReturns:\n    ResponseMessage: Message indicating success or existing subscription\n\nRaises:\n    HTTPException: If user is not authenticated",
         "operationId": "post_subscription_notifications_subscription_post",
@@ -2435,9 +2470,7 @@
     },
     "/llm/completion": {
       "post": {
-        "tags": [
-          "llm"
-        ],
+        "tags": ["llm"],
         "summary": "Generate Completion",
         "description": "Generate a completion for the given request.\n\nGenerates a completion for the given request.\n\nArgs:\n    completion_request (CompletionRequest): Completion request details\n    req_dep (AuthenticatedRequestDependencies): Request dependencies including database session\n\nReturns:\n    CompletionResponse: Completion response details\n\nRaises:\n    HTTPException: If user is not authenticated",
         "operationId": "generate_completion_llm_completion_post",
@@ -2482,9 +2515,7 @@
     },
     "/search/raw-search": {
       "get": {
-        "tags": [
-          "search"
-        ],
+        "tags": ["search"],
         "summary": "Raw Search",
         "description": "Search the search table for a given query.\n\nArgs:\n    query: The search query string\n    search_type: Type of search to perform (semantic, keyword, or dual)\n    limit: Maximum number of results to return\n    req_dep: Authenticated request dependencies\n\nReturns:\n    RawSearchResponse containing matching results and total count",
         "operationId": "raw_search_search_raw_search_get",
@@ -2549,9 +2580,7 @@
     },
     "/search/search": {
       "get": {
-        "tags": [
-          "search"
-        ],
+        "tags": ["search"],
         "summary": "Perform Search",
         "operationId": "perform_search_search_search_get",
         "security": [
@@ -2615,9 +2644,7 @@
     },
     "/notebook/documents": {
       "post": {
-        "tags": [
-          "notebook"
-        ],
+        "tags": ["notebook"],
         "summary": "Create Document Endpoint",
         "description": "Create a new document.\n\nArgs:\n    document (DocumentCreate): Document creation parameters\n    req_dep (AuthenticatedRequestDependencies): Request dependencies including database session and auth\n\nReturns:\n    Document: Newly created document",
         "operationId": "create_document_endpoint_notebook_documents_post",
@@ -2660,9 +2687,7 @@
         }
       },
       "get": {
-        "tags": [
-          "notebook"
-        ],
+        "tags": ["notebook"],
         "summary": "List Documents",
         "description": "List documents for a group.\n\nArgs:\n    group_api_id (str): API identifier of the group\n    req_dep (AuthenticatedRequestDependencies): Request dependencies including database session and auth\n\nReturns:\n    List[Document]: List of documents",
         "operationId": "list_documents_notebook_documents_get",
@@ -2712,9 +2737,7 @@
     },
     "/notebook/documents/{document_api_id}": {
       "get": {
-        "tags": [
-          "notebook"
-        ],
+        "tags": ["notebook"],
         "summary": "Get Document Endpoint",
         "description": "Get a document by its API identifier.\n\nArgs:\n    document_api_id (str): API identifier of the document\n    req_dep (AuthenticatedRequestDependencies): Request dependencies including database session and auth\n\nReturns:\n    Document: The requested document\n\nRaises:\n    IDNotFoundException: If document with given API ID is not found",
         "operationId": "get_document_endpoint_notebook_documents__document_api_id__get",
@@ -2758,9 +2781,7 @@
         }
       },
       "put": {
-        "tags": [
-          "notebook"
-        ],
+        "tags": ["notebook"],
         "summary": "Update Document Endpoint",
         "description": "Update a document.\n\nArgs:\n    document_api_id (str): API identifier of the document\n    document_update (DocumentUpdate): Document update parameters\n    req_dep (AuthenticatedRequestDependencies): Request dependencies including database session and auth\n\nReturns:\n    Document: Updated document\n\nRaises:\n    IDNotFoundException: If document with given API ID is not found",
         "operationId": "update_document_endpoint_notebook_documents__document_api_id__put",
@@ -2874,9 +2895,7 @@
           }
         },
         "type": "object",
-        "required": [
-          "member_emails"
-        ],
+        "required": ["member_emails"],
         "title": "AddMembers",
         "description": "Schema for adding members to a group.\n\nAttributes:\n    member_emails (list[str]): List of email addresses to invite"
       },
@@ -2931,10 +2950,7 @@
           }
         },
         "type": "object",
-        "required": [
-          "username",
-          "password"
-        ],
+        "required": ["username", "password"],
         "title": "Body_login_access_token_login_access_token_post"
       },
       "Body_upload_image_questions_question__question_api_id__upload_image_post": {
@@ -2946,9 +2962,7 @@
           }
         },
         "type": "object",
-        "required": [
-          "response_image"
-        ],
+        "required": ["response_image"],
         "title": "Body_upload_image_questions_question__question_api_id__upload_image_post"
       },
       "Body_upload_image_responses_response__response_api_id__upload_image_post": {
@@ -2963,9 +2977,7 @@
           }
         },
         "type": "object",
-        "required": [
-          "response_images"
-        ],
+        "required": ["response_images"],
         "title": "Body_upload_image_responses_response__response_api_id__upload_image_post"
       },
       "BulkGroupKeyValueUpdate": {
@@ -2981,9 +2993,7 @@
           }
         },
         "type": "object",
-        "required": [
-          "updates"
-        ],
+        "required": ["updates"],
         "title": "BulkGroupKeyValueUpdate",
         "description": "Schema for bulk updating multiple key-value pairs.\n\nThis model allows multiple key-value operations to be performed in a single request.\nEach update in the list can be either a 'set' or 'delete' operation.\n\nAttributes:\n    updates (list[SingleGroupKeyValueUpdate]): List of update operations to perform\n\nNote:\n    At least one update operation must be provided"
       },
@@ -2995,9 +3005,7 @@
           }
         },
         "type": "object",
-        "required": [
-          "prompt"
-        ],
+        "required": ["prompt"],
         "title": "CompletionRequest"
       },
       "CompletionResponse": {
@@ -3008,9 +3016,7 @@
           }
         },
         "type": "object",
-        "required": [
-          "text"
-        ],
+        "required": ["text"],
         "title": "CompletionResponse"
       },
       "ContainerVersion": {
@@ -3105,10 +3111,7 @@
           }
         },
         "type": "object",
-        "required": [
-          "name",
-          "container_id"
-        ],
+        "required": ["name", "container_id"],
         "title": "ContainerVersion",
         "description": "Identity of a running (or recently stopped) compose container."
       },
@@ -3137,11 +3140,7 @@
           }
         },
         "type": "object",
-        "required": [
-          "upcoming",
-          "in_progress",
-          "recently_completed"
-        ],
+        "required": ["upcoming", "in_progress", "recently_completed"],
         "title": "DashboardLetters",
         "description": "Model for the letters dashboard view.\n\nGroups letters by their status for dashboard display.\n\nAttributes:\n    upcoming (list[PublicLetter]): Letters scheduled for the future\n    in_progress (list[PublicLetter]): Currently active letters\n    recently_completed (list[PublicLetter]): Recently finished letters"
       },
@@ -3164,10 +3163,7 @@
           },
           "source": {
             "type": "string",
-            "enum": [
-              "snapshot",
-              "unavailable"
-            ],
+            "enum": ["snapshot", "unavailable"],
             "title": "Source",
             "default": "unavailable"
           },
@@ -3213,9 +3209,7 @@
           }
         },
         "type": "object",
-        "required": [
-          "available"
-        ],
+        "required": ["available"],
         "title": "DockerInfo",
         "description": "Host-written snapshot of this compose project's containers."
       },
@@ -3238,11 +3232,7 @@
           }
         },
         "type": "object",
-        "required": [
-          "name",
-          "content",
-          "group_api_id"
-        ],
+        "required": ["name", "content", "group_api_id"],
         "title": "DocumentCreate",
         "description": "Schema for creating a new document."
       },
@@ -3338,9 +3328,7 @@
           }
         },
         "type": "object",
-        "required": [
-          "prompt"
-        ],
+        "required": ["prompt"],
         "title": "GenerateQuestionRequest"
       },
       "GenerateQuestionResponse": {
@@ -3351,9 +3339,7 @@
           }
         },
         "type": "object",
-        "required": [
-          "generated_text"
-        ],
+        "required": ["generated_text"],
         "title": "GenerateQuestionResponse"
       },
       "GitCommitInfo": {
@@ -3448,12 +3434,7 @@
           },
           "source": {
             "type": "string",
-            "enum": [
-              "git",
-              "env",
-              "image_env",
-              "unavailable"
-            ],
+            "enum": ["git", "env", "image_env", "unavailable"],
             "title": "Source",
             "default": "unavailable"
           }
@@ -3474,10 +3455,7 @@
           }
         },
         "type": "object",
-        "required": [
-          "name",
-          "admin_api_identifier"
-        ],
+        "required": ["name", "admin_api_identifier"],
         "title": "GroupCreate",
         "description": "Schema for creating a new group.\n\nAttributes:\n    name (str): Name of the group (inherited from GroupBase)\n    admin_api_identifier (str): API identifier of the user who will be admin"
       },
@@ -3491,9 +3469,7 @@
           }
         },
         "type": "object",
-        "required": [
-          "key_values"
-        ],
+        "required": ["key_values"],
         "title": "GroupKeyValue",
         "description": "Schema for group key-value responses.\n\nThis model represents the complete key-value store for a group, containing\nall key-value pairs in a dictionary format.\n\nAttributes:\n    key_values (dict[str, Any]): Dictionary containing all key-value pairs for the group"
       },
@@ -3510,10 +3486,7 @@
           }
         },
         "type": "object",
-        "required": [
-          "key",
-          "value"
-        ],
+        "required": ["key", "value"],
         "title": "GroupKeyValueBase",
         "description": "Base schema for group key-value operations.\n\nThis is the base model that defines the fundamental structure of a key-value pair.\nIt is used as a building block for other key-value related schemas.\n\nAttributes:\n    key (str): The key identifier for the value\n    value (Any): The value associated with the key, can be any JSON-serializable type"
       },
@@ -3629,12 +3602,7 @@
           }
         },
         "type": "object",
-        "required": [
-          "name",
-          "api_identifier",
-          "created_at",
-          "cycle_length"
-        ],
+        "required": ["name", "api_identifier", "created_at", "cycle_length"],
         "title": "GroupUnlinked",
         "description": "Schema for groups without linked relationships.\n\nInherits all fields from Group but excludes relationship data."
       },
@@ -3702,10 +3670,7 @@
           }
         },
         "type": "object",
-        "required": [
-          "s3_url",
-          "media_type"
-        ],
+        "required": ["s3_url", "media_type"],
         "title": "Image",
         "description": "Schema for image data.\n\nRepresents an image stored in S3 with its media type.\n\nAttributes:\n    s3_url (str): S3 key/path for the image\n    media_type (MediaType): Type of media (image/video)"
       },
@@ -3721,10 +3686,7 @@
           }
         },
         "type": "object",
-        "required": [
-          "email",
-          "group_api_id"
-        ],
+        "required": ["email", "group_api_id"],
         "title": "InviteCreate",
         "description": "Schema for creating a new invite.\n\nAttributes:\n    email (str): Email address of the invitee (inherited from InviteBase)\n    group_api_id (str): API identifier of the group to invite to"
       },
@@ -3799,29 +3761,19 @@
           }
         },
         "type": "object",
-        "required": [
-          "group_api_identifier",
-          "send_at"
-        ],
+        "required": ["group_api_identifier", "send_at"],
         "title": "LetterCreate",
         "description": "Schema for creating a new letter.\n\nAttributes:\n    group_api_identifier (str): API identifier of the group to create the letter for\n    send_at (AwareDatetime): Scheduled time to send the letter"
       },
       "LetterStatus": {
         "type": "string",
-        "enum": [
-          "UPCOMING",
-          "IN_PROGRESS",
-          "SENT"
-        ],
+        "enum": ["UPCOMING", "IN_PROGRESS", "SENT"],
         "title": "LetterStatus",
         "description": "Enumeration of possible letter statuses.\nRepresents the different states a letter can be in within the system:\n- UPCOMING: Letter is scheduled but not yet active\n- IN_PROGRESS: Letter is currently active and accepting responses\n- SENT: Letter has been completed and sent"
       },
       "LetterType": {
         "type": "string",
-        "enum": [
-          "CYCLIC",
-          "ADHOC"
-        ],
+        "enum": ["CYCLIC", "ADHOC"],
         "title": "LetterType",
         "description": ""
       },
@@ -3923,10 +3875,7 @@
       },
       "MediaType": {
         "type": "string",
-        "enum": [
-          "image",
-          "video"
-        ],
+        "enum": ["image", "video"],
         "title": "MediaType",
         "description": "Enumeration of supported media types.\n\nAttributes:\n    IMAGE: Image files (e.g., jpg, png)\n    VIDEO: Video files"
       },
@@ -4027,9 +3976,7 @@
           }
         },
         "type": "object",
-        "required": [
-          "new_password"
-        ],
+        "required": ["new_password"],
         "title": "NewPassword",
         "description": "Schema for setting a new password (e.g., after reset).\n\nAttributes:\n    new_password (str): User's new password"
       },
@@ -4201,10 +4148,7 @@
           }
         },
         "type": "object",
-        "required": [
-          "question_text",
-          "author_api_id"
-        ],
+        "required": ["question_text", "author_api_id"],
         "title": "QuestionCreate",
         "description": "Schema for creating a new question.\n\nAttributes:\n    question_text (str): The text content of the question\n    author_api_id (str | None): API identifier of the question's author, optional"
       },
@@ -4266,11 +4210,7 @@
           }
         },
         "type": "object",
-        "required": [
-          "question_text",
-          "api_identifier",
-          "created_at"
-        ],
+        "required": ["question_text", "api_identifier", "created_at"],
         "title": "QuestionUnlinked",
         "description": "Schema for question without linked relationships.\n\nInherits all fields from Question but excludes relationship data."
       },
@@ -4289,10 +4229,7 @@
           }
         },
         "type": "object",
-        "required": [
-          "results",
-          "total"
-        ],
+        "required": ["results", "total"],
         "title": "RawSearchResponse"
       },
       "RawSearchResult": {
@@ -4303,9 +4240,7 @@
           }
         },
         "type": "object",
-        "required": [
-          "raw_text"
-        ],
+        "required": ["raw_text"],
         "title": "RawSearchResult"
       },
       "ReplaceDefaultQuestions": {
@@ -4319,9 +4254,7 @@
           }
         },
         "type": "object",
-        "required": [
-          "questions"
-        ],
+        "required": ["questions"],
         "title": "ReplaceDefaultQuestions",
         "description": "Schema for replacing a group's default questions.\n\nAttributes:\n    questions (list[str]): New list of default questions"
       },
@@ -4333,9 +4266,7 @@
           }
         },
         "type": "object",
-        "required": [
-          "response_text"
-        ],
+        "required": ["response_text"],
         "title": "ResponseCreateBase",
         "description": "Base schema for response creation operations.\n\nInherits response_text field from ResponseBase."
       },
@@ -4398,9 +4329,7 @@
           }
         },
         "type": "object",
-        "required": [
-          "message"
-        ],
+        "required": ["message"],
         "title": "ResponseMessage",
         "description": "Standard response message model.\n\nUsed for API endpoints that return a simple message response.\n\nAttributes:\n    message (str): The response message text"
       },
@@ -4421,11 +4350,7 @@
           }
         },
         "type": "object",
-        "required": [
-          "response_text",
-          "api_identifier",
-          "created_at"
-        ],
+        "required": ["response_text", "api_identifier", "created_at"],
         "title": "ResponseUnlinked",
         "description": "Schema for response without linked relationships.\n\nInherits all fields from Response but excludes relationship data."
       },
@@ -4459,9 +4384,7 @@
           }
         },
         "type": "object",
-        "required": [
-          "response_text"
-        ],
+        "required": ["response_text"],
         "title": "ResponseUpsert",
         "description": "Schema for creating or updating a response.\n\nAttributes:\n    response_text (str): The text content of the response\n    participant_api_identifier (Optional[str]): API identifier of the participant, optional\n    api_identifier (Optional[str]): API identifier of an existing response, optional"
       },
@@ -4518,10 +4441,7 @@
           }
         },
         "type": "object",
-        "required": [
-          "group",
-          "tasks"
-        ],
+        "required": ["group", "tasks"],
         "title": "ScheduleLinked",
         "description": "Schedule model with linked relationships.\n\nExtends the base Schedule model to include the associated group and tasks.\n\nAttributes:\n    group (GroupUnlinked): The group this schedule belongs to\n    tasks (list[TaskUnlinked]): Tasks in the schedule"
       },
@@ -4536,9 +4456,7 @@
           }
         },
         "type": "object",
-        "required": [
-          "tasks"
-        ],
+        "required": ["tasks"],
         "title": "ScheduleUnlinked",
         "description": "Schema for schedule data with unlinked task relationships.\n\nThis schema extends the base Schedule schema and includes a list of tasks,\nusing the unlinked task schema to avoid circular references.\n\nAttributes:\n    tasks: List of tasks associated with this schedule"
       },
@@ -4546,13 +4464,7 @@
         "properties": {
           "type": {
             "type": "string",
-            "enum": [
-              "user",
-              "group",
-              "letter",
-              "question",
-              "response"
-            ],
+            "enum": ["user", "group", "letter", "question", "response"],
             "title": "Type"
           },
           "api_identifier": {
@@ -4675,11 +4587,7 @@
           }
         },
         "type": "object",
-        "required": [
-          "type",
-          "api_identifier",
-          "title"
-        ],
+        "required": ["type", "api_identifier", "title"],
         "title": "SearchHit"
       },
       "SearchResponse": {
@@ -4697,20 +4605,83 @@
           }
         },
         "type": "object",
-        "required": [
-          "results",
-          "total"
-        ],
+        "required": ["results", "total"],
         "title": "SearchResponse"
       },
       "SearchType": {
         "type": "string",
-        "enum": [
-          "semantic",
-          "keyword",
-          "dual"
-        ],
+        "enum": ["semantic", "keyword", "dual"],
         "title": "SearchType"
+      },
+      "ShortLink": {
+        "properties": {
+          "api_identifier": {
+            "type": "string",
+            "title": "Api Identifier"
+          },
+          "token": {
+            "type": "string",
+            "title": "Token"
+          },
+          "target_api_id": {
+            "type": "string",
+            "title": "Target Api Id"
+          },
+          "target_type": {
+            "$ref": "#/components/schemas/ShortLinkTargetType"
+          },
+          "path": {
+            "type": "string",
+            "title": "Path"
+          }
+        },
+        "type": "object",
+        "required": [
+          "api_identifier",
+          "token",
+          "target_api_id",
+          "target_type",
+          "path"
+        ],
+        "title": "ShortLink",
+        "description": "Schema representing a short link in the system.\n\nAttributes:\n    api_identifier (str): Unique API identifier for the short link.\n    token (str): The short, URL-safe token used in the shareable path.\n    target_api_id (str): API identifier of the resource the link resolves to.\n    target_type (ShortLinkTargetType): Category of the resolved resource.\n    path (str): Relative shareable path, e.g. ``/s/<token>``."
+      },
+      "ShortLinkCreate": {
+        "properties": {
+          "target_api_id": {
+            "type": "string",
+            "title": "Target Api Id"
+          }
+        },
+        "type": "object",
+        "required": ["target_api_id"],
+        "title": "ShortLinkCreate",
+        "description": "Schema for creating (or reusing) a short link.\n\nAttributes:\n    target_api_id (str): API identifier of the resource to share. Must be a\n        supported target type (see ``ShortLinkTargetType``)."
+      },
+      "ShortLinkResolution": {
+        "properties": {
+          "token": {
+            "type": "string",
+            "title": "Token"
+          },
+          "target_api_id": {
+            "type": "string",
+            "title": "Target Api Id"
+          },
+          "target_type": {
+            "$ref": "#/components/schemas/ShortLinkTargetType"
+          }
+        },
+        "type": "object",
+        "required": ["token", "target_api_id", "target_type"],
+        "title": "ShortLinkResolution",
+        "description": "Schema returned when resolving a token to its target.\n\nAttributes:\n    token (str): The resolved token.\n    target_api_id (str): API identifier of the resource to redirect to.\n    target_type (ShortLinkTargetType): Category of the resolved resource."
+      },
+      "ShortLinkTargetType": {
+        "type": "string",
+        "enum": ["letter"],
+        "title": "ShortLinkTargetType",
+        "description": "Coarse category of a short link's target resource."
       },
       "SingleGroupKeyValueUpdate": {
         "properties": {
@@ -4731,19 +4702,13 @@
           },
           "operation": {
             "type": "string",
-            "enum": [
-              "set",
-              "delete"
-            ],
+            "enum": ["set", "delete"],
             "title": "Operation",
             "description": "Operation to perform: 'set' to update/create, 'delete' to remove"
           }
         },
         "type": "object",
-        "required": [
-          "key",
-          "operation"
-        ],
+        "required": ["key", "operation"],
         "title": "SingleGroupKeyValueUpdate",
         "description": "Schema for updating a single group key-value pair.\n\nThis model extends GroupKeyValueBase to include an operation field that specifies\nwhether to set or delete the key-value pair.\n\nAttributes:\n    key (str): The key identifier to update\n    value (Any | None): The value to set (required for 'set' operation, ignored for 'delete')\n    operation (Literal[\"set\", \"delete\"]): The operation to perform on the key-value pair\n\nNote:\n    For 'delete' operations, the value field is ignored"
       },
@@ -4776,11 +4741,7 @@
           }
         },
         "type": "object",
-        "required": [
-          "endpoint",
-          "keys",
-          "user_api_identifier"
-        ],
+        "required": ["endpoint", "keys", "user_api_identifier"],
         "title": "SubscriptionCreate",
         "description": "Schema for creating a new subscription.\n\nInherits endpoint and keys from SubscriptionBase and adds user identification.\n\nAttributes:\n    endpoint (str): Push notification endpoint URL\n    keys (dict[str, str | float | bool]): Dictionary containing encryption keys and auth info\n    user_api_identifier (str): API identifier of the user to subscribe"
       },
@@ -4806,12 +4767,7 @@
           }
         },
         "type": "object",
-        "required": [
-          "type",
-          "status",
-          "execute_at",
-          "arguments"
-        ],
+        "required": ["type", "status", "execute_at", "arguments"],
         "title": "TaskUnlinked",
         "description": "Schema for task data without linked relationships.\n\nThis schema extends the base Task schema but excludes any linked relationships,\nuseful for nested serialization to avoid circular references."
       },
@@ -4827,10 +4783,7 @@
           }
         },
         "type": "object",
-        "required": [
-          "access_token",
-          "token_type"
-        ],
+        "required": ["access_token", "token_type"],
         "title": "Token",
         "description": "Authentication token schema.\n\nRepresents the structure of an authentication token response.\n\nAttributes:\n    access_token (str): The JWT access token string\n    token_type (str): The type of token (e.g., \"bearer\")"
       },
@@ -4850,11 +4803,7 @@
           }
         },
         "type": "object",
-        "required": [
-          "email",
-          "name",
-          "password"
-        ],
+        "required": ["email", "name", "password"],
         "title": "UserCreate",
         "description": "Schema for creating a new user.\n\nAttributes:\n    email (str): User's email address (inherited from UserBase)\n    name (str): User's display name (inherited from UserBase)\n    password (str): User's password (will be hashed)"
       },
@@ -4923,12 +4872,7 @@
           }
         },
         "type": "object",
-        "required": [
-          "email",
-          "name",
-          "api_identifier",
-          "admin"
-        ],
+        "required": ["email", "name", "api_identifier", "admin"],
         "title": "UserUnlinked",
         "description": "Schema for users without linked relationships.\n\nInherits all fields from User but excludes relationship data."
       },
@@ -4973,10 +4917,7 @@
           }
         },
         "type": "object",
-        "required": [
-          "current_password",
-          "new_password"
-        ],
+        "required": ["current_password", "new_password"],
         "title": "UserUpdatePassword",
         "description": "Schema for updating a user's password.\n\nAttributes:\n    current_password (str): User's current password\n    new_password (str): User's new password"
       },
@@ -5006,11 +4947,7 @@
           }
         },
         "type": "object",
-        "required": [
-          "loc",
-          "msg",
-          "type"
-        ],
+        "required": ["loc", "msg", "type"],
         "title": "ValidationError"
       },
       "VersionResponse": {
@@ -5030,12 +4967,7 @@
           }
         },
         "type": "object",
-        "required": [
-          "hostname",
-          "git",
-          "image_build",
-          "docker"
-        ],
+        "required": ["hostname", "git", "image_build", "docker"],
         "title": "VersionResponse",
         "description": "Deploy diagnostic payload for GET /version."
       }

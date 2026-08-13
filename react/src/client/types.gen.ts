@@ -709,6 +709,54 @@ export type SearchResponse = {
 export type SearchType = 'semantic' | 'keyword' | 'dual';
 
 /**
+ * Schema representing a short link in the system.
+ *
+ * Attributes:
+ * api_identifier (str): Unique API identifier for the short link.
+ * token (str): The short, URL-safe token used in the shareable path.
+ * target_api_id (str): API identifier of the resource the link resolves to.
+ * target_type (ShortLinkTargetType): Category of the resolved resource.
+ * path (str): Relative shareable path, e.g. ``/s/<token>``.
+ */
+export type ShortLink = {
+    api_identifier: string;
+    token: string;
+    target_api_id: string;
+    target_type: ShortLinkTargetType;
+    path: string;
+};
+
+/**
+ * Schema for creating (or reusing) a short link.
+ *
+ * Attributes:
+ * target_api_id (str): API identifier of the resource to share. Must be a
+ * supported target type (see ``ShortLinkTargetType``).
+ */
+export type ShortLinkCreate = {
+    target_api_id: string;
+};
+
+/**
+ * Schema returned when resolving a token to its target.
+ *
+ * Attributes:
+ * token (str): The resolved token.
+ * target_api_id (str): API identifier of the resource to redirect to.
+ * target_type (ShortLinkTargetType): Category of the resolved resource.
+ */
+export type ShortLinkResolution = {
+    token: string;
+    target_api_id: string;
+    target_type: ShortLinkTargetType;
+};
+
+/**
+ * Coarse category of a short link's target resource.
+ */
+export type ShortLinkTargetType = 'letter';
+
+/**
  * Schema for updating a single group key-value pair.
  *
  * This model extends GroupKeyValueBase to include an operation field that specifies
@@ -2047,6 +2095,85 @@ export type DeleteImageResponsesResponseResponseApiIdDeleteImageDeleteResponses 
 };
 
 export type DeleteImageResponsesResponseResponseApiIdDeleteImageDeleteResponse = DeleteImageResponsesResponseResponseApiIdDeleteImageDeleteResponses[keyof DeleteImageResponsesResponseResponseApiIdDeleteImageDeleteResponses];
+
+export type CreateShortLinkLinksShortLinkPostData = {
+    body: ShortLinkCreate;
+    path?: never;
+    query?: never;
+    url: '/links/short-link';
+};
+
+export type CreateShortLinkLinksShortLinkPostErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type CreateShortLinkLinksShortLinkPostError = CreateShortLinkLinksShortLinkPostErrors[keyof CreateShortLinkLinksShortLinkPostErrors];
+
+export type CreateShortLinkLinksShortLinkPostResponses = {
+    /**
+     * Successful Response
+     */
+    201: ShortLink;
+};
+
+export type CreateShortLinkLinksShortLinkPostResponse = CreateShortLinkLinksShortLinkPostResponses[keyof CreateShortLinkLinksShortLinkPostResponses];
+
+export type ResolveShortLinkLinksShortLinkTokenGetData = {
+    body?: never;
+    path: {
+        token: string;
+    };
+    query?: never;
+    url: '/links/short-link/{token}';
+};
+
+export type ResolveShortLinkLinksShortLinkTokenGetErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type ResolveShortLinkLinksShortLinkTokenGetError = ResolveShortLinkLinksShortLinkTokenGetErrors[keyof ResolveShortLinkLinksShortLinkTokenGetErrors];
+
+export type ResolveShortLinkLinksShortLinkTokenGetResponses = {
+    /**
+     * Successful Response
+     */
+    200: ShortLinkResolution;
+};
+
+export type ResolveShortLinkLinksShortLinkTokenGetResponse = ResolveShortLinkLinksShortLinkTokenGetResponses[keyof ResolveShortLinkLinksShortLinkTokenGetResponses];
+
+export type DeleteShortLinkLinksShortLinkShortLinkApiIdDeleteData = {
+    body?: never;
+    path: {
+        short_link_api_id: string;
+    };
+    query?: never;
+    url: '/links/short-link/{short_link_api_id}';
+};
+
+export type DeleteShortLinkLinksShortLinkShortLinkApiIdDeleteErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type DeleteShortLinkLinksShortLinkShortLinkApiIdDeleteError = DeleteShortLinkLinksShortLinkShortLinkApiIdDeleteErrors[keyof DeleteShortLinkLinksShortLinkShortLinkApiIdDeleteErrors];
+
+export type DeleteShortLinkLinksShortLinkShortLinkApiIdDeleteResponses = {
+    /**
+     * Successful Response
+     */
+    204: void;
+};
+
+export type DeleteShortLinkLinksShortLinkShortLinkApiIdDeleteResponse = DeleteShortLinkLinksShortLinkShortLinkApiIdDeleteResponses[keyof DeleteShortLinkLinksShortLinkShortLinkApiIdDeleteResponses];
 
 export type CreateInviteInvitesPostData = {
     body: InviteCreate;
