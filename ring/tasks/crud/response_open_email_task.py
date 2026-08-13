@@ -8,6 +8,7 @@ from UPCOMING to IN_PROGRESS status).
 from __future__ import annotations
 
 from ring.email_util import EmailDraft, construct_email_draft
+from ring.lib.app_links import app_url
 
 
 def construct_response_open_email(
@@ -36,11 +37,11 @@ def construct_response_open_email(
 
 The newsletter {letter_title} is now ready for your responses. Head over to Ring to share your answers to this week's questions.
 
-Visit: http://ring.neilsriv.tech/loops/{letter_api_id}
+Visit: {letter_url}
 """.format(
         group_name=group_name,
         letter_title=letter_title,
-        letter_api_id=letter_api_id,
+        letter_url=app_url(f"loops/{letter_api_id}"),
     )
 
     # The HTML body of the email.
@@ -48,14 +49,14 @@ Visit: http://ring.neilsriv.tech/loops/{letter_api_id}
     <head></head>
     <body>
     <h1>Ring Newsletter for {group_name} is now open for responses!</h1>
-    <h2>Check out the newsletter online at <a href="http://ring.neilsriv.tech/loops/{letter_api_id}">http://ring.neilsriv.tech</a></h2>
+    <h2>Check out the newsletter online at <a href="{letter_url}">{letter_url}</a></h2>
     <p>The newsletter <strong>{letter_title}</strong> is now ready for your responses.</p>
     <p>Head over to Ring to share your answers to this week's questions!</p>
     </body>
     </html>
                 """.format(
         group_name=group_name,
-        letter_api_id=letter_api_id,
+        letter_url=app_url(f"loops/{letter_api_id}"),
         letter_title=letter_title,
     )
 

@@ -11,6 +11,7 @@ import html
 import re
 
 from ring.email_util import EmailDraft, construct_email_draft
+from ring.lib.app_links import app_url
 
 _URL_RE = re.compile(r"https?://[^\s<>\"]+")
 
@@ -195,7 +196,7 @@ def construct_send_letter_email(
                   You can also read and share this newsletter online:
                 </p>
                 <p style="margin:0 0 4px;">
-                  <a href="http://ring.neilsriv.tech/loops/{letter_api_id}" style="color:#2b6cb0; text-decoration:underline; font-size:14px;">http://ring.neilsriv.tech/loops/{letter_api_id}</a>
+                  <a href="{letter_url}" style="color:#2b6cb0; text-decoration:underline; font-size:14px;">{letter_url}</a>
                 </p>
               </td>
             </tr>
@@ -219,7 +220,7 @@ def construct_send_letter_email(
 </html>
 """.format(
         title=title,
-        letter_api_id=letter_api_id,
+        letter_url=app_url(f"loops/{letter_api_id}"),
         question_html=question_html,
     )
 

@@ -7,6 +7,7 @@ open for responses.
 
 from __future__ import annotations
 
+from ring.lib.app_links import app_url
 from ring.tasks.crud.response_open_email_task import (
     construct_response_open_email,
 )
@@ -49,7 +50,7 @@ class TestResponseOpenEmailTask:
         assert group_name in html_body
         assert letter_api_id in html_body
         assert letter_title in html_body
-        assert "http://ring.neilsriv.tech/loops/" in html_body
+        assert app_url(f"loops/{letter_api_id}") in html_body
 
         # Check plain text body
         text_body = email_draft.message["Body"]["Text"]["Data"]

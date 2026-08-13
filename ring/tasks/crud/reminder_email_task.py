@@ -9,6 +9,7 @@ from __future__ import annotations
 
 from ring.email_util import EmailDraft, construct_email_draft
 from ring.letters.constants import LetterStatus
+from ring.lib.app_links import app_url
 
 
 def construct_reminder_email(
@@ -51,14 +52,14 @@ def construct_reminder_email(
     <head></head>
     <body>
     <h1>Ring Reminder: Last day to {subject_text} for {group_name}</h1>
-    <h2>Check out the newsletter online at <a href="http://ring.neilsriv.tech/loops/{letter_api_id}">http://ring.neilsriv.tech</a></h2>
+    <h2>Check out the newsletter online at <a href="{letter_url}">{letter_url}</a></h2>
     <p>Today is the last day to {subject_text} for the newsletter. Please visit the link above to {subject_text}.</p>
     </body>
     </html>
                 """.format(
         subject_text=subject_text,
         group_name=group_name,
-        letter_api_id=letter_api_id,
+        letter_url=app_url(f"loops/{letter_api_id}"),
     )
 
     # Try to send the email.

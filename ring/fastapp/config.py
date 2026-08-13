@@ -42,6 +42,8 @@ class RingConfig(BaseSettings):
         JWT_SIGNING_ALGORITHM (str): Algorithm used for JWT signing
         VAPID_PRIVATE_KEY (str): Private key for VAPID web push notifications
         root_path (str): Base path for API routes (default: "/api/v1")
+        APP_BASE_URL (str): Public origin the web app is served on, used to
+            build links in outbound email
         BUCKET_NAME (str): S3 bucket name for file storage (default: "rings3files")
         DISABLE_SCHEDULER (bool): Skip APScheduler lifespan start/shutdown
         BACKEND_CORS_ORIGINS (list[AnyUrl] | str): List of allowed CORS origins
@@ -56,6 +58,10 @@ class RingConfig(BaseSettings):
     JWT_SIGNING_ALGORITHM: str
     VAPID_PRIVATE_KEY: str
     root_path: str = "/api/v1"
+    # Must stay on the scheme and host the frontend is served from: the build
+    # bakes in an absolute VITE_API_URL, so a link on a different origin makes
+    # every API call from that page cross-origin.
+    APP_BASE_URL: str = "https://ring.neilsriv.tech"
     BUCKET_NAME: str = "rings3files"
     # When true, skip APScheduler start/shutdown (used by cloud-prod-db mode so a
     # local API pointed at Cockroach Cloud does not run prod scheduled jobs).
