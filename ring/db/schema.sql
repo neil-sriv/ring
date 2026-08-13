@@ -245,6 +245,21 @@ CREATE TABLE public.document_edits (
 	UNIQUE INDEX unique_document_edit_version (document_id ASC, version ASC),
 	INDEX ix_document_edits_created_at (created_at ASC)
 );
+CREATE TABLE public.short_link (
+	id INT8 NOT NULL DEFAULT unique_rowid(),
+	api_identifier VARCHAR NOT NULL,
+	token VARCHAR NOT NULL,
+	target_api_id VARCHAR NOT NULL,
+	creator_id INT8 NOT NULL,
+	created_at TIMESTAMPTZ NOT NULL DEFAULT now():::TIMESTAMPTZ,
+	CONSTRAINT short_link_pkey PRIMARY KEY (id ASC),
+	UNIQUE INDEX ix_short_link_api_identifier (api_identifier ASC),
+	INDEX ix_short_link_created_at (created_at ASC),
+	INDEX ix_short_link_creator_id (creator_id ASC),
+	INDEX ix_short_link_id (id ASC),
+	INDEX ix_short_link_target_api_id (target_api_id ASC),
+	UNIQUE INDEX ix_short_link_token (token ASC)
+);
 ALTER TABLE public."group" ADD CONSTRAINT group_admin_id_fkey FOREIGN KEY (admin_id) REFERENCES public."user"(id);
 ALTER TABLE public.default_question ADD CONSTRAINT default_question_group_id_fkey FOREIGN KEY (group_id) REFERENCES public."group"(id);
 ALTER TABLE public.group_key_value ADD CONSTRAINT group_key_value_group_id_fkey FOREIGN KEY (group_id) REFERENCES public."group"(id);
@@ -270,6 +285,7 @@ ALTER TABLE public.hybrid_search_document_association ADD CONSTRAINT association
 ALTER TABLE public.documents ADD CONSTRAINT documents_group_id_fkey FOREIGN KEY (group_id) REFERENCES public."group"(id);
 ALTER TABLE public.document_edits ADD CONSTRAINT document_edits_author_id_fkey FOREIGN KEY (author_id) REFERENCES public."user"(id);
 ALTER TABLE public.document_edits ADD CONSTRAINT document_edits_document_id_fkey FOREIGN KEY (document_id) REFERENCES public.documents(id);
+ALTER TABLE public.short_link ADD CONSTRAINT short_link_creator_id_fkey FOREIGN KEY (creator_id) REFERENCES public."user"(id) ON DELETE CASCADE;
 -- Validate foreign key constraints. These can fail if there was unvalidated data during the SHOW CREATE ALL TABLES
 ALTER TABLE public."group" VALIDATE CONSTRAINT group_admin_id_fkey;
 ALTER TABLE public.default_question VALIDATE CONSTRAINT default_question_group_id_fkey;
@@ -296,3 +312,4 @@ ALTER TABLE public.hybrid_search_document_association VALIDATE CONSTRAINT associ
 ALTER TABLE public.documents VALIDATE CONSTRAINT documents_group_id_fkey;
 ALTER TABLE public.document_edits VALIDATE CONSTRAINT document_edits_author_id_fkey;
 ALTER TABLE public.document_edits VALIDATE CONSTRAINT document_edits_document_id_fkey;
+ALTER TABLE public.short_link VALIDATE CONSTRAINT short_link_creator_id_fkey;

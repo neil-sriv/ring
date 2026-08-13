@@ -14,6 +14,7 @@ def import_all_sqla_models() -> None:
         ImageResponseAssociation,
         Response,
     )
+    from ring.links.models.short_link_model import ShortLink
     from ring.notebook.models.document import Document, DocumentEdit
     from ring.notifications.models.subscription import Subscription
     from ring.parties.models.group_key_value import GroupKeyValue

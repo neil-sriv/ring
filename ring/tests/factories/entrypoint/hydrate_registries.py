@@ -8,6 +8,7 @@ def hydrate_factories_registry():
     from ring.tests.factories.letters.letter_factory import LetterFactory
     from ring.tests.factories.letters.question_factory import QuestionFactory
     from ring.tests.factories.letters.response_factory import ResponseFactory
+    from ring.tests.factories.links.short_link_factory import ShortLinkFactory
     from ring.tests.factories.notebook.document_factory import (
         DocumentEditFactory,
         DocumentFactory,
