@@ -7,8 +7,18 @@
   "compatibility_date": "2026-08-11",
   "workers_dev": true,
   "preview_urls": true,
+  // Runs ahead of the assets for page routes so link-preview crawlers get the
+  // API's Open Graph card instead of the SPA shell. See react/src/worker.ts.
+  "main": "./src/worker.ts",
+  "vars": {
+    "UNFURL_API_ORIGIN": "https://ring.neilsriv.tech"
+  },
   "assets": {
     "directory": "./dist",
-    "not_found_handling": "single-page-application"
+    "not_found_handling": "single-page-application",
+    "binding": "ASSETS",
+    // Hashed bundles are the bulk of the bytes and are never previewed, so they
+    // stay on the asset-first fast path.
+    "run_worker_first": ["/*", "!/assets/*"]
   }
 }

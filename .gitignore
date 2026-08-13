@@ -192,6 +192,8 @@ ssh-key-2025-05-16*
 
 node_modules/
 .pnpm-store/
+# Local state from `wrangler dev`
+.wrangler/
 .cursor/*
 !.cursor/environment.json
 !.cursor/Dockerfile

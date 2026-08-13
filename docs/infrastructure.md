@@ -159,6 +159,34 @@ API → CockroachDB vector/keyword search
 Embedding generation → ring-llm microservice (not AWS Bedrock)
 ```
 
+### Link previews (Slack / Discord / iMessage)
+
+```
+Crawler → ring.neilsriv.tech/loops/... → Worker (react/src/worker.ts)
+                                       → API /api/v1/unfurl/loops/...
+Browser → same URL                     → Worker → static assets (SPA shell)
+```
+
+Chat clients build a preview from the Open Graph tags in the first HTML
+response and never run JavaScript, so the SPA shell cannot carry per-URL
+copy. The Worker matches the known crawler user agents (including the
+`facebookexternalhit/1.1 Facebot Twitterbot/1.0` string iMessage sends from
+the *sender's* device) on page requests and returns
+[ring/unfurl/api/unfurl.py](../ring/unfurl/api/unfurl.py)'s card. Requests
+that look like a file are left alone, because the same crawlers fetch
+`og:image` next.
+
+- Copy is static per path prefix and names no group, letter, or person: a
+  preview renders for everyone who can see the channel the link was pasted
+  into.
+- `prod.nginx.conf` carries the same user-agent routing for the EC2 rollback
+  path, where nginx serves `/*` instead of the Worker.
+- If the API is unreachable the Worker falls through to the shell, whose
+  static tags in [react/index.html](../react/index.html) still produce a
+  branded card.
+- Cards go out as `private, no-store`, since Cloudflare ignores `Vary` and a
+  cached card served to a browser would replace the app with a dead page.
+
 ---
 
 ## Deployment
@@ -411,4 +439,5 @@ Helpful for agents so they do not assume these exist:
 | [dev_util/prod.sh](../dev_util/prod.sh) | Pull ECR images on the server |
 | [dev_util/deploy_host.sh](../dev_util/deploy_host.sh) | Full host rollout (git + pull + migrate + up + verify) |
 | [dev_util/docker.py](../dev_util/docker.py) | Tag/push to ECR Public |
+| [react/src/worker.ts](../react/src/worker.ts) | Cloudflare entry point; routes link-preview crawlers to `/unfurl` |
 | [.cursor/cloud-start.sh](../.cursor/cloud-start.sh) | Cursor Cloud Agent VM bootstrap (local Cockroach, not prod) |
