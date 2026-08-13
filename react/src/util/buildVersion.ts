@@ -40,6 +40,24 @@ export async function fetchBuildVersion(): Promise<BuildVersion> {
   return JSON.parse(body) as BuildVersion
 }
 
+/**
+ * Shorten a Docker image identifier for display.
+ *
+ * Accepts both local ids (`sha256:...`) and registry digests
+ * (`repo@sha256:...`) and reduces them to `sha256:` plus 12 hex chars,
+ * mirroring how `docker images` abbreviates ids.
+ */
+export function shortImageSha(value: string | null | undefined): string | null {
+  if (!value) {
+    return null
+  }
+  const match = value.match(/sha256:([0-9a-f]+)/i)
+  if (!match) {
+    return value
+  }
+  return `sha256:${match[1].slice(0, 12)}`
+}
+
 /** Render an ISO-8601 timestamp as a compact age like `2h 5m ago`. */
 export function formatAge(
   timestamp: string | null | undefined,
