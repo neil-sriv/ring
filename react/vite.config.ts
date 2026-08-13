@@ -6,6 +6,7 @@ import { defineConfig } from "vite"
 import { VitePWA, type VitePWAOptions } from "vite-plugin-pwa"
 import topLevelAwait from "vite-plugin-top-level-await"
 import wasm from "vite-plugin-wasm"
+import { VERSION_FILE_NAME, versionStamp } from "./plugins/version-stamp"
 
 const pwaOptions: Partial<VitePWAOptions> = {
   mode: "development",
@@ -46,6 +47,8 @@ const pwaOptions: Partial<VitePWAOptions> = {
   },
   injectManifest: {
     maximumFileSizeToCacheInBytes: 3 * 1024 * 1024,
+    // A precached build stamp would keep reporting the previous deploy.
+    globIgnores: ["**/node_modules/**/*", `**/${VERSION_FILE_NAME}`],
   },
 }
 
@@ -92,6 +95,7 @@ export default defineConfig({
     VitePWA({ ...pwaOptions, registerType: "autoUpdate" }),
     wasm(),
     topLevelAwait(),
+    versionStamp(),
   ],
   resolve: {
     alias: {

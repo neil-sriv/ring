@@ -2,6 +2,7 @@ import { createFileRoute } from "@tanstack/react-router"
 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import Appearance from "../../components/UserSettings/Appearance"
+import BuildInfo from "../../components/UserSettings/BuildInfo"
 import ChangePassword from "../../components/UserSettings/ChangePassword"
 import DeleteAccount from "../../components/UserSettings/DeleteAccount"
 import UserInformation from "../../components/UserSettings/UserInformation"
@@ -10,6 +11,7 @@ const tabsConfig = [
   { title: "My profile", component: UserInformation, value: "profile" },
   { title: "Password", component: ChangePassword, value: "password" },
   { title: "Appearance", component: Appearance, value: "appearance" },
+  { title: "Build", component: BuildInfo, value: "build" },
   { title: "Danger zone", component: DeleteAccount, value: "danger" },
 ]
 

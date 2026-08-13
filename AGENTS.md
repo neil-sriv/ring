@@ -42,6 +42,11 @@ Full topology, request flows, and deploy steps:
 | CDN | `du32exnxihxuf.cloudfront.net` | [ring/s3/models/s3_model.py](ring/s3/models/s3_model.py) `qualified_s3_url` |
 | Email (SES) | `us-east-1`, sender `ring@neilsriv.tech` | [ring/email_util.py](ring/email_util.py) |
 | Container registry | ECR Public `public.ecr.aws/z2k1e8p1/` | [dev_util/docker.py](dev_util/docker.py), [dev_util/prod.sh](dev_util/prod.sh), [dev_util/deploy_host.sh](dev_util/deploy_host.sh) |
+| Frontend hosting | Cloudflare Workers Builds (`ring-frontend`), auto-deploys every push to `dev` | [react/wrangler.jsonc](react/wrangler.jsonc), [react/plugins/version-stamp.ts](react/plugins/version-stamp.ts) |
+
+Prod's two halves ship independently: the frontend redeploys itself about a
+minute after any push to `dev`, while the API only moves when someone runs
+`deploy_host.sh`. `ring deploy status` prints what each is running.
 
 Do not assume ECS, RDS, Route 53, Redis/Celery, Lambda, or Bedrock — none are
 in the current prod path. Embeddings go through the optional `ring-llm`
