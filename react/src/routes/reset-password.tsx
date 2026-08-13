@@ -50,8 +50,8 @@ function ResetPasswordRequest() {
         throwOnError: true,
       })
       showToast(
-        "Email sent.",
-        "We sent an email with a link to get back into your account.",
+        "Check your email.",
+        "If an account exists for that address, we sent a link to reset your password.",
         "success",
       )
     } catch (err) {
@@ -73,7 +73,8 @@ function ResetPasswordRequest() {
             Password Reset
           </CardTitle>
           <CardDescription>
-            A password reset email will be sent to the registered account.
+            Enter your email and we&apos;ll send a reset link if an account
+            exists for that address.
           </CardDescription>
         </CardHeader>
         <CardContent>
