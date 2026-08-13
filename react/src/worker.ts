@@ -26,7 +26,8 @@ interface Env {
 const LINK_PREVIEW_AGENTS =
   /Slackbot|Discordbot|facebookexternalhit|Facebot|Twitterbot|WhatsApp|TelegramBot|LinkedInBot|SkypeUriPreview|redditbot|Iframely|Embedly|Cardyb|Mastodon/i
 
-const FILE_PATH = /\.[a-z0-9]{1,6}$/i
+/** No app route has a dot in its last segment; `.webmanifest` and friends do. */
+const FILE_PATH = /\.[a-z0-9]+$/i
 
 /** Crawlers fetch `og:image` next, so asset requests keep hitting the file. */
 function isPageRequest(pathname: string): boolean {
