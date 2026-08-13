@@ -330,55 +330,84 @@ function DraftQuestion({
     setDeleteOpen(false)
   }
 
+  const letterQueryKey = readLetterLettersLetterLetterApiIdGetQueryKey({
+    path: { letter_api_id: loopApiId },
+  })
+
   const handleUpsert = async (responseText: string): Promise<void> => {
-    await upsertResponseQuestionsQuestionQuestionApiIdUpsertResponsePost({
-      path: { question_api_id: question.api_identifier },
-      body: {
-        response_text: responseText,
-        participant_api_identifier: currentUser.api_identifier,
-      },
-      throwOnError: true,
-    })
-
-    // Keep letter cache in sync so navigate-away → quick return within
-    // global staleTime does not remount the textarea from pre-flush data.
-    const letterQueryKey = readLetterLettersLetterLetterApiIdGetQueryKey({
-      path: { letter_api_id: loopApiId },
-    })
-    const cachedLetter = queryClient.getQueryData<PublicLetter>(letterQueryKey)
-    const hasExistingResponse = cachedLetter?.questions
-      .find((q) => q.api_identifier === question.api_identifier)
-      ?.responses.some(
-        (r) => r.participant.api_identifier === currentUser.api_identifier,
-      )
-
-    if (hasExistingResponse) {
-      queryClient.setQueryData<PublicLetter>(letterQueryKey, (oldData) => {
-        if (!oldData) {
-          return oldData
-        }
-        return {
-          ...oldData,
-          questions: oldData.questions.map((q) => {
-            if (q.api_identifier !== question.api_identifier) {
-              return q
-            }
-            return {
-              ...q,
-              responses: q.responses.map((r) => {
-                if (
-                  r.participant.api_identifier !== currentUser.api_identifier
-                ) {
-                  return r
-                }
-                return { ...r, response_text: responseText }
-              }),
-            }
-          }),
-        }
+    const { data: updatedQuestion } =
+      await upsertResponseQuestionsQuestionQuestionApiIdUpsertResponsePost({
+        path: { question_api_id: question.api_identifier },
+        body: {
+          response_text: responseText,
+          participant_api_identifier: currentUser.api_identifier,
+        },
+        throwOnError: true,
       })
-    } else {
-      // First answer: no ResponseWithParticipant in cache yet — refetch.
+
+    // Keep letter cache in sync so navigate-away → return within staleTime
+    // still shows the saved text (debounce and unmount flush).
+    let didPatch = false
+    queryClient.setQueryData<PublicLetter>(letterQueryKey, (oldData) => {
+      if (!oldData) {
+        return oldData
+      }
+
+      return {
+        ...oldData,
+        questions: oldData.questions.map((q) => {
+          if (q.api_identifier !== question.api_identifier) {
+            return q
+          }
+
+          const existingIdx = q.responses.findIndex(
+            (r) => r.participant.api_identifier === currentUser.api_identifier,
+          )
+          if (existingIdx >= 0) {
+            const responses = [...q.responses]
+            responses[existingIdx] = {
+              ...responses[existingIdx],
+              response_text: responseText,
+            }
+            didPatch = true
+            return { ...q, responses }
+          }
+
+          // Upsert returns ResponseUnlinked (no participant). Require both an
+          // unknown id and matching text so we don't attach another member's
+          // response to currentUser when the letter cache lags the payload.
+          const knownIds = new Set(q.responses.map((r) => r.api_identifier))
+          const created = updatedQuestion?.responses.find(
+            (r) =>
+              !knownIds.has(r.api_identifier) &&
+              r.response_text === responseText,
+          )
+          if (!created) {
+            return q
+          }
+
+          didPatch = true
+          return {
+            ...q,
+            responses: [
+              ...q.responses,
+              {
+                ...created,
+                participant: {
+                  email: currentUser.email,
+                  name: currentUser.name,
+                  api_identifier: currentUser.api_identifier,
+                  admin: currentUser.admin,
+                },
+                images: [],
+              },
+            ],
+          }
+        }),
+      }
+    })
+
+    if (!didPatch) {
       await queryClient.invalidateQueries({ queryKey: letterQueryKey })
     }
   }
