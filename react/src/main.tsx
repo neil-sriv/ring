@@ -17,6 +17,7 @@ import { readUserMePartiesMeGetOptions } from "./client/@tanstack/react-query.ge
 import { client } from "./client/client.gen"
 import { initGlobalKeyboardShortcuts } from "./lib/globalKeyboardShortcuts"
 import { isPublicAuthPath } from "./util/authRoutes"
+import { httpsUpgradeUrl } from "./util/httpsUpgrade"
 
 /* Dark mode initialization */
 const savedTheme = localStorage.getItem("theme")
@@ -30,6 +31,17 @@ if (
 }
 /**/
 
+/* vite Config */
+const apiOrigin = import.meta.env.VITE_API_URL ?? ""
+
+const httpsUrl = httpsUpgradeUrl(window.location, apiOrigin)
+if (httpsUrl) {
+  window.location.replace(httpsUrl)
+  // location.replace does not stop this module; abort so the client,
+  // router, and React tree never boot on the insecure origin.
+  throw new Error("Redirecting to HTTPS")
+}
+
 /* PWA: auto-reload when a new service worker is ready after deploy.
    Skip in DEV when SW_DEV=false (cloud HTTP Vite) — VitePWA already disables
    the dev SW, but calling registerSW still races and noisy-fails. */
@@ -38,8 +50,6 @@ if (!import.meta.env.DEV || import.meta.env.VITE_SW_DEV !== "false") {
 }
 /**/
 
-/* vite Config */
-const apiOrigin = import.meta.env.VITE_API_URL ?? ""
 client.setConfig({
   baseURL: apiOrigin ? `${apiOrigin}/api/v1` : "/api/v1",
   auth: async () => {
