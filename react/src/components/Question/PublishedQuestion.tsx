@@ -12,6 +12,7 @@ import { Dialog as DialogPrimitive } from "radix-ui"
 import { useEffect, useRef, useState } from "react"
 import type { PublicQuestion, ResponseWithParticipant } from "../../client"
 import { URLMatch, splitText } from "../../util/URLParse"
+import LinkPreviewCard from "../Common/LinkPreviewCard"
 import { MediaCarousel } from "../Common/MediaCarousel"
 import { S3Video } from "../Common/SingleUploadImage"
 
@@ -26,15 +27,17 @@ function TextBlockWithUrls({
   texts.forEach((text, index) => {
     if (URLMatch(text) != null) {
       elements.push(
-        <a
-          key={`${index}${responseApiId}`}
-          href={text}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="text-primary underline hover:opacity-80"
-        >
-          {text}
-        </a>,
+        <span key={`${index}${responseApiId}`}>
+          <a
+            href={text}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-primary underline hover:opacity-80"
+          >
+            {text}
+          </a>
+          <LinkPreviewCard url={text} />
+        </span>,
       )
     } else {
       elements.push(
