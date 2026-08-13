@@ -74,6 +74,16 @@ class RingConfig(BaseSettings):
     # BACKEND_CORS_ORIGINS, e.g. Cloudflare Pages / Vercel PR preview URLs:
     # BACKEND_CORS_ORIGIN_REGEX="^https://[a-z0-9-]+\.ring-cvq\.pages\.dev$"
     BACKEND_CORS_ORIGIN_REGEX: str = ""
+    # Link unfurling (rich URL previews). The fetcher is time- and
+    # size-bounded to stay resilient against slow or huge pages.
+    LINK_UNFURL_TIMEOUT_SECONDS: float = 5.0
+    LINK_UNFURL_MAX_BYTES: int = 2_000_000
+    LINK_UNFURL_MAX_REDIRECTS: int = 5
+    LINK_UNFURL_USER_AGENT: str = (
+        "RingLinkUnfurl/1.0 (+https://ring.neilsriv.tech)"
+    )
+    # In-process cache TTL for previews; set to 0 to disable caching.
+    LINK_UNFURL_CACHE_TTL_SECONDS: int = 900
 
 
 @lru_cache
