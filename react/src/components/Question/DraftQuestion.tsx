@@ -347,6 +347,7 @@ function DraftQuestion({
 
     // Keep letter cache in sync so navigate-away → return within staleTime
     // still shows the saved text (debounce and unmount flush).
+    let didPatch = false
     queryClient.setQueryData<PublicLetter>(letterQueryKey, (oldData) => {
       if (!oldData) {
         return oldData
@@ -368,21 +369,24 @@ function DraftQuestion({
               ...responses[existingIdx],
               response_text: responseText,
             }
+            didPatch = true
             return { ...q, responses }
           }
 
+          // Upsert returns ResponseUnlinked (no participant). Require both an
+          // unknown id and matching text so we don't attach another member's
+          // response to currentUser when the letter cache lags the payload.
           const knownIds = new Set(q.responses.map((r) => r.api_identifier))
-          const created =
-            updatedQuestion?.responses.find(
-              (r) => !knownIds.has(r.api_identifier),
-            ) ??
-            updatedQuestion?.responses.find(
-              (r) => r.response_text === responseText,
-            )
+          const created = updatedQuestion?.responses.find(
+            (r) =>
+              !knownIds.has(r.api_identifier) &&
+              r.response_text === responseText,
+          )
           if (!created) {
             return q
           }
 
+          didPatch = true
           return {
             ...q,
             responses: [
@@ -402,6 +406,10 @@ function DraftQuestion({
         }),
       }
     })
+
+    if (!didPatch) {
+      await queryClient.invalidateQueries({ queryKey: letterQueryKey })
+    }
   }
 
   const newHandleUpload = async (file: File) => {
