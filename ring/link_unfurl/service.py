@@ -61,13 +61,19 @@ def _cache_put(url: str, preview: LinkPreview, ttl_seconds: int) -> None:
 def _assert_public_host(host: str) -> None:
     """Reject hosts that resolve to a non-public IP address.
 
+    Uses an allowlist: an address is only accepted when it is globally
+    routable (``is_global``). This is safer than a hand-maintained denylist
+    of ``is_private``/``is_loopback``/etc. flags, which misses ranges such
+    as IANA shared/CGNAT space ``100.64.0.0/10``. IPv4-mapped IPv6 addresses
+    (e.g. ``::ffff:100.64.0.1``) are unwrapped first, because the mapped
+    IPv6 form reports ``is_global`` even when the embedded IPv4 does not.
+
     Args:
         host (str): The hostname (or IP literal) to validate.
 
     Raises:
         UnsafeURLError: If the host cannot be resolved or any resolved
-            address is private, loopback, link-local, multicast, reserved,
-            or unspecified.
+            address is not globally routable.
     """
     try:
         addrinfos = socket.getaddrinfo(host, None)
@@ -76,14 +82,13 @@ def _assert_public_host(host: str) -> None:
 
     for info in addrinfos:
         ip = ipaddress.ip_address(info[4][0])
-        if (
-            ip.is_private
-            or ip.is_loopback
-            or ip.is_link_local
-            or ip.is_multicast
-            or ip.is_reserved
-            or ip.is_unspecified
-        ):
+        effective = (
+            ip.ipv4_mapped
+            if isinstance(ip, ipaddress.IPv6Address)
+            and ip.ipv4_mapped is not None
+            else ip
+        )
+        if not effective.is_global:
             raise UnsafeURLError(f"URL resolves to a non-public address: {ip}")
 
 
@@ -209,6 +214,21 @@ def _page_title(soup: BeautifulSoup) -> str | None:
     return text or None
 
 
+def _safe_media_url(base_url: str, value: str | None) -> str | None:
+    """Absolutize a media URL, dropping non-http(s) schemes.
+
+    Open Graph tags are attacker-controlled, so an ``og:image`` could be a
+    ``javascript:`` or ``data:`` URI. Returning only http(s) URLs keeps
+    those out of the frontend's ``<img src>``.
+    """
+    if not value:
+        return None
+    absolute = urljoin(base_url, value)
+    if urlparse(absolute).scheme not in ("http", "https"):
+        return None
+    return absolute
+
+
 def extract_link_preview(
     html: str, base_url: str, requested_url: str
 ) -> LinkPreview:
@@ -251,12 +271,11 @@ def extract_link_preview(
         resolved_url=base_url,
         title=title,
         description=description,
-        image_url=urljoin(base_url, image) if image else None,
+        image_url=_safe_media_url(base_url, image),
         site_name=site_name,
         favicon_url=(
-            urljoin(base_url, favicon)
-            if favicon
-            else urljoin(base_url, "/favicon.ico")
+            _safe_media_url(base_url, favicon)
+            or _safe_media_url(base_url, "/favicon.ico")
         ),
     )
 

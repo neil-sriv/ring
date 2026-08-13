@@ -8,9 +8,11 @@ the project does not use an asyncio pytest plugin.
 from __future__ import annotations
 
 import asyncio
+from collections.abc import Callable
 from typing import Generator
 from unittest.mock import AsyncMock, patch
 
+import httpx
 import pytest
 
 from ring.link_unfurl.service import (
@@ -21,6 +23,26 @@ from ring.link_unfurl.service import (
     extract_link_preview,
     unfurl_url,
 )
+
+
+def _mock_async_client(
+    handler: Callable[[httpx.Request], httpx.Response],
+) -> Callable[..., httpx.AsyncClient]:
+    """Build a drop-in ``httpx.AsyncClient`` factory backed by a mock.
+
+    The real client is constructed so redirect/stream/read behaviour is
+    exercised, but requests are served by ``handler`` instead of the network.
+    """
+    real_async_client = httpx.AsyncClient
+
+    def factory(*args: object, **kwargs: object) -> httpx.AsyncClient:
+        kwargs.pop("transport", None)
+        return real_async_client(
+            *args, transport=httpx.MockTransport(handler), **kwargs
+        )
+
+    return factory
+
 
 HTML_FULL = """
 <html><head>
@@ -97,6 +119,22 @@ class TestExtractLinkPreview:
         assert preview.image_url is None
         assert preview.site_name == "example.org"
 
+    def test_drops_non_http_image_scheme(self) -> None:
+        # og:image is attacker-controlled; a javascript:/data: URI must not
+        # survive into image_url (where it would become an <img src>).
+        html = (
+            "<html><head><title>T</title>"
+            "<meta property='og:image' content='javascript:alert(1)'>"
+            "</head><body></body></html>"
+        )
+        preview = extract_link_preview(
+            html,
+            base_url="https://example.com/",
+            requested_url="https://example.com/",
+        )
+        assert preview.image_url is None
+        assert preview.favicon_url == "https://example.com/favicon.ico"
+
 
 class TestAssertUrlIsSafe:
     @pytest.mark.parametrize(
@@ -113,6 +151,11 @@ class TestAssertUrlIsSafe:
             "http://192.168.1.1/",
             "http://169.254.169.254/latest/meta-data/",
             "http://[::1]/",
+            # IANA shared address space / CGNAT (100.64.0.0/10): not
+            # is_private, so a flag denylist would let it through.
+            "http://100.64.0.1/",
+            # IPv4-mapped IPv6 form of the same CGNAT address.
+            "http://[::ffff:100.64.0.1]/",
         ],
     )
     def test_rejects_unsafe_urls(self, url: str) -> None:
@@ -155,3 +198,40 @@ class TestUnfurlUrl:
         with patch("ring.link_unfurl.service._fetch_document", fetch):
             with pytest.raises(LinkUnfurlError):
                 asyncio.run(unfurl_url("https://example.com/err"))
+
+
+class TestFetchRedirects:
+    def test_rejects_redirect_to_non_public_host(self) -> None:
+        # A public first hop redirecting to a loopback address must be
+        # rejected: redirect re-validation is the key SSRF control.
+        def handler(request: httpx.Request) -> httpx.Response:
+            return httpx.Response(
+                302, headers={"location": "http://127.0.0.1/"}
+            )
+
+        with patch(
+            "ring.link_unfurl.service.httpx.AsyncClient",
+            _mock_async_client(handler),
+        ):
+            with pytest.raises(UnsafeURLError):
+                asyncio.run(unfurl_url("http://8.8.8.8/"))
+
+    def test_follows_redirect_to_public_host(self) -> None:
+        def handler(request: httpx.Request) -> httpx.Response:
+            if request.url.host == "8.8.8.8":
+                return httpx.Response(
+                    307, headers={"location": "http://1.1.1.1/page"}
+                )
+            return httpx.Response(
+                200,
+                headers={"content-type": "text/html"},
+                text=HTML_FULL,
+            )
+
+        with patch(
+            "ring.link_unfurl.service.httpx.AsyncClient",
+            _mock_async_client(handler),
+        ):
+            preview = asyncio.run(unfurl_url("http://8.8.8.8/"))
+        assert preview.title == "OG Title"
+        assert "1.1.1.1" in preview.resolved_url
