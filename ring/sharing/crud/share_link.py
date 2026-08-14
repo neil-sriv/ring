@@ -113,12 +113,11 @@ def get_or_create_share_link(
             target_api_id=target_api_id,
             created_by_api_id=created_by_api_id,
         )
-        db.add(share_link)
         try:
             with db.begin_nested():
+                db.add(share_link)
                 db.flush()
         except IntegrityError:
-            db.expunge(share_link)
             winner = get_share_link_for_target(db, target_api_id)
             if winner is not None:
                 return winner
