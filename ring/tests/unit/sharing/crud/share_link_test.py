@@ -81,9 +81,7 @@ class TestGetOrCreateShareLink:
         lookups = {"count": 0}
         original = share_link_crud.get_share_link_for_target
 
-        def miss_then_hit(
-            db: Session, target_api_id: str
-        ) -> ShareLink | None:
+        def miss_then_hit(db: Session, target_api_id: str) -> ShareLink | None:
             lookups["count"] += 1
             if lookups["count"] == 1:
                 return None
