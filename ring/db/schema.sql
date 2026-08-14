@@ -258,7 +258,8 @@ CREATE TABLE public.short_link (
 	INDEX ix_short_link_creator_id (creator_id ASC),
 	INDEX ix_short_link_id (id ASC),
 	INDEX ix_short_link_target_api_id (target_api_id ASC),
-	UNIQUE INDEX ix_short_link_token (token ASC)
+	UNIQUE INDEX ix_short_link_token (token ASC),
+	UNIQUE INDEX uq_short_link_target_creator (target_api_id ASC, creator_id ASC)
 );
 ALTER TABLE public."group" ADD CONSTRAINT group_admin_id_fkey FOREIGN KEY (admin_id) REFERENCES public."user"(id);
 ALTER TABLE public.default_question ADD CONSTRAINT default_question_group_id_fkey FOREIGN KEY (group_id) REFERENCES public."group"(id);

@@ -13,7 +13,7 @@ import secrets
 import string
 from typing import TYPE_CHECKING
 
-from sqlalchemy import ForeignKey
+from sqlalchemy import ForeignKey, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from ring.api_identifier.api_identified_model import APIIdentified, APIPrefix
@@ -60,6 +60,13 @@ class ShortLink(Base, APIIdentified, PydanticModel, CreatedAtMixin):
     """
 
     __tablename__ = "short_link"
+    __table_args__ = (
+        UniqueConstraint(
+            "target_api_id",
+            "creator_id",
+            name="uq_short_link_target_creator",
+        ),
+    )
 
     API_ID_PREFIX = APIPrefix.SHORT_LINK
     PYDANTIC_MODEL = ShortLinkSchema

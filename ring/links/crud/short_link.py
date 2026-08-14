@@ -1,13 +1,16 @@
 """CRUD operations for short links.
 
 Pure functions that operate on a SQLAlchemy ``Session`` and return ORM
-instances. Token generation retries on the (unlikely) event of a collision with
-the unique ``token`` column.
+instances. Creation is idempotent per ``(target_api_id, creator)``; a unique
+constraint plus ``IntegrityError`` handling covers concurrent inserts. Token
+generation retries on the (unlikely) event of a collision with the unique
+``token`` column.
 """
 
 from __future__ import annotations
 
 from sqlalchemy import select
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from ring.links.models.short_link_model import ShortLink, generate_token
@@ -58,8 +61,10 @@ def create_short_link(
 ) -> ShortLink:
     """Create a short link, reusing an existing one for the same target/creator.
 
-    Creation is idempotent per ``(target_api_id, creator)`` so repeated share
-    actions return a stable link rather than proliferating tokens.
+    Creation is idempotent per ``(target_api_id, creator)``. The unique
+    constraint ``uq_short_link_target_creator`` is the source of truth: a
+    concurrent create that loses the race is recovered via ``IntegrityError``
+    and a re-fetch of the winning row (and a token collision retries).
 
     Args:
         db (Session): Database session.
@@ -73,12 +78,27 @@ def create_short_link(
     if existing is not None:
         return existing
 
-    token = _generate_unique_token(db)
-    short_link = ShortLink.create(
-        target_api_id=target_api_id, creator=creator, token=token
-    )
-    db.add(short_link)
-    return short_link
+    for _ in range(_MAX_TOKEN_ATTEMPTS):
+        token = _generate_unique_token(db)
+        short_link = ShortLink.create(
+            target_api_id=target_api_id, creator=creator, token=token
+        )
+        db.add(short_link)
+        try:
+            with db.begin_nested():
+                db.flush()
+        except IntegrityError:
+            db.expunge(short_link)
+            winner = get_short_link_for_target(db, target_api_id, creator)
+            if winner is not None:
+                return winner
+            continue
+        return short_link
+
+    winner = get_short_link_for_target(db, target_api_id, creator)
+    if winner is not None:
+        return winner
+    raise RuntimeError("Could not create a unique short link")
 
 
 def delete_short_link(db: Session, short_link: ShortLink) -> None:

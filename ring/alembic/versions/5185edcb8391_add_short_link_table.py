@@ -49,6 +49,11 @@ def upgrade() -> None:
             ondelete="CASCADE",
         ),
         sa.PrimaryKeyConstraint("id"),
+        sa.UniqueConstraint(
+            "target_api_id",
+            "creator_id",
+            name="uq_short_link_target_creator",
+        ),
     )
     op.create_index(
         op.f("ix_short_link_api_identifier"),
