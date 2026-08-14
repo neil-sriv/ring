@@ -46,14 +46,16 @@ class TestUnfurlAPI:
         assert response.status_code == 200
         assert 'property="og:title" content="Ring"' in response.text
 
-    def test_response_varies_on_user_agent(
+    def test_response_is_not_cached_on_the_page_url(
         self, unauthenticated_client: TestClient
     ) -> None:
-        """Nginx serves this body only to crawlers, never to browsers."""
+        """Cloudflare ignores Vary, so the card must not be publicly cacheable."""
         response = unauthenticated_client.get("/unfurl/loops/lttr_abc123")
 
-        assert response.headers["vary"] == "User-Agent"
-        assert "max-age" in response.headers["cache-control"]
+        cache_control = response.headers["cache-control"]
+        assert "private" in cache_control
+        assert "no-store" in cache_control
+        assert "vary" not in response.headers
 
     def test_copy_is_the_static_card_for_the_path(
         self, unauthenticated_client: TestClient
