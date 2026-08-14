@@ -78,7 +78,8 @@ prod deploy:
   building `ring-api` / `ring-frontend`. Host rollout is
   `deploy_host.sh` / Actions → **Deploy ring-api**.
 - **Incident freeze:** repo variable `DEPLOY_PAUSED=true` stops automatic
-  EC2 rollouts; manual Deploy still works for rollback.
+  EC2 rollouts; manual Deploy still works for rollback. Pick a prior SHA
+  with `ring deploy history` (or `ring deploy status` for what's live).
 - **Never** build images on the EC2 host or attach `ring.neilsriv.tech`
   as a Cloudflare Worker custom domain (use Workers Routes with `/api/*`
   and `/.well-known/*` passthrough — see continuous-deploy.md).

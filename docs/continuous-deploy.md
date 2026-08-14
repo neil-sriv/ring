@@ -68,6 +68,7 @@ and `.env`. Migrations run *inside* the API container.
 | Host rollout | [`dev_util/deploy_host.sh`](../dev_util/deploy_host.sh) / `uv run ring deploy host` |
 | Image pull only | [`dev_util/prod.sh`](../dev_util/prod.sh) |
 | What is live | `uv run ring deploy status` |
+| Deploy history / rollback SHAs | `uv run ring deploy history` |
 
 ### Deploy job shape
 
@@ -119,8 +120,18 @@ SSH is the current path.
 
 ## Rollback
 
+Find a previous good SHA:
+
 ```bash
-# Preferred: Actions → Deploy ring-api, sha = previous published image SHA
+ring deploy history              # GitHub Deployments from successful rollouts
+ring deploy history --resolve    # also parse older Actions logs (slower)
+ring deploy status               # what is live right now
+```
+
+Then:
+
+```bash
+# Preferred: Actions → Deploy ring-api, sha = previous good image SHA
 # Or on the box:
 ./dev_util/deploy_host.sh <previous-published-sha>
 # Image-only restore without changing compose checkout:
@@ -131,7 +142,8 @@ SSH is the current path.
 and restores that image if `/api/v1/version` does not match after swap.
 
 The SHA must exist as `ring-api:<sha>` in ECR (a Publish ring-api run).
-Docs-only `origin/dev` tips often have **no** image tag.
+Docs-only `origin/dev` tips often have **no** image tag. **Deploy ring-api** runs also create a GitHub Deployment
+(`environment=production-api`) for `ring deploy history`.
 
 ---
 
