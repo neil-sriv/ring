@@ -183,6 +183,44 @@ class TestPostpendLetters:
             days=LETTER_SEND_DEFERRAL_DAYS
         )
 
+    def test_postpend_then_send_email_defers_send_date_once(
+        self, db_session: Session
+    ) -> None:
+        """Postpend-first (the live job order) must not send or stack days."""
+        admin = UserFactory.create()
+        members = [admin] + [UserFactory.create() for _ in range(3)]
+        group = GroupFactory.create(admin=admin, members=members)
+        send_at = datetime.now(tz=UTC) - timedelta(minutes=1)
+        letter = LetterFactory.create(
+            group=group,
+            status=LetterStatus.IN_PROGRESS,
+            send_at=send_at,
+        )
+        question = QuestionFactory.create(letter=letter)
+        ResponseFactory.create(question=question, participant=members[0])
+        db_session.commit()
+
+        with (
+            run_scheduled_jobs_inline(db_session),
+            patch(
+                "ring.tasks.crud.task.send_email", return_value="message-id"
+            ) as mock_send_email,
+        ):
+            assert hold_letter_for_send_threshold(db_session, letter) is True
+            assert (
+                defer_letter_send_if_below_threshold(db_session, letter)
+                is True
+            )
+
+        mock_send_email.assert_called_once()
+        assert is_waiting_response_email(mock_send_email)
+        db_session.refresh(letter)
+
+        assert letter.status == LetterStatus.IN_PROGRESS
+        assert letter.send_at == send_at + timedelta(
+            days=LETTER_SEND_DEFERRAL_DAYS
+        )
+
     def test_postpend_marks_sent_when_threshold_met(
         self, db_session: Session
     ) -> None:
