@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 import os
+import subprocess
 from pathlib import Path
 from typing import Any
 
@@ -244,6 +245,76 @@ def deploy_status(
         click.echo(
             f"  {format_component(component, behind_by_name[component.name], ref)}"
         )
+
+
+@dev_command("history", deploy)
+@click.option(
+    "--limit",
+    "-n",
+    type=int,
+    default=20,
+    show_default=True,
+    help="Max rows to show.",
+)
+@click.option(
+    "--resolve/--no-resolve",
+    default=False,
+    show_default=True,
+    help="Parse Actions logs for Deploy complete (<sha>) when no "
+    "GitHub Deployment records exist yet (slower).",
+)
+@click.option(
+    "--json",
+    "as_json",
+    is_flag=True,
+    default=False,
+    help="Emit machine-readable JSON instead of a table.",
+)
+def deploy_history(
+    ctx: click.Context,
+    limit: int,
+    resolve: bool,
+    as_json: bool,
+    *args: list[Any],
+    **kwargs: dict[Any, Any],
+) -> None:
+    """List recent API deploys so you can pick a rollback SHA.
+
+    Prefers GitHub Deployments recorded by Deploy ring-api
+    (environment=production-api). Falls back to workflow runs; pass
+    --resolve to parse logs for the exact image SHA.
+    """
+    from dev_util.deploy_history import as_dicts, collect, format_record
+
+    try:
+        records = collect(limit, resolve_logs=resolve)
+    except FileNotFoundError as exc:
+        raise click.ClickException(
+            "gh CLI not found — install GitHub CLI to use deploy history."
+        ) from exc
+    except subprocess.CalledProcessError as exc:
+        detail = (exc.stderr or exc.stdout or str(exc)).strip()
+        raise click.ClickException(detail or "gh command failed") from exc
+
+    if as_json:
+        click.echo(json.dumps({"deployments": as_dicts(records)}, indent=2))
+        return
+
+    if not records:
+        click.echo(
+            "No deploy history yet. Successful Deploy ring-api runs record "
+            "a GitHub Deployment (production-api); older runs need --resolve "
+            "to parse logs."
+        )
+        return
+
+    click.echo("API deploy history (newest first) — use sha with:")
+    click.echo(
+        "  Actions → Deploy ring-api, or ./dev_util/deploy_host.sh <sha>"
+    )
+    click.echo("")
+    for record in records:
+        click.echo(format_record(record))
 
 
 @dev_command("host", deploy)

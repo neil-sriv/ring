@@ -88,6 +88,9 @@ jobs:
     name: Roll out on EC2
     needs: [resolve, test, migrations]
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      deployments: write
     steps:
       - name: SSH deploy_host.sh
         uses: appleboy/ssh-action@v1.2.2
@@ -106,3 +109,47 @@ jobs:
             fi
             cd "$APP_DIR"
             ./dev_util/deploy_host.sh --rollback-on-fail "${{ needs.resolve.outputs.sha }}"
+
+      # Append-only history for `ring deploy history` / rollback picks.
+      # Best-effort: a bookkeeping failure must not fail a successful host
+      # rollout (or hide it from history when conclusion != success).
+      - name: Record GitHub Deployment
+        continue-on-error: true
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const sha = '${{ needs.resolve.outputs.sha }}';
+            const event = '${{ github.event_name }}';
+            const deployment = await github.rest.repos.createDeployment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              ref: sha,
+              environment: 'production-api',
+              auto_merge: false,
+              required_contexts: [],
+              description: `ring-api ${sha.slice(0, 7)} via ${event}`,
+              payload: {
+                event,
+                workflow: 'Deploy ring-api',
+                run_id: context.runId,
+              },
+            });
+            const id = deployment.data?.id;
+            if (!id) {
+              core.warning(
+                `createDeployment returned no id (status ${deployment.status}); ` +
+                  'skipping deployment status. Host rollout already succeeded.'
+              );
+              return;
+            }
+            await github.rest.repos.createDeploymentStatus({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              deployment_id: id,
+              state: 'success',
+              environment: 'production-api',
+              environment_url: 'https://ring.neilsriv.tech',
+              description: 'deploy_host.sh completed',
+              log_url: `https://github.com/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}`,
+            });
+            core.info(`Recorded production-api deployment ${sha}`);
