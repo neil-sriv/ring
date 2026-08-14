@@ -1,8 +1,12 @@
 from __future__ import annotations
 
+from collections.abc import Iterator
+from contextlib import contextmanager
 from typing import Any, Sequence
+from unittest.mock import MagicMock, patch
 
 from pydantic import BaseModel
+from sqlalchemy.orm import Session
 
 from ring.ring_pydantic.pydantic_model import PydanticModel
 from ring.sqlalchemy_base import Base
@@ -68,4 +72,52 @@ def assert_sqlalchemy_object_list_equal_with_order_insensitive(
 ) -> None:
     assert sorted(list1, key=lambda x: x.id) == sorted(
         list2, key=lambda x: x.id
+    )
+
+
+@contextmanager
+def run_scheduled_jobs_inline(db: Session) -> Iterator[MagicMock]:
+    """Run ``scheduler.add_job`` callbacks against the test session.
+
+    Production one-shot jobs use APScheduler with their own DB session.
+    Unit tests share a rolled-back transaction, so jobs are invoked
+    immediately with the test session instead.
+    """
+    from ring.async_scheduler.job_registry import JOB_REGISTRY
+
+    def _add_job(job: Any, *args: Any, **kwargs: Any) -> None:
+        job_args = list(kwargs.get("args") or [])
+        name = getattr(job, "name", None)
+        if name and name in JOB_REGISTRY:
+            JOB_REGISTRY[name].job_function(db, *job_args)
+            return
+        raise AssertionError(f"Unregistered job scheduled: {job!r}")
+
+    with patch(
+        "ring.async_scheduler.scheduler.scheduler.add_job",
+        side_effect=_add_job,
+    ) as mock_add_job:
+        yield mock_add_job
+
+
+def email_draft_recipients(
+    mock_send_email: MagicMock, call_index: int = 0
+) -> list[str]:
+    draft = mock_send_email.call_args_list[call_index].args[0]
+    return list(draft.destination["ToAddresses"])
+
+
+def email_draft_subject(
+    mock_send_email: MagicMock, call_index: int = 0
+) -> str:
+    draft = mock_send_email.call_args_list[call_index].args[0]
+    return draft.message["Subject"]["Data"]
+
+
+def is_waiting_response_email(
+    mock_send_email: MagicMock, call_index: int = 0
+) -> bool:
+    return (
+        "waiting for your response"
+        in email_draft_subject(mock_send_email, call_index).lower()
     )

@@ -164,7 +164,8 @@ def defer_letter_send(db: Session, letter: Letter) -> bool:
 
     Idempotent across callers that may both run at the same deadline moment
     (send-email task and postpend): once ``send_at`` is in the future, further
-    calls are a no-op.
+    calls are a no-op. A successful deferral also schedules a one-shot email
+    to participants who have not yet responded.
 
     Returns:
         True if the send date was deferred, False if it had not yet arrived
@@ -187,7 +188,22 @@ def defer_letter_send(db: Session, letter: Letter) -> bool:
         )
     )
     letter_crud.edit_letter(db, letter, send_at=new_send_at)
+    _schedule_waiting_response_email(letter.id)
     return True
+
+
+def _schedule_waiting_response_email(letter_id: int) -> None:
+    """Queue a one-shot job to email participants who have not responded.
+
+    Imported lazily because ``ring.tasks.crud.task`` imports this module.
+    """
+    from ring.async_scheduler.scheduler import scheduler
+    from ring.tasks.crud.task import send_waiting_response_email
+
+    scheduler.add_job(
+        send_waiting_response_email,
+        args=[letter_id],
+    )
 
 
 def defer_letter_send_if_below_threshold(db: Session, letter: Letter) -> bool:

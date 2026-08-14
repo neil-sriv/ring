@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from datetime import UTC, datetime, timedelta
+from unittest.mock import patch
 
 from sqlalchemy.orm import Session
 
@@ -18,6 +19,11 @@ from ring.tests.factories.letters.question_factory import QuestionFactory
 from ring.tests.factories.letters.response_factory import ResponseFactory
 from ring.tests.factories.parties.group_factory import GroupFactory
 from ring.tests.factories.parties.user_factory import UserFactory
+from ring.tests.lib.utils import (
+    email_draft_recipients,
+    is_waiting_response_email,
+    run_scheduled_jobs_inline,
+)
 
 
 class TestPostpendLetters:
@@ -47,7 +53,21 @@ class TestPostpendLetters:
         ResponseFactory.create(question=question, participant=members[0])
         db_session.commit()
 
-        self.run_postpend_job(db_session, [letter.id])
+        with (
+            run_scheduled_jobs_inline(db_session),
+            patch(
+                "ring.tasks.crud.task.send_email", return_value="message-id"
+            ) as mock_send_email,
+        ):
+            self.run_postpend_job(db_session, [letter.id])
+
+        mock_send_email.assert_called_once()
+        assert is_waiting_response_email(mock_send_email)
+        assert set(email_draft_recipients(mock_send_email)) == {
+            member.email for member in members[1:]
+        }
+        assert members[0].email not in email_draft_recipients(mock_send_email)
+
         db_session.refresh(letter)
 
         assert letter.status == LetterStatus.IN_PROGRESS
@@ -72,7 +92,16 @@ class TestPostpendLetters:
         ResponseFactory.create(question=question, participant=members[0])
         db_session.commit()
 
-        self.run_postpend_job(db_session, [letter.id])
+        with (
+            run_scheduled_jobs_inline(db_session) as mock_add_job,
+            patch(
+                "ring.tasks.crud.task.send_email", return_value="message-id"
+            ) as mock_send_email,
+        ):
+            self.run_postpend_job(db_session, [letter.id])
+
+        mock_add_job.assert_not_called()
+        mock_send_email.assert_not_called()
         db_session.refresh(letter)
 
         assert letter.status == LetterStatus.IN_PROGRESS
@@ -95,8 +124,17 @@ class TestPostpendLetters:
         ResponseFactory.create(question=question, participant=members[0])
         db_session.commit()
 
-        for _ in range(3):
-            self.run_postpend_job(db_session, [letter.id])
+        with (
+            run_scheduled_jobs_inline(db_session),
+            patch(
+                "ring.tasks.crud.task.send_email", return_value="message-id"
+            ) as mock_send_email,
+        ):
+            for _ in range(3):
+                self.run_postpend_job(db_session, [letter.id])
+
+        mock_send_email.assert_called_once()
+        assert is_waiting_response_email(mock_send_email)
         db_session.refresh(letter)
 
         assert letter.status == LetterStatus.IN_PROGRESS
@@ -121,8 +159,23 @@ class TestPostpendLetters:
         ResponseFactory.create(question=question, participant=members[0])
         db_session.commit()
 
-        assert defer_letter_send_if_below_threshold(db_session, letter) is True
-        assert hold_letter_for_send_threshold(db_session, letter) is True
+        with (
+            run_scheduled_jobs_inline(db_session),
+            patch(
+                "ring.tasks.crud.task.send_email", return_value="message-id"
+            ) as mock_send_email,
+        ):
+            assert (
+                defer_letter_send_if_below_threshold(db_session, letter)
+                is True
+            )
+            assert hold_letter_for_send_threshold(db_session, letter) is True
+
+        mock_send_email.assert_called_once()
+        assert is_waiting_response_email(mock_send_email)
+        assert set(email_draft_recipients(mock_send_email)) == {
+            member.email for member in members[1:]
+        }
         db_session.refresh(letter)
 
         assert letter.status == LetterStatus.IN_PROGRESS
@@ -148,7 +201,16 @@ class TestPostpendLetters:
         ResponseFactory.create(question=question, participant=members[1])
         db_session.commit()
 
-        self.run_postpend_job(db_session, [letter.id])
+        with (
+            run_scheduled_jobs_inline(db_session) as mock_add_job,
+            patch(
+                "ring.tasks.crud.task.send_email", return_value="message-id"
+            ) as mock_send_email,
+        ):
+            self.run_postpend_job(db_session, [letter.id])
+
+        mock_add_job.assert_not_called()
+        mock_send_email.assert_not_called()
         db_session.refresh(letter)
 
         assert letter.status == LetterStatus.SENT
