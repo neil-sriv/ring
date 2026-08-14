@@ -4,6 +4,11 @@
     "title": "FastAPI",
     "version": "0.1.0"
   },
+  "servers": [
+    {
+      "url": "/api/v1"
+    }
+  ],
   "paths": {
     "/login/access-token": {
       "post": {
@@ -2613,6 +2618,53 @@
         }
       }
     },
+    "/links/unfurl": {
+      "post": {
+        "tags": [
+          "links"
+        ],
+        "summary": "Unfurl Link",
+        "description": "Fetch a URL and return a rich preview of its page metadata.\n\nArgs:\n    request (LinkPreviewRequest): The URL to unfurl.\n    req_dep (AuthenticatedRequestDependencies): Request dependencies;\n        authentication is required so the endpoint is not an open proxy.\n\nReturns:\n    LinkPreview: The preview metadata for the URL.\n\nRaises:\n    HTTPException: 400 if the URL is invalid or unsafe to fetch, 502 if\n        the URL could not be fetched or parsed.",
+        "operationId": "unfurl_link_links_unfurl_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LinkPreviewRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LinkPreview"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ]
+      }
+    },
     "/notebook/documents": {
       "post": {
         "tags": [
@@ -3920,6 +3972,94 @@
         "type": "object",
         "title": "LetterUpdate",
         "description": "Schema for updating an existing letter.\n\nAttributes:\n    send_at (AwareDatetime): New scheduled time to send the letter"
+      },
+      "LinkPreview": {
+        "properties": {
+          "url": {
+            "type": "string",
+            "title": "Url"
+          },
+          "resolved_url": {
+            "type": "string",
+            "title": "Resolved Url"
+          },
+          "title": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Title"
+          },
+          "description": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Description"
+          },
+          "image_url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Image Url"
+          },
+          "site_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Site Name"
+          },
+          "favicon_url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Favicon Url"
+          }
+        },
+        "type": "object",
+        "required": [
+          "url",
+          "resolved_url"
+        ],
+        "title": "LinkPreview",
+        "description": "A rich preview of a URL built from its page metadata.\n\nAll descriptive fields are optional because a page may only expose a\nsubset of Open Graph / Twitter card / standard meta tags.\n\nAttributes:\n    url (str): The URL that was requested.\n    resolved_url (str): The final URL after following redirects.\n    title (str | None): Best-effort page title.\n    description (str | None): Best-effort page description.\n    image_url (str | None): Absolute URL of the preview image.\n    site_name (str | None): Human-readable site name.\n    favicon_url (str | None): Absolute URL of the site favicon."
+      },
+      "LinkPreviewRequest": {
+        "properties": {
+          "url": {
+            "type": "string",
+            "title": "Url"
+          }
+        },
+        "type": "object",
+        "required": [
+          "url"
+        ],
+        "title": "LinkPreviewRequest",
+        "description": "Request body for unfurling a single URL.\n\nAttributes:\n    url (str): The URL to fetch and unfurl. Must be an http(s) URL."
       },
       "MediaType": {
         "type": "string",

@@ -410,6 +410,41 @@ export type LetterUpdate = {
 };
 
 /**
+ * A rich preview of a URL built from its page metadata.
+ *
+ * All descriptive fields are optional because a page may only expose a
+ * subset of Open Graph / Twitter card / standard meta tags.
+ *
+ * Attributes:
+ * url (str): The URL that was requested.
+ * resolved_url (str): The final URL after following redirects.
+ * title (str | None): Best-effort page title.
+ * description (str | None): Best-effort page description.
+ * image_url (str | None): Absolute URL of the preview image.
+ * site_name (str | None): Human-readable site name.
+ * favicon_url (str | None): Absolute URL of the site favicon.
+ */
+export type LinkPreview = {
+    url: string;
+    resolved_url: string;
+    title?: string | null;
+    description?: string | null;
+    image_url?: string | null;
+    site_name?: string | null;
+    favicon_url?: string | null;
+};
+
+/**
+ * Request body for unfurling a single URL.
+ *
+ * Attributes:
+ * url (str): The URL to fetch and unfurl. Must be an http(s) URL.
+ */
+export type LinkPreviewRequest = {
+    url: string;
+};
+
+/**
  * Enumeration of supported media types.
  *
  * Attributes:
@@ -2207,6 +2242,31 @@ export type PerformSearchSearchSearchGetResponses = {
 };
 
 export type PerformSearchSearchSearchGetResponse = PerformSearchSearchSearchGetResponses[keyof PerformSearchSearchSearchGetResponses];
+
+export type UnfurlLinkLinksUnfurlPostData = {
+    body: LinkPreviewRequest;
+    path?: never;
+    query?: never;
+    url: '/links/unfurl';
+};
+
+export type UnfurlLinkLinksUnfurlPostErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type UnfurlLinkLinksUnfurlPostError = UnfurlLinkLinksUnfurlPostErrors[keyof UnfurlLinkLinksUnfurlPostErrors];
+
+export type UnfurlLinkLinksUnfurlPostResponses = {
+    /**
+     * Successful Response
+     */
+    200: LinkPreview;
+};
+
+export type UnfurlLinkLinksUnfurlPostResponse = UnfurlLinkLinksUnfurlPostResponses[keyof UnfurlLinkLinksUnfurlPostResponses];
 
 export type ListDocumentsNotebookDocumentsGetData = {
     body?: never;
