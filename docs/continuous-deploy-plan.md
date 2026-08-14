@@ -17,14 +17,17 @@ Status legend: `[ ]` todo · `[x]` done. Update this file as phases land.
 | Frontend PR previews | ✅ Cloudflare Workers Builds deploys every branch; PR comments carry preview URLs (see [infrastructure.md](infrastructure.md)) |
 | Frontend prod | ✅ Cloudflare Workers Routes (`/*`); `/api/*` and `/.well-known/*` passthrough to EC2 nginx. Leftover `ring-frontend` container still runs as a rollback hatch (Phase 5 cleanup) |
 | Backend images | ✅ CI publishes `ring-api:latest` + `:<git-sha>` to ECR Public on `dev` pushes (#303) |
-| Backend rollout | ✅ Image filesystem (#309, live 2026-08-11: `image_build.sha=195c464`, `git.source=unavailable`). Push-button job is #310 |
-| Migrations | Run by `deploy_host.sh` (`uv run ring db upgrade --profile prod`) |
+| Backend rollout | ✅ Image filesystem (#309, live 2026-08-11: `image_build.sha=195c464`, `git.source=unavailable`). Push-button job is #333; auto-trigger is #334 (draft) |
+| Migrations | Run by `deploy_host.sh` (`uv run ring db upgrade --profile prod`), inside the API container. CI gate in #332 |
 | Version introspection | ✅ `GET /api/v1/version` returns git SHAs + image digests (#298) — verified 2026-08-11 after the #303 swap (`image_build.source=image_env`) |
 | CORS for previews | ✅ `BACKEND_CORS_ORIGIN_REGEX` live on prod (#295) |
 
 Known remaining risks:
 
 - Host pull is still manual; a green publish does not restart prod.
+  #333 makes it one click, #334 makes it automatic.
+- The `PROD_SSH_*` secrets do not exist yet, so the push-button job in
+  #333 has never executed.
 
 ---
 
@@ -152,23 +155,53 @@ Image-filesystem cutover *(done 2026-08-11 via #309; applied on EC2)*:
       `/version` was `git.sha=0f1871c` (checkout) +
       `image_build.sha=60ca61b` (image). Pass a published SHA, not
       `HEAD`, when `origin/dev` did not touch `ring/**`.
-- [ ] Deploy job: SSH to EC2 (`PROD_SSH_*` secrets) and run
+- [x] Deploy job: SSH to EC2 (`PROD_SSH_*` secrets) and run
       `./dev_util/deploy_host.sh --rollback-on-fail <sha>`
       — [`.github/workflows/deploy_api.yml`](../.github/workflows/deploy_api.yml)
-      (#310)
-- [ ] Actions `concurrency` group `prod-deploy` (queue, don't cancel) so
-      two deploys can't race migrations *(#310)*
-- [ ] Gate deploy on backend tests (suite is ~26s in-container; worth it)
-      *(#310; `run_test.yml` now accepts `workflow_call`)*
+      (#333, superseding #310)
+- [x] Actions `concurrency` group `prod-deploy` (queue, don't cancel) so
+      two deploys can't race migrations *(#333)*
+- [x] Gate deploy on backend tests (suite is ~26s in-container; worth it)
+      *(#333; `run_test.yml` now accepts `workflow_call`)*
+- [ ] **Add the `PROD_SSH_HOST` / `PROD_SSH_USER` / `PROD_SSH_KEY` repo
+      secrets.** Not set as of 2026-08-13, so the job has never run.
+      `PROD_SSH_HOST` must be the raw EC2 IP or a gray-cloud name —
+      Cloudflare will not forward SSH on the orange `ring.neilsriv.tech`.
+- [ ] One successful push-button run before Phase 4 flips the trigger
+      (bar chosen 2026-08-13: a single clean run, since rollback is one
+      command).
 
 ## Phase 4 — Flip to continuous (the north star)
 
-- [ ] Change trigger from `workflow_dispatch` to `push: branches: [dev]`
-      after several clean push-button runs
-- [ ] Stop checking out git on the host during deploy (`deploy_host.sh
-      --skip-git`) once the bind-mount is gone
-- [ ] Retire `ring deploy prod` for everything except `ring-llm`
-- [ ] Update [infrastructure.md](infrastructure.md) deployment section
+Implemented in #334, held as a draft until the Phase 3 run above happens.
+
+- [x] Change the trigger so backend merges deploy themselves. Uses
+      `workflow_run` on **Publish ring-api** completing, *not*
+      `push: branches: [dev]` as originally written: a push trigger races
+      the image build, so the "require published image" step would fail
+      while the build is still running. `workflow_run` fires only after
+      the image exists and inherits that workflow's backend path filter,
+      so docs-only merges still deploy nothing. A failed publish cannot
+      deploy (`conclusion == 'success'`).
+- [x] Retire `ring deploy prod` for everything except `ring-llm`. It
+      confirms rather than hard-errors on `ring-api` / `ring-frontend`,
+      so a laptop build stays possible if CI or ECR is down.
+- [x] Update [infrastructure.md](infrastructure.md) deployment section
+- [x] Migration gate wired in as a deploy prerequisite (#332)
+- [x] Escape hatch: repo variable `DEPLOY_PAUSED=true` freezes automatic
+      deploys. Manual `workflow_dispatch` stays open so rollback still
+      works while paused.
+- [x] ~~Stop checking out git on the host during deploy
+      (`deploy_host.sh --skip-git`)~~ **Dropped.** Tried it, and syncing
+      compose/nginx under `--skip-git` silently corrupts the checkout:
+      the staged files survive a later `git checkout -B dev <newer-sha>`,
+      so the box keeps an old `compose.prod.yml` with no error, and
+      `--rollback-on-fail` re-invokes with `--skip-git` so every rollback
+      would leave that behind. The original motivation (the `./ring`
+      bind-mount) is gone, and migrations run inside the API container,
+      so the host checkout only supplies compose/nginx/`.env`. A full
+      checkout is cheap and keeps them consistent. `deploy_host.sh` is
+      unchanged.
 
 ### Per-merge behavior once Phase 4 is complete
 
@@ -211,8 +244,20 @@ These only tidy the EC2 fallback and unused `www.ring` routes.
    against CockroachDB Cloud with no human watching. Destructive changes
    (drops, renames) are two-step: deploy code that stops using the
    column, then a later migration removes it.
-   - [ ] Add a CI gate that runs `alembic upgrade head` against the test
-         CockroachDB so broken revisions can't merge.
+   - [x] Add a CI gate that runs `alembic upgrade head` against the test
+         CockroachDB so broken revisions can't merge (#332). It caught a
+         real failure on the first run: migrations cannot apply to a
+         virgin cluster without `SET CLUSTER SETTING
+         feature.vector_index.enabled = true`, which every other
+         environment sets out of band (`conftest.py`, `cloud-start.sh`).
+   - [x] Also check `db/schema.sql` for drift against the migrated
+         schema (#332). pytest builds from `schema.sql`, so a stale dump
+         means the suite tests a schema prod does not have. Tables and
+         columns are compared; defaults and index order are not, because
+         they already diverge — migrations emit `unique_rowid()` while
+         the committed dump still carries `nextval(...)` sequences.
+         Worth reconciling separately (CockroachDB treats sequential IDs
+         as a hotspot anti-pattern, so the migrations are likely right).
 2. **Backend-first PRs remain law** (see `ring-split-pr` skill). The
    frontend track deploys within minutes of merge; an OpenAPI-consuming
    frontend change must merge only after the API change is deployed.
@@ -230,9 +275,12 @@ These only tidy the EC2 fallback and unused `www.ring` routes.
       `PROD_SSH_KEY`), same shape as superseded #290. SSM still possible
       later; not required to get push-button deploys.
 - [x] `ring-llm` does **not** join CD (heavy image; still manual / inactive)
-- [ ] Whether to keep an escape hatch (`VITE_MAINTENANCE_MODE` fast path
-      or a `deploy:pause` label) for freezing auto-deploys during
-      incidents
+- [x] Escape hatch for freezing auto-deploys during incidents: **repo
+      variable `DEPLOY_PAUSED=true`** (decided 2026-08-13, #334). Chosen
+      over a PR label (auto-deploy is triggered by a merged push, not a
+      PR) and over `VITE_MAINTENANCE_MODE` (that is a frontend concern).
+      Merges still publish images while paused; they just don't roll out.
+      Manual dispatch is deliberately exempt so rollback still works.
 
 ## Constraints
 
