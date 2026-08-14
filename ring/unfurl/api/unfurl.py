@@ -24,15 +24,6 @@ from ring.unfurl.enrich import enriched_card_for_share
 
 router = APIRouter()
 
-# Slack caches an unfurl for ~30 minutes and Discord keys its cache off the
-# URL. Generic copy only changes on deploy, so an hour is safe and keeps
-# repeated pastes of a popular link cheap.
-PREVIEW_CACHE_SECONDS = 3600
-
-# A tokenized card can be revoked, so it is cached only briefly to bound how
-# long a stale card lingers after the link is turned off.
-SHARED_PREVIEW_CACHE_SECONDS = 300
-
 
 def render_unfurl_html(path: str, card: UnfurlCard | None = None) -> str:
     """Render the head-only HTML a link-preview crawler reads.
@@ -130,14 +121,13 @@ def unfurl(
             # enrichment error.
             card = None
 
-    max_age = SHARED_PREVIEW_CACHE_SECONDS if card else PREVIEW_CACHE_SECONDS
     return Response(
         content=render_unfurl_html(app_path, card),
         media_type="text/html; charset=utf-8",
         headers={
-            "Cache-Control": f"public, max-age={max_age}",
-            # The response body depends on the user agent, so anything caching
-            # in front of the app must not hand this to a browser.
-            "Vary": "User-Agent",
+            # Cloudflare ignores Vary, so a public cache on the page URL can
+            # hand this head-only card to a browser and replace the SPA.
+            # Slack/Discord cache on their side; we must not.
+            "Cache-Control": "private, no-store",
         },
     )
