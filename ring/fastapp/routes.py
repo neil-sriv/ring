@@ -17,6 +17,7 @@ from ring.notebook.api import document
 from ring.notifications.api import subscription
 from ring.parties.api import group, group_key_value, invite, user
 from ring.search.api import search
+from ring.sharing.api import share_link
 from ring.tasks.api import schedule
 from ring.unfurl.api import unfurl
 
@@ -51,6 +52,8 @@ router.include_router(
 router.include_router(completion.router, prefix="/llm", tags=["llm"])
 
 router.include_router(search.router, prefix="/search", tags=["search"])
+
+router.include_router(share_link.router, prefix="/shares", tags=["shares"])
 
 router.include_router(
     document.websocket_router, prefix="/ws/notebook", tags=["notebook"]

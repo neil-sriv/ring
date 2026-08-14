@@ -23,6 +23,7 @@ class APIPrefix(str, Enum):
     DEFAULT_QUESTION = "dfqstn"
     SUBSCRIPTION = "sbscrp"
     DOCUMENT = "dcmnt"
+    SHARE_LINK = "shrl"
 
 
 class APIIdentified:

@@ -173,6 +173,20 @@ CREATE TABLE public.subscription (
 	INDEX ix_subscription_id (id ASC),
 	INDEX ix_subscription_user_id (user_id ASC)
 );
+CREATE TABLE public.share_link (
+	id INT8 NOT NULL DEFAULT unique_rowid(),
+	token VARCHAR NOT NULL,
+	target_api_id VARCHAR NOT NULL,
+	created_by_api_id VARCHAR NOT NULL,
+	api_identifier VARCHAR NOT NULL,
+	created_at TIMESTAMPTZ NOT NULL DEFAULT now():::TIMESTAMPTZ,
+	CONSTRAINT share_link_pkey PRIMARY KEY (id ASC),
+	UNIQUE INDEX ix_share_link_api_identifier (api_identifier ASC),
+	INDEX ix_share_link_created_at (created_at ASC),
+	INDEX ix_share_link_id (id ASC),
+	INDEX ix_share_link_target_api_id (target_api_id ASC),
+	UNIQUE INDEX ix_share_link_token (token ASC)
+);
 CREATE SEQUENCE public.task_id_seq AS INT8 MINVALUE 1 MAXVALUE 9223372036854775807 INCREMENT 1 START 1;
 CREATE TABLE public.task (
 	id INT8 NOT NULL DEFAULT nextval('public.task_id_seq'::REGCLASS),
