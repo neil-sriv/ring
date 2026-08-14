@@ -129,7 +129,7 @@
           "login"
         ],
         "summary": "Reset Password Request",
-        "description": "Initiate password reset process for a user.\n\nGenerates a one-time token and sends a password reset email to the user.\n\nArgs:\n    email (str): User's email address\n    req_dep (RequestDependenciesBase): Request dependencies including database session\n\nReturns:\n    ResponseMessage: Confirmation message of email sent\n\nRaises:\n    HTTPException: 400 if user with email doesn't exist",
+        "description": "Initiate password reset process for a user.\n\nWhen the email matches an account, generates a one-time token and queues a\npassword reset email. Always returns the same success message whether or\nnot the email is registered, so callers cannot enumerate accounts.\n\nArgs:\n    email (str): User's email address\n    req_dep (RequestDependenciesBase): Request dependencies including database session\n\nReturns:\n    ResponseMessage: Generic confirmation that a reset email was sent if\n        an account exists for the given address",
         "operationId": "reset_password_request_reset_password_request__email__post",
         "parameters": [
           {
@@ -563,6 +563,62 @@
             }
           }
         ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserLinked"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "patch": {
+        "tags": [
+          "parties"
+        ],
+        "summary": "Update User By Id",
+        "description": "Update another user's email/name (admin only).\n\nArgs:\n    user_api_id (str): API identifier of the user to update\n    user_update (UserUpdate): Fields to update\n    req_dep (AuthenticatedRequestDependencies): Request dependencies\n\nReturns:\n    User: Updated user information\n\nRaises:\n    HTTPException: If caller is not an admin, user is missing, or email\n        is already registered",
+        "operationId": "update_user_by_id_parties_user__user_api_id__patch",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "user_api_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "User Api Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UserUpdate"
+              }
+            }
+          }
+        },
         "responses": {
           "200": {
             "description": "Successful Response",

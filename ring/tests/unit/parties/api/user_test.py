@@ -628,6 +628,78 @@ class TestUserAPI:
         assert resp.status_code == 404
         assert resp.json()["detail"] == "Model ids not found"
 
+    @pytest.mark.admin(True)
+    def test_update_user_by_id(
+        self,
+        authenticated_client: TestClient,
+        db_session: Session,
+        faker: Faker,
+    ) -> None:
+        """Admins can update another user's name and email."""
+        user = UserFactory.create()
+        db_session.commit()
+
+        new_name = faker.name()
+        new_email = faker.email().lower()
+        resp = authenticated_client.patch(
+            f"/parties/user/{user.api_identifier}",
+            json={"name": new_name, "email": new_email},
+        )
+        assert resp.status_code == 200
+        data = resp.json()
+        assert data["name"] == new_name
+        assert data["email"] == new_email
+        assert user.name == new_name
+        assert user.email == new_email
+
+    @pytest.mark.admin(True)
+    def test_update_user_by_id_duplicate_email(
+        self,
+        authenticated_client: TestClient,
+        db_session: Session,
+    ) -> None:
+        """Admin user update rejects emails already used by another account."""
+        target = UserFactory.create()
+        other = UserFactory.create()
+        db_session.commit()
+
+        resp = authenticated_client.patch(
+            f"/parties/user/{target.api_identifier}",
+            json={"email": other.email},
+        )
+        assert resp.status_code == 400
+        assert resp.json()["detail"] == "Email already registered"
+
+    def test_update_user_by_id_requires_admin(
+        self,
+        authenticated_client: TestClient,
+        db_session: Session,
+        faker: Faker,
+    ) -> None:
+        """Non-admin callers cannot update another user."""
+        user = UserFactory.create()
+        db_session.commit()
+
+        resp = authenticated_client.patch(
+            f"/parties/user/{user.api_identifier}",
+            json={"name": faker.name()},
+        )
+        assert resp.status_code == 403
+        assert resp.json()["detail"] == "Unauthorized"
+
+    @pytest.mark.admin(True)
+    def test_update_user_by_id_not_found(
+        self,
+        authenticated_client: TestClient,
+    ) -> None:
+        """Admin update returns not-found for unknown api ids."""
+        resp = authenticated_client.patch(
+            "/parties/user/invalid_id",
+            json={"name": "Nope"},
+        )
+        assert resp.status_code == 404
+        assert_api_model_not_found(resp.json(), User, ["invalid_id"])
+
     def test_deprecated_endpoints_return_501(
         self, unauthenticated_client: TestClient
     ) -> None:
