@@ -709,6 +709,34 @@ export type SearchResponse = {
 export type SearchType = 'semantic' | 'keyword' | 'dual';
 
 /**
+ * Request to mint (or fetch) a share link for a resource.
+ *
+ * Attributes:
+ * target_api_id (str): API id of the resource to share (e.g. a letter)
+ */
+export type ShareLinkCreate = {
+    target_api_id: string;
+};
+
+/**
+ * A share link and the URL to hand out.
+ *
+ * Attributes:
+ * api_identifier (str): The share link's own API id
+ * token (str): The capability token embedded in the URL
+ * target_api_id (str): API id of the shared resource
+ * share_url (str): Absolute URL to share, carrying the token
+ * created_at (datetime): When the link was minted
+ */
+export type ShareLinkResponse = {
+    api_identifier: string;
+    token: string;
+    target_api_id: string;
+    share_url: string;
+    created_at: string;
+};
+
+/**
  * Schema for updating a single group key-value pair.
  *
  * This model extends GroupKeyValueBase to include an operation field that specifies
@@ -2207,6 +2235,85 @@ export type PerformSearchSearchSearchGetResponses = {
 };
 
 export type PerformSearchSearchSearchGetResponse = PerformSearchSearchSearchGetResponses[keyof PerformSearchSearchSearchGetResponses];
+
+export type GetShareLinkSharesGetData = {
+    body?: never;
+    path?: never;
+    query: {
+        target_api_id: string;
+    };
+    url: '/shares/';
+};
+
+export type GetShareLinkSharesGetErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type GetShareLinkSharesGetError = GetShareLinkSharesGetErrors[keyof GetShareLinkSharesGetErrors];
+
+export type GetShareLinkSharesGetResponses = {
+    /**
+     * Successful Response
+     */
+    200: ShareLinkResponse;
+};
+
+export type GetShareLinkSharesGetResponse = GetShareLinkSharesGetResponses[keyof GetShareLinkSharesGetResponses];
+
+export type CreateShareLinkSharesPostData = {
+    body: ShareLinkCreate;
+    path?: never;
+    query?: never;
+    url: '/shares/';
+};
+
+export type CreateShareLinkSharesPostErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type CreateShareLinkSharesPostError = CreateShareLinkSharesPostErrors[keyof CreateShareLinkSharesPostErrors];
+
+export type CreateShareLinkSharesPostResponses = {
+    /**
+     * Successful Response
+     */
+    200: ShareLinkResponse;
+};
+
+export type CreateShareLinkSharesPostResponse = CreateShareLinkSharesPostResponses[keyof CreateShareLinkSharesPostResponses];
+
+export type RevokeShareLinkSharesTokenDeleteData = {
+    body?: never;
+    path: {
+        token: string;
+    };
+    query?: never;
+    url: '/shares/{token}';
+};
+
+export type RevokeShareLinkSharesTokenDeleteErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type RevokeShareLinkSharesTokenDeleteError = RevokeShareLinkSharesTokenDeleteErrors[keyof RevokeShareLinkSharesTokenDeleteErrors];
+
+export type RevokeShareLinkSharesTokenDeleteResponses = {
+    /**
+     * Successful Response
+     */
+    204: void;
+};
+
+export type RevokeShareLinkSharesTokenDeleteResponse = RevokeShareLinkSharesTokenDeleteResponses[keyof RevokeShareLinkSharesTokenDeleteResponses];
 
 export type ListDocumentsNotebookDocumentsGetData = {
     body?: never;

@@ -4,6 +4,11 @@
     "title": "FastAPI",
     "version": "0.1.0"
   },
+  "servers": [
+    {
+      "url": "/api/v1"
+    }
+  ],
   "paths": {
     "/login/access-token": {
       "post": {
@@ -2613,6 +2618,140 @@
         }
       }
     },
+    "/shares/": {
+      "post": {
+        "tags": [
+          "shares"
+        ],
+        "summary": "Create Share Link",
+        "description": "Mint (or return the existing) share link for a resource.",
+        "operationId": "create_share_link_shares__post",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ShareLinkCreate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ShareLinkResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "tags": [
+          "shares"
+        ],
+        "summary": "Get Share Link",
+        "description": "Return the existing share link for a resource, if any.",
+        "operationId": "get_share_link_shares__get",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "target_api_id",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Target Api Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ShareLinkResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/shares/{token}": {
+      "delete": {
+        "tags": [
+          "shares"
+        ],
+        "summary": "Revoke Share Link",
+        "description": "Revoke a share link, so its URL stops enriching previews.",
+        "operationId": "revoke_share_link_shares__token__delete",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "token",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Token"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/notebook/documents": {
       "post": {
         "tags": [
@@ -4711,6 +4850,55 @@
           "dual"
         ],
         "title": "SearchType"
+      },
+      "ShareLinkCreate": {
+        "properties": {
+          "target_api_id": {
+            "type": "string",
+            "title": "Target Api Id"
+          }
+        },
+        "type": "object",
+        "required": [
+          "target_api_id"
+        ],
+        "title": "ShareLinkCreate",
+        "description": "Request to mint (or fetch) a share link for a resource.\n\nAttributes:\n    target_api_id (str): API id of the resource to share (e.g. a letter)"
+      },
+      "ShareLinkResponse": {
+        "properties": {
+          "api_identifier": {
+            "type": "string",
+            "title": "Api Identifier"
+          },
+          "token": {
+            "type": "string",
+            "title": "Token"
+          },
+          "target_api_id": {
+            "type": "string",
+            "title": "Target Api Id"
+          },
+          "share_url": {
+            "type": "string",
+            "title": "Share Url"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "api_identifier",
+          "token",
+          "target_api_id",
+          "share_url",
+          "created_at"
+        ],
+        "title": "ShareLinkResponse",
+        "description": "A share link and the URL to hand out.\n\nAttributes:\n    api_identifier (str): The share link's own API id\n    token (str): The capability token embedded in the URL\n    target_api_id (str): API id of the shared resource\n    share_url (str): Absolute URL to share, carrying the token\n    created_at (datetime): When the link was minted"
       },
       "SingleGroupKeyValueUpdate": {
         "properties": {
