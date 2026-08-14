@@ -29,6 +29,7 @@ def import_all_sqla_models() -> None:
         HybridSearchDocument,
         HybridSearchDocumentAssociation,
     )
+    from ring.sharing.models.share_link_model import ShareLink
     from ring.tasks.models.schedule_model import Schedule
     from ring.tasks.models.task_model import (
         ReminderEmailTask,

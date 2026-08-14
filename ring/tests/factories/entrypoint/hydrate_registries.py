@@ -18,6 +18,9 @@ def hydrate_factories_registry():
         OneTimeTokenFactory,
     )
     from ring.tests.factories.parties.user_factory import UserFactory
+    from ring.tests.factories.sharing.share_link_factory import (
+        ShareLinkFactory,
+    )
 
 
 def hydrate_all_registries():
