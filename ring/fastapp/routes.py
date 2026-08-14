@@ -12,6 +12,7 @@ from fastapi import APIRouter
 from ring.auth.api import authn
 from ring.fastapp.api import version
 from ring.letters.api import letter, question, response
+from ring.links.api import short_link
 from ring.llm.api import completion
 from ring.notebook.api import document
 from ring.notifications.api import subscription
@@ -37,6 +38,7 @@ router.include_router(letter.router, prefix="/letters", tags=["letters"])
 router.include_router(schedule.router, prefix="/schedule", tags=["schedule"])
 router.include_router(question.router, prefix="/questions", tags=["questions"])
 router.include_router(response.router, prefix="/responses", tags=["responses"])
+router.include_router(short_link.router, prefix="/links", tags=["links"])
 
 # Invitation and notification routes
 router.include_router(invite.router, prefix="/invites", tags=["invites"])
