@@ -6,6 +6,7 @@ import {
   GITHUB_COMMIT_URL,
   fetchBuildVersion,
   formatAge,
+  shortImageSha,
 } from "../../util/buildVersion"
 
 interface DeployRowProps {
@@ -14,6 +15,7 @@ interface DeployRowProps {
   branch: string | null | undefined
   timestampLabel: string
   timestamp: string | null | undefined
+  imageSha?: string | null
   note?: string | null
   error?: string | null
 }
@@ -24,6 +26,7 @@ function DeployRow({
   branch,
   timestampLabel,
   timestamp,
+  imageSha,
   note,
   error,
 }: DeployRowProps) {
@@ -48,6 +51,14 @@ function DeployRow({
           </span>
         )}
         {branch ? <Badge variant="secondary">{branch}</Badge> : null}
+        {imageSha ? (
+          <span
+            className="font-mono text-xs text-muted-foreground"
+            title={imageSha}
+          >
+            image {shortImageSha(imageSha)}
+          </span>
+        ) : null}
       </div>
       {timestamp ? (
         <span className="text-xs text-muted-foreground">
@@ -83,6 +94,12 @@ const BuildInfo = () => {
   const apiBuild = api.data?.image_build.sha
     ? api.data.image_build
     : api.data?.git
+  // The registry digest pins the exact image prod pulled; a locally built
+  // image has no RepoDigest, so fall back to the local image id.
+  const apiContainer = api.data?.docker.containers?.find(
+    (container) => container.service === "api" || container.name === "ring-api",
+  )
+  const apiImageSha = apiContainer?.image_digest ?? apiContainer?.image_id
 
   return (
     <div className="w-full">
@@ -113,6 +130,7 @@ const BuildInfo = () => {
               branch={apiBuild?.branch}
               timestampLabel="Committed"
               timestamp={apiBuild?.committed_at}
+              imageSha={apiImageSha}
               note={apiBuild?.subject}
               error={
                 api.isPending ? "loading…" : api.error?.message ?? "unknown"
