@@ -1,8 +1,8 @@
 name: Publish ring-api
 
-# Phase 2 of the CD plan (docs/continuous-deploy-plan.md): every
-# backend-touching push to dev publishes a SHA-tagged image. This does not
-# restart EC2 — use Actions → Deploy ring-api (or deploy_host.sh on the box).
+# Continuous deploy (docs/continuous-deploy.md): every backend-touching push
+# to `dev` publishes a SHA-tagged image. A successful run triggers Deploy
+# ring-api.
 
 on:
   push:

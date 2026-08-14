@@ -206,10 +206,10 @@ ring run shell      # Start a shell
 
 ## Deployment
 
-Prod runs Docker Compose on a single EC2 instance. Images are stored in **ECR
-Public** (`public.ecr.aws/z2k1e8p1/`); the database is **CockroachDB Cloud**
-(`ring-db`). See [docs/infrastructure.md](docs/infrastructure.md) for the full
-topology (S3, CloudFront, SES, request flows).
+Prod deploys continuously from `dev`. See
+[docs/continuous-deploy.md](docs/continuous-deploy.md) for the full path
+(workflows, secrets, rollback, safety rules) and
+[docs/infrastructure.md](docs/infrastructure.md) for topology.
 
 ### Deploy the frontend
 
@@ -220,9 +220,8 @@ ring-frontend** check on the commit.
 ### Publish API images
 
 Pushes to `dev` that touch backend paths publish `ring-api:latest` and
-`ring-api:<sha>` to ECR Public (Actions → **Publish ring-api**). Frontend
-prod is Cloudflare Workers; do not build `ring-frontend` unless you are
-rolling back to the nginx SPA.
+`ring-api:<sha>` to ECR Public (Actions → **Publish ring-api**). A
+successful publish auto-triggers **Deploy ring-api**.
 
 `ring deploy prod` defaults to `ring-llm` (still manual). Day-to-day
 `ring-api` publishes via CI; laptop API builds confirm first:
@@ -234,22 +233,9 @@ ring deploy prod -i ring-api -t "$(git rev-parse HEAD)"   # break-glass; confirm
 
 ### Deploy on the host
 
-Automatic: a backend merge to `dev` publishes an image, and a successful
-publish runs **Deploy ring-api** — backend tests, migration check, then SSH
-to EC2 and `deploy_host.sh --rollback-on-fail`. The `prod-deploy`
-concurrency group queues runs so two deploys cannot race migrations.
-
-The same workflow is a `workflow_dispatch` button (optional SHA input) for
-manual deploys and rollbacks.
-
-To freeze automatic deploys during an incident, set the repo variable
-`DEPLOY_PAUSED=true`. Manual runs still work, so rollback stays available.
-
-Needs repo secrets `PROD_SSH_HOST` (EC2 public IP or gray-cloud DNS —
-Cloudflare will not forward SSH on the orange `ring.neilsriv.tech`),
-`PROD_SSH_USER`, `PROD_SSH_KEY` (dedicated deploy key, not a laptop key).
-Optional repo variables: `PROD_SSH_PORT` (22), `PROD_APP_DIR`
-(`$HOME/ring`).
+Automatic after every successful **Publish ring-api** on `dev`. Manual /
+rollback: Actions → **Deploy ring-api** (optional SHA). Freeze auto with
+repo variable `DEPLOY_PAUSED=true` (manual dispatch still works).
 
 Or SSH in yourself:
 
@@ -259,12 +245,11 @@ cd ring
 # uv run ring deploy host <sha>            # same script
 ```
 
-That syncs git (compose/nginx), pulls `ring-api:<sha>`, runs
+That force-checkouts git (compose/nginx), pulls `ring-api:<sha>`, runs
 `uv run ring db upgrade --profile prod`, recreates Compose, and checks
-`GET /api/v1/version` (`image_build.sha`). Prod runs the image
-filesystem — pass a SHA that `publish_api.yml` actually tagged, not a
-docs-only `HEAD`. To roll back an image without reverting compose to a
-pre-cutover commit: `./dev_util/deploy_host.sh --skip-git <sha>`.
+`GET /api/v1/version` (`image_build.sha`). Pass a SHA that
+`publish_api.yml` actually tagged. Image-only restore:
+`./dev_util/deploy_host.sh --skip-git <sha>`.
 
 ### See what is live
 

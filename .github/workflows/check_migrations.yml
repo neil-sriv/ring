@@ -1,6 +1,6 @@
 name: Check migrations
 
-# Safety gate for the CD plan (docs/continuous-deploy-plan.md): deploys run
+# Safety gate for continuous deploy (docs/continuous-deploy.md): deploys run
 # `alembic upgrade head` against CockroachDB Cloud with nobody watching, and
 # the pytest suite builds its schema from ring/db/schema.sql — so without
 # this job nothing ever proves the revision chain applies.
