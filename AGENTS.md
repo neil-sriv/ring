@@ -46,7 +46,8 @@ Full topology, request flows, and deploy steps:
 
 Prod's two halves ship independently: the frontend redeploys itself about a
 minute after any push to `dev`, while the API only moves when someone runs
-`deploy_host.sh`. `ring deploy status` prints what each is running.
+Actions → **Deploy ring-api** or `deploy_host.sh` on the box.
+`ring deploy status` prints what each is running.
 
 Do not assume ECS, RDS, Route 53, Redis/Celery, Lambda, or Bedrock — none are
 in the current prod path. Embeddings go through the optional `ring-llm`
