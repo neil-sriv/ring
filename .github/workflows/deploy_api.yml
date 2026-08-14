@@ -108,6 +108,14 @@ jobs:
               APP_DIR="$HOME/ring"
             fi
             cd "$APP_DIR"
+            # Chicken-and-egg: the host runs whatever deploy_host.sh is already
+            # on disk. If that copy predates `git checkout -f` (#335) and tracked
+            # files are dirty (e.g. host-side uv rewriting uv.lock), checkout
+            # fails and the fixed script never lands. Discard local edits to
+            # tracked files first (.env stays untracked). Then run the script —
+            # after this bootstrap it will be the tip's version with -f.
+            git fetch --prune origin
+            git reset --hard HEAD
             ./dev_util/deploy_host.sh --rollback-on-fail "${{ needs.resolve.outputs.sha }}"
 
       # Append-only history for `ring deploy history` / rollback picks.
