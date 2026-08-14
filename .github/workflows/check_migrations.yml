@@ -1,0 +1,88 @@
+name: Check migrations
+
+# Safety gate for the CD plan (docs/continuous-deploy-plan.md): deploys run
+# `alembic upgrade head` against CockroachDB Cloud with nobody watching, and
+# the pytest suite builds its schema from ring/db/schema.sql — so without
+# this job nothing ever proves the revision chain applies.
+
+on:
+  push:
+    branches:
+      - dev
+  pull_request:
+  workflow_call:
+    inputs:
+      ref:
+        description: "Git ref / SHA to check (default: caller github.sha)"
+        required: false
+        type: string
+
+jobs:
+  migrations:
+    name: alembic upgrade head
+    runs-on: ubuntu-latest
+
+    env:
+      # Same throwaway credentials compose.test.yml gives the container.
+      TEST_DB_URL: "postgresql://ringcockroach:ringcockroach@localhost:26257/test?sslmode=require"
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.ref || github.sha }}
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v4
+
+      - name: Sync uv
+        run: uv sync --all-extras
+
+      - name: Install project
+        run: uv pip install -e .
+
+      - name: Docker set-up
+        run: |
+          docker login ghcr.io -u neil-sriv -p ${{ secrets.GITHUB_TOKEN }}
+          docker pull ghcr.io/neil-sriv/ring/ring-test-runner:latest
+          docker tag ghcr.io/neil-sriv/ring/ring-test-runner:latest ring-test-runner:latest
+          docker rmi ghcr.io/neil-sriv/ring/ring-test-runner:latest
+          uv run ring compose any --profile test pull test-cockroach
+          docker network create ring-network
+
+      - name: Start test CockroachDB
+        run: uv run ring compose any --profile test up -d test-cockroach
+
+      # Probe with a real authenticated query. `/health?ready=1` goes green
+      # before the image finishes creating COCKROACH_USER, so waiting on it
+      # alone races into "password authentication failed".
+      - name: Wait for CockroachDB
+        run: |
+          for attempt in $(seq 1 60); do
+            if docker exec ring-test-cockroach ./cockroach sql \
+                --url "$TEST_DB_URL" -e "SELECT 1" >/dev/null 2>&1; then
+              echo "CockroachDB accepting queries after ${attempt} attempt(s)"
+              exit 0
+            fi
+            sleep 2
+          done
+          echo "CockroachDB never accepted an authenticated query" >&2
+          uv run ring compose any --profile test logs test-cockroach >&2
+          exit 1
+
+      # Cluster-level prerequisite, not something a migration can set for
+      # itself. conftest.py does the same for pytest, cloud-start.sh for dev.
+      - name: Enable vector index
+        run: |
+          docker exec ring-test-cockroach ./cockroach sql \
+            --url "$TEST_DB_URL" \
+            -e "SET CLUSTER SETTING feature.vector_index.enabled = true;"
+
+      # The test database starts empty, so this applies every revision from
+      # scratch. A broken or unapplyable migration fails here, not in prod.
+      - name: Apply migrations
+        run: uv run ring db check-migrations
+
+      # pytest builds its schema from schema.sql, so a stale dump means the
+      # suite tests a schema production does not have.
+      - name: Check schema.sql drift
+        run: uv run ring db check-schema-drift
