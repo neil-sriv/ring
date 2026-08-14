@@ -12,6 +12,7 @@ from fastapi import APIRouter
 from ring.auth.api import authn
 from ring.fastapp.api import version
 from ring.letters.api import letter, question, response
+from ring.link_unfurl.api import unfurl
 from ring.llm.api import completion
 from ring.notebook.api import document
 from ring.notifications.api import subscription
@@ -49,6 +50,8 @@ router.include_router(
 router.include_router(completion.router, prefix="/llm", tags=["llm"])
 
 router.include_router(search.router, prefix="/search", tags=["search"])
+
+router.include_router(unfurl.router, prefix="/links", tags=["links"])
 
 router.include_router(
     document.websocket_router, prefix="/ws/notebook", tags=["notebook"]
