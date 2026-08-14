@@ -27,7 +27,7 @@ from dev_util.frontend import fe_build
 DEFAULT_VITE_API_URL = "https://ring.neilsriv.tech"
 DEFAULT_AWS_REGION = "us-east-1"
 ECR_PUBLIC_REGISTRY = "public.ecr.aws"
-DEFAULT_DEPLOY_IMAGES = ("ring-api",)
+MANUAL_DEPLOY_IMAGES = ("ring-llm",)
 DEPLOY_HOST_SCRIPT = Path(ROOT_DIR) / "dev_util" / "deploy_host.sh"
 
 
@@ -110,8 +110,8 @@ def _build_llm_image() -> None:
     "-i",
     type=click.Choice(IMAGE_TAG_NAMES),
     multiple=True,
-    default=DEFAULT_DEPLOY_IMAGES,
-    help="Images to build and push (default: ring-api).",
+    default=MANUAL_DEPLOY_IMAGES,
+    help="Images to build and push (default: ring-llm only).",
 )
 @click.option(
     "--extra-tag",
@@ -134,11 +134,22 @@ def deploy_prod(
 ) -> None:
     """Build, tag, and push production images to public ECR.
 
-    Default is ring-api only. Frontend prod is Cloudflare; ring-llm is
-    manual. Laptop builds are the fallback — CI publishes SHA tags on
-    push to dev.
+    ring-api publishes via CI on push to dev and deploys via Deploy ring-api.
+    Frontend prod is Cloudflare. Only ring-llm still uses laptop builds.
     """
-    images = list(image) or list(DEFAULT_DEPLOY_IMAGES)
+    images = list(image) or list(MANUAL_DEPLOY_IMAGES)
+    # Kept usable on purpose: if CI or ECR is down, a laptop build is the
+    # only way to ship. Confirm rather than block.
+    for retired, reason in (
+        ("ring-api", "CI publishes it on every push to dev"),
+        ("ring-frontend", "prod frontend is Cloudflare Workers"),
+    ):
+        if retired in images:
+            click.confirm(
+                f"{retired} is no longer built from a laptop ({reason}). "
+                "Continue anyway?",
+                abort=True,
+            )
     compose_services = [
         COMPOSE_SERVICE_BY_IMAGE[name]
         for name in images
@@ -201,8 +212,8 @@ def deploy_status(
     """Show which commit is live on prod, and how long ago it shipped.
 
     The frontend deploys itself on every push to dev (Cloudflare Workers
-    Builds); the API only moves when someone runs `ring deploy host`. This
-    is how you tell the two apart.
+    Builds). The API auto-deploys after Publish ring-api on dev (Deploy
+    ring-api); manual fallback is `ring deploy host` / deploy_host.sh.
     """
     components = collect(base_url)
     behind_by_name = {

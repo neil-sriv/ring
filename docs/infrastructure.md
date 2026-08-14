@@ -174,10 +174,11 @@ differ:
 | | Trigger | Push → live |
 |---|---------|-------------|
 | Frontend | Automatic, every push to `dev` | ~1 minute |
-| API | Actions → **Deploy ring-api**, or `deploy_host.sh` on EC2 | whenever someone runs it |
+| API | Automatic, after **Publish ring-api** succeeds on `dev` | ~2–3 minutes |
 
-Making the API half automatic is Phase 4 of the CD plan; see
-[continuous-deploy-plan.md](continuous-deploy-plan.md).
+Both halves are automatic; see
+[continuous-deploy-plan.md](continuous-deploy-plan.md). Docs-only merges
+deploy nothing, because publishing is path-filtered to backend paths.
 
 ### Deploy the frontend (automatic)
 
@@ -207,28 +208,38 @@ Requires repo secrets `AWS_ACCESS_KEY_ID` / `AWS_SECRET_ACCESS_KEY` with
 push access to that registry. Use a dedicated IAM user for GitHub Actions,
 not laptop keys.
 
-Laptop fallback (API only by default):
+`ring deploy prod` defaults to `ring-llm`. Day-to-day `ring-api` is CI;
+laptop API builds are break-glass and confirm before building:
 
 ```bash
-ring deploy prod -t "$(git rev-parse HEAD)"
+ring deploy prod -i ring-llm
+ring deploy prod -i ring-api -t "$(git rev-parse HEAD)"
 ```
 
 ### Deploy on the EC2 host
 
-Push-button: Actions → **Deploy ring-api**. It resolves the target SHA,
-fails fast if `ring-api:<sha>` is missing from ECR Public, runs the
-backend tests for that SHA (`run_test.yml` via `workflow_call`), then
-SSHs and runs `./dev_util/deploy_host.sh --rollback-on-fail <sha>`.
-Concurrency group `prod-deploy` queues (does not cancel) so two runs
-cannot race migrations.
+**Deploy ring-api** runs automatically once **Publish ring-api** succeeds
+on `dev`, and is also available as a `workflow_dispatch` button for manual
+deploys and rollbacks. It resolves the target SHA, fails fast if
+`ring-api:<sha>` is missing from ECR Public, runs the backend tests and the
+migration check for that SHA, then SSHs and runs
+`./dev_util/deploy_host.sh --rollback-on-fail <sha>`. Concurrency group
+`prod-deploy` queues (does not cancel) so two runs cannot race migrations.
+
+A failed publish never deploys: the job is gated on
+`workflow_run.conclusion == 'success'`.
+
+**Freezing deploys during an incident.** Set the repo variable
+`DEPLOY_PAUSED=true` (Settings → Secrets and variables → Actions →
+Variables). Automatic deploys stop; merges to `dev` still publish images,
+they just do not roll out. Manual **Deploy ring-api** runs are deliberately
+*not* blocked, so you can still deploy a fix or roll back while paused.
+Delete the variable, or set it to anything other than `true`, to resume.
 
 Secrets: `PROD_SSH_HOST` (raw EC2 IP or gray-cloud name — Cloudflare
 will not forward SSH on the orange `ring.neilsriv.tech`),
 `PROD_SSH_USER`, `PROD_SSH_KEY` (dedicated deploy key, not a laptop
 key). Optional vars: `PROD_SSH_PORT` (22), `PROD_APP_DIR` (`$HOME/ring`).
-
-The job is deliberately `workflow_dispatch` only. Flipping it to run
-automatically is Phase 4.
 
 Prod runs the API **image filesystem** (no `./ring` bind-mount, no
 uvicorn `--reload`). The one-shot host script still checkouts git so

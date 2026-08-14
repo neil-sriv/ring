@@ -224,19 +224,26 @@ Pushes to `dev` that touch backend paths publish `ring-api:latest` and
 prod is Cloudflare Workers; do not build `ring-frontend` unless you are
 rolling back to the nginx SPA.
 
-Laptop fallback:
+`ring deploy prod` defaults to `ring-llm` (still manual). Day-to-day
+`ring-api` publishes via CI; laptop API builds confirm first:
 
 ```bash
-ring deploy prod -t "$(git rev-parse HEAD)"   # ring-api only
+ring deploy prod -i ring-llm
+ring deploy prod -i ring-api -t "$(git rev-parse HEAD)"   # break-glass; confirms
 ```
 
 ### Deploy on the host
 
-Push-button: Actions → **Deploy ring-api** (`workflow_dispatch`, optional
-SHA input). It resolves the SHA, fails fast if `ring-api:<sha>` is not in
-ECR Public, runs the backend tests, then SSHs to EC2 and runs
-`deploy_host.sh --rollback-on-fail`. The `prod-deploy` concurrency group
-queues runs so two deploys cannot race migrations.
+Automatic: a backend merge to `dev` publishes an image, and a successful
+publish runs **Deploy ring-api** — backend tests, migration check, then SSH
+to EC2 and `deploy_host.sh --rollback-on-fail`. The `prod-deploy`
+concurrency group queues runs so two deploys cannot race migrations.
+
+The same workflow is a `workflow_dispatch` button (optional SHA input) for
+manual deploys and rollbacks.
+
+To freeze automatic deploys during an incident, set the repo variable
+`DEPLOY_PAUSED=true`. Manual runs still work, so rollback stays available.
 
 Needs repo secrets `PROD_SSH_HOST` (EC2 public IP or gray-cloud DNS —
 Cloudflare will not forward SSH on the orange `ring.neilsriv.tech`),

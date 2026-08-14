@@ -1,9 +1,13 @@
 name: Deploy ring-api
 
-# Phase 3 of the CD plan (docs/continuous-deploy-plan.md): push-button host
-# rollout. Deliberately manual — Phase 4 adds the automatic trigger after
-# several clean runs. The host script is the interface; this job only SSHs
+# Phase 4 of the CD plan (docs/continuous-deploy-plan.md): backend merges to
+# dev deploy themselves. The host script is the interface; this job only SSHs
 # and runs it.
+#
+# Triggering on workflow_run rather than `push: dev` is deliberate: the image
+# has to exist before we deploy, and a push trigger would race publish_api.
+# It also inherits that workflow's backend path filter, so docs-only merges
+# deploy nothing.
 
 on:
   workflow_dispatch:
@@ -12,6 +16,10 @@ on:
         description: Published ring-api image tag (git SHA). Empty = this ref.
         required: false
         type: string
+  workflow_run:
+    workflows: ["Publish ring-api"]
+    types: [completed]
+    branches: [dev]
 
 concurrency:
   group: prod-deploy
@@ -23,6 +31,13 @@ env:
 jobs:
   resolve:
     name: Resolve SHA
+    # A failed publish must not deploy the previous image over a newer one.
+    # DEPLOY_PAUSED freezes the automatic path during an incident; manual
+    # dispatch stays open so a rollback is still one click away.
+    if: >-
+      github.event_name == 'workflow_dispatch' ||
+      (github.event.workflow_run.conclusion == 'success' &&
+       vars.DEPLOY_PAUSED != 'true')
     runs-on: ubuntu-latest
     outputs:
       sha: ${{ steps.sha.outputs.sha }}
@@ -35,7 +50,11 @@ jobs:
       - name: Pick target SHA
         id: sha
         run: |
-          sha="${{ inputs.sha }}"
+          if [[ "${{ github.event_name }}" == "workflow_run" ]]; then
+            sha="${{ github.event.workflow_run.head_sha }}"
+          else
+            sha="${{ inputs.sha }}"
+          fi
           if [[ -z "$sha" ]]; then
             sha="${{ github.sha }}"
           fi
@@ -58,9 +77,16 @@ jobs:
     with:
       ref: ${{ needs.resolve.outputs.sha }}
 
+  migrations:
+    name: Migration check
+    needs: resolve
+    uses: ./.github/workflows/check_migrations.yml
+    with:
+      ref: ${{ needs.resolve.outputs.sha }}
+
   deploy:
     name: Roll out on EC2
-    needs: [resolve, test]
+    needs: [resolve, test, migrations]
     runs-on: ubuntu-latest
     steps:
       - name: SSH deploy_host.sh
