@@ -39,7 +39,10 @@ def _linkify_escaped_text(escaped_text: str) -> str:
 
 def _format_response_body_html(text: str) -> str:
     """Format response body text for HTML email bodies."""
-    return _linkify_escaped_text(html.escape(text))
+    normalized = text.replace("\r\n", "\n").replace("\r", "\n")
+    escaped = html.escape(normalized)
+    linkified = _linkify_escaped_text(escaped)
+    return linkified.replace("\n", "<br />")
 
 
 def construct_question_html(
@@ -90,8 +93,8 @@ def construct_response_html(response: tuple[str, list[str]]) -> str:
         else ""
     )
     body_html = (
-        '<p style="margin:0;font-size:15px;line-height:1.5;color:#1a202c;'
-        'white-space:pre-line;">{text}</p>'
+        '<p style="margin:0;font-size:15px;line-height:1.5;color:#1a202c;">'
+        "{text}</p>"
     ).format(text=_format_response_body_html(body))
     image_htmls = "".join(
         [
