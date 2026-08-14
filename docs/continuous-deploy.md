@@ -85,7 +85,11 @@ Auto-deploy uses `workflow_run` on **Publish ring-api** completing — not
 never deploy (`conclusion == 'success'`).
 
 `deploy_host.sh` force-checkouts tracked files (`git checkout -f -B`) so
-host-side drift like a rewritten `uv.lock` cannot abort the deploy.
+host-side drift like a rewritten `uv.lock` cannot abort the deploy. The
+Actions SSH step also `git reset --hard HEAD` before invoking the script,
+so a host stuck on a pre-`-f` copy of `deploy_host.sh` can still pick up
+the fix (without that bootstrap, dirty tracked files block checkout
+forever).
 Untracked files (`.env`) are left alone.
 
 ---
