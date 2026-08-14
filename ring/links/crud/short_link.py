@@ -83,12 +83,11 @@ def create_short_link(
         short_link = ShortLink.create(
             target_api_id=target_api_id, creator=creator, token=token
         )
-        db.add(short_link)
         try:
             with db.begin_nested():
+                db.add(short_link)
                 db.flush()
         except IntegrityError:
-            db.expunge(short_link)
             winner = get_short_link_for_target(db, target_api_id, creator)
             if winner is not None:
                 return winner
