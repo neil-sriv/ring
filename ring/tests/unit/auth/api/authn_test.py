@@ -5,7 +5,7 @@ from __future__ import annotations
 from fastapi.testclient import TestClient
 from sqlalchemy.orm import Session
 
-from ring.parties.models.one_time_token_model import TokenType
+from ring.parties.models.one_time_token_model import OneTimeToken, TokenType
 from ring.security import verify_password
 from ring.tests.factories.parties.one_time_token_factory import (
     OneTimeTokenFactory,
@@ -15,6 +15,11 @@ from ring.tests.factories.parties.user_factory import UserFactory
 
 class TestAuthnAPI:
     """Test suite for login / authn API endpoints."""
+
+    _RESET_REQUEST_MESSAGE = (
+        "If an account exists for that email, "
+        "a password recovery email has been sent"
+    )
 
     def test_deprecated_endpoints_return_501(
         self, unauthenticated_client: TestClient
@@ -31,6 +36,48 @@ class TestAuthnAPI:
                 response.json()["detail"]
                 == "This endpoint is deprecated and not implemented"
             )
+
+    def test_reset_password_request_unknown_email_does_not_enumerate(
+        self, unauthenticated_client: TestClient, db_session: Session
+    ) -> None:
+        """Unknown emails get the same success body as known ones (no 400)."""
+        unknown = "nobody-at-all@example.com"
+        response = unauthenticated_client.post(
+            f"/reset-password:request/{unknown}"
+        )
+
+        assert response.status_code == 200
+        assert response.json()["message"] == self._RESET_REQUEST_MESSAGE
+        assert (
+            db_session.query(OneTimeToken)
+            .filter(OneTimeToken.email == unknown)
+            .count()
+            == 0
+        )
+
+    def test_reset_password_request_known_email_queues_token(
+        self, unauthenticated_client: TestClient, db_session: Session
+    ) -> None:
+        """Registered emails still mint a password-reset token."""
+        user = UserFactory.create()
+        db_session.commit()
+
+        response = unauthenticated_client.post(
+            f"/reset-password:request/{user.email}"
+        )
+
+        assert response.status_code == 200
+        assert response.json()["message"] == self._RESET_REQUEST_MESSAGE
+        tokens = (
+            db_session.query(OneTimeToken)
+            .filter(
+                OneTimeToken.email == user.email,
+                OneTimeToken.type == TokenType.PASSWORD_RESET,
+            )
+            .all()
+        )
+        assert len(tokens) == 1
+        assert not tokens[0].used
 
     def test_reset_password_accepts_password_reset_token(
         self, unauthenticated_client: TestClient, db_session: Session

@@ -7,8 +7,6 @@ and password recovery workflows.
 
 from __future__ import annotations
 
-from http import HTTPStatus
-
 from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordRequestForm
 
@@ -120,24 +118,28 @@ async def reset_password_request(
 ) -> ResponseMessage:
     """Initiate password reset process for a user.
 
-    Generates a one-time token and sends a password reset email to the user.
+    When the email matches an account, generates a one-time token and queues a
+    password reset email. Always returns the same success message whether or
+    not the email is registered, so callers cannot enumerate accounts.
 
     Args:
         email (str): User's email address
         req_dep (RequestDependenciesBase): Request dependencies including database session
 
     Returns:
-        ResponseMessage: Confirmation message of email sent
-
-    Raises:
-        HTTPException: 400 if user with email doesn't exist
+        ResponseMessage: Generic confirmation that a reset email was sent if
+            an account exists for the given address
     """
+    # Same response for known and unknown emails to avoid user enumeration.
+    success = ResponseMessage(
+        message=(
+            "If an account exists for that email, "
+            "a password recovery email has been sent"
+        )
+    )
     db_user = user_crud.get_user_by_email(req_dep.db, email)
     if not db_user:
-        raise HTTPException(
-            status_code=HTTPStatus.BAD_REQUEST,
-            detail="User with this email does not exist",
-        )
+        return success
     ott = generate_token(TokenType.PASSWORD_RESET, email)
     req_dep.db.add(ott)
     scheduler.add_job(
@@ -145,7 +147,7 @@ async def reset_password_request(
         args=[email, ott.token],
     )
     req_dep.db.commit()
-    return ResponseMessage(message="Password recovery email sent")
+    return success
 
 
 @router.post("/reset-password/{token}", response_model=ResponseMessage)
