@@ -21,6 +21,9 @@ from ring.tasks.crud.response_open_email_task import (
     construct_response_open_email,
 )
 from ring.tasks.crud.send_email_task import construct_send_letter_email
+from ring.tasks.crud.waiting_response_email_task import (
+    construct_waiting_response_email,
+)
 from ring.tests.factories.parties.group_factory import GroupFactory
 
 
@@ -86,6 +89,15 @@ class TestOutboundEmailLinks:
                     group.name,
                     letter_api_id,
                     LetterStatus.IN_PROGRESS,
+                ),
+                letter_url,
+            ),
+            (
+                construct_waiting_response_email(
+                    ["user@example.com"],
+                    group.name,
+                    letter_api_id,
+                    "#1",
                 ),
                 letter_url,
             ),

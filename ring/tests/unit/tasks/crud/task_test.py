@@ -13,6 +13,8 @@ from ring.letters.send_threshold import (
     GROUP_SETTING_MIN_RESPONDER_RATIO_KEY,
     GROUP_SETTING_MIN_RESPONDERS_KEY,
     LETTER_SEND_DEFERRAL_DAYS,
+    defer_letter_send,
+    defer_letter_send_if_below_threshold,
 )
 from ring.tasks.crud import task as task_crud
 from ring.tasks.models.task_model import Task, TaskStatus, TaskType
@@ -21,6 +23,11 @@ from ring.tests.factories.letters.question_factory import QuestionFactory
 from ring.tests.factories.letters.response_factory import ResponseFactory
 from ring.tests.factories.parties.group_factory import GroupFactory
 from ring.tests.factories.parties.user_factory import UserFactory
+from ring.tests.lib.utils import (
+    email_draft_recipients,
+    is_waiting_response_email,
+    run_scheduled_jobs_inline,
+)
 
 
 class TestTaskCrud:
@@ -29,7 +36,7 @@ class TestTaskCrud:
     def test_execute_send_email_task_defers_when_responders_below_threshold(
         self, db_session: Session
     ) -> None:
-        """Defer send by one day when too few participants have responded."""
+        """Defer send by one day and email only people who have not answered."""
         admin = UserFactory.create()
         members = [admin] + [UserFactory.create() for _ in range(3)]
         group = GroupFactory.create(admin=admin, members=members)
@@ -53,12 +60,20 @@ class TestTaskCrud:
         send_task.status = TaskStatus.IN_PROGRESS
         db_session.commit()
 
-        with patch(
-            "ring.tasks.crud.task.send_email", return_value="message-id"
-        ) as mock_send_email:
+        with (
+            run_scheduled_jobs_inline(db_session),
+            patch(
+                "ring.tasks.crud.task.send_email", return_value="message-id"
+            ) as mock_send_email,
+        ):
             task_crud.execute_send_email_task(db_session, send_task)
 
-        mock_send_email.assert_not_called()
+        mock_send_email.assert_called_once()
+        assert is_waiting_response_email(mock_send_email)
+        recipients = email_draft_recipients(mock_send_email)
+        assert set(recipients) == {member.email for member in members[1:]}
+        assert members[0].email not in recipients
+
         db_session.refresh(letter)
 
         expected_send_at = send_at + timedelta(days=LETTER_SEND_DEFERRAL_DAYS)
@@ -75,6 +90,41 @@ class TestTaskCrud:
             )
         ).one_or_none()
         assert rescheduled_send_task is not None
+
+    def test_second_deferral_caller_does_not_send_waiting_response_email(
+        self, db_session: Session
+    ) -> None:
+        """Idempotent deferral must not email non-responders a second time."""
+        admin = UserFactory.create()
+        members = [admin] + [UserFactory.create() for _ in range(3)]
+        group = GroupFactory.create(admin=admin, members=members)
+        send_at = datetime.now(tz=UTC) - timedelta(minutes=1)
+        letter = LetterFactory.create(
+            group=group,
+            status=LetterStatus.IN_PROGRESS,
+            send_at=send_at,
+        )
+        question = QuestionFactory.create(letter=letter)
+        ResponseFactory.create(question=question, participant=members[0])
+        db_session.commit()
+
+        with (
+            run_scheduled_jobs_inline(db_session),
+            patch(
+                "ring.tasks.crud.task.send_email", return_value="message-id"
+            ) as mock_send_email,
+        ):
+            assert (
+                defer_letter_send_if_below_threshold(db_session, letter)
+                is True
+            )
+            assert defer_letter_send(db_session, letter) is False
+
+        mock_send_email.assert_called_once()
+        assert is_waiting_response_email(mock_send_email)
+        assert set(email_draft_recipients(mock_send_email)) == {
+            member.email for member in members[1:]
+        }
 
     def test_execute_send_email_task_sends_when_responders_meet_threshold(
         self, db_session: Session
@@ -102,12 +152,19 @@ class TestTaskCrud:
             )
         ).one()
 
-        with patch(
-            "ring.tasks.crud.task.send_email", return_value="message-id"
-        ) as mock_send_email:
+        with (
+            run_scheduled_jobs_inline(db_session),
+            patch(
+                "ring.tasks.crud.task.send_email", return_value="message-id"
+            ) as mock_send_email,
+        ):
             task_crud.execute_send_email_task(db_session, send_task)
 
         mock_send_email.assert_called_once()
+        assert not is_waiting_response_email(mock_send_email)
+        assert set(email_draft_recipients(mock_send_email)) == {
+            member.email for member in members
+        }
         db_session.refresh(letter)
         assert letter.status == LetterStatus.SENT
         assert letter.send_at == send_at
@@ -141,12 +198,20 @@ class TestTaskCrud:
         send_task.status = TaskStatus.IN_PROGRESS
         db_session.commit()
 
-        with patch(
-            "ring.tasks.crud.task.send_email", return_value="message-id"
-        ) as mock_send_email:
+        with (
+            run_scheduled_jobs_inline(db_session),
+            patch(
+                "ring.tasks.crud.task.send_email", return_value="message-id"
+            ) as mock_send_email,
+        ):
             task_crud.execute_send_email_task(db_session, send_task)
 
-        mock_send_email.assert_not_called()
+        mock_send_email.assert_called_once()
+        assert is_waiting_response_email(mock_send_email)
+        assert set(email_draft_recipients(mock_send_email)) == {
+            members[2].email,
+            members[3].email,
+        }
         db_session.refresh(letter)
         assert letter.send_at == send_at + timedelta(
             days=LETTER_SEND_DEFERRAL_DAYS
@@ -181,12 +246,16 @@ class TestTaskCrud:
             )
         ).one()
 
-        with patch(
-            "ring.tasks.crud.task.send_email", return_value="message-id"
-        ) as mock_send_email:
+        with (
+            run_scheduled_jobs_inline(db_session),
+            patch(
+                "ring.tasks.crud.task.send_email", return_value="message-id"
+            ) as mock_send_email,
+        ):
             task_crud.execute_send_email_task(db_session, send_task)
 
         mock_send_email.assert_called_once()
+        assert not is_waiting_response_email(mock_send_email)
         db_session.refresh(letter)
         assert letter.status == LetterStatus.SENT
 
@@ -219,12 +288,16 @@ class TestTaskCrud:
         send_task.status = TaskStatus.IN_PROGRESS
         db_session.commit()
 
-        with patch(
-            "ring.tasks.crud.task.send_email", return_value="message-id"
-        ) as mock_send_email:
+        with (
+            run_scheduled_jobs_inline(db_session),
+            patch(
+                "ring.tasks.crud.task.send_email", return_value="message-id"
+            ) as mock_send_email,
+        ):
             task_crud.execute_send_email_task(db_session, send_task)
 
-        mock_send_email.assert_not_called()
+        mock_send_email.assert_called_once()
+        assert is_waiting_response_email(mock_send_email)
         db_session.refresh(letter)
         assert letter.send_at == send_at + timedelta(
             days=LETTER_SEND_DEFERRAL_DAYS
@@ -255,11 +328,43 @@ class TestTaskCrud:
             )
         ).one()
 
-        with patch(
-            "ring.tasks.crud.task.send_email", return_value="message-id"
-        ) as mock_send_email:
+        with (
+            run_scheduled_jobs_inline(db_session),
+            patch(
+                "ring.tasks.crud.task.send_email", return_value="message-id"
+            ) as mock_send_email,
+        ):
             task_crud.execute_send_email_task(db_session, send_task)
 
         mock_send_email.assert_called_once()
+        assert not is_waiting_response_email(mock_send_email)
         db_session.refresh(letter)
         assert letter.status == LetterStatus.SENT
+
+    def test_send_waiting_response_email_noops_without_non_responders(
+        self, db_session: Session
+    ) -> None:
+        """Skip sending when every participant has already answered."""
+        admin = UserFactory.create()
+        members = [admin] + [UserFactory.create() for _ in range(3)]
+        group = GroupFactory.create(admin=admin, members=members)
+        letter = LetterFactory.create(
+            group=group,
+            status=LetterStatus.IN_PROGRESS,
+            send_at=datetime.now(tz=UTC) - timedelta(minutes=1),
+        )
+        question = QuestionFactory.create(letter=letter)
+        for member in members:
+            ResponseFactory.create(question=question, participant=member)
+        db_session.commit()
+
+        with patch(
+            "ring.tasks.crud.task.send_email", return_value="message-id"
+        ) as mock_send_email:
+            from ring.async_scheduler.job_registry import JOB_REGISTRY
+
+            JOB_REGISTRY["send_waiting_response_email"].job_function(
+                db_session, letter.id
+            )
+
+        mock_send_email.assert_not_called()

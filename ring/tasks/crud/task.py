@@ -26,6 +26,11 @@ from ring.tasks.crud.response_open_email_task import (
     construct_response_open_email,
 )
 from ring.tasks.crud.send_email_task import construct_send_letter_email
+from ring.tasks.crud.waiting_response_email_task import (
+    construct_waiting_response_email,
+    letter_display_title,
+    letter_non_responder_emails,
+)
 from ring.tasks.models.task_model import (
     ReminderEmailTask,
     SendEmailTask,
@@ -262,6 +267,44 @@ def send_response_open_email(db: Session, letter_id: int) -> None:
     if message_id:
         logger.info(
             f"Sent response open email for letter {letter_id} to {recipients}"
+        )
+
+
+@job_factory("send_waiting_response_email")
+def send_waiting_response_email(db: Session, letter_id: int) -> None:
+    """Email participants who have not yet answered a deferred letter.
+
+    Triggered once when a letter send is deferred because too few people
+    have responded. Recipients are letter participants minus responders.
+    No-ops if that list is empty.
+
+    Args:
+        db: Database session
+        letter_id: ID of the deferred letter
+    """
+    letter = db.scalars(
+        sqlalchemy.select(Letter).where(Letter.id == letter_id)
+    ).one()
+
+    recipients = letter_non_responder_emails(letter)
+    if not recipients:
+        logger.info(
+            f"No non-responders for waiting-response email for letter {letter_id}"
+        )
+        return
+
+    email_draft = construct_waiting_response_email(
+        recipients,
+        letter.group.name,
+        letter.api_identifier,
+        letter_display_title(letter),
+    )
+    message_id = send_email(email_draft)
+    if message_id:
+        logger.info(
+            "Sent waiting-response email for letter {} to {}".format(
+                letter_id, recipients
+            )
         )
 
 
