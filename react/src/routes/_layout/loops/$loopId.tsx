@@ -1,7 +1,7 @@
 import { Button } from "@/components/ui/button"
 import { useQueryClient, useSuspenseQuery } from "@tanstack/react-query"
 import { Link, createFileRoute } from "@tanstack/react-router"
-import { Plus } from "lucide-react"
+import { Plus, Share2 } from "lucide-react"
 import { Suspense, useState } from "react"
 import { ErrorBoundary } from "react-error-boundary"
 import type { PublicLetter, UserLinked } from "../../../client"
@@ -13,6 +13,7 @@ import {
 import DraftLoop from "../../../components/Loops/DraftLoop"
 import EditLetter from "../../../components/Loops/EditLoop"
 import PublishedLoop from "../../../components/Loops/PublishedLoop"
+import ShareLoop from "../../../components/Loops/ShareLoop"
 import AddQuestion from "../../../components/Question/AddQuestion"
 import GenerateQuestion from "../../../components/Question/GenerateQuestion"
 
@@ -52,6 +53,7 @@ function IssueContent() {
   )
   const localDueDate = new Date(loop.send_at)
   const [editLoopOpen, setEditLoopOpen] = useState(false)
+  const [shareLoopOpen, setShareLoopOpen] = useState(false)
   const [addQuestionOpen, setAddQuestionOpen] = useState(false)
   const [generateQuestionOpen, setGenerateQuestionOpen] = useState(false)
 
@@ -71,6 +73,13 @@ function IssueContent() {
                     {group!.name}
                   </Link>
                 </h2>
+                <Button
+                  variant="outline"
+                  onClick={() => setShareLoopOpen(true)}
+                  className="absolute left-0 top-1/2 -translate-y-1/2"
+                >
+                  <Share2 className="h-4 w-4" /> Share
+                </Button>
                 {group.admin.api_identifier === currentUser?.api_identifier &&
                   loop.status !== "SENT" && (
                     <Button
@@ -134,6 +143,12 @@ function IssueContent() {
         isOpen={editLoopOpen}
         onClose={() => setEditLoopOpen(false)}
         loop={loop}
+      />
+      <ShareLoop
+        isOpen={shareLoopOpen}
+        onClose={() => setShareLoopOpen(false)}
+        loopApiId={loop.api_identifier}
+        isDraft={loop.status !== "SENT"}
       />
       <AddQuestion
         isOpen={addQuestionOpen}

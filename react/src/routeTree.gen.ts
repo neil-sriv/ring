@@ -22,6 +22,7 @@ import { Route as LayoutSettingsImport } from './routes/_layout/settings'
 import { Route as LayoutSearchImport } from './routes/_layout/search'
 import { Route as LayoutGroupsImport } from './routes/_layout/groups'
 import { Route as LayoutAdminImport } from './routes/_layout/admin'
+import { Route as LayoutSTokenImport } from './routes/_layout/s/$token'
 import { Route as LayoutLoopsLoopIdImport } from './routes/_layout/loops/$loopId'
 import { Route as LayoutDocumentsDocumentIdImport } from './routes/_layout/documents/$documentId'
 import { Route as LayoutGroupsGroupIdSettingsImport } from './routes/_layout/groups_/$groupId/settings'
@@ -81,6 +82,11 @@ const LayoutGroupsRoute = LayoutGroupsImport.update({
 
 const LayoutAdminRoute = LayoutAdminImport.update({
   path: '/admin',
+  getParentRoute: () => LayoutRoute,
+} as any)
+
+const LayoutSTokenRoute = LayoutSTokenImport.update({
+  path: '/s/$token',
   getParentRoute: () => LayoutRoute,
 } as any)
 
@@ -161,6 +167,10 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LayoutLoopsLoopIdImport
       parentRoute: typeof LayoutImport
     }
+    '/_layout/s/$token': {
+      preLoaderRoute: typeof LayoutSTokenImport
+      parentRoute: typeof LayoutImport
+    }
     '/_layout/groups/$groupId/loops': {
       preLoaderRoute: typeof LayoutGroupsGroupIdLoopsImport
       parentRoute: typeof LayoutImport
@@ -183,6 +193,7 @@ export const routeTree = rootRoute.addChildren([
     LayoutIndexRoute,
     LayoutDocumentsDocumentIdRoute,
     LayoutLoopsLoopIdRoute,
+    LayoutSTokenRoute,
     LayoutGroupsGroupIdLoopsRoute,
     LayoutGroupsGroupIdSettingsRoute,
   ]),
