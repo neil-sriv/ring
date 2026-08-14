@@ -174,7 +174,10 @@ differ:
 | | Trigger | Push → live |
 |---|---------|-------------|
 | Frontend | Automatic, every push to `dev` | ~1 minute |
-| API | Manual `deploy_host.sh` on EC2 | whenever someone runs it |
+| API | Actions → **Deploy ring-api**, or `deploy_host.sh` on EC2 | whenever someone runs it |
+
+Making the API half automatic is Phase 4 of the CD plan; see
+[continuous-deploy-plan.md](continuous-deploy-plan.md).
 
 ### Deploy the frontend (automatic)
 
@@ -211,6 +214,21 @@ ring deploy prod -t "$(git rev-parse HEAD)"
 ```
 
 ### Deploy on the EC2 host
+
+Push-button: Actions → **Deploy ring-api**. It resolves the target SHA,
+fails fast if `ring-api:<sha>` is missing from ECR Public, runs the
+backend tests for that SHA (`run_test.yml` via `workflow_call`), then
+SSHs and runs `./dev_util/deploy_host.sh --rollback-on-fail <sha>`.
+Concurrency group `prod-deploy` queues (does not cancel) so two runs
+cannot race migrations.
+
+Secrets: `PROD_SSH_HOST` (raw EC2 IP or gray-cloud name — Cloudflare
+will not forward SSH on the orange `ring.neilsriv.tech`),
+`PROD_SSH_USER`, `PROD_SSH_KEY` (dedicated deploy key, not a laptop
+key). Optional vars: `PROD_SSH_PORT` (22), `PROD_APP_DIR` (`$HOME/ring`).
+
+The job is deliberately `workflow_dispatch` only. Flipping it to run
+automatically is Phase 4.
 
 Prod runs the API **image filesystem** (no `./ring` bind-mount, no
 uvicorn `--reload`). The one-shot host script still checkouts git so

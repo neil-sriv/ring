@@ -1,0 +1,82 @@
+name: Deploy ring-api
+
+# Phase 3 of the CD plan (docs/continuous-deploy-plan.md): push-button host
+# rollout. Deliberately manual — Phase 4 adds the automatic trigger after
+# several clean runs. The host script is the interface; this job only SSHs
+# and runs it.
+
+on:
+  workflow_dispatch:
+    inputs:
+      sha:
+        description: Published ring-api image tag (git SHA). Empty = this ref.
+        required: false
+        type: string
+
+concurrency:
+  group: prod-deploy
+  cancel-in-progress: false
+
+env:
+  ECR_IMAGE: public.ecr.aws/z2k1e8p1/ring-api
+
+jobs:
+  resolve:
+    name: Resolve SHA
+    runs-on: ubuntu-latest
+    outputs:
+      sha: ${{ steps.sha.outputs.sha }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Pick target SHA
+        id: sha
+        run: |
+          sha="${{ inputs.sha }}"
+          if [[ -z "$sha" ]]; then
+            sha="${{ github.sha }}"
+          fi
+          sha="$(git rev-parse --verify "${sha}^{commit}")"
+          echo "sha=${sha}" >> "$GITHUB_OUTPUT"
+          echo "Deploy target ${sha}"
+
+      - name: Require published image
+        run: |
+          sha="${{ steps.sha.outputs.sha }}"
+          if ! docker manifest inspect "${{ env.ECR_IMAGE }}:${sha}" >/dev/null; then
+            echo "No ${{ env.ECR_IMAGE }}:${sha}. Wait for Publish ring-api, or pass a SHA that job tagged." >&2
+            exit 1
+          fi
+
+  test:
+    name: Backend tests
+    needs: resolve
+    uses: ./.github/workflows/run_test.yml
+    with:
+      ref: ${{ needs.resolve.outputs.sha }}
+
+  deploy:
+    name: Roll out on EC2
+    needs: [resolve, test]
+    runs-on: ubuntu-latest
+    steps:
+      - name: SSH deploy_host.sh
+        uses: appleboy/ssh-action@v1.2.2
+        with:
+          host: ${{ secrets.PROD_SSH_HOST }}
+          username: ${{ secrets.PROD_SSH_USER }}
+          key: ${{ secrets.PROD_SSH_KEY }}
+          port: ${{ vars.PROD_SSH_PORT || 22 }}
+          command_timeout: 15m
+          script_stop: true
+          script: |
+            set -euo pipefail
+            APP_DIR="${{ vars.PROD_APP_DIR }}"
+            if [[ -z "$APP_DIR" ]]; then
+              APP_DIR="$HOME/ring"
+            fi
+            cd "$APP_DIR"
+            ./dev_util/deploy_host.sh --rollback-on-fail "${{ needs.resolve.outputs.sha }}"
