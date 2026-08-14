@@ -14,7 +14,7 @@
 # publish_api.yml run). Docs-only origin/dev tips have no image tag.
 #
 # First apply of the image-filesystem cutover (old script still on disk):
-#   git fetch origin && git checkout -B dev <this-sha>
+#   git fetch origin && git checkout -f -B dev <this-sha>
 #   ./dev_util/deploy_host.sh --skip-git <this-sha>
 # --rollback-on-fail captures live /version image_build.sha *before*
 # mutating. The pre-cutover script on the box still asserts git.sha and
@@ -203,7 +203,10 @@ if [[ "$SKIP_GIT" -eq 0 ]]; then
     SHA="$(git rev-parse --verify "${SHA}^{commit}")"
   fi
   # Stay on a named branch so later `git pull` still works.
-  git checkout -B "$BRANCH" "$SHA"
+  # -f: discard local edits to tracked files (e.g. a host-side `uv`
+  # rewriting uv.lock). Untracked files like .env are left alone. Prod
+  # runs the image filesystem; the checkout only supplies compose/nginx.
+  git checkout -f -B "$BRANCH" "$SHA"
 else
   if [[ -z "$SHA" ]]; then
     SHA="$(git rev-parse HEAD)"
