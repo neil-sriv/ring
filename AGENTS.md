@@ -31,8 +31,9 @@ used only by tooling (e.g. OpenAPI spec fetching).
 
 Local dev uses Docker Compose with a local CockroachDB container. **Production**
 is a single EC2 host running the same Compose stack, plus managed services below.
-Full topology, request flows, and deploy steps:
-[docs/infrastructure.md](docs/infrastructure.md).
+Full topology, request flows, and Cloudflare/EC2 wiring:
+[docs/infrastructure.md](docs/infrastructure.md). Continuous deploy path:
+[docs/continuous-deploy.md](docs/continuous-deploy.md).
 
 | Service | Identifier / endpoint | Code / config |
 |---------|----------------------|---------------|
@@ -46,12 +47,43 @@ Full topology, request flows, and deploy steps:
 
 Both halves of prod deploy themselves from `dev`: the frontend about a
 minute after any push, the API about 2–3 minutes after a backend-touching
-push (Publish ring-api → Deploy ring-api). Docs-only merges deploy nothing.
-`ring deploy status` prints what each is running.
+push (Publish ring-api → Deploy ring-api). Docs-only merges deploy nothing
+for the API. `ring deploy status` prints what each is running.
+
+Canonical deploy doc: [docs/continuous-deploy.md](docs/continuous-deploy.md).
+Topology: [docs/infrastructure.md](docs/infrastructure.md).
 
 Do not assume ECS, RDS, Route 53, Redis/Celery, Lambda, or Bedrock — none are
 in the current prod path. Embeddings go through the optional `ring-llm`
 microservice; background work uses in-process APScheduler, not Celery.
+
+### Continuous deploy (agents)
+
+Merges to `dev` ship themselves. Treat every backend-touching PR as a
+prod deploy:
+
+- **Additive migrations only.** Auto-deploy runs `alembic upgrade head`
+  against CockroachDB Cloud with nobody watching. Drops/renames are
+  two-step. CI gate: `.github/workflows/check_migrations.yml` (also
+  `ring db check-migrations` / `ring db check-schema-drift` locally).
+  After a migration that changes tables/columns, refresh
+  `ring/db/schema.sql` with `ring db autogenerate-schema` — pytest builds
+  from that dump, not from Alembic.
+- **Backend-first PRs** ([`ring-split-pr`](.cursor/skills/ring-split-pr/SKILL.md)).
+  Frontend deploys within minutes of merge; OpenAPI-consuming UI must
+  land only after the API change is live (check
+  `https://ring.neilsriv.tech/api/v1/version` / `ring deploy status`).
+- **Do not invent laptop `ring deploy prod` for `ring-api`.** CI publishes
+  images. That command defaults to `ring-llm` and confirms before
+  building `ring-api` / `ring-frontend`. Host rollout is
+  `deploy_host.sh` / Actions → **Deploy ring-api**.
+- **Incident freeze:** repo variable `DEPLOY_PAUSED=true` stops automatic
+  EC2 rollouts; manual Deploy still works for rollback.
+- **Never** build images on the EC2 host or attach `ring.neilsriv.tech`
+  as a Cloudflare Worker custom domain (use Workers Routes with `/api/*`
+  and `/.well-known/*` passthrough — see continuous-deploy.md).
+- Bundler / `vite.config.ts` build changes need a `vite preview` browser
+  check; `pnpm run build` alone has shipped a blank runtime page.
 
 ## Codebase map
 
@@ -176,15 +208,21 @@ this mode.
 | TypeScript           | `cd react && npx tsc --noEmit`                                 |
 | Frontend build       | `cd react && pnpm run build`                                   |
 | Backend tests        | `ring test run` (Compose `compose.test.yml`, profile `test`)   |
+| Migrations (CD gate) | `ring db check-migrations` then `ring db check-schema-drift`   |
 
 Backend tests run inside a dedicated `ring-test-runner` container against a
-separate CockroachDB instance on port 8008.
+separate CockroachDB instance on port 8008. The migration gate applies every
+Alembic revision to an empty test DB (CI: `check_migrations.yml`) — required
+because pytest builds schema from `ring/db/schema.sql`, not Alembic.
 
 ## Design preferences
 
 - **Split big changes into PRs.** Land backend (models, migrations, API,
   tests, OpenAPI) first; follow with `ring fe regen` + UI in a second PR. Each
-  PR should pass `ring check lint` and the relevant tests on its own.
+  PR should pass `ring check lint` and the relevant tests on its own. Under
+  continuous deploy this is load-bearing: the frontend half of a stacked
+  change can reach prod minutes after merge while the API half is still
+  rolling (or paused).
 - **Prefer existing timeout mechanisms.** For operational resilience (e.g.
   long-running image uploads), use Nginx proxy timeouts and the
   botocore/boto3 / FastAPI built-in timeouts rather than rolling custom

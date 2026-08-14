@@ -163,22 +163,19 @@ Embedding generation → ring-llm microservice (not AWS Bedrock)
 
 ## Deployment
 
-Roadmap: [PR #301](https://github.com/neil-sriv/ring/pull/301) — frontend
-via Cloudflare Workers Routes, backend via CI-built SHA-tagged images.
-Frontend prod traffic already hits the Worker (`/*`); `/api/*` and
-`/.well-known/*` still pass through to this nginx.
+Prod deploys continuously from `dev`. Full path, secrets, rollback, and
+safety rules: [continuous-deploy.md](continuous-deploy.md).
 
 The two halves ship on **different triggers**, so their commits routinely
 differ:
 
 | | Trigger | Push → live |
 |---|---------|-------------|
-| Frontend | Automatic, every push to `dev` | ~1 minute |
-| API | Automatic, after **Publish ring-api** succeeds on `dev` | ~2–3 minutes |
+| Frontend | Automatic, every push to `dev` (Cloudflare Workers Builds) | ~1–2 minutes |
+| API | Automatic after **Publish ring-api** succeeds on `dev` | ~2–3 minutes |
 
-Both halves are automatic; see
-[continuous-deploy-plan.md](continuous-deploy-plan.md). Docs-only merges
-deploy nothing, because publishing is path-filtered to backend paths.
+Docs-only merges deploy nothing for the API (publish is path-filtered).
+Frontend still rebuilds on any `dev` push.
 
 ### Deploy the frontend (automatic)
 
@@ -242,8 +239,8 @@ will not forward SSH on the orange `ring.neilsriv.tech`),
 key). Optional vars: `PROD_SSH_PORT` (22), `PROD_APP_DIR` (`$HOME/ring`).
 
 Prod runs the API **image filesystem** (no `./ring` bind-mount, no
-uvicorn `--reload`). The one-shot host script still checkouts git so
-compose/nginx on disk match the deploy:
+uvicorn `--reload`). The host script force-checkouts git so compose/nginx
+on disk match the deploy:
 
 ```bash
 cd ring

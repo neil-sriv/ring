@@ -1,8 +1,8 @@
 name: Deploy ring-api
 
-# Phase 4 of the CD plan (docs/continuous-deploy-plan.md): backend merges to
-# dev deploy themselves. The host script is the interface; this job only SSHs
-# and runs it.
+# Phase 4 of continuous deploy (docs/continuous-deploy.md): backend merges
+# to `dev` deploy themselves. The host script is the interface; this job
+# only SSHs and runs it.
 #
 # Triggering on workflow_run rather than `push: dev` is deliberate: the image
 # has to exist before we deploy, and a push trigger would race publish_api.
