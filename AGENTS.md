@@ -44,9 +44,9 @@ Full topology, request flows, and deploy steps:
 | Container registry | ECR Public `public.ecr.aws/z2k1e8p1/` | [dev_util/docker.py](dev_util/docker.py), [dev_util/prod.sh](dev_util/prod.sh), [dev_util/deploy_host.sh](dev_util/deploy_host.sh) |
 | Frontend hosting | Cloudflare Workers Builds (`ring-frontend`), auto-deploys every push to `dev` | [react/wrangler.jsonc](react/wrangler.jsonc), [react/plugins/version-stamp.ts](react/plugins/version-stamp.ts) |
 
-Prod's two halves ship independently: the frontend redeploys itself about a
-minute after any push to `dev`, while the API only moves when someone runs
-Actions → **Deploy ring-api** or `deploy_host.sh` on the box.
+Both halves of prod deploy themselves from `dev`: the frontend about a
+minute after any push, the API about 2–3 minutes after a backend-touching
+push (Publish ring-api → Deploy ring-api). Docs-only merges deploy nothing.
 `ring deploy status` prints what each is running.
 
 Do not assume ECS, RDS, Route 53, Redis/Celery, Lambda, or Bedrock — none are
