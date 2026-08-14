@@ -45,7 +45,9 @@ export default {
 
     try {
       const card = await fetch(
-        `${env.UNFURL_API_ORIGIN}/api/v1/unfurl${url.pathname}`,
+        // Forward the query string so a share link's ?s=<token> reaches the
+        // API and can enrich the card.
+        `${env.UNFURL_API_ORIGIN}/api/v1/unfurl${url.pathname}${url.search}`,
         { headers: { "user-agent": userAgent } },
       )
       if (card.ok) {
