@@ -63,7 +63,7 @@ def upgrade() -> None:
         op.f("ix_share_link_target_api_id"),
         "share_link",
         ["target_api_id"],
-        unique=False,
+        unique=True,
     )
     op.create_index(
         op.f("ix_share_link_token"), "share_link", ["token"], unique=True

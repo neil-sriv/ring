@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import pytest
 from sqlalchemy.orm import Session
 
 from ring.sharing.crud import share_link as share_link_crud
@@ -67,6 +68,38 @@ class TestGetOrCreateShareLink:
             .count()
             == 1
         )
+
+    def test_recovers_from_concurrent_insert(
+        self, db_session: Session, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """A unique-constraint race re-fetches the winning row instead of 500."""
+        existing = share_link_crud.get_or_create_share_link(
+            db_session, target_api_id="lttr_abc", created_by_api_id="usr_1"
+        )
+        db_session.commit()
+
+        lookups = {"count": 0}
+        original = share_link_crud.get_share_link_for_target
+
+        def miss_then_hit(
+            db: Session, target_api_id: str
+        ) -> ShareLink | None:
+            lookups["count"] += 1
+            if lookups["count"] == 1:
+                return None
+            return original(db, target_api_id)
+
+        monkeypatch.setattr(
+            share_link_crud, "get_share_link_for_target", miss_then_hit
+        )
+
+        recovered = share_link_crud.get_or_create_share_link(
+            db_session, target_api_id="lttr_abc", created_by_api_id="usr_2"
+        )
+        db_session.commit()
+
+        assert recovered.id == existing.id
+        assert recovered.token == existing.token
 
 
 class TestLookupAndRevoke:

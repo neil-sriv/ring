@@ -6,6 +6,7 @@ import secrets
 from typing import TYPE_CHECKING
 
 from sqlalchemy import select
+from sqlalchemy.exc import IntegrityError
 
 from ring.api_identifier.api_identified_model import APIPrefix
 from ring.sharing.models.share_link_model import ShareLink
@@ -17,6 +18,7 @@ if TYPE_CHECKING:
 # bits of entropy, which makes the token unguessable and enumeration-proof.
 SHARE_TOKEN_PREFIX = "sh"
 _SHARE_TOKEN_BYTES = 32
+_MAX_CREATE_ATTEMPTS = 8
 
 # Which app path a resource lives at, keyed by API-id prefix. Also the set of
 # resources a preview can be enriched for.
@@ -89,7 +91,9 @@ def get_or_create_share_link(
     """Return the resource's share link, minting one on first use.
 
     Idempotent so a resource has one stable link: re-sharing does not rotate
-    the token and invalidate links already in flight.
+    the token and invalidate links already in flight. Uniqueness of
+    ``target_api_id`` is enforced in the database; a concurrent mint that
+    loses the race is recovered via ``IntegrityError`` and a re-fetch.
 
     Args:
         db (Session): Database session
@@ -102,13 +106,29 @@ def get_or_create_share_link(
     existing = get_share_link_for_target(db, target_api_id)
     if existing is not None:
         return existing
-    share_link = ShareLink.create(
-        token=generate_share_token(),
-        target_api_id=target_api_id,
-        created_by_api_id=created_by_api_id,
-    )
-    db.add(share_link)
-    return share_link
+
+    for _ in range(_MAX_CREATE_ATTEMPTS):
+        share_link = ShareLink.create(
+            token=generate_share_token(),
+            target_api_id=target_api_id,
+            created_by_api_id=created_by_api_id,
+        )
+        db.add(share_link)
+        try:
+            with db.begin_nested():
+                db.flush()
+        except IntegrityError:
+            db.expunge(share_link)
+            winner = get_share_link_for_target(db, target_api_id)
+            if winner is not None:
+                return winner
+            continue
+        return share_link
+
+    winner = get_share_link_for_target(db, target_api_id)
+    if winner is not None:
+        return winner
+    raise RuntimeError("Could not create a unique share link")
 
 
 def revoke_share_link(db: Session, share_link: ShareLink) -> None:

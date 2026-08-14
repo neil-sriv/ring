@@ -98,8 +98,11 @@ class TestUnfurlEndpointWithToken:
 
         assert response.status_code == 200
         assert 'content="Spring Issue"' in response.text
-        # A tokenized card is cached only briefly so revocation takes effect.
-        assert "max-age=300" in response.headers["cache-control"]
+        # Cloudflare ignores Vary, so the card must not be publicly cacheable
+        # on the page URL (revocation also takes effect immediately).
+        cache_control = response.headers["cache-control"]
+        assert "private" in cache_control
+        assert "no-store" in cache_control
 
     def test_no_token_is_generic(
         self, unauthenticated_client: TestClient, db_session: Session

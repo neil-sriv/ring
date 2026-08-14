@@ -184,7 +184,7 @@ CREATE TABLE public.share_link (
 	UNIQUE INDEX ix_share_link_api_identifier (api_identifier ASC),
 	INDEX ix_share_link_created_at (created_at ASC),
 	INDEX ix_share_link_id (id ASC),
-	INDEX ix_share_link_target_api_id (target_api_id ASC),
+	UNIQUE INDEX ix_share_link_target_api_id (target_api_id ASC),
 	UNIQUE INDEX ix_share_link_token (token ASC)
 );
 CREATE SEQUENCE public.task_id_seq AS INT8 MINVALUE 1 MAXVALUE 9223372036854775807 INCREMENT 1 START 1;

@@ -39,7 +39,9 @@ class ShareLink(Base, APIIdentified, CreatedAtMixin):
 
     id: Mapped[int] = mapped_column(primary_key=True, index=True)
     token: Mapped[str] = mapped_column(unique=True, index=True, nullable=False)
-    target_api_id: Mapped[str] = mapped_column(index=True, nullable=False)
+    target_api_id: Mapped[str] = mapped_column(
+        unique=True, index=True, nullable=False
+    )
     created_by_api_id: Mapped[str] = mapped_column(nullable=False)
 
     def __init__(
