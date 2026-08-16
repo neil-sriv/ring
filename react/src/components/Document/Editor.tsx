@@ -29,6 +29,14 @@ import {
 } from "lucide-react"
 import type React from "react"
 import { useEffect, useRef } from "react"
+import { toast } from "sonner"
+
+function notifyDocumentLoadError(): void {
+  toast.error("Couldn't load document", {
+    description: "The document could not be loaded. Try refreshing the page.",
+    duration: 8_000,
+  })
+}
 
 function MenuBar({ editor }: { editor: Editor }) {
   const editorState = useEditorState({
@@ -301,7 +309,8 @@ export const CollabEditor: React.FC<{
   docId: string
   onSavingChange?: (isSaving: boolean) => void
   onEditingChange?: (isEditing: boolean) => void
-}> = ({ docId, onSavingChange, onEditingChange }) => {
+  onSyncError?: () => void
+}> = ({ docId, onSavingChange, onEditingChange, onSyncError }) => {
   const editorRef = useRef<any>(null)
   const wsRef = useRef<WebSocket | null>(null)
   const lastContentRef = useRef<string>("")
@@ -310,6 +319,8 @@ export const CollabEditor: React.FC<{
   const isUpdatingFromWebSocketRef = useRef<boolean>(false)
   const wsSendTimeoutRef = useRef<NodeJS.Timeout | null>(null)
   const pendingContentRef = useRef<string>("")
+  const onSyncErrorRef = useRef(onSyncError)
+  onSyncErrorRef.current = onSyncError
 
   useEffect(() => {
     const accessToken = localStorage.getItem("access_token") ?? ""
@@ -330,13 +341,23 @@ export const CollabEditor: React.FC<{
         })
         if (response.ok) {
           const data = await response.json()
+          if (cancelled) {
+            return
+          }
           if (data.content && editorRef.current) {
             editorRef.current.commands.setContent(data.content)
             lastContentRef.current = data.content
           }
+          return
+        }
+        if (!cancelled) {
+          notifyDocumentLoadError()
         }
       } catch (error) {
         console.error("Failed to load content:", error)
+        if (!cancelled) {
+          notifyDocumentLoadError()
+        }
       }
     }
 
@@ -532,16 +553,23 @@ export const CollabEditor: React.FC<{
           try {
             const accessToken = localStorage.getItem("access_token") ?? ""
 
-            await fetch(apiUrl(`/api/v1/notebook/documents/${docId}`), {
-              method: "PUT",
-              headers: {
-                "Content-Type": "application/json",
-                Authorization: `Bearer ${accessToken}`,
+            const response = await fetch(
+              apiUrl(`/api/v1/notebook/documents/${docId}`),
+              {
+                method: "PUT",
+                headers: {
+                  "Content-Type": "application/json",
+                  Authorization: `Bearer ${accessToken}`,
+                },
+                body: JSON.stringify({ content: content }),
               },
-              body: JSON.stringify({ content: content }),
-            })
+            )
+            if (!response.ok) {
+              throw new Error(`Sync failed with status ${response.status}`)
+            }
           } catch (error) {
             console.error("Failed to sync to backend:", error)
+            onSyncErrorRef.current?.()
           } finally {
             onSavingChange?.(false)
           }

@@ -2,6 +2,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import { createFileRoute } from "@tanstack/react-router"
 import { Loader2 } from "lucide-react"
 import { Suspense, lazy, useRef, useState } from "react"
+import { toast } from "sonner"
 import type { DocumentResponse } from "../../../client"
 import {
   getDocumentEndpointNotebookDocumentsDocumentApiIdGetOptions,
@@ -9,6 +10,8 @@ import {
   updateDocumentEndpointNotebookDocumentsDocumentApiIdPutMutation,
 } from "../../../client/@tanstack/react-query.gen"
 import { EditableTitle } from "../../../components/Document/EditableTitle"
+
+const SYNC_ERROR_TOAST_COOLDOWN_MS = 10_000
 
 type DocumentLoaderProps = {
   document: DocumentResponse
@@ -41,7 +44,9 @@ function DocumentContentLoader() {
   const documentId = Route.useParams().documentId
   const [isSaving, setIsSaving] = useState(false)
   const [isEditing, setIsEditing] = useState(false)
+  const [hasSyncError, setHasSyncError] = useState(false)
   const savingStartTimeRef = useRef<number | null>(null)
+  const lastSyncErrorToastAtRef = useRef(0)
   const queryClient = useQueryClient()
 
   // Use query data instead of loader data to get real-time updates
@@ -65,6 +70,7 @@ function DocumentContentLoader() {
   const handleSavingChange = (saving: boolean) => {
     if (saving) {
       savingStartTimeRef.current = Date.now()
+      setHasSyncError(false)
       setIsSaving(true)
     } else {
       const elapsed = Date.now() - (savingStartTimeRef.current || 0)
@@ -74,6 +80,28 @@ function DocumentContentLoader() {
         setIsSaving(false)
       }, remainingTime)
     }
+  }
+
+  const handleSyncError = () => {
+    setHasSyncError(true)
+    const now = Date.now()
+    if (now - lastSyncErrorToastAtRef.current < SYNC_ERROR_TOAST_COOLDOWN_MS) {
+      return
+    }
+    lastSyncErrorToastAtRef.current = now
+    toast.error("Couldn't save document", {
+      id: "notebook-sync-error",
+      description:
+        "Your latest edits could not be saved. Check your connection and try again.",
+      duration: 8_000,
+    })
+  }
+
+  const handleEditingChange = (editing: boolean) => {
+    if (editing) {
+      setHasSyncError(false)
+    }
+    setIsEditing(editing)
   }
 
   const handleTitleChange = async (newTitle: string) => {
@@ -126,6 +154,10 @@ function DocumentContentLoader() {
                   Syncing...
                 </span>
               </>
+            ) : hasSyncError ? (
+              <span className="text-sm text-red-600 dark:text-red-400">
+                Couldn't save
+              </span>
             ) : isEditing ? (
               <span className="text-sm text-orange-600 dark:text-orange-400">
                 Editing...
@@ -145,7 +177,8 @@ function DocumentContentLoader() {
           <CollabEditor
             docId={documentId}
             onSavingChange={handleSavingChange}
-            onEditingChange={setIsEditing}
+            onEditingChange={handleEditingChange}
+            onSyncError={handleSyncError}
           />
         </Suspense>
       </div>
