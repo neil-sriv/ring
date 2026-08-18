@@ -9,6 +9,7 @@ import {
   updateDocumentEndpointNotebookDocumentsDocumentApiIdPutMutation,
 } from "../../../client/@tanstack/react-query.gen"
 import { EditableTitle } from "../../../components/Document/EditableTitle"
+import type { NotebookWsStatus } from "../../../components/Document/Editor"
 
 type DocumentLoaderProps = {
   document: DocumentResponse
@@ -41,6 +42,7 @@ function DocumentContentLoader() {
   const documentId = Route.useParams().documentId
   const [isSaving, setIsSaving] = useState(false)
   const [isEditing, setIsEditing] = useState(false)
+  const [wsStatus, setWsStatus] = useState<NotebookWsStatus>("connecting")
   const savingStartTimeRef = useRef<number | null>(null)
   const queryClient = useQueryClient()
 
@@ -107,6 +109,9 @@ function DocumentContentLoader() {
     )
   }
 
+  const isReconnecting = wsStatus === "reconnecting"
+  const isConnecting = wsStatus === "connecting"
+
   return (
     <div className="w-full mt-8 px-4">
       <div className="backdrop-blur-md bg-white/80 border border-white/20 dark:bg-gray-900/80 dark:border-gray-700/50 p-6 rounded-xl shadow-md mb-6">
@@ -118,8 +123,26 @@ function DocumentContentLoader() {
             size="lg"
             textAlign="left"
           />
-          <div className="flex items-center gap-2 bg-white/20 px-3 py-1 rounded-md border border-white/30 dark:bg-white/10 dark:border-white/20">
-            {isSaving ? (
+          <div
+            className="flex items-center gap-2 bg-white/20 px-3 py-1 rounded-md border border-white/30 dark:bg-white/10 dark:border-white/20"
+            role="status"
+            aria-live="polite"
+          >
+            {isReconnecting ? (
+              <>
+                <Loader2 className="h-4 w-4 animate-spin text-amber-500" />
+                <span className="text-sm text-amber-700 dark:text-amber-400">
+                  Reconnecting...
+                </span>
+              </>
+            ) : isConnecting ? (
+              <>
+                <Loader2 className="h-4 w-4 animate-spin text-blue-400" />
+                <span className="text-sm text-gray-700 dark:text-gray-300">
+                  Connecting...
+                </span>
+              </>
+            ) : isSaving ? (
               <>
                 <Loader2 className="h-4 w-4 animate-spin text-blue-400" />
                 <span className="text-sm text-gray-700 dark:text-gray-300">
@@ -146,6 +169,7 @@ function DocumentContentLoader() {
             docId={documentId}
             onSavingChange={handleSavingChange}
             onEditingChange={setIsEditing}
+            onConnectionChange={setWsStatus}
           />
         </Suspense>
       </div>
