@@ -19,12 +19,14 @@ from ring.notifications.api import subscription
 from ring.parties.api import group, group_key_value, invite, user
 from ring.search.api import search
 from ring.tasks.api import schedule
+from ring.unfurl.api import unfurl
 
 router = APIRouter()
 
 # Authentication routes
 router.include_router(authn.router, tags=["login"])
 router.include_router(version.router, tags=["meta"])
+router.include_router(unfurl.router, tags=["meta"])
 
 # User and group management routes
 router.include_router(user.router, prefix="/parties", tags=["parties"])

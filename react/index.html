@@ -6,6 +6,26 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Ring</title>
     <link rel="icon" type="image/x-icon" href="./assets/images/favicon.ico" />
+
+    <!-- Baseline link preview for chat apps. Crawlers never run JavaScript, so
+         these static tags are what a shared URL previews as unless the request
+         reached the API's /unfurl handler for path-specific copy (see
+         src/worker.ts). One tag per line: the crawlers that read them are not
+         all full HTML parsers. -->
+    <meta name="description" content="Ring asks your group the same few questions on a cadence, then collects everyone's answers into one newsletter." />
+    <meta property="og:site_name" content="Ring" />
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="Ring" />
+    <meta property="og:description" content="Ring asks your group the same few questions on a cadence, then collects everyone's answers into one newsletter." />
+    <meta property="og:image" content="https://ring.neilsriv.tech/assets/images/og-card.png" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:alt" content="The Ring logo on a dark background" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="Ring" />
+    <meta name="twitter:description" content="Ring asks your group the same few questions on a cadence, then collects everyone's answers into one newsletter." />
+    <meta name="twitter:image" content="https://ring.neilsriv.tech/assets/images/og-card.png" />
+    <meta name="theme-color" content="#051a3b" />
   </head>
   <body>
     <div id="root"></div>
