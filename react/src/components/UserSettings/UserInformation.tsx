@@ -4,6 +4,7 @@ import { useState } from "react"
 import { type SubmitHandler, useForm } from "react-hook-form"
 
 import type { AxiosError } from "axios"
+import { toast } from "sonner"
 import type {
   UpdateUserMePartiesMePatchError,
   UserLinked,
@@ -79,6 +80,41 @@ const UserInformation = () => {
   const onCancel = () => {
     reset()
     toggleEditMode()
+  }
+
+  const [isEnablingNotifications, setIsEnablingNotifications] = useState(false)
+  const [notificationFeedback, setNotificationFeedback] = useState<{
+    tone: "success" | "error"
+    message: string
+  } | null>(null)
+
+  const handleEnableNotifications = async () => {
+    if (!currentUser?.api_identifier || isEnablingNotifications) {
+      return
+    }
+    setIsEnablingNotifications(true)
+    setNotificationFeedback(null)
+    try {
+      const result = await subscribeToPush(currentUser.api_identifier)
+      if (result.ok) {
+        const message = "Push notifications are enabled for this browser."
+        setNotificationFeedback({ tone: "success", message })
+        toast.success("Success!", {
+          id: "enable-notifications",
+          description: message,
+          duration: 8000,
+        })
+        return
+      }
+      setNotificationFeedback({ tone: "error", message: result.message })
+      toast.error("Couldn't enable notifications", {
+        id: "enable-notifications",
+        description: result.message,
+        duration: 8000,
+      })
+    } finally {
+      setIsEnablingNotifications(false)
+    }
   }
 
   return (
@@ -158,15 +194,35 @@ const UserInformation = () => {
             </form>
           </CardContent>
         </Card>
-        <div>
+        <div className="space-y-2">
           <Button
             variant="outline"
+            type="button"
+            disabled={isEnablingNotifications}
             onClick={() => {
-              subscribeToPush(currentUser!.api_identifier)
+              void handleEnableNotifications()
             }}
           >
+            {isEnablingNotifications && (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            )}
             Enable Notifications
           </Button>
+          {notificationFeedback && (
+            <p
+              role="status"
+              aria-live="polite"
+              className={
+                notificationFeedback.tone === "error"
+                  ? "max-w-md text-sm text-destructive"
+                  : "max-w-md text-sm text-muted-foreground"
+              }
+            >
+              {notificationFeedback.tone === "error"
+                ? `Couldn't enable notifications: ${notificationFeedback.message}`
+                : notificationFeedback.message}
+            </p>
+          )}
         </div>
       </div>
     </div>
