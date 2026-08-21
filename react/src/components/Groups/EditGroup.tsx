@@ -98,8 +98,8 @@ const EditGroup = ({ group, isOpen, onClose }: EditGroupProps) => {
           <DialogHeader>
             <DialogTitle>Edit Group</DialogTitle>
           </DialogHeader>
-          <div className="py-4">
-            <div className="space-y-2">
+          <div className="flex flex-col gap-5 py-4">
+            <div className="flex flex-col gap-1.5">
               <Label htmlFor="name">Name</Label>
               <Input
                 id="name"
@@ -109,20 +109,11 @@ const EditGroup = ({ group, isOpen, onClose }: EditGroupProps) => {
                 type="text"
               />
               {errors.name && (
-                <p className="text-sm text-destructive">
+                <p className="text-xs text-destructive">
                   {errors.name.message}
                 </p>
               )}
             </div>
-            {/* <div className="mt-4 space-y-2">
-              <Label htmlFor="description">Description</Label>
-              <Input
-                id="description"
-                {...register("description")}
-                placeholder="Description"
-                type="text"
-              />
-            </div> */}
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={onCancel} type="button">

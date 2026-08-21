@@ -11,7 +11,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table"
-import { Plus } from "lucide-react"
+import { Plus, Users } from "lucide-react"
 import { Suspense, useState } from "react"
 import { ErrorBoundary } from "react-error-boundary"
 import type { UserLinked } from "../../client"
@@ -45,132 +45,105 @@ function GroupTableBody() {
 
   if (groups.length === 0) {
     return (
-      <TableBody>
-        <TableRow>
-          <TableCell colSpan={3} className="hover:bg-transparent">
-            <div className="text-center py-12 w-full">
-              <div className="flex flex-col items-center gap-4 px-4">
-                <p className="text-lg text-foreground">No groups yet</p>
-                <p className="text-sm text-muted-foreground max-w-md">
-                  Create a group to invite friends and start a letter loop.
-                </p>
-                <Button
-                  onClick={() => setIsAddGroupOpen(true)}
-                  className="gap-1"
-                >
-                  <Plus className="h-4 w-4" />
-                  Create a group
-                </Button>
-              </div>
-              <AddGroup
-                isOpen={isAddGroupOpen}
-                onClose={() => setIsAddGroupOpen(false)}
-              />
-            </div>
-          </TableCell>
-        </TableRow>
-      </TableBody>
+      <div className="flex flex-col items-center rounded-lg border border-dashed px-6 py-16 text-center">
+        <Users
+          className="h-8 w-8 text-muted-foreground/60"
+          strokeWidth={1.5}
+        />
+        <h3 className="mt-4 font-display text-lg font-medium">
+          No groups yet
+        </h3>
+        <p className="mt-1 max-w-sm text-sm text-muted-foreground">
+          Create a group to invite friends and start a letter loop.
+        </p>
+        <Button className="mt-6" onClick={() => setIsAddGroupOpen(true)}>
+          <Plus className="h-4 w-4" />
+          Create group
+        </Button>
+        <AddGroup
+          isOpen={isAddGroupOpen}
+          onClose={() => setIsAddGroupOpen(false)}
+        />
+      </div>
     )
   }
 
   return (
-    <>
+    <Table>
       <TableHeader>
         <TableRow>
-          <TableHead>Name</TableHead>
+          <TableHead className="w-[30%]">Name</TableHead>
           <TableHead>Members</TableHead>
-          {/* <TableHead>Letters</TableHead> */}
-          <TableHead>Actions</TableHead>
+          <TableHead className="w-16 text-right">Actions</TableHead>
         </TableRow>
       </TableHeader>
       <TableBody>
         {groups.map((group) => (
           <TableRow key={group.api_identifier}>
-            {/* <TableCell>{group.name}</TableCell> */}
             <TableCell>
               <Link
                 to="/groups/$groupId/loops"
                 params={{ groupId: group.api_identifier }}
-                className="underline"
+                className="font-medium text-foreground transition-colors hover:text-primary"
               >
                 {group.name}
               </Link>
+              <p className="mt-0.5 text-xs text-muted-foreground">
+                {group.members.length}{" "}
+                {group.members.length === 1 ? "member" : "members"}
+              </p>
             </TableCell>
-            <TableCell className="whitespace-normal">
-              <div>
-                <p>
-                  {group.members
-                    .map((member) => {
-                      return member.name
-                    })
-                    .sort()
-                    .join(", ")}
-                </p>
-              </div>
-            </TableCell>
-            {/* <TableCell>
-              {group.letters
-                .map((letter) => {
-                  return letter.number;
+            <TableCell className="whitespace-normal text-sm text-muted-foreground">
+              {group.members
+                .map((member) => {
+                  return member.name
                 })
                 .sort()
                 .join(", ")}
-            </TableCell> */}
-            <TableCell>
+            </TableCell>
+            <TableCell className="text-right">
               <ActionsMenu type={"Group"} value={group} />
             </TableCell>
           </TableRow>
         ))}
       </TableBody>
-    </>
+    </Table>
   )
 }
 
 function GroupTable() {
   return (
-    <Table>
-      <ErrorBoundary
-        fallbackRender={({ error }) => (
-          <TableBody>
-            <TableRow>
-              <TableCell colSpan={4}>
-                Something went wrong: {error.message}
-              </TableCell>
-            </TableRow>
-          </TableBody>
-        )}
+    <ErrorBoundary
+      fallbackRender={({ error }) => (
+        <div className="rounded-lg border border-dashed px-6 py-12 text-center text-sm text-muted-foreground">
+          Something went wrong: {error.message}
+        </div>
+      )}
+    >
+      <Suspense
+        fallback={
+          <div className="flex flex-col gap-2">
+            {new Array(5).fill(null).map((_, index) => (
+              <Skeleton key={index} className="h-11 w-full" />
+            ))}
+          </div>
+        }
       >
-        <Suspense
-          fallback={
-            <TableBody>
-              {new Array(5).fill(null).map((_, index) => (
-                <TableRow key={index}>
-                  {new Array(4).fill(null).map((_, index) => (
-                    <TableCell key={index}>
-                      <div className="flex">
-                        <Skeleton className="h-5 w-5" />
-                      </div>
-                    </TableCell>
-                  ))}
-                </TableRow>
-              ))}
-            </TableBody>
-          }
-        >
-          <GroupTableBody />
-        </Suspense>
-      </ErrorBoundary>
-    </Table>
+        <GroupTableBody />
+      </Suspense>
+    </ErrorBoundary>
   )
 }
 
 function Groups() {
   return (
-    <div className="max-w-screen-xl mx-auto px-4">
-      <h2 className="text-2xl font-bold text-center md:text-left pt-12">
+    <div className="mx-auto w-full max-w-5xl px-4 py-8 md:px-8">
+      <h1 className="font-display text-2xl font-semibold tracking-tight md:text-3xl">
         Groups
-      </h2>
-
+      </h1>
+      <p className="mt-1 text-sm text-muted-foreground">
+        The circles you write with.
+      </p>
       <Navbar type={"Group"} />
       <GroupTable />
     </div>

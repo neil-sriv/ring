@@ -1,17 +1,12 @@
+import { Avatar, AvatarFallback } from "@/components/ui/avatar"
+import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table"
 import { useQueryClient } from "@tanstack/react-query"
 import { useState } from "react"
 
 import type { GroupLinked, UserUnlinked } from "../../client"
 import { readGroupPartiesGroupGroupApiIdGetQueryKey } from "../../client/@tanstack/react-query.gen"
+import { userInitials } from "../../util/misc"
 import RemoveMemberConfirmation from "./RemoveMemberConfirmation"
 
 function GroupMembershipSettings({ groupId }: { groupId: string }) {
@@ -35,42 +30,51 @@ function GroupMembershipSettings({ groupId }: { groupId: string }) {
 
   return (
     <>
-      <div className="w-full">
-        <h3 className="text-sm font-semibold py-4">Group Membership</h3>
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Name</TableHead>
-              <TableHead>Email</TableHead>
-              <TableHead>Role</TableHead>
-              <TableHead className="w-[100px]">Actions</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {group.members.map((member) => {
-              const isAdmin = member.api_identifier === group.admin.api_identifier
-              return (
-                <TableRow key={member.api_identifier}>
-                  <TableCell>{member.name}</TableCell>
-                  <TableCell>{member.email}</TableCell>
-                  <TableCell>{isAdmin ? "Admin" : "Member"}</TableCell>
-                  <TableCell>
-                    {canRemoveMember(member) ? (
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        className="text-destructive hover:text-destructive"
-                        onClick={() => setMemberToRemove(member)}
-                      >
-                        Remove
-                      </Button>
-                    ) : null}
-                  </TableCell>
-                </TableRow>
-              )
-            })}
-          </TableBody>
-        </Table>
+      <div className="w-full max-w-2xl">
+        <h3 className="text-base font-semibold">Group Membership</h3>
+        <p className="mt-1 text-sm text-muted-foreground">
+          Everyone who receives and writes this group's letters.
+        </p>
+        <ul className="mt-4 divide-y">
+          {group.members.map((member) => {
+            const isAdmin = member.api_identifier === group.admin.api_identifier
+            return (
+              <li
+                key={member.api_identifier}
+                className="flex items-center gap-3 py-3"
+              >
+                <Avatar>
+                  <AvatarFallback>
+                    {userInitials(member.name, member.email)}
+                  </AvatarFallback>
+                </Avatar>
+                <div className="min-w-0 flex-1">
+                  <div className="flex items-center gap-2">
+                    <p className="truncate text-sm font-medium">
+                      {member.name || member.email}
+                    </p>
+                    {isAdmin && <Badge variant="secondary">Admin</Badge>}
+                  </div>
+                  {member.name ? (
+                    <p className="truncate text-xs text-muted-foreground">
+                      {member.email}
+                    </p>
+                  ) : null}
+                </div>
+                {canRemoveMember(member) ? (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="text-muted-foreground hover:text-destructive"
+                    onClick={() => setMemberToRemove(member)}
+                  >
+                    Remove
+                  </Button>
+                ) : null}
+              </li>
+            )
+          })}
+        </ul>
       </div>
       {memberToRemove ? (
         <RemoveMemberConfirmation

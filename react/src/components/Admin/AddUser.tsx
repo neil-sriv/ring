@@ -92,8 +92,8 @@ const AddUser = ({ isOpen, onClose }: AddUserProps) => {
           <DialogHeader>
             <DialogTitle>Add User</DialogTitle>
           </DialogHeader>
-          <div className="py-4 space-y-4">
-            <div className="space-y-2">
+          <div className="flex flex-col gap-5 py-4">
+            <div className="flex flex-col gap-1.5">
               <Label htmlFor="email">Email</Label>
               <Input
                 id="email"
@@ -105,12 +105,12 @@ const AddUser = ({ isOpen, onClose }: AddUserProps) => {
                 type="email"
               />
               {errors.email && (
-                <p className="text-sm text-destructive">
+                <p className="text-xs text-destructive">
                   {errors.email.message}
                 </p>
               )}
             </div>
-            <div className="space-y-2">
+            <div className="flex flex-col gap-1.5">
               <Label htmlFor="name">Full name</Label>
               <Input
                 id="name"
@@ -119,12 +119,12 @@ const AddUser = ({ isOpen, onClose }: AddUserProps) => {
                 type="text"
               />
               {errors.name && (
-                <p className="text-sm text-destructive">
+                <p className="text-xs text-destructive">
                   {errors.name.message}
                 </p>
               )}
             </div>
-            <div className="space-y-2">
+            <div className="flex flex-col gap-1.5">
               <Label htmlFor="password">Set Password</Label>
               <Input
                 id="password"
@@ -139,12 +139,12 @@ const AddUser = ({ isOpen, onClose }: AddUserProps) => {
                 type="password"
               />
               {errors.password && (
-                <p className="text-sm text-destructive">
+                <p className="text-xs text-destructive">
                   {errors.password.message}
                 </p>
               )}
             </div>
-            <div className="space-y-2">
+            <div className="flex flex-col gap-1.5">
               <Label htmlFor="confirm_password">Confirm Password</Label>
               <Input
                 id="confirm_password"
@@ -158,22 +158,10 @@ const AddUser = ({ isOpen, onClose }: AddUserProps) => {
                 type="password"
               />
               {errors.confirm_password && (
-                <p className="text-sm text-destructive">
+                <p className="text-xs text-destructive">
                   {errors.confirm_password.message}
                 </p>
               )}
-            </div>
-            <div className="flex gap-4">
-              <div>
-                {/* <Checkbox {...register("is_superuser")} colorScheme="teal">
-                  Is superuser?
-                </Checkbox> */}
-              </div>
-              <div>
-                {/* <Checkbox {...register("is_active")} colorScheme="teal">
-                  Is active?
-                </Checkbox> */}
-              </div>
             </div>
           </div>
           <DialogFooter>

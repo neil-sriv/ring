@@ -6,7 +6,6 @@ import type { GroupLinked } from "../../client"
 import { readGroupPartiesGroupGroupApiIdGetQueryKey } from "../../client/@tanstack/react-query.gen"
 
 import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 
@@ -34,15 +33,20 @@ function GroupInformation({ groupId }: { groupId: string }) {
   }
 
   return (
-    <Card>
-      <CardHeader className="flex flex-row items-center justify-between">
-        <CardTitle>Group Information</CardTitle>
-        <Button variant="outline" onClick={toggleEditMode}>
+    <div className="w-full max-w-xl">
+      <div className="flex items-start justify-between gap-4">
+        <div>
+          <h3 className="text-base font-semibold">Group Information</h3>
+          <p className="mt-1 text-sm text-muted-foreground">
+            The basics of this group.
+          </p>
+        </div>
+        <Button variant="outline" size="sm" onClick={toggleEditMode}>
           Edit
         </Button>
-      </CardHeader>
-      <CardContent className="space-y-4">
-        <div className="space-y-2">
+      </div>
+      <div className="mt-6 flex flex-col gap-5">
+        <div className="flex flex-col gap-1.5">
           <Label>Name</Label>
           {editMode ? (
             <Input
@@ -51,17 +55,17 @@ function GroupInformation({ groupId }: { groupId: string }) {
               type="text"
             />
           ) : (
-            <p className="text-foreground">{group.name || "N/A"}</p>
+            <p className="text-sm">{group.name || "N/A"}</p>
           )}
         </div>
-        <div className="space-y-2">
+        <div className="flex flex-col gap-1.5">
           <Label>Created At</Label>
-          <p className="text-foreground">
+          <p className="text-sm">
             {new Date(group.created_at).toLocaleDateString()}
           </p>
         </div>
-      </CardContent>
-    </Card>
+      </div>
+    </div>
   )
 }
 

@@ -21,6 +21,7 @@ import { Button } from "@/components/ui/button"
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogFooter,
   DialogHeader,
   DialogTitle,
@@ -109,9 +110,12 @@ const ImpersonateUser = ({ user, isOpen, onClose }: ImpersonateUserProps) => {
         <form onSubmit={handleSubmit(onSubmit)}>
           <DialogHeader>
             <DialogTitle>Impersonate User</DialogTitle>
+            <DialogDescription>
+              You will be signed in as this user until you log out.
+            </DialogDescription>
           </DialogHeader>
-          <div className="py-4 space-y-4">
-            <div className="space-y-2">
+          <div className="flex flex-col gap-5 py-4">
+            <div className="flex flex-col gap-1.5">
               <Label htmlFor="id">User ID</Label>
               <Input
                 id="id"
@@ -122,7 +126,7 @@ const ImpersonateUser = ({ user, isOpen, onClose }: ImpersonateUserProps) => {
                 type="text"
               />
               {errors.id && (
-                <p className="text-sm text-destructive">{errors.id.message}</p>
+                <p className="text-xs text-destructive">{errors.id.message}</p>
               )}
             </div>
           </div>
@@ -130,9 +134,13 @@ const ImpersonateUser = ({ user, isOpen, onClose }: ImpersonateUserProps) => {
             <Button variant="outline" onClick={onCancel} type="button">
               Cancel
             </Button>
-            <Button type="submit" disabled={isSubmitting}>
+            <Button
+              variant="destructive"
+              type="submit"
+              disabled={isSubmitting}
+            >
               {isSubmitting && <Loader2 className="h-4 w-4 animate-spin" />}
-              Save
+              Impersonate
             </Button>
           </DialogFooter>
         </form>

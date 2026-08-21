@@ -169,174 +169,175 @@ function GroupLoopSettings({ groupId }: { groupId: string }) {
   }
 
   return (
-    <>
-      <div className="w-full">
-        <h3 className="text-sm font-semibold py-4">Loop Settings</h3>
-        <div className="w-full md:w-1/2">
-          <form onSubmit={handleSubmit(onSubmit)}>
-            <div className="space-y-1">
-              <Label htmlFor="cycle_length">Loop Cycle (days)</Label>
-              {editMode ? (
-                <Input
-                  id="cycle_length"
-                  {...register("cycle_length", {
-                    valueAsNumber: true,
-                    required: "Cycle length is required",
-                    min: {
-                      value: 1,
-                      message: "Cycle length must be greater than 0",
-                    },
-                  })}
-                  type="number"
-                />
-              ) : (
-                <p className="py-2 text-foreground">
-                  {group.cycle_length} days
-                </p>
-              )}
-              {errors.cycle_length && (
-                <p className="text-sm text-destructive">
-                  {errors.cycle_length.message}
-                </p>
-              )}
-            </div>
-            <div className="mt-4 space-y-1">
-              <Label htmlFor="min_responder_percent">
-                Minimum responses before send
-              </Label>
-              {editMode ? (
-                <Input
-                  id="min_responder_percent"
-                  {...register("min_responder_percent", {
-                    valueAsNumber: true,
-                    required: "Minimum response percentage is required",
-                    min: {
-                      value: 0,
-                      message: "Percentage must be at least 0",
-                    },
-                    max: {
-                      value: 100,
-                      message: "Percentage must be at most 100",
-                    },
-                  })}
-                  type="number"
-                  step={5}
-                />
-              ) : (
-                <p className="py-2 text-foreground">
-                  {displayMinResponderPercent(group.min_responder_ratio)}%
-                  {group.min_responder_ratio === 0 ? " (disabled)" : ""}
-                </p>
-              )}
-              <p className="text-sm text-muted-foreground">
-                If not enough members have responded by the send date, the issue
-                is delayed by one day and retried. Set to 0% to send on schedule
-                regardless of responses.
+    <div className="w-full max-w-xl">
+      <h3 className="text-base font-semibold">Loop Settings</h3>
+      <p className="mt-1 text-sm text-muted-foreground">
+        How often this group's loop runs and the questions each issue starts
+        with.
+      </p>
+      <form onSubmit={handleSubmit(onSubmit)} className="mt-6">
+        <div className="flex flex-col gap-5">
+          <div className="flex flex-col gap-1.5">
+            <Label htmlFor="cycle_length">Loop Cycle (days)</Label>
+            {editMode ? (
+              <Input
+                id="cycle_length"
+                {...register("cycle_length", {
+                  valueAsNumber: true,
+                  required: "Cycle length is required",
+                  min: {
+                    value: 1,
+                    message: "Cycle length must be greater than 0",
+                  },
+                })}
+                type="number"
+              />
+            ) : (
+              <p className="text-sm">{group.cycle_length} days</p>
+            )}
+            {errors.cycle_length && (
+              <p className="text-xs text-destructive">
+                {errors.cycle_length.message}
               </p>
-              {errors.min_responder_percent && (
-                <p className="text-sm text-destructive">
-                  {errors.min_responder_percent.message}
-                </p>
-              )}
-            </div>
-            <div className="mt-4 space-y-1">
-              <Label htmlFor="defaultQuestions">Default Questions</Label>
-              <ul className="space-y-2">
-                {fields.map((field, index) => (
-                  <li key={field.id}>
-                    <div className="flex gap-2">
-                      {editMode ? (
-                        <>
-                          <Controller
-                            control={control}
-                            name={`questions.${index}.question_text`}
-                            render={({ field }) => (
-                              <Input
-                                {...register(
-                                  `questions.${index}.question_text`,
-                                )}
-                                {...field}
-                              />
-                            )}
+            )}
+          </div>
+          <div className="flex flex-col gap-1.5">
+            <Label htmlFor="min_responder_percent">
+              Minimum responses before send
+            </Label>
+            {editMode ? (
+              <Input
+                id="min_responder_percent"
+                {...register("min_responder_percent", {
+                  valueAsNumber: true,
+                  required: "Minimum response percentage is required",
+                  min: {
+                    value: 0,
+                    message: "Percentage must be at least 0",
+                  },
+                  max: {
+                    value: 100,
+                    message: "Percentage must be at most 100",
+                  },
+                })}
+                type="number"
+                step={5}
+              />
+            ) : (
+              <p className="text-sm">
+                {displayMinResponderPercent(group.min_responder_ratio)}%
+                {group.min_responder_ratio === 0 ? " (disabled)" : ""}
+              </p>
+            )}
+            <p className="text-xs text-muted-foreground">
+              If not enough members have responded by the send date, the issue
+              is delayed by one day and retried. Set to 0% to send on schedule
+              regardless of responses.
+            </p>
+            {errors.min_responder_percent && (
+              <p className="text-xs text-destructive">
+                {errors.min_responder_percent.message}
+              </p>
+            )}
+          </div>
+        </div>
+        <div className="mt-6 border-t pt-6">
+          <h4 className="text-base font-semibold">Default Questions</h4>
+          <p className="mt-1 text-sm text-muted-foreground">
+            Every new loop starts with these questions.
+          </p>
+          <ul className="mt-4 flex flex-col gap-2">
+            {fields.map((field, index) => (
+              <li key={field.id}>
+                <div className="flex gap-2">
+                  {editMode ? (
+                    <>
+                      <Controller
+                        control={control}
+                        name={`questions.${index}.question_text`}
+                        render={({ field }) => (
+                          <Input
+                            {...register(`questions.${index}.question_text`)}
+                            {...field}
                           />
-                          <Button
-                            type="button"
-                            onClick={() => remove(index)}
-                            size="sm"
-                            variant="outline"
-                          >
-                            Remove
-                          </Button>
-                        </>
-                      ) : (
-                        <p className="py-2 text-foreground">
-                          {field.question_text}
-                        </p>
-                      )}
-                    </div>
-                  </li>
-                ))}
-                {editMode && (
-                  <li>
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                      onClick={() => append({ question_text: "" })}
-                    >
-                      <Plus className="h-4 w-4" />
-                    </Button>
-                  </li>
-                )}
-                {errors.questions?.root && (
-                  <li>
-                    <p className="text-sm text-destructive">
-                      {errors.questions.root?.message}
-                    </p>
-                  </li>
-                )}
-              </ul>
-            </div>
-            <div className="flex mt-4 gap-3">
-              <Button
-                onClick={editMode ? undefined : toggleEditMode}
-                type={editMode ? "submit" : "button"}
-                disabled={
-                  editMode
-                    ? !isDirty ||
-                      isSubmitting ||
-                      cycleUpdateMutation.isPending ||
-                      defaultQuestionsMutation.isPending
-                    : false
-                }
-              >
-                {editMode &&
-                  (isSubmitting ||
-                    cycleUpdateMutation.isPending ||
-                    defaultQuestionsMutation.isPending) && (
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        )}
+                      />
+                      <Button
+                        type="button"
+                        onClick={() => remove(index)}
+                        size="sm"
+                        variant="ghost"
+                        className="text-muted-foreground hover:text-destructive"
+                      >
+                        Remove
+                      </Button>
+                    </>
+                  ) : (
+                    <p className="text-sm">{field.question_text}</p>
                   )}
-                {editMode ? "Save" : "Edit"}
-              </Button>
-              {editMode && (
+                </div>
+              </li>
+            ))}
+            {editMode && (
+              <li>
                 <Button
                   type="button"
                   variant="outline"
-                  onClick={onCancel}
-                  disabled={
-                    isSubmitting ||
-                    cycleUpdateMutation.isPending ||
-                    defaultQuestionsMutation.isPending
-                  }
+                  size="sm"
+                  onClick={() => append({ question_text: "" })}
                 >
-                  Cancel
+                  <Plus className="h-4 w-4" />
+                  Add question
                 </Button>
-              )}
-            </div>
-          </form>
+              </li>
+            )}
+            {errors.questions?.root && (
+              <li>
+                <p className="text-xs text-destructive">
+                  {errors.questions.root?.message}
+                </p>
+              </li>
+            )}
+          </ul>
         </div>
-      </div>
-    </>
+        <div className="mt-6 flex gap-3 border-t pt-6">
+          <Button
+            onClick={editMode ? undefined : toggleEditMode}
+            type={editMode ? "submit" : "button"}
+            disabled={
+              editMode
+                ? !isDirty ||
+                  isSubmitting ||
+                  cycleUpdateMutation.isPending ||
+                  defaultQuestionsMutation.isPending
+                : false
+            }
+          >
+            {editMode &&
+              (isSubmitting ||
+                cycleUpdateMutation.isPending ||
+                defaultQuestionsMutation.isPending) && (
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              )}
+            {editMode ? "Save" : "Edit"}
+          </Button>
+          {editMode && (
+            <Button
+              type="button"
+              variant="outline"
+              onClick={onCancel}
+              disabled={
+                isSubmitting ||
+                cycleUpdateMutation.isPending ||
+                defaultQuestionsMutation.isPending
+              }
+            >
+              Cancel
+            </Button>
+          )}
+        </div>
+      </form>
+    </div>
   )
 }
 
