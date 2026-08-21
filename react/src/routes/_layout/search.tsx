@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router"
 import { Loader2, Search as SearchIcon } from "lucide-react"
-import { useState } from "react"
+import { useEffect, useRef, useState } from "react"
 
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -15,6 +15,7 @@ import { useQuery } from "@tanstack/react-query"
 import type { SearchHit } from "../../client"
 import { performSearchSearchSearchGetOptions } from "../../client/@tanstack/react-query.gen"
 import { SearchResultRow } from "../../components/Common/SearchResultRow"
+import { registerSearchFocusHandler } from "../../lib/globalKeyboardShortcuts"
 
 export const Route = createFileRoute("/_layout/search")({
   component: Search,
@@ -24,6 +25,13 @@ function SearchContent() {
   const [searchQuery, setSearchQuery] = useState("")
   const [submittedQuery, setSubmittedQuery] = useState("")
   const [hasSubmittedSearch, setHasSubmittedSearch] = useState(false)
+  const searchInputRef = useRef<HTMLInputElement>(null)
+
+  useEffect(() => {
+    searchInputRef.current?.focus()
+    registerSearchFocusHandler(() => searchInputRef.current?.focus())
+    return () => registerSearchFocusHandler(null)
+  }, [])
 
   const {
     data: searchResults,
@@ -67,6 +75,7 @@ function SearchContent() {
       <div className="flex py-8 px-4">
         <div className="relative w-full">
           <Input
+            ref={searchInputRef}
             type="text"
             placeholder="Search..."
             className="h-12 pr-12"
