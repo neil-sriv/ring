@@ -42,6 +42,7 @@ Full topology, request flows, and Cloudflare/EC2 wiring:
 | S3 uploads | Bucket `rings3files` (`us-east-1`) | [ring/fastapp/config.py](ring/fastapp/config.py) `BUCKET_NAME`; upload in [ring/letters/crud/response.py](ring/letters/crud/response.py) |
 | CDN | `du32exnxihxuf.cloudfront.net` | [ring/s3/models/s3_model.py](ring/s3/models/s3_model.py) `qualified_s3_url` |
 | Email (SES) | `us-east-1`, sender `ring@neilsriv.tech` | [ring/email_util.py](ring/email_util.py) |
+| Logs (CloudWatch) | Log group `/ring/prod` (`us-east-1`) | `logging:` blocks in [compose.prod.yml](compose.prod.yml); viewing/IAM in [docs/infrastructure.md](docs/infrastructure.md) |
 | Container registry | ECR Public `public.ecr.aws/z2k1e8p1/` | [dev_util/docker.py](dev_util/docker.py), [dev_util/prod.sh](dev_util/prod.sh), [dev_util/deploy_host.sh](dev_util/deploy_host.sh) |
 | Frontend hosting | Cloudflare Workers Builds (`ring-frontend`), auto-deploys every push to `dev` | [react/wrangler.jsonc](react/wrangler.jsonc), [react/plugins/version-stamp.ts](react/plugins/version-stamp.ts) |
 

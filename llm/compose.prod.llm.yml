@@ -7,6 +7,16 @@ services:
     mem_limit: 300m
     platform: linux/amd64
     volumes: []
+    # Same CloudWatch shipping as compose.prod.yml (anchors do not cross
+    # files). Requires the same IAM policy on the EC2 instance role.
+    logging:
+      driver: awslogs
+      options:
+        awslogs-region: us-east-1
+        awslogs-group: /ring/prod
+        awslogs-create-group: "true"
+        awslogs-stream: llm
+        mode: non-blocking
 
 networks:
   ring-network:
