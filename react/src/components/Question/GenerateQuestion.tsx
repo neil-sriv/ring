@@ -7,13 +7,14 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog"
+import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { useMutation, useQueryClient } from "@tanstack/react-query"
 import { type SubmitHandler, useForm } from "react-hook-form"
 
 import { useRouter } from "@tanstack/react-router"
 import type { AxiosError } from "axios"
-import { Loader2 } from "lucide-react"
+import { Loader2, Sparkles } from "lucide-react"
 import { useState } from "react"
 import type {
   AddQuestionLettersLetterLetterApiIdAddQuestionPostError,
@@ -141,49 +142,49 @@ const GenerateQuestion = ({
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && handleClose()}>
-      <DialogContent className="backdrop-blur-md bg-white/80 border border-white/20 dark:bg-gray-900/80 dark:border-gray-700/50 sm:max-w-md">
+      <DialogContent className="sm:max-w-md">
         <form onSubmit={handleSubmit(onGenerateQuestion)}>
           <DialogHeader>
-            <DialogTitle className="text-foreground">
-              Generate question
-            </DialogTitle>
+            <DialogTitle>Generate question</DialogTitle>
             <DialogDescription className="sr-only">
               Generate a question using AI
             </DialogDescription>
           </DialogHeader>
-          <div className="pb-6 pt-4 space-y-4">
-            <div>
+          <div className="flex flex-col gap-5 pb-6 pt-4">
+            <div className="grid gap-1.5">
+              <Label htmlFor="questionPrompt">Prompt</Label>
               <Textarea
                 id="questionPrompt"
                 placeholder="Enter a prompt to generate a question..."
                 {...register("questionPrompt", {
                   required: "Question prompt is required.",
                 })}
-                className="min-h-[100px] bg-white/50 border-white/20 dark:bg-gray-900/50 dark:border-gray-700/50 hover:border-primary focus-visible:border-primary focus-visible:ring-primary"
+                className="min-h-[100px]"
               />
               {errors.questionPrompt && (
-                <p className="text-sm text-destructive mt-1">
+                <p className="text-xs text-destructive">
                   {errors.questionPrompt.message}
                 </p>
               )}
             </div>
             {generatedQuestion && (
-              <div>
-                <Textarea
-                  id="generatedQuestion"
-                  value={generatedQuestion}
-                  readOnly
-                  placeholder="Generated question will appear here..."
-                  className="min-h-[100px] bg-white/50 border-white/20 dark:bg-gray-900/50 dark:border-gray-700/50"
-                />
+              <div className="rounded-lg border bg-muted/50 px-4 py-3">
+                <p className="text-xs text-muted-foreground">
+                  Generated question
+                </p>
+                <p className="mt-1 font-display text-base font-medium leading-relaxed">
+                  {generatedQuestion}
+                </p>
               </div>
             )}
           </div>
 
           <DialogFooter className="gap-3">
             <Button type="submit" disabled={generateQuestionMutation.isPending}>
-              {generateQuestionMutation.isPending && (
+              {generateQuestionMutation.isPending ? (
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              ) : (
+                <Sparkles className="mr-2 h-4 w-4" />
               )}
               Generate
             </Button>

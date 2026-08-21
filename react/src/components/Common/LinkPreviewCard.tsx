@@ -41,7 +41,7 @@ function LinkPreviewCard({ url }: { url: string }): JSX.Element | null {
       href={url}
       target="_blank"
       rel="noopener noreferrer"
-      className="my-2 flex max-w-[480px] overflow-hidden rounded-xl border bg-card text-card-foreground shadow-sm transition-shadow hover:shadow-md"
+      className="my-2 flex max-w-[480px] overflow-hidden rounded-lg border bg-card text-card-foreground transition-colors hover:bg-accent/50"
     >
       {showImage && (
         <img
@@ -65,14 +65,12 @@ function LinkPreviewCard({ url }: { url: string }): JSX.Element | null {
               }}
             />
           )}
-          {preview.site_name && (
-            <span className="truncate text-xs text-muted-foreground">
-              {preview.site_name}
-            </span>
-          )}
+          <span className="truncate text-xs text-muted-foreground">
+            {preview.site_name || url}
+          </span>
         </div>
         {preview.title && (
-          <span className="line-clamp-2 text-sm font-semibold leading-snug">
+          <span className="line-clamp-2 text-sm font-medium leading-snug">
             {preview.title}
           </span>
         )}

@@ -10,6 +10,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog"
+import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { useRouter } from "@tanstack/react-router"
 import type { AxiosError } from "axios"
@@ -91,28 +92,27 @@ const AddQuestion = ({ isOpen, onClose, loopApiId }: AddQuestionProps) => {
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
-      <DialogContent className="backdrop-blur-md bg-white/80 border border-white/20 dark:bg-gray-900/80 dark:border-gray-700/50 sm:max-w-md">
+      <DialogContent className="sm:max-w-md">
         <form onSubmit={handleSubmit(onSubmit)}>
           <DialogHeader>
-            <DialogTitle className="text-foreground">
-              Add new question
-            </DialogTitle>
+            <DialogTitle>Add new question</DialogTitle>
             <DialogDescription className="sr-only">
               Add a new question to the loop
             </DialogDescription>
           </DialogHeader>
           <div className="pb-6 pt-4">
-            <div>
+            <div className="grid gap-1.5">
+              <Label htmlFor="questionText">Question</Label>
               <Textarea
                 id="questionText"
                 {...register("questionText", {
                   required: "Question text is required.",
                 })}
-                className="min-h-[100px] bg-white/50 border-white/20 dark:bg-gray-900/50 dark:border-gray-700/50 hover:border-primary focus-visible:border-primary focus-visible:ring-primary"
+                className="min-h-[100px]"
                 placeholder="Enter your question here..."
               />
               {errors.questionText && (
-                <p className="text-sm text-destructive mt-1">
+                <p className="text-xs text-destructive">
                   {errors.questionText.message}
                 </p>
               )}

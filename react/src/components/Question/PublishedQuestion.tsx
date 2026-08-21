@@ -6,7 +6,6 @@ import {
   DialogPortal,
   DialogTitle,
 } from "@/components/ui/dialog"
-import { cn } from "@/lib/utils"
 import { ChevronLeft, ChevronRight, X } from "lucide-react"
 import { Dialog as DialogPrimitive } from "radix-ui"
 import { useEffect, useRef, useState } from "react"
@@ -32,7 +31,7 @@ function TextBlockWithUrls({
             href={text}
             target="_blank"
             rel="noopener noreferrer"
-            className="text-primary underline hover:opacity-80"
+            className="text-primary underline underline-offset-2 transition-colors hover:text-primary/80"
           >
             {text}
           </a>
@@ -85,11 +84,11 @@ function ResponseBlock({
               onClick={() => setActiveLightboxIndex(imageIndexCounter++)}
               aria-label={`View image from ${response.participant.name} full screen`}
             >
-              <div className="rounded-md shadow-sm hover:shadow-md transition-all duration-200 overflow-hidden block w-full max-w-[400px] min-w-0 p-2 relative">
+              <div className="block w-full max-w-[400px] min-w-0 overflow-hidden rounded-lg border bg-card">
                 <img
                   src={`https://du32exnxihxuf.cloudfront.net/${image.s3_url}`}
                   alt={response.participant.name}
-                  className="w-full max-h-[300px] object-contain hover:scale-[1.02] transition-all duration-200"
+                  className="block w-full max-h-[300px] object-contain"
                   loading="lazy"
                 />
               </div>
@@ -172,30 +171,21 @@ function ResponseBlock({
   }, [activeLightboxIndex])
 
   return (
-    <div
-      className={cn(
-        "my-2.5",
-        isLateAnswer
-          ? "p-3 bg-purple-50 border border-purple-200 rounded-md dark:bg-purple-900 dark:border-purple-600"
-          : "",
-      )}
-    >
-      <div className="flex items-center gap-2 mb-2">
-        <h3 className="text-lg font-semibold">{response.participant.name}</h3>
-        {isLateAnswer && (
-          <Badge
-            variant="secondary"
-            className="text-xs bg-purple-100 text-purple-800 dark:bg-purple-800 dark:text-purple-200"
-          >
-            Late Answer
-          </Badge>
-        )}
+    <div>
+      <div className="flex flex-wrap items-baseline gap-x-2 gap-y-1">
+        <h3 className="text-sm font-medium">{response.participant.name}</h3>
+        <span className="text-xs text-muted-foreground">
+          {new Date(response.created_at).toLocaleDateString()}
+        </span>
+        {isLateAnswer && <Badge variant="info">Late Answer</Badge>}
       </div>
       {/* <Text>{responseText}</Text> */}
-      <TextBlockWithUrls
-        texts={responseText}
-        responseApiId={response.api_identifier}
-      />
+      <div className="mt-1.5 space-y-2 text-sm leading-relaxed text-foreground">
+        <TextBlockWithUrls
+          texts={responseText}
+          responseApiId={response.api_identifier}
+        />
+      </div>
       {mediaItems.length > 0 && (
         <div className="mt-3">
           <MediaCarousel items={mediaItems} />
@@ -290,28 +280,33 @@ function PublishedQuestion({
   const letterSendDate = letterSendAt ? new Date(letterSendAt) : null
 
   return (
-    <div className="my-5">
-      {question.author == null ? (
-        <h2 className="text-2xl font-bold">{question.question_text}</h2>
-      ) : (
-        <h2 className="text-2xl font-bold">
-          {question.author.name} asked: {question.question_text}
+    <div className="border-b py-6 last:border-b-0">
+      <div className="space-y-1">
+        {question.author != null && (
+          <p className="text-xs text-muted-foreground">
+            {question.author.name} asked:
+          </p>
+        )}
+        <h2 className="font-display text-lg font-medium leading-relaxed">
+          {question.question_text}
         </h2>
-      )}
-      {question.responses.map((response) => {
-        const responseCreatedAt = new Date(response.created_at)
-        const isLateAnswer = letterSendDate
-          ? responseCreatedAt > letterSendDate
-          : false
+      </div>
+      <div className="mt-5 space-y-5">
+        {question.responses.map((response) => {
+          const responseCreatedAt = new Date(response.created_at)
+          const isLateAnswer = letterSendDate
+            ? responseCreatedAt > letterSendDate
+            : false
 
-        return (
-          <ResponseBlock
-            response={response}
-            key={response.api_identifier}
-            isLateAnswer={isLateAnswer}
-          />
-        )
-      })}
+          return (
+            <ResponseBlock
+              response={response}
+              key={response.api_identifier}
+              isLateAnswer={isLateAnswer}
+            />
+          )
+        })}
+      </div>
     </div>
   )
 }

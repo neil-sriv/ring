@@ -103,24 +103,25 @@ function LateAnswerQuestion({
   }
 
   return (
-    <div className="my-5 p-4 border border-gray-200 rounded-md bg-gray-50 dark:border-gray-600 dark:bg-gray-700">
-      <h3 className="text-lg font-semibold mb-3 text-foreground">
-        {question.author == null ? (
-          question.question_text
-        ) : (
-          <>
-            {question.author.name} asked: {question.question_text}
-          </>
+    <div className="my-5 rounded-lg border bg-muted/50 p-4 sm:p-5">
+      <div className="space-y-1">
+        {question.author != null && (
+          <p className="text-xs text-muted-foreground">
+            {question.author.name} asked:
+          </p>
         )}
-      </h3>
+        <h3 className="font-display text-base font-medium leading-relaxed">
+          {question.question_text}
+        </h3>
+      </div>
 
-      <div className="mb-3">
+      <div className="mb-3 mt-4">
         <Textarea
           ref={textareaRef}
           value={responseText}
           onChange={handleResponseChange}
           placeholder="Add your late answer here..."
-          className="min-h-[100px] overflow-hidden resize-none bg-muted"
+          className="min-h-[100px] overflow-hidden resize-none"
         />
       </div>
 

@@ -13,21 +13,19 @@ import { useState } from "react"
 /**
  * SingleUploadImage Component
  *
- * This component provides a user-friendly interface for uploading a single image.
- * It includes an option to preview the selected image and supports customization for size and rounding.
+ * Renders a quiet, dashed "attach media" affordance that opens the native
+ * file picker and uploads the selected file(s).
  *
  * @component
  *
- * @props {string} [size='100px'] - Specifies the dimensions of the upload area.
- * @props {string} [rounded='full'] - Defines the border-radius for the upload area, creating rounded corners.
  * @props {function} onUpdateFile (Required) - A callback function invoked when a new image is selected.
  *                                              It receives the selected image file as a parameter.
+ * @props {string} name (Required) - Unique id used to pair the label with its hidden file input.
  *
  * @example
  * // Usage Example
  * <SingleUploadImage
- *   size="150px"
- *   rounded="md"
+ *   name="question-123"
  *   onUpdateFile={handleFileUpdate}
  * />
  *
@@ -43,21 +41,18 @@ import { useState } from "react"
  *
  *   return (
  *     <SingleUploadImage
- *       size="150px"
- *       rounded="md"
+ *       name="question-123"
  *       onUpdateFile={handleFileUpdate}
  *     />
  *   );
  * };
  */
 type SingleUploadImageProps = {
-  size?: string
   onUpdateFile(file: File): Promise<void>
   name: string
 }
 
 export function SingleUploadImage({
-  size = "50px",
   onUpdateFile,
   name,
 }: SingleUploadImageProps): JSX.Element {
@@ -85,18 +80,14 @@ export function SingleUploadImage({
   return (
     <label
       htmlFor={name}
-      className="flex items-center justify-center cursor-pointer overflow-hidden relative"
-      style={{ width: size, height: size }}
+      className="inline-flex w-fit cursor-pointer items-center gap-2 rounded-lg border border-dashed px-3 py-2 text-xs font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground"
     >
-      <div className="absolute w-full h-full flex items-center justify-center hover:bg-black/40 transition-colors">
-        <div className="flex flex-col items-center">
-          {isUploading ? (
-            <Loader2 className="h-4 w-4 animate-spin" />
-          ) : (
-            <ImagePlus className="h-4 w-4" />
-          )}
-        </div>
-      </div>
+      {isUploading ? (
+        <Loader2 className="h-4 w-4 animate-spin" />
+      ) : (
+        <ImagePlus className="h-4 w-4" />
+      )}
+      {isUploading ? "Uploading..." : "Attach media"}
 
       <input
         style={{ display: "none" }}
@@ -122,7 +113,7 @@ interface S3MediaProps {
 
 function S3MediaContainer({ children }: { children: React.ReactNode }) {
   return (
-    <div className="rounded-md hover:shadow-md transition-all duration-200 shadow-sm overflow-hidden block w-full max-w-[400px] min-w-0 p-2 relative">
+    <div className="relative block w-full max-w-[400px] min-w-0 overflow-hidden rounded-lg border bg-card">
       {children}
     </div>
   )
@@ -138,7 +129,7 @@ export function S3Image({
   const [lightboxOpen, setLightboxOpen] = useState(false)
 
   const imageClassName =
-    "max-w-[400px] max-h-[300px] object-contain hover:scale-[1.02] transition-all duration-200"
+    "mx-auto block max-w-[400px] max-h-[300px] object-contain"
 
   const thumbnail = expandable ? (
     <button
@@ -189,9 +180,9 @@ export function S3Image({
       )}
       {handleDelete && (
         <Button
-          variant="destructive"
+          variant="outline"
           size="icon"
-          className="absolute top-3 right-3 opacity-70 hover:opacity-100 h-8 w-8"
+          className="absolute top-2 right-2 h-7 w-7 text-muted-foreground hover:text-destructive"
           onClick={handleDelete}
           aria-label="Delete image"
         >
@@ -212,15 +203,15 @@ export function S3Video({
       <video
         src={url}
         controls
-        className="h-auto w-full max-h-[300px] object-contain"
+        className="block h-auto w-full max-h-[300px] object-contain"
       >
         <track kind="captions" />
       </video>
       {handleDelete && (
         <Button
-          variant="destructive"
+          variant="outline"
           size="icon"
-          className="absolute top-3 right-3 opacity-70 hover:opacity-100 h-8 w-8"
+          className="absolute top-2 right-2 h-7 w-7 text-muted-foreground hover:text-destructive"
           onClick={handleDelete}
           aria-label="Delete video"
         >
