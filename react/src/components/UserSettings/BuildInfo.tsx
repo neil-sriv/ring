@@ -34,19 +34,19 @@ function DeployRow({
 
   return (
     <div className="flex flex-col gap-1 py-3 first:pt-0 last:pb-0">
+      <span className="text-xs text-muted-foreground">{label}</span>
       <div className="flex flex-wrap items-center gap-2">
-        <span className="text-sm font-medium text-foreground">{label}</span>
         {sha ? (
           <a
             href={`${GITHUB_COMMIT_URL}/${sha}`}
             target="_blank"
             rel="noreferrer"
-            className="font-mono text-sm text-primary underline underline-offset-2"
+            className="font-mono text-xs text-primary underline underline-offset-2"
           >
             {sha.slice(0, 7)}
           </a>
         ) : (
-          <span className="text-sm text-muted-foreground">
+          <span className="font-mono text-xs text-foreground">
             {error ?? "unknown"}
           </span>
         )}
@@ -103,40 +103,39 @@ const BuildInfo = () => {
 
   return (
     <div className="w-full">
-      <div className="flex flex-col gap-6">
-        <h3 className="text-sm font-semibold text-foreground">Build</h3>
-        <div className="rounded-xl border bg-card p-6 shadow-sm">
-          <div className="divide-y">
-            <DeployRow
-              label="Frontend"
-              sha={frontend.data?.sha}
-              branch={frontend.data?.branch}
-              timestampLabel="Deployed"
-              timestamp={frontend.data?.built_at}
-              note={
-                frontend.data?.build_uuid
-                  ? `Cloudflare build ${frontend.data.build_uuid}`
-                  : null
-              }
-              error={
-                frontend.isPending
-                  ? "loading…"
-                  : frontend.error?.message ?? "unknown"
-              }
-            />
-            <DeployRow
-              label="API"
-              sha={apiBuild?.sha}
-              branch={apiBuild?.branch}
-              timestampLabel="Committed"
-              timestamp={apiBuild?.committed_at}
-              imageSha={apiImageSha}
-              note={apiBuild?.subject}
-              error={
-                api.isPending ? "loading…" : api.error?.message ?? "unknown"
-              }
-            />
-          </div>
+      <h3 className="text-base font-semibold">Build</h3>
+      <p className="mt-1 text-sm text-muted-foreground">
+        Which commit each half of the app is running.
+      </p>
+      <div className="mt-5 rounded-lg border bg-card p-4">
+        <div className="divide-y">
+          <DeployRow
+            label="Frontend"
+            sha={frontend.data?.sha}
+            branch={frontend.data?.branch}
+            timestampLabel="Deployed"
+            timestamp={frontend.data?.built_at}
+            note={
+              frontend.data?.build_uuid
+                ? `Cloudflare build ${frontend.data.build_uuid}`
+                : null
+            }
+            error={
+              frontend.isPending
+                ? "loading…"
+                : frontend.error?.message ?? "unknown"
+            }
+          />
+          <DeployRow
+            label="API"
+            sha={apiBuild?.sha}
+            branch={apiBuild?.branch}
+            timestampLabel="Committed"
+            timestamp={apiBuild?.committed_at}
+            imageSha={apiImageSha}
+            note={apiBuild?.subject}
+            error={api.isPending ? "loading…" : api.error?.message ?? "unknown"}
+          />
         </div>
       </div>
     </div>

@@ -23,11 +23,14 @@ function UserSettings() {
   const finalTabs = tabsConfig
 
   return (
-    <div className="w-full">
-      <h2 className="text-2xl font-bold text-center md:text-left py-12">
-        User Settings
-      </h2>
-      <Tabs defaultValue={finalTabs[0].value}>
+    <div className="mx-auto w-full max-w-3xl px-4 py-8 md:px-8">
+      <h1 className="font-display text-2xl font-semibold tracking-tight md:text-3xl">
+        Settings
+      </h1>
+      <p className="mt-1 text-sm text-muted-foreground">
+        Your account, appearance, and preferences.
+      </p>
+      <Tabs defaultValue={finalTabs[0].value} className="mt-6">
         <TabsList>
           {finalTabs.map((tab) => (
             <TabsTrigger key={tab.value} value={tab.value}>
@@ -36,7 +39,7 @@ function UserSettings() {
           ))}
         </TabsList>
         {finalTabs.map((tab) => (
-          <TabsContent key={tab.value} value={tab.value}>
+          <TabsContent key={tab.value} value={tab.value} className="mt-6">
             <tab.component />
           </TabsContent>
         ))}

@@ -77,67 +77,57 @@ export function LLMPlayground(): JSX.Element {
   }
 
   return (
-    <div className="max-w-2xl mx-auto py-8 px-4">
-      <div className="flex flex-col gap-6">
-        <h2 className="text-2xl font-bold">LLM Playground</h2>
-        <p>
-          This is a playground for talking to LLMs. I don't have chat history or
-          memory, so it's not very useful yet.
-        </p>
+    <div className="w-full max-w-2xl">
+      <h3 className="text-base font-semibold">LLM playground</h3>
+      <p className="mt-1 text-sm text-muted-foreground">
+        This is a playground for talking to LLMs. I don't have chat history or
+        memory, so it's not very useful yet.
+      </p>
 
-        {/* Message History */}
-        <div className="flex-1 overflow-y-auto max-h-[60vh] border rounded-md p-4">
-          <div className="flex flex-col gap-4">
-            {messages.map((msg, index) => (
-              <div
-                key={index}
-                className={`flex ${
-                  msg.role === "user" ? "justify-end" : "justify-start"
-                }`}
-              >
-                <div
-                  className={`max-w-[70%] p-3 rounded-lg ${
-                    msg.role === "user"
-                      ? "bg-primary text-primary-foreground"
-                      : "bg-muted text-foreground"
-                  }`}
-                >
-                  <p>{msg.content}</p>
-                  <p
-                    className={`text-xs ${
-                      msg.role === "user"
-                        ? "text-primary-foreground/70"
-                        : "text-muted-foreground"
-                    }`}
-                  >
-                    {msg.timestamp.toLocaleTimeString()}
-                  </p>
-                </div>
+      {messages.length > 0 && (
+        <div className="mt-6 flex max-h-[60vh] flex-col gap-4 overflow-y-auto">
+          {messages.map((msg, index) =>
+            msg.role === "user" ? (
+              <div key={index} className="flex flex-col gap-1">
+                <p className="text-xs text-muted-foreground">
+                  You · {msg.timestamp.toLocaleTimeString()}
+                </p>
+                <p className="text-sm leading-relaxed text-foreground">
+                  {msg.content}
+                </p>
               </div>
-            ))}
-          </div>
+            ) : (
+              <div key={index} className="rounded-lg border bg-muted/50 px-4 py-3">
+                <p className="font-display text-base leading-relaxed text-foreground">
+                  {msg.content}
+                </p>
+                <p className="mt-1.5 text-xs text-muted-foreground">
+                  {msg.timestamp.toLocaleTimeString()}
+                </p>
+              </div>
+            ),
+          )}
+        </div>
+      )}
+
+      <form onSubmit={handleSubmit} className="mt-6">
+        <div className="flex flex-col gap-1.5">
+          <Label htmlFor="message">Message</Label>
+          <Textarea
+            id="message"
+            value={message}
+            onChange={(e) => setMessage(e.target.value)}
+            placeholder="Type your message here..."
+            rows={3}
+            required
+          />
         </div>
 
-        {/* Message Input */}
-        <form onSubmit={handleSubmit}>
-          <div className="space-y-2">
-            <Label htmlFor="message">Message</Label>
-            <Textarea
-              id="message"
-              value={message}
-              onChange={(e) => setMessage(e.target.value)}
-              placeholder="Type your message here..."
-              rows={3}
-              required
-            />
-          </div>
-
-          <Button className="mt-4" type="submit" disabled={isPending}>
-            {isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-            {isPending ? "Sending..." : "Send Message"}
-          </Button>
-        </form>
-      </div>
+        <Button className="mt-4" type="submit" disabled={isPending}>
+          {isPending && <Loader2 className="h-4 w-4 animate-spin" />}
+          {isPending ? "Sending…" : "Send message"}
+        </Button>
+      </form>
     </div>
   )
 }

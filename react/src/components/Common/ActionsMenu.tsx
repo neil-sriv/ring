@@ -31,7 +31,12 @@ const ActionsMenu = ({ type, value, disabled }: ActionsMenuProps) => {
     <>
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
-          <Button variant="ghost" size="icon" disabled={disabled}>
+          <Button
+            variant="ghost"
+            size="icon"
+            disabled={disabled}
+            className="text-muted-foreground hover:text-foreground"
+          >
             <MoreVertical className="h-4 w-4" />
           </Button>
         </DropdownMenuTrigger>
@@ -43,7 +48,7 @@ const ActionsMenu = ({ type, value, disabled }: ActionsMenuProps) => {
           {type === "User" && (
             <DropdownMenuItem
               onClick={() => setIsImpersonateOpen(true)}
-              className="text-destructive"
+              className="text-destructive focus:text-destructive [&>svg]:text-destructive"
             >
               <User className="h-4 w-4" />
               Impersonate User
