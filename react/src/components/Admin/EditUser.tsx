@@ -110,8 +110,8 @@ const EditUser = ({ user, isOpen, onClose }: EditUserProps) => {
           <DialogHeader>
             <DialogTitle>Edit User</DialogTitle>
           </DialogHeader>
-          <div className="py-4 space-y-4">
-            <div className="space-y-2">
+          <div className="flex flex-col gap-5 py-4">
+            <div className="flex flex-col gap-1.5">
               <Label htmlFor="email">Email</Label>
               <Input
                 id="email"
@@ -123,12 +123,12 @@ const EditUser = ({ user, isOpen, onClose }: EditUserProps) => {
                 type="email"
               />
               {errors.email && (
-                <p className="text-sm text-destructive">
+                <p className="text-xs text-destructive">
                   {errors.email.message}
                 </p>
               )}
             </div>
-            <div className="space-y-2">
+            <div className="flex flex-col gap-1.5">
               <Label htmlFor="name">Full name</Label>
               <Input id="name" {...register("name")} type="text" />
             </div>

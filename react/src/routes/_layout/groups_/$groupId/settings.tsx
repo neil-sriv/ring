@@ -49,24 +49,27 @@ function GroupSettings() {
   }
 
   return (
-    <div className="w-full">
-      <h2 className="py-12 text-center text-2xl font-semibold md:text-left">
+    <div className="mx-auto w-full max-w-5xl px-4 py-8 md:px-8">
+      <h1 className="font-display text-2xl font-semibold tracking-tight md:text-3xl">
         Group Settings
-      </h2>
-      <Tabs defaultValue={finalTabs[0].value}>
-        <TabsList>
+      </h1>
+      <p className="mt-1 text-sm text-muted-foreground">{loadedGroup.name}</p>
+      <div className="mt-6">
+        <Tabs defaultValue={finalTabs[0].value}>
+          <TabsList>
+            {finalTabs.map((tab) => (
+              <TabsTrigger key={tab.value} value={tab.value}>
+                {tab.title}
+              </TabsTrigger>
+            ))}
+          </TabsList>
           {finalTabs.map((tab) => (
-            <TabsTrigger key={tab.value} value={tab.value}>
-              {tab.title}
-            </TabsTrigger>
+            <TabsContent key={tab.value} value={tab.value} className="mt-6">
+              <tab.component groupId={loadedGroup.api_identifier} />
+            </TabsContent>
           ))}
-        </TabsList>
-        {finalTabs.map((tab) => (
-          <TabsContent key={tab.value} value={tab.value}>
-            <tab.component groupId={loadedGroup.api_identifier} />
-          </TabsContent>
-        ))}
-      </Tabs>
+        </Tabs>
+      </div>
     </div>
   )
 }

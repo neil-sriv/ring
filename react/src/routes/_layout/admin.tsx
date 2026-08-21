@@ -38,25 +38,28 @@ const MembersTableBody = () => {
     <TableBody>
       {users.map((user) => (
         <TableRow key={user.api_identifier}>
-          <TableCell className={!user.name ? "text-muted-foreground" : ""}>
-            {user.name || "N/A"}
-            {currentUser?.api_identifier === user.api_identifier && (
-              <Badge className="ml-1" variant="secondary">
-                You
-              </Badge>
-            )}
-          </TableCell>
-          <TableCell>{user.email}</TableCell>
-          {/* <TableCell>{user.is_superuser ? "Superuser" : "User"}</TableCell> */}
-          {/* <TableCell>{false ? "Superuser" : "User"}</TableCell> */}
-          <TableCell>{user.api_identifier}</TableCell>
           <TableCell>
             <div className="flex items-center gap-2">
-              <span className="inline-block h-2 w-2 rounded-full bg-green-500" />
-              Active
+              <span
+                className={
+                  user.name ? "font-medium" : "text-muted-foreground"
+                }
+              >
+                {user.name || "N/A"}
+              </span>
+              {currentUser?.api_identifier === user.api_identifier && (
+                <Badge variant="secondary">You</Badge>
+              )}
             </div>
           </TableCell>
+          <TableCell>{user.email}</TableCell>
+          <TableCell className="font-mono text-xs text-muted-foreground">
+            {user.api_identifier}
+          </TableCell>
           <TableCell>
+            <Badge variant="success">Active</Badge>
+          </TableCell>
+          <TableCell className="text-right">
             <ActionsMenu type="User" value={user} />
           </TableCell>
         </TableRow>
@@ -68,32 +71,37 @@ const MembersTableBody = () => {
 const MembersBodySkeleton = () => {
   return (
     <TableBody>
-      <TableRow>
-        {new Array(5).fill(null).map((_, index) => (
-          <TableCell key={index}>
-            <Skeleton className="h-4 w-full my-4" />
-          </TableCell>
-        ))}
-      </TableRow>
+      {new Array(5).fill(null).map((_, rowIndex) => (
+        <TableRow key={rowIndex}>
+          {new Array(5).fill(null).map((_, cellIndex) => (
+            <TableCell key={cellIndex}>
+              <Skeleton className="h-4 w-full" />
+            </TableCell>
+          ))}
+        </TableRow>
+      ))}
     </TableBody>
   )
 }
 
 function Admin() {
   return (
-    <div className="w-full">
-      <h2 className="text-2xl font-bold text-center md:text-left pt-12">
-        User Management
-      </h2>
+    <div className="mx-auto w-full max-w-5xl px-4 py-8 md:px-8">
+      <h1 className="font-display text-2xl font-semibold tracking-tight md:text-3xl">
+        Admin
+      </h1>
+      <p className="mt-1 text-sm text-muted-foreground">
+        Manage everyone with a Ring account.
+      </p>
       <Navbar type={"User"} />
       <Table>
         <TableHeader>
           <TableRow>
             <TableHead className="w-[20%]">Full name</TableHead>
-            <TableHead className="w-[50%]">Email</TableHead>
-            <TableHead className="w-[10%]">API ID</TableHead>
+            <TableHead className="w-[30%]">Email</TableHead>
+            <TableHead className="w-[30%]">API ID</TableHead>
             <TableHead className="w-[10%]">Status</TableHead>
-            <TableHead className="w-[10%]">Actions</TableHead>
+            <TableHead className="w-[10%] text-right">Actions</TableHead>
           </TableRow>
         </TableHeader>
         <Suspense fallback={<MembersBodySkeleton />}>

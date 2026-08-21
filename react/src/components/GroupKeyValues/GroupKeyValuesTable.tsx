@@ -59,10 +59,19 @@ export function GroupKeyValuesTable({
   }
 
   return (
-    <div className="w-full flex flex-col gap-4">
-      <p>Group Key Values; use this as a fast data store for the group.</p>(
-      <div className="border border-gray-200 rounded-md p-4">
-        <Suspense fallback={<div>Loading editor...</div>}>
+    <div className="w-full">
+      <h3 className="text-base font-semibold">Group Key Values</h3>
+      <p className="mt-1 text-sm text-muted-foreground">
+        Use this as a fast data store for the group.
+      </p>
+      <div className="mt-4 overflow-hidden rounded-lg border">
+        <Suspense
+          fallback={
+            <div className="p-4 text-sm text-muted-foreground">
+              Loading editor...
+            </div>
+          }
+        >
           <ReactJson
             src={editableData}
             onEdit={handleEdit}
@@ -73,10 +82,10 @@ export function GroupKeyValuesTable({
             displayDataTypes={false}
             collapsed={false}
             name={false}
+            style={{ padding: "1rem" }}
           />
         </Suspense>
       </div>
-      )
     </div>
   )
 }

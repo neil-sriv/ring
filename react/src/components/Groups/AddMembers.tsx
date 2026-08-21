@@ -113,8 +113,8 @@ const AddMembers = ({ group, isOpen, onClose }: AddMembersProps) => {
           <DialogHeader>
             <DialogTitle>Add new members</DialogTitle>
           </DialogHeader>
-          <div className="py-4">
-            <div className="space-y-2">
+          <div className="flex flex-col gap-5 py-4">
+            <div className="flex flex-col gap-1.5">
               <Label htmlFor="name">New Member Emails</Label>
               <p className="text-sm text-muted-foreground">
                 Enter the email addresses of the new members you want to add to
@@ -128,20 +128,11 @@ const AddMembers = ({ group, isOpen, onClose }: AddMembersProps) => {
                 type="text"
               />
               {errors.member_emails && (
-                <p className="text-sm text-destructive">
+                <p className="text-xs text-destructive">
                   {errors.member_emails.message}
                 </p>
               )}
             </div>
-            {/* <div className="mt-4 space-y-2">
-              <Label htmlFor="description">Description</Label>
-              <Input
-                id="description"
-                {...register("description")}
-                placeholder="Description"
-                type="text"
-              />
-            </div> */}
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={onCancel} type="button">
