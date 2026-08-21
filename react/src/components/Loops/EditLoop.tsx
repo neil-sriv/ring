@@ -137,8 +137,8 @@ const EditLetter = ({ isOpen, onClose, loop }: EditLetterProps) => {
           <DialogHeader>
             <DialogTitle>Edit Loop</DialogTitle>
           </DialogHeader>
-          <div className="space-y-4 py-4">
-            <div className="space-y-2">
+          <div className="flex flex-col gap-5 py-4">
+            <div className="flex flex-col gap-1.5">
               <Label htmlFor="title">Title</Label>
               <Input
                 id="title"
@@ -147,14 +147,14 @@ const EditLetter = ({ isOpen, onClose, loop }: EditLetterProps) => {
               />
             </div>
 
-            <div className="space-y-2">
+            <div className="flex flex-col gap-1.5">
               <Label htmlFor="isInProgress">Status</Label>
               <div className="flex items-center gap-4">
                 <span
                   className={`text-sm ${
                     !watch("isInProgress")
-                      ? "font-bold opacity-100"
-                      : "font-normal opacity-60"
+                      ? "font-medium text-foreground"
+                      : "text-muted-foreground"
                   }`}
                 >
                   Upcoming
@@ -171,8 +171,8 @@ const EditLetter = ({ isOpen, onClose, loop }: EditLetterProps) => {
                 <span
                   className={`text-sm ${
                     watch("isInProgress")
-                      ? "font-bold opacity-100"
-                      : "font-normal opacity-60"
+                      ? "font-medium text-foreground"
+                      : "text-muted-foreground"
                   }`}
                 >
                   In Progress
@@ -180,7 +180,7 @@ const EditLetter = ({ isOpen, onClose, loop }: EditLetterProps) => {
               </div>
             </div>
 
-            <div className="space-y-2">
+            <div className="flex flex-col gap-1.5">
               <Label htmlFor="sendAt">
                 Send at <span className="text-destructive">*</span>
               </Label>
@@ -194,7 +194,7 @@ const EditLetter = ({ isOpen, onClose, loop }: EditLetterProps) => {
                 min={toISOLocal(new Date()).slice(0, 16)}
               />
               {errors.sendAt && (
-                <p className="text-sm text-destructive">
+                <p className="text-xs text-destructive">
                   {errors.sendAt.message}
                 </p>
               )}

@@ -130,21 +130,15 @@ function LoopsContentLoader() {
   }, [tabsConfig])
 
   return (
-    <div className="w-full">
-      <div className="mb-6 rounded-xl border border-border/50 bg-background/80 p-6 shadow-md backdrop-blur-sm dark:border-border/30 dark:bg-background/60">
-        <h2 className="text-center text-2xl font-semibold text-foreground md:text-left">
-          {group!.name}
-        </h2>
-      </div>
-      <div className="rounded-xl border border-border/50 bg-background/80 p-6 shadow-md backdrop-blur-sm dark:border-border/30 dark:bg-background/60">
+    <div className="mx-auto w-full max-w-5xl px-4 py-8 md:px-8">
+      <h1 className="font-display text-2xl font-semibold tracking-tight md:text-3xl">
+        {group!.name}
+      </h1>
+      <div className="mt-6">
         <Tabs value={activeTab} onValueChange={handleTabChange}>
-          <TabsList className="flex-nowrap overflow-x-auto overflow-y-hidden">
+          <TabsList className="w-full flex-nowrap overflow-x-auto overflow-y-hidden">
             {tabsConfig.map((tab) => (
-              <TabsTrigger
-                key={tab.hash}
-                value={tab.hash}
-                className="shrink-0 transition-all duration-200 hover:-translate-y-0.5"
-              >
+              <TabsTrigger key={tab.hash} value={tab.hash} className="shrink-0">
                 {tab.title}
               </TabsTrigger>
             ))}
@@ -165,7 +159,7 @@ function LoopsContent() {
     <Suspense
       fallback={
         <div className="flex justify-center py-12">
-          <Loader2 className="h-8 w-8 animate-spin" />
+          <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
         </div>
       }
     >
