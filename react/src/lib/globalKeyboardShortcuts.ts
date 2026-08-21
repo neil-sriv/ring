@@ -15,12 +15,14 @@ interface GlobalShortcutState {
   paletteToggle: (() => void) | null
   helpOpen: (() => void) | null
   isHelpOpen: () => boolean
+  searchFocus: (() => void) | null
 }
 
 const state: GlobalShortcutState = {
   paletteToggle: null,
   helpOpen: null,
   isHelpOpen: () => false,
+  searchFocus: null,
 }
 
 export function registerKeyboardShortcutHandlers(handlers: {
@@ -31,6 +33,10 @@ export function registerKeyboardShortcutHandlers(handlers: {
   state.paletteToggle = handlers.togglePalette
   state.helpOpen = handlers.openHelp
   state.isHelpOpen = handlers.isHelpOpen
+}
+
+export function registerSearchFocusHandler(handler: (() => void) | null) {
+  state.searchFocus = handler
 }
 
 function shouldIgnoreShortcuts(event: KeyboardEvent) {
@@ -65,6 +71,11 @@ export function initGlobalKeyboardShortcuts(router: RegisteredRouter) {
       if (destination) {
         event.preventDefault()
         router.navigate({ to: destination })
+        if (destination === "/search") {
+          // Already on /search: the route doesn't remount, so its mount-time
+          // focus won't run again. Refocus the registered search input.
+          state.searchFocus?.()
+        }
       }
       return
     }
