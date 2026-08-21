@@ -1,14 +1,20 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query"
 import { Loader2 } from "lucide-react"
+import { useEffect } from "react"
 import { type SubmitHandler, useForm } from "react-hook-form"
 
-import type { UserLinked, UserUpdate } from "../../client"
+import type { AxiosError } from "axios"
+import type {
+  UpdateUserByIdPartiesUserUserApiIdPatchError,
+  UserLinked,
+  UserUpdate,
+} from "../../client"
 import {
   readUsersPartiesUsersGetQueryKey,
-  updateUserPartiesUserIdPatchMutation,
+  updateUserByIdPartiesUserUserApiIdPatchMutation,
 } from "../../client/@tanstack/react-query.gen"
 import useCustomToast from "../../hooks/useCustomToast"
-import { emailPattern } from "../../util/misc"
+import { emailPattern, formatApiErrorDetail } from "../../util/misc"
 
 import { Button } from "@/components/ui/button"
 import {
@@ -27,10 +33,6 @@ interface EditUserProps {
   onClose: () => void
 }
 
-interface UserUpdateForm extends UserUpdate {
-  confirm_password: string
-}
-
 const EditUser = ({ user, isOpen, onClose }: EditUserProps) => {
   const queryClient = useQueryClient()
   const showToast = useCustomToast()
@@ -40,24 +42,40 @@ const EditUser = ({ user, isOpen, onClose }: EditUserProps) => {
     handleSubmit,
     reset,
     formState: { errors, isSubmitting, isDirty },
-  } = useForm<UserUpdateForm>({
+  } = useForm<UserUpdate>({
     mode: "onBlur",
     criteriaMode: "all",
-    defaultValues: user,
+    defaultValues: {
+      email: user.email,
+      name: user.name ?? "",
+    },
   })
 
+  useEffect(() => {
+    if (isOpen) {
+      reset({
+        email: user.email,
+        name: user.name ?? "",
+      })
+    }
+  }, [isOpen, user.email, user.name, reset])
+
   const mutation = useMutation({
-    ...updateUserPartiesUserIdPatchMutation(),
+    ...updateUserByIdPartiesUserUserApiIdPatchMutation(),
     onSuccess: () => {
       showToast("Success!", "User updated successfully.", "success")
       reset()
       onClose()
     },
-    // onError: (err: AxiosError<UpdateUserMePartiesMePatchError>) => {
-    //   const errDetail =
-    //     err.response?.data.detail || "no error detail, please contact support";
-    //   showToast("Something went wrong.", `${errDetail}`, "error");
-    // },
+    onError: (
+      error: AxiosError<UpdateUserByIdPartiesUserUserApiIdPatchError>,
+    ) => {
+      showToast(
+        "Something went wrong.",
+        formatApiErrorDetail(error.response?.data?.detail),
+        "error",
+      )
+    },
     onSettled: () => {
       queryClient.invalidateQueries({
         queryKey: readUsersPartiesUsersGetQueryKey(),
@@ -65,8 +83,14 @@ const EditUser = ({ user, isOpen, onClose }: EditUserProps) => {
     },
   })
 
-  const onSubmit: SubmitHandler<UserUpdateForm> = async () => {
-    mutation.mutate({})
+  const onSubmit: SubmitHandler<UserUpdate> = (data) => {
+    mutation.mutate({
+      path: { user_api_id: user.api_identifier },
+      body: {
+        email: data.email,
+        name: data.name,
+      },
+    })
   }
 
   const onCancel = () => {
@@ -107,53 +131,6 @@ const EditUser = ({ user, isOpen, onClose }: EditUserProps) => {
             <div className="space-y-2">
               <Label htmlFor="name">Full name</Label>
               <Input id="name" {...register("name")} type="text" />
-            </div>
-            {/* <div className="space-y-2">
-              <Label htmlFor="password">Set Password</Label>
-              <Input
-                id="password"
-                {...register("password", {
-                  minLength: {
-                    value: 8,
-                    message: "Password must be at least 8 characters",
-                  },
-                })}
-                placeholder="Password"
-                type="password"
-              />
-              {errors.password && (
-                <p className="text-sm text-destructive">{errors.password.message}</p>
-              )}
-            </div> */}
-            {/* <div className="space-y-2">
-              <Label htmlFor="confirm_password">Confirm Password</Label>
-              <Input
-                id="confirm_password"
-                {...register("confirm_password", {
-                  validate: (value) =>
-                    value === getValues().password ||
-                    "The passwords do not match",
-                })}
-                placeholder="Password"
-                type="password"
-              />
-              {errors.confirm_password && (
-                <p className="text-sm text-destructive">
-                  {errors.confirm_password.message}
-                </p>
-              )}
-            </div> */}
-            <div className="flex gap-4">
-              <div>
-                {/* <Checkbox {...register("is_superuser")} colorScheme="teal">
-                  Is superuser?
-                </Checkbox> */}
-              </div>
-              <div>
-                {/* <Checkbox {...register("is_active")} colorScheme="teal">
-                  Is active?
-                </Checkbox> */}
-              </div>
             </div>
           </div>
           <DialogFooter>

@@ -1232,6 +1232,33 @@ export type ReadUserByIdPartiesUserUserApiIdGetResponses = {
 
 export type ReadUserByIdPartiesUserUserApiIdGetResponse = ReadUserByIdPartiesUserUserApiIdGetResponses[keyof ReadUserByIdPartiesUserUserApiIdGetResponses];
 
+export type UpdateUserByIdPartiesUserUserApiIdPatchData = {
+    body: UserUpdate;
+    path: {
+        user_api_id: string;
+    };
+    query?: never;
+    url: '/parties/user/{user_api_id}';
+};
+
+export type UpdateUserByIdPartiesUserUserApiIdPatchErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type UpdateUserByIdPartiesUserUserApiIdPatchError = UpdateUserByIdPartiesUserUserApiIdPatchErrors[keyof UpdateUserByIdPartiesUserUserApiIdPatchErrors];
+
+export type UpdateUserByIdPartiesUserUserApiIdPatchResponses = {
+    /**
+     * Successful Response
+     */
+    200: UserLinked;
+};
+
+export type UpdateUserByIdPartiesUserUserApiIdPatchResponse = UpdateUserByIdPartiesUserUserApiIdPatchResponses[keyof UpdateUserByIdPartiesUserUserApiIdPatchResponses];
+
 export type UpdatePasswordMePartiesMePasswordPatchData = {
     body: UserUpdatePassword;
     path?: never;

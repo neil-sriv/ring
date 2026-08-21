@@ -186,6 +186,51 @@ async def read_user_by_id(
     return db_user
 
 
+@router.patch("/user/{user_api_id}", response_model=UserSchema)
+async def update_user_by_id(
+    user_api_id: str,
+    user_update: UserUpdate,
+    req_dep: AuthenticatedRequestDependencies = Depends(
+        get_request_dependencies,
+    ),
+) -> User:
+    """Update another user's email/name (admin only).
+
+    Args:
+        user_api_id (str): API identifier of the user to update
+        user_update (UserUpdate): Fields to update
+        req_dep (AuthenticatedRequestDependencies): Request dependencies
+
+    Returns:
+        User: Updated user information
+
+    Raises:
+        HTTPException: If caller is not an admin, user is missing, or email
+            is already registered
+    """
+    if not req_dep.current_user.admin:
+        raise HTTPException(status_code=403, detail="Unauthorized")
+
+    db_user = api_identifier_crud.get_model(
+        req_dep.db,
+        User,
+        api_id=user_api_id,
+    )
+    if user_update.email:
+        email = user_update.email.lower()
+        existing = user_crud.get_user_by_email(req_dep.db, email=email)
+        if existing and existing.id != db_user.id:
+            raise HTTPException(
+                status_code=400,
+                detail="Email already registered",
+            )
+        db_user.email = email
+    if user_update.name is not None:
+        db_user.name = user_update.name
+    req_dep.db.commit()
+    return db_user
+
+
 @router.patch(
     "/me",
     response_model=UserSchema,
