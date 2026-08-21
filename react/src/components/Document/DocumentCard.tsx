@@ -1,4 +1,5 @@
 import { Badge } from "@/components/ui/badge"
+import { Card } from "@/components/ui/card"
 import { Link } from "@tanstack/react-router"
 import type { DocumentResponse } from "../../client"
 
@@ -25,32 +26,31 @@ export function DocumentCard(props: {
       params={{ documentId: props.document.api_identifier }}
       className="block h-full no-underline"
     >
-      <div className="h-full backdrop-blur-md bg-white/80 border border-white/20 dark:bg-gray-900/80 dark:border-gray-700/50 p-6 rounded-xl shadow-md transition-all duration-200 hover:-translate-y-1 hover:shadow-xl hover:border-primary relative">
-        <Badge variant="secondary" className="text-xs absolute top-2 right-2">
-          v{props.document.latest_snapshot_version}
-        </Badge>
-
-        <div className="flex flex-col items-start gap-3">
-          <h3 className="text-lg font-semibold text-foreground">
+      <Card className="flex h-full flex-col gap-2 p-5 transition-shadow hover:shadow-sm">
+        <div className="flex items-start justify-between gap-3">
+          <h3 className="min-w-0 font-display text-base font-medium">
             {props.document.name}
           </h3>
-
-          <p className="text-sm text-muted-foreground line-clamp-3">
-            {getContentPreview()}
-          </p>
-
-          <div className="flex flex-col items-start gap-1 w-full">
-            <span className="text-xs text-muted-foreground">
-              Created: {createdDate.toLocaleDateString()}
-            </span>
-            {updatedDate && (
-              <span className="text-xs text-muted-foreground">
-                Updated: {updatedDate.toLocaleDateString()}
-              </span>
-            )}
-          </div>
+          <Badge variant="outline">
+            v{props.document.latest_snapshot_version}
+          </Badge>
         </div>
-      </div>
+
+        <p className="text-sm text-muted-foreground line-clamp-3">
+          {getContentPreview()}
+        </p>
+
+        <div className="mt-auto flex w-full flex-col items-start gap-0.5 pt-1">
+          <span className="text-xs text-muted-foreground">
+            Created: {createdDate.toLocaleDateString()}
+          </span>
+          {updatedDate && (
+            <span className="text-xs text-muted-foreground">
+              Updated: {updatedDate.toLocaleDateString()}
+            </span>
+          )}
+        </div>
+      </Card>
     </Link>
   )
 }

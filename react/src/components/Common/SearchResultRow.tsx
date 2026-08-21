@@ -1,18 +1,23 @@
-import { Badge } from "@/components/ui/badge"
-import { TableCell, TableRow } from "@/components/ui/table"
 import { Link } from "@tanstack/react-router"
+import {
+  Mail,
+  MessageCircleQuestion,
+  MessageSquare,
+  User,
+  Users,
+} from "lucide-react"
 import type { SearchHit } from "../../client"
 
 interface SearchResultRowProps {
   result: SearchHit
 }
 
-const badgeClassByType: Record<SearchHit["type"], string> = {
-  user: "bg-green-500 text-white hover:bg-green-600",
-  group: "bg-purple-500 text-white hover:bg-purple-600",
-  letter: "bg-teal-500 text-white hover:bg-teal-600",
-  question: "bg-orange-500 text-white hover:bg-orange-600",
-  response: "bg-blue-500 text-white hover:bg-blue-600",
+const iconByType: Record<SearchHit["type"], typeof Mail> = {
+  user: User,
+  group: Users,
+  letter: Mail,
+  question: MessageCircleQuestion,
+  response: MessageSquare,
 }
 
 const labelByType: Record<SearchHit["type"], string> = {
@@ -24,25 +29,37 @@ const labelByType: Record<SearchHit["type"], string> = {
 }
 
 function SearchResultContent({ result }: SearchResultRowProps) {
+  const Icon = iconByType[result.type]
+
   return (
-    <div className="flex flex-col gap-2">
-      <div className="flex gap-2 items-center">
-        <Badge className={badgeClassByType[result.type]}>
-          {labelByType[result.type]}
-        </Badge>
-        <span className="font-medium">{result.title}</span>
+    <div className="flex items-start gap-3">
+      <Icon
+        className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground"
+        strokeWidth={1.5}
+      />
+      <div className="flex min-w-0 flex-1 flex-col gap-1">
+        <div className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-0.5">
+          <span className="text-sm font-medium">{result.title}</span>
+          <span className="text-xs text-muted-foreground">
+            {labelByType[result.type]}
+          </span>
+        </div>
+        {result.type === "response" && result.detail && (
+          <p className="text-xs text-muted-foreground line-clamp-2">
+            {result.detail}
+          </p>
+        )}
+        {result.subtitle && (
+          <p className="text-xs text-muted-foreground line-clamp-2">
+            {result.subtitle}
+          </p>
+        )}
+        {result.type !== "response" && result.detail && (
+          <p className="text-xs text-muted-foreground line-clamp-2">
+            {result.detail}
+          </p>
+        )}
       </div>
-      {result.type === "response" && result.detail && (
-        <p className="text-sm font-medium line-clamp-2">{result.detail}</p>
-      )}
-      {result.subtitle && (
-        <p className="text-sm text-muted-foreground line-clamp-2">
-          {result.subtitle}
-        </p>
-      )}
-      {result.type !== "response" && result.detail && (
-        <p className="text-sm text-muted-foreground/70">{result.detail}</p>
-      )}
     </div>
   )
 }
@@ -52,39 +69,27 @@ export function SearchResultRow({ result }: SearchResultRowProps) {
 
   if (result.href_loop_id) {
     return (
-      <TableRow className="cursor-pointer">
-        <TableCell>
-          <Link
-            to="/loops/$loopId"
-            params={{ loopId: result.href_loop_id }}
-            style={{ textDecoration: "none" }}
-          >
-            {content}
-          </Link>
-        </TableCell>
-      </TableRow>
+      <Link
+        to="/loops/$loopId"
+        params={{ loopId: result.href_loop_id }}
+        className="block rounded-md px-3 py-2.5 no-underline transition-colors hover:bg-accent"
+      >
+        {content}
+      </Link>
     )
   }
 
   if (result.href_group_id) {
     return (
-      <TableRow className="cursor-pointer">
-        <TableCell>
-          <Link
-            to="/groups/$groupId/loops"
-            params={{ groupId: result.href_group_id }}
-            style={{ textDecoration: "none" }}
-          >
-            {content}
-          </Link>
-        </TableCell>
-      </TableRow>
+      <Link
+        to="/groups/$groupId/loops"
+        params={{ groupId: result.href_group_id }}
+        className="block rounded-md px-3 py-2.5 no-underline transition-colors hover:bg-accent"
+      >
+        {content}
+      </Link>
     )
   }
 
-  return (
-    <TableRow>
-      <TableCell>{content}</TableCell>
-    </TableRow>
-  )
+  return <div className="rounded-md px-3 py-2.5">{content}</div>
 }

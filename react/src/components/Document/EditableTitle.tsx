@@ -93,11 +93,11 @@ export function EditableTitle({
   }
 
   const sizeClasses = {
-    sm: "text-xl",
-    md: "text-2xl",
-    lg: "text-3xl",
-    xl: "text-4xl",
-    "2xl": "text-5xl",
+    sm: "text-lg",
+    md: "text-xl",
+    lg: "text-2xl md:text-3xl",
+    xl: "text-3xl",
+    "2xl": "text-4xl",
   }
 
   const alignClasses = {
@@ -117,7 +117,7 @@ export function EditableTitle({
         className={cn(
           sizeClasses[size],
           alignClasses[textAlign],
-          "font-bold border-2 border-blue-400 dark:border-blue-500 bg-transparent px-3 py-2 h-auto focus-visible:ring-blue-400",
+          "h-auto rounded-md border-transparent bg-transparent px-2 py-1 font-display font-semibold tracking-tight shadow-none",
           color,
         )}
         disabled={isLoading}
@@ -127,7 +127,7 @@ export function EditableTitle({
 
   return (
     <div
-      className="relative w-full cursor-pointer group"
+      className="relative w-full cursor-pointer rounded-md transition-colors hover:bg-accent/50 focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-ring/30"
       onClick={handleStartEdit}
       onKeyDown={(e) => {
         if (e.key === "Enter" || e.key === " ") {
@@ -142,16 +142,15 @@ export function EditableTitle({
         className={cn(
           sizeClasses[size],
           alignClasses[textAlign],
-          "font-bold leading-tight break-words transition-colors duration-200 text-gray-800 dark:text-white group-hover:text-blue-400 dark:group-hover:text-blue-400",
+          "break-words border border-transparent px-2 py-1 font-display font-semibold tracking-tight",
           color,
         )}
       >
         {title}
       </h2>
-      <div className="absolute bottom-[-2px] left-0 right-0 h-0.5 bg-blue-300 dark:bg-blue-400 rounded-sm opacity-0 group-hover:opacity-60 transition-opacity duration-200" />
       {isLoading && (
         <div className="absolute top-1/2 -right-8 -translate-y-1/2">
-          <Loader2 className="h-4 w-4 animate-spin text-blue-500" />
+          <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
         </div>
       )}
     </div>
