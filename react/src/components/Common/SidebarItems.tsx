@@ -20,23 +20,21 @@ const items = [
 
 export default function SidebarItems({ onClose }: SidebarItemsProps) {
   return (
-    <nav className="flex flex-col gap-0.5">
+    <nav className="flex flex-col gap-px">
       {items.map((item) => (
         <Link
           key={item.name}
           to={item.path}
           onClick={onClose}
           className={cn(
-            "flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium text-foreground/70",
-            "transition-colors hover:bg-accent hover:text-accent-foreground",
+            "group flex items-center gap-2.5 rounded-md px-2.5 py-1.5 text-sm font-medium text-sidebar-foreground/75",
+            "transition-colors hover:bg-sidebar-accent hover:text-sidebar-foreground",
+            "data-[status=active]:bg-sidebar-accent data-[status=active]:font-semibold data-[status=active]:text-sidebar-accent-foreground",
           )}
-          activeProps={{
-            className: "bg-accent text-accent-foreground font-semibold",
-          }}
         >
-          <item.icon className="h-4 w-4 shrink-0" />
+          <item.icon className="h-4 w-4 shrink-0 text-sidebar-foreground/50 transition-colors group-hover:text-sidebar-foreground/80 group-data-[status=active]:text-sidebar-accent-foreground" />
           <span className="flex-1">{item.name}</span>
-          <kbd className="hidden text-[10px] font-mono text-muted-foreground lg:inline">
+          <kbd className="hidden border-none bg-transparent px-0 text-[0.625rem] text-sidebar-foreground/40 shadow-none lg:inline">
             {item.shortcut}
           </kbd>
         </Link>

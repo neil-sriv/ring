@@ -1,3 +1,4 @@
+import { Toaster } from "@/components/ui/sonner"
 import {
   QueryClient,
   QueryClientProvider,
@@ -5,7 +6,6 @@ import {
 } from "@tanstack/react-query"
 import { RouterProvider, createRouter } from "@tanstack/react-router"
 import ReactDOM from "react-dom/client"
-import { Toaster } from "sonner"
 import { routeTree } from "./routeTree.gen"
 
 import { StrictMode } from "react"
