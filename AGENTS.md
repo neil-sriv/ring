@@ -76,7 +76,8 @@ prod deploy:
   `https://ring.neilsriv.tech/api/v1/version` / `ring deploy status`).
 - **Do not invent laptop `ring deploy prod` for `ring-api`.** CI publishes
   images. That command defaults to `ring-llm` and confirms before
-  building `ring-api` / `ring-frontend`. Host rollout is
+  building `ring-api`. There is no frontend image — the SPA ships only
+  via Cloudflare Workers Builds. Host rollout is
   `deploy_host.sh` / Actions → **Deploy ring-api**.
 - **Incident freeze:** repo variable `DEPLOY_PAUSED=true` stops automatic
   EC2 rollouts; manual Deploy still works for rollback. Pick a prior SHA

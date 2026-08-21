@@ -4,7 +4,7 @@
 # Usage:
 #   ./dev_util/prod.sh                  # ring-api:latest
 #   ./dev_util/prod.sh <git-sha>        # ring-api:<sha> (deps / image pin)
-#   ./dev_util/prod.sh --image ring-api --image ring-frontend <sha>
+#   ./dev_util/prod.sh --image ring-api --image ring-llm <sha>
 #
 # This only swaps the image (deps + RING_BUILD_GIT_* + baked Python).
 # Prod no longer bind-mounts ./ring, so a SHA pull is a code rollback.

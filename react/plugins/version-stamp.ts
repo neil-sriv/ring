@@ -44,9 +44,9 @@ function readGitFromCli(): GitFields | null {
  * Identify the commit this bundle was built from.
  *
  * Cloudflare Workers Builds clones without a usable git history for our
- * purposes but injects WORKERS_CI_*, so that wins. The Docker frontend
- * image passes RING_GIT_* as build args. A laptop build falls back to the
- * git CLI.
+ * purposes but injects WORKERS_CI_*, so that wins. The ring CLI exports
+ * RING_GIT_* into the build environment (dev_util/git_meta.py). A laptop
+ * build falls back to the git CLI.
  */
 export function resolveBuildVersion(
   environ: NodeJS.ProcessEnv = process.env,

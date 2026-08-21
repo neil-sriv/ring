@@ -177,7 +177,8 @@ ring deploy prod -i ring-api -t "$(git rev-parse HEAD)"   # confirms first
 ```
 
 `ring deploy prod` defaults to `ring-llm` and prompts before building
-`ring-api` / `ring-frontend`. Prefer CI unless ECR or Actions is down.
+`ring-api`. Prefer CI unless ECR or Actions is down. There is no
+frontend image anymore — the SPA ships only via Workers Builds.
 
 ---
 
@@ -210,12 +211,17 @@ ring deploy prod -i ring-api -t "$(git rev-parse HEAD)"   # confirms first
 
 ## Optional leftovers (not required for CD)
 
-Prod SPA already comes from Cloudflare. These only tidy EC2:
+The EC2 frontend container is retired: `compose.prod.yml` no longer
+defines a `frontend` service, origin nginx returns 404 for non-API
+paths, and `ring-frontend` is out of the image tooling. `deploy_host.sh`
+runs compose with `--remove-orphans`, so the first backend deploy after
+that lands removes the old `ring-frontend` container from the host
+(`docker rm -f ring-frontend` on the box does it immediately).
+
+Still optional:
 
 - Delete unused `www.ring.*` Workers Routes or add DNS
-- Remove leftover `frontend` service from `compose.prod.yml` (~300MB)
-- Remove nginx SPA `proxy_pass` to `ring-frontend`
-- Drop `ring-frontend` from `IMAGE_TAG_NAMES` if unused
+- Delete the stale `ring-frontend` repository from ECR Public
 
 ---
 
@@ -227,7 +233,7 @@ Prod SPA already comes from Cloudflare. These only tidy EC2:
 | 2 | CI SHA-tagged `ring-api` images on `dev` | Done (#303) |
 | 3 | Push-button `Deploy ring-api` + `deploy_host.sh` | Done (#333) |
 | 4 | Auto-deploy after successful publish | Done (#334) |
-| 5 | Optional EC2 frontend cleanup | Open |
+| 5 | Optional EC2 frontend cleanup | Done |
 
 Incidents that shaped the design: attaching the domain to the Worker
 (swallowed `/api`); ECR cache needing OCI single-manifest export;

@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import json
-import os
 import subprocess
 from pathlib import Path
 from typing import Any
@@ -23,9 +22,7 @@ from dev_util.docker import (
     push,
     tag,
 )
-from dev_util.frontend import fe_build
 
-DEFAULT_VITE_API_URL = "https://ring.neilsriv.tech"
 DEFAULT_AWS_REGION = "us-east-1"
 ECR_PUBLIC_REGISTRY = "public.ecr.aws"
 MANUAL_DEPLOY_IMAGES = ("ring-llm",)
@@ -75,30 +72,11 @@ def _build_llm_image() -> None:
 
 @dev_command("prod", deploy)
 @click.option(
-    "--vite-api-url",
-    type=str,
-    default=DEFAULT_VITE_API_URL,
-    show_default=True,
-    help="VITE_API_URL build arg baked into the frontend image.",
-)
-@click.option(
-    "--maintenance-mode/--no-maintenance-mode",
-    default=False,
-    show_default=True,
-    help="VITE_MAINTENANCE_MODE build arg baked into the frontend image.",
-)
-@click.option(
     "--region",
     type=str,
     default=DEFAULT_AWS_REGION,
     show_default=True,
     help="AWS region used for the public ECR login.",
-)
-@click.option(
-    "--skip-fe-build",
-    is_flag=True,
-    default=False,
-    help="Skip the `ring fe build` step (use the existing react/dist).",
 )
 @click.option(
     "--skip-login",
@@ -123,10 +101,7 @@ def _build_llm_image() -> None:
 )
 def deploy_prod(
     ctx: click.Context,
-    vite_api_url: str,
-    maintenance_mode: bool,
     region: str,
-    skip_fe_build: bool,
     skip_login: bool,
     image: tuple[str, ...],
     extra_tag: tuple[str, ...],
@@ -136,39 +111,26 @@ def deploy_prod(
     """Build, tag, and push production images to public ECR.
 
     ring-api publishes via CI on push to dev and deploys via Deploy ring-api.
-    Frontend prod is Cloudflare. Only ring-llm still uses laptop builds.
+    Frontend prod is Cloudflare (no image). Only ring-llm uses laptop builds.
     """
     images = list(image) or list(MANUAL_DEPLOY_IMAGES)
     # Kept usable on purpose: if CI or ECR is down, a laptop build is the
     # only way to ship. Confirm rather than block.
-    for retired, reason in (
-        ("ring-api", "CI publishes it on every push to dev"),
-        ("ring-frontend", "prod frontend is Cloudflare Workers"),
-    ):
-        if retired in images:
-            click.confirm(
-                f"{retired} is no longer built from a laptop ({reason}). "
-                "Continue anyway?",
-                abort=True,
-            )
+    if "ring-api" in images:
+        click.confirm(
+            "ring-api is no longer built from a laptop (CI publishes it "
+            "on every push to dev). Continue anyway?",
+            abort=True,
+        )
     compose_services = [
         COMPOSE_SERVICE_BY_IMAGE[name]
         for name in images
         if name in COMPOSE_SERVICE_BY_IMAGE
     ]
 
-    if not skip_fe_build and "ring-frontend" in images:
-        ctx.invoke(fe_build)
-
-    build_env = {
-        **os.environ,
-        "VITE_API_URL": vite_api_url,
-        "VITE_MAINTENANCE_MODE": "true" if maintenance_mode else "false",
-    }
     if compose_services:
         subprocess_run(
             compose_starter("prod") + ["build", *compose_services],
-            env=build_env,
         )
     if "ring-llm" in images:
         _build_llm_image()
