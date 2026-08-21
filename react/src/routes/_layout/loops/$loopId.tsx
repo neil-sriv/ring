@@ -87,10 +87,7 @@ function IssueContent() {
             )}
           </div>
           {isGroupAdmin && loop.status !== "SENT" && (
-            <Button
-              variant="outline"
-              onClick={() => setEditLoopOpen(true)}
-            >
+            <Button variant="outline" onClick={() => setEditLoopOpen(true)}>
               Edit Loop
             </Button>
           )}

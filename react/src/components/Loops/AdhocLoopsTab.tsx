@@ -68,8 +68,7 @@ export function AdhocLoopsTab({
             No adhoc loops yet
           </h3>
           <p className="mt-1 max-w-sm text-sm text-muted-foreground">
-            Create your first adhoc loop to send a one-off letter to this
-            group.
+            Create your first adhoc loop to send a one-off letter to this group.
           </p>
         </div>
       )}

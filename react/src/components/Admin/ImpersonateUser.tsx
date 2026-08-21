@@ -134,11 +134,7 @@ const ImpersonateUser = ({ user, isOpen, onClose }: ImpersonateUserProps) => {
             <Button variant="outline" onClick={onCancel} type="button">
               Cancel
             </Button>
-            <Button
-              variant="destructive"
-              type="submit"
-              disabled={isSubmitting}
-            >
+            <Button variant="destructive" type="submit" disabled={isSubmitting}>
               {isSubmitting && <Loader2 className="h-4 w-4 animate-spin" />}
               Impersonate
             </Button>

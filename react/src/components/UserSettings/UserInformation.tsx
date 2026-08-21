@@ -20,7 +20,6 @@ import { emailPattern, formatApiErrorDetail } from "../../util/misc"
 import { subscribeToPush } from "../../util/notifications"
 
 import { Button } from "@/components/ui/button"
-import { Card, CardContent } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 
@@ -118,98 +117,112 @@ const UserInformation = () => {
   }
 
   return (
-    <div className="w-full">
-      <div className="flex flex-col gap-6">
-        <h3 className="text-sm font-semibold text-foreground">
-          User Information
-        </h3>
-        <Card className="w-full md:w-1/2">
-          <CardContent className="pt-6">
-            <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="name">Full name</Label>
-                {editMode ? (
-                  <Input
-                    id="name"
-                    {...register("name", { maxLength: 30 })}
-                    type="text"
-                  />
-                ) : (
-                  <p
-                    className={`py-2 ${
-                      !currentUser?.name
-                        ? "text-muted-foreground"
-                        : "text-foreground"
-                    }`}
-                  >
-                    {currentUser?.name || "N/A"}
-                  </p>
-                )}
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="email">Email</Label>
-                {editMode ? (
-                  <Input
-                    id="email"
-                    {...register("email", {
-                      required: "Email is required",
-                      pattern: emailPattern,
-                    })}
-                    type="email"
-                  />
-                ) : (
-                  <p className="py-2 text-foreground">{currentUser?.email}</p>
-                )}
-                {errors.email && (
-                  <p className="text-sm text-destructive">
-                    {errors.email.message}
-                  </p>
-                )}
-              </div>
-              <div className="flex gap-3">
-                {editMode ? (
-                  <Button
-                    type="submit"
-                    disabled={isSubmitting || !isDirty || !getValues("email")}
-                  >
-                    {isSubmitting && (
-                      <Loader2 className="h-4 w-4 animate-spin" />
-                    )}
-                    Save
-                  </Button>
-                ) : (
-                  <Button type="button" onClick={() => setEditMode(true)}>
-                    Edit
-                  </Button>
-                )}
-                {editMode && (
-                  <Button
-                    type="button"
-                    variant="outline"
-                    onClick={onCancel}
-                    disabled={isSubmitting}
-                  >
-                    Cancel
-                  </Button>
-                )}
-              </div>
-            </form>
-          </CardContent>
-        </Card>
-        <div className="space-y-2">
-          <Button
-            variant="outline"
-            type="button"
-            disabled={isEnablingNotifications}
-            onClick={() => {
-              void handleEnableNotifications()
-            }}
-          >
-            {isEnablingNotifications && (
-              <Loader2 className="h-4 w-4 animate-spin" />
+    <div className="flex w-full flex-col gap-10">
+      <section>
+        <h3 className="text-base font-semibold">My profile</h3>
+        <p className="mt-1 text-sm text-muted-foreground">
+          Your name and email, as other members see them.
+        </p>
+        <form
+          onSubmit={handleSubmit(onSubmit)}
+          className="mt-5 flex max-w-md flex-col gap-5"
+        >
+          <div className="flex flex-col gap-1.5">
+            <Label
+              htmlFor="name"
+              className={editMode ? undefined : "text-muted-foreground"}
+            >
+              Full name
+            </Label>
+            {editMode ? (
+              <Input
+                id="name"
+                {...register("name", { maxLength: 30 })}
+                type="text"
+              />
+            ) : (
+              <p
+                className={`text-sm ${
+                  !currentUser?.name
+                    ? "text-muted-foreground"
+                    : "text-foreground"
+                }`}
+              >
+                {currentUser?.name || "N/A"}
+              </p>
             )}
-            Enable Notifications
-          </Button>
+          </div>
+          <div className="flex flex-col gap-1.5">
+            <Label
+              htmlFor="email"
+              className={editMode ? undefined : "text-muted-foreground"}
+            >
+              Email
+            </Label>
+            {editMode ? (
+              <Input
+                id="email"
+                {...register("email", {
+                  required: "Email is required",
+                  pattern: emailPattern,
+                })}
+                type="email"
+              />
+            ) : (
+              <p className="text-sm text-foreground">{currentUser?.email}</p>
+            )}
+            {errors.email && (
+              <p className="text-xs text-destructive">{errors.email.message}</p>
+            )}
+          </div>
+          <div className="flex gap-3">
+            {editMode ? (
+              <Button
+                type="submit"
+                disabled={isSubmitting || !isDirty || !getValues("email")}
+              >
+                {isSubmitting && <Loader2 className="h-4 w-4 animate-spin" />}
+                Save
+              </Button>
+            ) : (
+              <Button type="button" onClick={() => setEditMode(true)}>
+                Edit
+              </Button>
+            )}
+            {editMode && (
+              <Button
+                type="button"
+                variant="outline"
+                onClick={onCancel}
+                disabled={isSubmitting}
+              >
+                Cancel
+              </Button>
+            )}
+          </div>
+        </form>
+      </section>
+      <section>
+        <h3 className="text-base font-semibold">Notifications</h3>
+        <p className="mt-1 text-sm text-muted-foreground">
+          Get a push notification in this browser when something new arrives.
+        </p>
+        <div className="mt-5 flex flex-col gap-1.5">
+          <div>
+            <Button
+              variant="outline"
+              type="button"
+              disabled={isEnablingNotifications}
+              onClick={() => {
+                void handleEnableNotifications()
+              }}
+            >
+              {isEnablingNotifications && (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              )}
+              Enable notifications
+            </Button>
+          </div>
           {notificationFeedback && (
             <p
               role="status"
@@ -226,7 +239,7 @@ const UserInformation = () => {
             </p>
           )}
         </div>
-      </div>
+      </section>
     </div>
   )
 }

@@ -46,13 +46,8 @@ function GroupTableBody() {
   if (groups.length === 0) {
     return (
       <div className="flex flex-col items-center rounded-lg border border-dashed px-6 py-16 text-center">
-        <Users
-          className="h-8 w-8 text-muted-foreground/60"
-          strokeWidth={1.5}
-        />
-        <h3 className="mt-4 font-display text-lg font-medium">
-          No groups yet
-        </h3>
+        <Users className="h-8 w-8 text-muted-foreground/60" strokeWidth={1.5} />
+        <h3 className="mt-4 font-display text-lg font-medium">No groups yet</h3>
         <p className="mt-1 max-w-sm text-sm text-muted-foreground">
           Create a group to invite friends and start a letter loop.
         </p>

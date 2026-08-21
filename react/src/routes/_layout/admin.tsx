@@ -41,9 +41,7 @@ const MembersTableBody = () => {
           <TableCell>
             <div className="flex items-center gap-2">
               <span
-                className={
-                  user.name ? "font-medium" : "text-muted-foreground"
-                }
+                className={user.name ? "font-medium" : "text-muted-foreground"}
               >
                 {user.name || "N/A"}
               </span>
