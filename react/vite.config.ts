@@ -18,7 +18,9 @@ const pwaOptions: Partial<VitePWAOptions> = {
   manifest: {
     name: process.env.ENVIRONMENT === "LOCAL" ? "Ring localhost" : "Ring",
     short_name: "Ring",
-    theme_color: "#051a3b",
+    // Warm paper — keep in sync with --color-background in src/app.css
+    theme_color: "#fbfaf7",
+    background_color: "#fbfaf7",
     icons: [
       {
         src: "/assets/images/pwa-192x192.png", // <== don't add slash, for testing
