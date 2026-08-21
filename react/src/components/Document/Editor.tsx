@@ -319,6 +319,7 @@ export const CollabEditor: React.FC<{
   const isUpdatingFromWebSocketRef = useRef<boolean>(false)
   const wsSendTimeoutRef = useRef<NodeJS.Timeout | null>(null)
   const pendingContentRef = useRef<string>("")
+  const syncGenerationRef = useRef(0)
   const onSyncErrorRef = useRef(onSyncError)
   onSyncErrorRef.current = onSyncError
 
@@ -549,6 +550,7 @@ export const CollabEditor: React.FC<{
         // Debounced sync to backend
         clearTimeout((window as any).syncTimeout)
         ;(window as any).syncTimeout = setTimeout(async () => {
+          const syncGeneration = ++syncGenerationRef.current
           onSavingChange?.(true)
           try {
             const accessToken = localStorage.getItem("access_token") ?? ""
@@ -569,9 +571,13 @@ export const CollabEditor: React.FC<{
             }
           } catch (error) {
             console.error("Failed to sync to backend:", error)
-            onSyncErrorRef.current?.()
+            if (syncGeneration === syncGenerationRef.current) {
+              onSyncErrorRef.current?.()
+            }
           } finally {
-            onSavingChange?.(false)
+            if (syncGeneration === syncGenerationRef.current) {
+              onSavingChange?.(false)
+            }
           }
         }, 1000)
       }

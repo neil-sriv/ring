@@ -98,9 +98,6 @@ function DocumentContentLoader() {
   }
 
   const handleEditingChange = (editing: boolean) => {
-    if (editing) {
-      setHasSyncError(false)
-    }
     setIsEditing(editing)
   }
 
@@ -154,13 +151,13 @@ function DocumentContentLoader() {
                   Syncing...
                 </span>
               </>
-            ) : hasSyncError ? (
-              <span className="text-sm text-red-600 dark:text-red-400">
-                Couldn't save
-              </span>
             ) : isEditing ? (
               <span className="text-sm text-orange-600 dark:text-orange-400">
                 Editing...
+              </span>
+            ) : hasSyncError ? (
+              <span className="text-sm text-red-600 dark:text-red-400">
+                Couldn't save
               </span>
             ) : (
               <span className="text-sm text-green-600 dark:text-green-400">
