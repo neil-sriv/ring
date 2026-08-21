@@ -12,6 +12,7 @@ import {
 } from "../../../client/@tanstack/react-query.gen"
 import DraftLoop from "../../../components/Loops/DraftLoop"
 import EditLetter from "../../../components/Loops/EditLoop"
+import { LoopReplyTracker } from "../../../components/Loops/LoopReplyTracker"
 import PublishedLoop from "../../../components/Loops/PublishedLoop"
 import AddQuestion from "../../../components/Question/AddQuestion"
 import GenerateQuestion from "../../../components/Question/GenerateQuestion"
@@ -51,6 +52,8 @@ function IssueContent() {
     readUserMePartiesMeGetQueryKey(),
   )
   const localDueDate = new Date(loop.send_at)
+  const isGroupAdmin =
+    group.admin.api_identifier === currentUser?.api_identifier
   const [editLoopOpen, setEditLoopOpen] = useState(false)
   const [addQuestionOpen, setAddQuestionOpen] = useState(false)
   const [generateQuestionOpen, setGenerateQuestionOpen] = useState(false)
@@ -71,15 +74,14 @@ function IssueContent() {
                     {group!.name}
                   </Link>
                 </h2>
-                {group.admin.api_identifier === currentUser?.api_identifier &&
-                  loop.status !== "SENT" && (
-                    <Button
-                      onClick={() => setEditLoopOpen(true)}
-                      className="absolute right-0 top-1/2 -translate-y-1/2"
-                    >
-                      Edit Loop
-                    </Button>
-                  )}
+                {isGroupAdmin && loop.status !== "SENT" && (
+                  <Button
+                    onClick={() => setEditLoopOpen(true)}
+                    className="absolute right-0 top-1/2 -translate-y-1/2"
+                  >
+                    Edit Loop
+                  </Button>
+                )}
               </div>
               {loop.title && (
                 <h2 className="text-lg font-semibold text-foreground sm:text-xl lg:text-2xl">
@@ -98,6 +100,8 @@ function IssueContent() {
               )}
             </div>
           </div>
+
+          {isGroupAdmin && <LoopReplyTracker loop={loop} />}
 
           {loop.status === "UPCOMING" && (
             <div className="flex w-full flex-wrap gap-4">
@@ -120,12 +124,7 @@ function IssueContent() {
             {loop.status === "SENT" ? (
               <PublishedLoop loop={loop} />
             ) : (
-              <DraftLoop
-                loop={loop}
-                isGroupAdmin={
-                  group.admin.api_identifier === currentUser?.api_identifier
-                }
-              />
+              <DraftLoop loop={loop} isGroupAdmin={isGroupAdmin} />
             )}
           </div>
         </div>
