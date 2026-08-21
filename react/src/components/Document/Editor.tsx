@@ -366,6 +366,9 @@ export const CollabEditor: React.FC<{
       wsRef.current = new WebSocket(notebookWsUrl)
 
       wsRef.current.onopen = () => {
+        if (cancelled) {
+          return
+        }
         hasConnectedOnceRef.current = true
         onConnectionChangeRef.current?.("connected")
       }
@@ -458,7 +461,9 @@ export const CollabEditor: React.FC<{
         if (cancelled) {
           return
         }
-        onConnectionChangeRef.current?.("reconnecting")
+        onConnectionChangeRef.current?.(
+          hasConnectedOnceRef.current ? "reconnecting" : "connecting",
+        )
         wsReconnectTimeoutRef.current = setTimeout(setupWebSocket, 1000)
       }
 
