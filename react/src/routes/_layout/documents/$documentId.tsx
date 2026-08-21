@@ -91,9 +91,9 @@ function DocumentContentLoader() {
 
   if (isDocumentLoading) {
     return (
-      <div className="w-full mt-8">
-        <div className="text-center py-8">
-          <Loader2 className="h-8 w-8 animate-spin mx-auto" />
+      <div className="mx-auto w-full max-w-3xl px-4 py-8 md:px-8">
+        <div className="flex justify-center py-16">
+          <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
         </div>
       </div>
     )
@@ -101,10 +101,10 @@ function DocumentContentLoader() {
 
   if (!document) {
     return (
-      <div className="w-full mt-8">
-        <div className="text-center py-8">
-          <p>Document not found</p>
-        </div>
+      <div className="mx-auto w-full max-w-3xl px-4 py-8 md:px-8">
+        <p className="py-16 text-center text-sm text-muted-foreground">
+          Document not found
+        </p>
       </div>
     )
   }
@@ -113,57 +113,59 @@ function DocumentContentLoader() {
   const isConnecting = wsStatus === "connecting"
 
   return (
-    <div className="w-full mt-8 px-4">
-      <div className="backdrop-blur-md bg-white/80 border border-white/20 dark:bg-gray-900/80 dark:border-gray-700/50 p-6 rounded-xl shadow-md mb-6">
-        <div className="flex justify-between items-center">
-          <EditableTitle
-            title={document.name}
-            onTitleChange={handleTitleChange}
-            isLoading={updateDocumentMutation.isPending}
-            size="lg"
-            textAlign="left"
-          />
+    <div className="mx-auto w-full max-w-3xl px-4 py-8 md:px-8">
+      <header className="border-b pb-4">
+        <div className="flex flex-wrap items-center justify-between gap-4">
+          <div className="min-w-0 flex-1">
+            <EditableTitle
+              title={document.name}
+              onTitleChange={handleTitleChange}
+              isLoading={updateDocumentMutation.isPending}
+              size="lg"
+              textAlign="left"
+            />
+          </div>
           <div
-            className="flex items-center gap-2 bg-white/20 px-3 py-1 rounded-md border border-white/30 dark:bg-white/10 dark:border-white/20"
+            className="flex shrink-0 items-center gap-1.5 text-xs text-muted-foreground"
             role="status"
             aria-live="polite"
           >
             {isReconnecting ? (
               <>
-                <Loader2 className="h-4 w-4 animate-spin text-amber-500" />
-                <span className="text-sm text-amber-700 dark:text-amber-400">
-                  Reconnecting...
-                </span>
+                <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-warning" />
+                <span className="text-warning">Reconnecting...</span>
               </>
             ) : isConnecting ? (
               <>
-                <Loader2 className="h-4 w-4 animate-spin text-blue-400" />
-                <span className="text-sm text-gray-700 dark:text-gray-300">
-                  Connecting...
-                </span>
+                <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-muted-foreground/60" />
+                <span>Connecting...</span>
               </>
             ) : isSaving ? (
               <>
-                <Loader2 className="h-4 w-4 animate-spin text-blue-400" />
-                <span className="text-sm text-gray-700 dark:text-gray-300">
-                  Syncing...
-                </span>
+                <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-muted-foreground/60" />
+                <span>Syncing...</span>
               </>
             ) : isEditing ? (
-              <span className="text-sm text-orange-600 dark:text-orange-400">
-                Editing...
-              </span>
+              <>
+                <span className="h-1.5 w-1.5 rounded-full bg-muted-foreground/60" />
+                <span>Editing...</span>
+              </>
             ) : (
-              <span className="text-sm text-green-600 dark:text-green-400">
-                Saved
-              </span>
+              <>
+                <span className="h-1.5 w-1.5 rounded-full bg-success" />
+                <span>Saved</span>
+              </>
             )}
           </div>
         </div>
-      </div>
-      <div className="backdrop-blur-md bg-white/80 border border-white/20 dark:bg-gray-900/80 dark:border-gray-700/50 p-6 rounded-xl shadow-md">
+      </header>
+      <div className="mt-2">
         <Suspense
-          fallback={<Loader2 className="h-8 w-8 animate-spin mx-auto" />}
+          fallback={
+            <div className="flex justify-center py-16">
+              <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+            </div>
+          }
         >
           <CollabEditor
             docId={documentId}

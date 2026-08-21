@@ -1,16 +1,14 @@
 import { createFileRoute } from "@tanstack/react-router"
-import { Loader2, Search as SearchIcon } from "lucide-react"
+import {
+  ArrowRight,
+  Loader2,
+  Search as SearchIcon,
+  SearchX,
+} from "lucide-react"
 import { useEffect, useRef, useState } from "react"
 
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import {
-  Table,
-  TableBody,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table"
 import { useQuery } from "@tanstack/react-query"
 import type { SearchHit } from "../../client"
 import { performSearchSearchSearchGetOptions } from "../../client/@tanstack/react-query.gen"
@@ -68,75 +66,77 @@ function SearchContent() {
     hasSubmittedSearch && !isPending && !isError && !hasResults
 
   return (
-    <div className="w-full">
-      <h2 className="text-2xl font-bold text-center md:text-left pt-12 px-4">
+    <div className="mx-auto w-full max-w-3xl px-4 py-8 md:px-8">
+      <h1 className="font-display text-2xl font-semibold tracking-tight md:text-3xl">
         Search
-      </h2>
-      <div className="flex py-8 px-4">
-        <div className="relative w-full">
-          <Input
-            ref={searchInputRef}
-            type="text"
-            placeholder="Search..."
-            className="h-12 pr-12"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === "Enter") {
-                handleSearch()
-              }
-            }}
-          />
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={handleSearch}
-            disabled={!searchQuery.trim()}
-            className="absolute right-1 top-1/2 -translate-y-1/2"
-          >
-            {isFetching ? (
-              <Loader2 className="h-5 w-5 animate-spin" />
-            ) : (
-              <SearchIcon className="h-5 w-5" />
-            )}
-          </Button>
-        </div>
+      </h1>
+      <div className="relative mt-6">
+        <SearchIcon className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+        <Input
+          ref={searchInputRef}
+          type="text"
+          placeholder="Search..."
+          className="h-11 pl-10 pr-12"
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === "Enter") {
+              handleSearch()
+            }
+          }}
+        />
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={handleSearch}
+          disabled={!searchQuery.trim()}
+          className="absolute right-1 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+        >
+          {isFetching ? (
+            <Loader2 className="h-4 w-4 animate-spin" />
+          ) : (
+            <ArrowRight className="h-4 w-4" />
+          )}
+        </Button>
       </div>
 
       {showInitialLoading && (
-        <div className="flex justify-center items-center gap-2 p-8 text-muted-foreground">
-          <Loader2 className="h-5 w-5 animate-spin" />
+        <div className="flex items-center justify-center gap-2 py-12 text-sm text-muted-foreground">
+          <Loader2 className="h-4 w-4 animate-spin" />
           <span>Searching...</span>
         </div>
       )}
 
       {hasSubmittedSearch && !isPending && isError && (
-        <div className="px-4 text-sm text-destructive">
+        <div className="mt-6 text-sm text-destructive">
           Search failed
           {error instanceof Error && error.message ? `: ${error.message}` : "."}
         </div>
       )}
 
       {hasEmptyResults && (
-        <div className="px-4 text-sm text-muted-foreground">
-          No results found for "{submittedQuery}".
+        <div className="mt-6 flex flex-col items-center rounded-lg border border-dashed px-6 py-16 text-center">
+          <SearchX
+            className="h-8 w-8 text-muted-foreground/60"
+            strokeWidth={1.5}
+          />
+          <h3 className="mt-4 font-display text-lg font-medium">No results</h3>
+          <p className="mt-1 max-w-sm text-sm text-muted-foreground">
+            No results found for "{submittedQuery}".
+          </p>
         </div>
       )}
 
       {hasResults && searchResults && (
-        <div className="px-4 overflow-auto">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Result</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {searchResults.results.map((result: SearchHit) => (
-                <SearchResultRow key={result.api_identifier} result={result} />
-              ))}
-            </TableBody>
-          </Table>
+        <div className="mt-6">
+          <p className="px-3 text-xs text-muted-foreground">
+            {searchResults.total} result{searchResults.total === 1 ? "" : "s"}
+          </p>
+          <div className="mt-2 flex flex-col gap-0.5">
+            {searchResults.results.map((result: SearchHit) => (
+              <SearchResultRow key={result.api_identifier} result={result} />
+            ))}
+          </div>
         </div>
       )}
     </div>

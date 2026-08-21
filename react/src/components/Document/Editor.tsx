@@ -6,6 +6,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip"
 import { apiUrl, wsUrl } from "@/lib/apiUrl"
+import { cn } from "@/lib/utils"
 import Placeholder from "@tiptap/extension-placeholder"
 import { TextStyleKit } from "@tiptap/extension-text-style"
 import type { Editor } from "@tiptap/react"
@@ -31,6 +32,13 @@ import type React from "react"
 import { useEffect, useRef } from "react"
 
 export type NotebookWsStatus = "connecting" | "connected" | "reconnecting"
+
+function toolbarButtonClass(isActive = false) {
+  return cn(
+    "h-8 w-8 px-0 text-muted-foreground hover:bg-accent hover:text-foreground",
+    isActive && "bg-accent text-foreground",
+  )
+}
 
 function MenuBar({ editor }: { editor: Editor }) {
   const editorState = useEditorState({
@@ -60,17 +68,18 @@ function MenuBar({ editor }: { editor: Editor }) {
   })
 
   return (
-    <div className="p-3 border-b border-gray-200 bg-gray-50 dark:bg-gray-700 dark:border-gray-600">
+    <div className="rounded-lg border bg-card p-1">
       <TooltipProvider>
-        <div className="flex flex-wrap gap-2">
+        <div className="flex flex-wrap items-center gap-0.5">
           {/* Text Formatting */}
-          <div className="flex gap-1">
+          <div className="flex gap-0.5">
             <Tooltip>
               <TooltipTrigger asChild>
                 <Button
                   type="button"
                   size="sm"
-                  variant={editorState.isBold ? "default" : "outline"}
+                  variant="ghost"
+                  className={toolbarButtonClass(editorState.isBold)}
                   onClick={() => editor.chain().focus().toggleBold().run()}
                   disabled={!editorState.canBold}
                 >
@@ -84,7 +93,8 @@ function MenuBar({ editor }: { editor: Editor }) {
                 <Button
                   type="button"
                   size="sm"
-                  variant={editorState.isItalic ? "default" : "outline"}
+                  variant="ghost"
+                  className={toolbarButtonClass(editorState.isItalic)}
                   onClick={() => editor.chain().focus().toggleItalic().run()}
                   disabled={!editorState.canItalic}
                 >
@@ -98,7 +108,8 @@ function MenuBar({ editor }: { editor: Editor }) {
                 <Button
                   type="button"
                   size="sm"
-                  variant={editorState.isStrike ? "default" : "outline"}
+                  variant="ghost"
+                  className={toolbarButtonClass(editorState.isStrike)}
                   onClick={() => editor.chain().focus().toggleStrike().run()}
                   disabled={!editorState.canStrike}
                 >
@@ -112,7 +123,8 @@ function MenuBar({ editor }: { editor: Editor }) {
                 <Button
                   type="button"
                   size="sm"
-                  variant={editorState.isCode ? "default" : "outline"}
+                  variant="ghost"
+                  className={toolbarButtonClass(editorState.isCode)}
                   onClick={() => editor.chain().focus().toggleCode().run()}
                   disabled={!editorState.canCode}
                 >
@@ -123,14 +135,17 @@ function MenuBar({ editor }: { editor: Editor }) {
             </Tooltip>
           </div>
 
+          <div className="mx-1 h-5 w-px bg-border" />
+
           {/* Headings */}
-          <div className="flex gap-1">
+          <div className="flex gap-0.5">
             <Tooltip>
               <TooltipTrigger asChild>
                 <Button
                   type="button"
                   size="sm"
-                  variant={editorState.isParagraph ? "default" : "outline"}
+                  variant="ghost"
+                  className={toolbarButtonClass(editorState.isParagraph)}
                   onClick={() => editor.chain().focus().setParagraph().run()}
                 >
                   <Pilcrow className="h-4 w-4" />
@@ -143,7 +158,8 @@ function MenuBar({ editor }: { editor: Editor }) {
                 <Button
                   type="button"
                   size="sm"
-                  variant={editorState.isHeading1 ? "default" : "outline"}
+                  variant="ghost"
+                  className={toolbarButtonClass(editorState.isHeading1)}
                   onClick={() =>
                     editor.chain().focus().toggleHeading({ level: 1 }).run()
                   }
@@ -158,7 +174,8 @@ function MenuBar({ editor }: { editor: Editor }) {
                 <Button
                   type="button"
                   size="sm"
-                  variant={editorState.isHeading2 ? "default" : "outline"}
+                  variant="ghost"
+                  className={toolbarButtonClass(editorState.isHeading2)}
                   onClick={() =>
                     editor.chain().focus().toggleHeading({ level: 2 }).run()
                   }
@@ -173,7 +190,8 @@ function MenuBar({ editor }: { editor: Editor }) {
                 <Button
                   type="button"
                   size="sm"
-                  variant={editorState.isHeading3 ? "default" : "outline"}
+                  variant="ghost"
+                  className={toolbarButtonClass(editorState.isHeading3)}
                   onClick={() =>
                     editor.chain().focus().toggleHeading({ level: 3 }).run()
                   }
@@ -185,14 +203,17 @@ function MenuBar({ editor }: { editor: Editor }) {
             </Tooltip>
           </div>
 
+          <div className="mx-1 h-5 w-px bg-border" />
+
           {/* Lists and Blocks */}
-          <div className="flex gap-1">
+          <div className="flex gap-0.5">
             <Tooltip>
               <TooltipTrigger asChild>
                 <Button
                   type="button"
                   size="sm"
-                  variant={editorState.isBulletList ? "default" : "outline"}
+                  variant="ghost"
+                  className={toolbarButtonClass(editorState.isBulletList)}
                   onClick={() =>
                     editor.chain().focus().toggleBulletList().run()
                   }
@@ -207,7 +228,8 @@ function MenuBar({ editor }: { editor: Editor }) {
                 <Button
                   type="button"
                   size="sm"
-                  variant={editorState.isOrderedList ? "default" : "outline"}
+                  variant="ghost"
+                  className={toolbarButtonClass(editorState.isOrderedList)}
                   onClick={() =>
                     editor.chain().focus().toggleOrderedList().run()
                   }
@@ -222,7 +244,8 @@ function MenuBar({ editor }: { editor: Editor }) {
                 <Button
                   type="button"
                   size="sm"
-                  variant={editorState.isCodeBlock ? "default" : "outline"}
+                  variant="ghost"
+                  className={toolbarButtonClass(editorState.isCodeBlock)}
                   onClick={() => editor.chain().focus().toggleCodeBlock().run()}
                 >
                   <Code className="h-4 w-4" />
@@ -235,7 +258,8 @@ function MenuBar({ editor }: { editor: Editor }) {
                 <Button
                   type="button"
                   size="sm"
-                  variant={editorState.isBlockquote ? "default" : "outline"}
+                  variant="ghost"
+                  className={toolbarButtonClass(editorState.isBlockquote)}
                   onClick={() =>
                     editor.chain().focus().toggleBlockquote().run()
                   }
@@ -250,7 +274,8 @@ function MenuBar({ editor }: { editor: Editor }) {
                 <Button
                   type="button"
                   size="sm"
-                  variant="outline"
+                  variant="ghost"
+                  className={toolbarButtonClass()}
                   onClick={() =>
                     editor.chain().focus().setHorizontalRule().run()
                   }
@@ -262,14 +287,17 @@ function MenuBar({ editor }: { editor: Editor }) {
             </Tooltip>
           </div>
 
+          <div className="mx-1 h-5 w-px bg-border" />
+
           {/* History */}
-          <div className="flex gap-1">
+          <div className="flex gap-0.5">
             <Tooltip>
               <TooltipTrigger asChild>
                 <Button
                   type="button"
                   size="sm"
-                  variant="outline"
+                  variant="ghost"
+                  className={toolbarButtonClass()}
                   onClick={() => editor.chain().focus().undo().run()}
                   disabled={!editorState.canUndo}
                 >
@@ -283,7 +311,8 @@ function MenuBar({ editor }: { editor: Editor }) {
                 <Button
                   type="button"
                   size="sm"
-                  variant="outline"
+                  variant="ghost"
+                  className={toolbarButtonClass()}
                   onClick={() => editor.chain().focus().redo().run()}
                   disabled={!editorState.canRedo}
                 >
@@ -586,31 +615,47 @@ export const CollabEditor: React.FC<{
   })
 
   if (!editor) {
-    return <div className="text-center py-8">Initializing editor...</div>
+    return (
+      <div className="py-8 text-center text-sm text-muted-foreground">
+        Initializing editor...
+      </div>
+    )
   }
 
   return (
-    <div className="min-h-screen">
-      <div className="bg-gray-50 rounded-lg p-6 border border-gray-200 shadow-sm transition-all duration-200 dark:bg-gray-800 dark:border-gray-600 focus-within:border-blue-400 focus-within:ring-1 focus-within:ring-blue-400">
-        <MenuBar editor={editor} />
-        <EditorContent
-          editor={editor}
-          style={{
-            minHeight: "400px",
-            fontSize: "16px",
-            lineHeight: "1.6",
-            outline: "none",
-          }}
-        />
-        <style
-          // biome-ignore lint/security/noDangerouslySetInnerHtml: Required to style ProseMirror document content reliably.
-          dangerouslySetInnerHTML={{
-            __html: `
+    <div>
+      <MenuBar editor={editor} />
+      <EditorContent
+        editor={editor}
+        style={{
+          minHeight: "400px",
+          fontSize: "16px",
+          lineHeight: "1.6",
+          outline: "none",
+        }}
+      />
+      <style
+        // biome-ignore lint/security/noDangerouslySetInnerHtml: Required to style ProseMirror document content reliably.
+        dangerouslySetInnerHTML={{
+          __html: `
                         .prosemirror-editor {
                             min-height: 400px;
-                            padding: 1rem;
+                            padding: 1rem 0.5rem;
+                            color: var(--color-foreground);
                         }
-                        
+
+                        .prosemirror-editor ::selection {
+                            background-color: color-mix(in oklab, var(--color-primary) 20%, transparent);
+                        }
+
+                        .prosemirror-editor p.is-editor-empty:first-child::before {
+                            content: attr(data-placeholder);
+                            float: left;
+                            height: 0;
+                            pointer-events: none;
+                            color: var(--color-muted-foreground);
+                        }
+
                         .prosemirror-editor h1,
                         .prosemirror-editor h2,
                         .prosemirror-editor h3,
@@ -620,98 +665,104 @@ export const CollabEditor: React.FC<{
                             line-height: 1.1;
                             margin-top: 2rem;
                             margin-bottom: 1rem;
-                            font-weight: bold;
+                            font-weight: 600;
                         }
-                        
+
+                        .prosemirror-editor h1,
+                        .prosemirror-editor h2 {
+                            font-family: var(--font-display);
+                            letter-spacing: -0.025em;
+                        }
+
                         .prosemirror-editor h1 {
                             font-size: 1.8rem;
                             margin-top: 2.5rem;
                         }
-                        
+
                         .prosemirror-editor h2 {
                             font-size: 1.5rem;
                             margin-top: 2rem;
                         }
-                        
+
                         .prosemirror-editor h3 {
                             font-size: 1.3rem;
                         }
-                        
+
                         .prosemirror-editor h4 {
                             font-size: 1.2rem;
                         }
-                        
+
                         .prosemirror-editor h5 {
                             font-size: 1.1rem;
                         }
-                        
+
                         .prosemirror-editor h6 {
                             font-size: 1rem;
                         }
-                        
+
                         .prosemirror-editor ul,
                         .prosemirror-editor ol {
                             padding-left: 1.5rem;
                             margin: 1rem 0;
                         }
-                        
+
                         .prosemirror-editor li {
                             margin: 0.25rem 0;
                         }
-                        
+
                         .prosemirror-editor code {
-                            background-color: rgba(0, 0, 0, 0.1);
+                            background-color: var(--color-muted);
                             border-radius: 0.25rem;
                             padding: 0.125rem 0.25rem;
-                            font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+                            font-family: var(--font-mono);
                             font-size: 0.9em;
                         }
-                        
+
                         .prosemirror-editor pre {
-                            background-color: rgba(0, 0, 0, 0.05);
+                            background-color: var(--color-muted);
                             border-radius: 0.5rem;
                             padding: 1rem;
                             margin: 1rem 0;
                             overflow-x: auto;
                         }
-                        
+
                         .prosemirror-editor pre code {
                             background: none;
                             padding: 0;
                         }
-                        
+
                         .prosemirror-editor blockquote {
-                            border-left: 3px solid #e2e8f0;
+                            border-left: 3px solid var(--color-border);
                             margin: 1rem 0;
                             padding-left: 1rem;
                             font-style: italic;
+                            color: var(--color-muted-foreground);
                         }
-                        
+
                         .prosemirror-editor hr {
                             border: none;
-                            border-top: 1px solid #e2e8f0;
+                            border-top: 1px solid var(--color-border);
                             margin: 2rem 0;
                         }
-                        
+
                         .prosemirror-editor p {
                             margin: 0.5rem 0;
                         }
-                        
+
                         .prosemirror-editor strong {
                             font-weight: bold;
                         }
-                        
+
                         .prosemirror-editor em {
                             font-style: italic;
                         }
-                        
+
                         .prosemirror-editor s {
                             text-decoration: line-through;
                         }
                     `,
-          }}
-        />
-      </div>
+        }}
+      />
     </div>
   )
 }
