@@ -1,16 +1,13 @@
 import { useMutation } from "@tanstack/react-query"
-import { createFileRoute, useNavigate } from "@tanstack/react-router"
+import {
+  Link as RouterLink,
+  createFileRoute,
+  useNavigate,
+} from "@tanstack/react-router"
 import { Loader2 } from "lucide-react"
 import { type SubmitHandler, useForm } from "react-hook-form"
 
 import { Button } from "@/components/ui/button"
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import type { AxiosError } from "axios"
@@ -77,70 +74,78 @@ function ResetPassword() {
   }
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-primary/10 via-background to-muted p-4">
-      <Card className="w-full max-w-sm">
-        <CardHeader className="text-center">
-          <CardTitle className="text-2xl font-bold tracking-tight text-primary">
-            Reset Password
-          </CardTitle>
-          <CardDescription>
-            Please enter your new password and confirm it to reset your
-            password.
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <form
-            onSubmit={handleSubmit(onSubmit)}
-            className="flex flex-col gap-4"
+    <div className="flex min-h-screen flex-col items-center justify-center bg-background px-4">
+      <div className="w-full max-w-sm">
+        <div className="text-center">
+          <RouterLink
+            to="/"
+            className="font-display text-3xl font-semibold tracking-tight text-foreground"
           >
-            <div className="space-y-2">
-              <Label htmlFor="password">New Password</Label>
-              <Input
-                id="password"
-                {...register("new_password", passwordRules())}
-                placeholder="Password"
-                type="password"
-                className={errors.new_password ? "border-destructive" : ""}
-              />
-              {errors.new_password && (
-                <p className="text-sm text-destructive">
-                  {errors.new_password.message}
-                </p>
-              )}
-            </div>
+            Ring
+          </RouterLink>
+          <h1 className="mt-6 text-lg font-semibold">Choose a new password</h1>
+          <p className="mt-1 text-sm text-muted-foreground">
+            Enter and confirm the new password for your account.
+          </p>
+        </div>
+        <form
+          onSubmit={handleSubmit(onSubmit)}
+          className="mt-8 flex flex-col gap-5"
+        >
+          <div className="flex flex-col gap-1.5">
+            <Label htmlFor="password">New Password</Label>
+            <Input
+              id="password"
+              {...register("new_password", passwordRules())}
+              placeholder="Password"
+              type="password"
+              className={errors.new_password ? "border-destructive" : ""}
+            />
+            {errors.new_password && (
+              <p className="text-xs text-destructive">
+                {errors.new_password.message}
+              </p>
+            )}
+          </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="confirm_password">Confirm Password</Label>
-              <Input
-                id="confirm_password"
-                {...register(
-                  "confirm_password",
-                  confirmPasswordRules(getValues),
-                )}
-                placeholder="Confirm password"
-                type="password"
-                className={errors.confirm_password ? "border-destructive" : ""}
-              />
-              {errors.confirm_password && (
-                <p className="text-sm text-destructive">
-                  {errors.confirm_password.message}
-                </p>
+          <div className="flex flex-col gap-1.5">
+            <Label htmlFor="confirm_password">Confirm Password</Label>
+            <Input
+              id="confirm_password"
+              {...register(
+                "confirm_password",
+                confirmPasswordRules(getValues),
               )}
-            </div>
+              placeholder="Confirm password"
+              type="password"
+              className={errors.confirm_password ? "border-destructive" : ""}
+            />
+            {errors.confirm_password && (
+              <p className="text-xs text-destructive">
+                {errors.confirm_password.message}
+              </p>
+            )}
+          </div>
 
-            <Button
-              type="submit"
-              disabled={mutation.isPending}
-              className="w-full"
+          <Button
+            type="submit"
+            disabled={mutation.isPending}
+            className="w-full"
+          >
+            {mutation.isPending && <Loader2 className="h-4 w-4 animate-spin" />}
+            Reset Password
+          </Button>
+
+          <div className="text-center">
+            <RouterLink
+              to="/login"
+              className="text-sm text-muted-foreground underline-offset-4 hover:text-foreground hover:underline"
             >
-              {mutation.isPending && (
-                <Loader2 className="h-4 w-4 animate-spin" />
-              )}
-              Reset Password
-            </Button>
-          </form>
-        </CardContent>
-      </Card>
+              Back to login
+            </RouterLink>
+          </div>
+        </form>
+      </div>
     </div>
   )
 }

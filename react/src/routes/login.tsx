@@ -8,13 +8,6 @@ import { useState } from "react"
 import { type SubmitHandler, useForm } from "react-hook-form"
 
 import { Button } from "@/components/ui/button"
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import type { BodyLoginAccessTokenLoginAccessTokenPost as AccessToken } from "../client"
@@ -108,80 +101,84 @@ function Login() {
   }
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-primary/10 via-background to-muted p-4">
-      <Card className="w-full max-w-sm">
-        <CardHeader className="text-center">
-          <CardTitle className="text-2xl font-bold tracking-tight">
-            Login
-          </CardTitle>
-          <CardDescription>Enter your credentials</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <form
-            onSubmit={handleSubmit(onSubmit)}
-            className="flex flex-col gap-4"
+    <div className="flex min-h-screen flex-col items-center justify-center bg-background px-4">
+      <div className="w-full max-w-sm">
+        <div className="text-center">
+          <RouterLink
+            to="/"
+            className="font-display text-3xl font-semibold tracking-tight text-foreground"
           >
-            <div className="space-y-2">
-              <Label htmlFor="username">Email</Label>
+            Ring
+          </RouterLink>
+          <h1 className="mt-6 text-lg font-semibold">Welcome back</h1>
+          <p className="mt-1 text-sm text-muted-foreground">
+            Sign in to read and write your letters.
+          </p>
+        </div>
+        <form
+          onSubmit={handleSubmit(onSubmit)}
+          className="mt-8 flex flex-col gap-5"
+        >
+          <div className="flex flex-col gap-1.5">
+            <Label htmlFor="username">Email</Label>
+            <Input
+              id="username"
+              {...register("username", {
+                pattern: emailPattern,
+              })}
+              placeholder="you@example.com"
+              type="email"
+              required
+              className={errors.username || error ? "border-destructive" : ""}
+            />
+            {errors.username && (
+              <p className="text-xs text-destructive">
+                {errors.username.message}
+              </p>
+            )}
+          </div>
+
+          <div className="flex flex-col gap-1.5">
+            <Label htmlFor="password">Password</Label>
+            <div className="relative">
               <Input
-                id="username"
-                {...register("username", {
-                  pattern: emailPattern,
-                })}
-                placeholder="you@example.com"
-                type="email"
+                id="password"
+                {...register("password")}
+                type={showPassword ? "text" : "password"}
+                placeholder="Password"
                 required
-                className={errors.username || error ? "border-destructive" : ""}
+                className={error ? "border-destructive pr-10" : "pr-10"}
               />
-              {errors.username && (
-                <p className="text-sm text-destructive">
-                  {errors.username.message}
-                </p>
-              )}
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="password">Password</Label>
-              <div className="relative">
-                <Input
-                  id="password"
-                  {...register("password")}
-                  type={showPassword ? "text" : "password"}
-                  placeholder="Password"
-                  required
-                  className={error ? "border-destructive pr-10" : "pr-10"}
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
-                >
-                  {showPassword ? (
-                    <EyeOff className="h-4 w-4" />
-                  ) : (
-                    <Eye className="h-4 w-4" />
-                  )}
-                </button>
-              </div>
-              {error && <p className="text-sm text-destructive">{error}</p>}
-            </div>
-
-            <div className="text-center">
-              <RouterLink
-                to="/reset-password"
-                className="text-sm text-primary hover:text-primary/80 transition-colors"
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
               >
-                Forgot password?
-              </RouterLink>
+                {showPassword ? (
+                  <EyeOff className="h-4 w-4" />
+                ) : (
+                  <Eye className="h-4 w-4" />
+                )}
+              </button>
             </div>
+            {error && <p className="text-xs text-destructive">{error}</p>}
+          </div>
 
-            <Button type="submit" disabled={isSubmitting} className="w-full">
-              {isSubmitting && <Loader2 className="h-4 w-4 animate-spin" />}
-              Sign In
-            </Button>
-          </form>
-        </CardContent>
-      </Card>
+          <Button type="submit" disabled={isSubmitting} className="w-full">
+            {isSubmitting && <Loader2 className="h-4 w-4 animate-spin" />}
+            Sign In
+          </Button>
+
+          <div className="text-center">
+            <RouterLink
+              to="/reset-password"
+              className="text-sm text-muted-foreground underline-offset-4 hover:text-foreground hover:underline"
+            >
+              Forgot password?
+            </RouterLink>
+          </div>
+        </form>
+      </div>
     </div>
   )
 }
