@@ -56,7 +56,7 @@ function DraftSaveStatusLine({ status }: { status: DraftSaveStatus }) {
     case "saving":
       return (
         <div
-          className="mt-1 flex items-center gap-1.5 text-sm text-muted-foreground"
+          className="mt-1.5 flex items-center gap-1.5 text-xs text-muted-foreground"
           role="status"
           aria-live="polite"
         >
@@ -67,18 +67,18 @@ function DraftSaveStatusLine({ status }: { status: DraftSaveStatus }) {
     case "saved":
       return (
         <div
-          className="mt-1 flex items-center gap-1.5 text-sm text-green-600 dark:text-green-400"
+          className="mt-1.5 flex items-center gap-1.5 text-xs text-muted-foreground"
           role="status"
           aria-live="polite"
         >
-          <Check className="h-3.5 w-3.5" />
+          <Check className="h-3.5 w-3.5 text-success" />
           Saved
         </div>
       )
     case "error":
       return (
         <div
-          className="mt-1 flex items-center gap-1.5 text-sm text-destructive"
+          className="mt-1.5 flex items-center gap-1.5 text-xs text-destructive"
           role="status"
           aria-live="polite"
         >
@@ -234,18 +234,20 @@ function ResponseBlock(props: ResponseBlockProps) {
   const isSaving = saveStatus === "saving"
 
   return (
-    <div className="my-2.5">
-      <Textarea
-        ref={textareaRef}
-        value={responseText}
-        onChange={handleResponseChange}
-        disabled={props.readOnly}
-        placeholder={isSaving ? "Saving..." : "Type your response..."}
-        className={`overflow-hidden resize-none bg-muted transition-opacity duration-200 ${
-          isSaving ? "opacity-70" : "opacity-100"
-        }`}
-      />
-      {!props.readOnly && <DraftSaveStatusLine status={saveStatus} />}
+    <div className="mt-4 space-y-3">
+      <div>
+        <Textarea
+          ref={textareaRef}
+          value={responseText}
+          onChange={handleResponseChange}
+          disabled={props.readOnly}
+          placeholder={isSaving ? "Saving..." : "Type your response..."}
+          className={`overflow-hidden resize-none transition-opacity duration-200 ${
+            isSaving ? "opacity-70" : "opacity-100"
+          }`}
+        />
+        {!props.readOnly && <DraftSaveStatusLine status={saveStatus} />}
+      </div>
       {!props.readOnly && (
         <SingleUploadImage
           onUpdateFile={props.uploadFunction}
@@ -504,20 +506,23 @@ function DraftQuestion({
   }
 
   return (
-    <div className="my-5">
-      <div className="flex justify-between items-center">
-        {question.author == null ? (
-          <h3 className="text-lg font-semibold">{question.question_text}</h3>
-        ) : (
-          <h3 className="text-lg font-semibold">
-            {question.author.name} asked: {question.question_text}
+    <div className="border-b py-6 first:pt-0 last:border-b-0">
+      <div className="flex items-start justify-between gap-3">
+        <div className="min-w-0 space-y-1">
+          {question.author != null && (
+            <p className="text-xs text-muted-foreground">
+              {question.author.name} asked:
+            </p>
+          )}
+          <h3 className="font-display text-lg font-medium leading-relaxed">
+            {question.question_text}
           </h3>
-        )}
+        </div>
         {canDelete && readOnly && (
           <Button
             variant="ghost"
             size="sm"
-            className="text-destructive hover:text-destructive hover:bg-destructive/10"
+            className="shrink-0 text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
             onClick={() => setDeleteOpen(true)}
           >
             <Trash2 className="mr-2 h-4 w-4" />

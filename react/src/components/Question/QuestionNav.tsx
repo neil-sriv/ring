@@ -1,5 +1,5 @@
 import { Button } from "@/components/ui/button"
-import { Plus } from "lucide-react"
+import { Plus, Sparkles } from "lucide-react"
 import { useState } from "react"
 
 import type { GroupLinked, PublicLetter } from "../../client"
@@ -24,21 +24,20 @@ function QuestionNav(props: QuestionNavProps): JSX.Element {
   }
   return (
     <>
-      <div className="flex gap-4 flex-wrap">
+      <div className="flex flex-wrap gap-3">
         {props.loop.status === "UPCOMING" && (
-          <Button
-            className="gap-1 text-sm md:text-base whitespace-normal text-left h-auto py-2 hover:-translate-y-0.5 transition-all duration-200"
-            onClick={() => onClickAddQuestion()}
-          >
+          <Button onClick={() => onClickAddQuestion()}>
             <Plus className="h-4 w-4" /> Add new question
           </Button>
         )}
         {props.loop.status === "UPCOMING" && (
           <Button
-            className="gap-1 text-sm md:text-base whitespace-normal text-left h-auto py-2 hover:-translate-y-0.5 transition-all duration-200"
+            variant="outline"
+            className="h-auto whitespace-normal py-2 text-left"
             onClick={() => onClickGenerateQuestion()}
           >
-            <Plus className="h-4 w-4" /> Ask ChatGPT to generate a question.
+            <Sparkles className="h-4 w-4 text-muted-foreground" /> Ask ChatGPT
+            to generate a question.
           </Button>
         )}
 

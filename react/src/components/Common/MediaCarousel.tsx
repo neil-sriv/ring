@@ -120,9 +120,10 @@ export function MediaCarousel({ items, className }: MediaCarouselProps) {
           <Button
             type="button"
             size="icon"
-            variant="outline"
+            variant="ghost"
             className={cn(
-              "absolute left-1 top-1/2 -translate-y-1/2",
+              "absolute left-2 top-1/2 h-8 w-8 -translate-y-1/2 rounded-full",
+              "bg-black/50 text-white hover:bg-black/70 hover:text-white",
             )}
             onClick={handlePrevious}
             aria-label="Previous media"
@@ -133,9 +134,10 @@ export function MediaCarousel({ items, className }: MediaCarouselProps) {
           <Button
             type="button"
             size="icon"
-            variant="outline"
+            variant="ghost"
             className={cn(
-              "absolute right-1 top-1/2 -translate-y-1/2",
+              "absolute right-2 top-1/2 h-8 w-8 -translate-y-1/2 rounded-full",
+              "bg-black/50 text-white hover:bg-black/70 hover:text-white",
             )}
             onClick={handleNext}
             aria-label="Next media"
