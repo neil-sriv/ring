@@ -71,11 +71,22 @@ jobs:
 
       # Cluster-level prerequisite, not something a migration can set for
       # itself. conftest.py does the same for pytest, cloud-start.sh for dev.
+      # Retried because the image entrypoint grants admin to COCKROACH_USER
+      # shortly after the user can authenticate, so the first attempts can
+      # fail with "only users with the MODIFYCLUSTERSETTING privilege ...".
       - name: Enable vector index
         run: |
-          docker exec ring-test-cockroach ./cockroach sql \
-            --url "$TEST_DB_URL" \
-            -e "SET CLUSTER SETTING feature.vector_index.enabled = true;"
+          for attempt in $(seq 1 30); do
+            if docker exec ring-test-cockroach ./cockroach sql \
+                --url "$TEST_DB_URL" \
+                -e "SET CLUSTER SETTING feature.vector_index.enabled = true;"; then
+              echo "Vector index enabled after ${attempt} attempt(s)"
+              exit 0
+            fi
+            sleep 2
+          done
+          echo "Never got MODIFYCLUSTERSETTING privilege to enable vector index" >&2
+          exit 1
 
       # The test database starts empty, so this applies every revision from
       # scratch. A broken or unapplyable migration fails here, not in prod.
