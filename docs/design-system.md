@@ -138,8 +138,9 @@ body `text-sm`; secondary `text-sm text-muted-foreground`; caption/meta
 no scale.
 
 **Menus/popovers** — `rounded-lg border bg-popover shadow-md`.
-**Dialogs** — `rounded-xl border bg-popover shadow-xl` (overlay
-`bg-foreground/25 backdrop-blur-[2px]` light-warm, not pitch black).
+**Dialogs** — `rounded-xl border bg-popover shadow-xl`. The overlay scrim
+(`bg-black/40 backdrop-blur-[2px]`, `dark:bg-black/60`) is defined once in the
+dialog/sheet/alert-dialog primitives; feature code never writes overlays.
 
 **Status badge** — Badge primitive variants: `success`, `warning`, `info`,
 `destructive`, `primary` (tinted), `secondary` (neutral), `outline`.
