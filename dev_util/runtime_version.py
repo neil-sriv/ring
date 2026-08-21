@@ -28,7 +28,6 @@ PLACEHOLDER = {
 KNOWN_CONTAINER_NAMES = (
     "ring-api",
     "ring-nginx",
-    "ring-frontend",
     "ring-cockroach",
     "ring-llm",
     "certbot",

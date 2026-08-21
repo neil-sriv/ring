@@ -224,7 +224,10 @@ if [[ "$SKIP_MIGRATE" -eq 0 ]]; then
 fi
 
 echo "==> Recreating Compose (prod)"
-ring_cmd compose any --profile prod up -d --force-recreate
+# --remove-orphans: the compose file is the source of truth — containers
+# from retired services (e.g. the old ring-frontend SPA container) are
+# removed instead of lingering with restart=unless-stopped.
+ring_cmd compose any --profile prod up -d --force-recreate --remove-orphans
 
 if [[ "$SKIP_VERIFY" -eq 0 ]]; then
   echo "==> Verifying ${VERSION_URL} image_build.sha == ${SHA}"
