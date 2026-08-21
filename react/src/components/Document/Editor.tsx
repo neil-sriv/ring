@@ -30,6 +30,8 @@ import {
 import type React from "react"
 import { useEffect, useRef } from "react"
 
+export type NotebookWsStatus = "connecting" | "connected" | "reconnecting"
+
 function MenuBar({ editor }: { editor: Editor }) {
   const editorState = useEditorState({
     editor,
@@ -301,7 +303,8 @@ export const CollabEditor: React.FC<{
   docId: string
   onSavingChange?: (isSaving: boolean) => void
   onEditingChange?: (isEditing: boolean) => void
-}> = ({ docId, onSavingChange, onEditingChange }) => {
+  onConnectionChange?: (status: NotebookWsStatus) => void
+}> = ({ docId, onSavingChange, onEditingChange, onConnectionChange }) => {
   const editorRef = useRef<any>(null)
   const wsRef = useRef<WebSocket | null>(null)
   const lastContentRef = useRef<string>("")
@@ -309,7 +312,13 @@ export const CollabEditor: React.FC<{
   const lastSentMessageIdRef = useRef<string>("")
   const isUpdatingFromWebSocketRef = useRef<boolean>(false)
   const wsSendTimeoutRef = useRef<NodeJS.Timeout | null>(null)
+  const wsReconnectTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(
+    null,
+  )
   const pendingContentRef = useRef<string>("")
+  const onConnectionChangeRef = useRef(onConnectionChange)
+  onConnectionChangeRef.current = onConnectionChange
+  const hasConnectedOnceRef = useRef(false)
 
   useEffect(() => {
     const accessToken = localStorage.getItem("access_token") ?? ""
@@ -318,6 +327,7 @@ export const CollabEditor: React.FC<{
       `/api/v1/ws/notebook/${docId}?token=${encodeURIComponent(accessToken)}`,
     )
     let cancelled = false
+    hasConnectedOnceRef.current = false
 
     // Load existing content
     const loadContent = async () => {
@@ -345,10 +355,22 @@ export const CollabEditor: React.FC<{
       if (cancelled) {
         return
       }
+      if (wsReconnectTimeoutRef.current) {
+        clearTimeout(wsReconnectTimeoutRef.current)
+        wsReconnectTimeoutRef.current = null
+      }
+
+      onConnectionChangeRef.current?.(
+        hasConnectedOnceRef.current ? "reconnecting" : "connecting",
+      )
       wsRef.current = new WebSocket(notebookWsUrl)
 
       wsRef.current.onopen = () => {
-        console.log("WebSocket connected")
+        if (cancelled) {
+          return
+        }
+        hasConnectedOnceRef.current = true
+        onConnectionChangeRef.current?.("connected")
       }
 
       wsRef.current.onmessage = (event) => {
@@ -395,12 +417,13 @@ export const CollabEditor: React.FC<{
                   }
                 }
               } catch (error) {
-                console.error("Failed to parse WebSocket Blob message:", error)
+                // Leave parse errors quiet; connection status covers outages.
+                console.debug("Failed to parse WebSocket Blob message:", error)
               }
             })
             return // Exit early for async Blob handling
           } else {
-            console.warn("Unknown WebSocket message type:", typeof event.data)
+            console.debug("Unknown WebSocket message type:", typeof event.data)
             return
           }
 
@@ -429,7 +452,8 @@ export const CollabEditor: React.FC<{
             }
           }
         } catch (error) {
-          console.error("Failed to parse WebSocket message:", error)
+          // Leave parse errors quiet; connection status covers outages.
+          console.debug("Failed to parse WebSocket message:", error)
         }
       }
 
@@ -437,12 +461,19 @@ export const CollabEditor: React.FC<{
         if (cancelled) {
           return
         }
-        console.log("WebSocket disconnected, reconnecting...")
-        setTimeout(setupWebSocket, 1000)
+        onConnectionChangeRef.current?.(
+          hasConnectedOnceRef.current ? "reconnecting" : "connecting",
+        )
+        wsReconnectTimeoutRef.current = setTimeout(setupWebSocket, 1000)
       }
 
-      wsRef.current.onerror = (error) => {
-        console.error("WebSocket error:", error)
+      wsRef.current.onerror = () => {
+        // Browsers often fire error then close; surface via reconnecting status.
+        if (!cancelled) {
+          onConnectionChangeRef.current?.(
+            hasConnectedOnceRef.current ? "reconnecting" : "connecting",
+          )
+        }
       }
     }
 
@@ -451,6 +482,10 @@ export const CollabEditor: React.FC<{
 
     return () => {
       cancelled = true
+      if (wsReconnectTimeoutRef.current) {
+        clearTimeout(wsReconnectTimeoutRef.current)
+        wsReconnectTimeoutRef.current = null
+      }
       if (wsRef.current) {
         wsRef.current.close()
       }
