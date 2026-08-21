@@ -94,9 +94,7 @@ function ResetPasswordRequest() {
               className={errors.email ? "border-destructive" : ""}
             />
             {errors.email && (
-              <p className="text-xs text-destructive">
-                {errors.email.message}
-              </p>
+              <p className="text-xs text-destructive">{errors.email.message}</p>
             )}
           </div>
 

@@ -97,7 +97,10 @@ export function LLMPlayground(): JSX.Element {
                 </p>
               </div>
             ) : (
-              <div key={index} className="rounded-lg border bg-muted/50 px-4 py-3">
+              <div
+                key={index}
+                className="rounded-lg border bg-muted/50 px-4 py-3"
+              >
                 <p className="font-display text-base leading-relaxed text-foreground">
                   {msg.content}
                 </p>

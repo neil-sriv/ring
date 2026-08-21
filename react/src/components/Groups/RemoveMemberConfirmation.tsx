@@ -115,9 +115,7 @@ function RemoveMemberConfirmation({
           <AlertDialogHeader>
             <AlertDialogTitle>Remove member?</AlertDialogTitle>
             <AlertDialogDescription>
-              <span className="font-medium text-foreground">
-                {memberLabel}
-              </span>{" "}
+              <span className="font-medium text-foreground">{memberLabel}</span>{" "}
               will be removed from this group. They will no longer receive new
               loops or be able to access group content. This action cannot be
               undone.

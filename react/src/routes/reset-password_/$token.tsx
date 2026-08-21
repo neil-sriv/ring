@@ -112,10 +112,7 @@ function ResetPassword() {
             <Label htmlFor="confirm_password">Confirm Password</Label>
             <Input
               id="confirm_password"
-              {...register(
-                "confirm_password",
-                confirmPasswordRules(getValues),
-              )}
+              {...register("confirm_password", confirmPasswordRules(getValues))}
               placeholder="Confirm password"
               type="password"
               className={errors.confirm_password ? "border-destructive" : ""}

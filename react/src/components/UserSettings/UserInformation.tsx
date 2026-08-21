@@ -172,9 +172,7 @@ const UserInformation = () => {
               <p className="text-sm text-foreground">{currentUser?.email}</p>
             )}
             {errors.email && (
-              <p className="text-xs text-destructive">
-                {errors.email.message}
-              </p>
+              <p className="text-xs text-destructive">{errors.email.message}</p>
             )}
           </div>
           <div className="flex gap-3">

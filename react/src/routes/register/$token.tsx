@@ -157,9 +157,7 @@ function Register() {
               className={errors.email || error ? "border-destructive" : ""}
             />
             {errors.email && (
-              <p className="text-xs text-destructive">
-                {errors.email.message}
-              </p>
+              <p className="text-xs text-destructive">{errors.email.message}</p>
             )}
           </div>
 
