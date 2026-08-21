@@ -38,13 +38,7 @@ export function KeyboardShortcutsReference({
                   {shortcut.description}
                 </dt>
                 <dd>
-                  <kbd
-                    className={
-                      compact
-                        ? "rounded border border-border bg-muted px-1.5 py-0.5 font-mono text-[10px] text-foreground"
-                        : "rounded border border-border bg-muted px-2 py-0.5 font-mono text-xs text-foreground"
-                    }
-                  >
+                  <kbd className={compact ? "" : "px-2 text-xs"}>
                     {shortcut.keys}
                   </kbd>
                 </dd>

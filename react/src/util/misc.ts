@@ -66,6 +66,21 @@ export const confirmPasswordRules = (
   return rules
 }
 
+/** Initials for avatar fallbacks: "Ada Lovelace" -> "AL", else first letter of email. */
+export function userInitials(
+  name?: string | null,
+  email?: string | null,
+): string {
+  const trimmed = name?.trim()
+  if (trimmed) {
+    const parts = trimmed.split(/\s+/)
+    const first = parts[0]?.[0] ?? ""
+    const last = parts.length > 1 ? parts[parts.length - 1][0] : ""
+    return (first + last).toUpperCase()
+  }
+  return email?.[0]?.toUpperCase() ?? "?"
+}
+
 export function toISOLocal(d: Date): string {
   const z = (n: number) => `0${n}`.slice(-2)
   const zz = (n: number) => `00${n}`.slice(-3)

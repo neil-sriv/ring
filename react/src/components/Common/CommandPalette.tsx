@@ -238,9 +238,7 @@ export function CommandPalette({ open, onOpenChange }: CommandPaletteProps) {
                           <Icon className="h-4 w-4 shrink-0 opacity-70" />
                           <span className="flex-1 truncate">{item.label}</span>
                           {item.shortcut && (
-                            <kbd className="shrink-0 rounded border border-border bg-muted px-1.5 py-0.5 font-mono text-[10px] text-muted-foreground">
-                              {item.shortcut}
-                            </kbd>
+                            <kbd className="shrink-0">{item.shortcut}</kbd>
                           )}
                         </button>
                       )

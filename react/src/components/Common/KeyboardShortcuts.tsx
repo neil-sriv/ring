@@ -39,7 +39,7 @@ export function KeyboardShortcuts() {
         <div
           className={cn(
             "pointer-events-none fixed bottom-4 left-1/2 z-50 -translate-x-1/2",
-            "rounded-md border border-border bg-background/95 px-3 py-2 text-sm shadow-md",
+            "rounded-lg border border-border bg-popover px-3 py-2 text-sm text-popover-foreground shadow-md",
           )}
         >
           Go to… h home, g groups, s search, p settings
