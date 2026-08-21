@@ -10,6 +10,18 @@ from __future__ import annotations
 import html
 import re
 
+from ring.email_template import (
+    BORDER,
+    CARD_BG,
+    INK,
+    MUTED_INK,
+    PRIMARY,
+    SANS,
+    SERIF,
+    render_button,
+    render_email_shell,
+    render_muted_line,
+)
 from ring.email_util import EmailDraft, construct_email_draft
 from ring.lib.app_links import app_url
 
@@ -30,7 +42,7 @@ def _linkify_escaped_text(escaped_text: str) -> str:
     def replacer(match: re.Match[str]) -> str:
         url = match.group(0)
         return (
-            f'<a href="{url}" style="color:#2b6cb0;text-decoration:underline;">'
+            f'<a href="{url}" style="color:{PRIMARY};text-decoration:underline;">'
             f"{url}</a>"
         )
 
@@ -55,8 +67,8 @@ def construct_question_html(
         str: HTML string containing the formatted question and responses
     """
     return """
-<div style="margin-top: 24px;">
-  <h2 style="margin: 0 0 8px; font-size: 18px; line-height: 1.4; color: #2d3748;">
+<div style="margin-top: 28px;">
+  <h2 style="margin: 0 0 10px; font-family: {serif}; font-size: 18px; line-height: 1.4; font-weight: 600; color: {ink};">
     {question}
   </h2>
   <ul style="margin: 0; padding: 0;">
@@ -64,6 +76,8 @@ def construct_question_html(
   </ul>
 </div>
 """.format(
+        serif=SERIF,
+        ink=INK,
         question=html.escape(question),
         responses="".join(
             [construct_response_html(response) for response in responses]
@@ -83,35 +97,38 @@ def construct_response_html(response: tuple[str, list[str]]) -> str:
     participant_name, body = _split_response_display(response[0])
     name_html = (
         (
-            '<div style="font-weight:600;font-size:15px;color:#2d3748;'
-            'margin-bottom:4px;">{name}</div>'
-        ).format(name=html.escape(participant_name))
+            '<div style="font-family:{sans};font-weight:600;font-size:14px;'
+            'color:{ink};margin-bottom:4px;">{name}</div>'
+        ).format(sans=SANS, ink=INK, name=html.escape(participant_name))
         if participant_name
         else ""
     )
     body_html = (
-        '<p style="margin:0;font-size:15px;line-height:1.5;color:#1a202c;'
-        'white-space:pre-line;">{text}</p>'
-    ).format(text=_format_response_body_html(body))
+        '<p style="margin:0;font-family:{sans};font-size:14px;'
+        'line-height:1.6;color:{ink};white-space:pre-line;">{text}</p>'
+    ).format(sans=SANS, ink=INK, text=_format_response_body_html(body))
     image_htmls = "".join(
         [
             (
                 '<img src="{url}" alt="Image" '
                 'style="display:block; margin:8px 0 0; width:auto; '
-                'height:auto; max-width:100%; border-radius:6px;" />'
-            ).format(url=html.escape(url, quote=True))
+                "height:auto; max-width:100%; border-radius:6px; "
+                'border:1px solid {border};" />'
+            ).format(url=html.escape(url, quote=True), border=BORDER)
             for url in response[1]
         ]
     )
     return """
 <li style="margin-bottom: 12px; list-style: none;">
-  <div style="padding: 12px 14px; border-radius: 8px; border: 1px solid #e2e8f0; background-color: #ffffff;">
+  <div style="padding: 14px 16px; border-radius: 8px; border: 1px solid {border}; background-color: {card_bg};">
     {name_html}
     {body_html}
     {images}
   </div>
 </li>
 """.format(
+        border=BORDER,
+        card_bg=CARD_BG,
         name_html=name_html,
         body_html=body_html,
         images=image_htmls,
@@ -171,57 +188,24 @@ def construct_send_letter_email(
     # The email body for recipients with non-HTML email clients.
     BODY_TEXT = question_text
 
+    letter_url = app_url(f"loops/{letter_api_id}")
+    content_html = (
+        render_button("Read online", letter_url)
+        + render_muted_line(
+            "Or open this letter in your browser: "
+            + f'<a href="{letter_url}" style="color:{MUTED_INK};'
+            f'text-decoration:underline;">{letter_url}</a>'
+        )
+        + question_html
+    )
+
     # The HTML body of the email.
-    BODY_HTML = """
-<html>
-  <head>
-    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>{title}</title>
-  </head>
-  <body style="margin:0; padding:0; background-color:#edf2f7;">
-    <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%%" style="background-color:#edf2f7; padding:24px 0;">
-      <tr>
-        <td align="center">
-          <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%%" style="max-width:640px; background-color:#ffffff; border-radius:12px; border:1px solid #e2e8f0; overflow:hidden;">
-            <tr>
-              <td style="padding:20px 24px 12px; background-color:#2b6cb0; color:#ffffff;">
-                <div style="font-size:13px; letter-spacing:0.08em; text-transform:uppercase; opacity:0.9;">Ring Newsletter</div>
-                <h1 style="margin:6px 0 0; font-size:22px; line-height:1.3; font-weight:600;">{title}</h1>
-              </td>
-            </tr>
-            <tr>
-              <td style="padding:20px 24px 8px;">
-                <p style="margin:0 0 12px; font-size:14px; line-height:1.5; color:#4a5568;">
-                  You can also read and share this newsletter online:
-                </p>
-                <p style="margin:0 0 4px;">
-                  <a href="{letter_url}" style="color:#2b6cb0; text-decoration:underline; font-size:14px;">{letter_url}</a>
-                </p>
-              </td>
-            </tr>
-            <tr>
-              <td style="padding:8px 24px 24px;">
-                {question_html}
-              </td>
-            </tr>
-            <tr>
-              <td style="padding:16px 24px 20px; border-top:1px solid #e2e8f0; background-color:#f7fafc;">
-                <p style="margin:0; font-size:12px; line-height:1.5; color:#a0aec0;">
-                  You are receiving this email as a member of a Ring loop.
-                </p>
-              </td>
-            </tr>
-          </table>
-        </td>
-      </tr>
-    </table>
-  </body>
-</html>
-""".format(
+    BODY_HTML = render_email_shell(
         title=title,
-        letter_url=app_url(f"loops/{letter_api_id}"),
-        question_html=question_html,
+        eyebrow="A new letter",
+        preheader="A new letter from your group is ready to read.",
+        content_html=content_html,
+        footer_note="You are receiving this email as a member of a Ring loop.",
     )
 
     # Try to send the email.

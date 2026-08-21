@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from ring.email_template import PRIMARY
 from ring.tasks.crud.send_email_task import (
     construct_question_html,
     construct_response_html,
@@ -32,8 +33,8 @@ class TestSendEmailTask:
         html_body = construct_response_html(response)
 
         assert (
-            '<a href="https://example.com/path" '
-            'style="color:#2b6cb0;text-decoration:underline;">'
+            f'<a href="https://example.com/path" '
+            f'style="color:{PRIMARY};text-decoration:underline;">'
             "https://example.com/path</a>"
         ) in html_body
 

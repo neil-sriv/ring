@@ -7,6 +7,15 @@ to letters in Ring.
 
 from __future__ import annotations
 
+import html
+
+from ring.email_template import (
+    render_button,
+    render_email_shell,
+    render_link,
+    render_muted_line,
+    render_paragraph,
+)
 from ring.email_util import EmailDraft, construct_email_draft
 from ring.letters.constants import LetterStatus
 from ring.lib.app_links import app_url
@@ -47,19 +56,32 @@ def construct_reminder_email(
     # The email body for recipients with non-HTML email clients.
     BODY_TEXT = question_text
 
+    letter_url = app_url(f"loops/{letter_api_id}")
+    cta_label = (
+        "Add questions"
+        if letter_status == LetterStatus.UPCOMING
+        else "Write your response"
+    )
+    content_html = (
+        render_paragraph(
+            f"Today is the last day to {html.escape(subject_text)} for the "
+            f"latest <strong>{html.escape(group_name)}</strong> letter."
+        )
+        + render_button(cta_label, letter_url)
+        + render_muted_line(
+            "Or open the letter here: " + render_link(letter_url)
+        )
+    )
+
     # The HTML body of the email.
-    BODY_HTML = """<html>
-    <head></head>
-    <body>
-    <h1>Ring Reminder: Last day to {subject_text} for {group_name}</h1>
-    <h2>Check out the newsletter online at <a href="{letter_url}">{letter_url}</a></h2>
-    <p>Today is the last day to {subject_text} for the newsletter. Please visit the link above to {subject_text}.</p>
-    </body>
-    </html>
-                """.format(
-        subject_text=subject_text,
-        group_name=group_name,
-        letter_url=app_url(f"loops/{letter_api_id}"),
+    BODY_HTML = render_email_shell(
+        title=f"Last day to {subject_text}",
+        eyebrow=group_name,
+        preheader=(
+            f"Today is the last day to {subject_text} for {group_name}."
+        ),
+        content_html=content_html,
+        footer_note="You are receiving this email as a member of a Ring loop.",
     )
 
     # Try to send the email.

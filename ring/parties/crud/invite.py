@@ -6,12 +6,20 @@ including email notifications and token validation.
 
 from __future__ import annotations
 
+import html
 from typing import TYPE_CHECKING, Sequence
 
 from sqlalchemy import select
 
 from ring.api_identifier import util as api_identifier_crud
 from ring.async_scheduler.scheduler import job_factory
+from ring.email_template import (
+    render_button,
+    render_email_shell,
+    render_link,
+    render_muted_line,
+    render_paragraph,
+)
 from ring.email_util import CHARSET, EmailDraft, send_email
 from ring.lib.app_links import app_url
 from ring.parties.crud.one_time_token import generate_token, validate_token
@@ -188,22 +196,29 @@ def construct_invite_email(
     Returns:
         EmailDraft: Email draft ready to send
     """
-    BODY_HTML = """
-    <html>
-    <head></head>
-    <body>
-    <h1 style="text-align:center">Join <b>{group_name}</b> and make custom monthly newsletters with your friends!</h1>
-    <spacer type="" size="">
-    <span>Click the link below to join the group and start creating newsletters!</span>
-    <spacer type="" size="">
-    <h3>Please use this custom URL to create an account: <a href="{register_url}">{register_url}</a></h2>
-    <p>
-    You've been invited to join a Ring Newsletter! Ring is a custom newsletter platform made by Neil Srivastava that allows you to create newsletters with your friends.
-    </p>
-    </body>
-    </html>
-                """.format(
-        group_name=group.name, register_url=app_url(f"register/{token}")
+    register_url = app_url(f"register/{token}")
+    content_html = (
+        render_paragraph(
+            "You've been invited to write letters with "
+            f"<strong>{html.escape(group.name)}</strong> on Ring — a place "
+            "where groups answer prompts together and share the results as a "
+            "letter."
+        )
+        + render_button("Accept invitation", register_url)
+        + render_muted_line(
+            "Or create your account with this link: "
+            + render_link(register_url)
+        )
+    )
+    BODY_HTML = render_email_shell(
+        title=f"Join {group.name} on Ring",
+        eyebrow="You're invited",
+        preheader=f"You've been invited to write with {group.name}.",
+        content_html=content_html,
+        footer_note=(
+            "You are receiving this email because someone invited you to a "
+            "Ring group."
+        ),
     )
     return EmailDraft(
         destination={"ToAddresses": [recipient]},

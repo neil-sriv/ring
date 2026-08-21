@@ -3,6 +3,13 @@ from __future__ import annotations
 from sqlalchemy.orm import Session
 
 from ring.async_scheduler.scheduler import job_factory
+from ring.email_template import (
+    render_button,
+    render_email_shell,
+    render_link,
+    render_muted_line,
+    render_paragraph,
+)
 from ring.email_util import CHARSET, EmailDraft, send_email
 from ring.lib.app_links import app_url
 from ring.parties.models.user_model import User
@@ -50,21 +57,28 @@ def construct_password_reset_email(
     Returns:
         EmailDraft: Email draft ready to be sent
     """
-    BODY_HTML = """
-    <html>
-    <head></head>
-    <body>
-    <h1 style="text-align:center">Reset password for your Ring account</h1>
-    <spacer type="" size="">
-    <span>Click the link below to reset your password.</span>
-    <spacer type="" size="">
-    <h3>Please use this custom URL to reset your password: <a href="{reset_url}">{reset_url}</a></h2>
-    <p>
-    A password reset was requested for your Ring account. If you did not request this, please ignore this email.
-    </p>
-    </body>
-    </html>
-                """.format(reset_url=app_url(f"reset-password/{token}"))
+    reset_url = app_url(f"reset-password/{token}")
+    content_html = (
+        render_paragraph(
+            "A password reset was requested for your Ring account. Choose a "
+            "new password with the button below."
+        )
+        + render_button("Reset password", reset_url)
+        + render_muted_line("Or use this link: " + render_link(reset_url))
+        + render_muted_line(
+            "If you did not request this, you can safely ignore this email."
+        )
+    )
+    BODY_HTML = render_email_shell(
+        title="Reset your password",
+        eyebrow="Account",
+        preheader="Choose a new password for your Ring account.",
+        content_html=content_html,
+        footer_note=(
+            "You are receiving this email because a password reset was "
+            "requested for your Ring account."
+        ),
+    )
     return EmailDraft(
         destination={"ToAddresses": [recipient]},
         message={
