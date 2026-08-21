@@ -15,6 +15,8 @@ from ring.notebook.crud.document import (
     add_document_edit,
     create_document,
     get_documents,
+    join_document_room,
+    leave_document_room,
     update_document,
 )
 from ring.notebook.models.document import Document, DocumentEdit
@@ -352,3 +354,23 @@ class TestDocumentCRUD:
         documents = [DocumentFactory.create(group=group) for _ in range(3)]
         db_session.commit()
         assert get_documents(db_session, group) == documents
+
+
+class TestDocumentRoomCleanup:
+    """Tests for WebSocket document room join/leave bookkeeping."""
+
+    def test_leave_document_room_is_idempotent(self) -> None:
+        """Leaving twice (disconnect + finally) must not raise."""
+        import asyncio
+        from unittest.mock import MagicMock
+
+        websocket = MagicMock()
+        document_api_id = "doc_heartbeat_test"
+
+        async def _run() -> None:
+            await join_document_room(document_api_id, websocket)
+            await leave_document_room(document_api_id, websocket)
+            # Second leave mimics disconnect path + finally both running.
+            await leave_document_room(document_api_id, websocket)
+
+        asyncio.run(_run())

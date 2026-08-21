@@ -32,6 +32,21 @@ import { useEffect, useRef } from "react"
 
 export type NotebookWsStatus = "connecting" | "connected" | "reconnecting"
 
+/** How often the client sends an application-level ping. */
+const NOTEBOOK_WS_HEARTBEAT_INTERVAL_MS = 4000
+/**
+ * If no pong (or other server message) arrives within this window, treat the
+ * socket as a zombie half-open connection and force reconnect.
+ */
+const NOTEBOOK_WS_HEARTBEAT_TIMEOUT_MS = 10000
+/** How often we check for heartbeat silence (independent of ping sends). */
+const NOTEBOOK_WS_WATCHDOG_INTERVAL_MS = 1000
+/**
+ * If the browser has buffered this many outbound bytes without draining,
+ * treat the socket as stuck (common when the peer is frozen).
+ */
+const NOTEBOOK_WS_BUFFERED_AMOUNT_LIMIT = 64 * 1024
+
 function MenuBar({ editor }: { editor: Editor }) {
   const editorState = useEditorState({
     editor,
@@ -315,6 +330,13 @@ export const CollabEditor: React.FC<{
   const wsReconnectTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(
     null,
   )
+  const wsHeartbeatIntervalRef = useRef<ReturnType<typeof setInterval> | null>(
+    null,
+  )
+  const wsWatchdogIntervalRef = useRef<ReturnType<typeof setInterval> | null>(
+    null,
+  )
+  const lastServerMessageAtRef = useRef(0)
   const pendingContentRef = useRef<string>("")
   const onConnectionChangeRef = useRef(onConnectionChange)
   onConnectionChangeRef.current = onConnectionChange
@@ -328,6 +350,77 @@ export const CollabEditor: React.FC<{
     )
     let cancelled = false
     hasConnectedOnceRef.current = false
+
+    const stopHeartbeat = () => {
+      if (wsHeartbeatIntervalRef.current) {
+        clearInterval(wsHeartbeatIntervalRef.current)
+        wsHeartbeatIntervalRef.current = null
+      }
+      if (wsWatchdogIntervalRef.current) {
+        clearInterval(wsWatchdogIntervalRef.current)
+        wsWatchdogIntervalRef.current = null
+      }
+    }
+
+    const markServerAlive = () => {
+      lastServerMessageAtRef.current = Date.now()
+    }
+
+    const forceReconnect = (ws: WebSocket) => {
+      onConnectionChangeRef.current?.(
+        hasConnectedOnceRef.current ? "reconnecting" : "connecting",
+      )
+      stopHeartbeat()
+      try {
+        ws.close()
+      } catch {
+        // Ignore close races; onclose / reconnect path will recover.
+      }
+    }
+
+    const startHeartbeat = (ws: WebSocket) => {
+      stopHeartbeat()
+      // Grace period for the first pong; UI stays connecting/reconnecting
+      // until a real server message proves the upstream is alive (Vite can
+      // accept the browser socket before the API peer is reachable).
+      markServerAlive()
+
+      // Watchdog must not share a tick with send(): a stalled send against a
+      // frozen peer can delay setInterval callbacks and miss the timeout.
+      wsWatchdogIntervalRef.current = setInterval(() => {
+        if (cancelled || wsRef.current !== ws) {
+          return
+        }
+        if (ws.readyState !== WebSocket.OPEN) {
+          return
+        }
+        const silentFor = Date.now() - lastServerMessageAtRef.current
+        if (
+          silentFor > NOTEBOOK_WS_HEARTBEAT_TIMEOUT_MS ||
+          ws.bufferedAmount > NOTEBOOK_WS_BUFFERED_AMOUNT_LIMIT
+        ) {
+          forceReconnect(ws)
+        }
+      }, NOTEBOOK_WS_WATCHDOG_INTERVAL_MS)
+
+      wsHeartbeatIntervalRef.current = setInterval(() => {
+        if (cancelled || wsRef.current !== ws) {
+          return
+        }
+        if (ws.readyState !== WebSocket.OPEN) {
+          return
+        }
+        if (ws.bufferedAmount > NOTEBOOK_WS_BUFFERED_AMOUNT_LIMIT) {
+          forceReconnect(ws)
+          return
+        }
+        try {
+          ws.send(JSON.stringify({ type: "ping" }))
+        } catch {
+          forceReconnect(ws)
+        }
+      }, NOTEBOOK_WS_HEARTBEAT_INTERVAL_MS)
+    }
 
     // Load existing content
     const loadContent = async () => {
@@ -359,21 +452,24 @@ export const CollabEditor: React.FC<{
         clearTimeout(wsReconnectTimeoutRef.current)
         wsReconnectTimeoutRef.current = null
       }
+      stopHeartbeat()
 
       onConnectionChangeRef.current?.(
         hasConnectedOnceRef.current ? "reconnecting" : "connecting",
       )
-      wsRef.current = new WebSocket(notebookWsUrl)
+      const ws = new WebSocket(notebookWsUrl)
+      wsRef.current = ws
 
-      wsRef.current.onopen = () => {
-        if (cancelled) {
+      ws.onopen = () => {
+        if (cancelled || wsRef.current !== ws) {
           return
         }
         hasConnectedOnceRef.current = true
-        onConnectionChangeRef.current?.("connected")
+        // Do not flip to "connected" until a pong/content proves upstream life.
+        startHeartbeat(ws)
       }
 
-      wsRef.current.onmessage = (event) => {
+      ws.onmessage = (event) => {
         try {
           // Handle both text and binary data
           let messageData: {
@@ -393,6 +489,11 @@ export const CollabEditor: React.FC<{
             event.data.text().then((text: string) => {
               try {
                 const data = JSON.parse(text)
+                markServerAlive()
+                onConnectionChangeRef.current?.("connected")
+                if (data.type === "pong") {
+                  return
+                }
                 if (
                   data.type === "content_update" &&
                   data.content !== lastContentRef.current
@@ -427,6 +528,12 @@ export const CollabEditor: React.FC<{
             return
           }
 
+          markServerAlive()
+          onConnectionChangeRef.current?.("connected")
+          if (messageData.type === "pong") {
+            return
+          }
+
           if (
             messageData.type === "content_update" &&
             typeof messageData.content === "string" &&
@@ -457,7 +564,8 @@ export const CollabEditor: React.FC<{
         }
       }
 
-      wsRef.current.onclose = () => {
+      ws.onclose = () => {
+        stopHeartbeat()
         if (cancelled) {
           return
         }
@@ -467,7 +575,7 @@ export const CollabEditor: React.FC<{
         wsReconnectTimeoutRef.current = setTimeout(setupWebSocket, 1000)
       }
 
-      wsRef.current.onerror = () => {
+      ws.onerror = () => {
         // Browsers often fire error then close; surface via reconnecting status.
         if (!cancelled) {
           onConnectionChangeRef.current?.(
@@ -482,6 +590,7 @@ export const CollabEditor: React.FC<{
 
     return () => {
       cancelled = true
+      stopHeartbeat()
       if (wsReconnectTimeoutRef.current) {
         clearTimeout(wsReconnectTimeoutRef.current)
         wsReconnectTimeoutRef.current = null

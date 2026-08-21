@@ -7,6 +7,8 @@ It verifies both successful operations and error cases.
 
 from __future__ import annotations
 
+import json
+
 import pytest
 import sqlalchemy
 from faker import Faker
@@ -15,8 +17,10 @@ from sqlalchemy.orm import Session
 
 from ring.notebook.models.document import Document
 from ring.notebook.schemas.document import DocumentCreate, DocumentUpdate
+from ring.security import create_access_token
 from ring.tests.factories.notebook.document_factory import DocumentFactory
 from ring.tests.factories.parties.group_factory import GroupFactory
+from ring.tests.factories.parties.user_factory import UserFactory
 from ring.tests.lib.utils import (
     assert_api_model_not_found,
     assert_pydantic_model_json_dump_equivalent_to_response_dict,
@@ -436,3 +440,20 @@ class TestDocumentAPI:
         print(data)
         assert len(data) == 3
         assert_pydantic_models_json_dump_in_response_dict(documents, data)
+
+    def test_document_websocket_ping_pong(
+        self,
+        unauthenticated_client: TestClient,
+        db_session: Session,
+    ) -> None:
+        """Application-level ping must get a pong (not be broadcast)."""
+        user = UserFactory.create()
+        document = DocumentFactory.create()
+        db_session.commit()
+
+        token = create_access_token({"sub": user.email})
+        with unauthenticated_client.websocket_connect(
+            f"/ws/notebook/{document.api_identifier}?token={token}"
+        ) as ws:
+            ws.send_text(json.dumps({"type": "ping"}))
+            assert json.loads(ws.receive_text()) == {"type": "pong"}

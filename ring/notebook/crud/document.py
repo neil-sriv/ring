@@ -52,7 +52,11 @@ async def leave_document_room(
     room = active_connections.get(document_api_id)
     if not room:
         return
-    room.active_connections.remove(websocket)
+    try:
+        room.active_connections.remove(websocket)
+    except ValueError:
+        # Already removed (e.g. disconnect + finally both ran).
+        return
     if not room.active_connections:
         del active_connections[document_api_id]
 

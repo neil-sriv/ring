@@ -6,6 +6,8 @@ creating, updating, deleting documents and managing document edits.
 
 from __future__ import annotations
 
+import json
+
 from fastapi import APIRouter, Depends, WebSocket, status
 from loguru import logger
 from starlette.websockets import WebSocketDisconnect
@@ -182,9 +184,11 @@ async def nb_automerge_repo_websocket(
 
             # Parse JSON message
             try:
-                import json
-
                 message = json.loads(data)
+
+                if message.get("type") == "ping":
+                    await websocket.send_text(json.dumps({"type": "pong"}))
+                    continue
 
                 if message.get("type") == "content_update":
                     # Broadcast content update to all other clients
@@ -225,8 +229,11 @@ async def nb_document_websocket(
 ) -> None:
     """
     Websocket endpoint for a notebook document.
+
+    Application-level ``ping`` / ``pong`` lets clients detect half-open /
+    frozen sockets (e.g. upstream pause) when TCP ``onclose`` never fires.
     """
-    db_document = get_model(req_dep.db, Document, document_api_id)
+    get_model(req_dep.db, Document, document_api_id)
     await websocket.accept()
     await join_document_room(document_api_id, websocket)
     try:
@@ -241,7 +248,18 @@ async def nb_document_websocket(
                         document_api_id, data, websocket
                     )
                 elif "text" in message:
-                    data = message["text"].encode("utf-8")
+                    text = message["text"]
+                    try:
+                        parsed = json.loads(text)
+                    except json.JSONDecodeError:
+                        parsed = None
+                    if (
+                        isinstance(parsed, dict)
+                        and parsed.get("type") == "ping"
+                    ):
+                        await websocket.send_text(json.dumps({"type": "pong"}))
+                        continue
+                    data = text.encode("utf-8")
                     await broadcast_document_message(
                         document_api_id, data, websocket
                     )
@@ -251,12 +269,13 @@ async def nb_document_websocket(
                 logger.info("WebSocket disconnected")
                 break
     except WebSocketDisconnect:
-        await leave_document_room(document_api_id, websocket)
+        pass
     except Exception as e:
         logger.error(f"Document WebSocket error: {e}")
-        await leave_document_room(document_api_id, websocket)
         try:
             await websocket.close()
         except RuntimeError:
             pass
         raise
+    finally:
+        await leave_document_room(document_api_id, websocket)
