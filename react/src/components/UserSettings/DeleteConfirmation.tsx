@@ -12,7 +12,7 @@ import { Loader2 } from "lucide-react"
 import { useForm } from "react-hook-form"
 
 import type { AxiosError } from "axios"
-import { deleteUserPartiesUserIdDelete } from "../../client"
+import { deleteUserMePartiesMeDelete } from "../../client"
 import { readUserMePartiesMeGetQueryKey } from "../../client/@tanstack/react-query.gen"
 import useAuth from "../../hooks/useAuth"
 import useCustomToast from "../../hooks/useCustomToast"
@@ -32,8 +32,16 @@ const DeleteConfirmation = ({ isOpen, onClose }: DeleteProps) => {
   } = useForm()
   const { logout } = useAuth()
 
+  // Account deletion is not implemented yet (API returns 501). Always
+  // throwOnError so failures surface as errors instead of a false
+  // "deleted" success that logs the user out.
   const mutation = useMutation({
-    mutationFn: () => deleteUserPartiesUserIdDelete(),
+    mutationFn: async () => {
+      const { data } = await deleteUserMePartiesMeDelete({
+        throwOnError: true,
+      })
+      return data
+    },
     onSuccess: () => {
       showToast(
         "Success",
@@ -44,14 +52,10 @@ const DeleteConfirmation = ({ isOpen, onClose }: DeleteProps) => {
       queryClient.clear()
       onClose()
     },
-    onError: (err: AxiosError<{ detail?: unknown }> | Error) => {
-      const detail = "response" in err ? err.response?.data?.detail : undefined
+    onError: (err: AxiosError<{ detail?: unknown }>) => {
       showToast(
         "Something went wrong.",
-        formatApiErrorDetail(
-          detail,
-          err instanceof Error ? err.message : undefined,
-        ),
+        formatApiErrorDetail(err.response?.data?.detail),
         "error",
       )
     },

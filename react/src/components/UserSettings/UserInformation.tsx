@@ -46,15 +46,15 @@ const UserInformation = () => {
     },
   })
 
-  const toggleEditMode = () => {
-    setEditMode(!editMode)
-  }
-
   const mutation = useMutation({
     ...updateUserMePartiesMePatchMutation(),
-    onSuccess: () => {
+    onSuccess: (_data, variables) => {
       showToast("Success!", "User updated successfully.", "success")
-      reset()
+      setEditMode(false)
+      reset({
+        name: variables.body?.name ?? currentUser?.name,
+        email: variables.body?.email ?? currentUser?.email,
+      })
     },
     onError: (err: AxiosError<UpdateUserMePartiesMePatchError>) => {
       showToast(
@@ -79,7 +79,7 @@ const UserInformation = () => {
 
   const onCancel = () => {
     reset()
-    toggleEditMode()
+    setEditMode(false)
   }
 
   const [isEnablingNotifications, setIsEnablingNotifications] = useState(false)
@@ -167,22 +167,24 @@ const UserInformation = () => {
                 )}
               </div>
               <div className="flex gap-3">
-                <Button
-                  onClick={toggleEditMode}
-                  type={editMode ? "button" : "submit"}
-                  disabled={
-                    editMode
-                      ? isSubmitting || !isDirty || !getValues("email")
-                      : false
-                  }
-                >
-                  {editMode && isSubmitting && (
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                  )}
-                  {editMode ? "Save" : "Edit"}
-                </Button>
+                {editMode ? (
+                  <Button
+                    type="submit"
+                    disabled={isSubmitting || !isDirty || !getValues("email")}
+                  >
+                    {isSubmitting && (
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    )}
+                    Save
+                  </Button>
+                ) : (
+                  <Button type="button" onClick={() => setEditMode(true)}>
+                    Edit
+                  </Button>
+                )}
                 {editMode && (
                   <Button
+                    type="button"
                     variant="outline"
                     onClick={onCancel}
                     disabled={isSubmitting}
