@@ -14,7 +14,9 @@ function PublishedLoop({ loop }: { loop: PublicLetter }) {
   )
 
   if (!currentUser) {
-    return <div className="w-full">Loading...</div>
+    return (
+      <div className="w-full text-sm text-muted-foreground">Loading...</div>
+    )
   }
 
   // Get questions the user hasn't answered
@@ -31,12 +33,10 @@ function PublishedLoop({ loop }: { loop: PublicLetter }) {
     <div className="w-full">
       {/* Late Answers Toggle */}
       {hasUnansweredQuestions && (
-        <div className="mb-6 rounded-md border border-border bg-blue-50 p-4 dark:bg-blue-950">
-          <div className="flex items-center justify-between">
+        <div className="mb-6 rounded-lg border border-info/25 bg-info/10 p-4">
+          <div className="flex flex-wrap items-center justify-between gap-3">
             <div>
-              <p className="font-bold text-foreground dark:text-foreground">
-                Late Answers Available
-              </p>
+              <p className="text-sm font-semibold">Late Answers Available</p>
               <p className="text-sm text-muted-foreground">
                 You have {unansweredQuestions.length} question
                 {unansweredQuestions.length !== 1 ? "s" : ""} you haven't
@@ -56,8 +56,8 @@ function PublishedLoop({ loop }: { loop: PublicLetter }) {
       {/* Late Answer Questions */}
       {showLateAnswers && hasUnansweredQuestions && (
         <div className="mb-6">
-          <p className="mb-4 text-lg font-bold text-foreground dark:text-foreground">
-            Questions You Haven't Answered:
+          <p className="mb-4 text-base font-semibold">
+            Questions You Haven't Answered
           </p>
           {unansweredQuestions.map((question) => (
             <LateAnswerQuestion
@@ -71,8 +71,8 @@ function PublishedLoop({ loop }: { loop: PublicLetter }) {
 
       {/* All Questions (Published) */}
       <div>
-        <p className="mb-4 text-lg font-bold text-foreground dark:text-foreground">
-          All Questions and Responses:
+        <p className="mb-4 text-base font-semibold">
+          All Questions and Responses
         </p>
         {loop.questions
           .sort(

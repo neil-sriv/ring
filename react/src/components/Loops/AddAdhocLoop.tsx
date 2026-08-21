@@ -103,8 +103,8 @@ const AddAdhocLoop = ({ isOpen, onClose, groupApiId }: AddAdhocLoopProps) => {
           <DialogHeader>
             <DialogTitle>Create Adhoc Loop</DialogTitle>
           </DialogHeader>
-          <div className="space-y-4 py-4">
-            <div className="space-y-2">
+          <div className="flex flex-col gap-5 py-4">
+            <div className="flex flex-col gap-1.5">
               <Label htmlFor="title">Title (Optional)</Label>
               <Input
                 id="title"
@@ -117,13 +117,13 @@ const AddAdhocLoop = ({ isOpen, onClose, groupApiId }: AddAdhocLoopProps) => {
                 placeholder="Enter a title for this adhoc loop"
               />
               {errors.title && (
-                <p className="text-sm text-destructive">
+                <p className="text-xs text-destructive">
                   {errors.title.message}
                 </p>
               )}
             </div>
 
-            <div className="space-y-2">
+            <div className="flex flex-col gap-1.5">
               <Label htmlFor="sendAt">
                 Send at <span className="text-destructive">*</span>
               </Label>
@@ -137,7 +137,7 @@ const AddAdhocLoop = ({ isOpen, onClose, groupApiId }: AddAdhocLoopProps) => {
                 min={toISOLocal(new Date()).slice(0, 16)}
               />
               {errors.sendAt && (
-                <p className="text-sm text-destructive">
+                <p className="text-xs text-destructive">
                   {errors.sendAt.message}
                 </p>
               )}

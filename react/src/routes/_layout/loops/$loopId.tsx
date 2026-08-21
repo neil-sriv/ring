@@ -59,75 +59,70 @@ function IssueContent() {
   const [generateQuestionOpen, setGenerateQuestionOpen] = useState(false)
 
   return (
-    <div className="flex w-full justify-center">
-      <div className="w-full max-w-[1200px] px-2 sm:px-4">
-        <div className="flex w-full flex-col items-center gap-4 sm:gap-6 lg:gap-8">
-          <div className="w-full rounded-xl border border-border/50 bg-background/80 p-6 shadow-md backdrop-blur-sm dark:border-border/30 dark:bg-background/60">
-            <div className="flex flex-col items-center gap-4">
-              <div className="relative w-full">
-                <h2 className="text-center text-lg font-semibold text-foreground sm:text-xl lg:text-2xl">
-                  <Link
-                    to="/groups/$groupId/loops"
-                    params={{ groupId: group!.api_identifier }}
-                    className="underline"
-                  >
-                    {group!.name}
-                  </Link>
-                </h2>
-                {isGroupAdmin && loop.status !== "SENT" && (
-                  <Button
-                    onClick={() => setEditLoopOpen(true)}
-                    className="absolute right-0 top-1/2 -translate-y-1/2"
-                  >
-                    Edit Loop
-                  </Button>
-                )}
-              </div>
-              {loop.title && (
-                <h2 className="text-lg font-semibold text-foreground sm:text-xl lg:text-2xl">
-                  {loop.title}
-                </h2>
-              )}
-              {!loop.title && loop.number && (
-                <h2 className="text-lg font-semibold text-foreground sm:text-xl lg:text-2xl">
-                  Issue #{loop.number}
-                </h2>
-              )}
-              {loop.status === "IN_PROGRESS" && (
-                <h3 className="pt-2 text-center text-base font-semibold text-muted-foreground md:text-left">
-                  Due {localDueDate.toLocaleString()}
-                </h3>
-              )}
-            </div>
-          </div>
-
-          {isGroupAdmin && <LoopReplyTracker loop={loop} />}
-
-          {loop.status === "UPCOMING" && (
-            <div className="flex w-full flex-wrap gap-4">
-              <Button
-                onClick={() => setAddQuestionOpen(true)}
-                className="h-auto whitespace-normal py-2 text-left transition-all duration-200 hover:-translate-y-0.5"
-              >
-                <Plus className="h-4 w-4" /> Add new question
-              </Button>
-              <Button
-                onClick={() => setGenerateQuestionOpen(true)}
-                className="h-auto whitespace-normal py-2 text-left transition-all duration-200 hover:-translate-y-0.5"
-              >
-                <Plus className="h-4 w-4" /> Ask ChatGPT to generate a question.
-              </Button>
-            </div>
-          )}
-
-          <div className="w-full rounded-xl border border-border/50 bg-background/80 p-6 shadow-md backdrop-blur-sm dark:border-border/30 dark:bg-background/60">
-            {loop.status === "SENT" ? (
-              <PublishedLoop loop={loop} />
-            ) : (
-              <DraftLoop loop={loop} isGroupAdmin={isGroupAdmin} />
+    <div className="mx-auto w-full max-w-3xl px-4 py-8 md:px-8">
+      <header className="border-b pb-6">
+        <div className="flex flex-wrap items-start justify-between gap-4">
+          <div className="min-w-0">
+            <Link
+              to="/groups/$groupId/loops"
+              params={{ groupId: group!.api_identifier }}
+              className="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
+            >
+              {group!.name}
+            </Link>
+            {loop.title && (
+              <h1 className="mt-1 font-display text-2xl font-semibold tracking-tight md:text-3xl">
+                {loop.title}
+              </h1>
+            )}
+            {!loop.title && loop.number && (
+              <h1 className="mt-1 font-display text-2xl font-semibold tracking-tight md:text-3xl">
+                Issue #{loop.number}
+              </h1>
+            )}
+            {loop.status === "IN_PROGRESS" && (
+              <p className="mt-2 text-sm text-muted-foreground">
+                Due {localDueDate.toLocaleString()}
+              </p>
             )}
           </div>
+          {isGroupAdmin && loop.status !== "SENT" && (
+            <Button
+              variant="outline"
+              onClick={() => setEditLoopOpen(true)}
+            >
+              Edit Loop
+            </Button>
+          )}
         </div>
+      </header>
+
+      {isGroupAdmin && (
+        <div className="mt-6">
+          <LoopReplyTracker loop={loop} />
+        </div>
+      )}
+
+      {loop.status === "UPCOMING" && (
+        <div className="mt-6 flex flex-wrap gap-3">
+          <Button onClick={() => setAddQuestionOpen(true)}>
+            <Plus className="h-4 w-4" /> Add new question
+          </Button>
+          <Button
+            variant="outline"
+            onClick={() => setGenerateQuestionOpen(true)}
+          >
+            <Plus className="h-4 w-4" /> Ask ChatGPT to generate a question.
+          </Button>
+        </div>
+      )}
+
+      <div className="mt-8">
+        {loop.status === "SENT" ? (
+          <PublishedLoop loop={loop} />
+        ) : (
+          <DraftLoop loop={loop} isGroupAdmin={isGroupAdmin} />
+        )}
       </div>
       <EditLetter
         isOpen={editLoopOpen}
@@ -151,20 +146,26 @@ function IssueContent() {
 function Issue() {
   return (
     <div className="w-full">
-      <div className="mx-2 pt-4 sm:mx-4 sm:pt-8 lg:pt-12">
-        <ErrorBoundary
-          fallbackRender={({ error }) => (
-            <div>
-              <h2 className="text-xl font-bold">Error</h2>
-              <p>{error.message}</p>
+      <ErrorBoundary
+        fallbackRender={({ error }) => (
+          <div className="mx-auto w-full max-w-3xl px-4 py-8 md:px-8">
+            <h2 className="font-display text-lg font-medium">Error</h2>
+            <p className="mt-1 text-sm text-muted-foreground">
+              {error.message}
+            </p>
+          </div>
+        )}
+      >
+        <Suspense
+          fallback={
+            <div className="mx-auto w-full max-w-3xl px-4 py-8 text-sm text-muted-foreground md:px-8">
+              Loading...
             </div>
-          )}
+          }
         >
-          <Suspense fallback={<div>Loading...</div>}>
-            <IssueContent />
-          </Suspense>
-        </ErrorBoundary>
-      </div>
+          <IssueContent />
+        </Suspense>
+      </ErrorBoundary>
     </div>
   )
 }

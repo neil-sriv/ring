@@ -96,8 +96,8 @@ const AddLetter = ({ isOpen, onClose, groupApiId }: AddLetterProps) => {
           <DialogHeader>
             <DialogTitle>Start Next Loop</DialogTitle>
           </DialogHeader>
-          <div className="space-y-4 py-4">
-            <div className="space-y-2">
+          <div className="flex flex-col gap-5 py-4">
+            <div className="flex flex-col gap-1.5">
               <Label htmlFor="sendAt">
                 Send at <span className="text-destructive">*</span>
               </Label>
@@ -111,7 +111,7 @@ const AddLetter = ({ isOpen, onClose, groupApiId }: AddLetterProps) => {
                 min={toISOLocal(new Date()).slice(0, 16)}
               />
               {errors.sendAt && (
-                <p className="text-sm text-destructive">
+                <p className="text-xs text-destructive">
                   {errors.sendAt.message}
                 </p>
               )}

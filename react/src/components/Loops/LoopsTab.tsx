@@ -1,3 +1,4 @@
+import { Repeat } from "lucide-react"
 import type { GroupLinked, MinimalLetter } from "../../client"
 import LoopNav from "./LoopNav"
 import { LoopsGrid } from "./LoopsGrid"
@@ -17,11 +18,25 @@ export function LoopsTab({
       <div className="w-full">
         <LoopNav loops={loops} group={group} />
       </div>
+      {loops.length === 0 && (
+        <div className="flex flex-col items-center rounded-lg border border-dashed px-6 py-16 text-center">
+          <Repeat
+            className="h-8 w-8 text-muted-foreground/60"
+            strokeWidth={1.5}
+          />
+          <h3 className="mt-4 font-display text-lg font-medium">
+            No loops yet
+          </h3>
+          <p className="mt-1 max-w-sm text-sm text-muted-foreground">
+            Start the first loop to send this group a round of questions.
+          </p>
+        </div>
+      )}
       {inProgressLoops.length > 0 && (
         <LoopsGrid
           loops={inProgressLoops}
           heading="In Progress"
-          subheading="Add your response now!"
+          subheading="Add your response now."
           showResponderCount={true}
         />
       )}

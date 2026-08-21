@@ -1,4 +1,5 @@
 import { Badge } from "@/components/ui/badge"
+import { Card } from "@/components/ui/card"
 import { useQueryClient } from "@tanstack/react-query"
 import { Link } from "@tanstack/react-router"
 import type { MinimalLetter, PublicLetter, UserLinked } from "../../client"
@@ -33,24 +34,10 @@ export function LoopCard(props: {
 
     const loopType = props.loop.letter_type
     if (loopType === "ADHOC") {
-      return (
-        <Badge
-          variant="secondary"
-          className="absolute top-2 right-2 bg-purple-100 text-purple-800 text-xs dark:bg-purple-900 dark:text-purple-200"
-        >
-          One-off
-        </Badge>
-      )
+      return <Badge variant="secondary">One-off</Badge>
     }
     if (loopType === "CYCLIC") {
-      return (
-        <Badge
-          variant="secondary"
-          className="absolute top-2 right-2 bg-blue-100 text-blue-800 text-xs dark:bg-blue-900 dark:text-blue-200"
-        >
-          Recurring
-        </Badge>
-      )
+      return <Badge variant="outline">Recurring</Badge>
     }
     return null
   }
@@ -80,38 +67,32 @@ export function LoopCard(props: {
   const unansweredCount = getUnansweredQuestionsCount()
 
   return (
-    <div className="h-full">
-      <Link
-        to="/loops/$loopId"
-        params={{ loopId: props.loop.api_identifier }}
-        className="block h-full no-underline"
-      >
-        <div className="relative h-full rounded-xl border border-border/50 bg-background/80 p-6 shadow-md backdrop-blur-sm transition-all duration-200 hover:-translate-y-1 hover:border-primary hover:shadow-xl dark:border-border/30 dark:bg-background/60">
+    <Link
+      to="/loops/$loopId"
+      params={{ loopId: props.loop.api_identifier }}
+      className="block h-full no-underline"
+    >
+      <Card className="flex h-full flex-col gap-2 p-5 transition-shadow hover:shadow-sm">
+        <div className="flex items-start justify-between gap-3">
+          <h3 className="min-w-0 font-display text-lg font-medium">
+            {getHeadingText()}
+          </h3>
           {getLoopTypeLabel()}
-          <div className="flex flex-col items-start gap-2">
-            <h3 className="text-lg font-semibold text-foreground">
-              {getHeadingText()}
-            </h3>
-            {props.includeGroupName && (
-              <p className="text-sm text-muted-foreground">
-                {props.loop.group.name}
-              </p>
-            )}
-            <p className="text-sm text-muted-foreground">
-              {sendDate.toLocaleDateString()}
-            </p>
-            {responderCount !== null && (
-              <p className="text-sm text-muted-foreground">{responderCount}</p>
-            )}
-            {unansweredCount > 0 && (
-              <p className="text-sm font-medium text-orange-500">
-                You have {unansweredCount} unanswered question
-                {unansweredCount !== 1 ? "s" : ""}
-              </p>
-            )}
-          </div>
         </div>
-      </Link>
-    </div>
+        <p className="text-xs text-muted-foreground">
+          {props.includeGroupName && <>{props.loop.group.name} &middot; </>}
+          {sendDate.toLocaleDateString()}
+        </p>
+        {responderCount !== null && (
+          <p className="text-xs text-muted-foreground">{responderCount}</p>
+        )}
+        {unansweredCount > 0 && (
+          <Badge variant="warning" className="mt-auto">
+            {unansweredCount} unanswered question
+            {unansweredCount !== 1 ? "s" : ""}
+          </Badge>
+        )}
+      </Card>
+    </Link>
   )
 }

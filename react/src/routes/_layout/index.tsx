@@ -9,14 +9,16 @@ export const Route = createFileRoute("/_layout/")({
 
 function Dashboard() {
   return (
-    <>
-      <div className="w-full">
-        <div className="pt-12 m-4">
-          <Suspense fallback={<div>Loading...</div>}>
-            <HomeDashboard />
-          </Suspense>
-        </div>
-      </div>
-    </>
+    <div className="w-full">
+      <Suspense
+        fallback={
+          <div className="mx-auto w-full max-w-5xl px-4 py-8 text-sm text-muted-foreground md:px-8">
+            Loading...
+          </div>
+        }
+      >
+        <HomeDashboard />
+      </Suspense>
+    </div>
   )
 }

@@ -68,20 +68,20 @@ function ReplyStatusChip({
   return (
     <li
       title={chipTitle}
-      className={`inline-flex items-center gap-1.5 rounded-md border px-2.5 py-1 text-sm ${
+      className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs font-medium ${
         status.hasReplied
-          ? "border-green-600/30 bg-green-50 text-green-800 dark:border-green-400/30 dark:bg-green-950 dark:text-green-200"
+          ? "border-success/25 bg-success/10 text-success"
           : "border-border bg-muted text-muted-foreground"
       }`}
     >
       {status.hasReplied ? (
-        <Check className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
+        <Check className="h-3 w-3 shrink-0" aria-hidden="true" />
       ) : (
-        <Clock className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
+        <Clock className="h-3 w-3 shrink-0" aria-hidden="true" />
       )}
-      <span className="font-medium">{status.participant.name}</span>
+      <span>{status.participant.name}</span>
       {showAnsweredCount && (
-        <span className="text-xs opacity-80">
+        <span className="opacity-75">
           {status.answeredCount}/{questionCount}
         </span>
       )}
@@ -106,9 +106,9 @@ export function LoopReplyTracker({ loop }: { loop: PublicLetter }) {
     statuses.length > 0 ? replied.length / statuses.length : 0
 
   return (
-    <div className="w-full rounded-xl border border-border/50 bg-background/80 p-6 shadow-md backdrop-blur-sm dark:border-border/30 dark:bg-background/60">
+    <div className="w-full rounded-lg border bg-card p-5 shadow-xs">
       <div className="flex flex-wrap items-baseline justify-between gap-2">
-        <h3 className="text-lg font-semibold text-foreground">Replies</h3>
+        <h3 className="text-base font-semibold text-foreground">Replies</h3>
         <p className="text-sm text-muted-foreground">
           {replied.length} of {statuses.length} participant
           {statuses.length !== 1 ? "s" : ""} replied
@@ -116,7 +116,7 @@ export function LoopReplyTracker({ loop }: { loop: PublicLetter }) {
       </div>
 
       <div
-        className="mt-3 h-2 w-full overflow-hidden rounded-full bg-muted"
+        className="mt-3 h-1.5 w-full overflow-hidden rounded-full bg-muted"
         role="progressbar"
         aria-label="Participants who replied"
         aria-valuemin={0}
@@ -124,14 +124,14 @@ export function LoopReplyTracker({ loop }: { loop: PublicLetter }) {
         aria-valuenow={replied.length}
       >
         <div
-          className="h-full rounded-full bg-green-600 transition-all duration-300 dark:bg-green-400"
+          className="h-full rounded-full bg-success transition-all duration-300"
           style={{ width: `${Math.round(repliedRatio * 100)}%` }}
         />
       </div>
 
       {replied.length > 0 && (
         <div className="mt-4">
-          <p className="mb-2 text-sm font-medium text-muted-foreground">
+          <p className="mb-2 text-xs font-medium text-muted-foreground">
             Replied ({replied.length})
           </p>
           <ul className="flex flex-wrap gap-2">
@@ -148,7 +148,7 @@ export function LoopReplyTracker({ loop }: { loop: PublicLetter }) {
 
       {pending.length > 0 && (
         <div className="mt-4">
-          <p className="mb-2 text-sm font-medium text-muted-foreground">
+          <p className="mb-2 text-xs font-medium text-muted-foreground">
             {loop.status === "SENT" ? "Didn't reply" : "Waiting on"} (
             {pending.length})
           </p>

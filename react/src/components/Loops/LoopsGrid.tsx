@@ -17,24 +17,22 @@ export function LoopsGrid({
   showResponderCount?: boolean
 }): JSX.Element {
   return (
-    <div className="flex w-full flex-col items-center gap-4">
-      <div className="w-full text-center">
-        <h3 className="text-lg font-semibold">{heading}</h3>
-        {subheading && <h4 className="text-sm font-medium">{subheading}</h4>}
+    <div className="flex w-full flex-col gap-4">
+      <div>
+        <h3 className="text-base font-semibold">{heading}</h3>
+        {subheading && (
+          <p className="mt-1 text-sm text-muted-foreground">{subheading}</p>
+        )}
       </div>
-      <div className="flex w-full flex-wrap justify-center gap-4">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {loops.map((loop) => (
-          <div
+          <LoopCard
             key={loop.api_identifier}
-            className="min-w-[200px] flex-[0_1_calc(25%-1rem)]"
-          >
-            <LoopCard
-              loop={loop}
-              includeGroupName={includeGroupName}
-              showLoopTypeLabel={showLoopTypeLabel}
-              showResponderCount={showResponderCount}
-            />
-          </div>
+            loop={loop}
+            includeGroupName={includeGroupName}
+            showLoopTypeLabel={showLoopTypeLabel}
+            showResponderCount={showResponderCount}
+          />
         ))}
       </div>
     </div>
