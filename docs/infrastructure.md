@@ -60,6 +60,7 @@ flowchart TB
 | CDN | Public URLs for uploaded media | CloudFront `du32exnxihxuf.cloudfront.net` → S3 origin |
 | Email | Invites, auth, letter notifications | SES (`us-east-1`), domain `neilsriv.tech`, sender `ring@neilsriv.tech` |
 | Container images | Prod Docker images | ECR Public `public.ecr.aws/z2k1e8p1/` |
+| Logs | Container stdout/stderr | CloudWatch Logs group `/ring/prod` (`us-east-1`) via the Docker `awslogs` driver — see [Backend logs](#backend-logs--cloudwatch) |
 | DNS / TLS | `ring.neilsriv.tech` | DNS at registrar (not Route 53). TLS via Let's Encrypt + certbot on the EC2 host. |
 
 ---
@@ -284,6 +285,88 @@ running code). `git` is unavailable in prod after the cutover (no
 `./.git` mount). `docker.containers[].image_id` / `image_digest` come
 from a host-written snapshot (`.ring-runtime-version.json`, mounted
 read-only). The API does not talk to the Docker Engine.
+
+---
+
+## Backend logs — CloudWatch
+
+Prod containers ship stdout/stderr to **CloudWatch Logs** through the
+Docker `awslogs` log driver, configured in
+[compose.prod.yml](../compose.prod.yml) (and
+[llm/compose.prod.llm.yml](../llm/compose.prod.llm.yml) for the optional
+LLM service). The Docker daemon does the shipping using the EC2 instance
+role — no collector container, no extra RAM on the `t2.micro`. Local dev
+is untouched (default `json-file` driver).
+
+- **Log group:** `/ring/prod` (`us-east-1`), one stream per service:
+  `api`, `nginx`, `frontend`, `certbot`, `llm`.
+- The API emits plain-text loguru + uvicorn lines (request/response
+  logging in [ring/fastapp/fast.py](../ring/fastapp/fast.py); tokens and
+  emails are already redacted by
+  [ring/lib/request_logging.py](../ring/lib/request_logging.py)).
+- `mode: non-blocking` — if CloudWatch is slow or unreachable, log lines
+  are dropped instead of blocking the app's stdout writes.
+- Free tier is 5 GB/month ingest (then ~$0.50/GB in `us-east-1`); this
+  app will not get close unless something is looping.
+
+### Viewing logs
+
+```bash
+aws logs tail /ring/prod --follow                          # all services
+aws logs tail /ring/prod --follow --log-stream-names api   # backend only
+```
+
+Or in the console: CloudWatch → Log groups → `/ring/prod` → **Live
+Tail**, and **Logs Insights** for history, e.g.:
+
+```
+fields @timestamp, @logStream, @message
+| filter @message like /(?i)error/
+| sort @timestamp desc
+| limit 100
+```
+
+On the EC2 host, `docker logs ring-api` still works — Docker's dual
+logging keeps a local cache alongside the remote driver.
+
+### One-time setup (required BEFORE this config deploys)
+
+**Ordering matters.** The `awslogs` driver fails *container creation*
+when the daemon cannot talk to CloudWatch, and
+`deploy_host.sh --rollback-on-fail` restores the previous **image only**
+— the checked-out compose file keeps the logging config. Deploying this
+without IAM in place takes prod down until the policy is attached or the
+compose change is reverted. If needed, freeze automatic deploys with the
+`DEPLOY_PAUSED=true` repo variable while you set this up.
+
+1. Attach this to the EC2 instance role (the one that already talks to
+   S3/SES):
+
+```json
+{
+  "Effect": "Allow",
+  "Action": [
+    "logs:CreateLogGroup",
+    "logs:CreateLogStream",
+    "logs:PutLogEvents",
+    "logs:DescribeLogStreams"
+  ],
+  "Resource": [
+    "arn:aws:logs:us-east-1:*:log-group:/ring/prod",
+    "arn:aws:logs:us-east-1:*:log-group:/ring/prod:*"
+  ]
+}
+```
+
+   `logs:CreateLogGroup` is not optional: `awslogs-create-group: "true"`
+   calls it on every container create, even when the group already
+   exists.
+
+2. Cap retention (driver-created groups default to never-expire):
+
+```bash
+aws logs put-retention-policy --log-group-name /ring/prod --retention-in-days 30
+```
 
 ---
 
