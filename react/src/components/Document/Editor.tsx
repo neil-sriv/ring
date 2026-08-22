@@ -700,14 +700,32 @@ export const CollabEditor: React.FC<{
                             font-size: 1rem;
                         }
 
+                        /* Tailwind preflight resets list-style to none;
+                           restore markers inside the editor. */
                         .prosemirror-editor ul,
                         .prosemirror-editor ol {
                             padding-left: 1.5rem;
                             margin: 1rem 0;
                         }
 
+                        .prosemirror-editor ul {
+                            list-style-type: disc;
+                        }
+
+                        .prosemirror-editor ul ul {
+                            list-style-type: circle;
+                        }
+
+                        .prosemirror-editor ol {
+                            list-style-type: decimal;
+                        }
+
                         .prosemirror-editor li {
                             margin: 0.25rem 0;
+                        }
+
+                        .prosemirror-editor li::marker {
+                            color: var(--color-muted-foreground);
                         }
 
                         .prosemirror-editor code {
