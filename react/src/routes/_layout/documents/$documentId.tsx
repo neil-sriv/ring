@@ -1,7 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import { createFileRoute } from "@tanstack/react-router"
 import { Loader2 } from "lucide-react"
-import { Suspense, lazy, useRef, useState } from "react"
+import { Suspense, lazy, useEffect, useRef, useState } from "react"
 import type { DocumentResponse } from "../../../client"
 import {
   getDocumentEndpointNotebookDocumentsDocumentApiIdGetOptions,
@@ -9,7 +9,10 @@ import {
   updateDocumentEndpointNotebookDocumentsDocumentApiIdPutMutation,
 } from "../../../client/@tanstack/react-query.gen"
 import { EditableTitle } from "../../../components/Document/EditableTitle"
-import type { NotebookWsStatus } from "../../../components/Document/Editor"
+import type {
+  NotebookWsConnectionMeta,
+  NotebookWsStatus,
+} from "../../../components/Document/Editor"
 
 type DocumentLoaderProps = {
   document: DocumentResponse
@@ -43,8 +46,41 @@ function DocumentContentLoader() {
   const [isSaving, setIsSaving] = useState(false)
   const [isEditing, setIsEditing] = useState(false)
   const [wsStatus, setWsStatus] = useState<NotebookWsStatus>("connecting")
+  const [retryCountdownSec, setRetryCountdownSec] = useState<number | null>(
+    null,
+  )
+  const [retryDeadlineMs, setRetryDeadlineMs] = useState<number | null>(null)
   const savingStartTimeRef = useRef<number | null>(null)
   const queryClient = useQueryClient()
+
+  const handleConnectionChange = (
+    status: NotebookWsStatus,
+    meta?: NotebookWsConnectionMeta,
+  ) => {
+    setWsStatus(status)
+    if (status === "connected") {
+      setRetryDeadlineMs(null)
+      setRetryCountdownSec(null)
+      return
+    }
+    if (meta?.nextRetryMs != null) {
+      setRetryDeadlineMs(Date.now() + meta.nextRetryMs)
+      setRetryCountdownSec(Math.ceil(meta.nextRetryMs / 1000))
+    }
+  }
+
+  useEffect(() => {
+    if (wsStatus === "connected" || retryDeadlineMs == null) {
+      return
+    }
+    const tick = () => {
+      const remainingMs = Math.max(0, retryDeadlineMs - Date.now())
+      setRetryCountdownSec(Math.ceil(remainingMs / 1000))
+    }
+    tick()
+    const id = window.setInterval(tick, 250)
+    return () => window.clearInterval(id)
+  }, [wsStatus, retryDeadlineMs])
 
   // Use query data instead of loader data to get real-time updates
   const { data: document, isLoading: isDocumentLoading } = useQuery({
@@ -133,12 +169,20 @@ function DocumentContentLoader() {
             {isReconnecting ? (
               <>
                 <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-warning" />
-                <span className="text-warning">Reconnecting...</span>
+                <span className="text-warning">
+                  {retryCountdownSec != null && retryCountdownSec > 0
+                    ? `Reconnecting... next try in ${retryCountdownSec}s`
+                    : "Reconnecting..."}
+                </span>
               </>
             ) : isConnecting ? (
               <>
                 <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-muted-foreground/60" />
-                <span>Connecting...</span>
+                <span>
+                  {retryCountdownSec != null && retryCountdownSec > 0
+                    ? `Connecting... next try in ${retryCountdownSec}s`
+                    : "Connecting..."}
+                </span>
               </>
             ) : isSaving ? (
               <>
@@ -171,7 +215,7 @@ function DocumentContentLoader() {
             docId={documentId}
             onSavingChange={handleSavingChange}
             onEditingChange={setIsEditing}
-            onConnectionChange={setWsStatus}
+            onConnectionChange={handleConnectionChange}
           />
         </Suspense>
       </div>

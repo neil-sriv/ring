@@ -33,6 +33,24 @@ import { useEffect, useRef } from "react"
 
 export type NotebookWsStatus = "connecting" | "connected" | "reconnecting"
 
+/** Optional metadata for connection status updates (e.g. reconnect backoff). */
+export type NotebookWsConnectionMeta = {
+  /** Delay until the next reconnect attempt, when status is reconnecting/connecting. */
+  nextRetryMs?: number
+}
+
+const WS_RECONNECT_BASE_MS = 1_000
+const WS_RECONNECT_MAX_MS = 30_000
+
+/** Exponential backoff for notebook WS reconnects: 1s, 2s, 4s, … capped at 30s. */
+export function notebookWsReconnectDelayMs(attempt: number): number {
+  const cappedAttempt = Math.max(0, Math.min(attempt, 16))
+  return Math.min(
+    WS_RECONNECT_BASE_MS * 2 ** cappedAttempt,
+    WS_RECONNECT_MAX_MS,
+  )
+}
+
 function toolbarButtonClass(isActive = false) {
   return cn(
     "h-8 w-8 px-0 text-muted-foreground hover:bg-accent hover:text-foreground",
@@ -332,7 +350,10 @@ export const CollabEditor: React.FC<{
   docId: string
   onSavingChange?: (isSaving: boolean) => void
   onEditingChange?: (isEditing: boolean) => void
-  onConnectionChange?: (status: NotebookWsStatus) => void
+  onConnectionChange?: (
+    status: NotebookWsStatus,
+    meta?: NotebookWsConnectionMeta,
+  ) => void
 }> = ({ docId, onSavingChange, onEditingChange, onConnectionChange }) => {
   const editorRef = useRef<any>(null)
   const wsRef = useRef<WebSocket | null>(null)
@@ -348,6 +369,7 @@ export const CollabEditor: React.FC<{
   const onConnectionChangeRef = useRef(onConnectionChange)
   onConnectionChangeRef.current = onConnectionChange
   const hasConnectedOnceRef = useRef(false)
+  const wsReconnectAttemptRef = useRef(0)
 
   useEffect(() => {
     const accessToken = localStorage.getItem("access_token") ?? ""
@@ -357,6 +379,7 @@ export const CollabEditor: React.FC<{
     )
     let cancelled = false
     hasConnectedOnceRef.current = false
+    wsReconnectAttemptRef.current = 0
 
     // Load existing content
     const loadContent = async () => {
@@ -399,6 +422,7 @@ export const CollabEditor: React.FC<{
           return
         }
         hasConnectedOnceRef.current = true
+        wsReconnectAttemptRef.current = 0
         onConnectionChangeRef.current?.("connected")
       }
 
@@ -490,14 +514,19 @@ export const CollabEditor: React.FC<{
         if (cancelled) {
           return
         }
+        const attempt = wsReconnectAttemptRef.current
+        const delayMs = notebookWsReconnectDelayMs(attempt)
+        wsReconnectAttemptRef.current = attempt + 1
         onConnectionChangeRef.current?.(
           hasConnectedOnceRef.current ? "reconnecting" : "connecting",
+          { nextRetryMs: delayMs },
         )
-        wsReconnectTimeoutRef.current = setTimeout(setupWebSocket, 1000)
+        wsReconnectTimeoutRef.current = setTimeout(setupWebSocket, delayMs)
       }
 
       wsRef.current.onerror = () => {
         // Browsers often fire error then close; surface via reconnecting status.
+        // Delay metadata is set in onclose once the backoff is scheduled.
         if (!cancelled) {
           onConnectionChangeRef.current?.(
             hasConnectedOnceRef.current ? "reconnecting" : "connecting",
