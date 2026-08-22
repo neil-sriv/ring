@@ -6,8 +6,16 @@ send was deferred because the issue is waiting for their response.
 
 from __future__ import annotations
 
+import html
 from typing import TYPE_CHECKING
 
+from ring.email_template import (
+    render_button,
+    render_email_shell,
+    render_link,
+    render_muted_line,
+    render_paragraph,
+)
 from ring.email_util import EmailDraft, construct_email_draft
 from ring.lib.app_links import app_url
 
@@ -67,19 +75,27 @@ Visit: {letter_url}
         letter_url=letter_url,
     )
 
-    BODY_HTML = """<html>
-    <head></head>
-    <body>
-    <h1>Ring: {letter_title} is waiting for your response</h1>
-    <h2>Check out the issue online at <a href="{letter_url}">{letter_url}</a></h2>
-    <p>The latest issue for <strong>{group_name}</strong> has not been sent yet because it is waiting for your response.</p>
-    <p>Please visit the link above to add your answers to <strong>{letter_title}</strong>.</p>
-    </body>
-    </html>
-                """.format(
-        group_name=group_name,
-        letter_url=letter_url,
-        letter_title=letter_title,
+    content_html = (
+        render_paragraph(
+            "The latest issue for "
+            f"<strong>{html.escape(group_name)}</strong> has not been sent "
+            "yet because it is waiting for your response."
+        )
+        + render_button("Add your response", letter_url)
+        + render_muted_line(
+            "Or open the letter here: " + render_link(letter_url)
+        )
+    )
+
+    BODY_HTML = render_email_shell(
+        title=f"{letter_title} is waiting on you",
+        eyebrow=group_name,
+        preheader=(
+            f"{letter_title} has not been sent yet — it is waiting for your "
+            "response."
+        ),
+        content_html=content_html,
+        footer_note="You are receiving this email as a member of a Ring loop.",
     )
 
     subject = "Ring: {} is waiting for your response".format(letter_title)

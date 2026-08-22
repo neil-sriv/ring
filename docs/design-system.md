@@ -183,7 +183,36 @@ decorative/empty-state icons, `text-muted-foreground` unless status-colored.
 
 ---
 
-## 6. File map
+## 6. Email
+
+Transactional emails follow the same language, but email clients cannot read
+CSS variables or load our webfonts. `ring/email_template.py` mirrors the
+tokens as hex values and provides the shared shell + helpers
+(`render_email_shell`, `render_button`, `render_link`, `render_paragraph`,
+`render_muted_line`). Rules:
+
+- All outgoing HTML email goes through `render_email_shell` — never hand-roll
+  a `<body>`.
+- Serif display comes from Georgia (closest broadly-installed analog to
+  Lora); UI text uses the system sans stack.
+- One terracotta button per email; fallback link as a muted line below it.
+- Escape all user content (`html.escape`) before interpolating.
+- When `react/src/app.css` tokens change, update the hex mirror in
+  `ring/email_template.py`.
+
+| Hex | Token mirrored |
+|-----|----------------|
+| `#fbfaf7` | `background` |
+| `#ffffff` | `card` |
+| `#3a3631` | `foreground` |
+| `#746d64` | `muted-foreground` |
+| `#e5e2dc` | `border` |
+| `#ba512c` | `primary` |
+| `#fdfcf9` | `primary-foreground` |
+
+---
+
+## 7. File map
 
 | Concern | File |
 |---------|------|
@@ -191,4 +220,5 @@ decorative/empty-state icons, `text-muted-foreground` unless status-colored.
 | Fonts | `@fontsource-variable/instrument-sans`, `@fontsource-variable/lora` (imported at top of `app.css`) |
 | Animations | `tw-animate-css` (imported in `app.css`; powers `animate-in/out` in primitives) |
 | Primitives | `react/src/components/ui/*` |
+| Email shell + token mirror | `ring/email_template.py` |
 | PWA/browser chrome color | `react/vite.config.ts` manifest `theme_color` + `background_color` |
