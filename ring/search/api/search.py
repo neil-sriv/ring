@@ -75,6 +75,7 @@ async def perform_search(
     query: str,
     search_type: SearchType = SearchType.KEYWORD,
     limit: int = 10,
+    offset: int = 0,
     req_dep: AuthenticatedRequestDependencies = Depends(
         get_request_dependencies,
     ),
@@ -84,6 +85,7 @@ async def perform_search(
         query=query,
         user=req_dep.current_user,
         limit=limit,
+        offset=offset,
         search_type=search_type,
     )
     return SearchResponse(
