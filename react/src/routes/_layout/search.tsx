@@ -9,9 +9,9 @@ import { useEffect, useRef, useState } from "react"
 
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { useQuery } from "@tanstack/react-query"
+import { useInfiniteQuery } from "@tanstack/react-query"
 import type { SearchHit } from "../../client"
-import { performSearchSearchSearchGetOptions } from "../../client/@tanstack/react-query.gen"
+import { performSearchSearchSearchGetInfiniteOptions } from "../../client/@tanstack/react-query.gen"
 import { SearchResultRow } from "../../components/Common/SearchResultRow"
 import { registerSearchFocusHandler } from "../../lib/globalKeyboardShortcuts"
 
@@ -19,11 +19,14 @@ export const Route = createFileRoute("/_layout/search")({
   component: Search,
 })
 
+const SEARCH_PAGE_SIZE = 10
+
 function SearchContent() {
   const [searchQuery, setSearchQuery] = useState("")
   const [submittedQuery, setSubmittedQuery] = useState("")
   const [hasSubmittedSearch, setHasSubmittedSearch] = useState(false)
   const searchInputRef = useRef<HTMLInputElement>(null)
+  const loadMoreRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     searchInputRef.current?.focus()
@@ -38,14 +41,48 @@ function SearchContent() {
     isFetching,
     isPending,
     refetch,
-  } = useQuery({
-    ...performSearchSearchSearchGetOptions({
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+  } = useInfiniteQuery({
+    ...performSearchSearchSearchGetInfiniteOptions({
       query: {
         query: submittedQuery,
+        limit: SEARCH_PAGE_SIZE,
       },
     }),
+    initialPageParam: 0,
+    getNextPageParam: (lastPage, allPages) => {
+      // A partial page means the results are exhausted; otherwise the next
+      // offset is the number of results loaded so far.
+      if (lastPage.results.length < SEARCH_PAGE_SIZE) {
+        return undefined
+      }
+      return allPages.reduce((count, page) => count + page.results.length, 0)
+    },
     enabled: hasSubmittedSearch && Boolean(submittedQuery),
   })
+
+  const searchHits = searchResults?.pages.flatMap((page) => page.results) ?? []
+
+  // Auto-fetch the next page when the sentinel below the results scrolls
+  // into view (within 200px of the viewport).
+  useEffect(() => {
+    const sentinel = loadMoreRef.current
+    if (!sentinel || !hasNextPage || isFetchingNextPage) {
+      return
+    }
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries.some((entry) => entry.isIntersecting)) {
+          fetchNextPage()
+        }
+      },
+      { rootMargin: "200px" },
+    )
+    observer.observe(sentinel)
+    return () => observer.disconnect()
+  }, [hasNextPage, isFetchingNextPage, fetchNextPage])
 
   const handleSearch = async () => {
     const trimmedQuery = searchQuery.trim()
@@ -60,7 +97,7 @@ function SearchContent() {
     setSubmittedQuery(trimmedQuery)
   }
 
-  const hasResults = Boolean(searchResults?.results.length)
+  const hasResults = searchHits.length > 0
   const showInitialLoading = hasSubmittedSearch && isPending
   const hasEmptyResults =
     hasSubmittedSearch && !isPending && !isError && !hasResults
@@ -92,7 +129,7 @@ function SearchContent() {
           disabled={!searchQuery.trim()}
           className="absolute right-1 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
         >
-          {isFetching ? (
+          {isFetching && !isFetchingNextPage ? (
             <Loader2 className="h-4 w-4 animate-spin" />
           ) : (
             <ArrowRight className="h-4 w-4" />
@@ -127,16 +164,25 @@ function SearchContent() {
         </div>
       )}
 
-      {hasResults && searchResults && (
+      {hasResults && (
         <div className="mt-6">
           <p className="px-3 text-xs text-muted-foreground">
-            {searchResults.total} result{searchResults.total === 1 ? "" : "s"}
+            {searchHits.length}
+            {hasNextPage ? "+" : ""} result
+            {searchHits.length === 1 && !hasNextPage ? "" : "s"}
           </p>
           <div className="mt-2 flex flex-col gap-0.5">
-            {searchResults.results.map((result: SearchHit) => (
+            {searchHits.map((result: SearchHit) => (
               <SearchResultRow key={result.api_identifier} result={result} />
             ))}
           </div>
+          <div ref={loadMoreRef} aria-hidden="true" />
+          {isFetchingNextPage && (
+            <div className="flex items-center justify-center gap-2 py-4 text-sm text-muted-foreground">
+              <Loader2 className="h-4 w-4 animate-spin" />
+              <span>Loading more...</span>
+            </div>
+          )}
         </div>
       )}
     </div>
