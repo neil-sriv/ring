@@ -1,5 +1,5 @@
 import { useSuspenseQuery } from "@tanstack/react-query"
-import { Link, createFileRoute } from "@tanstack/react-router"
+import { Link, createFileRoute, useNavigate } from "@tanstack/react-router"
 
 import { Button } from "@/components/ui/button"
 import { Skeleton } from "@/components/ui/skeleton"
@@ -32,6 +32,7 @@ export const Route = createFileRoute("/_layout/groups")({
 
 function GroupTableBody() {
   const currentUser = Route.useLoaderData<UserLinked>()
+  const navigate = useNavigate()
   const { data: groups } = useSuspenseQuery({
     ...listGroupsPartiesGroupsGetOptions({
       query: { user_api_id: currentUser?.api_identifier },
@@ -74,7 +75,27 @@ function GroupTableBody() {
       </TableHeader>
       <TableBody>
         {groups.map((group) => (
-          <TableRow key={group.api_identifier}>
+          <TableRow
+            key={group.api_identifier}
+            className="cursor-pointer"
+            onClick={(event) => {
+              // Let modified clicks (new tab, selection) fall through to the
+              // name link instead of also navigating the current tab.
+              if (
+                event.defaultPrevented ||
+                event.metaKey ||
+                event.ctrlKey ||
+                event.shiftKey ||
+                event.altKey
+              ) {
+                return
+              }
+              navigate({
+                to: "/groups/$groupId/loops",
+                params: { groupId: group.api_identifier },
+              })
+            }}
+          >
             <TableCell>
               <Link
                 to="/groups/$groupId/loops"
@@ -96,7 +117,10 @@ function GroupTableBody() {
                 .sort()
                 .join(", ")}
             </TableCell>
-            <TableCell className="text-right">
+            <TableCell
+              className="text-right"
+              onClick={(event) => event.stopPropagation()}
+            >
               <ActionsMenu type={"Group"} value={group} />
             </TableCell>
           </TableRow>
