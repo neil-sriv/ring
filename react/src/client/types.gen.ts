@@ -2248,6 +2248,7 @@ export type PerformSearchSearchSearchGetData = {
         query: string;
         search_type?: SearchType;
         limit?: number;
+        offset?: number;
     };
     url: '/search/search';
 };

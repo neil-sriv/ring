@@ -283,6 +283,97 @@ class TestHybridSearchCRUD:
             db_session, user, Action.READ, mock_ranked_results
         )
 
+    @patch("ring.search.crud.hybrid_search.dual_search_hybrid_search_document")
+    @patch(
+        "ring.search.crud.hybrid_search.get_model_ids_from_hybrid_search_documents"
+    )
+    @patch("ring.search.crud.hybrid_search.hydrate_results")
+    @patch("ring.search.crud.hybrid_search.filter_to_authorized")
+    def test_search_offset_pagination(
+        self,
+        mock_filter_authorized: MagicMock,
+        mock_hydrate: MagicMock,
+        mock_get_model_ids: MagicMock,
+        mock_dual_search: MagicMock,
+        db_session: Session,
+    ) -> None:
+        """Test offset-based pagination of the main search function.
+
+        This test verifies that:
+        1. The raw search window covers offset + limit (with overfetch)
+        2. The returned page is the [offset, offset + limit) slice of the
+           authorized results
+        3. An offset past the end of the results returns an empty page
+
+        Args:
+            mock_filter_authorized (MagicMock): Mock for authorization filtering
+            mock_hydrate (MagicMock): Mock for result hydration
+            mock_get_model_ids (MagicMock): Mock for model ID extraction
+            mock_dual_search (MagicMock): Mock for dual search
+            db_session (Session): Database session
+        """
+        mock_dual_search.return_value = [MagicMock()]
+        mock_get_model_ids.return_value = [
+            (SearchableType.USER, f"test_id_{i}") for i in range(3)
+        ]
+        mock_users = []
+        for i in range(3):
+            mock_user = MagicMock()
+            mock_user.api_identifier = f"test_id_{i}"
+            mock_users.append(mock_user)
+        mock_hydrate.return_value = mock_users
+        mock_filter_authorized.return_value = mock_users
+
+        user = UserFactory.create()
+        results = search(
+            db_session,
+            "test query",
+            user=user,
+            limit=1,
+            offset=1,
+            search_type=SearchType.DUAL,
+        )
+
+        assert results == [mock_users[1]]
+        mock_dual_search.assert_called_once_with(db_session, "test query", 6)
+
+        results_past_end = search(
+            db_session,
+            "test query",
+            user=user,
+            limit=10,
+            offset=3,
+            search_type=SearchType.DUAL,
+        )
+
+        assert results_past_end == []
+
+    @patch("ring.search.crud.hybrid_search.dual_search_hybrid_search_document")
+    def test_search_negative_offset_returns_empty(
+        self,
+        mock_dual_search: MagicMock,
+        db_session: Session,
+    ) -> None:
+        """Test that a negative offset short-circuits to an empty result.
+
+        Args:
+            mock_dual_search (MagicMock): Mock for dual search
+            db_session (Session): Database session
+        """
+        user = UserFactory.create()
+
+        results = search(
+            db_session,
+            "test query",
+            user=user,
+            limit=10,
+            offset=-1,
+            search_type=SearchType.DUAL,
+        )
+
+        assert results == []
+        mock_dual_search.assert_not_called()
+
     def test_register_search_function_returns_none_on_error(
         self, db_session: Session
     ) -> None:

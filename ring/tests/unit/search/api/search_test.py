@@ -185,3 +185,84 @@ class TestSearchAPI:
             ),
             data,
         )
+
+    @patch("ring.search.crud.hybrid_search._generate_text_embedding")
+    def test_hydrated_search_offset_pagination(
+        self,
+        mock_generate_embedding: MagicMock,
+        authenticated_client: TestClient,
+        current_user: User,
+        db_session: Session,
+    ) -> None:
+        """Test paginating hydrated search results with limit and offset.
+
+        This test verifies that:
+        1. Consecutive pages return consecutive slices of the ranked results
+        2. A partial final page returns only the remaining results
+        3. An offset past the end of the results returns an empty page
+
+        Args:
+            mock_generate_embedding (MagicMock): Mock for embedding generation
+            authenticated_client (TestClient): Authenticated test client
+            current_user (User): Authenticated user performing the search
+            db_session (Session): Database session
+        """
+        users = [UserFactory.create() for _ in range(3)]
+        group = GroupFactory.create()
+        for user in users:
+            group.members.append(user)
+        group.members.append(current_user)
+        db_session.commit()
+
+        base_embedding = [0.1] * 768
+        for i, user in enumerate(users):
+            doc_embedding = [x + (i * 0.01) for x in base_embedding]
+            document = HybridSearchDocument.create(
+                raw_text=f"test document for {user.name}",
+                text_embedding_768=doc_embedding,
+            )
+            association = HybridSearchDocumentAssociation.create(
+                model_api_identifier=user.api_identifier,
+                model_type=SearchableType.USER.value,
+                hybrid_search_document=document,
+            )
+            db_session.add_all([document, association])
+        db_session.commit()
+
+        query_embedding = [x + 0.005 for x in base_embedding]
+        mock_generate_embedding.return_value = query_embedding
+
+        first_page = authenticated_client.get(
+            "/search/search?query=test&search_type=semantic&limit=2&offset=0"
+        )
+
+        assert first_page.status_code == 200
+        assert_pydantic_schema_json_dump_equivalent_to_response_dict(
+            SearchResponse(
+                results=[SearchHit.from_model(user) for user in users[:2]],
+                total=2,
+            ),
+            first_page.json(),
+        )
+
+        second_page = authenticated_client.get(
+            "/search/search?query=test&search_type=semantic&limit=2&offset=2"
+        )
+
+        assert second_page.status_code == 200
+        assert_pydantic_schema_json_dump_equivalent_to_response_dict(
+            SearchResponse(
+                results=[SearchHit.from_model(users[2])],
+                total=1,
+            ),
+            second_page.json(),
+        )
+
+        empty_page = authenticated_client.get(
+            "/search/search?query=test&search_type=semantic&limit=2&offset=4"
+        )
+
+        assert empty_page.status_code == 200
+        empty_data = empty_page.json()
+        assert empty_data["total"] == 0
+        assert empty_data["results"] == []

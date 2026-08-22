@@ -270,6 +270,7 @@ def search(
     query: str,
     user: User,
     limit: int = 10,
+    offset: int = 0,
     search_type: SearchType = SearchType.KEYWORD,
 ) -> list[APIIdentified]:
     # Resolve the search function at call time (rather than via a module-level
@@ -282,11 +283,13 @@ def search(
         SearchType.KEYWORD: keyword_search_hybrid_search_document,
         SearchType.DUAL: dual_search_hybrid_search_document,
     }
-    if limit <= 0:
+    if limit <= 0 or offset < 0:
         return []
 
+    # Offset pagination is applied after authz filtering, so every page must
+    # re-fetch the raw window covering [0, offset + limit) and slice.
     search_results = search_dispatch[search_type](
-        db, query, _search_overfetch_limit(limit)
+        db, query, _search_overfetch_limit(offset + limit)
     )
     model_references = get_model_ids_from_hybrid_search_documents(
         db, search_results
@@ -308,7 +311,7 @@ def search(
     authorized_results = filter_to_authorized(
         db, user, Action.READ, ranked_results
     )
-    return list(authorized_results)[:limit]
+    return list(authorized_results)[offset : offset + limit]
 
 
 def _search_overfetch_limit(limit: int) -> int:
