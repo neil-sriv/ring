@@ -44,6 +44,7 @@ function SearchContent() {
     fetchNextPage,
     hasNextPage,
     isFetchingNextPage,
+    isFetchNextPageError,
   } = useInfiniteQuery({
     ...performSearchSearchSearchGetInfiniteOptions({
       query: {
@@ -66,10 +67,13 @@ function SearchContent() {
   const searchHits = searchResults?.pages.flatMap((page) => page.results) ?? []
 
   // Auto-fetch the next page when the sentinel below the results scrolls
-  // into view (within 200px of the viewport).
+  // into view (within 200px of the viewport). Gated on isError so a failed
+  // page fetch doesn't re-arm the observer and hammer retries while the
+  // sentinel is still in view; recovery goes through the explicit retry
+  // button instead.
   useEffect(() => {
     const sentinel = loadMoreRef.current
-    if (!sentinel || !hasNextPage || isFetchingNextPage) {
+    if (!sentinel || !hasNextPage || isFetchingNextPage || isError) {
       return
     }
     const observer = new IntersectionObserver(
@@ -82,7 +86,7 @@ function SearchContent() {
     )
     observer.observe(sentinel)
     return () => observer.disconnect()
-  }, [hasNextPage, isFetchingNextPage, fetchNextPage])
+  }, [hasNextPage, isFetchingNextPage, isError, fetchNextPage])
 
   const handleSearch = async () => {
     const trimmedQuery = searchQuery.trim()
@@ -144,7 +148,7 @@ function SearchContent() {
         </div>
       )}
 
-      {hasSubmittedSearch && !isPending && isError && (
+      {hasSubmittedSearch && !isPending && isError && !isFetchNextPageError && (
         <div className="mt-6 text-sm text-destructive">
           Search failed
           {error instanceof Error && error.message ? `: ${error.message}` : "."}
@@ -181,6 +185,18 @@ function SearchContent() {
             <div className="flex items-center justify-center gap-2 py-4 text-sm text-muted-foreground">
               <Loader2 className="h-4 w-4 animate-spin" />
               <span>Loading more...</span>
+            </div>
+          )}
+          {isFetchNextPageError && !isFetchingNextPage && (
+            <div className="flex items-center justify-center gap-3 py-4 text-sm text-muted-foreground">
+              <span>Couldn't load more results.</span>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => fetchNextPage()}
+              >
+                Retry
+              </Button>
             </div>
           )}
         </div>
