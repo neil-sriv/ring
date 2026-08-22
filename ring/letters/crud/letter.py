@@ -98,7 +98,16 @@ def get_letters_for_user(
     if filters:
         query_filters.extend(filters)
     return db.scalars(
-        select(Letter).join(Letter.participants).filter(*query_filters)
+        select(Letter)
+        .join(Letter.participants)
+        .filter(*query_filters)
+        .options(
+            selectinload(Letter.participants),
+            selectinload(Letter.group).selectinload(Group.key_values),
+            selectinload(Letter.questions)
+            .selectinload(Question.responses)
+            .selectinload(Response.participant),
+        )
     ).all()
 
 
