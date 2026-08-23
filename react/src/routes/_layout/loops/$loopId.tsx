@@ -94,7 +94,9 @@ function IssueContent() {
         </div>
       </header>
 
-      {isGroupAdmin && (
+      {/* Reply tracker: everyone sees it while the loop is in progress;
+          once sent, the "Didn't reply" view stays admin-only. */}
+      {(loop.status === "IN_PROGRESS" || isGroupAdmin) && (
         <div className="mt-6">
           <LoopReplyTracker loop={loop} />
         </div>
