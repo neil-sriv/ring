@@ -1454,6 +1454,16 @@ export const rawSearchSearchRawSearchGet = <ThrowOnError extends boolean = false
 
 /**
  * Perform Search
+ * Search groups, letters, questions, and responses.
+ *
+ * The query supports GitHub-style qualifiers in addition to free text:
+ * - `author:name` or `author:"Full Name"` — questions by that author and
+ * responses by that participant (name or email, case-insensitive)
+ * - `status:open` — currently in-progress issues
+ * - `status:published` — sent issues
+ * - `status:upcoming` — scheduled issues
+ * - `is:open` / `is:published` — aliases of `status:`
+ * - `author:@me` — the current user
  */
 export const performSearchSearchSearchGet = <ThrowOnError extends boolean = false>(options: Options<PerformSearchSearchSearchGetData, ThrowOnError>) => {
     return (options.client ?? _heyApiClient).get<PerformSearchSearchSearchGetResponse, PerformSearchSearchSearchGetError, ThrowOnError>({

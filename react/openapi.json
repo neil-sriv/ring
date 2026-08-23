@@ -2614,6 +2614,7 @@
           "search"
         ],
         "summary": "Perform Search",
+        "description": "Search groups, letters, questions, and responses.\n\nThe query supports GitHub-style qualifiers in addition to free text:\n- `author:name` or `author:\"Full Name\"` — questions by that author and\n  responses by that participant (name or email, case-insensitive)\n- `status:open` — currently in-progress issues\n- `status:published` — sent issues\n- `status:upcoming` — scheduled issues\n- `is:open` / `is:published` — aliases of `status:`\n- `author:@me` — the current user",
         "operationId": "perform_search_search_search_get",
         "security": [
           {
