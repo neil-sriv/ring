@@ -212,9 +212,7 @@ def poll_schedule_task(db: Session) -> dict[str, str]:
             args=[[task.id for task in tasks]],
         )
 
-    postpend, promote = collect_future_letters(
-        db, curr_time + datetime.timedelta(days=7)
-    )
+    postpend, promote = collect_future_letters(db, curr_time)
     if postpend:
         scheduler.add_job(
             postpend_upcoming_letters,

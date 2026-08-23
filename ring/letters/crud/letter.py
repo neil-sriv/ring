@@ -26,6 +26,10 @@ from ring.letters.crud.question import create_question
 from ring.letters.models.letter_model import Letter
 from ring.letters.models.question_model import Question
 from ring.letters.models.response_model import Response
+from ring.letters.send_threshold import (
+    has_send_date_arrived,
+    hold_letter_for_send_threshold,
+)
 from ring.parties.models.group_model import Group
 from ring.parties.models.user_model import User
 from ring.search.crud.hybrid_search import (
@@ -443,19 +447,26 @@ def compile_letter_dict(
     }
 
 
+LETTER_PROMOTION_LOOKAHEAD = timedelta(days=7)
+
+
 def collect_future_letters(
     db: Session,
-    recent_time: datetime,
+    curr_time: datetime,
 ) -> tuple[Sequence[Letter], Sequence[Letter]]:
     """Collect letters that need to be promoted or postpended.
 
-    This function collects letters that need to be promoted or postpended based on
-    the time threshold for recent letters and only if the group does not already
-    have a letter in the same status.
+    Upcoming letters are promoted ``LETTER_PROMOTION_LOOKAHEAD`` before their
+    send date so participants get a response window before the letter goes
+    out. In-progress letters are only postpended once their send date has
+    actually arrived; collecting them any earlier would close the response
+    window and mark the letter SENT ahead of schedule. Letters are only
+    collected if the group does not already have a letter in the target
+    status.
 
     Args:
         db (Session): Database session
-        recent_time (datetime): Time threshold for recent letters
+        curr_time (datetime): The current time
 
     Returns:
         tuple[Sequence[Letter], Sequence[Letter]]: Tuple containing:
@@ -467,7 +478,7 @@ def collect_future_letters(
         .where(
             Letter.letter_type == LetterType.CYCLIC,
             Letter.status == LetterStatus.UPCOMING,
-            Letter.send_at <= recent_time,
+            Letter.send_at <= curr_time + LETTER_PROMOTION_LOOKAHEAD,
         )
         .order_by(Letter.send_at)
     ).all()
@@ -477,7 +488,7 @@ def collect_future_letters(
         .where(
             Letter.letter_type == LetterType.CYCLIC,
             Letter.status == LetterStatus.IN_PROGRESS,
-            Letter.send_at <= recent_time,
+            Letter.send_at <= curr_time,
         )
         .order_by(Letter.send_at)
     ).all()
@@ -550,18 +561,24 @@ def postpend_upcoming_letters_with_session(
     This helper is used by the scheduled postpend job and tests that need to
     provide their own transaction-scoped session.
 
+    Letters whose send date has not arrived yet are left untouched, still
+    open for responses, no matter how many participants have responded.
     Letters below the responder send threshold are left in progress instead of
-    marked SENT without an email, and have their send date deferred once that
-    send date has arrived.
+    marked SENT without an email, and have their send date deferred.
 
     Args:
         db (Session): Database session
         letter_ids (list[int]): IDs of letters to postpend
     """
-    from ring.letters.send_threshold import hold_letter_for_send_threshold
-
     letters = db.scalars(select(Letter).where(Letter.id.in_(letter_ids))).all()
     for letter in letters:
+        if not has_send_date_arrived(letter):
+            logger.info(
+                "Not postpending letter {}: send date {} not reached".format(
+                    letter.id, letter.send_at
+                )
+            )
+            continue
         if hold_letter_for_send_threshold(db, letter):
             continue
         letter.status = LetterStatus.SENT
