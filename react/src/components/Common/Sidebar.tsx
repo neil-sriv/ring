@@ -1,7 +1,7 @@
 import { useQueryClient } from "@tanstack/react-query"
 import { Link } from "@tanstack/react-router"
 import { LogOut, Menu } from "lucide-react"
-import { useState } from "react"
+import { useCallback, useState } from "react"
 
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
@@ -15,6 +15,7 @@ import {
 import type { UserLinked } from "../../client"
 import { readUserMePartiesMeGetQueryKey } from "../../client/@tanstack/react-query.gen"
 import useAuth from "../../hooks/useAuth"
+import { useSidebarSwipe } from "../../hooks/useSidebarSwipe"
 import { userInitials } from "../../util/misc"
 import SidebarItems from "./SidebarItems"
 
@@ -25,6 +26,11 @@ const Sidebar = () => {
   )
   const [isOpen, setIsOpen] = useState(false)
   const { logout } = useAuth()
+
+  const openSidebar = useCallback(() => setIsOpen(true), [])
+  const closeSidebar = useCallback(() => setIsOpen(false), [])
+
+  useSidebarSwipe({ isOpen, onOpen: openSidebar, onClose: closeSidebar })
 
   const handleLogout = async () => {
     logout()
@@ -84,7 +90,7 @@ const Sidebar = () => {
     <>
       {/* Mobile top bar */}
       <header className="sticky top-0 z-40 flex h-12 shrink-0 items-center gap-1 border-b border-sidebar-border bg-sidebar px-2 md:hidden">
-        <Button variant="ghost" size="icon" onClick={() => setIsOpen(true)}>
+        <Button variant="ghost" size="icon" onClick={openSidebar}>
           <Menu className="h-4 w-4" />
           <span className="sr-only">Open menu</span>
         </Button>
@@ -98,7 +104,7 @@ const Sidebar = () => {
       <Sheet open={isOpen} onOpenChange={setIsOpen}>
         <SheetContent side="left" className="w-60 bg-sidebar p-3">
           <SheetTitle className="sr-only">Navigation</SheetTitle>
-          {sidebarContent(() => setIsOpen(false))}
+          {sidebarContent(closeSidebar)}
         </SheetContent>
       </Sheet>
 
