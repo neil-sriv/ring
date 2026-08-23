@@ -108,8 +108,10 @@ frozenlist==1.5.0
     # via
     #   aiohttp
     #   aiosignal
-greenlet==3.0.3
-    # via sqlalchemy
+greenlet==3.5.5
+    # via
+    #   playwright
+    #   sqlalchemy
 h11==0.16.0
     # via
     #   httpcore
@@ -221,6 +223,8 @@ pgvector==0.4.1
     # via ring (pyproject.toml)
 platformdirs==4.3.6
     # via virtualenv
+playwright==1.62.0
+    # via ring (pyproject.toml:dev)
 pluggy==1.5.0
     # via pytest
 pprintpp==0.4.0
@@ -275,6 +279,8 @@ pydantic-extra-types==2.1.0
     # via fastapi
 pydantic-settings==2.1.0
     # via fastapi
+pyee==13.0.1
+    # via playwright
 pygments==2.17.2
     # via
     #   ipython
@@ -386,6 +392,7 @@ typing-extensions==4.13.2
     #   llm-service
     #   pydantic
     #   pydantic-core
+    #   pyee
     #   pytest-factoryboy
     #   rich-toolkit
     #   sqlalchemy
