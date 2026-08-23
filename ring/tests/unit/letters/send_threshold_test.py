@@ -14,11 +14,14 @@ from ring.letters.send_threshold import (
     GROUP_SETTING_MIN_RESPONDERS_KEY,
     effective_send_threshold_ratio,
     get_group_min_responder_ratio,
+    is_below_send_threshold,
+    letter_responder_count,
     minimum_responders_required,
     parse_positive_int,
     parse_ratio,
     set_group_min_responder_ratio,
 )
+from ring.parties.crud import group as group_crud
 from ring.ring_pydantic.linked_schemas import MinimalLetter, PublicLetter
 from ring.tests.factories.letters.letter_factory import LetterFactory
 from ring.tests.factories.letters.question_factory import QuestionFactory
@@ -186,6 +189,51 @@ class TestSendThresholdPolicy:
         group = GroupFactory.build()
         with pytest.raises(ValueError, match="between 0 and 1"):
             set_group_min_responder_ratio(group, 1.5)
+
+
+class TestLetterResponderCount:
+    """Responder counting stays consistent with the participant roster."""
+
+    def test_removed_member_response_does_not_count(
+        self, db_session: Session
+    ) -> None:
+        """A responder removed from the group stops counting toward the
+        threshold, so their early reply cannot trigger a premature send
+        once the participant denominator shrinks."""
+        admin = UserFactory.create()
+        members = [admin] + [UserFactory.create() for _ in range(2)]
+        group = GroupFactory.create(admin=admin, members=members)
+        letter = LetterFactory.create(
+            group=group,
+            status=LetterStatus.IN_PROGRESS,
+            send_at=datetime.now(tz=UTC) + timedelta(days=1),
+        )
+        question = QuestionFactory.create(letter=letter)
+        leaver = members[2]
+        ResponseFactory.create(question=question, participant=leaver)
+        db_session.commit()
+
+        # 3 participants at the default ratio require 2 responders.
+        assert minimum_responders_required(letter) == 2
+        assert letter_responder_count(letter) == 1
+        assert is_below_send_threshold(letter) is True
+
+        group_crud.remove_member(
+            db_session, group.api_identifier, leaver.api_identifier
+        )
+        db_session.commit()
+
+        # 2 remaining participants require 1 responder, and the leaver's
+        # response no longer counts, so the letter stays below threshold.
+        assert minimum_responders_required(letter) == 1
+        assert letter_responder_count(letter) == 0
+        assert is_below_send_threshold(letter) is True
+
+        ResponseFactory.create(question=question, participant=members[1])
+        db_session.commit()
+
+        assert letter_responder_count(letter) == 1
+        assert is_below_send_threshold(letter) is False
 
 
 class TestLetterSchemaThresholdFields:
