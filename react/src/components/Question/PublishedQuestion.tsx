@@ -31,7 +31,7 @@ function TextBlockWithUrls({
             href={text}
             target="_blank"
             rel="noopener noreferrer"
-            className="text-primary underline underline-offset-2 transition-colors hover:text-primary/80"
+            className="break-all text-primary underline underline-offset-2 transition-colors hover:text-primary/80"
           >
             {text}
           </a>
@@ -180,7 +180,7 @@ function ResponseBlock({
         {isLateAnswer && <Badge variant="info">Late Answer</Badge>}
       </div>
       {/* <Text>{responseText}</Text> */}
-      <div className="mt-1.5 space-y-2 text-sm leading-relaxed text-foreground">
+      <div className="mt-1.5 space-y-2 break-words text-sm leading-relaxed text-foreground">
         <TextBlockWithUrls
           texts={responseText}
           responseApiId={response.api_identifier}
@@ -287,7 +287,7 @@ function PublishedQuestion({
             {question.author.name} asked:
           </p>
         )}
-        <h2 className="font-display text-lg font-medium leading-relaxed">
+        <h2 className="break-words font-display text-lg font-medium leading-relaxed">
           {question.question_text}
         </h2>
       </div>

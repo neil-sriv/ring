@@ -136,9 +136,9 @@ function LoopsContentLoader() {
       </h1>
       <div className="mt-6">
         <Tabs value={activeTab} onValueChange={handleTabChange}>
-          <TabsList className="w-full flex-nowrap overflow-x-auto overflow-y-hidden">
+          <TabsList className="w-full">
             {tabsConfig.map((tab) => (
-              <TabsTrigger key={tab.hash} value={tab.hash} className="shrink-0">
+              <TabsTrigger key={tab.hash} value={tab.hash}>
                 {tab.title}
               </TabsTrigger>
             ))}
