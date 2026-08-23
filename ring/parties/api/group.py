@@ -13,9 +13,7 @@ from ring.fastapp.dependencies import (
     AuthenticatedRequestDependencies,
     get_request_dependencies,
 )
-from ring.letters.constants import LetterStatus
 from ring.letters.crud.default_question import replace_default_questions
-from ring.letters.crud.letter import add_participants
 from ring.parties.crud import group as group_crud
 from ring.parties.crud import invite as invite_crud
 from ring.parties.models.group_model import Group
@@ -318,12 +316,6 @@ async def add_members(
         req_dep.db, db_group, req_dep.current_user, unregistered
     )
     group_crud.add_members(req_dep.db, db_group, db_users)
-    for letter in db_group.letters:
-        if (
-            letter.status == LetterStatus.IN_PROGRESS
-            or letter.status == LetterStatus.UPCOMING
-        ):
-            add_participants(req_dep.db, letter, db_users)
     req_dep.db.commit()
 
     if invites:
