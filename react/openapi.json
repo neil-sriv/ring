@@ -2494,53 +2494,6 @@
         ]
       }
     },
-    "/llm/completion": {
-      "post": {
-        "tags": [
-          "llm"
-        ],
-        "summary": "Generate Completion",
-        "description": "Generate a completion for the given request.\n\nGenerates a completion for the given request.\n\nArgs:\n    completion_request (CompletionRequest): Completion request details\n    req_dep (AuthenticatedRequestDependencies): Request dependencies including database session\n\nReturns:\n    CompletionResponse: Completion response details\n\nRaises:\n    HTTPException: If user is not authenticated",
-        "operationId": "generate_completion_llm_completion_post",
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/CompletionRequest"
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/CompletionResponse"
-                }
-              }
-            }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            }
-          }
-        },
-        "security": [
-          {
-            "OAuth2PasswordBearer": []
-          }
-        ]
-      }
-    },
     "/search/raw-search": {
       "get": {
         "tags": [
@@ -2756,7 +2709,7 @@
           "notebook"
         ],
         "summary": "Create Document Endpoint",
-        "description": "Create a new document.\n\nArgs:\n    document (DocumentCreate): Document creation parameters\n    req_dep (AuthenticatedRequestDependencies): Request dependencies including database session and auth\n\nReturns:\n    Document: Newly created document",
+        "description": "Create a new document in a group the user belongs to.",
         "operationId": "create_document_endpoint_notebook_documents_post",
         "security": [
           {
@@ -2801,7 +2754,7 @@
           "notebook"
         ],
         "summary": "List Documents",
-        "description": "List documents for a group.\n\nArgs:\n    group_api_id (str): API identifier of the group\n    req_dep (AuthenticatedRequestDependencies): Request dependencies including database session and auth\n\nReturns:\n    List[Document]: List of documents",
+        "description": "List documents for a group the user belongs to.",
         "operationId": "list_documents_notebook_documents_get",
         "security": [
           {
@@ -2853,7 +2806,7 @@
           "notebook"
         ],
         "summary": "Get Document Endpoint",
-        "description": "Get a document by its API identifier.\n\nArgs:\n    document_api_id (str): API identifier of the document\n    req_dep (AuthenticatedRequestDependencies): Request dependencies including database session and auth\n\nReturns:\n    Document: The requested document\n\nRaises:\n    IDNotFoundException: If document with given API ID is not found",
+        "description": "Get a document by its API identifier.",
         "operationId": "get_document_endpoint_notebook_documents__document_api_id__get",
         "security": [
           {
@@ -2899,7 +2852,7 @@
           "notebook"
         ],
         "summary": "Update Document Endpoint",
-        "description": "Update a document.\n\nArgs:\n    document_api_id (str): API identifier of the document\n    document_update (DocumentUpdate): Document update parameters\n    req_dep (AuthenticatedRequestDependencies): Request dependencies including database session and auth\n\nReturns:\n    Document: Updated document\n\nRaises:\n    IDNotFoundException: If document with given API ID is not found",
+        "description": "Update a document's name and/or rendered-HTML content projection.",
         "operationId": "update_document_endpoint_notebook_documents__document_api_id__put",
         "security": [
           {
@@ -3123,32 +3076,6 @@
         ],
         "title": "BulkGroupKeyValueUpdate",
         "description": "Schema for bulk updating multiple key-value pairs.\n\nThis model allows multiple key-value operations to be performed in a single request.\nEach update in the list can be either a 'set' or 'delete' operation.\n\nAttributes:\n    updates (list[SingleGroupKeyValueUpdate]): List of update operations to perform\n\nNote:\n    At least one update operation must be provided"
-      },
-      "CompletionRequest": {
-        "properties": {
-          "prompt": {
-            "type": "string",
-            "title": "Prompt"
-          }
-        },
-        "type": "object",
-        "required": [
-          "prompt"
-        ],
-        "title": "CompletionRequest"
-      },
-      "CompletionResponse": {
-        "properties": {
-          "text": {
-            "type": "string",
-            "title": "Text"
-          }
-        },
-        "type": "object",
-        "required": [
-          "text"
-        ],
-        "title": "CompletionResponse"
       },
       "ContainerVersion": {
         "properties": {

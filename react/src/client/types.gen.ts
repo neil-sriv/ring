@@ -46,14 +46,6 @@ export type BulkGroupKeyValueUpdate = {
     updates: Array<SingleGroupKeyValueUpdate>;
 };
 
-export type CompletionRequest = {
-    prompt: string;
-};
-
-export type CompletionResponse = {
-    text: string;
-};
-
 /**
  * Identity of a running (or recently stopped) compose container.
  */
@@ -2188,31 +2180,6 @@ export type PostSubscriptionNotificationsSubscriptionPostResponses = {
 };
 
 export type PostSubscriptionNotificationsSubscriptionPostResponse = PostSubscriptionNotificationsSubscriptionPostResponses[keyof PostSubscriptionNotificationsSubscriptionPostResponses];
-
-export type GenerateCompletionLlmCompletionPostData = {
-    body: CompletionRequest;
-    path?: never;
-    query?: never;
-    url: '/llm/completion';
-};
-
-export type GenerateCompletionLlmCompletionPostErrors = {
-    /**
-     * Validation Error
-     */
-    422: HttpValidationError;
-};
-
-export type GenerateCompletionLlmCompletionPostError = GenerateCompletionLlmCompletionPostErrors[keyof GenerateCompletionLlmCompletionPostErrors];
-
-export type GenerateCompletionLlmCompletionPostResponses = {
-    /**
-     * Successful Response
-     */
-    200: CompletionResponse;
-};
-
-export type GenerateCompletionLlmCompletionPostResponse = GenerateCompletionLlmCompletionPostResponses[keyof GenerateCompletionLlmCompletionPostResponses];
 
 export type RawSearchSearchRawSearchGetData = {
     body?: never;

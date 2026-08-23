@@ -13,7 +13,6 @@ from ring.auth.api import authn
 from ring.fastapp.api import version
 from ring.letters.api import letter, question, response
 from ring.link_unfurl.api import unfurl
-from ring.llm.api import completion
 from ring.notebook.api import document
 from ring.notifications.api import subscription
 from ring.parties.api import group, group_key_value, invite, user
@@ -46,8 +45,6 @@ router.include_router(
     prefix="/notifications",
     tags=["notifications"],
 )
-
-router.include_router(completion.router, prefix="/llm", tags=["llm"])
 
 router.include_router(search.router, prefix="/search", tags=["search"])
 
