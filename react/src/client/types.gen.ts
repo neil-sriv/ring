@@ -71,21 +71,67 @@ export type ContainerVersion = {
 };
 
 /**
+ * Dashboard letter model.
+ *
+ * Extends ``MinimalLetter`` with slim questions and a participant count —
+ * the home page needs per-question answered state ("waiting on you") and
+ * reply-progress totals, but not response bodies.
+ *
+ * Attributes:
+ * questions (list[DashboardQuestion]): Questions without response bodies
+ * participant_count (int): Number of participants in the letter
+ */
+export type DashboardLetter = {
+    api_identifier: string;
+    number?: number | null;
+    status: LetterStatus;
+    send_at: string;
+    created_at: string;
+    title?: string | null;
+    letter_type: LetterType;
+    group: GroupUnlinked;
+    responders: Array<UserUnlinked>;
+    required_responders?: number;
+    responder_count?: number;
+    send_threshold_ratio?: number | null;
+    questions: Array<DashboardQuestion>;
+    participant_count: number;
+};
+
+/**
  * Model for the letters dashboard view.
  *
  * Groups letters by their status for dashboard display. Uses
- * ``MinimalLetter`` so the home page does not download every question
- * and response body for every active/recent letter.
+ * ``DashboardLetter`` — slim questions without response bodies — so the
+ * home page can show reply state without downloading every response.
  *
  * Attributes:
- * upcoming (list[MinimalLetter]): Letters scheduled for the future
- * in_progress (list[MinimalLetter]): Currently active letters
- * recently_completed (list[MinimalLetter]): Recently finished letters
+ * upcoming (list[DashboardLetter]): Letters scheduled for the future
+ * in_progress (list[DashboardLetter]): Currently active letters
+ * recently_completed (list[DashboardLetter]): Recently finished letters
  */
 export type DashboardLetters = {
-    upcoming: Array<MinimalLetter>;
-    in_progress: Array<MinimalLetter>;
-    recently_completed: Array<MinimalLetter>;
+    upcoming: Array<DashboardLetter>;
+    in_progress: Array<DashboardLetter>;
+    recently_completed: Array<DashboardLetter>;
+};
+
+/**
+ * Slim question model for the dashboard.
+ *
+ * Carries which participants have answered (by api identifier) instead of
+ * full response bodies, so the home page can compute each user's unanswered
+ * questions without downloading every response.
+ *
+ * Attributes:
+ * responded_participant_api_ids (list[str]): API identifiers of users
+ * who have responded to this question
+ */
+export type DashboardQuestion = {
+    question_text: string;
+    api_identifier: string;
+    created_at: string;
+    responded_participant_api_ids: Array<string>;
 };
 
 /**

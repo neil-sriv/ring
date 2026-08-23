@@ -1,7 +1,7 @@
 import { Badge } from "@/components/ui/badge"
 import { Card } from "@/components/ui/card"
 import { Link } from "@tanstack/react-router"
-import type { PublicLetter } from "../../client"
+import type { DashboardLetter } from "../../client"
 import { getLoopDisplayTitle } from "../../util/loopDisplay"
 import { formatPublishedLabel } from "../../util/loopTime"
 import { Facepile } from "../Common/Facepile"
@@ -9,7 +9,7 @@ import { Facepile } from "../Common/Facepile"
 export function PublishedIssueCard({
   loop,
 }: {
-  loop: PublicLetter
+  loop: DashboardLetter
 }): JSX.Element {
   const questionCount = loop.questions.length
   const contributorCount = loop.responders.length

@@ -1,22 +1,19 @@
-import type { PublicLetter, PublicQuestion } from "../client"
+import type { DashboardLetter, DashboardQuestion } from "../client"
 
 export function getUnansweredQuestions(
-  loop: PublicLetter,
+  loop: DashboardLetter,
   userApiId: string | undefined,
-): PublicQuestion[] {
+): DashboardQuestion[] {
   if (!userApiId) {
     return []
   }
   return loop.questions.filter(
-    (question) =>
-      !question.responses.some(
-        (response) => response.participant.api_identifier === userApiId,
-      ),
+    (question) => !question.responded_participant_api_ids.includes(userApiId),
   )
 }
 
 export function hasUserReplied(
-  loop: PublicLetter,
+  loop: DashboardLetter,
   userApiId: string | undefined,
 ): boolean {
   if (!userApiId) {
@@ -32,8 +29,8 @@ export interface ReplyProgress {
   total: number
 }
 
-export function getReplyProgress(loop: PublicLetter): ReplyProgress {
+export function getReplyProgress(loop: DashboardLetter): ReplyProgress {
   const replied = loop.responders.length
-  const total = Math.max(loop.participants.length, replied)
+  const total = Math.max(loop.participant_count, replied)
   return { replied, total }
 }

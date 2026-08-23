@@ -193,22 +193,71 @@ class PublicLetter(Letter):
         return _populate_letter_send_threshold_fields(model, data)
 
 
+class DashboardQuestion(Question):
+    """Slim question model for the dashboard.
+
+    Carries which participants have answered (by api identifier) instead of
+    full response bodies, so the home page can compute each user's unanswered
+    questions without downloading every response.
+
+    Attributes:
+        responded_participant_api_ids (list[str]): API identifiers of users
+            who have responded to this question
+    """
+
+    responded_participant_api_ids: list[str]
+
+    @model_validator(mode="before")
+    @classmethod
+    def set_responded_participant_api_ids(cls, obj: Any) -> Any:
+        if isinstance(obj, BaseModel):
+            return obj
+        obj.responded_participant_api_ids = [
+            response.participant.api_identifier for response in obj.responses
+        ]
+        return obj
+
+
+class DashboardLetter(MinimalLetter):
+    """Dashboard letter model.
+
+    Extends ``MinimalLetter`` with slim questions and a participant count —
+    the home page needs per-question answered state ("waiting on you") and
+    reply-progress totals, but not response bodies.
+
+    Attributes:
+        questions (list[DashboardQuestion]): Questions without response bodies
+        participant_count (int): Number of participants in the letter
+    """
+
+    questions: list["DashboardQuestion"]
+    participant_count: int
+
+    @model_validator(mode="before")
+    @classmethod
+    def set_participant_count(cls, obj: Any) -> Any:
+        if isinstance(obj, BaseModel):
+            return obj
+        obj.participant_count = len(obj.participants)
+        return obj
+
+
 class DashboardLetters(BaseModel):
     """Model for the letters dashboard view.
 
     Groups letters by their status for dashboard display. Uses
-    ``MinimalLetter`` so the home page does not download every question
-    and response body for every active/recent letter.
+    ``DashboardLetter`` — slim questions without response bodies — so the
+    home page can show reply state without downloading every response.
 
     Attributes:
-        upcoming (list[MinimalLetter]): Letters scheduled for the future
-        in_progress (list[MinimalLetter]): Currently active letters
-        recently_completed (list[MinimalLetter]): Recently finished letters
+        upcoming (list[DashboardLetter]): Letters scheduled for the future
+        in_progress (list[DashboardLetter]): Currently active letters
+        recently_completed (list[DashboardLetter]): Recently finished letters
     """
 
-    upcoming: list[MinimalLetter]
-    in_progress: list[MinimalLetter]
-    recently_completed: list[MinimalLetter]
+    upcoming: list[DashboardLetter]
+    in_progress: list[DashboardLetter]
+    recently_completed: list[DashboardLetter]
 
 
 class QuestionLinked(Question):

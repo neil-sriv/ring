@@ -12,6 +12,7 @@ from __future__ import annotations
 # from .group import *
 from .linked_schemas import *
 
+DashboardLetter.model_rebuild()
 GroupLinked.model_rebuild()
 LetterLinked.model_rebuild()
 PublicLetter.model_rebuild()

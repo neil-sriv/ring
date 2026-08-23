@@ -3,7 +3,7 @@ import { useSuspenseQuery } from "@tanstack/react-query"
 import { Link } from "@tanstack/react-router"
 import { Inbox, Plus } from "lucide-react"
 import { useState } from "react"
-import type { PublicLetter, PublicQuestion } from "../../client"
+import type { DashboardLetter, DashboardQuestion } from "../../client"
 import {
   listDashboardLettersLettersLettersDashboardGetOptions,
   readUserMePartiesMeGetOptions,
@@ -17,8 +17,8 @@ import { PublishedIssueCard } from "./PublishedIssueCard"
 import { UpcomingList } from "./UpcomingList"
 
 interface LoopAwaitingReply {
-  loop: PublicLetter
-  unansweredQuestions: PublicQuestion[]
+  loop: DashboardLetter
+  unansweredQuestions: DashboardQuestion[]
 }
 
 function getGreeting(now: Date): string {
@@ -40,7 +40,7 @@ function getDigest({
 }: {
   waitingOnYou: LoopAwaitingReply[]
   waitingOnOthersCount: number
-  upcoming: PublicLetter[]
+  upcoming: DashboardLetter[]
   publishedCount: number
 }): string {
   if (waitingOnYou.length > 0) {
@@ -129,7 +129,7 @@ function EmptyDashboard({ hasGroups }: { hasGroups: boolean }): JSX.Element {
   )
 }
 
-function bySendAtAsc(a: PublicLetter, b: PublicLetter): number {
+function bySendAtAsc(a: DashboardLetter, b: DashboardLetter): number {
   return new Date(a.send_at).getTime() - new Date(b.send_at).getTime()
 }
 
@@ -150,7 +150,7 @@ export function HomeDashboard(): JSX.Element {
   )
 
   const waitingOnYou: LoopAwaitingReply[] = []
-  const waitingOnOthers: PublicLetter[] = []
+  const waitingOnOthers: DashboardLetter[] = []
   for (const loop of inProgress) {
     const unansweredQuestions = getUnansweredQuestions(loop, userApiId)
     if (unansweredQuestions.length > 0) {
