@@ -128,6 +128,9 @@ def get_cycle_length(db: Session, group: Group) -> int:
 def add_member(db: Session, group_api_id: str, user_api_id: str) -> Group:
     """Add a user to a group and its active letters.
 
+    Adding an existing member is a no-op, so repeated calls cannot create
+    duplicate membership or letter-participant rows.
+
     Args:
         db (Session): Database session
         group_api_id (str): API identifier of the group
@@ -138,6 +141,8 @@ def add_member(db: Session, group_api_id: str, user_api_id: str) -> Group:
     """
     db_group = api_identifier_crud.get_model(db, Group, api_id=group_api_id)
     db_user = api_identifier_crud.get_model(db, User, api_id=user_api_id)
+    if db_user in db_group.members:
+        return db_group
     db_group.members.append(db_user)
     for letter in db_group.letters:
         if (
@@ -149,7 +154,13 @@ def add_member(db: Session, group_api_id: str, user_api_id: str) -> Group:
 
 
 def remove_member(db: Session, group_api_id: str, user_api_id: str) -> Group:
-    """Remove a user from a group.
+    """Remove a user from a group and its active letters.
+
+    The user is also removed from the participants of the group's
+    in-progress and upcoming letters (mirroring add_member), so they no
+    longer appear in reply tracking, receive reminder emails, or count
+    toward send thresholds. Participants of sent letters are kept as a
+    historical record.
 
     Args:
         db (Session): Database session
@@ -169,6 +180,12 @@ def remove_member(db: Session, group_api_id: str, user_api_id: str) -> Group:
             f"User {user_api_id} is not a member of group {group_api_id}"
         )
     db_group.members.remove(db_user)
+    for letter in db_group.letters:
+        if (
+            letter.status == LetterStatus.IN_PROGRESS
+            or letter.status == LetterStatus.UPCOMING
+        ) and db_user in letter.participants:
+            letter.participants.remove(db_user)
     return db_group
 
 
@@ -198,20 +215,26 @@ def get_letter_by_api_id(group: Group, api_id: str) -> Letter:
 
 
 def add_members(db: Session, group: Group, members: Sequence[User]) -> None:
-    """Add multiple users to a group.
+    """Add multiple users to a group and its active letters.
+
+    Users who are already members are skipped, so repeated calls cannot
+    create duplicate membership or letter-participant rows.
 
     Args:
         db (Session): Database session
         group (Group): Group to add members to
         members (Sequence[User]): Users to add to the group
     """
-    group.members.extend(members)
+    new_members = [member for member in members if member not in group.members]
+    if not new_members:
+        return
+    group.members.extend(new_members)
     for letter in group.letters:
         if (
             letter.status == LetterStatus.IN_PROGRESS
             or letter.status == LetterStatus.UPCOMING
         ):
-            letter.participants.extend(members)
+            letter.participants.extend(new_members)
 
 
 @register_search_function(SearchableType.GROUP, Group)

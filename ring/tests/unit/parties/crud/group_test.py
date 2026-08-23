@@ -101,6 +101,7 @@ class TestGroupCrud:
         2. The user is added to active letters
         3. The user is added to upcoming letters
         4. The group is returned
+        5. Adding the same user again does not create duplicates
 
         Args:
             db_session (Session): Database session
@@ -130,6 +131,15 @@ class TestGroupCrud:
         assert user in in_progress_letter.participants
         assert user in upcoming_letter.participants
 
+        group_crud.add_member(
+            db_session, group.api_identifier, user.api_identifier
+        )
+        db_session.commit()
+
+        assert group.members.count(user) == 1
+        assert in_progress_letter.participants.count(user) == 1
+        assert upcoming_letter.participants.count(user) == 1
+
     def test_remove_member(self, db_session: Session) -> None:
         """Test removing a member from a group.
 
@@ -137,6 +147,8 @@ class TestGroupCrud:
         1. A member can be removed from the group
         2. The group is returned
         3. The member is actually removed
+        4. The member is removed from in-progress and upcoming letters
+        5. The member is kept in sent letters as a historical record
 
         Args:
             db_session (Session): Database session
@@ -144,9 +156,21 @@ class TestGroupCrud:
         group = GroupFactory.create()
         user = UserFactory.create()
         group.members.append(user)
+        in_progress_letter = LetterFactory.create(
+            group=group, status=LetterStatus.IN_PROGRESS
+        )
+        upcoming_letter = LetterFactory.create(
+            group=group, status=LetterStatus.UPCOMING
+        )
+        sent_letter = LetterFactory.create(
+            group=group, status=LetterStatus.SENT
+        )
         db_session.commit()
 
         assert user in group.members
+        assert user in in_progress_letter.participants
+        assert user in upcoming_letter.participants
+        assert user in sent_letter.participants
 
         assert (
             group_crud.remove_member(
@@ -156,6 +180,9 @@ class TestGroupCrud:
         )
 
         assert user not in group.members
+        assert user not in in_progress_letter.participants
+        assert user not in upcoming_letter.participants
+        assert user in sent_letter.participants
 
     def test_remove_member_duplicate(self, db_session: Session) -> None:
         """Test removing a member who is not in the group.
@@ -225,6 +252,7 @@ class TestGroupCrud:
         1. Multiple users can be added as members
         2. Existing members are not duplicated
         3. All users are added to the group
+        4. New users are added to active letters exactly once
 
         Args:
             db_session (Session): Database session
@@ -233,6 +261,9 @@ class TestGroupCrud:
         members = [UserFactory.create() for _ in range(5)]
         for member in members:
             group.members.append(member)
+        in_progress_letter = LetterFactory.create(
+            group=group, status=LetterStatus.IN_PROGRESS
+        )
         users = [UserFactory.create() for _ in range(5)]
         db_session.commit()
 
@@ -242,6 +273,11 @@ class TestGroupCrud:
         db_session.commit()
 
         assert all(user in group.members for user in users + members)
+        assert all(group.members.count(user) == 1 for user in users + members)
+        assert all(
+            in_progress_letter.participants.count(user) == 1
+            for user in users + members
+        )
 
     def test_update_cycle_length(self, db_session: Session) -> None:
         """Test updating a group's cycle length.

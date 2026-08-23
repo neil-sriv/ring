@@ -142,8 +142,15 @@ def minimum_responders_required(letter: Letter) -> int:
 
 
 def letter_responder_count(letter: Letter) -> int:
-    """Return the number of unique participants who have responded."""
-    return len(letter.responders)
+    """Return the number of unique current participants who have responded.
+
+    Responders who are no longer participants (e.g. members removed from
+    the group while the letter was open) are excluded so the count stays
+    consistent with the participant-based threshold denominator. Their
+    responses remain part of the letter and the reply tracker still
+    shows them.
+    """
+    return len(set(letter.responders) & set(letter.participants))
 
 
 def is_below_send_threshold(letter: Letter) -> bool:

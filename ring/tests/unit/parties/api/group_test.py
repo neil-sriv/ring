@@ -11,8 +11,10 @@ import sqlalchemy
 from fastapi.testclient import TestClient
 from sqlalchemy.orm import Session
 
+from ring.letters.constants import LetterStatus
 from ring.parties.models.group_model import Group
 from ring.parties.models.user_model import User
+from ring.tests.factories.letters.letter_factory import LetterFactory
 from ring.tests.factories.parties.group_factory import GroupFactory
 from ring.tests.factories.parties.user_factory import UserFactory
 from ring.tests.lib.utils import (
@@ -338,6 +340,52 @@ class TestGroupApi:
         data = response.json()
         assert_api_model_not_found(data, Group, ["invalid-group"])
 
+    def test_add_members(
+        self,
+        authenticated_client: TestClient,
+        current_user: User,
+        db_session: Session,
+    ):
+        """Test adding multiple members to a group by email.
+
+        This test verifies that:
+        1. Registered users are added to the group
+        2. New members are added to in-progress letters exactly once
+        3. Emails of existing members do not create duplicate rows
+
+        Args:
+            authenticated_client (TestClient): Authenticated test client
+            current_user (User): Currently authenticated user
+            db_session (Session): Database session
+        """
+        group = GroupFactory.create(admin=current_user)
+        in_progress_letter = LetterFactory.create(
+            group=group, status=LetterStatus.IN_PROGRESS
+        )
+        existing_member = UserFactory.create()
+        group.members.append(existing_member)
+        in_progress_letter.participants.append(existing_member)
+        new_user = UserFactory.create()
+        db_session.commit()
+
+        response = authenticated_client.post(
+            f"/parties/group/{group.api_identifier}:add_members",
+            json={
+                "member_emails": [new_user.email, existing_member.email],
+            },
+        )
+
+        assert response.status_code == 200
+        data = response.json()
+        assert_pydantic_model_json_dump_equivalent_to_response_dict(
+            group,
+            data,
+        )
+        assert group.members.count(new_user) == 1
+        assert in_progress_letter.participants.count(new_user) == 1
+        assert group.members.count(existing_member) == 1
+        assert in_progress_letter.participants.count(existing_member) == 1
+
     def test_remove_member(
         self,
         authenticated_client: TestClient,
@@ -350,7 +398,8 @@ class TestGroupApi:
         1. A member can be removed from the group
         2. The response contains the updated group data
         3. The user is actually removed from the group
-        4. The database state is updated correctly
+        4. The user is removed from in-progress and upcoming letters
+        5. The database state is updated correctly
 
         Args:
             authenticated_client (TestClient): Authenticated test client
@@ -360,9 +409,13 @@ class TestGroupApi:
         group = GroupFactory.create(admin=current_user)
         user = UserFactory.create()
         group.members.append(user)
+        in_progress_letter = LetterFactory.create(
+            group=group, status=LetterStatus.IN_PROGRESS
+        )
         db_session.commit()
 
         assert user in group.members
+        assert user in in_progress_letter.participants
 
         response = authenticated_client.post(
             f"/parties/group/{group.api_identifier}:remove_member/{user.api_identifier}"
@@ -375,6 +428,7 @@ class TestGroupApi:
             data,
         )
         assert user not in group.members
+        assert user not in in_progress_letter.participants
 
     def test_remove_member_not_found(
         self,
