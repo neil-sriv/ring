@@ -69,7 +69,7 @@ function GroupTableBody() {
       <TableHeader>
         <TableRow>
           <TableHead className="w-[30%]">Name</TableHead>
-          <TableHead>Members</TableHead>
+          <TableHead className="hidden sm:table-cell">Members</TableHead>
           <TableHead className="w-16 text-right">Actions</TableHead>
         </TableRow>
       </TableHeader>
@@ -109,7 +109,7 @@ function GroupTableBody() {
                 {group.members.length === 1 ? "member" : "members"}
               </p>
             </TableCell>
-            <TableCell className="whitespace-normal text-sm text-muted-foreground">
+            <TableCell className="hidden whitespace-normal text-sm text-muted-foreground sm:table-cell">
               {group.members
                 .map((member) => {
                   return member.name

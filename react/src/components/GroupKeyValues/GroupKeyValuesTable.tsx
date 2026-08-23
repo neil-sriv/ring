@@ -64,7 +64,7 @@ export function GroupKeyValuesTable({
       <p className="mt-1 text-sm text-muted-foreground">
         Use this as a fast data store for the group.
       </p>
-      <div className="mt-4 overflow-hidden rounded-lg border">
+      <div className="mt-4 overflow-x-auto rounded-lg border">
         <Suspense
           fallback={
             <div className="p-4 text-sm text-muted-foreground">
