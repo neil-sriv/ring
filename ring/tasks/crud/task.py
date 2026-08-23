@@ -19,7 +19,10 @@ from ring.email_util import send_email
 from ring.letters.constants import LetterStatus
 from ring.letters.crud import letter as letter_crud
 from ring.letters.models.letter_model import Letter
-from ring.letters.send_threshold import defer_letter_send_if_below_threshold
+from ring.letters.send_threshold import (
+    defer_letter_send_if_below_threshold,
+    is_stale_send_invocation,
+)
 from ring.lib.util import RegistrationDict
 from ring.tasks.crud.reminder_email_task import construct_reminder_email
 from ring.tasks.crud.response_open_email_task import (
@@ -123,6 +126,18 @@ def execute_send_email_task(
         group = task.schedule.group
         letter_to_send = group.in_progress_letters[0]
     assert letter_to_send
+
+    if is_stale_send_invocation(letter_to_send, task.execute_at):
+        logger.info(
+            "Skipping stale send for letter {}: task scheduled at {}, "
+            "send_at is {}".format(
+                letter_to_send.id,
+                task.execute_at,
+                letter_to_send.send_at,
+            )
+        )
+        db.commit()
+        return
 
     if defer_letter_send_if_below_threshold(db, letter_to_send):
         db.commit()

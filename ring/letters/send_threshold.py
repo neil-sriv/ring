@@ -159,6 +159,17 @@ def has_send_date_arrived(letter: Letter, now: datetime | None = None) -> bool:
     return letter.send_at <= (now or datetime.now(tz=UTC))
 
 
+def is_stale_send_invocation(letter: Letter, scheduled_at: datetime) -> bool:
+    """Return True when this send job was scheduled before a later deferral.
+
+    ``Task.execute_at`` is the send deadline this invocation was queued for.
+    Postpend (or a previous send-email) may have already pushed ``letter.send_at``
+    forward; the in-progress task is not updated, so the old job must no-op
+    and leave the rescheduled send in place.
+    """
+    return letter.send_at > scheduled_at
+
+
 def defer_letter_send(db: Session, letter: Letter) -> bool:
     """Push a letter's send date out by the deferral interval.
 
@@ -207,12 +218,14 @@ def _schedule_waiting_response_email(letter_id: int) -> None:
 
 
 def defer_letter_send_if_below_threshold(db: Session, letter: Letter) -> bool:
-    """Defer a letter's send date when the responder threshold is not met.
+    """Skip sending when the responder threshold is not met.
 
-    Intended for the send-email task, which runs when the send date arrives.
+    Intended for the send-email task. Defers ``send_at`` once the deadline has
+    arrived; if another caller already pushed the deadline forward, that
+    deferral is left in place.
 
     Returns:
-        True if the send was deferred, False otherwise.
+        True if the send should be skipped, False if it may proceed.
     """
     if letter.status != LetterStatus.IN_PROGRESS:
         return False
@@ -220,7 +233,8 @@ def defer_letter_send_if_below_threshold(db: Session, letter: Letter) -> bool:
     if not is_below_send_threshold(letter):
         return False
 
-    return defer_letter_send(db, letter)
+    defer_letter_send(db, letter)
+    return True
 
 
 def hold_letter_for_send_threshold(db: Session, letter: Letter) -> bool:

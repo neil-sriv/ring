@@ -9,6 +9,7 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from ring.letters.constants import LetterStatus
+from ring.letters.crud import letter as letter_crud
 from ring.letters.send_threshold import (
     GROUP_SETTING_MIN_RESPONDER_RATIO_KEY,
     GROUP_SETTING_MIN_RESPONDERS_KEY,
@@ -368,3 +369,97 @@ class TestTaskCrud:
             )
 
         mock_send_email.assert_not_called()
+
+    def test_execute_send_email_task_skips_after_postpend_deferral(
+        self, db_session: Session
+    ) -> None:
+        """A send job queued for the old deadline must not send after deferral."""
+        admin = UserFactory.create()
+        members = [admin] + [UserFactory.create() for _ in range(3)]
+        group = GroupFactory.create(admin=admin, members=members)
+        send_at = datetime.now(tz=UTC) - timedelta(minutes=1)
+        letter = LetterFactory.create(
+            group=group,
+            status=LetterStatus.IN_PROGRESS,
+            send_at=send_at,
+        )
+        question = QuestionFactory.create(letter=letter)
+        ResponseFactory.create(question=question, participant=members[0])
+        db_session.commit()
+
+        send_task = db_session.scalars(
+            select(Task).where(
+                Task.schedule_id == group.schedule.id,
+                Task.type == TaskType.SEND_EMAIL,
+                Task.arguments == {"letter_id": letter.id},
+            )
+        ).one()
+        send_task.status = TaskStatus.IN_PROGRESS
+        db_session.commit()
+
+        with (
+            run_scheduled_jobs_inline(db_session),
+            patch(
+                "ring.tasks.crud.task.send_email", return_value="message-id"
+            ) as mock_send_email,
+        ):
+            letter_crud.postpend_upcoming_letters_with_session(
+                db_session, [letter.id]
+            )
+            task_crud.execute_send_email_task(db_session, send_task)
+
+        mock_send_email.assert_called_once()
+        assert is_waiting_response_email(mock_send_email)
+        db_session.refresh(letter)
+        assert letter.status == LetterStatus.IN_PROGRESS
+        assert letter.send_at == send_at + timedelta(
+            days=LETTER_SEND_DEFERRAL_DAYS
+        )
+
+    def test_execute_send_email_task_skips_stale_task_even_if_threshold_met(
+        self, db_session: Session
+    ) -> None:
+        """Deferral invalidates this job even if answers arrive before it runs."""
+        admin = UserFactory.create()
+        members = [admin] + [UserFactory.create() for _ in range(3)]
+        group = GroupFactory.create(admin=admin, members=members)
+        send_at = datetime.now(tz=UTC) - timedelta(minutes=1)
+        letter = LetterFactory.create(
+            group=group,
+            status=LetterStatus.IN_PROGRESS,
+            send_at=send_at,
+        )
+        question = QuestionFactory.create(letter=letter)
+        ResponseFactory.create(question=question, participant=members[0])
+        db_session.commit()
+
+        send_task = db_session.scalars(
+            select(Task).where(
+                Task.schedule_id == group.schedule.id,
+                Task.type == TaskType.SEND_EMAIL,
+                Task.arguments == {"letter_id": letter.id},
+            )
+        ).one()
+        send_task.status = TaskStatus.IN_PROGRESS
+        db_session.commit()
+
+        with (
+            run_scheduled_jobs_inline(db_session),
+            patch(
+                "ring.tasks.crud.task.send_email", return_value="message-id"
+            ) as mock_send_email,
+        ):
+            letter_crud.postpend_upcoming_letters_with_session(
+                db_session, [letter.id]
+            )
+            ResponseFactory.create(question=question, participant=members[1])
+            db_session.commit()
+            task_crud.execute_send_email_task(db_session, send_task)
+
+        mock_send_email.assert_called_once()
+        assert is_waiting_response_email(mock_send_email)
+        db_session.refresh(letter)
+        assert letter.status == LetterStatus.IN_PROGRESS
+        assert letter.send_at == send_at + timedelta(
+            days=LETTER_SEND_DEFERRAL_DAYS
+        )
