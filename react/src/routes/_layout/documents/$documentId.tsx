@@ -169,6 +169,7 @@ function DocumentContentLoader() {
         >
           <CollabEditor
             docId={documentId}
+            legacyContent={document.content}
             onSavingChange={handleSavingChange}
             onEditingChange={setIsEditing}
             onConnectionChange={setWsStatus}

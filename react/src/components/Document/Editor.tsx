@@ -1,3 +1,4 @@
+import { readUserMePartiesMeGetOptions } from "@/client/@tanstack/react-query.gen"
 import { Button } from "@/components/ui/button"
 import {
   Tooltip,
@@ -7,11 +8,16 @@ import {
 } from "@/components/ui/tooltip"
 import { apiUrl, wsUrl } from "@/lib/apiUrl"
 import { cn } from "@/lib/utils"
+import { useQuery } from "@tanstack/react-query"
+import Collaboration from "@tiptap/extension-collaboration"
+import CollaborationCaret from "@tiptap/extension-collaboration-caret"
 import Placeholder from "@tiptap/extension-placeholder"
 import { TextStyleKit } from "@tiptap/extension-text-style"
+import type { Transaction } from "@tiptap/pm/state"
 import type { Editor } from "@tiptap/react"
 import { EditorContent, useEditor, useEditorState } from "@tiptap/react"
 import StarterKit from "@tiptap/starter-kit"
+import { ySyncPluginKey } from "@tiptap/y-tiptap"
 import {
   Bold,
   Code,
@@ -29,9 +35,37 @@ import {
   Undo,
 } from "lucide-react"
 import type React from "react"
-import { useEffect, useRef } from "react"
+import { useEffect, useRef, useState } from "react"
+import { WebsocketProvider } from "y-websocket"
+import * as Y from "yjs"
 
 export type NotebookWsStatus = "connecting" | "connected" | "reconnecting"
+
+const CARET_COLORS = [
+  "#b45309", // amber
+  "#0e7490", // cyan
+  "#15803d", // green
+  "#7c3aed", // violet
+  "#be185d", // pink
+  "#b91c1c", // red
+  "#1d4ed8", // blue
+  "#4d7c0f", // lime
+]
+
+function caretColorFor(seed: string): string {
+  let hash = 0
+  for (const char of seed) {
+    hash = (hash * 31 + char.charCodeAt(0)) | 0
+  }
+  return CARET_COLORS[Math.abs(hash) % CARET_COLORS.length]
+}
+
+function isRemoteTransaction(transaction: Transaction): boolean {
+  const meta = transaction.getMeta(ySyncPluginKey) as
+    | { isChangeOrigin?: boolean }
+    | undefined
+  return Boolean(meta?.isChangeOrigin)
+}
 
 function toolbarButtonClass(isActive = false) {
   return cn(
@@ -328,291 +362,216 @@ function MenuBar({ editor }: { editor: Editor }) {
   )
 }
 
-export const CollabEditor: React.FC<{
-  docId: string
-  onSavingChange?: (isSaving: boolean) => void
-  onEditingChange?: (isEditing: boolean) => void
-  onConnectionChange?: (status: NotebookWsStatus) => void
-}> = ({ docId, onSavingChange, onEditingChange, onConnectionChange }) => {
-  const editorRef = useRef<any>(null)
-  const wsRef = useRef<WebSocket | null>(null)
-  const lastContentRef = useRef<string>("")
-  const editingTimeoutRef = useRef<NodeJS.Timeout | null>(null)
-  const lastSentMessageIdRef = useRef<string>("")
-  const isUpdatingFromWebSocketRef = useRef<boolean>(false)
-  const wsSendTimeoutRef = useRef<NodeJS.Timeout | null>(null)
-  const wsReconnectTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(
-    null,
-  )
-  const pendingContentRef = useRef<string>("")
+type CollabSession = {
+  ydoc: Y.Doc
+  provider: WebsocketProvider
+}
+
+/** Create one Y.Doc + WebSocket provider per document (StrictMode-safe). */
+function useCollabSession(
+  docId: string,
+  onConnectionChange?: (status: NotebookWsStatus) => void,
+): CollabSession | null {
+  const [session, setSession] = useState<CollabSession | null>(null)
   const onConnectionChangeRef = useRef(onConnectionChange)
   onConnectionChangeRef.current = onConnectionChange
-  const hasConnectedOnceRef = useRef(false)
 
   useEffect(() => {
     const accessToken = localStorage.getItem("access_token") ?? ""
-    const documentUrl = apiUrl(`/api/v1/notebook/documents/${docId}`)
-    const notebookWsUrl = wsUrl(
-      `/api/v1/ws/notebook/${docId}?token=${encodeURIComponent(accessToken)}`,
+    const ydoc = new Y.Doc()
+    const provider = new WebsocketProvider(
+      wsUrl("/api/v1/ws/notebook"),
+      docId,
+      ydoc,
+      { params: { token: accessToken } },
     )
-    let cancelled = false
-    hasConnectedOnceRef.current = false
 
-    // Load existing content
-    const loadContent = async () => {
-      try {
-        const response = await fetch(documentUrl, {
-          method: "GET",
-          headers: {
-            Authorization: `Bearer ${accessToken}`,
-          },
-        })
-        if (response.ok) {
-          const data = await response.json()
-          if (data.content && editorRef.current) {
-            editorRef.current.commands.setContent(data.content)
-            lastContentRef.current = data.content
-          }
-        }
-      } catch (error) {
-        console.error("Failed to load content:", error)
-      }
-    }
-
-    // Setup WebSocket for real-time collaboration
-    const setupWebSocket = () => {
-      if (cancelled) {
-        return
-      }
-      if (wsReconnectTimeoutRef.current) {
-        clearTimeout(wsReconnectTimeoutRef.current)
-        wsReconnectTimeoutRef.current = null
-      }
-
-      onConnectionChangeRef.current?.(
-        hasConnectedOnceRef.current ? "reconnecting" : "connecting",
-      )
-      wsRef.current = new WebSocket(notebookWsUrl)
-
-      wsRef.current.onopen = () => {
-        if (cancelled) {
-          return
-        }
-        hasConnectedOnceRef.current = true
+    let hasConnectedOnce = false
+    onConnectionChangeRef.current?.("connecting")
+    provider.on("status", ({ status }: { status: string }) => {
+      if (status === "connected") {
+        hasConnectedOnce = true
         onConnectionChangeRef.current?.("connected")
-      }
-
-      wsRef.current.onmessage = (event) => {
-        try {
-          // Handle both text and binary data
-          let messageData: {
-            type?: unknown
-            content?: unknown
-            messageId?: unknown
-          }
-          if (typeof event.data === "string") {
-            messageData = JSON.parse(event.data)
-          } else if (event.data instanceof ArrayBuffer) {
-            // Convert ArrayBuffer to string
-            const decoder = new TextDecoder()
-            const text = decoder.decode(event.data)
-            messageData = JSON.parse(text)
-          } else if (event.data instanceof Blob) {
-            // Handle Blob data
-            event.data.text().then((text: string) => {
-              try {
-                const data = JSON.parse(text)
-                if (
-                  data.type === "content_update" &&
-                  data.content !== lastContentRef.current
-                ) {
-                  // Skip if this is our own message to prevent infinite loop
-                  if (
-                    data.messageId &&
-                    data.messageId === lastSentMessageIdRef.current
-                  ) {
-                    return
-                  }
-
-                  if (editorRef.current) {
-                    // Set flag to prevent onUpdate from firing
-                    isUpdatingFromWebSocketRef.current = true
-                    editorRef.current.commands.setContent(data.content)
-                    lastContentRef.current = data.content
-                    // Reset flag after a brief delay
-                    setTimeout(() => {
-                      isUpdatingFromWebSocketRef.current = false
-                    }, 50)
-                  }
-                }
-              } catch (error) {
-                // Leave parse errors quiet; connection status covers outages.
-                console.debug("Failed to parse WebSocket Blob message:", error)
-              }
-            })
-            return // Exit early for async Blob handling
-          } else {
-            console.debug("Unknown WebSocket message type:", typeof event.data)
-            return
-          }
-
-          if (
-            messageData.type === "content_update" &&
-            typeof messageData.content === "string" &&
-            messageData.content !== lastContentRef.current
-          ) {
-            // Skip if this is our own message to prevent infinite loop
-            if (
-              typeof messageData.messageId === "string" &&
-              messageData.messageId === lastSentMessageIdRef.current
-            ) {
-              return
-            }
-
-            if (editorRef.current) {
-              // Set flag to prevent onUpdate from firing
-              isUpdatingFromWebSocketRef.current = true
-              editorRef.current.commands.setContent(messageData.content)
-              lastContentRef.current = messageData.content
-              // Reset flag after a brief delay
-              setTimeout(() => {
-                isUpdatingFromWebSocketRef.current = false
-              }, 100)
-            }
-          }
-        } catch (error) {
-          // Leave parse errors quiet; connection status covers outages.
-          console.debug("Failed to parse WebSocket message:", error)
-        }
-      }
-
-      wsRef.current.onclose = () => {
-        if (cancelled) {
-          return
-        }
+      } else {
         onConnectionChangeRef.current?.(
-          hasConnectedOnceRef.current ? "reconnecting" : "connecting",
+          hasConnectedOnce ? "reconnecting" : "connecting",
         )
-        wsReconnectTimeoutRef.current = setTimeout(setupWebSocket, 1000)
       }
+    })
 
-      wsRef.current.onerror = () => {
-        // Browsers often fire error then close; surface via reconnecting status.
-        if (!cancelled) {
-          onConnectionChangeRef.current?.(
-            hasConnectedOnceRef.current ? "reconnecting" : "connecting",
-          )
-        }
-      }
-    }
-
-    loadContent()
-    setupWebSocket()
-
+    setSession({ ydoc, provider })
     return () => {
-      cancelled = true
-      if (wsReconnectTimeoutRef.current) {
-        clearTimeout(wsReconnectTimeoutRef.current)
-        wsReconnectTimeoutRef.current = null
-      }
-      if (wsRef.current) {
-        wsRef.current.close()
-      }
-      // Clean up timeouts
-      if (wsSendTimeoutRef.current) {
-        clearTimeout(wsSendTimeoutRef.current)
-      }
+      setSession(null)
+      provider.destroy()
+      ydoc.destroy()
     }
   }, [docId])
 
-  const editor = useEditor({
-    extensions: [
-      TextStyleKit,
-      StarterKit,
-      Placeholder.configure({ placeholder: "Start typing here…" }),
-    ],
-    editable: true,
-    editorProps: { attributes: { class: "prosemirror-editor outline-none" } },
-    onCreate: ({ editor }) => {
-      editorRef.current = editor
-    },
-    onUpdate: ({ editor }) => {
-      // Skip if we're updating from WebSocket to prevent infinite loop
-      if (isUpdatingFromWebSocketRef.current) {
-        return
-      }
+  return session
+}
 
-      const content = editor.getHTML()
-      if (content !== lastContentRef.current) {
-        lastContentRef.current = content
+export const CollabEditor: React.FC<{
+  docId: string
+  legacyContent?: string
+  onSavingChange?: (isSaving: boolean) => void
+  onEditingChange?: (isEditing: boolean) => void
+  onConnectionChange?: (status: NotebookWsStatus) => void
+}> = ({
+  docId,
+  legacyContent,
+  onSavingChange,
+  onEditingChange,
+  onConnectionChange,
+}) => {
+  const session = useCollabSession(docId, onConnectionChange)
 
-        // Set editing state immediately when user types
+  if (!session) {
+    return (
+      <div className="py-8 text-center text-sm text-muted-foreground">
+        Initializing editor...
+      </div>
+    )
+  }
+
+  return (
+    <CollabEditorInner
+      key={docId}
+      docId={docId}
+      session={session}
+      legacyContent={legacyContent}
+      onSavingChange={onSavingChange}
+      onEditingChange={onEditingChange}
+    />
+  )
+}
+
+const CollabEditorInner: React.FC<{
+  docId: string
+  session: CollabSession
+  legacyContent?: string
+  onSavingChange?: (isSaving: boolean) => void
+  onEditingChange?: (isEditing: boolean) => void
+}> = ({ docId, session, legacyContent, onSavingChange, onEditingChange }) => {
+  const { data: me } = useQuery({ ...readUserMePartiesMeGetOptions({}) })
+  const editingTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const saveTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const hasSeededRef = useRef(false)
+
+  const editor = useEditor(
+    {
+      extensions: [
+        TextStyleKit,
+        // Collaboration provides its own CRDT-aware undo/redo history.
+        StarterKit.configure({ undoRedo: false }),
+        Placeholder.configure({ placeholder: "Start typing here…" }),
+        Collaboration.configure({ document: session.ydoc }),
+        CollaborationCaret.configure({
+          provider: session.provider,
+          user: {
+            name: me?.name ?? "Anonymous",
+            color: caretColorFor(me?.api_identifier ?? "anonymous"),
+          },
+        }),
+      ],
+      editable: true,
+      editorProps: {
+        attributes: { class: "prosemirror-editor outline-none" },
+      },
+      onUpdate: ({ editor, transaction }) => {
+        // Remote peers' changes arrive through the same update pipeline;
+        // only local edits should drive the editing indicator and autosave.
+        if (isRemoteTransaction(transaction)) {
+          return
+        }
+
         onEditingChange?.(true)
-
-        // Clear any existing editing timeout
         if (editingTimeoutRef.current) {
           clearTimeout(editingTimeoutRef.current)
         }
-
-        // Set editing timeout to clear editing state after 1 second of inactivity
         editingTimeoutRef.current = setTimeout(() => {
           onEditingChange?.(false)
         }, 1000)
 
-        // Debounced WebSocket send to prevent rapid-fire messages
-        pendingContentRef.current = content
-
-        // Clear any existing WebSocket send timeout
-        if (wsSendTimeoutRef.current) {
-          clearTimeout(wsSendTimeoutRef.current)
+        // Debounced write of the rendered-HTML projection. The CRDT state on
+        // the WebSocket is the source of truth; this keeps REST reads,
+        // letters, and search working off documents.content.
+        if (saveTimeoutRef.current) {
+          clearTimeout(saveTimeoutRef.current)
         }
-
-        // Send to WebSocket with minimal debouncing
-        wsSendTimeoutRef.current = setTimeout(() => {
-          if (
-            wsRef.current &&
-            wsRef.current.readyState === WebSocket.OPEN &&
-            pendingContentRef.current === content
-          ) {
-            const messageId = `${Date.now()}-${Math.random()
-              .toString(36)
-              .substr(2, 9)}`
-            lastSentMessageIdRef.current = messageId
-            wsRef.current.send(
-              JSON.stringify({
-                type: "content_update",
-                content: content,
-                docId: docId,
-                messageId: messageId,
-              }),
-            )
-          }
-        }, 10) // Minimal debounce - just enough to batch rapid changes
-
-        // Debounced sync to backend
-        clearTimeout((window as any).syncTimeout)
-        ;(window as any).syncTimeout = setTimeout(async () => {
+        const content = editor.getHTML()
+        saveTimeoutRef.current = setTimeout(async () => {
           onSavingChange?.(true)
           try {
             const accessToken = localStorage.getItem("access_token") ?? ""
-
             await fetch(apiUrl(`/api/v1/notebook/documents/${docId}`), {
               method: "PUT",
               headers: {
                 "Content-Type": "application/json",
                 Authorization: `Bearer ${accessToken}`,
               },
-              body: JSON.stringify({ content: content }),
+              body: JSON.stringify({ content }),
             })
           } catch (error) {
-            console.error("Failed to sync to backend:", error)
+            console.error("Failed to sync content projection:", error)
           } finally {
             onSavingChange?.(false)
           }
         }, 1000)
-      }
+      },
     },
-  })
+    [session],
+  )
+
+  // Keep the caret identity in sync once the profile loads.
+  useEffect(() => {
+    if (editor && me) {
+      editor.commands.updateUser({
+        name: me.name,
+        color: caretColorFor(me.api_identifier),
+      })
+    }
+  }, [editor, me])
+
+  // Seed documents created before the CRDT rewrite: their content exists only
+  // as stored HTML. Once synced, if the shared doc is still empty and we are
+  // the only connected client, populate it from the HTML projection.
+  useEffect(() => {
+    if (!editor) {
+      return
+    }
+    const { provider, ydoc } = session
+
+    const seedIfNeeded = (isSynced: boolean) => {
+      if (!isSynced || hasSeededRef.current) {
+        return
+      }
+      hasSeededRef.current = true
+      const fragment = ydoc.getXmlFragment("default")
+      const aloneInRoom = provider.awareness.getStates().size <= 1
+      const hasLegacyContent =
+        legacyContent && legacyContent !== "" && legacyContent !== "<p></p>"
+      if (fragment.length === 0 && aloneInRoom && hasLegacyContent) {
+        editor.commands.setContent(legacyContent)
+      }
+    }
+
+    provider.on("sync", seedIfNeeded)
+    seedIfNeeded(provider.synced)
+    return () => {
+      provider.off("sync", seedIfNeeded)
+    }
+  }, [editor, session, legacyContent])
+
+  useEffect(() => {
+    return () => {
+      if (editingTimeoutRef.current) {
+        clearTimeout(editingTimeoutRef.current)
+      }
+      if (saveTimeoutRef.current) {
+        clearTimeout(saveTimeoutRef.current)
+      }
+    }
+  }, [])
 
   if (!editor) {
     return (
@@ -637,150 +596,182 @@ export const CollabEditor: React.FC<{
       <style
         // biome-ignore lint/security/noDangerouslySetInnerHtml: Required to style ProseMirror document content reliably.
         dangerouslySetInnerHTML={{
-          __html: `
-                        .prosemirror-editor {
-                            min-height: 400px;
-                            padding: 1rem 0.5rem;
-                            color: var(--color-foreground);
-                        }
-
-                        .prosemirror-editor ::selection {
-                            background-color: color-mix(in oklab, var(--color-primary) 20%, transparent);
-                        }
-
-                        .prosemirror-editor p.is-editor-empty:first-child::before {
-                            content: attr(data-placeholder);
-                            float: left;
-                            height: 0;
-                            pointer-events: none;
-                            color: var(--color-muted-foreground);
-                        }
-
-                        .prosemirror-editor h1,
-                        .prosemirror-editor h2,
-                        .prosemirror-editor h3,
-                        .prosemirror-editor h4,
-                        .prosemirror-editor h5,
-                        .prosemirror-editor h6 {
-                            line-height: 1.1;
-                            margin-top: 2rem;
-                            margin-bottom: 1rem;
-                            font-weight: 600;
-                        }
-
-                        .prosemirror-editor h1,
-                        .prosemirror-editor h2 {
-                            font-family: var(--font-display);
-                            letter-spacing: -0.025em;
-                        }
-
-                        .prosemirror-editor h1 {
-                            font-size: 1.8rem;
-                            margin-top: 2.5rem;
-                        }
-
-                        .prosemirror-editor h2 {
-                            font-size: 1.5rem;
-                            margin-top: 2rem;
-                        }
-
-                        .prosemirror-editor h3 {
-                            font-size: 1.3rem;
-                        }
-
-                        .prosemirror-editor h4 {
-                            font-size: 1.2rem;
-                        }
-
-                        .prosemirror-editor h5 {
-                            font-size: 1.1rem;
-                        }
-
-                        .prosemirror-editor h6 {
-                            font-size: 1rem;
-                        }
-
-                        /* Tailwind preflight resets list-style to none;
-                           restore markers inside the editor. */
-                        .prosemirror-editor ul,
-                        .prosemirror-editor ol {
-                            padding-left: 1.5rem;
-                            margin: 1rem 0;
-                        }
-
-                        .prosemirror-editor ul {
-                            list-style-type: disc;
-                        }
-
-                        .prosemirror-editor ul ul {
-                            list-style-type: circle;
-                        }
-
-                        .prosemirror-editor ol {
-                            list-style-type: decimal;
-                        }
-
-                        .prosemirror-editor li {
-                            margin: 0.25rem 0;
-                        }
-
-                        .prosemirror-editor li::marker {
-                            color: var(--color-muted-foreground);
-                        }
-
-                        .prosemirror-editor code {
-                            background-color: var(--color-muted);
-                            border-radius: 0.25rem;
-                            padding: 0.125rem 0.25rem;
-                            font-family: var(--font-mono);
-                            font-size: 0.9em;
-                        }
-
-                        .prosemirror-editor pre {
-                            background-color: var(--color-muted);
-                            border-radius: 0.5rem;
-                            padding: 1rem;
-                            margin: 1rem 0;
-                            overflow-x: auto;
-                        }
-
-                        .prosemirror-editor pre code {
-                            background: none;
-                            padding: 0;
-                        }
-
-                        .prosemirror-editor blockquote {
-                            border-left: 3px solid var(--color-border);
-                            margin: 1rem 0;
-                            padding-left: 1rem;
-                            font-style: italic;
-                            color: var(--color-muted-foreground);
-                        }
-
-                        .prosemirror-editor hr {
-                            border: none;
-                            border-top: 1px solid var(--color-border);
-                            margin: 2rem 0;
-                        }
-
-                        .prosemirror-editor p {
-                            margin: 0.5rem 0;
-                        }
-
-                        .prosemirror-editor strong {
-                            font-weight: bold;
-                        }
-
-                        .prosemirror-editor em {
-                            font-style: italic;
-                        }
-
-                        .prosemirror-editor s {
-                            text-decoration: line-through;
-                        }
-                    `,
+          __html: editorStyles,
         }}
       />
     </div>
   )
 }
+
+const editorStyles = `
+    .prosemirror-editor {
+        min-height: 400px;
+        padding: 1rem 0.5rem;
+        color: var(--color-foreground);
+    }
+
+    .prosemirror-editor ::selection {
+        background-color: color-mix(in oklab, var(--color-primary) 20%, transparent);
+    }
+
+    .prosemirror-editor p.is-editor-empty:first-child::before {
+        content: attr(data-placeholder);
+        float: left;
+        height: 0;
+        pointer-events: none;
+        color: var(--color-muted-foreground);
+    }
+
+    .prosemirror-editor h1,
+    .prosemirror-editor h2,
+    .prosemirror-editor h3,
+    .prosemirror-editor h4,
+    .prosemirror-editor h5,
+    .prosemirror-editor h6 {
+        line-height: 1.1;
+        margin-top: 2rem;
+        margin-bottom: 1rem;
+        font-weight: 600;
+    }
+
+    .prosemirror-editor h1,
+    .prosemirror-editor h2 {
+        font-family: var(--font-display);
+        letter-spacing: -0.025em;
+    }
+
+    .prosemirror-editor h1 {
+        font-size: 1.8rem;
+        margin-top: 2.5rem;
+    }
+
+    .prosemirror-editor h2 {
+        font-size: 1.5rem;
+        margin-top: 2rem;
+    }
+
+    .prosemirror-editor h3 {
+        font-size: 1.3rem;
+    }
+
+    .prosemirror-editor h4 {
+        font-size: 1.2rem;
+    }
+
+    .prosemirror-editor h5 {
+        font-size: 1.1rem;
+    }
+
+    .prosemirror-editor h6 {
+        font-size: 1rem;
+    }
+
+    /* Tailwind preflight resets list-style to none;
+       restore markers inside the editor. */
+    .prosemirror-editor ul,
+    .prosemirror-editor ol {
+        padding-left: 1.5rem;
+        margin: 1rem 0;
+    }
+
+    .prosemirror-editor ul {
+        list-style-type: disc;
+    }
+
+    .prosemirror-editor ul ul {
+        list-style-type: circle;
+    }
+
+    .prosemirror-editor ol {
+        list-style-type: decimal;
+    }
+
+    .prosemirror-editor li {
+        margin: 0.25rem 0;
+    }
+
+    .prosemirror-editor li::marker {
+        color: var(--color-muted-foreground);
+    }
+
+    .prosemirror-editor code {
+        background-color: var(--color-muted);
+        border-radius: 0.25rem;
+        padding: 0.125rem 0.25rem;
+        font-family: var(--font-mono);
+        font-size: 0.9em;
+    }
+
+    .prosemirror-editor pre {
+        background-color: var(--color-muted);
+        border-radius: 0.5rem;
+        padding: 1rem;
+        margin: 1rem 0;
+        overflow-x: auto;
+    }
+
+    .prosemirror-editor pre code {
+        background: none;
+        padding: 0;
+    }
+
+    .prosemirror-editor blockquote {
+        border-left: 3px solid var(--color-border);
+        margin: 1rem 0;
+        padding-left: 1rem;
+        font-style: italic;
+        color: var(--color-muted-foreground);
+    }
+
+    .prosemirror-editor hr {
+        border: none;
+        border-top: 1px solid var(--color-border);
+        margin: 2rem 0;
+    }
+
+    .prosemirror-editor p {
+        margin: 0.5rem 0;
+    }
+
+    .prosemirror-editor strong {
+        font-weight: bold;
+    }
+
+    .prosemirror-editor em {
+        font-style: italic;
+    }
+
+    .prosemirror-editor s {
+        text-decoration: line-through;
+    }
+
+    /* Remote collaborator carets (CollaborationCaret awareness) */
+    .prosemirror-editor .collaboration-carets__caret {
+        border-left: 1px solid;
+        border-right: 1px solid;
+        margin-left: -1px;
+        margin-right: -1px;
+        pointer-events: none;
+        position: relative;
+        word-break: normal;
+    }
+
+    .prosemirror-editor .collaboration-carets__label {
+        border-radius: 3px 3px 3px 0;
+        color: #fff;
+        font-size: 0.7rem;
+        font-weight: 600;
+        left: -1px;
+        line-height: normal;
+        padding: 0.1rem 0.3rem;
+        position: absolute;
+        top: -1.4em;
+        user-select: none;
+        white-space: nowrap;
+    }
+
+    /* Remote collaborator text selections */
+    .prosemirror-editor .ProseMirror-yjs-selection {
+        border-radius: 2px;
+    }
+`
