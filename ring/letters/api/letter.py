@@ -10,7 +10,7 @@ from __future__ import annotations
 import itertools
 from collections import defaultdict
 from datetime import UTC, datetime, timedelta
-from typing import Sequence
+from typing import Any, Sequence
 
 from fastapi import APIRouter, Depends, HTTPException
 from loguru import logger
@@ -175,17 +175,21 @@ async def list_dashboard_letters(
     req_dep: AuthenticatedRequestDependencies = Depends(
         get_request_dependencies,
     ),
-) -> dict[str, list[Letter]]:
+) -> dict[str, Any]:
     """List letters for the dashboard view.
 
     Retrieves letters that are upcoming, in progress, or recently completed
-    (within the last 8 days) for the current user.
+    (within the last 8 days) for the current user. In-progress letters come
+    with a per-letter map of the questions the current user has not answered
+    yet, so the dashboard can build "waiting on you" cards without the full
+    question/response payload.
 
     Args:
         req_dep (AuthenticatedRequestDependencies): Request dependencies including database session and auth
 
     Returns:
-        dict[str, list[Letter]]: Dictionary containing categorized letters
+        dict[str, Any]: Dictionary containing categorized letters and the
+            current user's unanswered questions per in-progress letter
     """
     time = datetime.now(tz=UTC) - timedelta(days=8)
     filters: list[ColumnElement[bool]] = [
@@ -205,10 +209,18 @@ async def list_dashboard_letters(
     grouped_letters: dict[str, list[Letter]] = defaultdict(list)
     for k, g in itertools.groupby(letters, key=lambda letter: letter.status):
         grouped_letters[k].extend(g)
+    in_progress_letters = grouped_letters.get(LetterStatus.IN_PROGRESS, [])
+    unanswered_questions = {
+        letter.api_identifier: question_crud.unanswered_questions_for_user(
+            letter, req_dep.current_user
+        )
+        for letter in in_progress_letters
+    }
     return {
         "upcoming": grouped_letters.get(LetterStatus.UPCOMING, []),
-        "in_progress": grouped_letters.get(LetterStatus.IN_PROGRESS, []),
+        "in_progress": in_progress_letters,
         "recently_completed": grouped_letters.get(LetterStatus.SENT, []),
+        "unanswered_questions": unanswered_questions,
     }
 
 

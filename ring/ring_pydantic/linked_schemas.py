@@ -63,6 +63,20 @@ def _populate_letter_send_threshold_fields[T: BaseModel](
     )
 
 
+def _populate_letter_counts[T: BaseModel](model: T, letter: Any) -> T:
+    """Add participant/question counts when serializing a letter ORM object."""
+    if isinstance(letter, BaseModel):
+        return model
+    if not hasattr(letter, "participants") or not hasattr(letter, "questions"):
+        return model
+    return model.model_copy(
+        update={
+            "participant_count": len(letter.participants),
+            "question_count": len(letter.questions),
+        }
+    )
+
+
 class UserLinked(User):
     """User model with group memberships.
 
@@ -138,6 +152,8 @@ class MinimalLetter(Letter):
         required_responders (int): Minimum unique responders needed before send
         responder_count (int): Current unique responder count
         send_threshold_ratio (float | None): Effective ratio gate, or null if disabled
+        participant_count (int): Number of participants in the letter
+        question_count (int): Number of questions in the letter
     """
 
     group: "GroupUnlinked"
@@ -145,6 +161,8 @@ class MinimalLetter(Letter):
     required_responders: int = 0
     responder_count: int = 0
     send_threshold_ratio: float | None = None
+    participant_count: int = 0
+    question_count: int = 0
 
     @model_validator(mode="wrap")
     @classmethod
@@ -154,7 +172,8 @@ class MinimalLetter(Letter):
         handler: ModelWrapValidatorHandler[Self],
     ) -> Self:
         model = handler(data)
-        return _populate_letter_send_threshold_fields(model, data)
+        model = _populate_letter_send_threshold_fields(model, data)
+        return _populate_letter_counts(model, data)
 
 
 class PublicLetter(Letter):
@@ -198,17 +217,24 @@ class DashboardLetters(BaseModel):
 
     Groups letters by their status for dashboard display. Uses
     ``MinimalLetter`` so the home page does not download every question
-    and response body for every active/recent letter.
+    and response body for every active/recent letter. The per-user
+    ``unanswered_questions`` map carries just the question previews the
+    home page needs for its "waiting on you" cards, without shipping
+    response bodies.
 
     Attributes:
         upcoming (list[MinimalLetter]): Letters scheduled for the future
         in_progress (list[MinimalLetter]): Currently active letters
         recently_completed (list[MinimalLetter]): Recently finished letters
+        unanswered_questions (dict[str, list[Question]]): In-progress letter
+            api_identifier mapped to the questions the current user has not
+            answered yet
     """
 
     upcoming: list[MinimalLetter]
     in_progress: list[MinimalLetter]
     recently_completed: list[MinimalLetter]
+    unanswered_questions: dict[str, list[Question]]
 
 
 class QuestionLinked(Question):

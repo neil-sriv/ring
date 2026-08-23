@@ -15,9 +15,12 @@ from sqlalchemy.orm import Session
 
 from ring.letters.constants import LetterStatus
 from ring.letters.models.letter_model import Letter
+from ring.letters.schemas.question import Question as QuestionSchema
 from ring.parties.models.group_model import Group
 from ring.ring_pydantic.linked_schemas import MinimalLetter
 from ring.tests.factories.letters.letter_factory import LetterFactory
+from ring.tests.factories.letters.question_factory import QuestionFactory
+from ring.tests.factories.letters.response_factory import ResponseFactory
 from ring.tests.factories.parties.group_factory import GroupFactory
 from ring.tests.factories.parties.user_factory import UserFactory
 from ring.tests.lib.utils import (
@@ -276,6 +279,75 @@ class TestLetterAPI:
             override_pydantic_model=MinimalLetter,
         )
         assert "questions" not in data["recently_completed"][0]
+        assert data["unanswered_questions"] == {letters[1].api_identifier: []}
+
+    def test_list_dashboard_letters_unanswered_questions(
+        self,
+        authenticated_client: TestClient,
+        db_session: Session,
+        current_user: UserFactory,
+    ):
+        """Test the per-user unanswered questions map for in-progress letters.
+
+        This test verifies that:
+        1. Questions the current user has not answered appear in the map
+        2. Questions the current user answered are excluded
+        3. Fully answered letters map to an empty list
+        4. Participant and question counts are serialized
+
+        Args:
+            authenticated_client (TestClient): Authenticated test client
+            db_session (Session): Database session
+            current_user (UserFactory): Currently authenticated user
+        """
+        member = UserFactory.create()
+        group = GroupFactory.create(
+            admin=current_user, members=[current_user, member]
+        )
+        letter = LetterFactory.create(
+            group=group, status=LetterStatus.IN_PROGRESS
+        )
+        answered_question = QuestionFactory.create(letter=letter)
+        unanswered_question = QuestionFactory.create(letter=letter)
+        ResponseFactory.create(
+            question=answered_question, participant=current_user
+        )
+        ResponseFactory.create(
+            question=unanswered_question, participant=member
+        )
+
+        answered_group = GroupFactory.create(
+            admin=current_user, members=[current_user]
+        )
+        answered_letter = LetterFactory.create(
+            group=answered_group, status=LetterStatus.IN_PROGRESS
+        )
+        ResponseFactory.create(
+            question=QuestionFactory.create(letter=answered_letter),
+            participant=current_user,
+        )
+        db_session.commit()
+
+        response = authenticated_client.get("/letters/letters:dashboard")
+        assert response.status_code == 200
+        data = response.json()
+        assert len(data["in_progress"]) == 2
+        letters_by_api_id = {
+            letter_data["api_identifier"]: letter_data
+            for letter_data in data["in_progress"]
+        }
+        assert (
+            letters_by_api_id[letter.api_identifier]["participant_count"] == 2
+        )
+        assert letters_by_api_id[letter.api_identifier]["question_count"] == 2
+        assert data["unanswered_questions"][letter.api_identifier] == [
+            QuestionSchema.model_validate(unanswered_question).model_dump(
+                mode="json"
+            )
+        ]
+        assert (
+            data["unanswered_questions"][answered_letter.api_identifier] == []
+        )
 
     def test_list_dashboard_letters_empty(
         self,
@@ -304,6 +376,7 @@ class TestLetterAPI:
         assert data["upcoming"] == []
         assert data["in_progress"] == []
         assert data["recently_completed"] == []
+        assert data["unanswered_questions"] == {}
 
     def test_edit_letter(
         self, authenticated_client: TestClient, db_session: Session

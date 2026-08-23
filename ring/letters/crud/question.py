@@ -60,6 +60,25 @@ def get_questions(
     ).all()
 
 
+def unanswered_questions_for_user(
+    letter: Letter, user: User
+) -> list[Question]:
+    """Return the letter's questions that a user has not responded to.
+
+    Args:
+        letter (Letter): Letter whose questions to check
+        user (User): User whose responses to look for
+
+    Returns:
+        list[Question]: Questions without a response from the user
+    """
+    return [
+        question
+        for question in letter.questions
+        if user.id not in [resp.participant_id for resp in question.responses]
+    ]
+
+
 def _validate_response(
     question: Question,
     user: User,
