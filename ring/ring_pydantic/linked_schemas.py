@@ -64,35 +64,33 @@ def _populate_letter_send_threshold_fields[T: BaseModel](
 
 
 class UserLinked(User):
-    """User model with linked relationships.
+    """User model with group memberships.
 
-    Extends the base User model to include related groups and responses.
+    Used for ``/me`` and other user-facing responses. Intentionally omits
+    ``responses`` — a user's full answer history is only needed on letter
+    detail pages, not on every authenticated request.
 
     Attributes:
         groups (list[GroupUnlinked]): Groups the user is a member of
-        responses (list[ResponseUnlinked]): User's responses to questions
     """
 
     groups: list["GroupUnlinked"]
-    responses: list["ResponseUnlinked"]
 
 
 class GroupLinked(Group):
-    """Group model with linked relationships.
+    """Group model with members and settings.
 
-    Extends the base Group model to include members, letters, and other related data.
+    Used for group list/detail. Letters are fetched from ``/letters/`` (and
+    the dashboard) rather than being nested on every group payload. Schedule
+    tasks are internal and unused by the frontend.
 
     Attributes:
         members (list[UserUnlinked]): Users who are members of the group
-        letters (list[LetterUnlinked]): Letters associated with the group
-        schedule (Optional[ScheduleUnlinked]): Group's schedule, if any
         admin (UserUnlinked): The group administrator
         default_questions (list[QuestionUnlinked]): Default questions for group letters
     """
 
     members: list["UserUnlinked"]
-    letters: list["LetterUnlinked"]
-    schedule: Optional["ScheduleUnlinked"]
     admin: "UserUnlinked"
     default_questions: list["QuestionUnlinked"]
 
@@ -198,17 +196,19 @@ class PublicLetter(Letter):
 class DashboardLetters(BaseModel):
     """Model for the letters dashboard view.
 
-    Groups letters by their status for dashboard display.
+    Groups letters by their status for dashboard display. Uses
+    ``MinimalLetter`` so the home page does not download every question
+    and response body for every active/recent letter.
 
     Attributes:
-        upcoming (list[PublicLetter]): Letters scheduled for the future
-        in_progress (list[PublicLetter]): Currently active letters
-        recently_completed (list[PublicLetter]): Recently finished letters
+        upcoming (list[MinimalLetter]): Letters scheduled for the future
+        in_progress (list[MinimalLetter]): Currently active letters
+        recently_completed (list[MinimalLetter]): Recently finished letters
     """
 
-    upcoming: list[PublicLetter]
-    in_progress: list[PublicLetter]
-    recently_completed: list[PublicLetter]
+    upcoming: list[MinimalLetter]
+    in_progress: list[MinimalLetter]
+    recently_completed: list[MinimalLetter]
 
 
 class QuestionLinked(Question):

@@ -3181,21 +3181,21 @@
         "properties": {
           "upcoming": {
             "items": {
-              "$ref": "#/components/schemas/PublicLetter"
+              "$ref": "#/components/schemas/MinimalLetter"
             },
             "type": "array",
             "title": "Upcoming"
           },
           "in_progress": {
             "items": {
-              "$ref": "#/components/schemas/PublicLetter"
+              "$ref": "#/components/schemas/MinimalLetter"
             },
             "type": "array",
             "title": "In Progress"
           },
           "recently_completed": {
             "items": {
-              "$ref": "#/components/schemas/PublicLetter"
+              "$ref": "#/components/schemas/MinimalLetter"
             },
             "type": "array",
             "title": "Recently Completed"
@@ -3208,7 +3208,7 @@
           "recently_completed"
         ],
         "title": "DashboardLetters",
-        "description": "Model for the letters dashboard view.\n\nGroups letters by their status for dashboard display.\n\nAttributes:\n    upcoming (list[PublicLetter]): Letters scheduled for the future\n    in_progress (list[PublicLetter]): Currently active letters\n    recently_completed (list[PublicLetter]): Recently finished letters"
+        "description": "Model for the letters dashboard view.\n\nGroups letters by their status for dashboard display. Uses\n``MinimalLetter`` so the home page does not download every question\nand response body for every active/recent letter.\n\nAttributes:\n    upcoming (list[MinimalLetter]): Letters scheduled for the future\n    in_progress (list[MinimalLetter]): Currently active letters\n    recently_completed (list[MinimalLetter]): Recently finished letters"
       },
       "DockerInfo": {
         "properties": {
@@ -3619,23 +3619,6 @@
             "type": "array",
             "title": "Members"
           },
-          "letters": {
-            "items": {
-              "$ref": "#/components/schemas/LetterUnlinked"
-            },
-            "type": "array",
-            "title": "Letters"
-          },
-          "schedule": {
-            "anyOf": [
-              {
-                "$ref": "#/components/schemas/ScheduleUnlinked"
-              },
-              {
-                "type": "null"
-              }
-            ]
-          },
           "admin": {
             "$ref": "#/components/schemas/UserUnlinked"
           },
@@ -3654,13 +3637,11 @@
           "created_at",
           "cycle_length",
           "members",
-          "letters",
-          "schedule",
           "admin",
           "default_questions"
         ],
         "title": "GroupLinked",
-        "description": "Group model with linked relationships.\n\nExtends the base Group model to include members, letters, and other related data.\n\nAttributes:\n    members (list[UserUnlinked]): Users who are members of the group\n    letters (list[LetterUnlinked]): Letters associated with the group\n    schedule (Optional[ScheduleUnlinked]): Group's schedule, if any\n    admin (UserUnlinked): The group administrator\n    default_questions (list[QuestionUnlinked]): Default questions for group letters"
+        "description": "Group model with members and settings.\n\nUsed for group list/detail. Letters are fetched from ``/letters/`` (and\nthe dashboard) rather than being nested on every group payload. Schedule\ntasks are internal and unused by the frontend.\n\nAttributes:\n    members (list[UserUnlinked]): Users who are members of the group\n    admin (UserUnlinked): The group administrator\n    default_questions (list[QuestionUnlinked]): Default questions for group letters"
       },
       "GroupUnlinked": {
         "properties": {
@@ -4678,23 +4659,6 @@
         "title": "ScheduleLinked",
         "description": "Schedule model with linked relationships.\n\nExtends the base Schedule model to include the associated group and tasks.\n\nAttributes:\n    group (GroupUnlinked): The group this schedule belongs to\n    tasks (list[TaskUnlinked]): Tasks in the schedule"
       },
-      "ScheduleUnlinked": {
-        "properties": {
-          "tasks": {
-            "items": {
-              "$ref": "#/components/schemas/TaskUnlinked"
-            },
-            "type": "array",
-            "title": "Tasks"
-          }
-        },
-        "type": "object",
-        "required": [
-          "tasks"
-        ],
-        "title": "ScheduleUnlinked",
-        "description": "Schema for schedule data with unlinked task relationships.\n\nThis schema extends the base Schedule schema and includes a list of tasks,\nusing the unlinked task schema to avoid circular references.\n\nAttributes:\n    tasks: List of tasks associated with this schedule"
-      },
       "SearchHit": {
         "properties": {
           "type": {
@@ -5046,13 +5010,6 @@
             },
             "type": "array",
             "title": "Groups"
-          },
-          "responses": {
-            "items": {
-              "$ref": "#/components/schemas/ResponseUnlinked"
-            },
-            "type": "array",
-            "title": "Responses"
           }
         },
         "type": "object",
@@ -5061,11 +5018,10 @@
           "name",
           "api_identifier",
           "admin",
-          "groups",
-          "responses"
+          "groups"
         ],
         "title": "UserLinked",
-        "description": "User model with linked relationships.\n\nExtends the base User model to include related groups and responses.\n\nAttributes:\n    groups (list[GroupUnlinked]): Groups the user is a member of\n    responses (list[ResponseUnlinked]): User's responses to questions"
+        "description": "User model with group memberships.\n\nUsed for ``/me`` and other user-facing responses. Intentionally omits\n``responses`` — a user's full answer history is only needed on letter\ndetail pages, not on every authenticated request.\n\nAttributes:\n    groups (list[GroupUnlinked]): Groups the user is a member of"
       },
       "UserUnlinked": {
         "properties": {
