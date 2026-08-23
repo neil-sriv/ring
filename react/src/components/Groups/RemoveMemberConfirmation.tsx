@@ -93,7 +93,7 @@ function RemoveMemberConfirmation({
   })
 
   const onSubmit = async () => {
-    mutation.mutate({
+    await mutation.mutateAsync({
       path: {
         group_api_id: groupId,
         user_api_id: member.api_identifier,
@@ -102,12 +102,13 @@ function RemoveMemberConfirmation({
   }
 
   const memberLabel = member.name || member.email
+  const isRemoving = isSubmitting || mutation.isPending
 
   return (
     <AlertDialog
       open={isOpen}
       onOpenChange={(open) => {
-        if (!open) onClose()
+        if (!open && !isRemoving) onClose()
       }}
     >
       <AlertDialogContent>
@@ -125,13 +126,13 @@ function RemoveMemberConfirmation({
             <Button
               variant="outline"
               onClick={onClose}
-              disabled={isSubmitting}
+              disabled={isRemoving}
               type="button"
             >
               Cancel
             </Button>
-            <Button variant="destructive" type="submit" disabled={isSubmitting}>
-              {isSubmitting && <Loader2 className="h-4 w-4 animate-spin" />}
+            <Button variant="destructive" type="submit" disabled={isRemoving}>
+              {isRemoving && <Loader2 className="h-4 w-4 animate-spin" />}
               Remove
             </Button>
           </AlertDialogFooter>

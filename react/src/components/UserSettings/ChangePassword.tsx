@@ -52,10 +52,12 @@ const ChangePassword = () => {
   })
 
   const onSubmit: SubmitHandler<UpdatePasswordForm> = async (data) => {
-    mutation.mutate({
+    await mutation.mutateAsync({
       body: data,
     })
   }
+
+  const isSaving = isSubmitting || mutation.isPending
 
   return (
     <div className="w-full">
@@ -110,8 +112,8 @@ const ChangePassword = () => {
           )}
         </div>
         <div>
-          <Button type="submit" disabled={isSubmitting}>
-            {isSubmitting && <Loader2 className="h-4 w-4 animate-spin" />}
+          <Button type="submit" disabled={isSaving}>
+            {isSaving && <Loader2 className="h-4 w-4 animate-spin" />}
             Save
           </Button>
         </div>
