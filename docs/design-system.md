@@ -183,7 +183,32 @@ decorative/empty-state icons, `text-muted-foreground` unless status-colored.
 
 ---
 
-## 6. Email
+## 6. Brand mark
+
+The mark is an ink-drawn circle: a ribbon traced between two off-center circles
+so it swells toward the bottom left, with a small notch near the top left where
+the pen lands and lifts. It is cream on a terracotta tile as an app icon, and
+terracotta on paper (`text-primary`) inside the app.
+
+- `react/public/assets/images/logo.svg` is the source of truth. Everything else
+  is generated or copied from it — edit the SVG, never the PNGs.
+- Raster icons (`pwa-64x64`, `pwa-192x192`, `pwa-512x512`,
+  `maskable-icon-512x512`, `apple-touch-icon-180x180`, `favicon.ico`) come from
+  `cd react && pnpm run generate-pwa-assets` (config in
+  `react/pwa-assets.config.ts`). Commit the regenerated files.
+- The `any`-purpose icons keep the tile's rounded corners; the maskable and
+  Apple icons are composited on terracotta so they bleed to the edges and
+  platform masks crop the tile rather than the ring. The ring stays inside the
+  center 65%, within the maskable safe zone.
+- In-app the mark is `RingMark` (`react/src/components/Common/RingMark.tsx`),
+  which carries the same path and fills with `currentColor`. Use it at `h-5`
+  beside the sidebar wordmark and `h-10` above it on auth pages. Pair it with
+  the Lora wordmark — the mark never replaces the word "Ring".
+- Email keeps the text wordmark only (see below); no image logos in email.
+
+---
+
+## 7. Email
 
 Transactional emails follow the same language, but email clients cannot read
 CSS variables or load our webfonts. `ring/email_template.py` mirrors the
@@ -212,7 +237,7 @@ tokens as hex values and provides the shared shell + helpers
 
 ---
 
-## 7. File map
+## 8. File map
 
 | Concern | File |
 |---------|------|
@@ -221,4 +246,6 @@ tokens as hex values and provides the shared shell + helpers
 | Animations | `tw-animate-css` (imported in `app.css`; powers `animate-in/out` in primitives) |
 | Primitives | `react/src/components/ui/*` |
 | Email shell + token mirror | `ring/email_template.py` |
+| Brand mark source | `react/public/assets/images/logo.svg` (+ `react/pwa-assets.config.ts`) |
+| In-app mark | `react/src/components/Common/RingMark.tsx` |
 | PWA/browser chrome color | `react/vite.config.ts` manifest `theme_color` + `background_color` |

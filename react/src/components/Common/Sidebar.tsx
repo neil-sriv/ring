@@ -16,6 +16,7 @@ import type { UserLinked } from "../../client"
 import { readUserMePartiesMeGetQueryKey } from "../../client/@tanstack/react-query.gen"
 import useAuth from "../../hooks/useAuth"
 import { userInitials } from "../../util/misc"
+import { RingMark } from "./RingMark"
 import SidebarItems from "./SidebarItems"
 
 const Sidebar = () => {
@@ -38,6 +39,7 @@ const Sidebar = () => {
         className="mx-1 mb-4 mt-1 flex items-center gap-2 rounded-md px-1.5 py-1"
         onClick={onClose}
       >
+        <RingMark className="h-5 w-5 shrink-0 text-primary" />
         <span className="font-display text-xl font-semibold tracking-tight text-sidebar-accent-foreground">
           Ring
         </span>
@@ -90,8 +92,9 @@ const Sidebar = () => {
         </Button>
         <Link
           to="/"
-          className="rounded-md px-1.5 py-1 font-display text-lg font-semibold tracking-tight text-sidebar-accent-foreground"
+          className="flex items-center gap-2 rounded-md px-1.5 py-1 font-display text-lg font-semibold tracking-tight text-sidebar-accent-foreground"
         >
+          <RingMark className="h-[1.125rem] w-[1.125rem] shrink-0 text-primary" />
           Ring
         </Link>
       </header>

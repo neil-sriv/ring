@@ -6,6 +6,7 @@ import {
 import { Loader2 } from "lucide-react"
 import { type SubmitHandler, useForm } from "react-hook-form"
 
+import { RingMark } from "@/components/Common/RingMark"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -68,8 +69,9 @@ function ResetPasswordRequest() {
         <div className="text-center">
           <RouterLink
             to="/"
-            className="font-display text-3xl font-semibold tracking-tight text-foreground"
+            className="inline-flex flex-col items-center gap-3 font-display text-3xl font-semibold tracking-tight text-foreground"
           >
+            <RingMark className="h-10 w-10 text-primary" />
             Ring
           </RouterLink>
           <h1 className="mt-6 text-lg font-semibold">Reset your password</h1>
