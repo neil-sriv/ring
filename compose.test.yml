@@ -16,6 +16,16 @@ services:
   test-runner:
     image: ring-test-runner
     container_name: ring-test-runner
+    # Top up dependencies from the mounted source before running anything, so
+    # a stale prebuilt image (CI pulls ghcr :latest) cannot miss newly added
+    # packages. No-ops in seconds when the image is already current.
+    entrypoint:
+      [
+        "bash",
+        "-c",
+        "uv pip install --quiet --system -r ring/tests/dev_requirements.txt && exec \"$@\"",
+        "--",
+      ]
     command: [ "pytest", "-c", "ring/tests/pytest.ini" ]
     build:
       context: ./ring
