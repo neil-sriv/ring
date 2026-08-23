@@ -49,12 +49,15 @@ const MembersTableBody = () => {
                 <Badge variant="secondary">You</Badge>
               )}
             </div>
+            <p className="mt-0.5 break-all text-xs text-muted-foreground md:hidden">
+              {user.email}
+            </p>
           </TableCell>
-          <TableCell>{user.email}</TableCell>
-          <TableCell className="font-mono text-xs text-muted-foreground">
+          <TableCell className="hidden md:table-cell">{user.email}</TableCell>
+          <TableCell className="hidden font-mono text-xs text-muted-foreground lg:table-cell">
             {user.api_identifier}
           </TableCell>
-          <TableCell>
+          <TableCell className="hidden sm:table-cell">
             <Badge variant="success">Active</Badge>
           </TableCell>
           <TableCell className="text-right">
@@ -66,13 +69,21 @@ const MembersTableBody = () => {
   )
 }
 
+const SKELETON_CELL_CLASSES = [
+  "",
+  "hidden md:table-cell",
+  "hidden lg:table-cell",
+  "hidden sm:table-cell",
+  "",
+]
+
 const MembersBodySkeleton = () => {
   return (
     <TableBody>
       {new Array(5).fill(null).map((_, rowIndex) => (
         <TableRow key={rowIndex}>
-          {new Array(5).fill(null).map((_, cellIndex) => (
-            <TableCell key={cellIndex}>
+          {SKELETON_CELL_CLASSES.map((cellClass, cellIndex) => (
+            <TableCell key={cellIndex} className={cellClass}>
               <Skeleton className="h-4 w-full" />
             </TableCell>
           ))}
@@ -96,9 +107,15 @@ function Admin() {
         <TableHeader>
           <TableRow>
             <TableHead className="w-[20%]">Full name</TableHead>
-            <TableHead className="w-[30%]">Email</TableHead>
-            <TableHead className="w-[30%]">API ID</TableHead>
-            <TableHead className="w-[10%]">Status</TableHead>
+            <TableHead className="hidden w-[30%] md:table-cell">
+              Email
+            </TableHead>
+            <TableHead className="hidden w-[30%] lg:table-cell">
+              API ID
+            </TableHead>
+            <TableHead className="hidden w-[10%] sm:table-cell">
+              Status
+            </TableHead>
             <TableHead className="w-[10%] text-right">Actions</TableHead>
           </TableRow>
         </TableHeader>
