@@ -743,6 +743,8 @@ export type SearchResponse = {
 
 export type SearchType = 'semantic' | 'keyword' | 'dual';
 
+export type SearchableType = 'user' | 'group' | 'response' | 'letter' | 'question';
+
 /**
  * Schema for updating a single group key-value pair.
  *
@@ -2249,6 +2251,7 @@ export type PerformSearchSearchSearchGetData = {
         search_type?: SearchType;
         limit?: number;
         offset?: number;
+        types?: Array<SearchableType> | null;
     };
     url: '/search/search';
 };
