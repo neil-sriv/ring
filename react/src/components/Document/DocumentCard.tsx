@@ -3,6 +3,20 @@ import { Card } from "@/components/ui/card"
 import { Link } from "@tanstack/react-router"
 import type { DocumentResponse } from "../../client"
 
+// Elements whose boundaries should read as whitespace in the plain-text
+// preview, so adjacent blocks don't run together ("JAPANdates" -> "JAPAN dates").
+const BLOCK_BOUNDARY_SELECTOR =
+  "p, h1, h2, h3, h4, h5, h6, li, blockquote, pre, br, hr, td, th"
+
+function htmlToPreviewText(html: string): string {
+  // DOMParser (vs. tag-stripping regex) also decodes entities like &amp;.
+  const parsed = new DOMParser().parseFromString(html, "text/html")
+  for (const element of parsed.body.querySelectorAll(BLOCK_BOUNDARY_SELECTOR)) {
+    element.after(" ")
+  }
+  return (parsed.body.textContent ?? "").replace(/\s+/g, " ").trim()
+}
+
 export function DocumentCard(props: {
   document: DocumentResponse
 }): JSX.Element {
@@ -11,10 +25,11 @@ export function DocumentCard(props: {
     ? new Date(props.document.updated_at)
     : null
 
-  // Get content preview (first 100 characters)
+  // Get content preview (first 50 characters)
   const getContentPreview = () => {
     if (!props.document.content) return "No content yet"
-    const plainText = props.document.content.replace(/<[^>]*>/g, "") // Strip HTML tags
+    const plainText = htmlToPreviewText(props.document.content)
+    if (!plainText) return "No content yet"
     return plainText.length > 50
       ? `${plainText.substring(0, 50)}...`
       : plainText
