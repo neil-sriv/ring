@@ -12,16 +12,12 @@ from faker import Faker
 from sqlalchemy.orm import Session
 
 from ring.notebook.crud.document import (
-    add_document_edit,
     create_document,
     get_documents,
     update_document,
 )
-from ring.notebook.models.document import Document, DocumentEdit
-from ring.tests.factories.notebook.document_factory import (
-    DocumentEditFactory,
-    DocumentFactory,
-)
+from ring.notebook.models.document import Document
+from ring.tests.factories.notebook.document_factory import DocumentFactory
 from ring.tests.factories.parties.group_factory import GroupFactory
 from ring.tests.factories.parties.user_factory import UserFactory
 
@@ -217,125 +213,6 @@ class TestDocumentCRUD:
         assert updated_document.name == original_name
         assert updated_document.content == original_content
         assert updated_document.latest_snapshot_version == original_version
-
-    def test_add_document_edit(
-        self, db_session: Session, faker: Faker
-    ) -> None:
-        """Test adding an edit to a document.
-
-        This test verifies that:
-        1. An edit can be added to a document
-        2. The edit has the correct attributes
-        3. The edit version is assigned correctly
-        4. The edit is properly stored in the database
-
-        Args:
-            db_session (Session): Database session
-            faker (Faker): Faker instance for generating test data
-        """
-        document = DocumentFactory.create()
-        user = UserFactory.create()
-        db_session.commit()
-
-        delta = faker.text(max_nb_chars=100)
-        original_version = document.latest_snapshot_version
-
-        edit = add_document_edit(
-            db_session, document, delta.encode("utf-8"), user
-        )
-        db_session.commit()
-
-        assert edit.delta == delta.encode("utf-8")
-        assert edit.version >= 1  # Edit gets a version number
-        assert edit.document == document
-        assert edit.author == user
-
-        # Verify document version remains unchanged (no auto-increment)
-        assert document.latest_snapshot_version == original_version
-
-        # Verify edit was created in database
-        db_edit = db_session.scalar(
-            sqlalchemy.select(DocumentEdit).filter(
-                DocumentEdit.document == document,
-                DocumentEdit.version == edit.version,
-            )
-        )
-        assert db_edit is not None
-        assert db_edit.delta.decode("utf-8") == delta
-
-    def test_add_multiple_document_edits(
-        self, db_session: Session, faker: Faker
-    ) -> None:
-        """Test adding multiple edits to a document.
-
-        This test verifies that:
-        1. Multiple edits can be added to a document
-        2. Each edit has the correct version number
-        3. The document version is incremented for each edit
-        4. All edits are properly stored in the database
-
-        Args:
-            db_session (Session): Database session
-            faker (Faker): Faker instance for generating test data
-        """
-        document = DocumentFactory.create()
-        user = UserFactory.create()
-        db_session.commit()
-
-        original_version = document.latest_snapshot_version
-        edits = []
-
-        # Add multiple edits
-        for i in range(3):
-            delta = faker.text(max_nb_chars=100)
-            edit = add_document_edit(
-                db_session, document, delta.encode("utf-8"), user
-            )
-            edits.append(edit)
-            db_session.commit()
-
-        # Verify all edits were created correctly
-        for i, edit in enumerate(edits):
-            assert edit.version >= 1  # Each edit gets a version number
-            assert edit.document == document
-            assert edit.author == user
-
-        # Verify document version remains unchanged (no auto-increment)
-        assert document.latest_snapshot_version == original_version
-
-    def test_add_document_edit_with_empty_delta(
-        self, db_session: Session
-    ) -> None:
-        """Test adding an edit with empty delta.
-
-        This test verifies that:
-        1. An edit with empty delta can be added
-        2. The edit has the correct attributes
-        3. The document version is incremented
-        4. Empty delta is handled correctly
-
-        Args:
-            db_session (Session): Database session
-        """
-        document = DocumentFactory.create()
-        user = UserFactory.create()
-        db_session.commit()
-
-        delta = ""
-        original_version = document.latest_snapshot_version
-
-        edit = add_document_edit(
-            db_session, document, delta.encode("utf-8"), user
-        )
-        db_session.commit()
-
-        assert edit.delta == delta.encode("utf-8")
-        assert edit.version >= 1  # Edit gets a version number
-        assert edit.document == document
-        assert edit.author == user
-
-        # Verify document version remains unchanged (no auto-increment)
-        assert document.latest_snapshot_version == original_version
 
     def test_get_documents(self, db_session: Session) -> None:
         """Test getting documents for a group.

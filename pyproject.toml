@@ -80,6 +80,8 @@ dependencies = [
     "websockets>=14.1",
     "httpx-ws>=0.7.2",
     "httpx>=0.28.1",
+    "pycrdt>=0.14.3",
+    "pycrdt-websocket>=0.16.4",
 ]
 
 [dependency-groups]

@@ -23,6 +23,7 @@ from ring.lib.request_logging import (
     install_uvicorn_access_log_redaction,
     sanitize_request_url,
 )
+from ring.notebook.sync import notebook_websocket_server
 
 
 @asynccontextmanager
@@ -34,7 +35,9 @@ async def lifespan(app: FastAPI):
     if not ring_config.DISABLE_SCHEDULER:
         scheduler.start()
 
-    yield
+    # Runs the notebook CRDT rooms' task group for the app's lifetime.
+    async with notebook_websocket_server:
+        yield
 
     if not ring_config.DISABLE_SCHEDULER:
         scheduler.shutdown()
@@ -75,6 +78,21 @@ app = create_app()
 # @app.on_event("startup")
 # async def startup_event():
 #     scheduler.start()
+
+
+@app.exception_handler(PermissionError)
+async def permission_error_handler(
+    request: Request, exc: PermissionError
+) -> JSONResponse:
+    """Map authz PermissionError to a 403 response.
+
+    Raised by ring.authz helpers; also covers resources whose ids do not
+    resolve, so unauthorized users cannot probe for resource existence.
+    """
+    return JSONResponse(
+        status_code=403,
+        content={"detail": "Not authorized to access this resource"},
+    )
 
 
 @app.exception_handler(IDNotFoundException)

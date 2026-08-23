@@ -239,7 +239,7 @@ CREATE TABLE public.document_edits (
 	delta BYTES NOT NULL,
 	version INT8 NOT NULL DEFAULT nextval('public.document_edit_version_seq'::REGCLASS),
 	document_id INT8 NOT NULL,
-	author_id INT8 NOT NULL,
+	author_id INT8 NULL,
 	created_at TIMESTAMPTZ NOT NULL DEFAULT now():::TIMESTAMPTZ,
 	CONSTRAINT document_edits_pkey PRIMARY KEY (id ASC),
 	UNIQUE INDEX unique_document_edit_version (document_id ASC, version ASC),

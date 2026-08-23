@@ -14,6 +14,10 @@ anyio==4.9.0
     # via
     #   httpx
     #   httpx-ws
+    #   pycrdt
+    #   pycrdt-store
+    #   pycrdt-websocket
+    #   sqlite-anyio
     #   starlette
     #   watchfiles
 apscheduler==3.11.0
@@ -105,7 +109,9 @@ frozenlist==1.6.0
     #   aiohttp
     #   aiosignal
 greenlet==3.2.1
-    # via sqlalchemy
+    # via
+    #   playwright
+    #   sqlalchemy
 h11==0.16.0
     # via
     #   httpcore
@@ -121,6 +127,7 @@ httptools==0.6.4
     # via uvicorn
 httpx==0.28.1
     # via
+    #   ring (pyproject.toml)
     #   fastapi
     #   httpx-ws
 httpx-ws==0.7.2
@@ -216,6 +223,8 @@ pgvector==0.4.1
     # via ring (pyproject.toml)
 platformdirs==4.3.7
     # via virtualenv
+playwright==1.62.0
+    # via ring (pyproject.toml:dev)
 pluggy==1.5.0
     # via pytest
 pprintpp==0.4.0
@@ -248,6 +257,15 @@ pycasbin==1.45.0
     # via ring (pyproject.toml)
 pycparser==2.22
     # via cffi
+pycrdt==0.14.3
+    # via
+    #   ring (pyproject.toml)
+    #   pycrdt-store
+    #   pycrdt-websocket
+pycrdt-store==0.1.5
+    # via pycrdt-websocket
+pycrdt-websocket==0.16.4
+    # via ring (pyproject.toml)
 pydantic==2.11.4
     # via
     #   ring (pyproject.toml)
@@ -261,6 +279,8 @@ pydantic-extra-types==2.10.4
     # via fastapi
 pydantic-settings==2.9.1
     # via fastapi
+pyee==13.0.1
+    # via playwright
 pygments==2.18.0
     # via
     #   ipython
@@ -349,6 +369,8 @@ sqlalchemy-cockroachdb==2.0.2
     # via ring (pyproject.toml)
 sqlalchemy-json==0.7.0
     # via ring (pyproject.toml)
+sqlite-anyio==0.2.5
+    # via pycrdt-store
 stack-data==0.6.3
     # via ipython
 starlette==0.46.2
@@ -373,6 +395,7 @@ typing-extensions==4.12.2
     #   pydantic
     #   pydantic-core
     #   pydantic-extra-types
+    #   pyee
     #   pytest-factoryboy
     #   rich-toolkit
     #   sqlalchemy

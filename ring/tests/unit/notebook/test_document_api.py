@@ -15,13 +15,20 @@ from sqlalchemy.orm import Session
 
 from ring.notebook.models.document import Document
 from ring.notebook.schemas.document import DocumentCreate, DocumentUpdate
+from ring.parties.models.group_model import Group
+from ring.parties.models.user_model import User
 from ring.tests.factories.notebook.document_factory import DocumentFactory
 from ring.tests.factories.parties.group_factory import GroupFactory
 from ring.tests.lib.utils import (
-    assert_api_model_not_found,
     assert_pydantic_model_json_dump_equivalent_to_response_dict,
     assert_pydantic_models_json_dump_in_response_dict,
 )
+
+FORBIDDEN_DETAIL = "Not authorized to access this resource"
+
+
+def _member_group(current_user: User) -> Group:
+    return GroupFactory.create(admin=current_user, members=[current_user])
 
 
 class TestDocumentAPI:
@@ -99,6 +106,7 @@ class TestDocumentAPI:
     def test_create_document(
         self,
         authenticated_client: TestClient,
+        current_user: User,
         faker: Faker,
         db_session: Session,
     ) -> None:
@@ -112,11 +120,12 @@ class TestDocumentAPI:
 
         Args:
             authenticated_client (TestClient): Authenticated test client
+            current_user (User): The authenticated user
             faker (Faker): Faker instance for generating test data
             db_session (Session): Database session
         """
 
-        group = GroupFactory.create()
+        group = _member_group(current_user)
         db_session.commit()
 
         name, content = (
@@ -177,6 +186,7 @@ class TestDocumentAPI:
     def test_get_document(
         self,
         authenticated_client: TestClient,
+        current_user: User,
         db_session: Session,
     ) -> None:
         """Test retrieving a document by its API identifier.
@@ -189,9 +199,10 @@ class TestDocumentAPI:
 
         Args:
             authenticated_client (TestClient): Authenticated test client
+            current_user (User): The authenticated user
             db_session (Session): Database session
         """
-        document = DocumentFactory.create()
+        document = DocumentFactory.create(group=_member_group(current_user))
         db_session.commit()
 
         response = authenticated_client.get(
@@ -212,18 +223,32 @@ class TestDocumentAPI:
     ) -> None:
         """Test retrieving a non-existent document.
 
-        This test verifies that:
-        1. Retrieving a non-existent document fails
-        2. The response contains the correct error message
-        3. The response indicates the document was not found
+        Authz-loaded resources return 403 for unknown ids so unauthorized
+        users cannot probe for resource existence.
 
         Args:
             authenticated_client (TestClient): Authenticated test client
         """
         response = authenticated_client.get("/notebook/documents/invalid_id")
-        assert response.status_code == 404
+        assert response.status_code == 403
         data = response.json()
-        assert_api_model_not_found(data, Document, ["invalid_id"])
+        assert data["detail"] == FORBIDDEN_DETAIL
+
+    def test_get_document_non_member_forbidden(
+        self,
+        authenticated_client: TestClient,
+        db_session: Session,
+    ) -> None:
+        """A user who is not in the document's group gets a 403."""
+        document = DocumentFactory.create()
+        db_session.commit()
+
+        response = authenticated_client.get(
+            f"/notebook/documents/{document.api_identifier}"
+        )
+        assert response.status_code == 403
+        data = response.json()
+        assert data["detail"] == FORBIDDEN_DETAIL
 
     def test_get_document_unauthenticated(
         self,
@@ -254,6 +279,7 @@ class TestDocumentAPI:
     def test_update_document_name_only(
         self,
         authenticated_client: TestClient,
+        current_user: User,
         db_session: Session,
         faker: Faker,
     ) -> None:
@@ -267,10 +293,11 @@ class TestDocumentAPI:
 
         Args:
             authenticated_client (TestClient): Authenticated test client
+            current_user (User): The authenticated user
             db_session (Session): Database session
             faker (Faker): Faker instance for generating test data
         """
-        document = DocumentFactory.create()
+        document = DocumentFactory.create(group=_member_group(current_user))
         db_session.commit()
 
         new_name = faker.sentence(nb_words=3)
@@ -290,6 +317,7 @@ class TestDocumentAPI:
     def test_update_document_content_only(
         self,
         authenticated_client: TestClient,
+        current_user: User,
         db_session: Session,
         faker: Faker,
     ) -> None:
@@ -303,10 +331,11 @@ class TestDocumentAPI:
 
         Args:
             authenticated_client (TestClient): Authenticated test client
+            current_user (User): The authenticated user
             db_session (Session): Database session
             faker (Faker): Faker instance for generating test data
         """
-        document = DocumentFactory.create()
+        document = DocumentFactory.create(group=_member_group(current_user))
         db_session.commit()
 
         new_content = faker.text(max_nb_chars=500)
@@ -326,6 +355,7 @@ class TestDocumentAPI:
     def test_update_document_both_fields(
         self,
         authenticated_client: TestClient,
+        current_user: User,
         db_session: Session,
         faker: Faker,
     ) -> None:
@@ -339,10 +369,11 @@ class TestDocumentAPI:
 
         Args:
             authenticated_client (TestClient): Authenticated test client
+            current_user (User): The authenticated user
             db_session (Session): Database session
             faker (Faker): Faker instance for generating test data
         """
-        document = DocumentFactory.create()
+        document = DocumentFactory.create(group=_member_group(current_user))
         db_session.commit()
 
         new_name = faker.sentence(nb_words=3)
@@ -383,9 +414,27 @@ class TestDocumentAPI:
         response = authenticated_client.put(
             "/notebook/documents/invalid_id", json=input_data
         )
-        assert response.status_code == 404
+        assert response.status_code == 403
         data = response.json()
-        assert_api_model_not_found(data, Document, ["invalid_id"])
+        assert data["detail"] == FORBIDDEN_DETAIL
+
+    def test_update_document_non_member_forbidden(
+        self,
+        authenticated_client: TestClient,
+        db_session: Session,
+        faker: Faker,
+    ) -> None:
+        """A user who is not in the document's group cannot update it."""
+        document = DocumentFactory.create()
+        db_session.commit()
+
+        response = authenticated_client.put(
+            f"/notebook/documents/{document.api_identifier}",
+            json={"name": faker.sentence(nb_words=3)},
+        )
+        assert response.status_code == 403
+        data = response.json()
+        assert data["detail"] == FORBIDDEN_DETAIL
 
     def test_update_document_unauthenticated(
         self,
@@ -422,10 +471,11 @@ class TestDocumentAPI:
     def test_list_documents(
         self,
         authenticated_client: TestClient,
+        current_user: User,
         db_session: Session,
     ) -> None:
         """Test listing documents for a group."""
-        group = GroupFactory.create()
+        group = _member_group(current_user)
         documents = [DocumentFactory.create(group=group) for _ in range(3)]
         db_session.commit()
         response = authenticated_client.get(
@@ -433,6 +483,42 @@ class TestDocumentAPI:
         )
         assert response.status_code == 200
         data = response.json()
-        print(data)
         assert len(data) == 3
         assert_pydantic_models_json_dump_in_response_dict(documents, data)
+
+    def test_list_documents_non_member_forbidden(
+        self,
+        authenticated_client: TestClient,
+        db_session: Session,
+    ) -> None:
+        """A user who is not in the group cannot list its documents."""
+        group = GroupFactory.create()
+        db_session.commit()
+        response = authenticated_client.get(
+            f"/notebook/documents/?group_api_id={group.api_identifier}"
+        )
+        assert response.status_code == 403
+        data = response.json()
+        assert data["detail"] == FORBIDDEN_DETAIL
+
+    def test_create_document_non_member_forbidden(
+        self,
+        authenticated_client: TestClient,
+        db_session: Session,
+        faker: Faker,
+    ) -> None:
+        """A user who is not in the group cannot create documents in it."""
+        group = GroupFactory.create()
+        db_session.commit()
+
+        response = authenticated_client.post(
+            "/notebook/documents",
+            json={
+                "name": faker.sentence(nb_words=3),
+                "content": "",
+                "group_api_id": group.api_identifier,
+            },
+        )
+        assert response.status_code == 403
+        data = response.json()
+        assert data["detail"] == FORBIDDEN_DETAIL
