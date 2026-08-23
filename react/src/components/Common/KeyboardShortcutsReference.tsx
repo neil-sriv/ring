@@ -37,7 +37,7 @@ export function KeyboardShortcutsReference({
                 >
                   {shortcut.description}
                 </dt>
-                <dd>
+                <dd className="shrink-0">
                   <kbd className={compact ? "" : "px-2 text-xs"}>
                     {shortcut.keys}
                   </kbd>

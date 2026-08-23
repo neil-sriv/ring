@@ -74,7 +74,7 @@ export function LoopCard(props: {
     >
       <Card className="flex h-full flex-col gap-2 p-5 transition-shadow hover:shadow-sm">
         <div className="flex items-start justify-between gap-3">
-          <h3 className="min-w-0 font-display text-lg font-medium">
+          <h3 className="line-clamp-2 min-w-0 break-words font-display text-lg font-medium">
             {getHeadingText()}
           </h3>
           {getLoopTypeLabel()}
