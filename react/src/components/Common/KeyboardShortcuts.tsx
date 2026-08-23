@@ -33,7 +33,14 @@ export function KeyboardShortcuts() {
 
   return (
     <>
-      <CommandPalette open={paletteOpen} onOpenChange={setPaletteOpen} />
+      <CommandPalette
+        open={paletteOpen}
+        onOpenChange={setPaletteOpen}
+        onOpenShortcutHelp={() => {
+          setPaletteOpen(false)
+          setHelpOpen(true)
+        }}
+      />
       <KeyboardShortcutsHelp open={helpOpen} onOpenChange={setHelpOpen} />
       {goPending && (
         <div
