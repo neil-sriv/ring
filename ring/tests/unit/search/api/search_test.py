@@ -266,3 +266,93 @@ class TestSearchAPI:
         empty_data = empty_page.json()
         assert empty_data["total"] == 0
         assert empty_data["results"] == []
+
+    def test_hydrated_search_type_filter(
+        self,
+        authenticated_client: TestClient,
+        current_user: User,
+        db_session: Session,
+    ) -> None:
+        """Test filtering hydrated search results by result type.
+
+        This test verifies that:
+        1. A single type filter returns only results of that type
+        2. A multi-select filter (repeated types params) returns all selected
+           types, preserving rank order
+        3. A filter matching no documents returns an empty result
+
+        Args:
+            authenticated_client (TestClient): Authenticated test client
+            current_user (User): Authenticated user performing the search
+            db_session (Session): Database session
+        """
+        users = [UserFactory.create() for _ in range(2)]
+        group = GroupFactory.create()
+        for user in users:
+            group.members.append(user)
+        group.members.append(current_user)
+        db_session.commit()
+
+        # The autouse embedding mock returns [0.1] * 768 for the query, so
+        # increasing per-document offsets give a deterministic rank order:
+        # users[0], users[1], then the group.
+        base_embedding = [0.1] * 768
+        document_specs = [
+            (users[0].api_identifier, SearchableType.USER, 0.001),
+            (users[1].api_identifier, SearchableType.USER, 0.002),
+            (group.api_identifier, SearchableType.GROUP, 0.003),
+        ]
+        for model_api_identifier, model_type, offset in document_specs:
+            document = HybridSearchDocument.create(
+                raw_text=f"test document for {model_api_identifier}",
+                text_embedding_768=[x + offset for x in base_embedding],
+            )
+            association = HybridSearchDocumentAssociation.create(
+                model_api_identifier=model_api_identifier,
+                model_type=model_type.value,
+                hybrid_search_document=document,
+            )
+            db_session.add_all([document, association])
+        db_session.commit()
+
+        group_only = authenticated_client.get(
+            "/search/search?query=test&search_type=semantic&limit=10"
+            "&types=group"
+        )
+
+        assert group_only.status_code == 200
+        assert_pydantic_schema_json_dump_equivalent_to_response_dict(
+            SearchResponse(
+                results=[SearchHit.from_model(group)],
+                total=1,
+            ),
+            group_only.json(),
+        )
+
+        users_and_group = authenticated_client.get(
+            "/search/search?query=test&search_type=semantic&limit=10"
+            "&types=user&types=group"
+        )
+
+        assert users_and_group.status_code == 200
+        assert_pydantic_schema_json_dump_equivalent_to_response_dict(
+            SearchResponse(
+                results=[
+                    SearchHit.from_model(users[0]),
+                    SearchHit.from_model(users[1]),
+                    SearchHit.from_model(group),
+                ],
+                total=3,
+            ),
+            users_and_group.json(),
+        )
+
+        no_matches = authenticated_client.get(
+            "/search/search?query=test&search_type=semantic&limit=10"
+            "&types=response"
+        )
+
+        assert no_matches.status_code == 200
+        no_matches_data = no_matches.json()
+        assert no_matches_data["total"] == 0
+        assert no_matches_data["results"] == []

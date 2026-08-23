@@ -4,7 +4,7 @@ from collections import defaultdict
 from dataclasses import dataclass
 from enum import Enum
 from functools import wraps
-from typing import Callable
+from typing import Callable, Sequence
 
 from llm_service import (
     ApiClient,
@@ -13,7 +13,7 @@ from llm_service import (
 )
 from loguru import logger
 from sqlalchemy import func, or_, select
-from sqlalchemy.orm import Session, load_only, selectinload
+from sqlalchemy.orm import Query, Session, load_only, selectinload
 
 from ring.api_identifier.api_identified_model import APIIdentified
 from ring.authz.authz import filter_to_authorized
@@ -134,17 +134,37 @@ def create_hybrid_search_document(
     return db_hybrid_search_document
 
 
+def _filter_to_model_types(
+    db_query: Query[HybridSearchDocument],
+    model_types: Sequence[SearchableType] | None,
+) -> Query[HybridSearchDocument]:
+    # EXISTS on associations (rather than a join) keeps result rows unique and
+    # plays nicely with the rank-based ORDER BY expressions.
+    if not model_types:
+        return db_query
+    return db_query.filter(
+        HybridSearchDocument.associations.any(
+            HybridSearchDocumentAssociation.model_type.in_(
+                [model_type.value for model_type in model_types]
+            )
+        )
+    )
+
+
 def semantic_search_hybrid_search_document(
-    db: Session, query: str, limit: int = 10
+    db: Session,
+    query: str,
+    limit: int = 10,
+    model_types: Sequence[SearchableType] | None = None,
 ) -> list[HybridSearchDocument]:
     text_embedding = _generate_text_embedding(query)
+    db_query = db.query(HybridSearchDocument).filter(
+        HybridSearchDocument.text_embedding_768.l2_distance(text_embedding)
+        < 0.5
+    )
+    db_query = _filter_to_model_types(db_query, model_types)
     return (
-        db.query(HybridSearchDocument)
-        .filter(
-            HybridSearchDocument.text_embedding_768.l2_distance(text_embedding)
-            < 0.5
-        )
-        .order_by(
+        db_query.order_by(
             HybridSearchDocument.text_embedding_768.l2_distance(text_embedding)
         )
         .limit(limit)
@@ -153,16 +173,22 @@ def semantic_search_hybrid_search_document(
 
 
 def keyword_search_hybrid_search_document(
-    db: Session, query: str, limit: int = 10
+    db: Session,
+    query: str,
+    limit: int = 10,
+    model_types: Sequence[SearchableType] | None = None,
 ) -> list[HybridSearchDocument]:
     tsquery = func.plainto_tsquery("english", query)
-    return (
+    db_query = (
         db.query(HybridSearchDocument)
         .options(
             load_only(HybridSearchDocument.id, HybridSearchDocument.raw_text)
         )
         .filter(HybridSearchDocument.text_tsv_expr_literal.op("@@")(tsquery))
-        .order_by(
+    )
+    db_query = _filter_to_model_types(db_query, model_types)
+    return (
+        db_query.order_by(
             func.ts_rank(
                 HybridSearchDocument.text_tsv_expr_literal, tsquery
             ).desc()
@@ -173,22 +199,23 @@ def keyword_search_hybrid_search_document(
 
 
 def dual_search_hybrid_search_document(
-    db: Session, query: str, limit: int = 10
+    db: Session,
+    query: str,
+    limit: int = 10,
+    model_types: Sequence[SearchableType] | None = None,
 ) -> list[HybridSearchDocument]:
     text_embedding = _generate_text_embedding(query)
     tsquery = func.plainto_tsquery("english", query)
-    return (
-        db.query(HybridSearchDocument)
-        .filter(
-            or_(
-                HybridSearchDocument.text_embedding_768.l2_distance(
-                    text_embedding
-                )
-                < 0.5,
-                HybridSearchDocument.text_tsv_expr_literal.op("@@")(tsquery),
-            )
+    db_query = db.query(HybridSearchDocument).filter(
+        or_(
+            HybridSearchDocument.text_embedding_768.l2_distance(text_embedding)
+            < 0.5,
+            HybridSearchDocument.text_tsv_expr_literal.op("@@")(tsquery),
         )
-        .order_by(
+    )
+    db_query = _filter_to_model_types(db_query, model_types)
+    return (
+        db_query.order_by(
             HybridSearchDocument.text_embedding_768.l2_distance(
                 text_embedding
             ),
@@ -272,12 +299,16 @@ def search(
     limit: int = 10,
     offset: int = 0,
     search_type: SearchType = SearchType.KEYWORD,
+    model_types: Sequence[SearchableType] | None = None,
 ) -> list[APIIdentified]:
     # Resolve the search function at call time (rather than via a module-level
     # dict) so the names stay patchable in tests.
     search_dispatch: dict[
         SearchType,
-        Callable[[Session, str, int], list[HybridSearchDocument]],
+        Callable[
+            [Session, str, int, Sequence[SearchableType] | None],
+            list[HybridSearchDocument],
+        ],
     ] = {
         SearchType.SEMANTIC: semantic_search_hybrid_search_document,
         SearchType.KEYWORD: keyword_search_hybrid_search_document,
@@ -289,11 +320,21 @@ def search(
     # Offset pagination is applied after authz filtering, so every page must
     # re-fetch the raw window covering [0, offset + limit) and slice.
     search_results = search_dispatch[search_type](
-        db, query, _search_overfetch_limit(offset + limit)
+        db, query, _search_overfetch_limit(offset + limit), model_types
     )
     model_references = get_model_ids_from_hybrid_search_documents(
         db, search_results
     )
+    if model_types:
+        # The document-level EXISTS filter guarantees at least one matching
+        # association per document; drop any other-typed associations those
+        # documents may carry.
+        allowed_types = set(model_types)
+        model_references = [
+            reference
+            for reference in model_references
+            if reference[0] in allowed_types
+        ]
     model_ids_by_type: dict[SearchableType, list[str]] = defaultdict(list)
     for model_type, model_api_identifier in model_references:
         model_ids_by_type[model_type].append(model_api_identifier)

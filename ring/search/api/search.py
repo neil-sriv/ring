@@ -1,6 +1,8 @@
 from __future__ import annotations
 
-from fastapi import APIRouter, Depends, HTTPException
+from typing import Annotated
+
+from fastapi import APIRouter, Depends, HTTPException, Query
 
 from ring.fastapp.dependencies import (
     AuthenticatedRequestDependencies,
@@ -12,6 +14,7 @@ from ring.search.crud.hybrid_search import (
     search,
     semantic_search_hybrid_search_document,
 )
+from ring.search.models.hybrid_search import SearchableType
 from ring.search.schemas.search import (
     RawSearchResponse,
     RawSearchResult,
@@ -76,6 +79,7 @@ async def perform_search(
     search_type: SearchType = SearchType.KEYWORD,
     limit: int = 10,
     offset: int = 0,
+    types: Annotated[list[SearchableType] | None, Query()] = None,
     req_dep: AuthenticatedRequestDependencies = Depends(
         get_request_dependencies,
     ),
@@ -87,6 +91,7 @@ async def perform_search(
         limit=limit,
         offset=offset,
         search_type=search_type,
+        model_types=types,
     )
     return SearchResponse(
         results=[SearchHit.from_model(result) for result in results],

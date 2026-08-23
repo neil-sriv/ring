@@ -18,6 +18,7 @@ from ring.search.crud.hybrid_search import (
     create_hybrid_search_document,
     get_model_ids_from_hybrid_search_documents,
     hydrate_results,
+    keyword_search_hybrid_search_document,
     register_search_function,
     search,
     semantic_search_hybrid_search_document,
@@ -133,6 +134,55 @@ class TestHybridSearchCRUD:
         # Verify results are ordered by similarity (first two documents should be closest)
         assert results[0].raw_text == "test document 0"
         assert results[1].raw_text == "test document 1"
+
+    def test_keyword_search_filters_by_model_type(
+        self, db_session: Session
+    ) -> None:
+        """Test filtering keyword search results by model type.
+
+        This test verifies that:
+        1. An unfiltered search returns documents of every type
+        2. A model_types filter restricts results to those types only
+        3. Multi-select filters (several types at once) are honored
+
+        Args:
+            db_session (Session): Database session
+        """
+        type_specs = [
+            (SearchableType.USER, "filter_user_id"),
+            (SearchableType.GROUP, "filter_group_id"),
+            (SearchableType.LETTER, "filter_letter_id"),
+        ]
+        for model_type, model_api_identifier in type_specs:
+            create_hybrid_search_document(
+                db_session,
+                raw_text=f"volcano document for {model_type.value}",
+                model_api_identifier=model_api_identifier,
+                model_type=model_type,
+            )
+        db_session.commit()
+
+        unfiltered = keyword_search_hybrid_search_document(
+            db_session, "volcano"
+        )
+        assert len(unfiltered) == 3
+
+        filtered = keyword_search_hybrid_search_document(
+            db_session,
+            "volcano",
+            model_types=[SearchableType.GROUP, SearchableType.LETTER],
+        )
+
+        assert len(filtered) == 2
+        filtered_types = {
+            association.model_type
+            for document in filtered
+            for association in document.associations
+        }
+        assert filtered_types == {
+            SearchableType.GROUP.value,
+            SearchableType.LETTER.value,
+        }
 
     def test_get_model_ids_from_hybrid_search_documents(
         self, faker: Faker, db_session: Session
@@ -267,7 +317,9 @@ class TestHybridSearchCRUD:
         )
 
         assert results == mock_ranked_results
-        mock_dual_search.assert_called_once_with(db_session, "test query", 30)
+        mock_dual_search.assert_called_once_with(
+            db_session, "test query", 30, None
+        )
         mock_get_model_ids.assert_called_once_with(db_session, mock_documents)
         assert mock_hydrate.call_args_list[0].args == (
             db_session,
@@ -335,7 +387,9 @@ class TestHybridSearchCRUD:
         )
 
         assert results == [mock_users[1]]
-        mock_dual_search.assert_called_once_with(db_session, "test query", 6)
+        mock_dual_search.assert_called_once_with(
+            db_session, "test query", 6, None
+        )
 
         results_past_end = search(
             db_session,
@@ -347,6 +401,68 @@ class TestHybridSearchCRUD:
         )
 
         assert results_past_end == []
+
+    @patch("ring.search.crud.hybrid_search.dual_search_hybrid_search_document")
+    @patch(
+        "ring.search.crud.hybrid_search.get_model_ids_from_hybrid_search_documents"
+    )
+    @patch("ring.search.crud.hybrid_search.hydrate_results")
+    @patch("ring.search.crud.hybrid_search.filter_to_authorized")
+    def test_search_filters_references_to_model_types(
+        self,
+        mock_filter_authorized: MagicMock,
+        mock_hydrate: MagicMock,
+        mock_get_model_ids: MagicMock,
+        mock_dual_search: MagicMock,
+        db_session: Session,
+    ) -> None:
+        """Test that model type filters flow through the search pipeline.
+
+        This test verifies that:
+        1. model_types is forwarded to the raw search function
+        2. Associations of other types carried by matching documents are
+           dropped before hydration
+
+        Args:
+            mock_filter_authorized (MagicMock): Mock for authorization filtering
+            mock_hydrate (MagicMock): Mock for result hydration
+            mock_get_model_ids (MagicMock): Mock for model ID extraction
+            mock_dual_search (MagicMock): Mock for dual search
+            db_session (Session): Database session
+        """
+        mock_dual_search.return_value = [MagicMock()]
+        mock_get_model_ids.return_value = [
+            (SearchableType.USER, "user_id_1"),
+            (SearchableType.GROUP, "group_id_1"),
+            (SearchableType.USER, "user_id_2"),
+        ]
+        mock_user_1 = MagicMock()
+        mock_user_1.api_identifier = "user_id_1"
+        mock_user_2 = MagicMock()
+        mock_user_2.api_identifier = "user_id_2"
+        mock_hydrate.return_value = [mock_user_1, mock_user_2]
+        mock_filter_authorized.return_value = [mock_user_1, mock_user_2]
+
+        user = UserFactory.create()
+        results = search(
+            db_session,
+            "test query",
+            user=user,
+            limit=10,
+            search_type=SearchType.DUAL,
+            model_types=[SearchableType.USER],
+        )
+
+        assert results == [mock_user_1, mock_user_2]
+        mock_dual_search.assert_called_once_with(
+            db_session, "test query", 30, [SearchableType.USER]
+        )
+        assert len(mock_hydrate.call_args_list) == 1
+        assert mock_hydrate.call_args_list[0].args == (
+            db_session,
+            SearchableType.USER,
+            ["user_id_1", "user_id_2"],
+        )
 
     @patch("ring.search.crud.hybrid_search.dual_search_hybrid_search_document")
     def test_search_negative_offset_returns_empty(

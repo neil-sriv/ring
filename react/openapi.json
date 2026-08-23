@@ -2658,6 +2658,25 @@
               "default": 0,
               "title": "Offset"
             }
+          },
+          {
+            "name": "types",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/SearchableType"
+                  }
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Types"
+            }
           }
         ],
         "responses": {
@@ -4917,6 +4936,17 @@
           "dual"
         ],
         "title": "SearchType"
+      },
+      "SearchableType": {
+        "type": "string",
+        "enum": [
+          "user",
+          "group",
+          "response",
+          "letter",
+          "question"
+        ],
+        "title": "SearchableType"
       },
       "SingleGroupKeyValueUpdate": {
         "properties": {
