@@ -3177,25 +3177,127 @@
         "title": "ContainerVersion",
         "description": "Identity of a running (or recently stopped) compose container."
       },
+      "DashboardLetter": {
+        "properties": {
+          "api_identifier": {
+            "type": "string",
+            "title": "Api Identifier"
+          },
+          "number": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Number"
+          },
+          "status": {
+            "$ref": "#/components/schemas/LetterStatus"
+          },
+          "send_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Send At"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          },
+          "title": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Title"
+          },
+          "letter_type": {
+            "$ref": "#/components/schemas/LetterType"
+          },
+          "group": {
+            "$ref": "#/components/schemas/GroupUnlinked"
+          },
+          "responders": {
+            "items": {
+              "$ref": "#/components/schemas/UserUnlinked"
+            },
+            "type": "array",
+            "title": "Responders"
+          },
+          "required_responders": {
+            "type": "integer",
+            "title": "Required Responders",
+            "default": 0
+          },
+          "responder_count": {
+            "type": "integer",
+            "title": "Responder Count",
+            "default": 0
+          },
+          "send_threshold_ratio": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Send Threshold Ratio"
+          },
+          "questions": {
+            "items": {
+              "$ref": "#/components/schemas/DashboardQuestion"
+            },
+            "type": "array",
+            "title": "Questions"
+          },
+          "participant_count": {
+            "type": "integer",
+            "title": "Participant Count"
+          }
+        },
+        "type": "object",
+        "required": [
+          "api_identifier",
+          "status",
+          "send_at",
+          "created_at",
+          "letter_type",
+          "group",
+          "responders",
+          "questions",
+          "participant_count"
+        ],
+        "title": "DashboardLetter",
+        "description": "Dashboard letter model.\n\nExtends ``MinimalLetter`` with slim questions and a participant count —\nthe home page needs per-question answered state (\"waiting on you\") and\nreply-progress totals, but not response bodies.\n\nAttributes:\n    questions (list[DashboardQuestion]): Questions without response bodies\n    participant_count (int): Number of participants in the letter"
+      },
       "DashboardLetters": {
         "properties": {
           "upcoming": {
             "items": {
-              "$ref": "#/components/schemas/MinimalLetter"
+              "$ref": "#/components/schemas/DashboardLetter"
             },
             "type": "array",
             "title": "Upcoming"
           },
           "in_progress": {
             "items": {
-              "$ref": "#/components/schemas/MinimalLetter"
+              "$ref": "#/components/schemas/DashboardLetter"
             },
             "type": "array",
             "title": "In Progress"
           },
           "recently_completed": {
             "items": {
-              "$ref": "#/components/schemas/MinimalLetter"
+              "$ref": "#/components/schemas/DashboardLetter"
             },
             "type": "array",
             "title": "Recently Completed"
@@ -3208,7 +3310,40 @@
           "recently_completed"
         ],
         "title": "DashboardLetters",
-        "description": "Model for the letters dashboard view.\n\nGroups letters by their status for dashboard display. Uses\n``MinimalLetter`` so the home page does not download every question\nand response body for every active/recent letter.\n\nAttributes:\n    upcoming (list[MinimalLetter]): Letters scheduled for the future\n    in_progress (list[MinimalLetter]): Currently active letters\n    recently_completed (list[MinimalLetter]): Recently finished letters"
+        "description": "Model for the letters dashboard view.\n\nGroups letters by their status for dashboard display. Uses\n``DashboardLetter`` — slim questions without response bodies — so the\nhome page can show reply state without downloading every response.\n\nAttributes:\n    upcoming (list[DashboardLetter]): Letters scheduled for the future\n    in_progress (list[DashboardLetter]): Currently active letters\n    recently_completed (list[DashboardLetter]): Recently finished letters"
+      },
+      "DashboardQuestion": {
+        "properties": {
+          "question_text": {
+            "type": "string",
+            "title": "Question Text"
+          },
+          "api_identifier": {
+            "type": "string",
+            "title": "Api Identifier"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          },
+          "responded_participant_api_ids": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Responded Participant Api Ids"
+          }
+        },
+        "type": "object",
+        "required": [
+          "question_text",
+          "api_identifier",
+          "created_at",
+          "responded_participant_api_ids"
+        ],
+        "title": "DashboardQuestion",
+        "description": "Slim question model for the dashboard.\n\nCarries which participants have answered (by api identifier) instead of\nfull response bodies, so the home page can compute each user's unanswered\nquestions without downloading every response.\n\nAttributes:\n    responded_participant_api_ids (list[str]): API identifiers of users\n        who have responded to this question"
       },
       "DockerInfo": {
         "properties": {

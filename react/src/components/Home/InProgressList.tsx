@@ -1,7 +1,7 @@
 import { cn } from "@/lib/utils"
 import { Link } from "@tanstack/react-router"
 import { Check, ChevronRight, Hourglass } from "lucide-react"
-import type { PublicLetter } from "../../client"
+import type { DashboardLetter } from "../../client"
 import { getLoopDisplayTitle } from "../../util/loopDisplay"
 import { getReplyProgress, hasUserReplied } from "../../util/loopReply"
 import { formatDueLabel } from "../../util/loopTime"
@@ -11,7 +11,7 @@ function InProgressRow({
   loop,
   userApiId,
 }: {
-  loop: PublicLetter
+  loop: DashboardLetter
   userApiId: string | undefined
 }): JSX.Element {
   const replied = hasUserReplied(loop, userApiId)
@@ -63,7 +63,7 @@ export function InProgressList({
   loops,
   userApiId,
 }: {
-  loops: PublicLetter[]
+  loops: DashboardLetter[]
   userApiId: string | undefined
 }): JSX.Element {
   return (
