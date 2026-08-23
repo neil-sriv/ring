@@ -29,7 +29,11 @@ export function Facepile({
   const overflowCount = users.length - visible.length
 
   return (
-    <div className={cn("flex items-center -space-x-2", className)}>
+    <div
+      role="group"
+      aria-label={users.map((user) => user.name).join(", ")}
+      className={cn("flex items-center -space-x-2", className)}
+    >
       {visible.map((user) => (
         <Avatar
           key={user.api_identifier}
