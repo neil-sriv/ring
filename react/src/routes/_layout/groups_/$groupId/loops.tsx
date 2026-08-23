@@ -73,8 +73,8 @@ function LoopsContentLoader() {
       ),
     },
     {
-      title: "Key Values",
-      hash: "key-values",
+      title: "Store",
+      hash: "store",
       component: () => (
         <GroupKeyValuesTable
           keyValues={{
