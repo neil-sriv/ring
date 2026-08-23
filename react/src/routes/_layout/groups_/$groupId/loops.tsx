@@ -9,7 +9,6 @@ import {
 } from "../../../../client/@tanstack/react-query.gen"
 import { DocumentsGrid } from "../../../../components/Document/DocumentsGrid"
 import { GroupKeyValuesTable } from "../../../../components/GroupKeyValues/GroupKeyValuesTable"
-import { LLMPlayground } from "../../../../components/LLMPlayground/LLMPlayground"
 import { AdhocLoopsTab } from "../../../../components/Loops/AdhocLoopsTab"
 import { LoopsTab } from "../../../../components/Loops/LoopsTab"
 import { useGroupKeyValues } from "../../../../hooks/useGroupKeyValues"
@@ -83,11 +82,6 @@ function LoopsContentLoader() {
           groupApiId={groupId}
         />
       ),
-    },
-    {
-      title: "LLM Playground",
-      hash: "llm-playground",
-      component: () => <LLMPlayground />,
     },
     {
       title: "Documents",
