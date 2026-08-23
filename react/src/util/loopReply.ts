@@ -1,22 +1,7 @@
-import type { PublicLetter, PublicQuestion } from "../client"
-
-export function getUnansweredQuestions(
-  loop: PublicLetter,
-  userApiId: string | undefined,
-): PublicQuestion[] {
-  if (!userApiId) {
-    return []
-  }
-  return loop.questions.filter(
-    (question) =>
-      !question.responses.some(
-        (response) => response.participant.api_identifier === userApiId,
-      ),
-  )
-}
+import type { MinimalLetter } from "../client"
 
 export function hasUserReplied(
-  loop: PublicLetter,
+  loop: MinimalLetter,
   userApiId: string | undefined,
 ): boolean {
   if (!userApiId) {
@@ -32,8 +17,8 @@ export interface ReplyProgress {
   total: number
 }
 
-export function getReplyProgress(loop: PublicLetter): ReplyProgress {
+export function getReplyProgress(loop: MinimalLetter): ReplyProgress {
   const replied = loop.responders.length
-  const total = Math.max(loop.participants.length, replied)
+  const total = Math.max(loop.participant_count ?? 0, replied)
   return { replied, total }
 }

@@ -75,17 +75,26 @@ export type ContainerVersion = {
  *
  * Groups letters by their status for dashboard display. Uses
  * ``MinimalLetter`` so the home page does not download every question
- * and response body for every active/recent letter.
+ * and response body for every active/recent letter. The per-user
+ * ``unanswered_questions`` map carries just the question previews the
+ * home page needs for its "waiting on you" cards, without shipping
+ * response bodies.
  *
  * Attributes:
  * upcoming (list[MinimalLetter]): Letters scheduled for the future
  * in_progress (list[MinimalLetter]): Currently active letters
  * recently_completed (list[MinimalLetter]): Recently finished letters
+ * unanswered_questions (dict[str, list[Question]]): In-progress letter
+ * api_identifier mapped to the questions the current user has not
+ * answered yet
  */
 export type DashboardLetters = {
     upcoming: Array<MinimalLetter>;
     in_progress: Array<MinimalLetter>;
     recently_completed: Array<MinimalLetter>;
+    unanswered_questions: {
+        [key: string]: Array<Question>;
+    };
 };
 
 /**
@@ -454,6 +463,8 @@ export type MediaType = 'image' | 'video';
  * required_responders (int): Minimum unique responders needed before send
  * responder_count (int): Current unique responder count
  * send_threshold_ratio (float | None): Effective ratio gate, or null if disabled
+ * participant_count (int): Number of participants in the letter
+ * question_count (int): Number of questions in the letter
  */
 export type MinimalLetter = {
     api_identifier: string;
@@ -468,6 +479,8 @@ export type MinimalLetter = {
     required_responders?: number;
     responder_count?: number;
     send_threshold_ratio?: number | null;
+    participant_count?: number;
+    question_count?: number;
 };
 
 /**
@@ -527,6 +540,20 @@ export type PublicQuestion = {
     created_at: string;
     responses: Array<ResponseWithParticipant>;
     author: UserUnlinked | null;
+};
+
+/**
+ * Schema representing a question in the system.
+ *
+ * Attributes:
+ * question_text (str): The text content of the question
+ * api_identifier (str): Unique API identifier for the question
+ * created_at (AwareDatetime): Timestamp when the question was created
+ */
+export type Question = {
+    question_text: string;
+    api_identifier: string;
+    created_at: string;
 };
 
 /**

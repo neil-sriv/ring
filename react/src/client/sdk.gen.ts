@@ -969,13 +969,17 @@ export const readLetterLettersLetterLetterApiIdGet = <ThrowOnError extends boole
  * List letters for the dashboard view.
  *
  * Retrieves letters that are upcoming, in progress, or recently completed
- * (within the last 8 days) for the current user.
+ * (within the last 8 days) for the current user. In-progress letters come
+ * with a per-letter map of the questions the current user has not answered
+ * yet, so the dashboard can build "waiting on you" cards without the full
+ * question/response payload.
  *
  * Args:
  * req_dep (AuthenticatedRequestDependencies): Request dependencies including database session and auth
  *
  * Returns:
- * dict[str, list[Letter]]: Dictionary containing categorized letters
+ * dict[str, Any]: Dictionary containing categorized letters and the
+ * current user's unanswered questions per in-progress letter
  */
 export const listDashboardLettersLettersLettersDashboardGet = <ThrowOnError extends boolean = false>(options?: Options<ListDashboardLettersLettersLettersDashboardGetData, ThrowOnError>) => {
     return (options?.client ?? _heyApiClient).get<ListDashboardLettersLettersLettersDashboardGetResponse, unknown, ThrowOnError>({

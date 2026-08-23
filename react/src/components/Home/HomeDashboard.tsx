@@ -3,12 +3,11 @@ import { useSuspenseQuery } from "@tanstack/react-query"
 import { Link } from "@tanstack/react-router"
 import { Inbox, Plus } from "lucide-react"
 import { useState } from "react"
-import type { PublicLetter, PublicQuestion } from "../../client"
+import type { MinimalLetter, Question } from "../../client"
 import {
   listDashboardLettersLettersLettersDashboardGetOptions,
   readUserMePartiesMeGetOptions,
 } from "../../client/@tanstack/react-query.gen"
-import { getUnansweredQuestions } from "../../util/loopReply"
 import { formatShortDate } from "../../util/loopTime"
 import AddGroup from "../Groups/AddGroup"
 import { InProgressList } from "./InProgressList"
@@ -17,8 +16,8 @@ import { PublishedIssueCard } from "./PublishedIssueCard"
 import { UpcomingList } from "./UpcomingList"
 
 interface LoopAwaitingReply {
-  loop: PublicLetter
-  unansweredQuestions: PublicQuestion[]
+  loop: MinimalLetter
+  unansweredQuestions: Question[]
 }
 
 function getGreeting(now: Date): string {
@@ -40,7 +39,7 @@ function getDigest({
 }: {
   waitingOnYou: LoopAwaitingReply[]
   waitingOnOthersCount: number
-  upcoming: PublicLetter[]
+  upcoming: MinimalLetter[]
   publishedCount: number
 }): string {
   if (waitingOnYou.length > 0) {
@@ -129,7 +128,7 @@ function EmptyDashboard({ hasGroups }: { hasGroups: boolean }): JSX.Element {
   )
 }
 
-function bySendAtAsc(a: PublicLetter, b: PublicLetter): number {
+function bySendAtAsc(a: MinimalLetter, b: MinimalLetter): number {
   return new Date(a.send_at).getTime() - new Date(b.send_at).getTime()
 }
 
@@ -149,10 +148,11 @@ export function HomeDashboard(): JSX.Element {
     (a, b) => new Date(b.send_at).getTime() - new Date(a.send_at).getTime(),
   )
 
+  const unansweredByLoop = dashboardLoops.data.unanswered_questions
   const waitingOnYou: LoopAwaitingReply[] = []
-  const waitingOnOthers: PublicLetter[] = []
+  const waitingOnOthers: MinimalLetter[] = []
   for (const loop of inProgress) {
-    const unansweredQuestions = getUnansweredQuestions(loop, userApiId)
+    const unansweredQuestions = unansweredByLoop[loop.api_identifier] ?? []
     if (unansweredQuestions.length > 0) {
       waitingOnYou.push({ loop, unansweredQuestions })
     } else {

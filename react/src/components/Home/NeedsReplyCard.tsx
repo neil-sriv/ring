@@ -2,7 +2,7 @@ import { Card } from "@/components/ui/card"
 import { cn } from "@/lib/utils"
 import { Link } from "@tanstack/react-router"
 import { Clock, PenLine } from "lucide-react"
-import type { PublicLetter, PublicQuestion } from "../../client"
+import type { MinimalLetter, Question } from "../../client"
 import { getLoopDisplayTitle } from "../../util/loopDisplay"
 import { getReplyProgress } from "../../util/loopReply"
 import { formatDueLabel } from "../../util/loopTime"
@@ -11,8 +11,8 @@ export function NeedsReplyCard({
   loop,
   unansweredQuestions,
 }: {
-  loop: PublicLetter
-  unansweredQuestions: PublicQuestion[]
+  loop: MinimalLetter
+  unansweredQuestions: Question[]
 }): JSX.Element {
   const due = formatDueLabel(loop.send_at)
   const progress = getReplyProgress(loop)

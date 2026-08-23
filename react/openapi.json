@@ -1783,7 +1783,7 @@
           "letters"
         ],
         "summary": "List Dashboard Letters",
-        "description": "List letters for the dashboard view.\n\nRetrieves letters that are upcoming, in progress, or recently completed\n(within the last 8 days) for the current user.\n\nArgs:\n    req_dep (AuthenticatedRequestDependencies): Request dependencies including database session and auth\n\nReturns:\n    dict[str, list[Letter]]: Dictionary containing categorized letters",
+        "description": "List letters for the dashboard view.\n\nRetrieves letters that are upcoming, in progress, or recently completed\n(within the last 8 days) for the current user. In-progress letters come\nwith a per-letter map of the questions the current user has not answered\nyet, so the dashboard can build \"waiting on you\" cards without the full\nquestion/response payload.\n\nArgs:\n    req_dep (AuthenticatedRequestDependencies): Request dependencies including database session and auth\n\nReturns:\n    dict[str, Any]: Dictionary containing categorized letters and the\n        current user's unanswered questions per in-progress letter",
         "operationId": "list_dashboard_letters_letters_letters_dashboard_get",
         "responses": {
           "200": {
@@ -3199,16 +3199,27 @@
             },
             "type": "array",
             "title": "Recently Completed"
+          },
+          "unanswered_questions": {
+            "additionalProperties": {
+              "items": {
+                "$ref": "#/components/schemas/Question"
+              },
+              "type": "array"
+            },
+            "type": "object",
+            "title": "Unanswered Questions"
           }
         },
         "type": "object",
         "required": [
           "upcoming",
           "in_progress",
-          "recently_completed"
+          "recently_completed",
+          "unanswered_questions"
         ],
         "title": "DashboardLetters",
-        "description": "Model for the letters dashboard view.\n\nGroups letters by their status for dashboard display. Uses\n``MinimalLetter`` so the home page does not download every question\nand response body for every active/recent letter.\n\nAttributes:\n    upcoming (list[MinimalLetter]): Letters scheduled for the future\n    in_progress (list[MinimalLetter]): Currently active letters\n    recently_completed (list[MinimalLetter]): Recently finished letters"
+        "description": "Model for the letters dashboard view.\n\nGroups letters by their status for dashboard display. Uses\n``MinimalLetter`` so the home page does not download every question\nand response body for every active/recent letter. The per-user\n``unanswered_questions`` map carries just the question previews the\nhome page needs for its \"waiting on you\" cards, without shipping\nresponse bodies.\n\nAttributes:\n    upcoming (list[MinimalLetter]): Letters scheduled for the future\n    in_progress (list[MinimalLetter]): Currently active letters\n    recently_completed (list[MinimalLetter]): Recently finished letters\n    unanswered_questions (dict[str, list[Question]]): In-progress letter\n        api_identifier mapped to the questions the current user has not\n        answered yet"
       },
       "DockerInfo": {
         "properties": {
@@ -4138,6 +4149,16 @@
               }
             ],
             "title": "Send Threshold Ratio"
+          },
+          "participant_count": {
+            "type": "integer",
+            "title": "Participant Count",
+            "default": 0
+          },
+          "question_count": {
+            "type": "integer",
+            "title": "Question Count",
+            "default": 0
           }
         },
         "type": "object",
@@ -4151,7 +4172,7 @@
           "responders"
         ],
         "title": "MinimalLetter",
-        "description": "Minimal letter model.\n\nAttributes:\n    group (GroupUnlinked): Group the letter belongs to\n    responders (list[UserUnlinked]): Users who have responded\n    required_responders (int): Minimum unique responders needed before send\n    responder_count (int): Current unique responder count\n    send_threshold_ratio (float | None): Effective ratio gate, or null if disabled"
+        "description": "Minimal letter model.\n\nAttributes:\n    group (GroupUnlinked): Group the letter belongs to\n    responders (list[UserUnlinked]): Users who have responded\n    required_responders (int): Minimum unique responders needed before send\n    responder_count (int): Current unique responder count\n    send_threshold_ratio (float | None): Effective ratio gate, or null if disabled\n    participant_count (int): Number of participants in the letter\n    question_count (int): Number of questions in the letter"
       },
       "NewPassword": {
         "properties": {
@@ -4315,6 +4336,31 @@
         ],
         "title": "PublicQuestion",
         "description": "Public question model with linked relationships.\n\nA version of the Question model that includes public response information.\n\nAttributes:\n    responses (list[ResponseWithParticipant]): Public responses with participant info\n    author (Optional[UserUnlinked]): Question author, if available"
+      },
+      "Question": {
+        "properties": {
+          "question_text": {
+            "type": "string",
+            "title": "Question Text"
+          },
+          "api_identifier": {
+            "type": "string",
+            "title": "Api Identifier"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "question_text",
+          "api_identifier",
+          "created_at"
+        ],
+        "title": "Question",
+        "description": "Schema representing a question in the system.\n\nAttributes:\n    question_text (str): The text content of the question\n    api_identifier (str): Unique API identifier for the question\n    created_at (AwareDatetime): Timestamp when the question was created"
       },
       "QuestionCreate": {
         "properties": {
