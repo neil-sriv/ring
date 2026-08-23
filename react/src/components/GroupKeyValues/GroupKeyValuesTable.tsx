@@ -60,7 +60,7 @@ export function GroupKeyValuesTable({
 
   return (
     <div className="w-full">
-      <h3 className="text-base font-semibold">Group Key Values</h3>
+      <h3 className="text-base font-semibold">Group Store</h3>
       <p className="mt-1 text-sm text-muted-foreground">
         Use this as a fast data store for the group.
       </p>
