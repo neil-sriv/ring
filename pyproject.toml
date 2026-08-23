@@ -90,6 +90,7 @@ dev = [
     "pytest-pretty>=1.2.0",
     "pytest-xdist>=3.6.1",
     "ipdb>=0.13.13",
+    "playwright>=1.62.0",
 ]
 ai = [
     "llm-service",
