@@ -4,6 +4,7 @@ import { useQueryClient } from "@tanstack/react-query"
 import { Link } from "@tanstack/react-router"
 import type { MinimalLetter, PublicLetter, UserLinked } from "../../client"
 import { readUserMePartiesMeGetQueryKey } from "../../client/@tanstack/react-query.gen"
+import { getLoopDisplayTitle } from "../../util/loopDisplay"
 import { formatResponderProgress } from "../../util/loopResponderProgress"
 
 export function LoopCard(props: {
@@ -18,16 +19,6 @@ export function LoopCard(props: {
   )
 
   const sendDate = new Date(props.loop.send_at)
-
-  const getHeadingText = () => {
-    if (props.loop.title) {
-      return props.loop.title
-    }
-    if (props.loop.number) {
-      return `Issue #${props.loop.number}`
-    }
-    return "Untitled Loop"
-  }
 
   const getLoopTypeLabel = () => {
     if (!props.showLoopTypeLabel) return null
@@ -75,7 +66,7 @@ export function LoopCard(props: {
       <Card className="flex h-full flex-col gap-2 p-5 transition-shadow hover:shadow-sm">
         <div className="flex items-start justify-between gap-3">
           <h3 className="line-clamp-2 min-w-0 break-words font-display text-lg font-medium">
-            {getHeadingText()}
+            {getLoopDisplayTitle(props.loop)}
           </h3>
           {getLoopTypeLabel()}
         </div>
