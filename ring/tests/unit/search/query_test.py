@@ -50,6 +50,20 @@ class TestParseSearchQuery:
         assert parsed.text == ""
         assert parsed.authors == ("jane",)
 
+    def test_key_inside_another_token_is_plain_text(self) -> None:
+        """A qualifier key only counts at the start of a token."""
+        for query in (
+            "this:open",
+            "coauthor:jane",
+            "basis:published",
+            "camping this:open",
+        ):
+            parsed = parse_search_query(query)
+            assert parsed.text == query, query
+            assert parsed.authors == (), query
+            assert parsed.statuses == (), query
+            assert parsed.match_nothing is False, query
+
     def test_expand_author_me(self) -> None:
         expanded = expand_author_me("notes author:@me", "jane@example.com")
         assert expanded == 'notes author:"jane@example.com"'

@@ -7,6 +7,9 @@ from ring.letters.constants import LetterStatus
 
 QUALIFIER_RE = re.compile(
     r"""
+    # Only treat a key as a qualifier at the start of a token, so free text
+    # like "this:open" or "coauthor:jane" is not silently turned into a filter.
+    (?<!\S)
     (?P<qualifier>
         (?P<key>author|status|is)
         :
