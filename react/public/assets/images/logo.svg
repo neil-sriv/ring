@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512" role="img" aria-label="Ring">
+  <title>Ring</title>
+  <!--
+    Ring brand mark: an ink-drawn circle on a terracotta tile.
+    #ba512c is the primary token and #fdfcf9 its foreground, both mirrored from
+    the "warm paper" theme in react/src/app.css.
+    The ring is one ribbon traced between an outer circle (r 166) and an inner
+    circle (r 118) whose center sits up and to the right, so the stroke swells
+    toward the bottom left the way a hand-drawn circle does. The notch near the
+    top left is where the pen lands and lifts.
+    Raster icons are generated from this file; see react/pwa-assets.config.ts.
+    The same path drives the in-app mark in src/components/Common/RingMark.tsx.
+  -->
+  <rect width="512" height="512" rx="112" fill="#ba512c" />
+  <path
+    fill="#fdfcf9"
+    transform="rotate(-16 256 256)"
+    d="M 108.09 180.64 A 166 166 0 1 1 101.03 196.51 A 26.65 26.65 0 0 1 153.84 203.71 A 118 118 0 1 0 158.86 192.43 A 26.06 26.06 0 0 1 108.09 180.64 Z"
+  />
+</svg>

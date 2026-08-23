@@ -21,22 +21,30 @@ const pwaOptions: Partial<VitePWAOptions> = {
     // Warm paper — keep in sync with --color-background in src/app.css
     theme_color: "#fbfaf7",
     background_color: "#fbfaf7",
+    // Generated from public/assets/images/logo.svg by `pnpm run
+    // generate-pwa-assets` (see pwa-assets.config.ts).
     icons: [
       {
-        src: "/assets/images/pwa-192x192.png", // <== don't add slash, for testing
+        src: "/assets/images/pwa-64x64.png",
+        sizes: "64x64",
+        type: "image/png",
+      },
+      {
+        src: "/assets/images/pwa-192x192.png",
         sizes: "192x192",
         type: "image/png",
       },
       {
-        src: "/assets/images/pwa-512x512.png", // <== don't remove slash, for testing
+        src: "/assets/images/pwa-512x512.png",
         sizes: "512x512",
         type: "image/png",
       },
       {
-        src: "/assets/images/pwa-512x512.png", // <== don't add slash, for testing
+        // Bleeds to the edges so platform masks crop the tile, not the ring.
+        src: "/assets/images/maskable-icon-512x512.png",
         sizes: "512x512",
         type: "image/png",
-        purpose: "any maskable",
+        purpose: "maskable",
       },
     ],
   },
