@@ -2,24 +2,24 @@ import { Card } from "@/components/ui/card"
 import { cn } from "@/lib/utils"
 import { Link } from "@tanstack/react-router"
 import { Clock, PenLine } from "lucide-react"
-import type { PublicLetter, PublicQuestion } from "../../client"
+import type { MinimalLetter } from "../../client"
 import { getLoopDisplayTitle } from "../../util/loopDisplay"
-import { getReplyProgress } from "../../util/loopReply"
+import { formatResponderProgress } from "../../util/loopResponderProgress"
 import { formatDueLabel } from "../../util/loopTime"
 
 export function NeedsReplyCard({
   loop,
-  unansweredQuestions,
 }: {
-  loop: PublicLetter
-  unansweredQuestions: PublicQuestion[]
+  loop: MinimalLetter
 }): JSX.Element {
   const due = formatDueLabel(loop.send_at)
-  const progress = getReplyProgress(loop)
+  const progressLabel = formatResponderProgress(loop)
+  const requiredResponders = loop.required_responders ?? 0
+  const responderCount = loop.responder_count ?? 0
   const repliedRatio =
-    progress.total > 0 ? progress.replied / progress.total : 0
-  const teaser = unansweredQuestions[0]?.question_text
-  const unansweredCount = unansweredQuestions.length
+    requiredResponders > 0
+      ? Math.min(responderCount / requiredResponders, 1)
+      : 0
 
   return (
     <Link
@@ -47,34 +47,29 @@ export function NeedsReplyCard({
           {getLoopDisplayTitle(loop)}
         </h3>
 
-        {teaser && (
-          <blockquote className="line-clamp-2 border-l-2 pl-3 font-display text-sm italic leading-relaxed text-muted-foreground">
-            {teaser}
-          </blockquote>
-        )}
-
         <div className="mt-auto flex flex-col gap-3 pt-2">
-          <div
-            className="h-1.5 w-full overflow-hidden rounded-full bg-muted"
-            role="progressbar"
-            aria-label="Participants who replied"
-            aria-valuemin={0}
-            aria-valuemax={progress.total}
-            aria-valuenow={progress.replied}
-          >
+          {requiredResponders > 0 && (
             <div
-              className="h-full rounded-full bg-success"
-              style={{ width: `${Math.round(repliedRatio * 100)}%` }}
-            />
-          </div>
+              className="h-1.5 w-full overflow-hidden rounded-full bg-muted"
+              role="progressbar"
+              aria-label="Responses received"
+              aria-valuemin={0}
+              aria-valuemax={requiredResponders}
+              aria-valuenow={responderCount}
+            >
+              <div
+                className="h-full rounded-full bg-success"
+                style={{ width: `${Math.round(repliedRatio * 100)}%` }}
+              />
+            </div>
+          )}
           <div className="flex items-center justify-between gap-3">
             <span className="text-xs text-muted-foreground">
-              {progress.replied} of {progress.total} replied
+              {progressLabel ?? "No replies yet"}
             </span>
             <span className="inline-flex items-center gap-1.5 text-sm font-medium text-primary group-hover:underline">
               <PenLine className="h-4 w-4" aria-hidden="true" />
-              Answer {unansweredCount} question
-              {unansweredCount !== 1 ? "s" : ""}
+              Write your reply
             </span>
           </div>
         </div>

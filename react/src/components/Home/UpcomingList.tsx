@@ -1,11 +1,11 @@
 import { Badge } from "@/components/ui/badge"
 import { Link } from "@tanstack/react-router"
 import { ChevronRight } from "lucide-react"
-import type { PublicLetter } from "../../client"
+import type { MinimalLetter } from "../../client"
 import { getLoopDisplayTitle } from "../../util/loopDisplay"
 import { formatDateChip, formatWeekday } from "../../util/loopTime"
 
-function UpcomingRow({ loop }: { loop: PublicLetter }): JSX.Element {
+function UpcomingRow({ loop }: { loop: MinimalLetter }): JSX.Element {
   const chip = formatDateChip(loop.send_at)
 
   return (
@@ -46,7 +46,7 @@ function UpcomingRow({ loop }: { loop: PublicLetter }): JSX.Element {
 export function UpcomingList({
   loops,
 }: {
-  loops: PublicLetter[]
+  loops: MinimalLetter[]
 }): JSX.Element {
   return (
     <div className="divide-y overflow-hidden rounded-lg border bg-card shadow-xs">

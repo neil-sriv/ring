@@ -3,23 +3,18 @@ import { useSuspenseQuery } from "@tanstack/react-query"
 import { Link } from "@tanstack/react-router"
 import { Inbox, Plus } from "lucide-react"
 import { useState } from "react"
-import type { PublicLetter, PublicQuestion } from "../../client"
+import type { MinimalLetter } from "../../client"
 import {
   listDashboardLettersLettersLettersDashboardGetOptions,
   readUserMePartiesMeGetOptions,
 } from "../../client/@tanstack/react-query.gen"
-import { getUnansweredQuestions } from "../../util/loopReply"
+import { hasUserReplied } from "../../util/loopReply"
 import { formatShortDate } from "../../util/loopTime"
 import AddGroup from "../Groups/AddGroup"
 import { InProgressList } from "./InProgressList"
 import { NeedsReplyCard } from "./NeedsReplyCard"
 import { PublishedIssueCard } from "./PublishedIssueCard"
 import { UpcomingList } from "./UpcomingList"
-
-interface LoopAwaitingReply {
-  loop: PublicLetter
-  unansweredQuestions: PublicQuestion[]
-}
 
 function getGreeting(now: Date): string {
   const hour = now.getHours()
@@ -33,28 +28,22 @@ function getGreeting(now: Date): string {
 }
 
 function getDigest({
-  waitingOnYou,
+  waitingOnYouCount,
   waitingOnOthersCount,
   upcoming,
   publishedCount,
 }: {
-  waitingOnYou: LoopAwaitingReply[]
+  waitingOnYouCount: number
   waitingOnOthersCount: number
-  upcoming: PublicLetter[]
+  upcoming: MinimalLetter[]
   publishedCount: number
 }): string {
-  if (waitingOnYou.length > 0) {
-    const letterCount = waitingOnYou.length
-    const questionCount = waitingOnYou.reduce(
-      (sum, entry) => sum + entry.unansweredQuestions.length,
-      0,
-    )
-    const letters = `${letterCount} letter${letterCount !== 1 ? "s" : ""}`
-    const verb = letterCount !== 1 ? "are" : "is"
-    const questions = `${questionCount} question${
-      questionCount !== 1 ? "s" : ""
+  if (waitingOnYouCount > 0) {
+    const letters = `${waitingOnYouCount} letter${
+      waitingOnYouCount !== 1 ? "s" : ""
     }`
-    return `${letters} ${verb} waiting on your reply — ${questions} to answer.`
+    const verb = waitingOnYouCount !== 1 ? "are" : "is"
+    return `${letters} ${verb} waiting on your reply.`
   }
   if (waitingOnOthersCount > 0) {
     return "You're all caught up — the pen is in someone else's hands."
@@ -129,7 +118,7 @@ function EmptyDashboard({ hasGroups }: { hasGroups: boolean }): JSX.Element {
   )
 }
 
-function bySendAtAsc(a: PublicLetter, b: PublicLetter): number {
+function bySendAtAsc(a: MinimalLetter, b: MinimalLetter): number {
   return new Date(a.send_at).getTime() - new Date(b.send_at).getTime()
 }
 
@@ -149,14 +138,15 @@ export function HomeDashboard(): JSX.Element {
     (a, b) => new Date(b.send_at).getTime() - new Date(a.send_at).getTime(),
   )
 
-  const waitingOnYou: LoopAwaitingReply[] = []
-  const waitingOnOthers: PublicLetter[] = []
+  // The dashboard payload is MinimalLetter (no per-question data), so
+  // "waiting on you" means the user hasn't submitted any response yet.
+  const waitingOnYou: MinimalLetter[] = []
+  const waitingOnOthers: MinimalLetter[] = []
   for (const loop of inProgress) {
-    const unansweredQuestions = getUnansweredQuestions(loop, userApiId)
-    if (unansweredQuestions.length > 0) {
-      waitingOnYou.push({ loop, unansweredQuestions })
-    } else {
+    if (hasUserReplied(loop, userApiId)) {
       waitingOnOthers.push(loop)
+    } else {
+      waitingOnYou.push(loop)
     }
   }
 
@@ -182,7 +172,7 @@ export function HomeDashboard(): JSX.Element {
           {!isEmpty && (
             <p className="mt-2 text-sm text-muted-foreground">
               {getDigest({
-                waitingOnYou,
+                waitingOnYouCount: waitingOnYou.length,
                 waitingOnOthersCount: waitingOnOthers.length,
                 upcoming,
                 publishedCount: published.length,
@@ -203,12 +193,8 @@ export function HomeDashboard(): JSX.Element {
                   subtitle="These letters need your replies before they can send."
                 />
                 <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-                  {waitingOnYou.map(({ loop, unansweredQuestions }) => (
-                    <NeedsReplyCard
-                      key={loop.api_identifier}
-                      loop={loop}
-                      unansweredQuestions={unansweredQuestions}
-                    />
+                  {waitingOnYou.map((loop) => (
+                    <NeedsReplyCard key={loop.api_identifier} loop={loop} />
                   ))}
                 </div>
               </section>

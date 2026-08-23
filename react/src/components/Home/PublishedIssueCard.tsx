@@ -1,7 +1,7 @@
 import { Badge } from "@/components/ui/badge"
 import { Card } from "@/components/ui/card"
 import { Link } from "@tanstack/react-router"
-import type { PublicLetter } from "../../client"
+import type { MinimalLetter } from "../../client"
 import { getLoopDisplayTitle } from "../../util/loopDisplay"
 import { formatPublishedLabel } from "../../util/loopTime"
 import { Facepile } from "../Common/Facepile"
@@ -9,9 +9,8 @@ import { Facepile } from "../Common/Facepile"
 export function PublishedIssueCard({
   loop,
 }: {
-  loop: PublicLetter
+  loop: MinimalLetter
 }): JSX.Element {
-  const questionCount = loop.questions.length
   const contributorCount = loop.responders.length
 
   return (
@@ -38,7 +37,6 @@ export function PublishedIssueCard({
         <div className="mt-auto flex flex-wrap items-center justify-between gap-2 pt-2">
           <Facepile users={loop.responders} />
           <span className="text-xs text-muted-foreground">
-            {questionCount} question{questionCount !== 1 ? "s" : ""} &middot;{" "}
             {contributorCount} contributor{contributorCount !== 1 ? "s" : ""}
           </span>
         </div>

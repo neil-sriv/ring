@@ -1,9 +1,10 @@
 import { cn } from "@/lib/utils"
 import { Link } from "@tanstack/react-router"
 import { Check, ChevronRight, Hourglass } from "lucide-react"
-import type { PublicLetter } from "../../client"
+import type { MinimalLetter } from "../../client"
 import { getLoopDisplayTitle } from "../../util/loopDisplay"
-import { getReplyProgress, hasUserReplied } from "../../util/loopReply"
+import { hasUserReplied } from "../../util/loopReply"
+import { formatResponderProgress } from "../../util/loopResponderProgress"
 import { formatDueLabel } from "../../util/loopTime"
 import { Facepile } from "../Common/Facepile"
 
@@ -11,12 +12,12 @@ function InProgressRow({
   loop,
   userApiId,
 }: {
-  loop: PublicLetter
+  loop: MinimalLetter
   userApiId: string | undefined
 }): JSX.Element {
   const replied = hasUserReplied(loop, userApiId)
   const due = formatDueLabel(loop.send_at)
-  const progress = getReplyProgress(loop)
+  const progressLabel = formatResponderProgress(loop)
 
   return (
     <Link
@@ -44,13 +45,16 @@ function InProgressRow({
         </span>
         <span className="block truncate text-xs text-muted-foreground">
           {loop.group.name} &middot;{" "}
-          {replied ? "You've replied" : "No questions yet"} &middot; {due.label}
+          {replied ? "You've replied" : "Waiting on your reply"} &middot;{" "}
+          {due.label}
         </span>
       </span>
       <Facepile users={loop.responders} className="hidden sm:flex" />
-      <span className="shrink-0 text-xs text-muted-foreground">
-        {progress.replied}/{progress.total}
-      </span>
+      {progressLabel && (
+        <span className="shrink-0 text-xs text-muted-foreground">
+          {progressLabel}
+        </span>
+      )}
       <ChevronRight
         className="h-4 w-4 shrink-0 text-muted-foreground/50"
         aria-hidden="true"
@@ -63,7 +67,7 @@ export function InProgressList({
   loops,
   userApiId,
 }: {
-  loops: PublicLetter[]
+  loops: MinimalLetter[]
   userApiId: string | undefined
 }): JSX.Element {
   return (
