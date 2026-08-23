@@ -226,6 +226,11 @@ because pytest builds schema from `ring/db/schema.sql`, not Alembic.
   continuous deploy this is load-bearing: the frontend half of a stacked
   change can reach prod minutes after merge while the API half is still
   rolling (or paused).
+- **Merge PRs manually (squash + delete branch).** Aviator is no longer
+  used — ignore `aviator-app` bot comments suggesting `/aviator merge` or
+  the `mergequeue` label. Land stacked PRs in order (backend first, and for
+  API-consuming UI, after the backend deploy is live), rebasing the rest of
+  the stack onto `dev` after each merge.
 - **Prefer existing timeout mechanisms.** For operational resilience (e.g.
   long-running image uploads), use Nginx proxy timeouts and the
   botocore/boto3 / FastAPI built-in timeouts rather than rolling custom
