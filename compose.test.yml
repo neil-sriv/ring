@@ -18,12 +18,15 @@ services:
     container_name: ring-test-runner
     # Top up dependencies from the mounted source before running anything, so
     # a stale prebuilt image (CI pulls ghcr :latest) cannot miss newly added
-    # packages. No-ops in seconds when the image is already current.
+    # packages. No-ops in seconds when the image is already current. The
+    # install runs from /src in a subshell because dev_requirements.txt pins
+    # the llm_service client by a path relative to /src, while callers may
+    # override the workdir (CI's migrations check uses -w /src/ring).
     entrypoint:
       [
         "bash",
         "-c",
-        "uv pip install --quiet --system -r ring/tests/dev_requirements.txt && exec \"$@\"",
+        "(cd /src && uv pip install --quiet --system -r ring/tests/dev_requirements.txt) && exec \"$@\"",
         "--",
       ]
     command: [ "pytest", "-c", "ring/tests/pytest.ini" ]
