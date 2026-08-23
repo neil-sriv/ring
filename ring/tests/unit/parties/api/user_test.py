@@ -14,6 +14,7 @@ from fastapi.testclient import TestClient
 from sqlalchemy.orm import Session
 
 from ring.parties.models.user_model import User
+from ring.tests.factories.letters.response_factory import ResponseFactory
 from ring.tests.factories.parties.group_factory import GroupFactory
 from ring.tests.factories.parties.invite_factory import InviteFactory
 from ring.tests.factories.parties.one_time_token_factory import (
@@ -50,12 +51,15 @@ class TestUserAPI:
             db_session (Session): Database session
         """
         user = UserFactory.create(email="test@gmail.com")
+        ResponseFactory.create(participant=user)
         db_session.commit()
         client = get_client_for_user(user)
         response = client.get("/parties/me")
         assert response.status_code == 200
         data = response.json()
         assert data["email"] == "test@gmail.com"
+        assert "groups" in data
+        assert "responses" not in data
 
     def test_read_me_unauthenticated(self, unauthenticated_client: TestClient):
         """Test reading the current user's profile when not authenticated.
@@ -383,6 +387,7 @@ class TestUserAPI:
         assert_pydantic_models_json_dump_in_response_dict(
             users + group_users + [current_user], data
         )
+        assert all("responses" not in user for user in data)
 
     def test_read_user_by_id(
         self,

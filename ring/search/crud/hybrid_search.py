@@ -12,7 +12,7 @@ from llm_service import (
     EmbeddingsApi,
 )
 from loguru import logger
-from sqlalchemy import func, or_, select
+from sqlalchemy import and_, false, func, or_, select
 from sqlalchemy.orm import Query, Session, load_only, selectinload
 
 from ring.api_identifier.api_identified_model import APIIdentified
@@ -29,6 +29,11 @@ from ring.search.models.hybrid_search import (
     HybridSearchDocument,
     HybridSearchDocumentAssociation,
     SearchableType,
+)
+from ring.search.query import (
+    ParsedSearchQuery,
+    expand_author_me,
+    parse_search_query,
 )
 from ring.search.schemas.search import SearchType
 
@@ -134,6 +139,20 @@ def create_hybrid_search_document(
     return db_hybrid_search_document
 
 
+# CockroachDB's plainto_tsquery rejects tsquery operator characters outright
+# ("syntax error in TSQuery") instead of ignoring them, so a query like "R&D"
+# or a mistyped qualifier such as "this:open" would 500. Drop them to spaces;
+# plainto_tsquery ANDs the remaining lexemes either way.
+TSQUERY_OPERATOR_CHARS = ":&|!()<>"
+_TSQUERY_SANITIZE_TABLE = str.maketrans(
+    {char: " " for char in TSQUERY_OPERATOR_CHARS}
+)
+
+
+def _tsquery_safe_text(text: str) -> str:
+    return " ".join(text.translate(_TSQUERY_SANITIZE_TABLE).split())
+
+
 def _filter_to_model_types(
     db_query: Query[HybridSearchDocument],
     model_types: Sequence[SearchableType] | None,
@@ -151,18 +170,148 @@ def _filter_to_model_types(
     )
 
 
+def _ilike_contains(column, value: str):
+    escaped = (
+        value.replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_")
+    )
+    return column.ilike(f"%{escaped}%", escape="\\")
+
+
+def _user_matches_authors(authors: Sequence[str]):
+    return or_(
+        *(
+            or_(
+                _ilike_contains(User.name, author),
+                _ilike_contains(User.email, author),
+            )
+            for author in authors
+        )
+    )
+
+
+def _association_qualifier_clause(parsed: ParsedSearchQuery):
+    clauses = []
+    if parsed.authors:
+        author_match = _user_matches_authors(parsed.authors)
+        question_ids = (
+            select(Question.api_identifier)
+            .join(User, Question.author_id == User.id)
+            .where(author_match)
+        )
+        response_ids = (
+            select(Response.api_identifier)
+            .join(User, Response.participant_id == User.id)
+            .where(author_match)
+        )
+        user_ids = select(User.api_identifier).where(author_match)
+        clauses.append(
+            or_(
+                and_(
+                    HybridSearchDocumentAssociation.model_type
+                    == SearchableType.QUESTION.value,
+                    HybridSearchDocumentAssociation.model_api_identifier.in_(
+                        question_ids
+                    ),
+                ),
+                and_(
+                    HybridSearchDocumentAssociation.model_type
+                    == SearchableType.RESPONSE.value,
+                    HybridSearchDocumentAssociation.model_api_identifier.in_(
+                        response_ids
+                    ),
+                ),
+                and_(
+                    HybridSearchDocumentAssociation.model_type
+                    == SearchableType.USER.value,
+                    HybridSearchDocumentAssociation.model_api_identifier.in_(
+                        user_ids
+                    ),
+                ),
+            )
+        )
+    if parsed.statuses:
+        status_values = [status.value for status in parsed.statuses]
+        letter_ids = select(Letter.api_identifier).where(
+            Letter.status.in_(status_values)
+        )
+        question_ids = (
+            select(Question.api_identifier)
+            .join(Question.letter)
+            .where(Letter.status.in_(status_values))
+        )
+        response_ids = (
+            select(Response.api_identifier)
+            .join(Response.question)
+            .join(Question.letter)
+            .where(Letter.status.in_(status_values))
+        )
+        clauses.append(
+            or_(
+                and_(
+                    HybridSearchDocumentAssociation.model_type
+                    == SearchableType.LETTER.value,
+                    HybridSearchDocumentAssociation.model_api_identifier.in_(
+                        letter_ids
+                    ),
+                ),
+                and_(
+                    HybridSearchDocumentAssociation.model_type
+                    == SearchableType.QUESTION.value,
+                    HybridSearchDocumentAssociation.model_api_identifier.in_(
+                        question_ids
+                    ),
+                ),
+                and_(
+                    HybridSearchDocumentAssociation.model_type
+                    == SearchableType.RESPONSE.value,
+                    HybridSearchDocumentAssociation.model_api_identifier.in_(
+                        response_ids
+                    ),
+                ),
+            )
+        )
+    if not clauses:
+        return None
+    return and_(*clauses)
+
+
+def _apply_parsed_search_filters(
+    db_query: Query[HybridSearchDocument],
+    parsed: ParsedSearchQuery,
+    model_types: Sequence[SearchableType] | None,
+) -> Query[HybridSearchDocument]:
+    db_query = _filter_to_model_types(db_query, model_types)
+    if parsed.match_nothing:
+        return db_query.filter(false())
+    qualifier_clause = _association_qualifier_clause(parsed)
+    if qualifier_clause is None:
+        return db_query
+    return db_query.filter(
+        HybridSearchDocument.associations.any(qualifier_clause)
+    )
+
+
 def semantic_search_hybrid_search_document(
     db: Session,
     query: str,
     limit: int = 10,
     model_types: Sequence[SearchableType] | None = None,
 ) -> list[HybridSearchDocument]:
-    text_embedding = _generate_text_embedding(query)
-    db_query = db.query(HybridSearchDocument).filter(
+    parsed = parse_search_query(query)
+    text = _tsquery_safe_text(parsed.text)
+    db_query = db.query(HybridSearchDocument)
+    db_query = _apply_parsed_search_filters(db_query, parsed, model_types)
+    if not text:
+        return (
+            db_query.order_by(HybridSearchDocument.id.desc())
+            .limit(limit)
+            .all()
+        )
+    text_embedding = _generate_text_embedding(text)
+    db_query = db_query.filter(
         HybridSearchDocument.text_embedding_768.l2_distance(text_embedding)
         < 0.5
     )
-    db_query = _filter_to_model_types(db_query, model_types)
     return (
         db_query.order_by(
             HybridSearchDocument.text_embedding_768.l2_distance(text_embedding)
@@ -178,15 +327,22 @@ def keyword_search_hybrid_search_document(
     limit: int = 10,
     model_types: Sequence[SearchableType] | None = None,
 ) -> list[HybridSearchDocument]:
-    tsquery = func.plainto_tsquery("english", query)
-    db_query = (
-        db.query(HybridSearchDocument)
-        .options(
-            load_only(HybridSearchDocument.id, HybridSearchDocument.raw_text)
-        )
-        .filter(HybridSearchDocument.text_tsv_expr_literal.op("@@")(tsquery))
+    parsed = parse_search_query(query)
+    text = _tsquery_safe_text(parsed.text)
+    db_query = db.query(HybridSearchDocument).options(
+        load_only(HybridSearchDocument.id, HybridSearchDocument.raw_text)
     )
-    db_query = _filter_to_model_types(db_query, model_types)
+    db_query = _apply_parsed_search_filters(db_query, parsed, model_types)
+    if not text:
+        return (
+            db_query.order_by(HybridSearchDocument.id.desc())
+            .limit(limit)
+            .all()
+        )
+    tsquery = func.plainto_tsquery("english", text)
+    db_query = db_query.filter(
+        HybridSearchDocument.text_tsv_expr_literal.op("@@")(tsquery)
+    )
     return (
         db_query.order_by(
             func.ts_rank(
@@ -204,16 +360,25 @@ def dual_search_hybrid_search_document(
     limit: int = 10,
     model_types: Sequence[SearchableType] | None = None,
 ) -> list[HybridSearchDocument]:
-    text_embedding = _generate_text_embedding(query)
-    tsquery = func.plainto_tsquery("english", query)
-    db_query = db.query(HybridSearchDocument).filter(
+    parsed = parse_search_query(query)
+    text = _tsquery_safe_text(parsed.text)
+    db_query = db.query(HybridSearchDocument)
+    db_query = _apply_parsed_search_filters(db_query, parsed, model_types)
+    if not text:
+        return (
+            db_query.order_by(HybridSearchDocument.id.desc())
+            .limit(limit)
+            .all()
+        )
+    text_embedding = _generate_text_embedding(text)
+    tsquery = func.plainto_tsquery("english", text)
+    db_query = db_query.filter(
         or_(
             HybridSearchDocument.text_embedding_768.l2_distance(text_embedding)
             < 0.5,
             HybridSearchDocument.text_tsv_expr_literal.op("@@")(tsquery),
         )
     )
-    db_query = _filter_to_model_types(db_query, model_types)
     return (
         db_query.order_by(
             HybridSearchDocument.text_embedding_768.l2_distance(
@@ -316,6 +481,8 @@ def search(
     }
     if limit <= 0 or offset < 0:
         return []
+
+    query = expand_author_me(query, user.email)
 
     # Offset pagination is applied after authz filtering, so every page must
     # re-fetch the raw window covering [0, offset + limit) and slice.

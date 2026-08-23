@@ -46,14 +46,6 @@ export type BulkGroupKeyValueUpdate = {
     updates: Array<SingleGroupKeyValueUpdate>;
 };
 
-export type CompletionRequest = {
-    prompt: string;
-};
-
-export type CompletionResponse = {
-    text: string;
-};
-
 /**
  * Identity of a running (or recently stopped) compose container.
  */
@@ -79,19 +71,67 @@ export type ContainerVersion = {
 };
 
 /**
- * Model for the letters dashboard view.
+ * Dashboard letter model.
  *
- * Groups letters by their status for dashboard display.
+ * Extends ``MinimalLetter`` with slim questions and a participant count —
+ * the home page needs per-question answered state ("waiting on you") and
+ * reply-progress totals, but not response bodies.
  *
  * Attributes:
- * upcoming (list[PublicLetter]): Letters scheduled for the future
- * in_progress (list[PublicLetter]): Currently active letters
- * recently_completed (list[PublicLetter]): Recently finished letters
+ * questions (list[DashboardQuestion]): Questions without response bodies
+ * participant_count (int): Number of participants in the letter
+ */
+export type DashboardLetter = {
+    api_identifier: string;
+    number?: number | null;
+    status: LetterStatus;
+    send_at: string;
+    created_at: string;
+    title?: string | null;
+    letter_type: LetterType;
+    group: GroupUnlinked;
+    responders: Array<UserUnlinked>;
+    required_responders?: number;
+    responder_count?: number;
+    send_threshold_ratio?: number | null;
+    questions: Array<DashboardQuestion>;
+    participant_count: number;
+};
+
+/**
+ * Model for the letters dashboard view.
+ *
+ * Groups letters by their status for dashboard display. Uses
+ * ``DashboardLetter`` — slim questions without response bodies — so the
+ * home page can show reply state without downloading every response.
+ *
+ * Attributes:
+ * upcoming (list[DashboardLetter]): Letters scheduled for the future
+ * in_progress (list[DashboardLetter]): Currently active letters
+ * recently_completed (list[DashboardLetter]): Recently finished letters
  */
 export type DashboardLetters = {
-    upcoming: Array<PublicLetter>;
-    in_progress: Array<PublicLetter>;
-    recently_completed: Array<PublicLetter>;
+    upcoming: Array<DashboardLetter>;
+    in_progress: Array<DashboardLetter>;
+    recently_completed: Array<DashboardLetter>;
+};
+
+/**
+ * Slim question model for the dashboard.
+ *
+ * Carries which participants have answered (by api identifier) instead of
+ * full response bodies, so the home page can compute each user's unanswered
+ * questions without downloading every response.
+ *
+ * Attributes:
+ * responded_participant_api_ids (list[str]): API identifiers of users
+ * who have responded to this question
+ */
+export type DashboardQuestion = {
+    question_text: string;
+    api_identifier: string;
+    created_at: string;
+    responded_participant_api_ids: Array<string>;
 };
 
 /**
@@ -244,14 +284,14 @@ export type GroupKeyValueBase = {
 };
 
 /**
- * Group model with linked relationships.
+ * Group model with members and settings.
  *
- * Extends the base Group model to include members, letters, and other related data.
+ * Used for group list/detail. Letters are fetched from ``/letters/`` (and
+ * the dashboard) rather than being nested on every group payload. Schedule
+ * tasks are internal and unused by the frontend.
  *
  * Attributes:
  * members (list[UserUnlinked]): Users who are members of the group
- * letters (list[LetterUnlinked]): Letters associated with the group
- * schedule (Optional[ScheduleUnlinked]): Group's schedule, if any
  * admin (UserUnlinked): The group administrator
  * default_questions (list[QuestionUnlinked]): Default questions for group letters
  */
@@ -262,8 +302,6 @@ export type GroupLinked = {
     cycle_length: number;
     min_responder_ratio?: number | null;
     members: Array<UserUnlinked>;
-    letters: Array<LetterUnlinked>;
-    schedule: ScheduleUnlinked | null;
     admin: UserUnlinked;
     default_questions: Array<QuestionUnlinked>;
 };
@@ -707,19 +745,6 @@ export type ScheduleLinked = {
     tasks: Array<TaskUnlinked>;
 };
 
-/**
- * Schema for schedule data with unlinked task relationships.
- *
- * This schema extends the base Schedule schema and includes a list of tasks,
- * using the unlinked task schema to avoid circular references.
- *
- * Attributes:
- * tasks: List of tasks associated with this schedule
- */
-export type ScheduleUnlinked = {
-    tasks: Array<TaskUnlinked>;
-};
-
 export type SearchHit = {
     type: 'user' | 'group' | 'letter' | 'question' | 'response';
     api_identifier: string;
@@ -836,13 +861,14 @@ export type UserCreate = {
 };
 
 /**
- * User model with linked relationships.
+ * User model with group memberships.
  *
- * Extends the base User model to include related groups and responses.
+ * Used for ``/me`` and other user-facing responses. Intentionally omits
+ * ``responses`` — a user's full answer history is only needed on letter
+ * detail pages, not on every authenticated request.
  *
  * Attributes:
  * groups (list[GroupUnlinked]): Groups the user is a member of
- * responses (list[ResponseUnlinked]): User's responses to questions
  */
 export type UserLinked = {
     email: string;
@@ -850,7 +876,6 @@ export type UserLinked = {
     api_identifier: string;
     admin: boolean;
     groups: Array<GroupUnlinked>;
-    responses: Array<ResponseUnlinked>;
 };
 
 /**
@@ -2188,31 +2213,6 @@ export type PostSubscriptionNotificationsSubscriptionPostResponses = {
 };
 
 export type PostSubscriptionNotificationsSubscriptionPostResponse = PostSubscriptionNotificationsSubscriptionPostResponses[keyof PostSubscriptionNotificationsSubscriptionPostResponses];
-
-export type GenerateCompletionLlmCompletionPostData = {
-    body: CompletionRequest;
-    path?: never;
-    query?: never;
-    url: '/llm/completion';
-};
-
-export type GenerateCompletionLlmCompletionPostErrors = {
-    /**
-     * Validation Error
-     */
-    422: HttpValidationError;
-};
-
-export type GenerateCompletionLlmCompletionPostError = GenerateCompletionLlmCompletionPostErrors[keyof GenerateCompletionLlmCompletionPostErrors];
-
-export type GenerateCompletionLlmCompletionPostResponses = {
-    /**
-     * Successful Response
-     */
-    200: CompletionResponse;
-};
-
-export type GenerateCompletionLlmCompletionPostResponse = GenerateCompletionLlmCompletionPostResponses[keyof GenerateCompletionLlmCompletionPostResponses];
 
 export type RawSearchSearchRawSearchGetData = {
     body?: never;

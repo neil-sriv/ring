@@ -64,35 +64,33 @@ def _populate_letter_send_threshold_fields[T: BaseModel](
 
 
 class UserLinked(User):
-    """User model with linked relationships.
+    """User model with group memberships.
 
-    Extends the base User model to include related groups and responses.
+    Used for ``/me`` and other user-facing responses. Intentionally omits
+    ``responses`` — a user's full answer history is only needed on letter
+    detail pages, not on every authenticated request.
 
     Attributes:
         groups (list[GroupUnlinked]): Groups the user is a member of
-        responses (list[ResponseUnlinked]): User's responses to questions
     """
 
     groups: list["GroupUnlinked"]
-    responses: list["ResponseUnlinked"]
 
 
 class GroupLinked(Group):
-    """Group model with linked relationships.
+    """Group model with members and settings.
 
-    Extends the base Group model to include members, letters, and other related data.
+    Used for group list/detail. Letters are fetched from ``/letters/`` (and
+    the dashboard) rather than being nested on every group payload. Schedule
+    tasks are internal and unused by the frontend.
 
     Attributes:
         members (list[UserUnlinked]): Users who are members of the group
-        letters (list[LetterUnlinked]): Letters associated with the group
-        schedule (Optional[ScheduleUnlinked]): Group's schedule, if any
         admin (UserUnlinked): The group administrator
         default_questions (list[QuestionUnlinked]): Default questions for group letters
     """
 
     members: list["UserUnlinked"]
-    letters: list["LetterUnlinked"]
-    schedule: Optional["ScheduleUnlinked"]
     admin: "UserUnlinked"
     default_questions: list["QuestionUnlinked"]
 
@@ -195,20 +193,71 @@ class PublicLetter(Letter):
         return _populate_letter_send_threshold_fields(model, data)
 
 
+class DashboardQuestion(Question):
+    """Slim question model for the dashboard.
+
+    Carries which participants have answered (by api identifier) instead of
+    full response bodies, so the home page can compute each user's unanswered
+    questions without downloading every response.
+
+    Attributes:
+        responded_participant_api_ids (list[str]): API identifiers of users
+            who have responded to this question
+    """
+
+    responded_participant_api_ids: list[str]
+
+    @model_validator(mode="before")
+    @classmethod
+    def set_responded_participant_api_ids(cls, obj: Any) -> Any:
+        if isinstance(obj, BaseModel):
+            return obj
+        obj.responded_participant_api_ids = [
+            response.participant.api_identifier for response in obj.responses
+        ]
+        return obj
+
+
+class DashboardLetter(MinimalLetter):
+    """Dashboard letter model.
+
+    Extends ``MinimalLetter`` with slim questions and a participant count —
+    the home page needs per-question answered state ("waiting on you") and
+    reply-progress totals, but not response bodies.
+
+    Attributes:
+        questions (list[DashboardQuestion]): Questions without response bodies
+        participant_count (int): Number of participants in the letter
+    """
+
+    questions: list["DashboardQuestion"]
+    participant_count: int
+
+    @model_validator(mode="before")
+    @classmethod
+    def set_participant_count(cls, obj: Any) -> Any:
+        if isinstance(obj, BaseModel):
+            return obj
+        obj.participant_count = len(obj.participants)
+        return obj
+
+
 class DashboardLetters(BaseModel):
     """Model for the letters dashboard view.
 
-    Groups letters by their status for dashboard display.
+    Groups letters by their status for dashboard display. Uses
+    ``DashboardLetter`` — slim questions without response bodies — so the
+    home page can show reply state without downloading every response.
 
     Attributes:
-        upcoming (list[PublicLetter]): Letters scheduled for the future
-        in_progress (list[PublicLetter]): Currently active letters
-        recently_completed (list[PublicLetter]): Recently finished letters
+        upcoming (list[DashboardLetter]): Letters scheduled for the future
+        in_progress (list[DashboardLetter]): Currently active letters
+        recently_completed (list[DashboardLetter]): Recently finished letters
     """
 
-    upcoming: list[PublicLetter]
-    in_progress: list[PublicLetter]
-    recently_completed: list[PublicLetter]
+    upcoming: list[DashboardLetter]
+    in_progress: list[DashboardLetter]
+    recently_completed: list[DashboardLetter]
 
 
 class QuestionLinked(Question):

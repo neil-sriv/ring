@@ -138,7 +138,7 @@ function SearchContent() {
         <Input
           ref={searchInputRef}
           type="text"
-          placeholder="Search..."
+          placeholder="Search… author:name status:open"
           className="h-11 pl-10 pr-12"
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
@@ -162,6 +162,12 @@ function SearchContent() {
           )}
         </Button>
       </div>
+      <p className="mt-2 text-xs text-muted-foreground">
+        GitHub-style filters: <span className="font-mono">author:jane</span>,{" "}
+        <span className="font-mono">status:open</span>,{" "}
+        <span className="font-mono">status:published</span>,{" "}
+        <span className="font-mono">author:@me</span>
+      </p>
 
       <div className="mt-3 flex flex-wrap items-center gap-1.5">
         {SEARCH_TYPE_FILTERS.map(({ value, label }) => {

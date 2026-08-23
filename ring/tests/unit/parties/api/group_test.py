@@ -146,6 +146,8 @@ class TestGroupApi:
             admin_groups + member_groups,
             data,
         )
+        assert all("letters" not in group for group in data)
+        assert all("schedule" not in group for group in data)
 
     def test_read_group(
         self,
@@ -175,6 +177,8 @@ class TestGroupApi:
 
         assert response.status_code == 200
         data = response.json()
+        assert "letters" not in data
+        assert "schedule" not in data
         assert_pydantic_model_json_dump_equivalent_to_response_dict(
             group,
             data,

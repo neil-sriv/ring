@@ -16,8 +16,10 @@ from sqlalchemy.orm import Session
 from ring.letters.constants import LetterStatus
 from ring.letters.models.letter_model import Letter
 from ring.parties.models.group_model import Group
-from ring.ring_pydantic.linked_schemas import MinimalLetter
+from ring.ring_pydantic.linked_schemas import DashboardLetter, MinimalLetter
 from ring.tests.factories.letters.letter_factory import LetterFactory
+from ring.tests.factories.letters.question_factory import QuestionFactory
+from ring.tests.factories.letters.response_factory import ResponseFactory
 from ring.tests.factories.parties.group_factory import GroupFactory
 from ring.tests.factories.parties.user_factory import UserFactory
 from ring.tests.lib.utils import (
@@ -241,7 +243,10 @@ class TestLetterAPI:
             db_session (Session): Database session
             current_user (UserFactory): Currently authenticated user
         """
-        group = GroupFactory.create(admin=current_user, members=[current_user])
+        other_member = UserFactory.create()
+        group = GroupFactory.create(
+            admin=current_user, members=[current_user, other_member]
+        )
         letters = [
             LetterFactory.create(group=group, status=LetterStatus.UPCOMING),
             LetterFactory.create(group=group, status=LetterStatus.IN_PROGRESS),
@@ -251,22 +256,53 @@ class TestLetterAPI:
                 send_at=datetime.now(tz=UTC) - timedelta(days=1),
             ),
         ]
+        answered_question = QuestionFactory.create(letter=letters[1])
+        unanswered_question = QuestionFactory.create(letter=letters[1])
+        ResponseFactory.create(
+            question=answered_question, participant=other_member
+        )
         db_session.commit()
         response = authenticated_client.get("/letters/letters:dashboard")
         assert response.status_code == 200
         data = response.json()
         assert len(data["upcoming"]) == 1
         assert_pydantic_model_json_dump_equivalent_to_response_dict(
-            letters[0], data["upcoming"][0]
+            letters[0],
+            data["upcoming"][0],
+            override_pydantic_model=DashboardLetter,
         )
         assert len(data["in_progress"]) == 1
         assert_pydantic_model_json_dump_equivalent_to_response_dict(
-            letters[1], data["in_progress"][0]
+            letters[1],
+            data["in_progress"][0],
+            override_pydantic_model=DashboardLetter,
         )
         assert len(data["recently_completed"]) == 1
         assert_pydantic_model_json_dump_equivalent_to_response_dict(
-            letters[2], data["recently_completed"][0]
+            letters[2],
+            data["recently_completed"][0],
+            override_pydantic_model=DashboardLetter,
         )
+
+        # Dashboard letters carry slim questions (who answered, no response
+        # bodies) plus a participant count for reply progress.
+        in_progress = data["in_progress"][0]
+        assert in_progress["participant_count"] == 2
+        questions_by_api_id = {
+            question["api_identifier"]: question
+            for question in in_progress["questions"]
+        }
+        assert questions_by_api_id[answered_question.api_identifier][
+            "responded_participant_api_ids"
+        ] == [other_member.api_identifier]
+        assert (
+            questions_by_api_id[unanswered_question.api_identifier][
+                "responded_participant_api_ids"
+            ]
+            == []
+        )
+        for question in in_progress["questions"]:
+            assert "responses" not in question
 
     def test_list_dashboard_letters_empty(
         self,

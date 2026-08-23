@@ -14,6 +14,7 @@ from pgvector.sqlalchemy import Vector
 from sqlalchemy.orm import Session
 
 from ring.authz.enforcer import Action
+from ring.letters.constants import LetterStatus
 from ring.search.crud.hybrid_search import (
     create_hybrid_search_document,
     get_model_ids_from_hybrid_search_documents,
@@ -30,6 +31,10 @@ from ring.search.models.hybrid_search import (
     SearchableType,
 )
 from ring.search.schemas.search import SearchType
+from ring.tests.factories.letters.letter_factory import LetterFactory
+from ring.tests.factories.letters.question_factory import QuestionFactory
+from ring.tests.factories.letters.response_factory import ResponseFactory
+from ring.tests.factories.parties.group_factory import GroupFactory
 from ring.tests.factories.parties.user_factory import UserFactory
 
 
@@ -520,3 +525,211 @@ class TestHybridSearchCRUD:
             hybrid_search_crud.SEARCH_REGISTRY[SearchableType.USER.value] = (
                 original
             )
+
+    def test_keyword_search_filters_by_author(
+        self, db_session: Session
+    ) -> None:
+        """author: keeps questions and responses from the matching person."""
+        group = GroupFactory.create()
+        zelda = UserFactory.create(name="Zelda Quokka")
+        marcus = UserFactory.create(name="Marcus Other")
+        group.members.extend([zelda, marcus])
+        letter = LetterFactory.create(group=group)
+        zelda_question = QuestionFactory.create(
+            letter=letter,
+            author=zelda,
+            question_text="What is your favorite quokka memory?",
+        )
+        marcus_question = QuestionFactory.create(
+            letter=letter,
+            author=marcus,
+            question_text="What is your favorite quokka memory?",
+        )
+        zelda_response = ResponseFactory.create(
+            question=marcus_question,
+            participant=zelda,
+            response_text="A quokka hopped onto the ferry.",
+        )
+        create_hybrid_search_document(
+            db_session,
+            raw_text=zelda_question.question_text,
+            model_api_identifier=zelda_question.api_identifier,
+            model_type=SearchableType.QUESTION,
+        )
+        create_hybrid_search_document(
+            db_session,
+            raw_text=marcus_question.question_text,
+            model_api_identifier=marcus_question.api_identifier,
+            model_type=SearchableType.QUESTION,
+        )
+        create_hybrid_search_document(
+            db_session,
+            raw_text=zelda_response.response_text,
+            model_api_identifier=zelda_response.api_identifier,
+            model_type=SearchableType.RESPONSE,
+        )
+        db_session.commit()
+
+        results = keyword_search_hybrid_search_document(
+            db_session, "quokka author:Zelda"
+        )
+        result_ids = {
+            association.model_api_identifier
+            for document in results
+            for association in document.associations
+        }
+        assert zelda_question.api_identifier in result_ids
+        assert zelda_response.api_identifier in result_ids
+        assert marcus_question.api_identifier not in result_ids
+
+    def test_keyword_search_filters_by_letter_status(
+        self, db_session: Session
+    ) -> None:
+        """status:open/published restrict questions to those letter states."""
+        group = GroupFactory.create()
+        author = UserFactory.create(name="Status Author")
+        group.members.append(author)
+        open_letter = LetterFactory.create(
+            group=group, status=LetterStatus.IN_PROGRESS
+        )
+        published_letter = LetterFactory.create(
+            group=group, status=LetterStatus.SENT
+        )
+        open_question = QuestionFactory.create(
+            letter=open_letter,
+            author=author,
+            question_text="Narwhal tusks in open water?",
+        )
+        published_question = QuestionFactory.create(
+            letter=published_letter,
+            author=author,
+            question_text="Narwhal tusks on published shores?",
+        )
+        create_hybrid_search_document(
+            db_session,
+            raw_text=open_question.question_text,
+            model_api_identifier=open_question.api_identifier,
+            model_type=SearchableType.QUESTION,
+        )
+        create_hybrid_search_document(
+            db_session,
+            raw_text=published_question.question_text,
+            model_api_identifier=published_question.api_identifier,
+            model_type=SearchableType.QUESTION,
+        )
+        db_session.commit()
+
+        open_results = keyword_search_hybrid_search_document(
+            db_session, "narwhal status:open"
+        )
+        open_ids = {
+            association.model_api_identifier
+            for document in open_results
+            for association in document.associations
+        }
+        assert open_ids == {open_question.api_identifier}
+
+        published_results = keyword_search_hybrid_search_document(
+            db_session, "narwhal status:published"
+        )
+        published_ids = {
+            association.model_api_identifier
+            for document in published_results
+            for association in document.associations
+        }
+        assert published_ids == {published_question.api_identifier}
+
+    def test_keyword_search_qualifier_only_author(
+        self, db_session: Session
+    ) -> None:
+        """A qualifier-only query still returns matching documents."""
+        group = GroupFactory.create()
+        zelda = UserFactory.create(name="Zelda Only")
+        group.members.append(zelda)
+        letter = LetterFactory.create(group=group)
+        question = QuestionFactory.create(
+            letter=letter,
+            author=zelda,
+            question_text="Unrelated prompt about weather",
+        )
+        create_hybrid_search_document(
+            db_session,
+            raw_text=question.question_text,
+            model_api_identifier=question.api_identifier,
+            model_type=SearchableType.QUESTION,
+        )
+        db_session.commit()
+
+        results = keyword_search_hybrid_search_document(
+            db_session, 'author:"Zelda Only"'
+        )
+        result_ids = {
+            association.model_api_identifier
+            for document in results
+            for association in document.associations
+        }
+        assert result_ids == {question.api_identifier}
+
+    def test_keyword_search_tolerates_tsquery_operator_characters(
+        self, db_session: Session
+    ) -> None:
+        """Operator characters are dropped instead of erroring in tsquery.
+
+        CockroachDB's plainto_tsquery raises a syntax error on characters like
+        ':' and '&', so free text containing them (including a mistyped
+        qualifier such as "this:open") must be sanitized before the query runs.
+        """
+        create_hybrid_search_document(
+            db_session,
+            raw_text="Bandicoot research and development notes, open",
+            model_api_identifier="qstn_operator_chars",
+            model_type=SearchableType.QUESTION,
+        )
+        db_session.commit()
+
+        for query in (
+            "bandicoot this:open",
+            "bandicoot & development",
+            "bandicoot (notes)",
+            "bandicoot | research",
+            "bandicoot !development",
+            "bandicoot <notes>",
+        ):
+            results = keyword_search_hybrid_search_document(db_session, query)
+            result_ids = {
+                association.model_api_identifier
+                for document in results
+                for association in document.associations
+            }
+            assert "qstn_operator_chars" in result_ids, query
+
+    def test_keyword_search_operator_only_text_is_treated_as_no_text(
+        self, db_session: Session
+    ) -> None:
+        """Text that sanitizes away falls back to the qualifier-only path."""
+        group = GroupFactory.create()
+        zelda = UserFactory.create(name="Zelda Operator")
+        group.members.append(zelda)
+        letter = LetterFactory.create(group=group)
+        question = QuestionFactory.create(
+            letter=letter,
+            author=zelda,
+            question_text="Prompt with no shared keywords",
+        )
+        create_hybrid_search_document(
+            db_session,
+            raw_text=question.question_text,
+            model_api_identifier=question.api_identifier,
+            model_type=SearchableType.QUESTION,
+        )
+        db_session.commit()
+
+        results = keyword_search_hybrid_search_document(
+            db_session, '&&& author:"Zelda Operator"'
+        )
+        result_ids = {
+            association.model_api_identifier
+            for document in results
+            for association in document.associations
+        }
+        assert result_ids == {question.api_identifier}
