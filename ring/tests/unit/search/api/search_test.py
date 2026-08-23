@@ -12,13 +12,17 @@ from unittest.mock import MagicMock, patch
 from fastapi.testclient import TestClient
 from sqlalchemy.orm import Session
 
+from ring.letters.constants import LetterStatus
 from ring.parties.models.user_model import User
 from ring.search.crud.hybrid_search import (
     HybridSearchDocument,
     HybridSearchDocumentAssociation,
     SearchableType,
+    create_hybrid_search_document,
 )
 from ring.search.schemas.search import SearchHit, SearchResponse
+from ring.tests.factories.letters.letter_factory import LetterFactory
+from ring.tests.factories.letters.question_factory import QuestionFactory
 from ring.tests.factories.parties.group_factory import GroupFactory
 from ring.tests.factories.parties.user_factory import UserFactory
 from ring.tests.lib.utils import (
@@ -356,3 +360,92 @@ class TestSearchAPI:
         no_matches_data = no_matches.json()
         assert no_matches_data["total"] == 0
         assert no_matches_data["results"] == []
+
+    def test_hydrated_search_author_and_status_qualifiers(
+        self,
+        authenticated_client: TestClient,
+        current_user: User,
+        db_session: Session,
+    ) -> None:
+        """GitHub-style author: and status: qualifiers filter hydrated hits."""
+        group = GroupFactory.create()
+        zelda = UserFactory.create(name="Zelda Qualifier")
+        marcus = UserFactory.create(name="Marcus Qualifier")
+        group.members.extend([current_user, zelda, marcus])
+        open_letter = LetterFactory.create(
+            group=group, status=LetterStatus.IN_PROGRESS
+        )
+        published_letter = LetterFactory.create(
+            group=group, status=LetterStatus.SENT
+        )
+        zelda_open = QuestionFactory.create(
+            letter=open_letter,
+            author=zelda,
+            question_text="Bandicoot breakfast on the open issue?",
+        )
+        zelda_published = QuestionFactory.create(
+            letter=published_letter,
+            author=zelda,
+            question_text="Bandicoot breakfast on the published issue?",
+        )
+        marcus_open = QuestionFactory.create(
+            letter=open_letter,
+            author=marcus,
+            question_text="Bandicoot breakfast from someone else?",
+        )
+        for question in (zelda_open, zelda_published, marcus_open):
+            create_hybrid_search_document(
+                db_session,
+                raw_text=question.question_text,
+                model_api_identifier=question.api_identifier,
+                model_type=SearchableType.QUESTION,
+            )
+        db_session.commit()
+
+        author_response = authenticated_client.get(
+            "/search/search",
+            params={
+                "query": "bandicoot author:Zelda",
+                "search_type": "keyword",
+                "limit": 10,
+            },
+        )
+        assert author_response.status_code == 200
+        author_ids = {
+            hit["api_identifier"] for hit in author_response.json()["results"]
+        }
+        assert zelda_open.api_identifier in author_ids
+        assert zelda_published.api_identifier in author_ids
+        assert marcus_open.api_identifier not in author_ids
+
+        status_response = authenticated_client.get(
+            "/search/search",
+            params={
+                "query": "bandicoot status:open",
+                "search_type": "keyword",
+                "limit": 10,
+            },
+        )
+        assert status_response.status_code == 200
+        status_ids = {
+            hit["api_identifier"] for hit in status_response.json()["results"]
+        }
+        assert status_ids == {
+            zelda_open.api_identifier,
+            marcus_open.api_identifier,
+        }
+
+        combined_response = authenticated_client.get(
+            "/search/search",
+            params={
+                "query": "bandicoot author:Zelda status:published",
+                "search_type": "keyword",
+                "limit": 10,
+            },
+        )
+        assert combined_response.status_code == 200
+        combined_ids = {
+            hit["api_identifier"]
+            for hit in combined_response.json()["results"]
+        }
+        assert combined_ids == {zelda_published.api_identifier}
