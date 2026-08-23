@@ -139,6 +139,20 @@ def create_hybrid_search_document(
     return db_hybrid_search_document
 
 
+# CockroachDB's plainto_tsquery rejects tsquery operator characters outright
+# ("syntax error in TSQuery") instead of ignoring them, so a query like "R&D"
+# or a mistyped qualifier such as "this:open" would 500. Drop them to spaces;
+# plainto_tsquery ANDs the remaining lexemes either way.
+TSQUERY_OPERATOR_CHARS = ":&|!()<>"
+_TSQUERY_SANITIZE_TABLE = str.maketrans(
+    {char: " " for char in TSQUERY_OPERATOR_CHARS}
+)
+
+
+def _tsquery_safe_text(text: str) -> str:
+    return " ".join(text.translate(_TSQUERY_SANITIZE_TABLE).split())
+
+
 def _filter_to_model_types(
     db_query: Query[HybridSearchDocument],
     model_types: Sequence[SearchableType] | None,
@@ -284,15 +298,16 @@ def semantic_search_hybrid_search_document(
     model_types: Sequence[SearchableType] | None = None,
 ) -> list[HybridSearchDocument]:
     parsed = parse_search_query(query)
+    text = _tsquery_safe_text(parsed.text)
     db_query = db.query(HybridSearchDocument)
     db_query = _apply_parsed_search_filters(db_query, parsed, model_types)
-    if not parsed.text:
+    if not text:
         return (
             db_query.order_by(HybridSearchDocument.id.desc())
             .limit(limit)
             .all()
         )
-    text_embedding = _generate_text_embedding(parsed.text)
+    text_embedding = _generate_text_embedding(text)
     db_query = db_query.filter(
         HybridSearchDocument.text_embedding_768.l2_distance(text_embedding)
         < 0.5
@@ -313,17 +328,18 @@ def keyword_search_hybrid_search_document(
     model_types: Sequence[SearchableType] | None = None,
 ) -> list[HybridSearchDocument]:
     parsed = parse_search_query(query)
+    text = _tsquery_safe_text(parsed.text)
     db_query = db.query(HybridSearchDocument).options(
         load_only(HybridSearchDocument.id, HybridSearchDocument.raw_text)
     )
     db_query = _apply_parsed_search_filters(db_query, parsed, model_types)
-    if not parsed.text:
+    if not text:
         return (
             db_query.order_by(HybridSearchDocument.id.desc())
             .limit(limit)
             .all()
         )
-    tsquery = func.plainto_tsquery("english", parsed.text)
+    tsquery = func.plainto_tsquery("english", text)
     db_query = db_query.filter(
         HybridSearchDocument.text_tsv_expr_literal.op("@@")(tsquery)
     )
@@ -345,16 +361,17 @@ def dual_search_hybrid_search_document(
     model_types: Sequence[SearchableType] | None = None,
 ) -> list[HybridSearchDocument]:
     parsed = parse_search_query(query)
+    text = _tsquery_safe_text(parsed.text)
     db_query = db.query(HybridSearchDocument)
     db_query = _apply_parsed_search_filters(db_query, parsed, model_types)
-    if not parsed.text:
+    if not text:
         return (
             db_query.order_by(HybridSearchDocument.id.desc())
             .limit(limit)
             .all()
         )
-    text_embedding = _generate_text_embedding(parsed.text)
-    tsquery = func.plainto_tsquery("english", parsed.text)
+    text_embedding = _generate_text_embedding(text)
+    tsquery = func.plainto_tsquery("english", text)
     db_query = db_query.filter(
         or_(
             HybridSearchDocument.text_embedding_768.l2_distance(text_embedding)

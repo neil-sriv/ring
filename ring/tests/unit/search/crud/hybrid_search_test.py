@@ -669,3 +669,67 @@ class TestHybridSearchCRUD:
             for association in document.associations
         }
         assert result_ids == {question.api_identifier}
+
+    def test_keyword_search_tolerates_tsquery_operator_characters(
+        self, db_session: Session
+    ) -> None:
+        """Operator characters are dropped instead of erroring in tsquery.
+
+        CockroachDB's plainto_tsquery raises a syntax error on characters like
+        ':' and '&', so free text containing them (including a mistyped
+        qualifier such as "this:open") must be sanitized before the query runs.
+        """
+        create_hybrid_search_document(
+            db_session,
+            raw_text="Bandicoot research and development notes, open",
+            model_api_identifier="qstn_operator_chars",
+            model_type=SearchableType.QUESTION,
+        )
+        db_session.commit()
+
+        for query in (
+            "bandicoot this:open",
+            "bandicoot & development",
+            "bandicoot (notes)",
+            "bandicoot | research",
+            "bandicoot !development",
+            "bandicoot <notes>",
+        ):
+            results = keyword_search_hybrid_search_document(db_session, query)
+            result_ids = {
+                association.model_api_identifier
+                for document in results
+                for association in document.associations
+            }
+            assert "qstn_operator_chars" in result_ids, query
+
+    def test_keyword_search_operator_only_text_is_treated_as_no_text(
+        self, db_session: Session
+    ) -> None:
+        """Text that sanitizes away falls back to the qualifier-only path."""
+        group = GroupFactory.create()
+        zelda = UserFactory.create(name="Zelda Operator")
+        group.members.append(zelda)
+        letter = LetterFactory.create(group=group)
+        question = QuestionFactory.create(
+            letter=letter,
+            author=zelda,
+            question_text="Prompt with no shared keywords",
+        )
+        create_hybrid_search_document(
+            db_session,
+            raw_text=question.question_text,
+            model_api_identifier=question.api_identifier,
+            model_type=SearchableType.QUESTION,
+        )
+        db_session.commit()
+
+        results = keyword_search_hybrid_search_document(
+            db_session, '&&& author:"Zelda Operator"'
+        )
+        result_ids = {
+            association.model_api_identifier
+            for document in results
+            for association in document.associations
+        }
+        assert result_ids == {question.api_identifier}
