@@ -10,7 +10,7 @@ import { useEffect, useRef, useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { useInfiniteQuery } from "@tanstack/react-query"
-import type { SearchHit } from "../../client"
+import type { SearchHit, SearchableType } from "../../client"
 import { performSearchSearchSearchGetInfiniteOptions } from "../../client/@tanstack/react-query.gen"
 import { SearchResultRow } from "../../components/Common/SearchResultRow"
 import { registerSearchFocusHandler } from "../../lib/globalKeyboardShortcuts"
@@ -21,12 +21,33 @@ export const Route = createFileRoute("/_layout/search")({
 
 const SEARCH_PAGE_SIZE = 10
 
+const SEARCH_TYPE_FILTERS: { value: SearchableType; label: string }[] = [
+  { value: "group", label: "Groups" },
+  { value: "user", label: "Users" },
+  { value: "question", label: "Questions" },
+  { value: "response", label: "Responses" },
+  { value: "letter", label: "Letters" },
+]
+
 function SearchContent() {
   const [searchQuery, setSearchQuery] = useState("")
   const [submittedQuery, setSubmittedQuery] = useState("")
   const [hasSubmittedSearch, setHasSubmittedSearch] = useState(false)
+  const [selectedTypes, setSelectedTypes] = useState<SearchableType[]>([])
   const searchInputRef = useRef<HTMLInputElement>(null)
   const loadMoreRef = useRef<HTMLDivElement>(null)
+
+  const toggleType = (type: SearchableType) => {
+    setSelectedTypes((current) =>
+      current.includes(type)
+        ? current.filter((selected) => selected !== type)
+        : [...current, type],
+    )
+  }
+
+  // Sorted copy so the query key (and cache entry) is independent of the
+  // order the chips were toggled in.
+  const activeTypes = [...selectedTypes].sort()
 
   useEffect(() => {
     searchInputRef.current?.focus()
@@ -50,6 +71,7 @@ function SearchContent() {
       query: {
         query: submittedQuery,
         limit: SEARCH_PAGE_SIZE,
+        ...(activeTypes.length > 0 ? { types: activeTypes } : {}),
       },
     }),
     initialPageParam: 0,
@@ -141,6 +163,38 @@ function SearchContent() {
         </Button>
       </div>
 
+      <div className="mt-3 flex flex-wrap items-center gap-1.5">
+        {SEARCH_TYPE_FILTERS.map(({ value, label }) => {
+          const isSelected = selectedTypes.includes(value)
+          return (
+            <Button
+              key={value}
+              variant={isSelected ? "secondary" : "outline"}
+              size="sm"
+              aria-pressed={isSelected}
+              onClick={() => toggleType(value)}
+              className={
+                isSelected
+                  ? "h-7 rounded-full px-3 text-xs"
+                  : "h-7 rounded-full px-3 text-xs text-muted-foreground"
+              }
+            >
+              {label}
+            </Button>
+          )
+        })}
+        {selectedTypes.length > 0 && (
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => setSelectedTypes([])}
+            className="h-7 rounded-full px-2 text-xs text-muted-foreground"
+          >
+            Clear
+          </Button>
+        )}
+      </div>
+
       {showInitialLoading && (
         <div className="flex items-center justify-center gap-2 py-12 text-sm text-muted-foreground">
           <Loader2 className="h-4 w-4 animate-spin" />
@@ -163,7 +217,8 @@ function SearchContent() {
           />
           <h3 className="mt-4 font-display text-lg font-medium">No results</h3>
           <p className="mt-1 max-w-sm text-sm text-muted-foreground">
-            No results found for "{submittedQuery}".
+            No results found for "{submittedQuery}"
+            {selectedTypes.length > 0 ? " with the selected filters" : ""}.
           </p>
         </div>
       )}
