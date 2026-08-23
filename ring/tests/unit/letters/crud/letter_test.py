@@ -474,10 +474,10 @@ class TestLetterCrud:
         """Test collecting future letters.
 
         This test verifies that:
-        1. Future letters are collected correctly
-        2. Past letters are not included
-        3. The letters are sorted by send time
-        4. The database state is preserved
+        1. In-progress letters are postpended only once their send date arrives
+        2. Upcoming letters are promoted up to a week before their send date
+        3. Groups that already have a letter in the target status are skipped
+        4. Sent letters are ignored
 
         Args:
             db_session (Session): Database session
@@ -485,17 +485,22 @@ class TestLetterCrud:
         curr_time = datetime.now(tz=UTC)
         postpend_letter = LetterFactory.create(
             status=LetterStatus.IN_PROGRESS,
-            send_at=curr_time + timedelta(days=6),
+            send_at=curr_time - timedelta(minutes=1),
         )
         promoted_letter = LetterFactory.create(
             status=LetterStatus.UPCOMING,
+            send_at=curr_time + timedelta(days=6),
+        )
+        # Mid response window: not postpended before its send date.
+        LetterFactory.create(
+            status=LetterStatus.IN_PROGRESS,
             send_at=curr_time + timedelta(days=6),
         )
         g = GroupFactory.create()
         LetterFactory.create(
             group=g,
             status=LetterStatus.IN_PROGRESS,
-            send_at=curr_time + timedelta(days=1),
+            send_at=curr_time - timedelta(minutes=1),
         )
         LetterFactory.create(
             group=g,
@@ -509,7 +514,7 @@ class TestLetterCrud:
         db_session.commit()
 
         postpend, promote = letter_crud.collect_future_letters(
-            db_session, curr_time + timedelta(days=7)
+            db_session, curr_time
         )
         db_session.commit()
 
@@ -539,7 +544,7 @@ class TestLetterCrud:
         db_session.commit()
 
         postpend, promote = letter_crud.collect_future_letters(
-            db_session, curr_time + timedelta(days=7)
+            db_session, curr_time
         )
         db_session.commit()
 

@@ -186,11 +186,11 @@ class TestPostpendLetters:
     def test_postpend_marks_sent_when_threshold_met(
         self, db_session: Session
     ) -> None:
-        """Mark SENT when enough participants have responded."""
+        """Mark SENT once the send date arrives and enough people responded."""
         admin = UserFactory.create()
         members = [admin] + [UserFactory.create() for _ in range(3)]
         group = GroupFactory.create(admin=admin, members=members)
-        send_at = datetime.now(tz=UTC) + timedelta(days=1)
+        send_at = datetime.now(tz=UTC) - timedelta(minutes=1)
         letter = LetterFactory.create(
             group=group,
             status=LetterStatus.IN_PROGRESS,
@@ -214,3 +214,42 @@ class TestPostpendLetters:
         db_session.refresh(letter)
 
         assert letter.status == LetterStatus.SENT
+
+    def test_postpend_keeps_future_letter_open_when_threshold_met(
+        self, db_session: Session
+    ) -> None:
+        """Never mark SENT before the send date, even at full participation.
+
+        Regression test: the poll job used to collect in-progress letters up
+        to a week before their send date, and postpend marked them SENT as
+        soon as the responder threshold was met — closing the response window
+        days early.
+        """
+        admin = UserFactory.create()
+        members = [admin] + [UserFactory.create() for _ in range(3)]
+        group = GroupFactory.create(admin=admin, members=members)
+        send_at = datetime.now(tz=UTC) + timedelta(days=6)
+        letter = LetterFactory.create(
+            group=group,
+            status=LetterStatus.IN_PROGRESS,
+            send_at=send_at,
+        )
+        question = QuestionFactory.create(letter=letter)
+        for member in members:
+            ResponseFactory.create(question=question, participant=member)
+        db_session.commit()
+
+        with (
+            run_scheduled_jobs_inline(db_session) as mock_add_job,
+            patch(
+                "ring.tasks.crud.task.send_email", return_value="message-id"
+            ) as mock_send_email,
+        ):
+            self.run_postpend_job(db_session, [letter.id])
+
+        mock_add_job.assert_not_called()
+        mock_send_email.assert_not_called()
+        db_session.refresh(letter)
+
+        assert letter.status == LetterStatus.IN_PROGRESS
+        assert letter.send_at == send_at

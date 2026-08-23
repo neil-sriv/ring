@@ -226,11 +226,11 @@ def defer_letter_send_if_below_threshold(db: Session, letter: Letter) -> bool:
 def hold_letter_for_send_threshold(db: Session, letter: Letter) -> bool:
     """Return True when a letter must not be marked SENT yet.
 
-    The poll job collects letters up to a week before their send date, so the
-    send date is only pushed out once the deadline itself has arrived. Before
-    then the letter is left untouched, still open for responses. Deferral is
-    idempotent via ``defer_letter_send``, so a concurrent send-email task that
-    already pushed ``send_at`` will not stack a second day.
+    Called by the postpend job once a letter's send date has arrived; the
+    caller is responsible for not postpending letters before their deadline.
+    Deferral is idempotent via ``defer_letter_send``, so a concurrent
+    send-email task that already pushed ``send_at`` will not stack a second
+    day.
 
     Returns:
         True if the letter is below its send threshold, False otherwise.
