@@ -82,16 +82,19 @@ const Sidebar = () => {
 
   return (
     <>
-      {/* Mobile hamburger */}
-      <Button
-        variant="outline"
-        size="icon"
-        className="fixed left-4 top-4 z-50 md:hidden"
-        onClick={() => setIsOpen(true)}
-      >
-        <Menu className="h-4 w-4" />
-        <span className="sr-only">Open menu</span>
-      </Button>
+      {/* Mobile top bar */}
+      <header className="sticky top-0 z-40 flex h-12 shrink-0 items-center gap-1 border-b border-sidebar-border bg-sidebar px-2 md:hidden">
+        <Button variant="ghost" size="icon" onClick={() => setIsOpen(true)}>
+          <Menu className="h-4 w-4" />
+          <span className="sr-only">Open menu</span>
+        </Button>
+        <Link
+          to="/"
+          className="rounded-md px-1.5 py-1 font-display text-lg font-semibold tracking-tight text-sidebar-accent-foreground"
+        >
+          Ring
+        </Link>
+      </header>
       <Sheet open={isOpen} onOpenChange={setIsOpen}>
         <SheetContent side="left" className="w-60 bg-sidebar p-3">
           <SheetTitle className="sr-only">Navigation</SheetTitle>
