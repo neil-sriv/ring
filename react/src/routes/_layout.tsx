@@ -70,7 +70,7 @@ function Layout() {
   }, [userApiId])
 
   return (
-    <div className="flex min-h-screen">
+    <div className="flex min-h-screen flex-col md:flex-row">
       <Sidebar />
       {isLoading ? (
         <div className="flex flex-1 items-center justify-center">
