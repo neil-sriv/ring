@@ -14,6 +14,10 @@ anyio==4.9.0
     # via
     #   httpx
     #   httpx-ws
+    #   pycrdt
+    #   pycrdt-store
+    #   pycrdt-websocket
+    #   sqlite-anyio
     #   starlette
     #   watchfiles
 apscheduler==3.11.0
@@ -121,6 +125,7 @@ httptools==0.6.4
     # via uvicorn
 httpx==0.28.1
     # via
+    #   ring (pyproject.toml)
     #   fastapi
     #   httpx-ws
 httpx-ws==0.7.2
@@ -248,6 +253,15 @@ pycasbin==1.45.0
     # via ring (pyproject.toml)
 pycparser==2.22
     # via cffi
+pycrdt==0.14.3
+    # via
+    #   ring (pyproject.toml)
+    #   pycrdt-store
+    #   pycrdt-websocket
+pycrdt-store==0.1.5
+    # via pycrdt-websocket
+pycrdt-websocket==0.16.4
+    # via ring (pyproject.toml)
 pydantic==2.11.4
     # via
     #   ring (pyproject.toml)
@@ -349,6 +363,8 @@ sqlalchemy-cockroachdb==2.0.2
     # via ring (pyproject.toml)
 sqlalchemy-json==0.7.0
     # via ring (pyproject.toml)
+sqlite-anyio==0.2.5
+    # via pycrdt-store
 stack-data==0.6.3
     # via ipython
 starlette==0.46.2

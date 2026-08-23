@@ -125,6 +125,12 @@ def bulk_load_and_check(
         raise PermissionError(
             f"One or more resources not found or not accessible to user: {e.api_ids}"
         ) from e
+    except ValueError as e:
+        # Malformed api identifier (unknown prefix); treat like missing so
+        # callers cannot distinguish malformed, missing, and forbidden ids.
+        raise PermissionError(
+            f"One or more resources not found or not accessible to user: {resource_api_identifiers}"
+        ) from e
     return bulk_check(db, user, action, resources)
 
 

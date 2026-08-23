@@ -34,14 +34,6 @@ class DocumentEditFactory(BaseFactory[DocumentEdit]):
     class Meta:
         model = DocumentEdit
 
-    delta = factory.Faker("text", max_nb_chars=100)
+    delta = factory.LazyFunction(lambda: b"default test delta")
     document = factory.SubFactory(DocumentFactory)
     author = factory.SubFactory(UserFactory)
-
-    @factory.post_generation
-    def delta(obj, create: bool, extracted: str | None, **kwargs) -> None:
-        """Convert string delta to bytes for storage."""
-        if extracted is not None:
-            obj.delta = extracted.encode("utf-8")
-        elif isinstance(obj.delta, str):
-            obj.delta = obj.delta.encode("utf-8")

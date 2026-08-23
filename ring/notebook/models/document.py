@@ -92,10 +92,11 @@ class DocumentEdit(Base, CreatedAtMixin):
     )
     document: Mapped["Document"] = relationship(back_populates="edits")
 
-    author_id: Mapped[int] = mapped_column(
-        ForeignKey("user.id"), nullable=False
+    # Nullable: CRDT sync updates are document-level and carry no single author.
+    author_id: Mapped[int | None] = mapped_column(
+        ForeignKey("user.id"), nullable=True
     )
-    author: Mapped["User"] = relationship()
+    author: Mapped["User | None"] = relationship()
 
     @declared_attr  # type: ignore
     def __table_args__(cls) -> tuple[Constraint]:
@@ -112,7 +113,12 @@ class DocumentEdit(Base, CreatedAtMixin):
             ),
         )
 
-    def __init__(self, document: Document, delta: bytes, author: User):
+    def __init__(
+        self,
+        document: Document,
+        delta: bytes,
+        author: User | None = None,
+    ):
         self.document = document
         self.delta = delta
         self.author = author

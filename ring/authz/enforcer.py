@@ -11,6 +11,7 @@ from ring.api_identifier.api_identified_model import APIPrefix
 from ring.letters.models.letter_model import Letter
 from ring.letters.models.question_model import Question
 from ring.letters.models.response_model import Response
+from ring.notebook.models.document import Document
 from ring.parties.models.group_model import Group
 from ring.parties.models.user_model import User
 
@@ -125,6 +126,16 @@ def _load_full_g2(
     }
     _add_g2_pairs(enforcer, response_pairs)
 
+    document_pairs = {
+        (document_api_id, group_api_id)
+        for document_api_id, group_api_id in db.execute(
+            select(Document.api_identifier, Group.api_identifier)
+            .join(Document.group)
+            .where(Group.api_identifier.in_(group_api_ids))
+        ).all()
+    }
+    _add_g2_pairs(enforcer, document_pairs)
+
 
 def _prefix(api_id: str) -> str:
     return api_id.split("_", 1)[0]
@@ -156,6 +167,11 @@ def _load_scoped_g2(
         api_id
         for api_id in resource_api_ids
         if _prefix(api_id) == APIPrefix.USER.value
+    }
+    document_ids = {
+        api_id
+        for api_id in resource_api_ids
+        if _prefix(api_id) == APIPrefix.DOCUMENT.value
     }
 
     if response_ids:
@@ -207,6 +223,17 @@ def _load_scoped_g2(
             ).all()
         }
         _add_g2_pairs(enforcer, member_pairs)
+
+    if document_ids:
+        document_pairs = {
+            (document_api_id, group_api_id)
+            for document_api_id, group_api_id in db.execute(
+                select(Document.api_identifier, Group.api_identifier)
+                .join(Document.group)
+                .where(Document.api_identifier.in_(document_ids))
+            ).all()
+        }
+        _add_g2_pairs(enforcer, document_pairs)
 
 
 def build_stateless_enforcer(db: Session, sub_api_id: str) -> Enforcer:
