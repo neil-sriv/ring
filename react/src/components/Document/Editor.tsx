@@ -534,31 +534,44 @@ const CollabEditorInner: React.FC<{
 
   // Seed documents created before the CRDT rewrite: their content exists only
   // as stored HTML. Once synced, if the shared doc is still empty and we are
-  // the only connected client, populate it from the HTML projection.
+  // the only connected client, populate it from the HTML projection. When
+  // other clients are present, don't latch the seeded flag — retry on
+  // awareness changes so whichever client ends up alone performs the seed.
   useEffect(() => {
     if (!editor) {
       return
     }
     const { provider, ydoc } = session
 
-    const seedIfNeeded = (isSynced: boolean) => {
-      if (!isSynced || hasSeededRef.current) {
+    const seedIfNeeded = () => {
+      if (!provider.synced || hasSeededRef.current) {
+        return
+      }
+      const fragment = ydoc.getXmlFragment("default")
+      if (fragment.length > 0) {
+        hasSeededRef.current = true
+        return
+      }
+      const hasLegacyContent =
+        legacyContent && legacyContent !== "" && legacyContent !== "<p></p>"
+      if (!hasLegacyContent) {
+        hasSeededRef.current = true
+        return
+      }
+      const aloneInRoom = provider.awareness.getStates().size <= 1
+      if (!aloneInRoom) {
         return
       }
       hasSeededRef.current = true
-      const fragment = ydoc.getXmlFragment("default")
-      const aloneInRoom = provider.awareness.getStates().size <= 1
-      const hasLegacyContent =
-        legacyContent && legacyContent !== "" && legacyContent !== "<p></p>"
-      if (fragment.length === 0 && aloneInRoom && hasLegacyContent) {
-        editor.commands.setContent(legacyContent)
-      }
+      editor.commands.setContent(legacyContent)
     }
 
     provider.on("sync", seedIfNeeded)
-    seedIfNeeded(provider.synced)
+    provider.awareness.on("change", seedIfNeeded)
+    seedIfNeeded()
     return () => {
       provider.off("sync", seedIfNeeded)
+      provider.awareness.off("change", seedIfNeeded)
     }
   }, [editor, session, legacyContent])
 
