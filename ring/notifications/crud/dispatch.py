@@ -92,8 +92,12 @@ def notify_users(
     }
     for recipient in recipients:
         try:
-            for subscription in recipient.notification_subscriptions:
-                send_push_notification(subscription, payload)
+            for subscription in list(recipient.notification_subscriptions):
+                gone = send_push_notification(subscription, payload)
+                if gone:
+                    # The push service says this subscription no longer
+                    # exists; drop it so we stop retrying dead endpoints.
+                    db.delete(subscription)
         except Exception:
             # Push delivery must never break the triggering flow
             # (letter sends, invites, ...); the in-app row still lands.

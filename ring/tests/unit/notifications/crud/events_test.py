@@ -174,6 +174,170 @@ class TestGroupEventHelpers:
         assert events.notify_added_to_group(db_session, group, [], admin) == []
 
 
+class TestMemberJoinedHelper:
+    """Test suite for the member-joined notification helper."""
+
+    def test_notifies_existing_members_only(self, db_session: Session) -> None:
+        admin, members, group = _group_with_members(member_count=2)
+        new_user = UserFactory.create()
+        group.members.append(new_user)
+        db_session.commit()
+
+        created = events.notify_member_joined(
+            db_session, group, [new_user], actor=admin
+        )
+        db_session.commit()
+
+        # Existing members minus the actor; never the new member.
+        assert len(created) == 2
+        assert list_notifications(db_session, new_user) == []
+        assert list_notifications(db_session, admin) == []
+        for member in members[1:]:
+            notifications = list_notifications(db_session, member)
+            assert [n.type for n in notifications] == [
+                NotificationType.MEMBER_JOINED
+            ]
+            assert group.name in notifications[0].title
+            assert notifications[0].target_api_id == group.api_identifier
+
+    def test_joined_name_formatting(self, db_session: Session) -> None:
+        admin, _, group = _group_with_members(member_count=1)
+        new_users = [
+            UserFactory.create(name=name)
+            for name in ["Ada", "Bob", "Cam", "Dot"]
+        ]
+        group.members.extend(new_users)
+        db_session.commit()
+
+        created = events.notify_member_joined(db_session, group, new_users)
+        db_session.commit()
+
+        assert created
+        assert "Ada, Bob, and 2 more" in created[0].title
+
+    def test_noops_without_new_members(self, db_session: Session) -> None:
+        admin, _, group = _group_with_members()
+        db_session.commit()
+        assert events.notify_member_joined(db_session, group, []) == []
+
+
+class TestNewQuestionHelper:
+    """Test suite for the new-question notification helper."""
+
+    def test_notifies_participants_except_asker_and_author(
+        self, db_session: Session
+    ) -> None:
+        _, members, group = _group_with_members()
+        letter = LetterFactory.create(
+            group=group, status=LetterStatus.IN_PROGRESS
+        )
+        db_session.commit()
+
+        created = events.notify_new_question(
+            db_session,
+            letter,
+            "What was the highlight of your month?",
+            asked_by=members[0],
+            author=members[1],
+        )
+        db_session.commit()
+
+        assert len(created) == len(members) - 2
+        assert list_notifications(db_session, members[0]) == []
+        assert list_notifications(db_session, members[1]) == []
+        notifications = list_notifications(db_session, members[2])
+        assert [n.type for n in notifications] == [
+            NotificationType.NEW_QUESTION
+        ]
+        assert "highlight of your month" in notifications[0].body
+        assert (members[1].name or members[1].email) in notifications[0].body
+        assert notifications[0].target_api_id == letter.api_identifier
+
+    def test_noops_for_sent_letter(self, db_session: Session) -> None:
+        _, members, group = _group_with_members()
+        letter = LetterFactory.create(group=group, status=LetterStatus.SENT)
+        db_session.commit()
+
+        assert (
+            events.notify_new_question(
+                db_session, letter, "Too late?", asked_by=members[0]
+            )
+            == []
+        )
+
+    def test_long_question_text_is_truncated(
+        self, db_session: Session
+    ) -> None:
+        _, members, group = _group_with_members()
+        letter = LetterFactory.create(
+            group=group, status=LetterStatus.IN_PROGRESS
+        )
+        db_session.commit()
+
+        created = events.notify_new_question(
+            db_session,
+            letter,
+            "x" * 300,
+            asked_by=members[0],
+        )
+        db_session.commit()
+
+        assert created
+        assert "…" in created[0].body
+        assert len(created[0].body) < 200
+
+
+class TestNewResponseHelper:
+    """Test suite for the new-response notification helper."""
+
+    def test_notifies_question_author(self, db_session: Session) -> None:
+        _, members, group = _group_with_members()
+        letter = LetterFactory.create(
+            group=group, status=LetterStatus.IN_PROGRESS
+        )
+        question = QuestionFactory.create(letter=letter, author=members[0])
+        db_session.commit()
+
+        created = events.notify_new_response(
+            db_session, question, responder=members[1]
+        )
+        db_session.commit()
+
+        assert len(created) == 1
+        notifications = list_notifications(db_session, members[0])
+        assert [n.type for n in notifications] == [
+            NotificationType.NEW_RESPONSE
+        ]
+        assert (members[1].name or members[1].email) in notifications[0].title
+        assert notifications[0].target_api_id == letter.api_identifier
+        # Nobody else hears about individual answers.
+        assert list_notifications(db_session, members[2]) == []
+
+    def test_noops_for_own_answer_or_authorless_question(
+        self, db_session: Session
+    ) -> None:
+        _, members, group = _group_with_members()
+        letter = LetterFactory.create(
+            group=group, status=LetterStatus.IN_PROGRESS
+        )
+        authored = QuestionFactory.create(letter=letter, author=members[0])
+        authorless = QuestionFactory.create(letter=letter, author=None)
+        db_session.commit()
+
+        assert (
+            events.notify_new_response(
+                db_session, authored, responder=members[0]
+            )
+            == []
+        )
+        assert (
+            events.notify_new_response(
+                db_session, authorless, responder=members[1]
+            )
+            == []
+        )
+
+
 class TestEmailTaskNotificationWiring:
     """The email task flows fan out matching in-app notifications."""
 

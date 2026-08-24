@@ -21,6 +21,7 @@ from ring.letters.crud.response import upload_image as upload_image_crud
 from ring.letters.models.question_model import Question
 from ring.letters.models.response_model import Response
 from ring.letters.schemas.response import ResponseUpsert
+from ring.notifications.crud.events import notify_new_response
 from ring.ring_pydantic.linked_schemas import QuestionLinked
 
 router = APIRouter()
@@ -87,6 +88,7 @@ async def upsert_response(
                 req_dep.current_user,
                 response.response_text,
             )
+            notify_new_response(req_dep.db, db_question, req_dep.current_user)
     req_dep.db.commit()
     return db_question
 

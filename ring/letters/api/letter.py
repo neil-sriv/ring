@@ -35,6 +35,7 @@ from ring.letters.schemas.question import (
     GenerateQuestionResponse,
     QuestionCreate,
 )
+from ring.notifications.crud.events import notify_new_question
 from ring.parties.models.user_model import User
 from ring.ring_pydantic import PublicLetter as LetterSchema
 from ring.ring_pydantic.linked_schemas import DashboardLetters, MinimalLetter
@@ -314,6 +315,13 @@ async def add_question(
     )
     letter_crud.add_question(
         req_dep.db, db_letter, question.question_text, author=db_author
+    )
+    notify_new_question(
+        req_dep.db,
+        db_letter,
+        question.question_text,
+        asked_by=req_dep.current_user,
+        author=db_author,
     )
     req_dep.db.refresh(db_letter)
     req_dep.db.commit()
