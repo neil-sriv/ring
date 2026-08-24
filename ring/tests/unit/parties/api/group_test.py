@@ -12,6 +12,8 @@ from fastapi.testclient import TestClient
 from sqlalchemy.orm import Session
 
 from ring.letters.constants import LetterStatus
+from ring.notifications.constants import NotificationType
+from ring.notifications.crud.notification import list_notifications
 from ring.parties.models.group_model import Group
 from ring.parties.models.user_model import User
 from ring.tests.factories.letters.letter_factory import LetterFactory
@@ -385,6 +387,46 @@ class TestGroupApi:
         assert in_progress_letter.participants.count(new_user) == 1
         assert group.members.count(existing_member) == 1
         assert in_progress_letter.participants.count(existing_member) == 1
+
+    def test_add_members_notifies_new_members_only(
+        self,
+        authenticated_client: TestClient,
+        current_user: User,
+        db_session: Session,
+    ):
+        """Test that only newly added members get an in-app notification.
+
+        This test verifies that:
+        1. A newly added registered user receives an added-to-group
+           notification pointing at the group
+        2. Existing members and the actor are not notified
+
+        Args:
+            authenticated_client (TestClient): Authenticated test client
+            current_user (User): Currently authenticated user
+            db_session (Session): Database session
+        """
+        group = GroupFactory.create(admin=current_user)
+        existing_member = UserFactory.create()
+        group.members.append(existing_member)
+        new_user = UserFactory.create()
+        db_session.commit()
+
+        response = authenticated_client.post(
+            f"/parties/group/{group.api_identifier}:add_members",
+            json={
+                "member_emails": [new_user.email, existing_member.email],
+            },
+        )
+
+        assert response.status_code == 200
+        new_user_notifications = list_notifications(db_session, new_user)
+        assert [n.type for n in new_user_notifications] == [
+            NotificationType.ADDED_TO_GROUP
+        ]
+        assert new_user_notifications[0].target_api_id == group.api_identifier
+        assert list_notifications(db_session, existing_member) == []
+        assert list_notifications(db_session, current_user) == []
 
     def test_remove_member(
         self,
