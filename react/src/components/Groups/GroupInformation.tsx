@@ -81,6 +81,7 @@ function GroupInformation({ groupId }: { groupId: string }) {
         "success",
       )
       setEditMode(false)
+      reset({ name: data.name })
     } catch (err) {
       const axiosErr =
         err as AxiosError<UpdateGroupPartiesGroupGroupApiIdPatchError>
