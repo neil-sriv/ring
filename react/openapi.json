@@ -2494,6 +2494,276 @@
         ]
       }
     },
+    "/notifications/": {
+      "get": {
+        "tags": [
+          "notifications"
+        ],
+        "summary": "List Notifications",
+        "description": "List the authenticated user's notifications, newest first.\n\nArgs:\n    unread_only (bool): Only include unread notifications\n    limit (int): Maximum number of notifications to return\n    offset (int): Number of notifications to skip\n    req_dep (AuthenticatedRequestDependencies): Request dependencies\n\nReturns:\n    NotificationList: Page of notifications plus unread/total counts",
+        "operationId": "list_notifications_notifications__get",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "unread_only",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "default": false,
+              "title": "Unread Only"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 100,
+              "minimum": 1,
+              "default": 50,
+              "title": "Limit"
+            }
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 0,
+              "default": 0,
+              "title": "Offset"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NotificationList"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/notifications/unread-count": {
+      "get": {
+        "tags": [
+          "notifications"
+        ],
+        "summary": "Get Unread Count",
+        "description": "Get the authenticated user's unread notification count.\n\nArgs:\n    req_dep (AuthenticatedRequestDependencies): Request dependencies\n\nReturns:\n    NotificationUnreadCount: Number of unread notifications",
+        "operationId": "get_unread_count_notifications_unread_count_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NotificationUnreadCount"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ]
+      }
+    },
+    "/notifications/{notification_api_id}:read": {
+      "post": {
+        "tags": [
+          "notifications"
+        ],
+        "summary": "Mark Notification Read",
+        "description": "Mark one notification as read.\n\nArgs:\n    notification_api_id (str): API identifier of the notification\n    req_dep (AuthenticatedRequestDependencies): Request dependencies\n\nReturns:\n    Notification: The updated notification\n\nRaises:\n    PermissionError: If the notification belongs to another user",
+        "operationId": "mark_notification_read_notifications__notification_api_id__read_post",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "notification_api_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Notification Api Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Notification"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/notifications/{notification_api_id}:unread": {
+      "post": {
+        "tags": [
+          "notifications"
+        ],
+        "summary": "Mark Notification Unread",
+        "description": "Mark one notification as unread.\n\nArgs:\n    notification_api_id (str): API identifier of the notification\n    req_dep (AuthenticatedRequestDependencies): Request dependencies\n\nReturns:\n    Notification: The updated notification\n\nRaises:\n    PermissionError: If the notification belongs to another user",
+        "operationId": "mark_notification_unread_notifications__notification_api_id__unread_post",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "notification_api_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Notification Api Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Notification"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/notifications/read-all": {
+      "post": {
+        "tags": [
+          "notifications"
+        ],
+        "summary": "Mark All Notifications Read",
+        "description": "Mark all of the authenticated user's notifications as read.\n\nArgs:\n    req_dep (AuthenticatedRequestDependencies): Request dependencies\n\nReturns:\n    NotificationUnreadCount: Unread count after the update (always 0)",
+        "operationId": "mark_all_notifications_read_notifications_read_all_post",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NotificationUnreadCount"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ]
+      }
+    },
+    "/notifications/{notification_api_id}": {
+      "delete": {
+        "tags": [
+          "notifications"
+        ],
+        "summary": "Delete Notification",
+        "description": "Delete one notification.\n\nArgs:\n    notification_api_id (str): API identifier of the notification\n    req_dep (AuthenticatedRequestDependencies): Request dependencies\n\nReturns:\n    ResponseMessage: Confirmation message\n\nRaises:\n    PermissionError: If the notification belongs to another user",
+        "operationId": "delete_notification_notifications__notification_api_id__delete",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "notification_api_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Notification Api Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResponseMessage"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/search/raw-search": {
       "get": {
         "tags": [
@@ -4301,6 +4571,117 @@
         ],
         "title": "NewPassword",
         "description": "Schema for setting a new password (e.g., after reset).\n\nAttributes:\n    new_password (str): User's new password"
+      },
+      "Notification": {
+        "properties": {
+          "type": {
+            "$ref": "#/components/schemas/NotificationType"
+          },
+          "title": {
+            "type": "string",
+            "title": "Title"
+          },
+          "body": {
+            "type": "string",
+            "title": "Body"
+          },
+          "target_api_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Target Api Id"
+          },
+          "api_identifier": {
+            "type": "string",
+            "title": "Api Identifier"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          },
+          "read_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Read At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "type",
+          "title",
+          "body",
+          "api_identifier",
+          "created_at"
+        ],
+        "title": "Notification",
+        "description": "Schema representing a notification in the system.\n\nAttributes:\n    api_identifier (str): Unique API identifier with 'notif' prefix\n    created_at (AwareDatetime): Timestamp of notification creation\n    read_at (AwareDatetime | None): When the recipient read the\n        notification, or null while unread"
+      },
+      "NotificationList": {
+        "properties": {
+          "notifications": {
+            "items": {
+              "$ref": "#/components/schemas/Notification"
+            },
+            "type": "array",
+            "title": "Notifications"
+          },
+          "unread_count": {
+            "type": "integer",
+            "title": "Unread Count"
+          },
+          "total_count": {
+            "type": "integer",
+            "title": "Total Count"
+          }
+        },
+        "type": "object",
+        "required": [
+          "notifications",
+          "unread_count",
+          "total_count"
+        ],
+        "title": "NotificationList",
+        "description": "Response schema for the notification list endpoint.\n\nAttributes:\n    notifications (list[Notification]): Page of notifications,\n        newest first\n    unread_count (int): Total unread notifications for the user\n    total_count (int): Total notifications for the user"
+      },
+      "NotificationType": {
+        "type": "string",
+        "enum": [
+          "generic",
+          "letter_sent",
+          "responses_open",
+          "letter_reminder",
+          "awaiting_response",
+          "added_to_group"
+        ],
+        "title": "NotificationType",
+        "description": "Type of an in-app notification.\n\nEach value corresponds to a product event that can notify users. Types\nmirror the transactional emails first (letter lifecycle, group\nmembership) and expand to richer in-app events over time."
+      },
+      "NotificationUnreadCount": {
+        "properties": {
+          "unread_count": {
+            "type": "integer",
+            "title": "Unread Count"
+          }
+        },
+        "type": "object",
+        "required": [
+          "unread_count"
+        ],
+        "title": "NotificationUnreadCount",
+        "description": "Response schema for the unread-count endpoint.\n\nAttributes:\n    unread_count (int): Total unread notifications for the user"
       },
       "PublicLetter": {
         "properties": {

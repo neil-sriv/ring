@@ -14,7 +14,7 @@ from ring.fastapp.api import version
 from ring.letters.api import letter, question, response
 from ring.link_unfurl.api import unfurl
 from ring.notebook.api import document
-from ring.notifications.api import subscription
+from ring.notifications.api import notification, subscription
 from ring.parties.api import group, group_key_value, invite, user
 from ring.search.api import search
 from ring.tasks.api import schedule
@@ -42,6 +42,11 @@ router.include_router(response.router, prefix="/responses", tags=["responses"])
 router.include_router(invite.router, prefix="/invites", tags=["invites"])
 router.include_router(
     subscription.router,
+    prefix="/notifications",
+    tags=["notifications"],
+)
+router.include_router(
+    notification.router,
     prefix="/notifications",
     tags=["notifications"],
 )
