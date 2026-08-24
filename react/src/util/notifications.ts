@@ -5,6 +5,37 @@ import {
 } from "../client"
 import { formatApiErrorDetail } from "./misc"
 
+export type NotificationTarget =
+  | { to: "/loops/$loopId"; params: { loopId: string } }
+  | { to: "/groups/$groupId/loops"; params: { groupId: string } }
+  | { to: "/documents/$documentId"; params: { documentId: string } }
+
+/** Resolve a notification's weak target reference to an app route, if it has a page. */
+export function notificationTargetPath(
+  targetApiId: string | null | undefined,
+): NotificationTarget | null {
+  if (!targetApiId) {
+    return null
+  }
+  const prefix = targetApiId.split("_", 1)[0]
+  switch (prefix) {
+    case "lttr":
+      return { to: "/loops/$loopId", params: { loopId: targetApiId } }
+    case "grp":
+      return {
+        to: "/groups/$groupId/loops",
+        params: { groupId: targetApiId },
+      }
+    case "dcmnt":
+      return {
+        to: "/documents/$documentId",
+        params: { documentId: targetApiId },
+      }
+    default:
+      return null
+  }
+}
+
 export type SubscribeToPushResult =
   | { ok: true }
   | {

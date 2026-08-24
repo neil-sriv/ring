@@ -17,6 +17,7 @@ import { readUserMePartiesMeGetQueryKey } from "../../client/@tanstack/react-que
 import useAuth from "../../hooks/useAuth"
 import { useSidebarSwipe } from "../../hooks/useSidebarSwipe"
 import { userInitials } from "../../util/misc"
+import NotificationBell from "./NotificationBell"
 import { RingMark } from "./RingMark"
 import SidebarItems from "./SidebarItems"
 
@@ -103,6 +104,7 @@ const Sidebar = () => {
           <RingMark className="h-[1.125rem] w-[1.125rem] shrink-0 text-primary" />
           Ring
         </Link>
+        <NotificationBell className="ml-auto" />
       </header>
       <Sheet open={isOpen} onOpenChange={setIsOpen}>
         <SheetContent side="left" className="w-60 bg-sidebar p-3">
