@@ -50,18 +50,20 @@ function SearchContent() {
   const loadMoreRef = useRef<HTMLDivElement>(null)
 
   // Sync from the ?q= param so command-palette handoffs run the search even
-  // when this route is already mounted (navigating /search -> /search).
+  // when this route is already mounted (navigating /search -> /search), and
+  // reset to a clean page when navigating here without ?q= so the URL always
+  // matches what is shown.
   useEffect(() => {
-    if (!q) {
-      return
+    const trimmed = q?.trim()
+    if (q && trimmed) {
+      setSearchQuery(q)
+      setSubmittedQuery(trimmed)
+      setHasSubmittedSearch(true)
+    } else {
+      setSearchQuery("")
+      setSubmittedQuery("")
+      setHasSubmittedSearch(false)
     }
-    const trimmed = q.trim()
-    if (!trimmed) {
-      return
-    }
-    setSearchQuery(q)
-    setSubmittedQuery(trimmed)
-    setHasSubmittedSearch(true)
   }, [q])
 
   const toggleType = (type: SearchableType) => {
