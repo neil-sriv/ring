@@ -14,7 +14,10 @@ from ring.fastapp.dependencies import (
     get_request_dependencies,
 )
 from ring.letters.crud.default_question import replace_default_questions
-from ring.notifications.crud.events import notify_added_to_group
+from ring.notifications.crud.events import (
+    notify_added_to_group,
+    notify_member_joined,
+)
 from ring.parties.crud import group as group_crud
 from ring.parties.crud import invite as invite_crud
 from ring.parties.models.group_model import Group
@@ -144,9 +147,23 @@ async def add_user_to_group(
     Raises:
         HTTPException: If group or user not found
     """
+    db_group = api_identifier_crud.get_model(
+        req_dep.db, Group, api_id=group_api_id
+    )
+    db_user = api_identifier_crud.get_model(
+        req_dep.db, User, api_id=user_api_id
+    )
+    was_member = db_user in db_group.members
     group = group_crud.add_member(
         req_dep.db, group_api_id=group_api_id, user_api_id=user_api_id
     )
+    if not was_member:
+        notify_added_to_group(
+            req_dep.db, group, [db_user], req_dep.current_user
+        )
+        notify_member_joined(
+            req_dep.db, group, [db_user], actor=req_dep.current_user
+        )
     req_dep.db.commit()
     return group
 
@@ -319,6 +336,9 @@ async def add_members(
     added_members = group_crud.add_members(req_dep.db, db_group, db_users)
     notify_added_to_group(
         req_dep.db, db_group, added_members, req_dep.current_user
+    )
+    notify_member_joined(
+        req_dep.db, db_group, added_members, actor=req_dep.current_user
     )
     req_dep.db.commit()
 

@@ -19,3 +19,6 @@ class NotificationType(StrEnum):
     LETTER_REMINDER = "letter_reminder"
     AWAITING_RESPONSE = "awaiting_response"
     ADDED_TO_GROUP = "added_to_group"
+    NEW_QUESTION = "new_question"
+    NEW_RESPONSE = "new_response"
+    MEMBER_JOINED = "member_joined"

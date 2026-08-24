@@ -567,7 +567,7 @@ export type NotificationList = {
  * mirror the transactional emails first (letter lifecycle, group
  * membership) and expand to richer in-app events over time.
  */
-export type NotificationType = 'generic' | 'letter_sent' | 'responses_open' | 'letter_reminder' | 'awaiting_response' | 'added_to_group';
+export type NotificationType = 'generic' | 'letter_sent' | 'responses_open' | 'letter_reminder' | 'awaiting_response' | 'added_to_group' | 'new_question' | 'new_response' | 'member_joined';
 
 /**
  * Response schema for the unread-count endpoint.

@@ -11,6 +11,7 @@ from ring.fastapp.dependencies import (
     get_request_dependencies,
     get_unauthenticated_request_dependencies,
 )
+from ring.notifications.crud.events import notify_member_joined
 from ring.parties.crud import (
     group as group_crud,
 )
@@ -133,6 +134,7 @@ async def register_user(
     group_crud.add_member(
         req_dep.db, db_group.api_identifier, db_user.api_identifier
     )
+    notify_member_joined(req_dep.db, db_group, [db_user])
     req_dep.db.commit()
     return db_user
 

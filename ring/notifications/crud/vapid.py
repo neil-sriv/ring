@@ -14,20 +14,24 @@ from pywebpush import WebPushException, webpush  # type: ignore
 from ring.fastapp.config import get_config
 from ring.notifications.crud.subscription import serialize_subscription_info
 from ring.notifications.models.subscription import Subscription
-from ring.parties.models.user_model import User
+
+# Push service status codes meaning the subscription no longer exists and
+# should be pruned (https://datatracker.ietf.org/doc/html/rfc8030#section-5).
+SUBSCRIPTION_GONE_STATUS_CODES = frozenset({404, 410})
 
 
 def send_push_notification(
     subscription_info: Subscription, payload: dict[str, str]
-) -> None:
+) -> bool:
     """Send a web push notification to a specific subscription.
 
     Args:
         subscription_info (Subscription): Subscription to send notification to
         payload (dict[str, str]): Data to send in the notification
 
-    Raises:
-        WebPushException: If sending the notification fails
+    Returns:
+        bool: True when the push service reported the subscription is gone
+            (expired or unsubscribed) and the row should be pruned
     """
     try:
         # Perform web push
@@ -39,20 +43,15 @@ def send_push_notification(
         )
         logger.info(f"Push notification sent successfully: {response}")
     except WebPushException as e:
+        if (
+            e.response is not None
+            and e.response.status_code in SUBSCRIPTION_GONE_STATUS_CODES
+        ):
+            logger.info(
+                "Push subscription {} is gone ({}); pruning".format(
+                    subscription_info.api_identifier, e.response.status_code
+                )
+            )
+            return True
         logger.error(f"Error sending push notification: {e}")
-
-
-def send_push_notification_to_user(
-    user: User, payload: dict[str, str]
-) -> None:
-    """Send a web push notification to a user's most recent subscription.
-
-    Args:
-        user (User): User to send notification to
-        payload (dict[str, str]): Data to send in the notification
-
-    Raises:
-        IndexError: If user has no subscriptions
-    """
-    newest_subscription = user.notification_subscriptions[-1]
-    send_push_notification(newest_subscription, payload)
+    return False

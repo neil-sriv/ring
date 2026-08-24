@@ -45,7 +45,12 @@ async def post_subscription(
 
     Raises:
         HTTPException: If user is not authenticated
+        PermissionError: If registering a subscription for another user
     """
+    if subscription.user_api_identifier != req_dep.current_user.api_identifier:
+        raise PermissionError(
+            "Cannot register a push subscription for another user"
+        )
     if get_subscription_by_endpoint(req_dep.db, subscription.endpoint):
         logger.warning(
             f"Subscription with endpoint {subscription.endpoint} already exists"

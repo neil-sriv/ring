@@ -1375,6 +1375,7 @@ export const validateTokenInvitesTokenTokenGet = <ThrowOnError extends boolean =
  *
  * Raises:
  * HTTPException: If user is not authenticated
+ * PermissionError: If registering a subscription for another user
  */
 export const postSubscriptionNotificationsSubscriptionPost = <ThrowOnError extends boolean = false>(options: Options<PostSubscriptionNotificationsSubscriptionPostData, ThrowOnError>) => {
     return (options.client ?? _heyApiClient).post<PostSubscriptionNotificationsSubscriptionPostResponse, PostSubscriptionNotificationsSubscriptionPostError, ThrowOnError>({

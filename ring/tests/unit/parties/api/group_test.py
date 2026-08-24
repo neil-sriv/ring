@@ -425,7 +425,10 @@ class TestGroupApi:
             NotificationType.ADDED_TO_GROUP
         ]
         assert new_user_notifications[0].target_api_id == group.api_identifier
-        assert list_notifications(db_session, existing_member) == []
+        # Existing members hear that someone joined, not that they were added.
+        assert [
+            n.type for n in list_notifications(db_session, existing_member)
+        ] == [NotificationType.MEMBER_JOINED]
         assert list_notifications(db_session, current_user) == []
 
     def test_remove_member(

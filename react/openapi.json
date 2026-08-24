@@ -2453,7 +2453,7 @@
           "notifications"
         ],
         "summary": "Post Subscription",
-        "description": "Create a new web push notification subscription.\n\nCreates a subscription for the authenticated user to receive web push\nnotifications. If a subscription with the same endpoint already exists,\nreturns a message indicating this instead of creating a duplicate.\n\nArgs:\n    subscription (SubscriptionCreate): Subscription details including endpoint and keys\n    req_dep (AuthenticatedRequestDependencies): Request dependencies including database session\n\nReturns:\n    ResponseMessage: Message indicating success or existing subscription\n\nRaises:\n    HTTPException: If user is not authenticated",
+        "description": "Create a new web push notification subscription.\n\nCreates a subscription for the authenticated user to receive web push\nnotifications. If a subscription with the same endpoint already exists,\nreturns a message indicating this instead of creating a duplicate.\n\nArgs:\n    subscription (SubscriptionCreate): Subscription details including endpoint and keys\n    req_dep (AuthenticatedRequestDependencies): Request dependencies including database session\n\nReturns:\n    ResponseMessage: Message indicating success or existing subscription\n\nRaises:\n    HTTPException: If user is not authenticated\n    PermissionError: If registering a subscription for another user",
         "operationId": "post_subscription_notifications_subscription_post",
         "requestBody": {
           "content": {
@@ -4664,7 +4664,10 @@
           "responses_open",
           "letter_reminder",
           "awaiting_response",
-          "added_to_group"
+          "added_to_group",
+          "new_question",
+          "new_response",
+          "member_joined"
         ],
         "title": "NotificationType",
         "description": "Type of an in-app notification.\n\nEach value corresponds to a product event that can notify users. Types\nmirror the transactional emails first (letter lifecycle, group\nmembership) and expand to richer in-app events over time."

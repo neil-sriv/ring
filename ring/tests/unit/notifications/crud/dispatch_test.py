@@ -12,7 +12,10 @@ from sqlalchemy.orm import Session
 from ring.notifications.constants import NotificationType
 from ring.notifications.crud import dispatch
 from ring.notifications.crud.notification import list_notifications
-from ring.notifications.crud.subscription import create_subscription
+from ring.notifications.crud.subscription import (
+    create_subscription,
+    get_subscription_by_endpoint,
+)
 from ring.notifications.schemas.subscription import SubscriptionCreate
 from ring.tests.factories.parties.user_factory import UserFactory
 
@@ -103,6 +106,50 @@ class TestNotifyUsers:
             assert payload["title"] == "A new letter"
             assert payload["body"] == "Read it now"
             assert payload["url"].endswith("/loops/lttr_abc")
+
+    def test_prunes_subscriptions_reported_gone(
+        self, db_session: Session, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        user = UserFactory.create()
+        db_session.commit()
+        for i in range(2):
+            create_subscription(
+                db_session,
+                SubscriptionCreate(
+                    endpoint=f"https://push.example.com/prune/{i}",
+                    keys={"p256dh": "key", "auth": "auth"},
+                    user_api_identifier=user.api_identifier,
+                ),
+            )
+        db_session.commit()
+
+        # The push service reports the first subscription as gone.
+        monkeypatch.setattr(
+            dispatch,
+            "send_push_notification",
+            lambda subscription, payload: subscription.endpoint.endswith("/0"),
+        )
+
+        dispatch.notify_users(
+            db_session,
+            [user],
+            type=NotificationType.GENERIC,
+            title="Prune check",
+        )
+        db_session.commit()
+
+        assert (
+            get_subscription_by_endpoint(
+                db_session, "https://push.example.com/prune/0"
+            )
+            is None
+        )
+        assert (
+            get_subscription_by_endpoint(
+                db_session, "https://push.example.com/prune/1"
+            )
+            is not None
+        )
 
     def test_push_failure_does_not_break_dispatch(
         self, db_session: Session, monkeypatch: pytest.MonkeyPatch
