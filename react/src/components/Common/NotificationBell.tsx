@@ -21,6 +21,7 @@ import {
 } from "../../client/@tanstack/react-query.gen"
 import { cn } from "../../lib/utils"
 import { formatTimeAgo } from "../../util/misc"
+import { notificationTypeMeta } from "../../util/notificationDisplay"
 import { notificationTargetPath } from "../../util/notifications"
 
 // Poll lightly so push-less sessions still see fresh counts.
@@ -158,57 +159,72 @@ const NotificationBell = ({ className }: NotificationBellProps) => {
             </div>
           ) : (
             <ul>
-              {notifications.map((notification) => (
-                <li
-                  key={notification.api_identifier}
-                  className="group relative border-b last:border-b-0"
-                >
-                  <button
-                    type="button"
-                    onClick={() => handleNotificationClick(notification)}
-                    className="flex w-full items-start gap-2.5 px-3 py-2.5 text-left transition-colors hover:bg-accent/60"
+              {notifications.map((notification) => {
+                const meta = notificationTypeMeta(notification.type)
+                return (
+                  <li
+                    key={notification.api_identifier}
+                    className="group relative border-b last:border-b-0"
                   >
-                    <span
-                      className={cn(
-                        "mt-1.5 h-2 w-2 shrink-0 rounded-full",
-                        notification.read_at ? "bg-transparent" : "bg-primary",
-                      )}
-                    />
-                    <span className="min-w-0 flex-1">
+                    <button
+                      type="button"
+                      onClick={() => handleNotificationClick(notification)}
+                      className="flex w-full items-start gap-2.5 px-3 py-2.5 text-left transition-colors hover:bg-accent/60"
+                    >
                       <span
                         className={cn(
-                          "block truncate text-sm",
+                          "mt-3 h-2 w-2 shrink-0 rounded-full",
                           notification.read_at
-                            ? "text-muted-foreground"
-                            : "font-medium text-foreground",
+                            ? "bg-transparent"
+                            : "bg-primary",
+                        )}
+                      />
+                      <span
+                        className={cn(
+                          "mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-full",
+                          notification.read_at
+                            ? "bg-muted text-muted-foreground/60"
+                            : meta.accentClassName,
                         )}
                       >
-                        {notification.title}
+                        <meta.icon className="h-3.5 w-3.5" />
                       </span>
-                      {notification.body && (
-                        <span className="mt-0.5 line-clamp-2 block text-xs text-muted-foreground">
-                          {notification.body}
+                      <span className="min-w-0 flex-1">
+                        <span
+                          className={cn(
+                            "block truncate text-sm",
+                            notification.read_at
+                              ? "text-muted-foreground"
+                              : "font-medium text-foreground",
+                          )}
+                        >
+                          {notification.title}
                         </span>
-                      )}
-                      <span className="mt-0.5 block text-[0.6875rem] text-muted-foreground/70">
-                        {formatTimeAgo(notification.created_at)}
+                        {notification.body && (
+                          <span className="mt-0.5 line-clamp-2 block text-xs text-muted-foreground">
+                            {notification.body}
+                          </span>
+                        )}
+                        <span className="mt-0.5 block text-[0.6875rem] text-muted-foreground/70">
+                          {formatTimeAgo(notification.created_at)}
+                        </span>
                       </span>
-                    </span>
-                  </button>
-                  <button
-                    type="button"
-                    aria-label="Dismiss notification"
-                    disabled={deleteMutation.isPending}
-                    onClick={(event) => {
-                      event.stopPropagation()
-                      deleteMutation.mutate(notification.api_identifier)
-                    }}
-                    className="absolute right-2 top-2 rounded p-1 text-muted-foreground/60 opacity-0 transition-opacity hover:bg-accent hover:text-foreground focus-visible:opacity-100 group-hover:opacity-100 [@media(hover:none)]:opacity-100"
-                  >
-                    <X className="h-3.5 w-3.5" />
-                  </button>
-                </li>
-              ))}
+                    </button>
+                    <button
+                      type="button"
+                      aria-label="Dismiss notification"
+                      disabled={deleteMutation.isPending}
+                      onClick={(event) => {
+                        event.stopPropagation()
+                        deleteMutation.mutate(notification.api_identifier)
+                      }}
+                      className="absolute right-2 top-2 rounded p-1 text-muted-foreground/60 opacity-0 transition-opacity hover:bg-accent hover:text-foreground focus-visible:opacity-100 group-hover:opacity-100 [@media(hover:none)]:opacity-100"
+                    >
+                      <X className="h-3.5 w-3.5" />
+                    </button>
+                  </li>
+                )
+              })}
             </ul>
           )}
         </div>
