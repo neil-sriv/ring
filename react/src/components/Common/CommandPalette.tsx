@@ -1,8 +1,4 @@
-import {
-  keepPreviousData,
-  useQuery,
-  useQueryClient,
-} from "@tanstack/react-query"
+import { useQuery, useQueryClient } from "@tanstack/react-query"
 import { useNavigate } from "@tanstack/react-router"
 import {
   Home,
@@ -138,6 +134,10 @@ export function CommandPalette({
   const debouncedQuery = useDebouncedValue(trimmedQuery, SEARCH_DEBOUNCE_MS)
   const searchActive = trimmedQuery.length >= MIN_SEARCH_QUERY_LENGTH
 
+  // No placeholderData here on purpose: carrying the previous query key's
+  // data forward would render hits from an older query under the current
+  // input. An unresolved key renders nothing (searchLoading covers it), and
+  // re-typing an identical query is still served instantly from the cache.
   const {
     data: searchData,
     isFetching: searchFetching,
@@ -151,7 +151,6 @@ export function CommandPalette({
       },
     }),
     enabled: open && debouncedQuery.length >= MIN_SEARCH_QUERY_LENGTH,
-    placeholderData: keepPreviousData,
   })
 
   const searchLoading =
