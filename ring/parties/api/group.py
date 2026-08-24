@@ -14,6 +14,7 @@ from ring.fastapp.dependencies import (
     get_request_dependencies,
 )
 from ring.letters.crud.default_question import replace_default_questions
+from ring.notifications.crud.events import notify_added_to_group
 from ring.parties.crud import group as group_crud
 from ring.parties.crud import invite as invite_crud
 from ring.parties.models.group_model import Group
@@ -315,7 +316,10 @@ async def add_members(
     invites = invite_crud.invite_users(
         req_dep.db, db_group, req_dep.current_user, unregistered
     )
-    group_crud.add_members(req_dep.db, db_group, db_users)
+    added_members = group_crud.add_members(req_dep.db, db_group, db_users)
+    notify_added_to_group(
+        req_dep.db, db_group, added_members, req_dep.current_user
+    )
     req_dep.db.commit()
 
     if invites:

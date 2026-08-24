@@ -214,7 +214,9 @@ def get_letter_by_api_id(group: Group, api_id: str) -> Letter:
     return letter
 
 
-def add_members(db: Session, group: Group, members: Sequence[User]) -> None:
+def add_members(
+    db: Session, group: Group, members: Sequence[User]
+) -> list[User]:
     """Add multiple users to a group and its active letters.
 
     Users who are already members are skipped, so repeated calls cannot
@@ -224,10 +226,13 @@ def add_members(db: Session, group: Group, members: Sequence[User]) -> None:
         db (Session): Database session
         group (Group): Group to add members to
         members (Sequence[User]): Users to add to the group
+
+    Returns:
+        list[User]: Users that were newly added (existing members excluded)
     """
     new_members = [member for member in members if member not in group.members]
     if not new_members:
-        return
+        return []
     group.members.extend(new_members)
     for letter in group.letters:
         if (
@@ -235,6 +240,7 @@ def add_members(db: Session, group: Group, members: Sequence[User]) -> None:
             or letter.status == LetterStatus.UPCOMING
         ):
             letter.participants.extend(new_members)
+    return new_members
 
 
 @register_search_function(SearchableType.GROUP, Group)

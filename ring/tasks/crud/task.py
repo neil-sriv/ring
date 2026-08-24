@@ -21,6 +21,12 @@ from ring.letters.crud import letter as letter_crud
 from ring.letters.models.letter_model import Letter
 from ring.letters.send_threshold import defer_letter_send_if_below_threshold
 from ring.lib.util import RegistrationDict
+from ring.notifications.crud.events import (
+    notify_awaiting_response,
+    notify_letter_reminder,
+    notify_letter_sent,
+    notify_responses_open,
+)
 from ring.tasks.crud.reminder_email_task import construct_reminder_email
 from ring.tasks.crud.response_open_email_task import (
     construct_response_open_email,
@@ -92,6 +98,7 @@ def execute_reminder_email_task(
                 [u.email for u in letter_to_send.participants]
             )
         )
+    notify_letter_reminder(db, letter_to_send)
 
     db.commit()
 
@@ -145,6 +152,7 @@ def execute_send_email_task(
                 [u.email for u in letter_to_send.participants]
             )
         )
+    notify_letter_sent(db, letter_to_send)
 
     db.commit()
 
@@ -268,6 +276,8 @@ def send_response_open_email(db: Session, letter_id: int) -> None:
         logger.info(
             f"Sent response open email for letter {letter_id} to {recipients}"
         )
+    notify_responses_open(db, letter)
+    db.commit()
 
 
 @job_factory("send_waiting_response_email")
@@ -306,6 +316,8 @@ def send_waiting_response_email(db: Session, letter_id: int) -> None:
                 letter_id, recipients
             )
         )
+    notify_awaiting_response(db, letter)
+    db.commit()
 
 
 # TASK_REGISTRY: RegistrationDict[TaskType, Callable[[Any], None]] = (

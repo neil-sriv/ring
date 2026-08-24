@@ -21,16 +21,20 @@ from ring.lib.app_links import app_url
 
 if TYPE_CHECKING:
     from ring.letters.models.letter_model import Letter
+    from ring.parties.models.user_model import User
+
+
+def letter_non_responder_users(letter: Letter) -> list[User]:
+    """Return participants who have not submitted any response."""
+    responder_ids = {user.id for user in letter.responders}
+    return [
+        user for user in letter.participants if user.id not in responder_ids
+    ]
 
 
 def letter_non_responder_emails(letter: Letter) -> list[str]:
     """Return emails of participants who have not submitted any response."""
-    responder_ids = {user.id for user in letter.responders}
-    return [
-        user.email
-        for user in letter.participants
-        if user.id not in responder_ids
-    ]
+    return [user.email for user in letter_non_responder_users(letter)]
 
 
 def letter_display_title(letter: Letter) -> str:
