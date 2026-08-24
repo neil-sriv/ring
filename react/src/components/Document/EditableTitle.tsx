@@ -25,8 +25,14 @@ export function EditableTitle({
 }: EditableTitleProps) {
   const [isEditing, setIsEditing] = useState(false)
   const [editValue, setEditValue] = useState(title)
+  const [isSaving, setIsSaving] = useState(false)
   const inputRef = useRef<HTMLInputElement>(null)
+  // Guards against Enter + blur (or double blur) firing two PUTs before
+  // parent isPending / local isSaving can disable the input.
+  const saveInFlightRef = useRef(false)
   const showToast = useCustomToast()
+
+  const busy = isLoading || isSaving
 
   // Update editValue when title prop changes
   useEffect(() => {
@@ -42,16 +48,20 @@ export function EditableTitle({
   }, [isEditing])
 
   const handleStartEdit = () => {
+    if (busy) return
     setIsEditing(true)
     setEditValue(title)
   }
 
   const handleCancelEdit = () => {
+    if (saveInFlightRef.current) return
     setIsEditing(false)
     setEditValue(title)
   }
 
   const handleSaveEdit = async () => {
+    if (saveInFlightRef.current) return
+
     if (editValue.trim() === title.trim()) {
       setIsEditing(false)
       return
@@ -64,6 +74,8 @@ export function EditableTitle({
       return
     }
 
+    saveInFlightRef.current = true
+    setIsSaving(true)
     try {
       await onTitleChange(editValue.trim())
       setIsEditing(false)
@@ -79,13 +91,16 @@ export function EditableTitle({
       )
       setEditValue(title) // Reset to original value
       setIsEditing(false)
+    } finally {
+      saveInFlightRef.current = false
+      setIsSaving(false)
     }
   }
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === "Enter") {
       e.preventDefault()
-      handleSaveEdit()
+      void handleSaveEdit()
     } else if (e.key === "Escape") {
       e.preventDefault()
       handleCancelEdit()
@@ -113,14 +128,17 @@ export function EditableTitle({
         value={editValue}
         onChange={(e) => setEditValue(e.target.value)}
         onKeyDown={handleKeyDown}
-        onBlur={handleSaveEdit}
+        onBlur={() => {
+          void handleSaveEdit()
+        }}
         className={cn(
           sizeClasses[size],
           alignClasses[textAlign],
           "h-auto rounded-md border-transparent bg-transparent px-2 py-1 font-display font-semibold tracking-tight shadow-none",
           color,
         )}
-        disabled={isLoading}
+        disabled={busy}
+        aria-busy={busy}
       />
     )
   }
@@ -136,7 +154,8 @@ export function EditableTitle({
         }
       }}
       role="button"
-      tabIndex={0}
+      tabIndex={busy ? -1 : 0}
+      aria-disabled={busy}
     >
       <h2
         className={cn(
@@ -148,7 +167,7 @@ export function EditableTitle({
       >
         {title}
       </h2>
-      {isLoading && (
+      {busy && (
         <div className="absolute top-1/2 -right-8 -translate-y-1/2">
           <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
         </div>
