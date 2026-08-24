@@ -95,6 +95,33 @@ export function toISOLocal(d: Date): string {
   )}${sign}${z((off / 60) | 0)}:${z(off % 60)}`
 }
 
+/** Compact relative timestamp: "just now", "5m ago", "3h ago", "2d ago", then a short date. */
+export function formatTimeAgo(dateIso: string, now: Date = new Date()): string {
+  const elapsedMs = now.getTime() - new Date(dateIso).getTime()
+  const minutes = Math.floor(elapsedMs / 60_000)
+  if (minutes < 1) {
+    return "just now"
+  }
+  if (minutes < 60) {
+    return `${minutes}m ago`
+  }
+  const hours = Math.floor(minutes / 60)
+  if (hours < 24) {
+    return `${hours}h ago`
+  }
+  const days = Math.floor(hours / 24)
+  if (days < 7) {
+    return `${days}d ago`
+  }
+  const date = new Date(dateIso)
+  const isSameYear = date.getFullYear() === now.getFullYear()
+  return date.toLocaleDateString(undefined, {
+    month: "short",
+    day: "numeric",
+    ...(isSameYear ? {} : { year: "numeric" }),
+  })
+}
+
 /** Local `datetime-local` default: N days ahead at the given local hour. */
 export function defaultLocalDateTimeValue(
   daysFromNow: number,

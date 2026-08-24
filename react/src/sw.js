@@ -27,12 +27,23 @@ self.addEventListener("push", (event) => {
   }
 })
 
-// Handle notification click
+// Handle notification click: focus an open app tab on the target URL, or
+// open a new one. The push payload's `url` is stored in notification.data.
 self.addEventListener("notificationclick", (event) => {
   event.notification.close()
-  if (event.notification.data) {
-    event.waitUntil(clients.openWindow("ring"))
-  }
+  const targetUrl = event.notification.data || "/"
+  event.waitUntil(
+    clients
+      .matchAll({ type: "window", includeUncontrolled: true })
+      .then((windowClients) => {
+        for (const client of windowClients) {
+          if (client.url === targetUrl && "focus" in client) {
+            return client.focus()
+          }
+        }
+        return clients.openWindow(targetUrl)
+      }),
+  )
 })
 
 // Handle onpushsubscriptionchange event

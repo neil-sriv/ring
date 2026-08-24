@@ -10,6 +10,7 @@ import {
 } from "../client/@tanstack/react-query.gen"
 import type { UserLinked } from "../client/types.gen"
 import { KeyboardShortcuts } from "../components/Common/KeyboardShortcuts"
+import NotificationBell from "../components/Common/NotificationBell"
 import Sidebar from "../components/Common/Sidebar"
 import UserMenu from "../components/Common/UserMenu"
 import { subscribeToPush } from "../util/notifications"
@@ -81,6 +82,9 @@ function Layout() {
           <Outlet />
         </main>
       )}
+      <div className="hidden md:block fixed top-4 right-16 z-40">
+        <NotificationBell />
+      </div>
       <UserMenu />
       <KeyboardShortcuts />
     </div>
