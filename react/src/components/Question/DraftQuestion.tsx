@@ -443,9 +443,28 @@ function DraftQuestion({
     }
   }
 
+  const deletingImageUrlsRef = useRef(new Set<string>())
+
   const handleDeleteImage = async (s3Url: string) => {
+    // Parent-level guard: same URL must not fire overlapping deletes even if
+    // the media delete button somehow re-arms before the letter cache updates.
+    if (deletingImageUrlsRef.current.has(s3Url)) {
+      return
+    }
+    deletingImageUrlsRef.current.add(s3Url)
+
     try {
-      // Optimistically update the UI
+      // Await the API before updating the letter cache so the media delete
+      // button can show a disabled/spinner state (optimistic removal raced
+      // rapid double-clicks and could fire two DELETEs for one image).
+      await deleteImageResponsesResponseResponseApiIdDeleteImageDelete({
+        path: { response_api_id: response!.api_identifier },
+        query: {
+          s3_url: s3Url,
+        },
+        throwOnError: true,
+      })
+
       queryClient.setQueryData(
         readLetterLettersLetterLetterApiIdGetQueryKey({
           path: { letter_api_id: loopApiId },
@@ -453,10 +472,8 @@ function DraftQuestion({
         (oldData: any) => {
           if (!oldData) return oldData
 
-          // Create a deep copy and remove the image
           const updatedData = JSON.parse(JSON.stringify(oldData))
 
-          // Find the response and remove the image
           updatedData.questions = updatedData.questions.map((q: any) => {
             if (q.api_identifier === question.api_identifier) {
               q.responses = q.responses.map((r: any) => {
@@ -475,18 +492,8 @@ function DraftQuestion({
         },
       )
 
-      // Make the API call
-      await deleteImageResponsesResponseResponseApiIdDeleteImageDelete({
-        path: { response_api_id: response!.api_identifier },
-        query: {
-          s3_url: s3Url,
-        },
-        throwOnError: true,
-      })
-
       showToast("Success!", "Image deleted successfully.", "success")
     } catch (error) {
-      // Revert optimistic update on error
       queryClient.invalidateQueries({
         queryKey: readLetterLettersLetterLetterApiIdGetQueryKey({
           path: { letter_api_id: loopApiId },
@@ -502,6 +509,8 @@ function DraftQuestion({
         ),
         "error",
       )
+    } finally {
+      deletingImageUrlsRef.current.delete(s3Url)
     }
   }
 

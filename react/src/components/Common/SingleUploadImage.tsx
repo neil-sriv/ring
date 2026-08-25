@@ -8,7 +8,7 @@ import {
 } from "@/components/ui/dialog"
 import { ImagePlus, Loader2, X } from "lucide-react"
 import { Dialog as DialogPrimitive } from "radix-ui"
-import { useState } from "react"
+import { useRef, useState } from "react"
 
 /**
  * SingleUploadImage Component
@@ -106,7 +106,7 @@ export function SingleUploadImage({
 interface S3MediaProps {
   s3Key: string
   alt?: string
-  handleDelete?: () => void
+  handleDelete?: () => void | Promise<void>
   /** When set, opens a full-screen style viewer on click or tap. */
   expandable?: boolean
 }
@@ -116,6 +116,50 @@ function S3MediaContainer({ children }: { children: React.ReactNode }) {
     <div className="relative block w-full max-w-[400px] min-w-0 overflow-hidden rounded-lg border bg-card">
       {children}
     </div>
+  )
+}
+
+function S3MediaDeleteButton({
+  handleDelete,
+  label,
+}: {
+  handleDelete: () => void | Promise<void>
+  label: string
+}) {
+  const [isDeleting, setIsDeleting] = useState(false)
+  // Sync guard: React state alone cannot block a second click before re-render.
+  const isDeletingRef = useRef(false)
+
+  const onDeleteClick = async () => {
+    if (isDeletingRef.current) {
+      return
+    }
+    isDeletingRef.current = true
+    setIsDeleting(true)
+    try {
+      await handleDelete()
+    } finally {
+      isDeletingRef.current = false
+      setIsDeleting(false)
+    }
+  }
+
+  return (
+    <Button
+      variant="outline"
+      size="icon"
+      className="absolute top-2 right-2 h-7 w-7 text-muted-foreground hover:text-destructive"
+      onClick={onDeleteClick}
+      disabled={isDeleting}
+      aria-busy={isDeleting}
+      aria-label={isDeleting ? `Deleting ${label}` : `Delete ${label}`}
+    >
+      {isDeleting ? (
+        <Loader2 className="h-4 w-4 animate-spin" />
+      ) : (
+        <X className="h-4 w-4" />
+      )}
+    </Button>
   )
 }
 
@@ -179,15 +223,7 @@ export function S3Image({
         thumbnail
       )}
       {handleDelete && (
-        <Button
-          variant="outline"
-          size="icon"
-          className="absolute top-2 right-2 h-7 w-7 text-muted-foreground hover:text-destructive"
-          onClick={handleDelete}
-          aria-label="Delete image"
-        >
-          <X className="h-4 w-4" />
-        </Button>
+        <S3MediaDeleteButton handleDelete={handleDelete} label="image" />
       )}
     </S3MediaContainer>
   )
@@ -196,7 +232,7 @@ export function S3Image({
 export function S3Video({
   s3Key,
   handleDelete,
-}: { s3Key: string; handleDelete?: () => void }) {
+}: { s3Key: string; handleDelete?: () => void | Promise<void> }) {
   const url = `https://du32exnxihxuf.cloudfront.net/${s3Key}`
   return (
     <S3MediaContainer>
@@ -208,15 +244,7 @@ export function S3Video({
         <track kind="captions" />
       </video>
       {handleDelete && (
-        <Button
-          variant="outline"
-          size="icon"
-          className="absolute top-2 right-2 h-7 w-7 text-muted-foreground hover:text-destructive"
-          onClick={handleDelete}
-          aria-label="Delete video"
-        >
-          <X className="h-4 w-4" />
-        </Button>
+        <S3MediaDeleteButton handleDelete={handleDelete} label="video" />
       )}
     </S3MediaContainer>
   )
