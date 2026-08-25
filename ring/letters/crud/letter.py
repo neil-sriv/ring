@@ -16,6 +16,7 @@ from sqlalchemy.orm import selectinload
 
 from ring.api_identifier import util as api_identifier_crud
 from ring.async_scheduler.scheduler import job_factory
+from ring.email_util import send_email
 from ring.letters.constants import (
     DEFAULT_QUESTIONS,
     QUESTION_BANK,
@@ -41,7 +42,8 @@ from ring.search.models.hybrid_search import (
     SearchableType,
 )
 from ring.tasks.crud import schedule as schedule_crud
-from ring.tasks.models.task_model import Task, TaskType
+from ring.tasks.crud.send_email_task import construct_send_letter_email
+from ring.tasks.models.task_model import Task, TaskStatus, TaskType
 
 if TYPE_CHECKING:
     from sqlalchemy.orm import Session
@@ -158,6 +160,10 @@ def create_letter(
     if search_document := create_letter_search_document(db, db_letter):
         db.add(search_document)
 
+    # Flush so the letter has a database id before tasks are registered;
+    # otherwise the send/reminder tasks are stored with "letter_id": None
+    # and task execution has to guess which letter to send.
+    db.flush()
     upsert_letter_tasks(db, db_letter, send_at)
     return db_letter
 
@@ -447,6 +453,73 @@ def compile_letter_dict(
     }
 
 
+def letter_email_title(letter: Letter) -> str:
+    """Build the email subject/title for a letter send."""
+    display = str(letter.title) if letter.title else f"#{letter.number}"
+    return f"Ring Newsletter {display} for {letter.group.name}"
+
+
+def send_letter_email(db: Session, letter: Letter) -> bool:
+    """Email a letter to its participants and mark it SENT on success.
+
+    A letter with no participants has nobody to email, so it is marked
+    SENT immediately. When the email provider rejects the send, the letter
+    is left IN_PROGRESS so a later poll can retry.
+
+    Returns:
+        bool: True when the letter is now SENT.
+    """
+    recipients = [u.email for u in letter.participants]
+    if not recipients:
+        logger.info(
+            "Letter {} has no participants to email; marking it sent".format(
+                letter.id
+            )
+        )
+        letter.status = LetterStatus.SENT
+        return True
+    message_id = send_email(
+        construct_send_letter_email(
+            recipients,
+            letter_email_title(letter),
+            letter.api_identifier,
+            compile_letter_dict(letter),
+        )
+    )
+    if not message_id:
+        logger.warning(
+            "Letter email for letter {} was not accepted; leaving it "
+            "in progress for retry".format(letter.id)
+        )
+        return False
+    letter.status = LetterStatus.SENT
+    logger.info("Message ID:" + message_id)
+    logger.info("Sent letter email to {}".format(recipients))
+    return True
+
+
+def has_outstanding_send_task(db: Session, letter: Letter) -> bool:
+    """Return True when a send-email task still owns sending this letter.
+
+    Legacy tasks were registered without a ``letter_id`` argument, so the
+    check matches on the group's schedule: any pending or in-progress
+    send-email task due at or before the letter's send date means the task
+    pipeline is (about to be) sending this letter, and the postpend job
+    must not touch it.
+    """
+    outstanding = db.scalars(
+        select(Task)
+        .where(
+            Task.schedule_id == letter.group.schedule.id,
+            Task.type == TaskType.SEND_EMAIL,
+            Task.status.in_([TaskStatus.PENDING, TaskStatus.IN_PROGRESS]),
+            Task.execute_at <= letter.send_at,
+        )
+        .limit(1)
+    ).first()
+    return outstanding is not None
+
+
 LETTER_PROMOTION_LOOKAHEAD = timedelta(days=7)
 
 
@@ -458,11 +531,11 @@ def collect_future_letters(
 
     Upcoming letters are promoted ``LETTER_PROMOTION_LOOKAHEAD`` before their
     send date so participants get a response window before the letter goes
-    out. In-progress letters are only postpended once their send date has
-    actually arrived; collecting them any earlier would close the response
-    window and mark the letter SENT ahead of schedule. Letters are only
-    collected if the group does not already have a letter in the target
-    status.
+    out; they are only collected if the group does not already have an
+    in-progress letter. In-progress letters are collected for postpend once
+    their send date has arrived, regardless of whether the group already has
+    an upcoming letter — the postpend job itself decides whether a letter
+    still needs to be sent, deferred, or left to its send-email task.
 
     Args:
         db (Session): Database session
@@ -494,9 +567,6 @@ def collect_future_letters(
     ).all()
     letters_to_promote = [
         l for l in letters_to_promote if not l.group.in_progress_letters
-    ]
-    letters_to_postpend = [
-        l for l in letters_to_postpend if not l.group.upcoming_letters
     ]
     return letters_to_postpend, letters_to_promote
 
@@ -556,19 +626,19 @@ def promote_and_create_new_letters(db: Session, letter_ids: list[int]) -> None:
 def postpend_upcoming_letters_with_session(
     db: Session, letter_ids: list[int]
 ) -> None:
-    """Move letters to SENT status.
+    """Send and close overdue letters that lost their send-email task.
 
     This helper is used by the scheduled postpend job and tests that need to
     provide their own transaction-scoped session.
 
     Letters whose send date has not arrived yet are left untouched, still
     open for responses, no matter how many participants have responded.
-    Letters below the responder send threshold are left in progress instead of
-    marked SENT without an email, and have their send date deferred.
-
-    Args:
-        db (Session): Database session
-        letter_ids (list[int]): IDs of letters to postpend
+    Letters with an outstanding send-email task are skipped — that task owns
+    sending, deferring, and marking the letter SENT, and touching the letter
+    here would race it. Letters below the responder send threshold are left
+    in progress and have their send date deferred. What remains are overdue
+    letters whose send task failed or never delivered: those are emailed and
+    marked SENT here, and the group's next letter is created when missing.
     """
     letters = db.scalars(select(Letter).where(Letter.id.in_(letter_ids))).all()
     for letter in letters:
@@ -579,23 +649,31 @@ def postpend_upcoming_letters_with_session(
                 )
             )
             continue
+        if has_outstanding_send_task(db, letter):
+            logger.info(
+                "Not postpending letter {}: a send-email task is still "
+                "responsible for it".format(letter.id)
+            )
+            continue
         if hold_letter_for_send_threshold(db, letter):
             continue
-        letter.status = LetterStatus.SENT
-        create_letter_with_questions(
-            db,
-            letter.group.api_identifier,
-            letter.send_at + timedelta(days=letter.group.cycle_length),
-        )
+        if not send_letter_email(db, letter):
+            continue
+        if not letter.group.upcoming_letters:
+            create_letter_with_questions(
+                db,
+                letter.group.api_identifier,
+                letter.send_at + timedelta(days=letter.group.cycle_length),
+            )
     db.commit()
 
 
 @job_factory("postpend_upcoming_letters")
 def postpend_upcoming_letters(db: Session, letter_ids: list[int]) -> None:
-    """Move letters to SENT status.
+    """Send and close overdue letters that lost their send-email task.
 
-    This task is triggered when letters need to be moved from IN_PROGRESS to
-    SENT status. It also creates a new upcoming letter for the affected groups.
+    This task is triggered for in-progress letters whose send date has
+    arrived. It also creates a new upcoming letter for groups without one.
 
     Args:
         db (Session): Database session
