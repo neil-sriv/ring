@@ -134,10 +134,10 @@ export function CommandPalette({
   const debouncedQuery = useDebouncedValue(trimmedQuery, SEARCH_DEBOUNCE_MS)
   const searchActive = trimmedQuery.length >= MIN_SEARCH_QUERY_LENGTH
 
-  // No placeholderData here on purpose: carrying the previous query key's
-  // data forward would render hits from an older query under the current
-  // input. An unresolved key renders nothing (searchLoading covers it), and
-  // re-typing an identical query is still served instantly from the cache.
+  // No placeholderData: carrying the previous query key's data forward would
+  // flash hits from an older query. Combined with gating searchEntries on
+  // `debouncedQuery === trimmedQuery`, API hits only render for the current
+  // input. Re-typing an identical query is still served from the cache.
   const {
     data: searchData,
     isFetching: searchFetching,
@@ -234,7 +234,10 @@ export function CommandPalette({
   }, [staticEntries, normalizedQuery])
 
   const searchEntries = useMemo<PaletteEntry[]>(() => {
-    if (!searchActive) {
+    // Drop hits while debounce is catching up so the previous query's results
+    // never sit under the current input. Static page/group/action filtering
+    // stays live via filteredStaticEntries.
+    if (!searchActive || debouncedQuery !== trimmedQuery) {
       return []
     }
     const staticIds = new Set(filteredStaticEntries.map((entry) => entry.id))
@@ -286,7 +289,14 @@ export function CommandPalette({
 
       return []
     })
-  }, [filteredStaticEntries, navigate, searchActive, searchData])
+  }, [
+    debouncedQuery,
+    filteredStaticEntries,
+    navigate,
+    searchActive,
+    searchData,
+    trimmedQuery,
+  ])
 
   const sectionedEntries = useMemo(() => {
     const allEntries = [...filteredStaticEntries, ...searchEntries]
