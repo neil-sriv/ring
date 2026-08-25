@@ -15,6 +15,7 @@ from loguru import logger
 from sqlalchemy.exc import OperationalError
 from sqlalchemy.orm import Session
 
+from ring.async_scheduler.schedule import INTERVAL_JOB_SCHEDULE_REGISTRY
 from ring.async_scheduler.scheduler import job_factory, scheduler
 from ring.email_util import send_email
 from ring.letters.constants import LetterStatus
@@ -253,6 +254,81 @@ ASYNC_TASK_TO_EXECUTE_MAPPING: dict[
 }
 
 
+def requeue_in_progress_tasks(db: Session) -> int:
+    """Reset tasks stranded IN_PROGRESS back to PENDING.
+
+    Called at app startup, right after the APScheduler jobstore has been
+    wiped: any task still IN_PROGRESS at that point was claimed by a poll
+    cycle whose jobs died with the previous process (restart or deploy),
+    so nothing will ever execute or repair it. Without this, the letter
+    behind a stranded send task is frozen: the task is never re-collected
+    (only PENDING tasks are), and the postpend job skips the letter
+    because a send task still appears responsible for it.
+
+    Returns:
+        int: Number of tasks put back in PENDING.
+    """
+    stranded = db.scalars(
+        sqlalchemy.select(Task).where(
+            Task.status == TaskStatus.IN_PROGRESS,
+        )
+    ).all()
+    for task in stranded:
+        task.status = TaskStatus.PENDING
+        task.message = (
+            "requeued at startup: task was in progress when the previous "
+            "process stopped"
+        )
+        logger.info(
+            "Requeueing task {} ({}) stranded in progress at {}".format(
+                task.id, task.type, task.execute_at
+            )
+        )
+    db.commit()
+    return len(stranded)
+
+
+def scheduler_has_one_shot_jobs() -> bool:
+    """Return True when APScheduler still has jobs besides interval polls."""
+    interval_ids = set(INTERVAL_JOB_SCHEDULE_REGISTRY)
+    return any(job.id not in interval_ids for job in scheduler.get_jobs())
+
+
+def requeue_orphaned_in_progress_tasks(db: Session) -> int:
+    """Requeue IN_PROGRESS tasks when no one-shot send jobs remain.
+
+    Startup requeue covers deploys. This covers the same freeze if the
+    process stayed up after the jobstore lost the per-task jobs (or if
+    startup requeue ran before those rows were visible). One-shot jobs
+    still in the scheduler mean a send is legitimately running, so we
+    leave those tasks alone.
+
+    Returns:
+        int: Number of tasks put back in PENDING.
+    """
+    if scheduler_has_one_shot_jobs():
+        return 0
+    stranded = db.scalars(
+        sqlalchemy.select(Task).where(
+            Task.status == TaskStatus.IN_PROGRESS,
+        )
+    ).all()
+    if not stranded:
+        return 0
+    for task in stranded:
+        task.status = TaskStatus.PENDING
+        task.message = (
+            "requeued: in progress with no one-shot scheduler jobs remaining"
+        )
+        logger.info(
+            "Requeueing orphaned in-progress task {} ({})".format(
+                task.id, task.type
+            )
+        )
+    db.commit()
+    return len(stranded)
+
+
 @job_factory("send_response_open_email")
 def send_response_open_email(db: Session, letter_id: int) -> None:
     """Send an email notifying participants that a newsletter is open for responses.
@@ -349,6 +425,10 @@ def execute_tasks_async(db: Session, task_ids: list[int]) -> None:
 def execute_tasks(db: Session, task_ids: list[int]) -> None:
     """Execute a list of tasks synchronously.
 
+    Tasks without a registered executor (unknown or retired task types)
+    are marked FAILED instead of aborting the whole batch, so one bad row
+    in the task table can never block every other scheduled send.
+
     Args:
         db: Database session
         task_ids: List of task IDs to execute
@@ -361,8 +441,21 @@ def execute_tasks(db: Session, task_ids: list[int]) -> None:
         task.status = TaskStatus.IN_PROGRESS
     db.flush()
     for task in tasks:
-        task_type = TaskType(task.type)
-        task_to_execute = ASYNC_TASK_TO_EXECUTE_MAPPING[task_type]
+        try:
+            task_to_execute = ASYNC_TASK_TO_EXECUTE_MAPPING[
+                TaskType(task.type)
+            ]
+        except (KeyError, ValueError):
+            task.status = TaskStatus.FAILED
+            task.message = "no executor registered for task type {!r}".format(
+                task.type
+            )
+            logger.warning(
+                "Skipping task {}: no executor for task type {!r}".format(
+                    task.id, task.type
+                )
+            )
+            continue
         scheduler.add_job(
             task_to_execute,
             args=[task.id],
