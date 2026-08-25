@@ -12,6 +12,7 @@ from typing import Any, Callable
 
 import sqlalchemy
 from loguru import logger
+from sqlalchemy.exc import OperationalError
 from sqlalchemy.orm import Session
 
 from ring.async_scheduler.scheduler import job_factory, scheduler
@@ -25,7 +26,6 @@ from ring.tasks.crud.reminder_email_task import construct_reminder_email
 from ring.tasks.crud.response_open_email_task import (
     construct_response_open_email,
 )
-from ring.tasks.crud.send_email_task import construct_send_letter_email
 from ring.tasks.crud.waiting_response_email_task import (
     construct_waiting_response_email,
     letter_display_title,
@@ -102,50 +102,58 @@ def execute_send_email_task(
     """Execute a send email task.
 
     Sends a letter email to all participants and marks the letter as sent
-    upon successful delivery.
+    upon successful delivery. If the group has no upcoming letter after a
+    successful send (normally created when the letter was promoted), the
+    next letter is created here so the group's cadence continues.
 
     Args:
         db: Database session
         task: The send email task to execute
         **kwargs: Additional arguments for the task
-    Raises:
-        AssertionError: If no in-progress letter is found
     """
     logger.debug(f"Executing send email task with kwargs: {kwargs}")
     letter_id = kwargs.get("letter_id")
     if letter_id:
-        letter = db.scalars(
+        letter_to_send = db.scalars(
             sqlalchemy.select(Letter).where(Letter.id == letter_id)
         ).one()
-        assert letter
-        letter_to_send = letter
     else:
+        # Legacy tasks were registered before the letter was flushed, so
+        # their arguments hold "letter_id": None and the letter has to be
+        # inferred from the group's current in-progress letter.
         group = task.schedule.group
+        if not group.in_progress_letters:
+            logger.info(
+                "Send email task {} has no letter to send: group {} has "
+                "no in-progress letter".format(task.id, group.id)
+            )
+            db.commit()
+            return
         letter_to_send = group.in_progress_letters[0]
-    assert letter_to_send
+
+    if letter_to_send.status == LetterStatus.SENT:
+        logger.info(
+            "Letter {} is already sent; skipping send email task {}".format(
+                letter_to_send.id, task.id
+            )
+        )
+        db.commit()
+        return
 
     if defer_letter_send_if_below_threshold(db, letter_to_send):
         db.commit()
         return
 
-    title = f"Ring Newsletter {('#' + str(letter_to_send.number)) if not letter_to_send.title else str(letter_to_send.title)} for {letter_to_send.group.name}"
-    message_id = send_email(
-        construct_send_letter_email(
-            [u.email for u in letter_to_send.participants],
-            title,
-            letter_to_send.api_identifier,
-            letter_crud.compile_letter_dict(letter_to_send),
+    if (
+        letter_crud.send_letter_email(db, letter_to_send)
+        and not letter_to_send.group.upcoming_letters
+    ):
+        letter_crud.create_letter_with_questions(
+            db,
+            letter_to_send.group.api_identifier,
+            letter_to_send.send_at
+            + timedelta(days=letter_to_send.group.cycle_length),
         )
-    )
-    if message_id:
-        letter_to_send.status = LetterStatus.SENT
-        logger.info("Message ID:" + message_id)
-        logger.info(
-            "Sent letter email to {}".format(
-                [u.email for u in letter_to_send.participants]
-            )
-        )
-
     db.commit()
 
 
@@ -174,6 +182,19 @@ def _find_and_execute_task(
     task = db.query(task_class).filter(task_class.id == task_id).one()
     try:
         execute_fn(db, task, **kwargs)
+    except OperationalError as e:
+        # Transient database errors (e.g. CockroachDB serialization
+        # failures) must not kill the task for good: put it back in
+        # PENDING so the next scheduler poll retries it.
+        db.rollback()
+        task.status = TaskStatus.PENDING
+        task.message = f"retrying after transient database error: {e}"
+        db.commit()
+        logger.info(
+            "Task {} hit a transient database error and will be "
+            "retried: {}".format(task_id, e)
+        )
+        raise e
     except Exception as e:
         db.rollback()
         task.status = TaskStatus.FAILED

@@ -125,9 +125,14 @@ class TestLetterCrud:
         [send_email_task, reminder_email_task] = group.schedule.tasks
         assert send_email_task.type == TaskType.SEND_EMAIL
         assert send_email_task.execute_at == send_at
+        assert send_email_task.arguments == {"letter_id": letter.id}
 
         assert reminder_email_task.type == TaskType.REMINDER_EMAIL
         assert reminder_email_task.execute_at == send_at - timedelta(days=1)
+        assert reminder_email_task.arguments == {
+            "letter_id": letter.id,
+            "letter_status": LetterStatus.IN_PROGRESS,
+        }
 
         letter_2 = letter_crud.create_letter(
             db_session,
@@ -474,9 +479,10 @@ class TestLetterCrud:
         """Test collecting future letters.
 
         This test verifies that:
-        1. In-progress letters are postpended only once their send date arrives
+        1. In-progress letters are postpended only once their send date
+           arrives, whether or not the group already has an upcoming letter
         2. Upcoming letters are promoted up to a week before their send date
-        3. Groups that already have a letter in the target status are skipped
+        3. Groups that already have an in-progress letter are not promoted
         4. Sent letters are ignored
 
         Args:
@@ -497,7 +503,7 @@ class TestLetterCrud:
             send_at=curr_time + timedelta(days=6),
         )
         g = GroupFactory.create()
-        LetterFactory.create(
+        overdue_with_upcoming = LetterFactory.create(
             group=g,
             status=LetterStatus.IN_PROGRESS,
             send_at=curr_time - timedelta(minutes=1),
@@ -518,7 +524,7 @@ class TestLetterCrud:
         )
         db_session.commit()
 
-        assert postpend == [postpend_letter]
+        assert set(postpend) == {postpend_letter, overdue_with_upcoming}
         assert promote == [promoted_letter]
 
     def test_collect_future_letters_no_letters(
