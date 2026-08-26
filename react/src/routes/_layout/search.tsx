@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router"
+import { createFileRoute, useNavigate } from "@tanstack/react-router"
 import {
   ArrowRight,
   Loader2,
@@ -15,8 +15,16 @@ import { performSearchSearchSearchGetInfiniteOptions } from "../../client/@tanst
 import { SearchResultRow } from "../../components/Common/SearchResultRow"
 import { registerSearchFocusHandler } from "../../lib/globalKeyboardShortcuts"
 
+interface SearchRouteParams {
+  q?: string
+}
+
 export const Route = createFileRoute("/_layout/search")({
   component: Search,
+  validateSearch: (search: Record<string, unknown>): SearchRouteParams => {
+    const q = search.q
+    return typeof q === "string" && q.trim() ? { q } : {}
+  },
 })
 
 const SEARCH_PAGE_SIZE = 10
@@ -30,12 +38,33 @@ const SEARCH_TYPE_FILTERS: { value: SearchableType; label: string }[] = [
 ]
 
 function SearchContent() {
-  const [searchQuery, setSearchQuery] = useState("")
-  const [submittedQuery, setSubmittedQuery] = useState("")
-  const [hasSubmittedSearch, setHasSubmittedSearch] = useState(false)
+  const { q } = Route.useSearch()
+  const navigate = useNavigate()
+  const [searchQuery, setSearchQuery] = useState(q ?? "")
+  const [submittedQuery, setSubmittedQuery] = useState(q?.trim() ?? "")
+  const [hasSubmittedSearch, setHasSubmittedSearch] = useState(
+    Boolean(q?.trim()),
+  )
   const [selectedTypes, setSelectedTypes] = useState<SearchableType[]>([])
   const searchInputRef = useRef<HTMLInputElement>(null)
   const loadMoreRef = useRef<HTMLDivElement>(null)
+
+  // Sync from the ?q= param so command-palette handoffs run the search even
+  // when this route is already mounted (navigating /search -> /search), and
+  // reset to a clean page when navigating here without ?q= so the URL always
+  // matches what is shown.
+  useEffect(() => {
+    const trimmed = q?.trim()
+    if (q && trimmed) {
+      setSearchQuery(q)
+      setSubmittedQuery(trimmed)
+      setHasSubmittedSearch(true)
+    } else {
+      setSearchQuery("")
+      setSubmittedQuery("")
+      setHasSubmittedSearch(false)
+    }
+  }, [q])
 
   const toggleType = (type: SearchableType) => {
     setSelectedTypes((current) =>
@@ -116,6 +145,15 @@ function SearchContent() {
       return
     }
     setHasSubmittedSearch(true)
+    // Keep ?q= in sync so the current search is shareable and survives
+    // reloads.
+    if (trimmedQuery !== q) {
+      navigate({
+        to: "/search",
+        search: { q: trimmedQuery },
+        replace: true,
+      })
+    }
     if (trimmedQuery === submittedQuery) {
       await refetch()
       return

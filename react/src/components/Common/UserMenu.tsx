@@ -29,7 +29,11 @@ const UserMenu = () => {
   }
 
   return (
-    <div className="hidden md:block fixed top-4 right-4 z-40">
+    <div
+      // Offset by the scrollbar width Radix removes during dialog scroll lock
+      // so this fixed element doesn't jump right when a dialog opens.
+      className="hidden md:block fixed top-4 right-[calc(1rem_+_var(--removed-body-scroll-bar-size,0px))] z-40"
+    >
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
           <button
