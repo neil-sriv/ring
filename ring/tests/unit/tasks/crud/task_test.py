@@ -519,6 +519,148 @@ class TestTaskCrud:
         assert requeued.status == TaskStatus.PENDING
         assert "transient database error" in requeued.message
 
+    def test_requeue_in_progress_tasks_resets_stranded_tasks(
+        self, db_session: Session
+    ) -> None:
+        """Put stranded IN_PROGRESS tasks back in PENDING at startup.
+
+        Regression test: a restart or deploy wipes the APScheduler
+        jobstore, so tasks claimed by the previous process stayed
+        IN_PROGRESS forever — never re-collected by the poll loop, while
+        the postpend job skipped their letters because a send task still
+        appeared responsible. The letter behind the task was frozen: no
+        email, no deferral, nothing at its due date.
+        """
+        admin = UserFactory.create()
+        group = GroupFactory.create(admin=admin, members=[admin])
+        db_session.commit()
+        stranded = schedule_crud.register_task(
+            db_session,
+            group.schedule,
+            TaskType.SEND_EMAIL,
+            datetime.now(tz=UTC) - timedelta(hours=1),
+            {"letter_id": None},
+        )
+        stranded.status = TaskStatus.IN_PROGRESS
+        completed = schedule_crud.register_task(
+            db_session,
+            group.schedule,
+            TaskType.REMINDER_EMAIL,
+            datetime.now(tz=UTC) - timedelta(days=1),
+            {"letter_id": None},
+        )
+        completed.status = TaskStatus.COMPLETED
+        db_session.commit()
+
+        requeued = task_crud.requeue_in_progress_tasks(db_session)
+
+        assert requeued == 1
+        db_session.expire_all()
+        assert stranded.status == TaskStatus.PENDING
+        assert "requeued at startup" in stranded.message
+        assert completed.status == TaskStatus.COMPLETED
+
+    def test_requeue_orphaned_in_progress_tasks_skips_when_jobs_remain(
+        self, db_session: Session
+    ) -> None:
+        """Do not requeue a send that still has a one-shot scheduler job."""
+        admin = UserFactory.create()
+        group = GroupFactory.create(admin=admin, members=[admin])
+        db_session.commit()
+        stranded = schedule_crud.register_task(
+            db_session,
+            group.schedule,
+            TaskType.SEND_EMAIL,
+            datetime.now(tz=UTC) - timedelta(hours=1),
+            {"letter_id": None},
+        )
+        stranded.status = TaskStatus.IN_PROGRESS
+        db_session.commit()
+
+        running_job = type("Job", (), {"id": "send_email_task_running"})()
+        with patch(
+            "ring.tasks.crud.task.scheduler.get_jobs",
+            return_value=[running_job],
+        ):
+            requeued = task_crud.requeue_orphaned_in_progress_tasks(db_session)
+
+        assert requeued == 0
+        db_session.expire_all()
+        assert stranded.status == TaskStatus.IN_PROGRESS
+
+    def test_requeue_orphaned_in_progress_tasks_resets_when_jobstore_empty(
+        self, db_session: Session
+    ) -> None:
+        """Requeue IN_PROGRESS tasks when only interval jobs remain."""
+        admin = UserFactory.create()
+        group = GroupFactory.create(admin=admin, members=[admin])
+        db_session.commit()
+        stranded = schedule_crud.register_task(
+            db_session,
+            group.schedule,
+            TaskType.SEND_EMAIL,
+            datetime.now(tz=UTC) - timedelta(hours=1),
+            {"letter_id": None},
+        )
+        stranded.status = TaskStatus.IN_PROGRESS
+        db_session.commit()
+
+        interval_job = type("Job", (), {"id": "poll_schedule_task"})()
+        with (
+            patch(
+                "ring.tasks.crud.task.scheduler.get_jobs",
+                return_value=[interval_job],
+            ),
+            patch(
+                "ring.tasks.crud.task.INTERVAL_JOB_SCHEDULE_REGISTRY",
+                {"poll_schedule_task": object()},
+            ),
+        ):
+            requeued = task_crud.requeue_orphaned_in_progress_tasks(db_session)
+
+        assert requeued == 1
+        db_session.expire_all()
+        assert stranded.status == TaskStatus.PENDING
+        assert "no one-shot scheduler jobs" in stranded.message
+
+    def test_execute_tasks_skips_task_without_executor(
+        self, db_session: Session
+    ) -> None:
+        """One task without an executor must not block the whole batch."""
+        admin = UserFactory.create()
+        group = GroupFactory.create(admin=admin, members=[admin])
+        db_session.commit()
+        generic_task = schedule_crud.register_task(
+            db_session,
+            group.schedule,
+            TaskType.GENERIC,
+            datetime.now(tz=UTC) - timedelta(minutes=1),
+        )
+        send_task = schedule_crud.register_task(
+            db_session,
+            group.schedule,
+            TaskType.SEND_EMAIL,
+            datetime.now(tz=UTC) - timedelta(minutes=1),
+            {"letter_id": None},
+        )
+        db_session.commit()
+
+        scheduled_jobs: list[int] = []
+        with patch(
+            "ring.tasks.crud.task.scheduler.add_job",
+            side_effect=lambda job, args, kwargs: scheduled_jobs.append(
+                args[0]
+            ),
+        ):
+            task_crud.execute_tasks(
+                db_session, [generic_task.id, send_task.id]
+            )
+
+        assert scheduled_jobs == [send_task.id]
+        assert generic_task.status == TaskStatus.FAILED
+        assert "no executor registered" in generic_task.message
+        assert send_task.status == TaskStatus.IN_PROGRESS
+
     def test_send_waiting_response_email_noops_without_non_responders(
         self, db_session: Session
     ) -> None:
