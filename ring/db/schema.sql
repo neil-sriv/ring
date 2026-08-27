@@ -173,6 +173,25 @@ CREATE TABLE public.subscription (
 	INDEX ix_subscription_id (id ASC),
 	INDEX ix_subscription_user_id (user_id ASC)
 );
+CREATE SEQUENCE public.notification_id_seq AS INT8 MINVALUE 1 MAXVALUE 9223372036854775807 INCREMENT 1 START 1;
+CREATE TABLE public.notification (
+	id INT8 NOT NULL DEFAULT nextval('public.notification_id_seq'::REGCLASS),
+	type VARCHAR NOT NULL,
+	title VARCHAR NOT NULL,
+	body VARCHAR NOT NULL,
+	target_api_id VARCHAR NULL,
+	read_at TIMESTAMPTZ NULL,
+	recipient_id INT8 NOT NULL,
+	api_identifier VARCHAR NOT NULL,
+	created_at TIMESTAMPTZ NOT NULL DEFAULT now():::TIMESTAMPTZ,
+	CONSTRAINT notification_pkey PRIMARY KEY (id ASC),
+	UNIQUE INDEX ix_notification_api_identifier (api_identifier ASC),
+	INDEX ix_notification_created_at (created_at ASC),
+	INDEX ix_notification_id (id ASC),
+	INDEX ix_notification_recipient_id (recipient_id ASC),
+	INDEX ix_notification_target_api_id (target_api_id ASC),
+	INDEX ix_notification_type (type ASC)
+);
 CREATE SEQUENCE public.task_id_seq AS INT8 MINVALUE 1 MAXVALUE 9223372036854775807 INCREMENT 1 START 1;
 CREATE TABLE public.task (
 	id INT8 NOT NULL DEFAULT nextval('public.task_id_seq'::REGCLASS),
@@ -263,6 +282,7 @@ ALTER TABLE public.letter_to_user_assocation ADD CONSTRAINT letter_to_user_assoc
 ALTER TABLE public.letter_to_user_assocation ADD CONSTRAINT letter_to_user_assocation_user_id_fkey FOREIGN KEY (user_id) REFERENCES public."user"(id);
 ALTER TABLE public.schedule ADD CONSTRAINT schedule_group_id_fkey FOREIGN KEY (group_id) REFERENCES public."group"(id);
 ALTER TABLE public.subscription ADD CONSTRAINT subscription_user_id_fkey FOREIGN KEY (user_id) REFERENCES public."user"(id) ON DELETE CASCADE;
+ALTER TABLE public.notification ADD CONSTRAINT notification_recipient_id_fkey FOREIGN KEY (recipient_id) REFERENCES public."user"(id) ON DELETE CASCADE;
 ALTER TABLE public.task ADD CONSTRAINT task_schedule_id_fkey FOREIGN KEY (schedule_id) REFERENCES public.schedule(id);
 ALTER TABLE public.user_group_assocation ADD CONSTRAINT user_group_assocation_group_id_fkey FOREIGN KEY (group_id) REFERENCES public."group"(id);
 ALTER TABLE public.user_group_assocation ADD CONSTRAINT user_group_assocation_user_id_fkey FOREIGN KEY (user_id) REFERENCES public."user"(id);
@@ -289,6 +309,7 @@ ALTER TABLE public.letter_to_user_assocation VALIDATE CONSTRAINT letter_to_user_
 ALTER TABLE public.letter_to_user_assocation VALIDATE CONSTRAINT letter_to_user_assocation_user_id_fkey;
 ALTER TABLE public.schedule VALIDATE CONSTRAINT schedule_group_id_fkey;
 ALTER TABLE public.subscription VALIDATE CONSTRAINT subscription_user_id_fkey;
+ALTER TABLE public.notification VALIDATE CONSTRAINT notification_recipient_id_fkey;
 ALTER TABLE public.task VALIDATE CONSTRAINT task_schedule_id_fkey;
 ALTER TABLE public.user_group_assocation VALIDATE CONSTRAINT user_group_assocation_group_id_fkey;
 ALTER TABLE public.user_group_assocation VALIDATE CONSTRAINT user_group_assocation_user_id_fkey;

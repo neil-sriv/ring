@@ -27,6 +27,14 @@ from ring.tests.factories.parties.user_factory import UserFactory
 from ring.tests.lib.utils import assert_lists_equal_with_order_insensitive
 
 
+def _self_policies(sub_api_id: str) -> list[list[str]]:
+    """Owner policies every enforcer build adds for the subject."""
+    return [
+        [sub_api_id, sub_api_id, Action.READ.value],
+        [sub_api_id, sub_api_id, Action.WRITE.value],
+    ]
+
+
 class TestAction:
     """Test the Action enum."""
 
@@ -49,7 +57,10 @@ class TestBuildStatelessEnforcer:
 
         enforcer = build_stateless_enforcer(db_session, user.api_identifier)
 
-        assert enforcer.get_policy() == []
+        assert_lists_equal_with_order_insensitive(
+            enforcer.get_policy(),
+            _self_policies(user.api_identifier),
+        )
         assert enforcer.get_grouping_policy() == []
         assert enforcer.get_named_grouping_policy("g2") == []
 
@@ -67,7 +78,8 @@ class TestBuildStatelessEnforcer:
 
         assert_lists_equal_with_order_insensitive(
             enforcer.get_policy(),
-            [[group.api_identifier, group.api_identifier, Action.READ.value]],
+            [[group.api_identifier, group.api_identifier, Action.READ.value]]
+            + _self_policies(user.api_identifier),
         )
         assert_lists_equal_with_order_insensitive(
             enforcer.get_grouping_policy(),
@@ -95,7 +107,8 @@ class TestBuildStatelessEnforcer:
 
         assert_lists_equal_with_order_insensitive(
             enforcer.get_policy(),
-            [[group.api_identifier, group.api_identifier, Action.READ.value]],
+            [[group.api_identifier, group.api_identifier, Action.READ.value]]
+            + _self_policies(user.api_identifier),
         )
 
         # Check g1 policies (user-group relationships)
@@ -118,7 +131,8 @@ class TestBuildStatelessEnforcer:
         # Check p policies (permissions)
         assert_lists_equal_with_order_insensitive(
             enforcer.get_policy(),
-            [[group.api_identifier, group.api_identifier, Action.READ.value]],
+            [[group.api_identifier, group.api_identifier, Action.READ.value]]
+            + _self_policies(user.api_identifier),
         )
 
     def test_build_stateless_enforcer_multiple_groups(
@@ -146,7 +160,8 @@ class TestBuildStatelessEnforcer:
                     group2.api_identifier,
                     Action.READ.value,
                 ],
-            ],
+            ]
+            + _self_policies(user.api_identifier),
         )
         assert_lists_equal_with_order_insensitive(
             enforcer.get_grouping_policy(),
@@ -170,7 +185,10 @@ class TestBuildStatelessEnforcer:
 
         enforcer = build_stateless_enforcer(db_session, "nonexistent_user_id")
 
-        assert enforcer.get_policy() == []
+        assert_lists_equal_with_order_insensitive(
+            enforcer.get_policy(),
+            _self_policies("nonexistent_user_id"),
+        )
         assert enforcer.get_grouping_policy() == []
         assert enforcer.get_named_grouping_policy("g2") == []
 

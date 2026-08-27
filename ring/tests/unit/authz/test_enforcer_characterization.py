@@ -104,6 +104,16 @@ class TestEnforcerPolicySets:
                 group_a.api_identifier,
                 Action.READ.value,
             ),
+            (
+                member.api_identifier,
+                member.api_identifier,
+                Action.READ.value,
+            ),
+            (
+                member.api_identifier,
+                member.api_identifier,
+                Action.WRITE.value,
+            ),
         }
         assert _unique_pairs(enforcer.get_named_grouping_policy("g2")) == {
             (member.api_identifier, group_a.api_identifier),
@@ -137,6 +147,16 @@ class TestEnforcerPolicySets:
                 group2.api_identifier,
                 group2.api_identifier,
                 Action.READ.value,
+            ),
+            (
+                user.api_identifier,
+                user.api_identifier,
+                Action.READ.value,
+            ),
+            (
+                user.api_identifier,
+                user.api_identifier,
+                Action.WRITE.value,
             ),
         }
         assert _unique_pairs(enforcer.get_named_grouping_policy("g2")) == {
