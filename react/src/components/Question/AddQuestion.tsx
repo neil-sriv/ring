@@ -80,8 +80,8 @@ const AddQuestion = ({ isOpen, onClose, loopApiId }: AddQuestionProps) => {
     },
   })
 
-  const onSubmit: SubmitHandler<QuestionFormProps> = (data) => {
-    mutation.mutate({
+  const onSubmit: SubmitHandler<QuestionFormProps> = async (data) => {
+    await mutation.mutateAsync({
       body: {
         question_text: data.questionText,
         author_api_id: currentUser!.api_identifier,
@@ -90,8 +90,15 @@ const AddQuestion = ({ isOpen, onClose, loopApiId }: AddQuestionProps) => {
     })
   }
 
+  const isSaving = isSubmitting || mutation.isPending
+
   return (
-    <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
+    <Dialog
+      open={isOpen}
+      onOpenChange={(open) => {
+        if (!open && !isSaving) onClose()
+      }}
+    >
       <DialogContent className="sm:max-w-md">
         <form onSubmit={handleSubmit(onSubmit)}>
           <DialogHeader>
@@ -110,6 +117,7 @@ const AddQuestion = ({ isOpen, onClose, loopApiId }: AddQuestionProps) => {
                 })}
                 className="min-h-[100px]"
                 placeholder="Enter your question here..."
+                disabled={isSaving}
               />
               {errors.questionText && (
                 <p className="text-xs text-destructive">
@@ -120,13 +128,16 @@ const AddQuestion = ({ isOpen, onClose, loopApiId }: AddQuestionProps) => {
           </div>
 
           <DialogFooter className="gap-3">
-            <Button type="submit" disabled={isSubmitting}>
-              {isSubmitting && (
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              )}
+            <Button type="submit" disabled={isSaving}>
+              {isSaving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
               Save
             </Button>
-            <Button type="button" onClick={onClose} variant="outline">
+            <Button
+              type="button"
+              onClick={onClose}
+              variant="outline"
+              disabled={isSaving}
+            >
               Cancel
             </Button>
           </DialogFooter>

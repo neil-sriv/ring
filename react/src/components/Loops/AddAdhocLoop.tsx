@@ -79,8 +79,8 @@ const AddAdhocLoop = ({ isOpen, onClose, groupApiId }: AddAdhocLoopProps) => {
     },
   })
 
-  const onSubmit: SubmitHandler<AdhocLetterFormProps> = (data) => {
-    mutation.mutate({
+  const onSubmit: SubmitHandler<AdhocLetterFormProps> = async (data) => {
+    await mutation.mutateAsync({
       path: { letter_type: "ADHOC" },
       body: {
         group_api_identifier: groupApiId,
@@ -91,11 +91,13 @@ const AddAdhocLoop = ({ isOpen, onClose, groupApiId }: AddAdhocLoopProps) => {
     })
   }
 
+  const isSaving = isSubmitting || mutation.isPending
+
   return (
     <Dialog
       open={isOpen}
       onOpenChange={(open) => {
-        if (!open) onClose()
+        if (!open && !isSaving) onClose()
       }}
     >
       <DialogContent className="sm:max-w-md">
@@ -115,6 +117,7 @@ const AddAdhocLoop = ({ isOpen, onClose, groupApiId }: AddAdhocLoopProps) => {
                   },
                 })}
                 placeholder="Enter a title for this adhoc loop"
+                disabled={isSaving}
               />
               {errors.title && (
                 <p className="text-xs text-destructive">
@@ -135,6 +138,7 @@ const AddAdhocLoop = ({ isOpen, onClose, groupApiId }: AddAdhocLoopProps) => {
                 })}
                 type="datetime-local"
                 min={toISOLocal(new Date()).slice(0, 16)}
+                disabled={isSaving}
               />
               {errors.sendAt && (
                 <p className="text-xs text-destructive">
@@ -145,13 +149,16 @@ const AddAdhocLoop = ({ isOpen, onClose, groupApiId }: AddAdhocLoopProps) => {
           </div>
 
           <DialogFooter className="gap-2">
-            <Button type="submit" disabled={isSubmitting}>
-              {isSubmitting && (
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              )}
+            <Button type="submit" disabled={isSaving}>
+              {isSaving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
               Create Adhoc Loop
             </Button>
-            <Button type="button" variant="outline" onClick={onClose}>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={onClose}
+              disabled={isSaving}
+            >
               Cancel
             </Button>
           </DialogFooter>
