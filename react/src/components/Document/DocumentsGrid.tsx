@@ -75,6 +75,7 @@ export function DocumentsGrid(props: {
           </p>
           <Button
             className="mt-6"
+            disabled={createDocumentMutation.isPending}
             onClick={() => {
               createDocumentMutation.mutate({
                 body: {
@@ -85,6 +86,9 @@ export function DocumentsGrid(props: {
               })
             }}
           >
+            {createDocumentMutation.isPending && (
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+            )}
             Create Document
           </Button>
         </div>

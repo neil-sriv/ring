@@ -83,8 +83,8 @@ const AddGroup = ({ isOpen, onClose }: AddGroupProps) => {
     },
   })
 
-  const onSubmit: SubmitHandler<GroupCreate> = (data) => {
-    mutation.mutate({
+  const onSubmit: SubmitHandler<GroupCreate> = async (data) => {
+    await mutation.mutateAsync({
       body: {
         admin_api_identifier: currentUser!.api_identifier,
         name: data.name,
@@ -92,11 +92,13 @@ const AddGroup = ({ isOpen, onClose }: AddGroupProps) => {
     })
   }
 
+  const isSaving = isSubmitting || mutation.isPending
+
   return (
     <Dialog
       open={isOpen}
       onOpenChange={(open) => {
-        if (!open) onClose()
+        if (!open && !isSaving) onClose()
       }}
     >
       <DialogContent>
@@ -114,6 +116,7 @@ const AddGroup = ({ isOpen, onClose }: AddGroupProps) => {
                 })}
                 placeholder="Name"
                 type="text"
+                disabled={isSaving}
               />
               {errors.name && (
                 <p className="text-xs text-destructive">
@@ -123,11 +126,16 @@ const AddGroup = ({ isOpen, onClose }: AddGroupProps) => {
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={onClose} type="button">
+            <Button
+              variant="outline"
+              onClick={onClose}
+              type="button"
+              disabled={isSaving}
+            >
               Cancel
             </Button>
-            <Button type="submit" disabled={isSubmitting}>
-              {isSubmitting && <Loader2 className="h-4 w-4 animate-spin" />}
+            <Button type="submit" disabled={isSaving}>
+              {isSaving && <Loader2 className="h-4 w-4 animate-spin" />}
               Save
             </Button>
           </DialogFooter>
