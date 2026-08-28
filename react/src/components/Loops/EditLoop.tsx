@@ -84,7 +84,7 @@ const EditLetter = ({ isOpen, onClose, loop }: EditLetterProps) => {
     },
   })
 
-  const onSubmit: SubmitHandler<LetterFormProps> = (data) => {
+  const onSubmit: SubmitHandler<LetterFormProps> = async (data) => {
     const updateData: {
       send_at?: string
       title?: string
@@ -115,7 +115,7 @@ const EditLetter = ({ isOpen, onClose, loop }: EditLetterProps) => {
 
     // Only submit if there are changes
     if (Object.keys(updateData).length > 0) {
-      mutation.mutate({
+      await mutation.mutateAsync({
         body: updateData,
         path: { letter_api_id: loop.api_identifier },
       })
@@ -125,11 +125,13 @@ const EditLetter = ({ isOpen, onClose, loop }: EditLetterProps) => {
     }
   }
 
+  const isSaving = isSubmitting || mutation.isPending
+
   return (
     <Dialog
       open={isOpen}
       onOpenChange={(open) => {
-        if (!open) onClose()
+        if (!open && !isSaving) onClose()
       }}
     >
       <DialogContent className="sm:max-w-md">
@@ -144,6 +146,7 @@ const EditLetter = ({ isOpen, onClose, loop }: EditLetterProps) => {
                 id="title"
                 {...register("title")}
                 placeholder="Enter letter title"
+                disabled={isSaving}
               />
             </div>
 
@@ -165,8 +168,9 @@ const EditLetter = ({ isOpen, onClose, loop }: EditLetterProps) => {
                     id="isInProgress"
                     {...register("isInProgress")}
                     className="peer sr-only"
+                    disabled={isSaving}
                   />
-                  <div className="peer h-6 w-11 rounded-full bg-muted after:absolute after:left-[2px] after:top-[2px] after:h-5 after:w-5 after:rounded-full after:border after:border-border after:bg-background after:transition-all after:content-[''] peer-checked:bg-primary peer-checked:after:translate-x-full peer-focus:ring-2 peer-focus:ring-ring" />
+                  <div className="peer h-6 w-11 rounded-full bg-muted after:absolute after:left-[2px] after:top-[2px] after:h-5 after:w-5 after:rounded-full after:border after:border-border after:bg-background after:transition-all after:content-[''] peer-checked:bg-primary peer-checked:after:translate-x-full peer-focus:ring-2 peer-focus:ring-ring peer-disabled:cursor-not-allowed peer-disabled:opacity-50" />
                 </label>
                 <span
                   className={`text-sm ${
@@ -192,6 +196,7 @@ const EditLetter = ({ isOpen, onClose, loop }: EditLetterProps) => {
                 })}
                 type="datetime-local"
                 min={toISOLocal(new Date()).slice(0, 16)}
+                disabled={isSaving}
               />
               {errors.sendAt && (
                 <p className="text-xs text-destructive">
@@ -202,13 +207,16 @@ const EditLetter = ({ isOpen, onClose, loop }: EditLetterProps) => {
           </div>
 
           <DialogFooter className="gap-2">
-            <Button type="submit" disabled={isSubmitting}>
-              {isSubmitting && (
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              )}
+            <Button type="submit" disabled={isSaving}>
+              {isSaving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
               Save
             </Button>
-            <Button type="button" variant="outline" onClick={onClose}>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={onClose}
+              disabled={isSaving}
+            >
               Cancel
             </Button>
           </DialogFooter>

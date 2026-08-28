@@ -90,7 +90,7 @@ const AddMembers = ({ group, isOpen, onClose }: AddMembersProps) => {
     const memberEmails = data.member_emails
       .split(",")
       .map((email) => email.trim())
-    mutation.mutate({
+    await mutation.mutateAsync({
       body: { member_emails: memberEmails },
       path: { group_api_id: group.api_identifier },
     })
@@ -101,11 +101,13 @@ const AddMembers = ({ group, isOpen, onClose }: AddMembersProps) => {
     onClose()
   }
 
+  const isSaving = isSubmitting || mutation.isPending
+
   return (
     <Dialog
       open={isOpen}
       onOpenChange={(open) => {
-        if (!open) onClose()
+        if (!open && !isSaving) onClose()
       }}
     >
       <DialogContent>
@@ -126,6 +128,7 @@ const AddMembers = ({ group, isOpen, onClose }: AddMembersProps) => {
                   required: "New member emails are required",
                 })}
                 type="text"
+                disabled={isSaving}
               />
               {errors.member_emails && (
                 <p className="text-xs text-destructive">
@@ -135,11 +138,16 @@ const AddMembers = ({ group, isOpen, onClose }: AddMembersProps) => {
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={onCancel} type="button">
+            <Button
+              variant="outline"
+              onClick={onCancel}
+              type="button"
+              disabled={isSaving}
+            >
               Cancel
             </Button>
-            <Button type="submit" disabled={isSubmitting || !isDirty}>
-              {isSubmitting && <Loader2 className="h-4 w-4 animate-spin" />}
+            <Button type="submit" disabled={isSaving || !isDirty}>
+              {isSaving && <Loader2 className="h-4 w-4 animate-spin" />}
               Save
             </Button>
           </DialogFooter>
