@@ -87,7 +87,7 @@ const ImpersonateUser = ({ user, isOpen, onClose }: ImpersonateUserProps) => {
   })
 
   const onSubmit: SubmitHandler<UserImpersonateForm> = async () => {
-    mutation.mutate({
+    await mutation.mutateAsync({
       query: {
         user_api_id: user.api_identifier,
       },
@@ -99,11 +99,13 @@ const ImpersonateUser = ({ user, isOpen, onClose }: ImpersonateUserProps) => {
     onClose()
   }
 
+  const isSaving = isSubmitting || mutation.isPending
+
   return (
     <Dialog
       open={isOpen}
       onOpenChange={(open) => {
-        if (!open) onClose()
+        if (!open && !isSaving) onClose()
       }}
     >
       <DialogContent>
@@ -124,6 +126,7 @@ const ImpersonateUser = ({ user, isOpen, onClose }: ImpersonateUserProps) => {
                 })}
                 placeholder="User ID"
                 type="text"
+                disabled={isSaving}
               />
               {errors.id && (
                 <p className="text-xs text-destructive">{errors.id.message}</p>
@@ -131,11 +134,16 @@ const ImpersonateUser = ({ user, isOpen, onClose }: ImpersonateUserProps) => {
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={onCancel} type="button">
+            <Button
+              variant="outline"
+              onClick={onCancel}
+              type="button"
+              disabled={isSaving}
+            >
               Cancel
             </Button>
-            <Button variant="destructive" type="submit" disabled={isSubmitting}>
-              {isSubmitting && <Loader2 className="h-4 w-4 animate-spin" />}
+            <Button variant="destructive" type="submit" disabled={isSaving}>
+              {isSaving && <Loader2 className="h-4 w-4 animate-spin" />}
               Impersonate
             </Button>
           </DialogFooter>
