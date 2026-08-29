@@ -33,35 +33,23 @@ function LateAnswerQuestion({
   )
   const showToast = useCustomToast()
   const [responseText, setResponseText] = useState("")
-  const [isSubmitting, setIsSubmitting] = useState(false)
   const textareaRef = useAutoResizeTextarea(responseText)
 
-  if (!currentUser) {
-    return <div>Loading...</div>
-  }
-
-  // Check if user has already responded to this question
-  const hasResponded = question.responses.some(
-    (response) =>
-      response.participant.api_identifier === currentUser.api_identifier,
-  )
-
-  // If user has already responded, don't show the late answer form
-  if (hasResponded) {
-    return <></>
-  }
-
-  const handleResponseChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
-    setResponseText(e.target.value)
-  }
-
   const mutation = useMutation({
-    mutationFn: async () => {
+    mutationFn: async ({
+      text,
+      questionApiId,
+      participantApiId,
+    }: {
+      text: string
+      questionApiId: string
+      participantApiId: string
+    }) => {
       await upsertResponseQuestionsQuestionQuestionApiIdUpsertResponsePost({
-        path: { question_api_id: question.api_identifier },
+        path: { question_api_id: questionApiId },
         body: {
-          response_text: responseText,
-          participant_api_identifier: currentUser.api_identifier,
+          response_text: text,
+          participant_api_identifier: participantApiId,
         },
         throwOnError: true,
       })
@@ -69,7 +57,6 @@ function LateAnswerQuestion({
     onSuccess: () => {
       showToast("Success!", "Your late answer has been submitted.", "success")
       setResponseText("")
-      // Invalidate the letter query to refresh the data
       queryClient.invalidateQueries({
         queryKey: readLetterLettersLetterLetterApiIdGetQueryKey({
           path: { letter_api_id: loopApiId },
@@ -88,18 +75,38 @@ function LateAnswerQuestion({
         "error",
       )
     },
-    onSettled: () => {
-      setIsSubmitting(false)
-    },
   })
 
+  if (!currentUser) {
+    return <div>Loading...</div>
+  }
+
+  const hasResponded = question.responses.some(
+    (response) =>
+      response.participant.api_identifier === currentUser.api_identifier,
+  )
+
+  if (hasResponded) {
+    return <></>
+  }
+
+  const isSaving = mutation.isPending
+
+  const handleResponseChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    setResponseText(e.target.value)
+  }
+
   const handleSubmit = async () => {
+    if (isSaving) return
     if (!responseText.trim()) {
       showToast("Error", "Please enter your answer before submitting.", "error")
       return
     }
-    setIsSubmitting(true)
-    mutation.mutate()
+    await mutation.mutateAsync({
+      text: responseText,
+      questionApiId: question.api_identifier,
+      participantApiId: currentUser.api_identifier,
+    })
   }
 
   return (
@@ -122,15 +129,16 @@ function LateAnswerQuestion({
           onChange={handleResponseChange}
           placeholder="Add your late answer here..."
           className="min-h-[100px] overflow-hidden resize-none"
+          disabled={isSaving}
         />
       </div>
 
       <Button
         onClick={handleSubmit}
-        disabled={isSubmitting || !responseText.trim()}
+        disabled={isSaving || !responseText.trim()}
       >
-        {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-        {isSubmitting ? "Submitting..." : "Submit Late Answer"}
+        {isSaving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+        {isSaving ? "Submitting..." : "Submit Late Answer"}
       </Button>
     </div>
   )
