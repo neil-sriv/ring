@@ -416,12 +416,15 @@ export const CollabEditor: React.FC<{
   onSavingChange?: (isSaving: boolean) => void
   onEditingChange?: (isEditing: boolean) => void
   onConnectionChange?: (status: NotebookWsStatus) => void
+  /** Fired when the HTML content projection PUT fails (network or non-OK). */
+  onSyncError?: () => void
 }> = ({
   docId,
   legacyContent,
   onSavingChange,
   onEditingChange,
   onConnectionChange,
+  onSyncError,
 }) => {
   const session = useCollabSession(docId, onConnectionChange)
 
@@ -441,6 +444,7 @@ export const CollabEditor: React.FC<{
       legacyContent={legacyContent}
       onSavingChange={onSavingChange}
       onEditingChange={onEditingChange}
+      onSyncError={onSyncError}
     />
   )
 }
@@ -451,11 +455,28 @@ const CollabEditorInner: React.FC<{
   legacyContent?: string
   onSavingChange?: (isSaving: boolean) => void
   onEditingChange?: (isEditing: boolean) => void
-}> = ({ docId, session, legacyContent, onSavingChange, onEditingChange }) => {
+  onSyncError?: () => void
+}> = ({
+  docId,
+  session,
+  legacyContent,
+  onSavingChange,
+  onEditingChange,
+  onSyncError,
+}) => {
   const { data: me } = useQuery({ ...readUserMePartiesMeGetOptions({}) })
   const editingTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const saveTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const hasSeededRef = useRef(false)
+  const syncGenerationRef = useRef(0)
+  // TipTap caches onUpdate from the initial useEditor call; keep callbacks
+  // fresh via refs so sync error/status handlers always see current props.
+  const onSavingChangeRef = useRef(onSavingChange)
+  const onEditingChangeRef = useRef(onEditingChange)
+  const onSyncErrorRef = useRef(onSyncError)
+  onSavingChangeRef.current = onSavingChange
+  onEditingChangeRef.current = onEditingChange
+  onSyncErrorRef.current = onSyncError
 
   const editor = useEditor(
     {
@@ -484,12 +505,12 @@ const CollabEditorInner: React.FC<{
           return
         }
 
-        onEditingChange?.(true)
+        onEditingChangeRef.current?.(true)
         if (editingTimeoutRef.current) {
           clearTimeout(editingTimeoutRef.current)
         }
         editingTimeoutRef.current = setTimeout(() => {
-          onEditingChange?.(false)
+          onEditingChangeRef.current?.(false)
         }, 1000)
 
         // Debounced write of the rendered-HTML projection. The CRDT state on
@@ -500,21 +521,33 @@ const CollabEditorInner: React.FC<{
         }
         const content = editor.getHTML()
         saveTimeoutRef.current = setTimeout(async () => {
-          onSavingChange?.(true)
+          const syncGeneration = ++syncGenerationRef.current
+          onSavingChangeRef.current?.(true)
           try {
             const accessToken = localStorage.getItem("access_token") ?? ""
-            await fetch(apiUrl(`/api/v1/notebook/documents/${docId}`), {
-              method: "PUT",
-              headers: {
-                "Content-Type": "application/json",
-                Authorization: `Bearer ${accessToken}`,
+            const response = await fetch(
+              apiUrl(`/api/v1/notebook/documents/${docId}`),
+              {
+                method: "PUT",
+                headers: {
+                  "Content-Type": "application/json",
+                  Authorization: `Bearer ${accessToken}`,
+                },
+                body: JSON.stringify({ content }),
               },
-              body: JSON.stringify({ content }),
-            })
+            )
+            if (!response.ok) {
+              throw new Error(`Sync failed with status ${response.status}`)
+            }
           } catch (error) {
             console.error("Failed to sync content projection:", error)
+            if (syncGeneration === syncGenerationRef.current) {
+              onSyncErrorRef.current?.()
+            }
           } finally {
-            onSavingChange?.(false)
+            if (syncGeneration === syncGenerationRef.current) {
+              onSavingChangeRef.current?.(false)
+            }
           }
         }, 1000)
       },
