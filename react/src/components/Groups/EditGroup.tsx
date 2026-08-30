@@ -75,7 +75,7 @@ const EditGroup = ({ group, isOpen, onClose }: EditGroupProps) => {
   })
 
   const onSubmit: SubmitHandler<GroupUpdate> = async (data) => {
-    mutation.mutate({
+    await mutation.mutateAsync({
       path: { group_api_id: group.api_identifier },
       body: data,
     })
@@ -86,11 +86,13 @@ const EditGroup = ({ group, isOpen, onClose }: EditGroupProps) => {
     onClose()
   }
 
+  const isSaving = isSubmitting || mutation.isPending
+
   return (
     <Dialog
       open={isOpen}
       onOpenChange={(open) => {
-        if (!open) onClose()
+        if (!open && !isSaving) onClose()
       }}
     >
       <DialogContent>
@@ -116,11 +118,16 @@ const EditGroup = ({ group, isOpen, onClose }: EditGroupProps) => {
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={onCancel} type="button">
+            <Button
+              variant="outline"
+              onClick={onCancel}
+              type="button"
+              disabled={isSaving}
+            >
               Cancel
             </Button>
-            <Button type="submit" disabled={isSubmitting || !isDirty}>
-              {isSubmitting && <Loader2 className="h-4 w-4 animate-spin" />}
+            <Button type="submit" disabled={isSaving || !isDirty}>
+              {isSaving && <Loader2 className="h-4 w-4 animate-spin" />}
               Save
             </Button>
           </DialogFooter>
