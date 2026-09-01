@@ -102,7 +102,13 @@ function ResponseBlock(props: ResponseBlockProps) {
   const lastSavedTextRef = useRef(props.response?.response_text ?? "")
   const responseTextRef = useRef(responseText)
   const saveSeqRef = useRef(0)
-  const flushInFlightRef = useRef<string | null>(null)
+  // Upserts must not overlap: an older in-flight POST can overwrite a newer
+  // answer on the server. Keep the latest text and flush once free.
+  const saveInFlightRef = useRef(false)
+  const queuedSaveRef = useRef<{
+    text: string
+    showStatus: boolean
+  } | null>(null)
   const submitResponseRef = useRef(props.submitResponse)
   const showToast = useCustomToast()
   const textareaRef = useAutoResizeTextarea(responseText)
@@ -120,58 +126,107 @@ function ResponseBlock(props: ResponseBlockProps) {
     lastSavedTextRef.current = nextText
   }, [props.response?.response_text])
 
-  const persistResponse = async (
+  const runSaveQueue = async () => {
+    if (saveInFlightRef.current) {
+      return
+    }
+    saveInFlightRef.current = true
+
+    try {
+      while (queuedSaveRef.current) {
+        const job = queuedSaveRef.current
+        queuedSaveRef.current = null
+
+        if (job.text === lastSavedTextRef.current) {
+          continue
+        }
+
+        const seq = ++saveSeqRef.current
+        if (job.showStatus) {
+          savingStartTimeRef.current = Date.now()
+          setSaveStatus("saving")
+        }
+
+        try {
+          await submitResponseRef.current(job.text)
+          if (saveSeqRef.current === seq) {
+            lastSavedTextRef.current = job.text
+          }
+        } catch (error) {
+          const axiosError = error as AxiosError<{ detail?: unknown }>
+          // Drop coalesced work on failure; user can edit again to retry.
+          queuedSaveRef.current = null
+          if (job.showStatus) {
+            showToast(
+              "Error!",
+              formatApiErrorDetail(
+                axiosError.response?.data?.detail,
+                "Failed to save answer.",
+              ),
+              "error",
+            )
+            if (
+              saveSeqRef.current === seq &&
+              responseTextRef.current === job.text
+            ) {
+              setSaveStatus("error")
+            }
+          }
+          throw error
+        }
+
+        if (!job.showStatus) {
+          continue
+        }
+
+        // Ensure saving animation shows for at least 250ms
+        const elapsed = Date.now() - (savingStartTimeRef.current || 0)
+        const remainingTime = Math.max(0, 250 - elapsed)
+        if (remainingTime > 0) {
+          await new Promise((resolve) => setTimeout(resolve, remainingTime))
+        }
+        if (
+          saveSeqRef.current === seq &&
+          responseTextRef.current === job.text &&
+          !queuedSaveRef.current
+        ) {
+          setSaveStatus("saved")
+        }
+      }
+    } finally {
+      saveInFlightRef.current = false
+      if (queuedSaveRef.current) {
+        void runSaveQueue().catch(() => {
+          // Error toast + status handled inside the queued job when showStatus.
+        })
+      }
+    }
+  }
+
+  const persistResponse = (
     newValue: string,
     { showStatus }: { showStatus: boolean },
   ) => {
-    if (newValue === lastSavedTextRef.current) {
+    if (
+      newValue === lastSavedTextRef.current &&
+      !saveInFlightRef.current &&
+      !queuedSaveRef.current
+    ) {
       return
     }
 
-    const seq = ++saveSeqRef.current
+    const prev = queuedSaveRef.current
+    queuedSaveRef.current = {
+      text: newValue,
+      showStatus: showStatus || (prev?.showStatus ?? false),
+    }
     if (showStatus) {
       savingStartTimeRef.current = Date.now()
       setSaveStatus("saving")
     }
-    try {
-      await submitResponseRef.current(newValue)
-      if (saveSeqRef.current === seq) {
-        lastSavedTextRef.current = newValue
-      }
-    } catch (error) {
-      const axiosError = error as AxiosError<{ detail?: unknown }>
-      if (showStatus) {
-        showToast(
-          "Error!",
-          formatApiErrorDetail(
-            axiosError.response?.data?.detail,
-            "Failed to save answer.",
-          ),
-          "error",
-        )
-        if (
-          saveSeqRef.current === seq &&
-          responseTextRef.current === newValue
-        ) {
-          setSaveStatus("error")
-        }
-      }
-      throw error
-    }
-
-    if (!showStatus) {
-      return
-    }
-
-    // Ensure saving animation shows for at least 250ms
-    const elapsed = Date.now() - (savingStartTimeRef.current || 0)
-    const remainingTime = Math.max(0, 250 - elapsed)
-    if (remainingTime > 0) {
-      await new Promise((resolve) => setTimeout(resolve, remainingTime))
-    }
-    if (saveSeqRef.current === seq && responseTextRef.current === newValue) {
-      setSaveStatus("saved")
-    }
+    void runSaveQueue().catch(() => {
+      // Error toast + status handled inside runSaveQueue when showStatus.
+    })
   }
 
   const flushPendingSave = () => {
@@ -180,22 +235,10 @@ function ResponseBlock(props: ResponseBlockProps) {
       debounceTimeoutRef.current = null
     }
     const pending = responseTextRef.current
-    if (pending === lastSavedTextRef.current) {
+    if (pending === lastSavedTextRef.current && !queuedSaveRef.current) {
       return
     }
-    if (flushInFlightRef.current === pending) {
-      return
-    }
-    flushInFlightRef.current = pending
-    void persistResponse(pending, { showStatus: false })
-      .catch(() => {
-        // Best-effort flush on navigate/unload; status UI may be unmounted.
-      })
-      .finally(() => {
-        if (flushInFlightRef.current === pending) {
-          flushInFlightRef.current = null
-        }
-      })
+    persistResponse(pending, { showStatus: false })
   }
   const flushPendingSaveRef = useRef(flushPendingSave)
   flushPendingSaveRef.current = flushPendingSave
@@ -212,9 +255,7 @@ function ResponseBlock(props: ResponseBlockProps) {
 
     // Set new timeout for debounced save
     debounceTimeoutRef.current = setTimeout(() => {
-      void persistResponse(newValue, { showStatus: true }).catch(() => {
-        // Error toast + status handled inside persistResponse when showStatus.
-      })
+      persistResponse(newValue, { showStatus: true })
     }, 1000) // 1 second debounce
   }
 
@@ -331,6 +372,8 @@ function DraftQuestion({
     })
     setDeleteOpen(false)
   }
+
+  const isDeleting = deleteMutation.isPending
 
   const letterQueryKey = readLetterLettersLetterLetterApiIdGetQueryKey({
     path: { letter_api_id: loopApiId },
@@ -540,7 +583,15 @@ function DraftQuestion({
         readOnly={readOnly}
       />
 
-      <AlertDialog open={deleteOpen} onOpenChange={setDeleteOpen}>
+      <AlertDialog
+        open={deleteOpen}
+        onOpenChange={(open) => {
+          if (!open && isDeleting) {
+            return
+          }
+          setDeleteOpen(open)
+        }}
+      >
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Delete Question</AlertDialogTitle>
@@ -550,15 +601,19 @@ function DraftQuestion({
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogCancel disabled={isDeleting}>Cancel</AlertDialogCancel>
             <AlertDialogAction
-              onClick={handleDelete}
+              onClick={(event) => {
+                // Radix closes on Action click unless prevented; keep dialog
+                // open so the pending spinner stays visible until mutateAsync
+                // finishes.
+                event.preventDefault()
+                void handleDelete()
+              }}
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-              disabled={deleteMutation.isPending}
+              disabled={isDeleting}
             >
-              {deleteMutation.isPending && (
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              )}
+              {isDeleting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
               Delete
             </AlertDialogAction>
           </AlertDialogFooter>
