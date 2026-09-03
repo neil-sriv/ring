@@ -50,11 +50,14 @@ import { useState } from "react"
 type SingleUploadImageProps = {
   onUpdateFile(file: File): Promise<void>
   name: string
+  /** Fired after all selected files upload successfully (once per picker use). */
+  onUploadsComplete?: (successCount: number) => void
 }
 
 export function SingleUploadImage({
   onUpdateFile,
   name,
+  onUploadsComplete,
 }: SingleUploadImageProps): JSX.Element {
   const [isUploading, setIsUploading] = useState(false)
 
@@ -66,9 +69,18 @@ export function SingleUploadImage({
       return
     }
     setIsUploading(true)
+    let successCount = 0
     try {
-      const uploadPromises = Array.from(files).map((file) => onUpdateFile(file))
-      await Promise.all(uploadPromises)
+      // Upload one file at a time. The question upload endpoint creates a
+      // response on first attach; parallel first uploads race on the unique
+      // (participant, question) constraint and can fail or double-create.
+      for (const file of Array.from(files)) {
+        await onUpdateFile(file)
+        successCount += 1
+      }
+      if (successCount > 0) {
+        onUploadsComplete?.(successCount)
+      }
     } catch {
       // Caller surfaces upload failures (e.g. toast); keep input usable.
     } finally {
