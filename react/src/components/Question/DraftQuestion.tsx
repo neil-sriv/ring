@@ -40,6 +40,7 @@ import {
 
 type ResponseBlockProps = {
   uploadFunction: (file: File) => Promise<void>
+  onUploadsComplete?: (successCount: number) => void
   deleteImage: (s3Url: string) => Promise<void>
   questionApiId: string
   response?: ResponseWithParticipant
@@ -251,6 +252,7 @@ function ResponseBlock(props: ResponseBlockProps) {
       {!props.readOnly && (
         <SingleUploadImage
           onUpdateFile={props.uploadFunction}
+          onUploadsComplete={props.onUploadsComplete}
           name={props.questionApiId}
         />
       )}
@@ -292,18 +294,6 @@ function DraftQuestion({
   const showToast = useCustomToast()
   const [deleteOpen, setDeleteOpen] = useState(false)
 
-  if (!currentUser) {
-    return <div>loading...</div>
-  }
-  const response = question.responses.find(
-    (response) =>
-      response.participant.api_identifier === currentUser.api_identifier,
-  )
-
-  const isAuthor =
-    question.author?.api_identifier === currentUser.api_identifier
-  const canDelete = isAuthor || isGroupAdmin
-
   const deleteMutation = useMutation({
     ...deleteQuestionQuestionsQuestionQuestionApiIdDeleteMutation(),
     onSuccess: () => {
@@ -324,6 +314,18 @@ function DraftQuestion({
       )
     },
   })
+
+  if (!currentUser) {
+    return <div>loading...</div>
+  }
+  const response = question.responses.find(
+    (response) =>
+      response.participant.api_identifier === currentUser.api_identifier,
+  )
+
+  const isAuthor =
+    question.author?.api_identifier === currentUser.api_identifier
+  const canDelete = isAuthor || isGroupAdmin
 
   const handleDelete = async () => {
     await deleteMutation.mutateAsync({
@@ -428,7 +430,6 @@ function DraftQuestion({
           path: { letter_api_id: loopApiId },
         }),
       })
-      showToast("Success!", "Image uploaded successfully.", "success")
     } catch (error) {
       const axiosError = error as AxiosError<{ detail?: unknown }>
       showToast(
@@ -441,6 +442,16 @@ function DraftQuestion({
       )
       throw error
     }
+  }
+
+  const handleUploadsComplete = (successCount: number) => {
+    showToast(
+      "Success!",
+      successCount === 1
+        ? "Image uploaded successfully."
+        : `${successCount} images uploaded successfully.`,
+      "success",
+    )
   }
 
   const handleDeleteImage = async (s3Url: string) => {
@@ -535,6 +546,7 @@ function DraftQuestion({
         response={response}
         submitResponse={handleUpsert}
         uploadFunction={newHandleUpload}
+        onUploadsComplete={handleUploadsComplete}
         deleteImage={handleDeleteImage}
         key={question.api_identifier}
         readOnly={readOnly}
