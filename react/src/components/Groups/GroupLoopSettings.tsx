@@ -132,19 +132,34 @@ function GroupLoopSettings({ groupId }: { groupId: string }) {
     }
 
     try {
-      if (Object.keys(groupPatch).length > 0) {
-        await cycleUpdateMutation.mutateAsync({
-          body: groupPatch,
-          path: { group_api_id: groupId },
-        })
-      }
-
+      // Apply default questions first so a questions failure cannot leave
+      // cycle / min_responder changes applied alone.
       await defaultQuestionsMutation.mutateAsync({
         body: {
           questions: data.questions.map((question) => question.question_text),
         },
         path: { group_api_id: groupId },
       })
+
+      if (Object.keys(groupPatch).length > 0) {
+        try {
+          await cycleUpdateMutation.mutateAsync({
+            body: groupPatch,
+            path: { group_api_id: groupId },
+          })
+        } catch (cycleErr) {
+          const axiosErr =
+            cycleErr as AxiosError<UpdateGroupPartiesGroupGroupApiIdPatchError>
+          showToast(
+            "Partially saved.",
+            `Default questions were updated, but cycle settings could not be saved. ${formatApiErrorDetail(
+              axiosErr.response?.data?.detail,
+            )}`,
+            "error",
+          )
+          return
+        }
+      }
 
       showToast("Success!", "Loop settings updated successfully.", "success")
       setEditMode(false)
