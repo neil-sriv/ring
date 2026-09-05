@@ -1,4 +1,5 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query"
+import { useEffect } from "react"
 import { type SubmitHandler, useForm } from "react-hook-form"
 
 import { Button } from "@/components/ui/button"
@@ -36,6 +37,11 @@ type AddAdhocLoopProps = {
   groupApiId: string
 }
 
+const freshDefaults = (): AdhocLetterFormProps => ({
+  title: "",
+  sendAt: defaultLocalDateTimeValue(7),
+})
+
 const AddAdhocLoop = ({ isOpen, onClose, groupApiId }: AddAdhocLoopProps) => {
   const queryClient = useQueryClient()
   const showToast = useCustomToast()
@@ -48,17 +54,21 @@ const AddAdhocLoop = ({ isOpen, onClose, groupApiId }: AddAdhocLoopProps) => {
   } = useForm<AdhocLetterFormProps>({
     mode: "onBlur",
     criteriaMode: "all",
-    defaultValues: {
-      title: "",
-      sendAt: defaultLocalDateTimeValue(7),
-    },
+    defaultValues: freshDefaults(),
   })
+
+  // Parent keeps this dialog mounted; clear title and refresh send-at each open.
+  useEffect(() => {
+    if (isOpen) {
+      reset(freshDefaults())
+    }
+  }, [isOpen, reset])
 
   const mutation = useMutation({
     ...addNextLetterLettersLetterLetterTypePostMutation(),
     onSuccess: () => {
       showToast("Success!", "Adhoc loop created successfully.", "success")
-      reset()
+      reset(freshDefaults())
       onClose()
     },
     onError: (
@@ -91,11 +101,16 @@ const AddAdhocLoop = ({ isOpen, onClose, groupApiId }: AddAdhocLoopProps) => {
     })
   }
 
+  const onCancel = () => {
+    reset(freshDefaults())
+    onClose()
+  }
+
   return (
     <Dialog
       open={isOpen}
       onOpenChange={(open) => {
-        if (!open) onClose()
+        if (!open) onCancel()
       }}
     >
       <DialogContent className="sm:max-w-md">
@@ -151,7 +166,7 @@ const AddAdhocLoop = ({ isOpen, onClose, groupApiId }: AddAdhocLoopProps) => {
               )}
               Create Adhoc Loop
             </Button>
-            <Button type="button" variant="outline" onClick={onClose}>
+            <Button type="button" variant="outline" onClick={onCancel}>
               Cancel
             </Button>
           </DialogFooter>
