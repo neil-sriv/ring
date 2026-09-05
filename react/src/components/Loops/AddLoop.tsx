@@ -1,4 +1,5 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query"
+import { useEffect } from "react"
 import { type SubmitHandler, useForm } from "react-hook-form"
 
 import { Button } from "@/components/ui/button"
@@ -35,6 +36,10 @@ interface AddLetterProps {
   groupApiId: string
 }
 
+const freshDefaults = (): LetterFormProps => ({
+  sendAt: defaultLocalDateTimeValue(14),
+})
+
 const AddLetter = ({ isOpen, onClose, groupApiId }: AddLetterProps) => {
   const queryClient = useQueryClient()
   const showToast = useCustomToast()
@@ -46,16 +51,21 @@ const AddLetter = ({ isOpen, onClose, groupApiId }: AddLetterProps) => {
   } = useForm<LetterFormProps>({
     mode: "onBlur",
     criteriaMode: "all",
-    defaultValues: {
-      sendAt: defaultLocalDateTimeValue(14),
-    },
+    defaultValues: freshDefaults(),
   })
+
+  // Parent keeps this dialog mounted; recompute send-at defaults each open.
+  useEffect(() => {
+    if (isOpen) {
+      reset(freshDefaults())
+    }
+  }, [isOpen, reset])
 
   const mutation = useMutation({
     ...addNextLetterLettersLetterPostMutation(),
     onSuccess: () => {
       showToast("Success!", "Next letter created successfully.", "success")
-      reset()
+      reset(freshDefaults())
       onClose()
     },
     onError: (err: AxiosError<AddNextLetterLettersLetterPostError>) => {
@@ -84,11 +94,16 @@ const AddLetter = ({ isOpen, onClose, groupApiId }: AddLetterProps) => {
     })
   }
 
+  const onCancel = () => {
+    reset(freshDefaults())
+    onClose()
+  }
+
   return (
     <Dialog
       open={isOpen}
       onOpenChange={(open) => {
-        if (!open) onClose()
+        if (!open) onCancel()
       }}
     >
       <DialogContent className="sm:max-w-md">
@@ -125,7 +140,7 @@ const AddLetter = ({ isOpen, onClose, groupApiId }: AddLetterProps) => {
               )}
               Save
             </Button>
-            <Button type="button" variant="outline" onClick={onClose}>
+            <Button type="button" variant="outline" onClick={onCancel}>
               Cancel
             </Button>
           </DialogFooter>

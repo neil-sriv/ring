@@ -1,5 +1,6 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query"
 import { Loader2 } from "lucide-react"
+import { useEffect } from "react"
 import { type SubmitHandler, useForm } from "react-hook-form"
 
 import type { AxiosError } from "axios"
@@ -48,14 +49,23 @@ const EditGroup = ({ group, isOpen, onClose }: EditGroupProps) => {
   } = useForm<GroupUpdate>({
     mode: "onBlur",
     criteriaMode: "all",
-    defaultValues: group,
+    defaultValues: {
+      name: group.name,
+    },
   })
+
+  // ActionsMenu keeps this dialog mounted; re-sync when opened or group changes.
+  useEffect(() => {
+    if (isOpen) {
+      reset({ name: group.name })
+    }
+  }, [isOpen, group.name, reset])
 
   const mutation = useMutation({
     ...updateGroupPartiesGroupGroupApiIdPatchMutation(),
-    onSuccess: () => {
+    onSuccess: (_data, variables) => {
       showToast("Success!", "Group updated successfully.", "success")
-      reset()
+      reset({ name: variables.body.name ?? group.name })
       onClose()
     },
     onError: (err: AxiosError<UpdateGroupPartiesGroupGroupApiIdPatchError>) => {
@@ -82,7 +92,7 @@ const EditGroup = ({ group, isOpen, onClose }: EditGroupProps) => {
   }
 
   const onCancel = () => {
-    reset()
+    reset({ name: group.name })
     onClose()
   }
 
@@ -90,7 +100,7 @@ const EditGroup = ({ group, isOpen, onClose }: EditGroupProps) => {
     <Dialog
       open={isOpen}
       onOpenChange={(open) => {
-        if (!open) onClose()
+        if (!open) onCancel()
       }}
     >
       <DialogContent>
