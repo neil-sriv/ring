@@ -1,6 +1,6 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query"
 import type { AxiosError } from "axios"
-import { Suspense, lazy, useState } from "react"
+import { Suspense, lazy, useRef, useState } from "react"
 import type {
   FullReplaceGroupKeyValuesPartiesGroupGroupApiIdKeyValuePutError,
   GroupKeyValue,
@@ -14,6 +14,10 @@ import { formatApiErrorDetail } from "../../util/misc"
 
 const ReactJson = lazy(() => import("react-json-view"))
 
+function cloneKeyValues(value: Record<string, unknown>) {
+  return structuredClone(value)
+}
+
 export function GroupKeyValuesTable({
   keyValues,
   groupApiId,
@@ -21,18 +25,28 @@ export function GroupKeyValuesTable({
   keyValues: GroupKeyValue
   groupApiId: string
 }) {
-  const [editableData, setEditableData] = useState(keyValues.key_values)
+  const [editableData, setEditableData] = useState(() =>
+    cloneKeyValues(keyValues.key_values),
+  )
+  // Last successfully persisted snapshot — used to roll back optimistic edits
+  // when a full-replace PUT fails (otherwise the editor stays out of sync).
+  const lastSavedRef = useRef(cloneKeyValues(keyValues.key_values))
+  // react-json-view ignores later `src` changes; bump key on rollback to remount.
+  const [editorKey, setEditorKey] = useState(0)
   const showToast = useCustomToast()
   const queryClient = useQueryClient()
 
   const addKey = useMutation({
     ...fullReplaceGroupKeyValuesPartiesGroupGroupApiIdKeyValuePutMutation(),
-    onSuccess: () => {
+    onSuccess: (_data, variables) => {
+      lastSavedRef.current = cloneKeyValues(variables.body.key_values)
       showToast("Success!", "Key value updated.", "success")
     },
     onError: (
       err: AxiosError<FullReplaceGroupKeyValuesPartiesGroupGroupApiIdKeyValuePutError>,
     ) => {
+      setEditableData(cloneKeyValues(lastSavedRef.current))
+      setEditorKey((key) => key + 1)
       showToast(
         "Something went wrong.",
         formatApiErrorDetail(err.response?.data?.detail),
@@ -73,6 +87,7 @@ export function GroupKeyValuesTable({
           }
         >
           <ReactJson
+            key={editorKey}
             src={editableData}
             onEdit={handleEdit}
             onAdd={handleEdit}
