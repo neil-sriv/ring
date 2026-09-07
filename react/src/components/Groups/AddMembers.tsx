@@ -1,5 +1,6 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query"
 import { Loader2 } from "lucide-react"
+import { useEffect } from "react"
 import { type SubmitHandler, useForm } from "react-hook-form"
 
 import type { AxiosError } from "axios"
@@ -38,6 +39,10 @@ type AddMembersFormType = {
   member_emails: string
 }
 
+const freshDefaults = (): AddMembersFormType => ({
+  member_emails: "",
+})
+
 const AddMembers = ({ group, isOpen, onClose }: AddMembersProps) => {
   const queryClient = useQueryClient()
   const showToast = useCustomToast()
@@ -52,13 +57,25 @@ const AddMembers = ({ group, isOpen, onClose }: AddMembersProps) => {
   } = useForm<AddMembersFormType>({
     mode: "onBlur",
     criteriaMode: "all",
+    defaultValues: freshDefaults(),
   })
+
+  // ActionsMenu keeps this dialog mounted; clear emails on each open.
+  useEffect(() => {
+    if (isOpen) {
+      reset(freshDefaults(), {
+        keepErrors: false,
+        keepDirty: false,
+        keepTouched: false,
+      })
+    }
+  }, [isOpen, reset])
 
   const mutation = useMutation({
     ...addMembersPartiesGroupGroupApiIdAddMembersPostMutation(),
     onSuccess: () => {
       showToast("Success!", "Group updated successfully.", "success")
-      reset()
+      reset(freshDefaults())
       onClose()
     },
     onError: (
@@ -97,7 +114,7 @@ const AddMembers = ({ group, isOpen, onClose }: AddMembersProps) => {
   }
 
   const onCancel = () => {
-    reset()
+    reset(freshDefaults())
     onClose()
   }
 
@@ -105,7 +122,7 @@ const AddMembers = ({ group, isOpen, onClose }: AddMembersProps) => {
     <Dialog
       open={isOpen}
       onOpenChange={(open) => {
-        if (!open) onClose()
+        if (!open) onCancel()
       }}
     >
       <DialogContent>
