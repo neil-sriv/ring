@@ -1,5 +1,5 @@
 import { useQueryClient } from "@tanstack/react-query"
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { useForm } from "react-hook-form"
 
 import type { GroupLinked } from "../../client"
@@ -17,16 +17,26 @@ function GroupInformation({ groupId }: { groupId: string }) {
       path: { group_api_id: groupId },
     }),
   )
-  if (group === undefined) {
-    return null
-  }
-  const { register } = useForm<GroupLinked>({
+
+  // Hooks must run unconditionally — never after the group early-return below.
+  const { register, reset } = useForm<GroupLinked>({
     mode: "onBlur",
     criteriaMode: "all",
     defaultValues: {
-      name: group.name,
+      name: group?.name ?? "",
     },
   })
+
+  useEffect(() => {
+    if (!group || editMode) {
+      return
+    }
+    reset({ name: group.name })
+  }, [group, editMode, reset])
+
+  if (group === undefined) {
+    return null
+  }
 
   const toggleEditMode = () => {
     setEditMode(!editMode)
