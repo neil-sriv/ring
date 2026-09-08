@@ -103,7 +103,10 @@ const ImpersonateUser = ({ user, isOpen, onClose }: ImpersonateUserProps) => {
     <Dialog
       open={isOpen}
       onOpenChange={(open) => {
-        if (!open) onClose()
+        if (!open) {
+          reset()
+          onClose()
+        }
       }}
     >
       <DialogContent>

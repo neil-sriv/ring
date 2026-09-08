@@ -2,7 +2,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { useMutation, useQueryClient } from "@tanstack/react-query"
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import {
   Controller,
   type SubmitHandler,
@@ -45,21 +45,36 @@ function displayMinResponderPercent(ratio: number | null | undefined): number {
   return Math.round(ratio * 100)
 }
 
+function formValuesFromGroup(group: GroupLinked): FormData {
+  return {
+    questions: group.default_questions.map((question) => ({
+      question_text: question.question_text,
+    })),
+    cycle_length: group.cycle_length,
+    min_responder_percent: displayMinResponderPercent(
+      group.min_responder_ratio,
+    ),
+  }
+}
+
+const EMPTY_FORM_VALUES: FormData = {
+  questions: [],
+  cycle_length: 1,
+  min_responder_percent: DEFAULT_MIN_RESPONDER_PERCENT,
+}
+
 function GroupLoopSettings({ groupId }: { groupId: string }) {
   const queryClient = useQueryClient()
   const showToast = useCustomToast()
   const [editMode, setEditMode] = useState(false)
+  const router = useRouter()
   const group = queryClient.getQueryData<GroupLinked>(
     readGroupPartiesGroupGroupApiIdGetQueryKey({
       path: { group_api_id: groupId },
     }),
   )
 
-  if (group === undefined) {
-    return null
-  }
-
-  const router = useRouter()
+  // Hooks must run unconditionally — never after the group early-return below.
   const {
     handleSubmit,
     reset,
@@ -69,15 +84,7 @@ function GroupLoopSettings({ groupId }: { groupId: string }) {
   } = useForm<FormData>({
     mode: "onBlur",
     criteriaMode: "all",
-    defaultValues: {
-      questions: group.default_questions.map((question) => ({
-        question_text: question.question_text,
-      })),
-      cycle_length: group.cycle_length,
-      min_responder_percent: displayMinResponderPercent(
-        group.min_responder_ratio,
-      ),
-    },
+    defaultValues: group ? formValuesFromGroup(group) : EMPTY_FORM_VALUES,
   })
 
   const { fields, append, remove } = useFieldArray({
@@ -89,6 +96,25 @@ function GroupLoopSettings({ groupId }: { groupId: string }) {
         "Question cannot be empty.",
     },
   })
+
+  const defaultQuestionsMutation = useMutation({
+    ...replaceGroupDefaultQuestionsPartiesGroupGroupApiIdReplaceDefaultQuestionsPostMutation(),
+  })
+
+  const cycleUpdateMutation = useMutation({
+    ...updateGroupPartiesGroupGroupApiIdPatchMutation(),
+  })
+
+  useEffect(() => {
+    if (!group || editMode) {
+      return
+    }
+    reset(formValuesFromGroup(group))
+  }, [group, editMode, reset])
+
+  if (group === undefined) {
+    return null
+  }
 
   const toggleEditMode = () => {
     setEditMode(!editMode)
@@ -107,14 +133,6 @@ function GroupLoopSettings({ groupId }: { groupId: string }) {
       }),
     })
   }
-
-  const defaultQuestionsMutation = useMutation({
-    ...replaceGroupDefaultQuestionsPartiesGroupGroupApiIdReplaceDefaultQuestionsPostMutation(),
-  })
-
-  const cycleUpdateMutation = useMutation({
-    ...updateGroupPartiesGroupGroupApiIdPatchMutation(),
-  })
 
   const onSubmit: SubmitHandler<FormData> = async (data) => {
     const currentMinResponderPercent = displayMinResponderPercent(
