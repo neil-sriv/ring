@@ -53,6 +53,10 @@ export function MediaCarousel({ items, className }: MediaCarouselProps) {
   }
 
   useEffect(() => {
+    setActiveIndex((index) => clampIndex(index))
+  }, [clampIndex])
+
+  useEffect(() => {
     const container = containerRef.current
     if (!container) return
 
@@ -76,14 +80,14 @@ export function MediaCarousel({ items, className }: MediaCarouselProps) {
         }
       })
 
-      setActiveIndex(closestIndex)
+      setActiveIndex(clampIndex(closestIndex))
     }
 
     container.addEventListener("scroll", handleScroll, { passive: true })
     return () => {
       container.removeEventListener("scroll", handleScroll)
     }
-  }, [activeIndex])
+  }, [activeIndex, clampIndex])
 
   if (!items.length) {
     return null
