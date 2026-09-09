@@ -1,24 +1,25 @@
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { useQueryClient } from "@tanstack/react-query"
+import { useQuery } from "@tanstack/react-query"
 import { useState } from "react"
 
-import type { GroupLinked, UserUnlinked } from "../../client"
-import { readGroupPartiesGroupGroupApiIdGetQueryKey } from "../../client/@tanstack/react-query.gen"
+import type { UserUnlinked } from "../../client"
+import { readGroupPartiesGroupGroupApiIdGetOptions } from "../../client/@tanstack/react-query.gen"
 import { userInitials } from "../../util/misc"
 import RemoveMemberConfirmation from "./RemoveMemberConfirmation"
 
 function GroupMembershipSettings({ groupId }: { groupId: string }) {
-  const queryClient = useQueryClient()
   const [memberToRemove, setMemberToRemove] = useState<UserUnlinked | null>(
     null,
   )
-  const group = queryClient.getQueryData<GroupLinked>(
-    readGroupPartiesGroupGroupApiIdGetQueryKey({
+  // Subscribe to the group query so remove-member refetch updates this list.
+  // getQueryData alone does not re-render when the cache is invalidated.
+  const { data: group } = useQuery({
+    ...readGroupPartiesGroupGroupApiIdGetOptions({
       path: { group_api_id: groupId },
     }),
-  )
+  })
 
   if (group === undefined) {
     return null
