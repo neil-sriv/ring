@@ -74,7 +74,7 @@ function PublishedLoop({ loop }: { loop: PublicLetter }) {
         <p className="mb-4 text-base font-semibold">
           All Questions and Responses
         </p>
-        {loop.questions
+        {[...loop.questions]
           .sort(
             (a, b) =>
               new Date(b.created_at).getTime() -
