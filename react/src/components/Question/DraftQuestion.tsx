@@ -254,18 +254,18 @@ function ResponseBlock(props: ResponseBlockProps) {
           name={props.questionApiId}
         />
       )}
-      {props.response?.images.map((image, index) => {
+      {props.response?.images.map((image) => {
         return image.media_type === "image" ? (
           <S3Image
             s3Key={image.s3_url}
             alt="response"
-            key={index}
+            key={image.s3_url}
             handleDelete={() => props.deleteImage(image.s3_url)}
           />
         ) : (
           <S3Video
             s3Key={image.s3_url}
-            key={index}
+            key={image.s3_url}
             handleDelete={() => props.deleteImage(image.s3_url)}
           />
         )

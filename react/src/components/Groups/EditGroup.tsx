@@ -11,6 +11,7 @@ import type {
 } from "../../client"
 import {
   listGroupsPartiesGroupsGetQueryKey,
+  readGroupPartiesGroupGroupApiIdGetQueryKey,
   readUserMePartiesMeGetQueryKey,
   updateGroupPartiesGroupGroupApiIdPatchMutation,
 } from "../../client/@tanstack/react-query.gen"
@@ -69,6 +70,13 @@ const EditGroup = ({ group, isOpen, onClose }: EditGroupProps) => {
       queryClient.invalidateQueries({
         queryKey: listGroupsPartiesGroupsGetQueryKey({
           query: { user_api_id: currentUser!.api_identifier },
+        }),
+      })
+      // Settings and other detail views cache this key (30s staleTime); list
+      // invalidation alone leaves the group name stale until expiry.
+      queryClient.invalidateQueries({
+        queryKey: readGroupPartiesGroupGroupApiIdGetQueryKey({
+          path: { group_api_id: group.api_identifier },
         }),
       })
     },
