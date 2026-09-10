@@ -64,7 +64,16 @@ const EditGroup = ({ group, isOpen, onClose }: EditGroupProps) => {
 
   const mutation = useMutation({
     ...updateGroupPartiesGroupGroupApiIdPatchMutation(),
-    onSuccess: (_data, variables) => {
+    onSuccess: (updatedGroup, variables) => {
+      // Settings uses ensureQueryData in beforeLoad; invalidate alone does not
+      // force a refetch when cached data already exists. Write the PATCH body
+      // into the detail cache so the next Settings visit shows the new name.
+      queryClient.setQueryData(
+        readGroupPartiesGroupGroupApiIdGetQueryKey({
+          path: { group_api_id: group.api_identifier },
+        }),
+        updatedGroup,
+      )
       showToast("Success!", "Group updated successfully.", "success")
       reset({ name: variables.body.name ?? group.name })
       onClose()
@@ -82,8 +91,6 @@ const EditGroup = ({ group, isOpen, onClose }: EditGroupProps) => {
           query: { user_api_id: currentUser!.api_identifier },
         }),
       })
-      // Settings and other detail views cache this key (30s staleTime); list
-      // invalidation alone leaves the group name stale until expiry.
       queryClient.invalidateQueries({
         queryKey: readGroupPartiesGroupGroupApiIdGetQueryKey({
           path: { group_api_id: group.api_identifier },
