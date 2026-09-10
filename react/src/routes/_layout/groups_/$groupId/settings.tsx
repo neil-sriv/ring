@@ -12,6 +12,9 @@ export const Route = createFileRoute("/_layout/groups/$groupId/settings")({
       ...readGroupPartiesGroupGroupApiIdGetOptions({
         path: { group_api_id: params.groupId },
       }),
+      // Mutations often invalidate this key without active observers; without
+      // revalidateIfStale, ensureQueryData would keep serving the warm cache.
+      revalidateIfStale: true,
     })
     const currentUser = context.auth.user
     if (currentUser?.api_identifier !== group.admin.api_identifier) {
