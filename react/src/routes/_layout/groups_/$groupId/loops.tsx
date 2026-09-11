@@ -18,6 +18,12 @@ type LoopsSearchParams = {
   limit?: number
 }
 
+const GROUP_TAB_HASHES = ["loops", "adhoc-loops", "store", "documents"] as const
+
+function isGroupTabHash(hash: string): boolean {
+  return (GROUP_TAB_HASHES as readonly string[]).includes(hash)
+}
+
 export const Route = createFileRoute("/_layout/groups/$groupId/loops")({
   validateSearch: (search: Record<string, string>): LoopsSearchParams => {
     return {
@@ -93,7 +99,7 @@ function LoopsContentLoader() {
   const getInitialTab = (): string => {
     if (typeof window !== "undefined") {
       const hash = window.location.hash.slice(1)
-      if (tabsConfig.some((tab) => tab.hash === hash)) {
+      if (isGroupTabHash(hash)) {
         return hash
       }
     }
@@ -110,7 +116,7 @@ function LoopsContentLoader() {
   useEffect(() => {
     const handleHashChange = () => {
       const hash = window.location.hash.slice(1)
-      if (tabsConfig.some((tab) => tab.hash === hash)) {
+      if (isGroupTabHash(hash)) {
         setActiveTab(hash)
       }
     }
@@ -121,7 +127,7 @@ function LoopsContentLoader() {
     return () => {
       window.removeEventListener("hashchange", handleHashChange)
     }
-  }, [tabsConfig])
+  }, [])
 
   return (
     <div className="mx-auto w-full max-w-5xl px-4 py-8 md:px-8">
