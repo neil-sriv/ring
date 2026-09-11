@@ -10,6 +10,7 @@ import type {
 import {
   loginAccessTokenLoginAccessTokenPostMutation,
   readUserMePartiesMeGetOptions,
+  readUserMePartiesMeGetQueryKey,
 } from "../client/@tanstack/react-query.gen"
 import { formatApiErrorDetail } from "../util/misc"
 
@@ -25,10 +26,17 @@ const useAuth = (next?: string) => {
 
   const loginMutation = useMutation({
     ...loginAccessTokenLoginAccessTokenPostMutation(),
-    onSuccess: (data) => {
+    onSuccess: async (data) => {
       localStorage.setItem("access_token", data.access_token)
-      queryClient.ensureQueryData({
-        ...readUserMePartiesMeGetOptions({}),
+      // Auth failure redirects to /login without clearing the Query cache, so
+      // a prior session's /me can still be warm. ensureQueryData would return
+      // that stale user under the new JWT — drop it and force a fresh fetch
+      // before navigating into the authenticated shell.
+      queryClient.removeQueries({
+        queryKey: readUserMePartiesMeGetQueryKey(),
+      })
+      await queryClient.fetchQuery({
+        ...readUserMePartiesMeGetOptions(),
       })
       // Redirect to the next parameter if provided, otherwise go to home
       // Use TanStack Router's hash option to preserve hash fragments
