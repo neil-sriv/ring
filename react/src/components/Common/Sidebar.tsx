@@ -1,4 +1,4 @@
-import { useQueryClient } from "@tanstack/react-query"
+import { useQuery, useQueryClient } from "@tanstack/react-query"
 import { Link } from "@tanstack/react-router"
 import { LogOut, Menu } from "lucide-react"
 import { useCallback, useState } from "react"
@@ -12,8 +12,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip"
-import type { UserLinked } from "../../client"
-import { readUserMePartiesMeGetQueryKey } from "../../client/@tanstack/react-query.gen"
+import { readUserMePartiesMeGetOptions } from "../../client/@tanstack/react-query.gen"
 import useAuth from "../../hooks/useAuth"
 import { useSidebarSwipe } from "../../hooks/useSidebarSwipe"
 import { userInitials } from "../../util/misc"
@@ -22,9 +21,11 @@ import SidebarItems from "./SidebarItems"
 
 const Sidebar = () => {
   const queryClient = useQueryClient()
-  const currentUser = queryClient.getQueryData<UserLinked>(
-    readUserMePartiesMeGetQueryKey(),
-  )
+  // Subscribe so name/email/initials refresh when /me is refetched (e.g. after
+  // My profile save). getQueryData alone never re-renders the sidebar.
+  const { data: currentUser } = useQuery({
+    ...readUserMePartiesMeGetOptions(),
+  })
   const [isOpen, setIsOpen] = useState(false)
   const { logout } = useAuth()
 

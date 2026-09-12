@@ -1,4 +1,4 @@
-import { useMutation, useQueryClient } from "@tanstack/react-query"
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import { Loader2 } from "lucide-react"
 import { useState } from "react"
 import { type SubmitHandler, useForm } from "react-hook-form"
@@ -11,6 +11,7 @@ import type {
   UserUpdate,
 } from "../../client"
 import {
+  readUserMePartiesMeGetOptions,
   readUserMePartiesMeGetQueryKey,
   readUsersPartiesUsersGetQueryKey,
   updateUserMePartiesMePatchMutation,
@@ -27,9 +28,11 @@ const UserInformation = () => {
   const queryClient = useQueryClient()
   const showToast = useCustomToast()
   const [editMode, setEditMode] = useState(false)
-  const currentUser = queryClient.getQueryData<UserLinked>(
-    readUserMePartiesMeGetQueryKey(),
-  )
+  // Subscribe so view-mode name/email update when /me refetches after save.
+  // getQueryData alone would leave the page stuck on the pre-save values.
+  const { data: currentUser } = useQuery({
+    ...readUserMePartiesMeGetOptions(),
+  })
   const {
     register,
     handleSubmit,
