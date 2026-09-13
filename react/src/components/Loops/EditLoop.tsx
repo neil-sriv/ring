@@ -20,6 +20,8 @@ import type {
 } from "../../client"
 import {
   editLetterLettersLetterLetterApiIdEditLetterPostMutation,
+  listDashboardLettersLettersLettersDashboardGetQueryKey,
+  listLettersLettersLettersGetQueryKey,
   readLetterLettersLetterLetterApiIdGetQueryKey,
 } from "../../client/@tanstack/react-query.gen"
 import useCustomToast from "../../hooks/useCustomToast"
@@ -61,7 +63,14 @@ const EditLetter = ({ isOpen, onClose, loop }: EditLetterProps) => {
 
   const mutation = useMutation({
     ...editLetterLettersLetterLetterApiIdEditLetterPostMutation(),
-    onSuccess: () => {
+    onSuccess: (data) => {
+      // Keep detail warm so the open loop page reflects the save immediately.
+      queryClient.setQueryData(
+        readLetterLettersLetterLetterApiIdGetQueryKey({
+          path: { letter_api_id: loop.api_identifier },
+        }),
+        data,
+      )
       showToast("Success!", "Letter updated successfully.", "success")
       reset()
       onClose()
@@ -80,6 +89,16 @@ const EditLetter = ({ isOpen, onClose, loop }: EditLetterProps) => {
         queryKey: readLetterLettersLetterLetterApiIdGetQueryKey({
           path: { letter_api_id: loop.api_identifier },
         }),
+      })
+      // Group Loops / dashboard cards use list queries with a 30s staleTime;
+      // without this, renamed titles stay wrong until the cache expires.
+      queryClient.invalidateQueries({
+        queryKey: listLettersLettersLettersGetQueryKey({
+          query: { group_api_id: loop.group.api_identifier },
+        }),
+      })
+      queryClient.invalidateQueries({
+        queryKey: listDashboardLettersLettersLettersDashboardGetQueryKey(),
       })
     },
   })
