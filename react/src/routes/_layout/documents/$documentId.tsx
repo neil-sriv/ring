@@ -14,6 +14,16 @@ import type { NotebookWsStatus } from "../../../components/Document/Editor"
 
 const SYNC_ERROR_TOAST_COOLDOWN_MS = 10_000
 
+function isListDocumentsQueryKey(queryKey: readonly unknown[]): boolean {
+  const first = queryKey[0]
+  return (
+    typeof first === "object" &&
+    first !== null &&
+    "_id" in first &&
+    (first as { _id: string })._id === "listDocumentsNotebookDocumentsGet"
+  )
+}
+
 type DocumentLoaderProps = {
   document: DocumentResponse
 }
@@ -60,11 +70,19 @@ function DocumentContentLoader() {
 
   const updateDocumentMutation = useMutation({
     ...updateDocumentEndpointNotebookDocumentsDocumentApiIdPutMutation(),
-    onSuccess: () => {
-      queryClient.invalidateQueries({
-        queryKey: getDocumentEndpointNotebookDocumentsDocumentApiIdGetQueryKey({
+    onSuccess: (data) => {
+      // Immediate header update without waiting on a detail refetch.
+      queryClient.setQueryData(
+        getDocumentEndpointNotebookDocumentsDocumentApiIdGetQueryKey({
           path: { document_api_id: documentId },
         }),
+        data,
+      )
+      // Documents tab cards use list queries with a 30s staleTime; the
+      // document detail response does not include group_api_id, so match
+      // all listDocuments caches by generated query _id.
+      queryClient.invalidateQueries({
+        predicate: (query) => isListDocumentsQueryKey(query.queryKey),
       })
     },
   })
