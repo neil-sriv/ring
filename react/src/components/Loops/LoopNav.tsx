@@ -2,12 +2,12 @@ import { Plus } from "lucide-react"
 import { useState } from "react"
 
 import { Button } from "@/components/ui/button"
-import { useQueryClient } from "@tanstack/react-query"
+import { useQuery, useQueryClient } from "@tanstack/react-query"
 import { useRouter } from "@tanstack/react-router"
-import type { GroupLinked, MinimalLetter, UserLinked } from "../../client"
+import type { GroupLinked, MinimalLetter } from "../../client"
 import {
   listLettersLettersLettersGetQueryKey,
-  readUserMePartiesMeGetQueryKey,
+  readUserMePartiesMeGetOptions,
 } from "../../client/@tanstack/react-query.gen"
 import AddLetter from "./AddLoop"
 
@@ -22,9 +22,11 @@ function LoopNav(props: LoopNavProps): JSX.Element {
     props.loops.filter((loop) => loop.status === "UPCOMING").length === 0
   const queryClient = useQueryClient()
   const router = useRouter()
-  const currentUser = queryClient.getQueryData<UserLinked>(
-    readUserMePartiesMeGetQueryKey(),
-  )
+  // Subscribe so admin chrome ("Start Next Loop") updates when /me is
+  // refetched or overwritten in cache. getQueryData alone never re-renders.
+  const { data: currentUser } = useQuery({
+    ...readUserMePartiesMeGetOptions(),
+  })
 
   const onClick = (): void => {
     queryClient.invalidateQueries({
