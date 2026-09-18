@@ -17,6 +17,7 @@ import { Loader2 } from "lucide-react"
 import type { AddNextLetterLettersLetterLetterTypePostError } from "../../client"
 import {
   addNextLetterLettersLetterLetterTypePostMutation,
+  listDashboardLettersLettersLettersDashboardGetQueryKey,
   listLettersLettersLettersGetQueryKey,
 } from "../../client/@tanstack/react-query.gen"
 import useCustomToast from "../../hooks/useCustomToast"
@@ -81,10 +82,15 @@ const AddAdhocLoop = ({ isOpen, onClose, groupApiId }: AddAdhocLoopProps) => {
       )
     },
     onSettled: () => {
+      // Group Loops list + Home dashboard both use 30s staleTime; without
+      // dashboard invalidation a soft-nav to Home keeps the pre-create cards.
       queryClient.invalidateQueries({
         queryKey: listLettersLettersLettersGetQueryKey({
           query: { group_api_id: groupApiId },
         }),
+      })
+      queryClient.invalidateQueries({
+        queryKey: listDashboardLettersLettersLettersDashboardGetQueryKey(),
       })
     },
   })
