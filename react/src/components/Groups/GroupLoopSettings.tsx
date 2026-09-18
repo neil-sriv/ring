@@ -45,6 +45,18 @@ function displayMinResponderPercent(ratio: number | null | undefined): number {
   return Math.round(ratio * 100)
 }
 
+function formValuesFromGroup(group: GroupLinked): FormData {
+  return {
+    questions: group.default_questions.map((question) => ({
+      question_text: question.question_text,
+    })),
+    cycle_length: group.cycle_length,
+    min_responder_percent: displayMinResponderPercent(
+      group.min_responder_ratio,
+    ),
+  }
+}
+
 function GroupLoopSettings({ groupId }: { groupId: string }) {
   const queryClient = useQueryClient()
   const showToast = useCustomToast()
@@ -69,15 +81,7 @@ function GroupLoopSettings({ groupId }: { groupId: string }) {
   } = useForm<FormData>({
     mode: "onBlur",
     criteriaMode: "all",
-    defaultValues: {
-      questions: group.default_questions.map((question) => ({
-        question_text: question.question_text,
-      })),
-      cycle_length: group.cycle_length,
-      min_responder_percent: displayMinResponderPercent(
-        group.min_responder_ratio,
-      ),
-    },
+    defaultValues: formValuesFromGroup(group),
   })
 
   const { fields, append, remove } = useFieldArray({
@@ -89,10 +93,6 @@ function GroupLoopSettings({ groupId }: { groupId: string }) {
         "Question cannot be empty.",
     },
   })
-
-  const toggleEditMode = () => {
-    setEditMode(!editMode)
-  }
 
   const refreshGroup = async () => {
     queryClient.invalidateQueries({
@@ -106,6 +106,28 @@ function GroupLoopSettings({ groupId }: { groupId: string }) {
         path: { group_api_id: groupId },
       }),
     })
+  }
+
+  const readFreshGroup = () =>
+    queryClient.getQueryData<GroupLinked>(
+      readGroupPartiesGroupGroupApiIdGetQueryKey({
+        path: { group_api_id: groupId },
+      }),
+    )
+
+  const enterEditMode = () => {
+    const latest = readFreshGroup() ?? group
+    reset(formValuesFromGroup(latest))
+    setEditMode(true)
+  }
+
+  const exitEditMode = (values?: FormData) => {
+    const latest = readFreshGroup()
+    reset(
+      values ??
+        (latest ? formValuesFromGroup(latest) : formValuesFromGroup(group)),
+    )
+    setEditMode(false)
   }
 
   const defaultQuestionsMutation = useMutation({
@@ -147,7 +169,9 @@ function GroupLoopSettings({ groupId }: { groupId: string }) {
       })
 
       showToast("Success!", "Loop settings updated successfully.", "success")
-      setEditMode(false)
+      await refreshGroup()
+      const refreshed = readFreshGroup()
+      exitEditMode(refreshed ? formValuesFromGroup(refreshed) : data)
     } catch (err) {
       const axiosErr = err as AxiosError<
         | ReplaceGroupDefaultQuestionsPartiesGroupGroupApiIdReplaceDefaultQuestionsPostError
@@ -158,14 +182,12 @@ function GroupLoopSettings({ groupId }: { groupId: string }) {
         formatApiErrorDetail(axiosErr.response?.data?.detail),
         "error",
       )
-    } finally {
       await refreshGroup()
     }
   }
 
   const onCancel = () => {
-    reset()
-    toggleEditMode()
+    exitEditMode()
   }
 
   return (
@@ -247,11 +269,10 @@ function GroupLoopSettings({ groupId }: { groupId: string }) {
             Every new loop starts with these questions.
           </p>
           <ul className="mt-4 flex flex-col gap-2">
-            {fields.map((field, index) => (
-              <li key={field.id}>
-                <div className="flex gap-2">
-                  {editMode ? (
-                    <>
+            {editMode
+              ? fields.map((field, index) => (
+                  <li key={field.id}>
+                    <div className="flex gap-2">
                       <Controller
                         control={control}
                         name={`questions.${index}.question_text`}
@@ -271,13 +292,14 @@ function GroupLoopSettings({ groupId }: { groupId: string }) {
                       >
                         Remove
                       </Button>
-                    </>
-                  ) : (
-                    <p className="text-sm">{field.question_text}</p>
-                  )}
-                </div>
-              </li>
-            ))}
+                    </div>
+                  </li>
+                ))
+              : group.default_questions.map((question) => (
+                  <li key={question.api_identifier}>
+                    <p className="text-sm">{question.question_text}</p>
+                  </li>
+                ))}
             {editMode && (
               <li>
                 <Button
@@ -302,7 +324,7 @@ function GroupLoopSettings({ groupId }: { groupId: string }) {
         </div>
         <div className="mt-6 flex gap-3 border-t pt-6">
           <Button
-            onClick={editMode ? undefined : toggleEditMode}
+            onClick={editMode ? undefined : enterEditMode}
             type={editMode ? "submit" : "button"}
             disabled={
               editMode
