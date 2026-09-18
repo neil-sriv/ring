@@ -1,4 +1,4 @@
-import { useQueryClient } from "@tanstack/react-query"
+import { useQuery, useQueryClient } from "@tanstack/react-query"
 import { Link } from "@tanstack/react-router"
 import { LogOut, User } from "lucide-react"
 
@@ -11,17 +11,18 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import type { UserLinked } from "../../client"
-import { readUserMePartiesMeGetQueryKey } from "../../client/@tanstack/react-query.gen"
+import { readUserMePartiesMeGetOptions } from "../../client/@tanstack/react-query.gen"
 import useAuth from "../../hooks/useAuth"
 import { userInitials } from "../../util/misc"
 
 const UserMenu = () => {
   const queryClient = useQueryClient()
   const { logout } = useAuth()
-  const currentUser = queryClient.getQueryData<UserLinked>(
-    readUserMePartiesMeGetQueryKey(),
-  )
+  // Subscribe so the avatar label refreshes when /me is refetched after a
+  // profile save. getQueryData alone never re-renders this menu.
+  const { data: currentUser } = useQuery({
+    ...readUserMePartiesMeGetOptions(),
+  })
 
   const handleLogout = async () => {
     logout()
