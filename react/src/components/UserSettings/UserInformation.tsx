@@ -76,8 +76,24 @@ const UserInformation = () => {
     await mutation.mutateAsync({ body: data })
   }
 
+  const syncFormFromCurrentUser = () => {
+    const latest = queryClient.getQueryData<UserLinked>(
+      readUserMePartiesMeGetQueryKey(),
+    )
+    reset({
+      name: latest?.name,
+      email: latest?.email,
+    })
+  }
+
+  const onEdit = () => {
+    // defaultValues are from mount — re-sync so Edit shows the latest /me cache
+    syncFormFromCurrentUser()
+    setEditMode(true)
+  }
+
   const onCancel = () => {
-    reset()
+    syncFormFromCurrentUser()
     setEditMode(false)
   }
 
@@ -189,7 +205,7 @@ const UserInformation = () => {
                 Save
               </Button>
             ) : (
-              <Button type="button" onClick={() => setEditMode(true)}>
+              <Button type="button" onClick={onEdit}>
                 Edit
               </Button>
             )}
