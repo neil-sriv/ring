@@ -7,7 +7,7 @@ the #16 number gap).
 
 from __future__ import annotations
 
-from datetime import timedelta
+from datetime import UTC, datetime, timedelta
 from typing import TYPE_CHECKING
 
 from ring.api_identifier import util as api_identifier_crud
@@ -48,8 +48,10 @@ def create_next_cyclic_letter(db: Session, group_api_id: str) -> Letter:
         group.cyclic_letters,
         key=lambda letter: (letter.number is not None, letter.number or 0),
     )
+    cycle = timedelta(days=group.cycle_length)
+    send_at = max(latest.send_at + cycle, datetime.now(tz=UTC) + cycle)
     return create_letter_with_questions(
         db,
         group.api_identifier,
-        latest.send_at + timedelta(days=group.cycle_length),
+        send_at,
     )
