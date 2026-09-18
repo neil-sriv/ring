@@ -271,6 +271,12 @@ The sha must exist as `ring-api:<sha>` (a **Publish ring-api** run).
 `image_build.sha` **before** git/image/compose mutate and restores that
 image (`--skip-git`) if verify fails — not `git rev-parse HEAD`.
 
+The host root volume is **30 GB**. `deploy_host.sh` aborts the pull if
+`/` has less than 3 GiB free (`RING_DEPLOY_MIN_FREE_GIB`) and, after a
+successful `/version` gate, runs `docker image prune -af` so retired
+images (old API SHAs, leftover frontend/worker/beat) do not accumulate.
+A `t2.micro` with a nearly full disk livelocks `docker pull` and SSH.
+
 Compose files: `compose.core.yml` + `compose.prod.yml` (+ `llm/compose.prod.llm.yml` if LLM is enabled).
 
 ### Confirm what is live

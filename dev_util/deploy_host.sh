@@ -38,6 +38,9 @@ SKIP_VERIFY=0
 ROLLBACK_ON_FAIL=0
 VERIFY_ATTEMPTS="${RING_VERSION_ATTEMPTS:-30}"
 VERIFY_SLEEP_SECS="${RING_VERSION_SLEEP_SECS:-2}"
+# t2.micro root is 30G. ring-api is ~1.5G unpacked; a cold pull + extract
+# needs a few GB free. Fail before docker starts an I/O storm.
+MIN_FREE_GIB="${RING_DEPLOY_MIN_FREE_GIB:-3}"
 
 usage() {
   cat <<'EOF'
@@ -58,6 +61,7 @@ Full host rollout: git sync, pull ECR image, migrate, compose up, verify.
 Env:
   RING_VERSION_URL      Default https://ring.neilsriv.tech/api/v1/version
   RING_DEPLOY_BRANCH    Branch to keep checked out (default: dev)
+  RING_DEPLOY_MIN_FREE_GIB  Abort pull if / has less free space (default: 3)
 
 Rollback:
   ./dev_util/deploy_host.sh <previous-published-sha>
@@ -117,6 +121,30 @@ ring_cmd() {
   else
     ring "$@"
   fi
+}
+
+require_disk_space() {
+  local min_kib=$((MIN_FREE_GIB * 1024 * 1024))
+  local avail_kib
+  avail_kib="$(df -P / | awk 'NR==2 {print $4}')"
+  if [[ -z "$avail_kib" || "$avail_kib" -lt "$min_kib" ]]; then
+    echo "==> Not enough free disk on / (${avail_kib:-?} KiB avail, need ${min_kib} KiB / ${MIN_FREE_GIB} GiB)" >&2
+    df -h / >&2 || true
+    docker system df >&2 || true
+    echo "Reclaim space (docker image prune -af) and retry." >&2
+    exit 1
+  fi
+  echo "==> Disk ok: $(df -h / | awk 'NR==2 {print $4}') free on /"
+}
+
+# After compose recreate, running containers pin the live images. prune -af
+# drops tagged leftovers (retired frontend/worker/beat, previous API SHAs)
+# that `docker image prune -f` (dangling-only) would keep. Skip on verify
+# failure so a local previous image is still there for rollback.
+prune_unused_docker() {
+  echo "==> Pruning unused Docker images and build cache"
+  docker image prune -af || true
+  docker builder prune -f || true
 }
 
 # Cloudflare blocks the default Python-urllib User-Agent (1010 / 403).
@@ -214,6 +242,7 @@ else
 fi
 
 if [[ "$SKIP_PULL" -eq 0 ]]; then
+  require_disk_space
   echo "==> Pulling images for ${SHA}"
   "${ROOT}/dev_util/prod.sh" "$SHA"
 fi
@@ -242,6 +271,10 @@ if [[ "$SKIP_VERIFY" -eq 0 ]]; then
     fi
     exit 1
   fi
+  # Only after /version matches: running containers pin the new images,
+  # so -af will not delete the live API/LLM/nginx. A failed verify exits
+  # above and keeps the previous image for rollback.
+  prune_unused_docker
 fi
 
 echo "==> Deploy complete (${SHA})"
