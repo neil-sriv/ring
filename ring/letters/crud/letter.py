@@ -203,6 +203,26 @@ def create_letter_with_questions(
     return letter
 
 
+def ensure_upcoming_cyclic_letter(db: Session, group: Group) -> Letter | None:
+    """Create the next upcoming cyclic letter when the group is missing one.
+
+    Used after promoting a letter to IN_PROGRESS (scheduler or edit) so a
+    number-gap unique violation or a manual status flip cannot leave the
+    cadence without a successor.
+    """
+    if group.upcoming_letters:
+        return None
+    in_progress = group.in_progress_letters
+    if not in_progress:
+        return None
+    latest = in_progress[-1]
+    return create_letter_with_questions(
+        db,
+        group.api_identifier,
+        latest.send_at + timedelta(days=group.cycle_length),
+    )
+
+
 def edit_letter(
     db: Session,
     letter: Letter,
@@ -224,6 +244,7 @@ def edit_letter(
         upsert_letter_tasks(db, letter, send_at)
         letter.send_at = send_at
     if status:
+        previous_status = letter.status
         letter.status = status
         if status == LetterStatus.IN_PROGRESS:
             delete_letter_task(
@@ -233,6 +254,8 @@ def edit_letter(
                 LetterStatus.UPCOMING,
                 letter.id,
             )
+            if previous_status != LetterStatus.IN_PROGRESS:
+                ensure_upcoming_cyclic_letter(db, letter.group)
     if title:
         letter.title = title
     db.flush()
@@ -532,10 +555,13 @@ def collect_future_letters(
     Upcoming letters are promoted ``LETTER_PROMOTION_LOOKAHEAD`` before their
     send date so participants get a response window before the letter goes
     out; they are only collected if the group does not already have an
-    in-progress letter. In-progress letters are collected for postpend once
-    their send date has arrived, regardless of whether the group already has
-    an upcoming letter — the postpend job itself decides whether a letter
-    still needs to be sent, deferred, or left to its send-email task.
+    in-progress letter. In-progress cyclic letters still in their response
+    window with no upcoming successor are collected too, so a failed promote
+    or a manual IN_PROGRESS edit can still queue the next letter.
+    In-progress letters are collected for postpend once their send date has
+    arrived, regardless of whether the group already has an upcoming letter
+    — the postpend job itself decides whether a letter still needs to be
+    sent, deferred, or left to its send-email task.
 
     Args:
         db (Session): Database session
@@ -568,6 +594,23 @@ def collect_future_letters(
     letters_to_promote = [
         l for l in letters_to_promote if not l.group.in_progress_letters
     ]
+    # Heal cyclic groups already in their response window that never got a
+    # successor (promote crashed after a number-gap unique violation, or
+    # someone flipped the letter to IN_PROGRESS via edit).
+    open_in_progress = db.scalars(
+        select(Letter)
+        .where(
+            Letter.letter_type == LetterType.CYCLIC,
+            Letter.status == LetterStatus.IN_PROGRESS,
+            Letter.send_at > curr_time,
+        )
+        .order_by(Letter.send_at)
+    ).all()
+    letters_to_promote = list(letters_to_promote) + [
+        letter
+        for letter in open_in_progress
+        if not letter.group.upcoming_letters
+    ]
     return letters_to_postpend, letters_to_promote
 
 
@@ -593,17 +636,16 @@ def promote_and_create_new_letters_with_session(
     logger.info(f"Promoting letters: {letter_ids}")
     letters = db.scalars(select(Letter).where(Letter.id.in_(letter_ids))).all()
     for letter in letters:
-        letter.status = LetterStatus.IN_PROGRESS
-        create_letter_with_questions(
-            db,
-            letter.group.api_identifier,
-            letter.send_at + timedelta(days=letter.group.cycle_length),
-        )
-        # Schedule async job to send email notification
-        scheduler.add_job(
-            send_response_open_email,
-            args=[letter.id],
-        )
+        was_upcoming = letter.status == LetterStatus.UPCOMING
+        if was_upcoming:
+            letter.status = LetterStatus.IN_PROGRESS
+        ensure_upcoming_cyclic_letter(db, letter.group)
+        if was_upcoming:
+            # Schedule async job to send email notification
+            scheduler.add_job(
+                send_response_open_email,
+                args=[letter.id],
+            )
     db.commit()
 
 
