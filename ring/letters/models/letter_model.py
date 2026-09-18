@@ -12,12 +12,13 @@ from typing import TYPE_CHECKING
 
 from sqlalchemy import (
     Column,
-    Constraint,
     DateTime,
     ForeignKey,
+    Index,
     Integer,
     Table,
     UniqueConstraint,
+    text,
 )
 from sqlalchemy.ext.declarative import declared_attr
 from sqlalchemy.ext.hybrid import hybrid_property
@@ -104,17 +105,33 @@ class Letter(Base, APIIdentified, PydanticModel, CreatedAtMixin):
     )
 
     @declared_attr  # type: ignore
-    def __table_args__(cls) -> tuple[Constraint]:
+    def __table_args__(cls) -> tuple[UniqueConstraint | Index, ...]:
         """Define table constraints.
 
         Returns:
-            tuple[Constraint]: Tuple of table constraints
+            tuple[UniqueConstraint | Index, ...]: Table constraints
         """
         return (
             UniqueConstraint(
                 "group_id",
                 "number",
                 name="unique_group_letter_number",
+            ),
+            Index(
+                "uniq_one_cyclic_upcoming_per_group",
+                "group_id",
+                unique=True,
+                postgresql_where=text(
+                    "letter_type = 'CYCLIC' AND status = 'UPCOMING'"
+                ),
+            ),
+            Index(
+                "uniq_one_cyclic_in_progress_per_group",
+                "group_id",
+                unique=True,
+                postgresql_where=text(
+                    "letter_type = 'CYCLIC' AND status = 'IN_PROGRESS'"
+                ),
             ),
         )
 
