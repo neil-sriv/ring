@@ -69,19 +69,23 @@ function ResponseBlock({
   const images =
     response.images?.filter((image) => image.media_type === "image") ?? []
 
-  let imageIndexCounter = 0
+  // Capture each photo's index into `images` at map time. Incrementing in
+  // onClick (post-increment) made every first click open image 0 regardless
+  // of which thumbnail was selected.
+  let nextImageIndex = 0
 
   const mediaItems =
     response.images?.map((image) => {
       const id = image.s3_url
       if (image.media_type === "image") {
+        const imageIndex = nextImageIndex++
         return {
           id,
           render: () => (
             <button
               type="button"
               className="block cursor-zoom-in focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-              onClick={() => setActiveLightboxIndex(imageIndexCounter++)}
+              onClick={() => setActiveLightboxIndex(imageIndex)}
               aria-label={`View image from ${response.participant.name} full screen`}
             >
               <div className="block w-full max-w-[400px] min-w-0 overflow-hidden rounded-lg border bg-card">
