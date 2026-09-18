@@ -89,6 +89,7 @@ CREATE TABLE public.question (
 	question_text STRING NOT NULL,
 	letter_id INT8 NOT NULL,
 	author_id INT8 NULL,
+	position INT8 NOT NULL DEFAULT 0:::INT8,
 	created_at TIMESTAMPTZ NOT NULL DEFAULT now():::TIMESTAMPTZ,
 	CONSTRAINT question_pkey PRIMARY KEY (id ASC),
 	UNIQUE INDEX ix_question_api_identifier (api_identifier ASC),

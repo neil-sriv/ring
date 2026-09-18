@@ -191,15 +191,13 @@ def create_letter_with_questions(
         IDNotFoundException: If group with given API ID is not found
     """
     letter = create_letter(db, group_api_id, send_at, number, letter_status)
-    add_random_questions(db, letter)
     group = api_identifier_crud.get_model(db, Group, api_id=group_api_id)
     if not group.default_questions:
         add_default_questions(db, letter)
     else:
-        [
+        for question in group.default_questions:
             add_question(db, letter, question.question_text)
-            for question in group.default_questions
-        ]
+    add_random_questions(db, letter)
     return letter
 
 
@@ -497,9 +495,7 @@ def compile_letter_dict(
             )
             for response in question.responses
         ]
-        for question in sorted(
-            letter.questions, key=lambda q: q.created_at, reverse=True
-        )
+        for question in sorted(letter.questions, key=lambda q: q.position)
     }
 
 
