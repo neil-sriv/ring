@@ -31,6 +31,10 @@ export function GroupKeyValuesTable({
   // Last successfully persisted snapshot — used to roll back optimistic edits
   // when a full-replace PUT fails (otherwise the editor stays out of sync).
   const lastSavedRef = useRef(cloneKeyValues(keyValues.key_values))
+  // Full-replace PUTs are not serialized, so an older attempt can settle after
+  // a newer one. Only the newest attempt may roll the editor back or advance
+  // the saved snapshot.
+  const saveGenerationRef = useRef(0)
   // react-json-view ignores later `src` changes; bump key on rollback to remount.
   const [editorKey, setEditorKey] = useState(0)
   const showToast = useCustomToast()
@@ -38,15 +42,12 @@ export function GroupKeyValuesTable({
 
   const addKey = useMutation({
     ...fullReplaceGroupKeyValuesPartiesGroupGroupApiIdKeyValuePutMutation(),
-    onSuccess: (_data, variables) => {
-      lastSavedRef.current = cloneKeyValues(variables.body.key_values)
+    onSuccess: () => {
       showToast("Success!", "Key value updated.", "success")
     },
     onError: (
       err: AxiosError<FullReplaceGroupKeyValuesPartiesGroupGroupApiIdKeyValuePutError>,
     ) => {
-      setEditableData(cloneKeyValues(lastSavedRef.current))
-      setEditorKey((key) => key + 1)
       showToast(
         "Something went wrong.",
         formatApiErrorDetail(err.response?.data?.detail),
@@ -63,13 +64,35 @@ export function GroupKeyValuesTable({
   })
 
   const handleEdit = ({ updated_src }: { updated_src: any }) => {
+    const generation = ++saveGenerationRef.current
     setEditableData(updated_src)
-    addKey.mutate({
-      path: { group_api_id: groupApiId },
-      body: {
-        key_values: updated_src,
+    addKey.mutate(
+      {
+        path: { group_api_id: groupApiId },
+        body: {
+          key_values: updated_src,
+        },
       },
-    })
+      {
+        onSuccess: () => {
+          // A late-settling older PUT must not move the snapshot backwards past
+          // a newer attempt.
+          if (generation !== saveGenerationRef.current) {
+            return
+          }
+          lastSavedRef.current = cloneKeyValues(updated_src)
+        },
+        onError: () => {
+          // Rolling back a superseded attempt would show stale values while a
+          // newer edit is still in flight (or has already landed).
+          if (generation !== saveGenerationRef.current) {
+            return
+          }
+          setEditableData(cloneKeyValues(lastSavedRef.current))
+          setEditorKey((key) => key + 1)
+        },
+      },
+    )
   }
 
   return (
