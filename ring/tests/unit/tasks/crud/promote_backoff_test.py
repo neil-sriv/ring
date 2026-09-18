@@ -12,6 +12,7 @@ from ring.tasks.crud.promote_backoff import (
     PROMOTE_BACKOFF_CAP,
     PROMOTE_FAILURE_LOG,
     backoff_delay,
+    eligible_promote_ids,
     enqueue_promote_if_allowed,
     mark_promote_failed,
     mark_promote_started,
@@ -109,3 +110,26 @@ class TestPromoteBackoff:
             is True
         )
         assert add_job.call_count == 2
+
+    def test_backoff_is_per_letter_not_batch_membership(self) -> None:
+        now = datetime(2026, 9, 18, 14, 0, tzinfo=UTC)
+        mark_promote_failed([1], RuntimeError("boom"), now=now)
+
+        assert should_enqueue_promote([1], now) is False
+        assert eligible_promote_ids([1, 2], now) == [2]
+        assert should_enqueue_promote([1, 2], now) is True
+
+        add_job = MagicMock()
+        job = object()
+        assert (
+            enqueue_promote_if_allowed([1, 2], add_job, job, now=now) is True
+        )
+        add_job.assert_called_once_with(job, args=[[2]])
+        assert should_enqueue_promote([1], now) is False
+        assert should_enqueue_promote([2], now) is False
+
+    def test_in_flight_coalesce_is_per_letter_not_batch(self) -> None:
+        now = datetime(2026, 9, 18, 14, 0, tzinfo=UTC)
+        mark_promote_started([1], now)
+        assert eligible_promote_ids([1, 2], now) == [2]
+        assert should_enqueue_promote([1], now) is False

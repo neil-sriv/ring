@@ -6,8 +6,12 @@ promote is still needed. A persistent error (historically a number-gap
 ``UniqueViolation``) then fires every minute until the API is restarted.
 
 This module keeps an in-process record of in-flight and recently failed
-promote batches so the poller can skip them, and emits a stable ERROR
+promote letters so the poller can skip them, and emits a stable ERROR
 line for a CloudWatch metric filter.
+
+State is keyed **per letter id**, not the exact poll batch. Otherwise a
+failed letter A is retried immediately as soon as another group adds B
+to the same ``collect_future_letters`` list (``{A} ≠ {A, B}``).
 """
 
 from __future__ import annotations
@@ -21,8 +25,8 @@ PROMOTE_BACKOFF_CAP = timedelta(minutes=30)
 PROMOTE_IN_FLIGHT_TIMEOUT = timedelta(minutes=15)
 PROMOTE_FAILURE_LOG = "promote_and_create_new_letters failed"
 
-_IN_FLIGHT: dict[frozenset[int], datetime] = {}
-_FAILURES: dict[frozenset[int], tuple[datetime, int]] = {}
+_IN_FLIGHT: dict[int, datetime] = {}
+_FAILURES: dict[int, tuple[datetime, int]] = {}
 
 
 def reset_promote_backoff() -> None:
@@ -41,40 +45,53 @@ def backoff_delay(failure_count: int) -> timedelta:
     return delay
 
 
-def should_enqueue_promote(
-    letter_ids: list[int], now: datetime | None = None
-) -> bool:
-    """Return True when a promote job should be scheduled for these ids."""
-    if not letter_ids:
-        return False
-    if now is None:
-        now = datetime.now(tz=UTC)
-    key = frozenset(letter_ids)
-    started_at = _IN_FLIGHT.get(key)
+def _is_blocked(letter_id: int, now: datetime) -> bool:
+    started_at = _IN_FLIGHT.get(letter_id)
     if started_at is not None and now - started_at < PROMOTE_IN_FLIGHT_TIMEOUT:
-        return False
-    failure = _FAILURES.get(key)
+        return True
+    failure = _FAILURES.get(letter_id)
     if failure is not None:
         failed_at, count = failure
         if now < failed_at + backoff_delay(count):
-            return False
-    return True
+            return True
+    return False
+
+
+def eligible_promote_ids(
+    letter_ids: list[int], now: datetime | None = None
+) -> list[int]:
+    """Return letter ids that are neither in flight nor backing off."""
+    if now is None:
+        now = datetime.now(tz=UTC)
+    return [
+        letter_id
+        for letter_id in letter_ids
+        if not _is_blocked(letter_id, now)
+    ]
+
+
+def should_enqueue_promote(
+    letter_ids: list[int], now: datetime | None = None
+) -> bool:
+    """Return True when at least one of these letters may be promoted."""
+    return bool(eligible_promote_ids(letter_ids, now))
 
 
 def mark_promote_started(
     letter_ids: list[int], now: datetime | None = None
 ) -> None:
-    """Record that a promote job is in flight for these letter ids."""
+    """Record that a promote job is in flight for each letter id."""
     if now is None:
         now = datetime.now(tz=UTC)
-    _IN_FLIGHT[frozenset(letter_ids)] = now
+    for letter_id in letter_ids:
+        _IN_FLIGHT[letter_id] = now
 
 
 def mark_promote_succeeded(letter_ids: list[int]) -> None:
     """Clear in-flight and failure state after a successful promote."""
-    key = frozenset(letter_ids)
-    _IN_FLIGHT.pop(key, None)
-    _FAILURES.pop(key, None)
+    for letter_id in letter_ids:
+        _IN_FLIGHT.pop(letter_id, None)
+        _FAILURES.pop(letter_id, None)
 
 
 def mark_promote_failed(
@@ -89,11 +106,11 @@ def mark_promote_failed(
     """
     if now is None:
         now = datetime.now(tz=UTC)
-    key = frozenset(letter_ids)
-    _IN_FLIGHT.pop(key, None)
-    previous = _FAILURES.get(key)
-    count = previous[1] + 1 if previous else 1
-    _FAILURES[key] = (now, count)
+    for letter_id in letter_ids:
+        _IN_FLIGHT.pop(letter_id, None)
+        previous = _FAILURES.get(letter_id)
+        count = previous[1] + 1 if previous else 1
+        _FAILURES[letter_id] = (now, count)
     logger.error(
         "{} for letter ids {}: {}",
         PROMOTE_FAILURE_LOG,
@@ -108,16 +125,27 @@ def enqueue_promote_if_allowed(
     job: object,
     now: datetime | None = None,
 ) -> bool:
-    """Enqueue a promote job unless one is in flight or backing off."""
+    """Enqueue a promote job for ids that are not in flight or backing off."""
     if now is None:
         now = datetime.now(tz=UTC)
-    if not should_enqueue_promote(letter_ids, now):
+    eligible = eligible_promote_ids(letter_ids, now)
+    if not eligible:
         logger.warning(
             "Skipping promote enqueue for letter ids {} "
             "(in flight or backing off after failure)",
             letter_ids,
         )
         return False
-    mark_promote_started(letter_ids, now)
-    add_job(job, args=[letter_ids])  # type: ignore[operator]
+    skipped = [
+        letter_id for letter_id in letter_ids if letter_id not in set(eligible)
+    ]
+    if skipped:
+        logger.warning(
+            "Skipping promote enqueue for letter ids {} "
+            "(in flight or backing off after failure); enqueueing {}",
+            skipped,
+            eligible,
+        )
+    mark_promote_started(eligible, now)
+    add_job(job, args=[eligible])  # type: ignore[operator]
     return True
