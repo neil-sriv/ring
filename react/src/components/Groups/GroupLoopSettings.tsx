@@ -157,6 +157,16 @@ function GroupLoopSettings({ groupId }: { groupId: string }) {
             )}`,
             "error",
           )
+          // Questions persisted, the cycle patch did not. Re-baseline the form
+          // on what is actually on the server so a later Cancel can't roll the
+          // saved questions back and a later Save can't overwrite them with
+          // pre-save values. Stay in edit mode so the cycle change can be
+          // retried.
+          reset({
+            questions: data.questions,
+            cycle_length: group.cycle_length,
+            min_responder_percent: currentMinResponderPercent,
+          })
           return
         }
       }
