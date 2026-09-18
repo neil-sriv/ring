@@ -44,6 +44,21 @@ letter_to_user_assocation = Table(
 )
 
 
+def next_cyclic_letter_number(group: Group) -> int:
+    """Return the next unused cyclic letter number for a group.
+
+    Numbers can have gaps (a letter skipped or inserted with an explicit
+    number), so this is ``max(existing) + 1``, not ``count + 1``. Using the
+    count collides with ``unique_group_letter_number`` when a gap exists.
+    """
+    numbers = [
+        letter.number
+        for letter in group.cyclic_letters
+        if letter.number is not None
+    ]
+    return (max(numbers) if numbers else 0) + 1
+
+
 @register_api_class(APIPrefix.LETTER)
 class Letter(Base, APIIdentified, PydanticModel, CreatedAtMixin):
     """SQLAlchemy model representing a letter in the system.
@@ -123,7 +138,11 @@ class Letter(Base, APIIdentified, PydanticModel, CreatedAtMixin):
         """
         APIIdentified.__init__(self)
         if letter_type == LetterType.CYCLIC:
-            self.number = number if number else len(group.cyclic_letters) + 1
+            self.number = (
+                number
+                if number is not None
+                else next_cyclic_letter_number(group)
+            )
         self.group = group
         self.participants = group.members
         self.send_at = send_at

@@ -497,8 +497,9 @@ class TestLetterCrud:
             status=LetterStatus.UPCOMING,
             send_at=curr_time + timedelta(days=6),
         )
-        # Mid response window: not postpended before its send date.
-        LetterFactory.create(
+        # Mid response window: not postpended before its send date, but
+        # queued so the group still gets an upcoming successor.
+        mid_window = LetterFactory.create(
             status=LetterStatus.IN_PROGRESS,
             send_at=curr_time + timedelta(days=6),
         )
@@ -525,7 +526,7 @@ class TestLetterCrud:
         db_session.commit()
 
         assert set(postpend) == {postpend_letter, overdue_with_upcoming}
-        assert promote == [promoted_letter]
+        assert set(promote) == {promoted_letter, mid_window}
 
     def test_collect_future_letters_no_letters(
         self, db_session: Session
@@ -606,6 +607,127 @@ class TestLetterCrud:
             days=group.cycle_length
         )
         mock_scheduler.add_job.assert_called_once()
+
+    def test_promote_and_create_new_letters_with_number_gap(
+        self, db_session: Session
+    ) -> None:
+        """A skipped cyclic number must not abort promote or the successor."""
+        from unittest.mock import MagicMock, patch
+
+        group = GroupFactory.create()
+        LetterFactory.create(group=group, status=LetterStatus.SENT, number=1)
+        send_at = datetime.now(tz=UTC) + timedelta(days=2)
+        letter = LetterFactory.create(
+            group=group,
+            status=LetterStatus.UPCOMING,
+            number=3,
+            send_at=send_at,
+        )
+        db_session.commit()
+        letter_id = letter.id
+        group_api_id = group.api_identifier
+
+        mock_scheduler = MagicMock()
+        with patch(
+            "ring.async_scheduler.scheduler.scheduler",
+            mock_scheduler,
+        ):
+            letter_crud.promote_and_create_new_letters_with_session(
+                db_session, [letter_id]
+            )
+
+        db_session.expire_all()
+        promoted = db_session.get(Letter, letter_id)
+        assert promoted is not None
+        assert promoted.status == LetterStatus.IN_PROGRESS
+
+        upcoming = [
+            group_letter
+            for group_letter in letter_crud.get_letters(
+                db_session, group_api_id
+            )
+            if group_letter.status == LetterStatus.UPCOMING
+        ]
+        assert len(upcoming) == 1
+        assert upcoming[0].number == 4
+        mock_scheduler.add_job.assert_called_once()
+
+    def test_promote_creates_upcoming_for_in_progress_without_successor(
+        self, db_session: Session
+    ) -> None:
+        """Heal an in-progress cyclic letter that never got a successor."""
+        from unittest.mock import MagicMock, patch
+
+        group = GroupFactory.create()
+        send_at = datetime.now(tz=UTC) + timedelta(days=6)
+        letter = LetterFactory.create(
+            group=group,
+            status=LetterStatus.IN_PROGRESS,
+            send_at=send_at,
+        )
+        db_session.commit()
+        letter_id = letter.id
+        group_api_id = group.api_identifier
+
+        mock_scheduler = MagicMock()
+        with patch(
+            "ring.async_scheduler.scheduler.scheduler",
+            mock_scheduler,
+        ):
+            letter_crud.promote_and_create_new_letters_with_session(
+                db_session, [letter_id]
+            )
+
+        db_session.expire_all()
+        in_progress = db_session.get(Letter, letter_id)
+        assert in_progress is not None
+        assert in_progress.status == LetterStatus.IN_PROGRESS
+
+        upcoming = [
+            group_letter
+            for group_letter in letter_crud.get_letters(
+                db_session, group_api_id
+            )
+            if group_letter.status == LetterStatus.UPCOMING
+        ]
+        assert len(upcoming) == 1
+        assert upcoming[0].send_at == send_at + timedelta(
+            days=group.cycle_length
+        )
+        mock_scheduler.add_job.assert_not_called()
+
+    def test_edit_letter_to_in_progress_creates_upcoming(
+        self, db_session: Session
+    ) -> None:
+        """Manual IN_PROGRESS flips should still queue the next cyclic letter."""
+        group = GroupFactory.create()
+        send_at = datetime.now(tz=UTC) + timedelta(days=10)
+        letter = LetterFactory.create(
+            group=group,
+            status=LetterStatus.UPCOMING,
+            send_at=send_at,
+        )
+        db_session.commit()
+
+        letter_crud.edit_letter(
+            db_session, letter, status=LetterStatus.IN_PROGRESS
+        )
+        db_session.commit()
+        letter_id = letter.id
+        db_session.expire_all()
+
+        edited = db_session.get(Letter, letter_id)
+        assert edited is not None
+        assert edited.status == LetterStatus.IN_PROGRESS
+        upcoming = [
+            group_letter
+            for group_letter in letter_crud.get_letters(
+                db_session, group.api_identifier
+            )
+            if group_letter.status == LetterStatus.UPCOMING
+        ]
+        assert len(upcoming) == 1
+        assert upcoming[0].id != letter.id
 
     def test_add_participants(self, db_session: Session) -> None:
         """Test adding participants to a letter.

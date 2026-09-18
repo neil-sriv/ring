@@ -104,6 +104,25 @@ class TestLetterModel:
 
         assert letter.number == 1
 
+    def test_letter_model_number_skips_gaps(
+        self, db_session: Session, faker: Faker
+    ) -> None:
+        """Count-based numbering collides when a cyclic number is skipped."""
+        group = GroupFactory.create()
+        LetterFactory.create(group=group, number=1)
+        LetterFactory.create(group=group, number=3)
+        db_session.commit()
+
+        letter = Letter(
+            group=group,
+            send_at=faker.date_time(tzinfo=UTC),
+            status=LetterStatus.IN_PROGRESS,
+        )
+        db_session.add(letter)
+        db_session.commit()
+
+        assert letter.number == 4
+
     def test_letter_model_responders(
         self, db_session: Session, faker: Faker
     ) -> None:
