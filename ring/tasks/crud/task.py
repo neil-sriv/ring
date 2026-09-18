@@ -102,9 +102,9 @@ def execute_send_email_task(
     """Execute a send email task.
 
     Sends a letter email to all participants and marks the letter as sent
-    upon successful delivery. If the group has no upcoming letter after a
-    successful send (normally created when the letter was promoted), the
-    next letter is created here so the group's cadence continues.
+    upon successful delivery. After a successful send, the next cyclic
+    letter is created via ``advance_cyclic_letter`` when the group is
+    missing an upcoming successor.
 
     Args:
         db: Database session
@@ -144,15 +144,9 @@ def execute_send_email_task(
         db.commit()
         return
 
-    if (
-        letter_crud.send_letter_email(db, letter_to_send)
-        and not letter_to_send.group.upcoming_letters
-    ):
-        letter_crud.create_letter_with_questions(
-            db,
-            letter_to_send.group.api_identifier,
-            letter_to_send.send_at
-            + timedelta(days=letter_to_send.group.cycle_length),
+    if letter_crud.send_letter_email(db, letter_to_send):
+        letter_crud.advance_cyclic_letter(
+            db, letter_to_send.group, after=letter_to_send
         )
     db.commit()
 
