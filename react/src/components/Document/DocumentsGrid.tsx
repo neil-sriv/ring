@@ -4,13 +4,19 @@ import {
   useQueryClient,
   useSuspenseQuery,
 } from "@tanstack/react-query"
+import type { AxiosError } from "axios"
 import { FileText, Loader2 } from "lucide-react"
-import type { DocumentResponse } from "../../client"
+import type {
+  CreateDocumentEndpointNotebookDocumentsPostError,
+  DocumentResponse,
+} from "../../client"
 import {
   createDocumentEndpointNotebookDocumentsPostMutation,
   listDocumentsNotebookDocumentsGetOptions,
   listDocumentsNotebookDocumentsGetQueryKey,
 } from "../../client/@tanstack/react-query.gen"
+import useCustomToast from "../../hooks/useCustomToast"
+import { formatApiErrorDetail } from "../../util/misc"
 import { DocumentCard } from "./DocumentCard"
 
 export function DocumentsGrid(props: {
@@ -25,6 +31,7 @@ export function DocumentsGrid(props: {
   })
 
   const queryClient = useQueryClient()
+  const showToast = useCustomToast()
 
   const createDocumentMutation = useMutation({
     ...createDocumentEndpointNotebookDocumentsPostMutation(),
@@ -34,6 +41,15 @@ export function DocumentsGrid(props: {
           query: { group_api_id: props.groupApiId },
         }),
       })
+    },
+    onError: (
+      err: AxiosError<CreateDocumentEndpointNotebookDocumentsPostError>,
+    ) => {
+      showToast(
+        "Something went wrong.",
+        formatApiErrorDetail(err.response?.data?.detail),
+        "error",
+      )
     },
   })
 
@@ -75,6 +91,7 @@ export function DocumentsGrid(props: {
           </p>
           <Button
             className="mt-6"
+            disabled={createDocumentMutation.isPending}
             onClick={() => {
               createDocumentMutation.mutate({
                 body: {
@@ -85,6 +102,9 @@ export function DocumentsGrid(props: {
               })
             }}
           >
+            {createDocumentMutation.isPending && (
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+            )}
             Create Document
           </Button>
         </div>

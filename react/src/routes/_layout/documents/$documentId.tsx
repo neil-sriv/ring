@@ -2,6 +2,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import { createFileRoute } from "@tanstack/react-router"
 import { Loader2 } from "lucide-react"
 import { Suspense, lazy, useRef, useState } from "react"
+import { toast } from "sonner"
 import type { DocumentResponse } from "../../../client"
 import {
   getDocumentEndpointNotebookDocumentsDocumentApiIdGetOptions,
@@ -10,6 +11,8 @@ import {
 } from "../../../client/@tanstack/react-query.gen"
 import { EditableTitle } from "../../../components/Document/EditableTitle"
 import type { NotebookWsStatus } from "../../../components/Document/Editor"
+
+const SYNC_ERROR_TOAST_COOLDOWN_MS = 10_000
 
 type DocumentLoaderProps = {
   document: DocumentResponse
@@ -42,8 +45,10 @@ function DocumentContentLoader() {
   const documentId = Route.useParams().documentId
   const [isSaving, setIsSaving] = useState(false)
   const [isEditing, setIsEditing] = useState(false)
+  const [hasSyncError, setHasSyncError] = useState(false)
   const [wsStatus, setWsStatus] = useState<NotebookWsStatus>("connecting")
   const savingStartTimeRef = useRef<number | null>(null)
+  const lastSyncErrorToastAtRef = useRef(0)
   const queryClient = useQueryClient()
 
   // Use query data instead of loader data to get real-time updates
@@ -67,6 +72,7 @@ function DocumentContentLoader() {
   const handleSavingChange = (saving: boolean) => {
     if (saving) {
       savingStartTimeRef.current = Date.now()
+      setHasSyncError(false)
       setIsSaving(true)
     } else {
       const elapsed = Date.now() - (savingStartTimeRef.current || 0)
@@ -76,6 +82,21 @@ function DocumentContentLoader() {
         setIsSaving(false)
       }, remainingTime)
     }
+  }
+
+  const handleSyncError = () => {
+    setHasSyncError(true)
+    const now = Date.now()
+    if (now - lastSyncErrorToastAtRef.current < SYNC_ERROR_TOAST_COOLDOWN_MS) {
+      return
+    }
+    lastSyncErrorToastAtRef.current = now
+    toast.error("Couldn't save document", {
+      id: "notebook-sync-error",
+      description:
+        "Your latest edits could not be saved. Check your connection and try again.",
+      duration: 8_000,
+    })
   }
 
   const handleTitleChange = async (newTitle: string) => {
@@ -150,6 +171,11 @@ function DocumentContentLoader() {
                 <span className="h-1.5 w-1.5 rounded-full bg-muted-foreground/60" />
                 <span>Editing...</span>
               </>
+            ) : hasSyncError ? (
+              <>
+                <span className="h-1.5 w-1.5 rounded-full bg-destructive" />
+                <span className="text-destructive">Couldn't save</span>
+              </>
             ) : (
               <>
                 <span className="h-1.5 w-1.5 rounded-full bg-success" />
@@ -173,6 +199,7 @@ function DocumentContentLoader() {
             onSavingChange={handleSavingChange}
             onEditingChange={setIsEditing}
             onConnectionChange={setWsStatus}
+            onSyncError={handleSyncError}
           />
         </Suspense>
       </div>
