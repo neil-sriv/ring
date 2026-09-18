@@ -1,8 +1,8 @@
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { useMutation, useQueryClient } from "@tanstack/react-query"
-import { useState } from "react"
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
+import { useEffect, useRef, useState } from "react"
 import {
   Controller,
   type SubmitHandler,
@@ -15,6 +15,7 @@ import type { AxiosError } from "axios"
 import { Loader2, Plus } from "lucide-react"
 import type { GroupLinked } from "../../client"
 import {
+  readGroupPartiesGroupGroupApiIdGetOptions,
   readGroupPartiesGroupGroupApiIdGetQueryKey,
   replaceGroupDefaultQuestionsPartiesGroupGroupApiIdReplaceDefaultQuestionsPostMutation,
   updateGroupPartiesGroupGroupApiIdPatchMutation,
@@ -37,6 +38,12 @@ type FormData = {
 }
 
 const DEFAULT_MIN_RESPONDER_PERCENT = 50
+
+const EMPTY_FORM_VALUES: FormData = {
+  questions: [],
+  cycle_length: 1,
+  min_responder_percent: DEFAULT_MIN_RESPONDER_PERCENT,
+}
 
 function displayMinResponderPercent(ratio: number | null | undefined): number {
   if (ratio == null) {
@@ -61,17 +68,16 @@ function GroupLoopSettings({ groupId }: { groupId: string }) {
   const queryClient = useQueryClient()
   const showToast = useCustomToast()
   const [editMode, setEditMode] = useState(false)
-  const group = queryClient.getQueryData<GroupLinked>(
-    readGroupPartiesGroupGroupApiIdGetQueryKey({
+  const router = useRouter()
+  // Subscribe so view-mode cycle / questions update when the group query is
+  // refetched or overwritten in cache. getQueryData alone never re-renders.
+  const { data: group } = useQuery({
+    ...readGroupPartiesGroupGroupApiIdGetOptions({
       path: { group_api_id: groupId },
     }),
-  )
+  })
 
-  if (group === undefined) {
-    return null
-  }
-
-  const router = useRouter()
+  // Hooks must run unconditionally — never after the group early-return below.
   const {
     handleSubmit,
     reset,
@@ -81,7 +87,7 @@ function GroupLoopSettings({ groupId }: { groupId: string }) {
   } = useForm<FormData>({
     mode: "onBlur",
     criteriaMode: "all",
-    defaultValues: formValuesFromGroup(group),
+    defaultValues: group ? formValuesFromGroup(group) : EMPTY_FORM_VALUES,
   })
 
   const { fields, append, remove } = useFieldArray({
@@ -93,6 +99,31 @@ function GroupLoopSettings({ groupId }: { groupId: string }) {
         "Question cannot be empty.",
     },
   })
+
+  const defaultQuestionsMutation = useMutation({
+    ...replaceGroupDefaultQuestionsPartiesGroupGroupApiIdReplaceDefaultQuestionsPostMutation(),
+  })
+
+  const cycleUpdateMutation = useMutation({
+    ...updateGroupPartiesGroupGroupApiIdPatchMutation(),
+  })
+
+  // Seed the form once the group arrives, then leave it alone — matching the
+  // prior behaviour where defaultValues were read from group exactly once.
+  // enterEditMode re-seeds from the freshest group; re-syncing on every later
+  // group object would risk clobbering in-progress edits.
+  const didSeedFormRef = useRef(false)
+  useEffect(() => {
+    if (!group || didSeedFormRef.current) {
+      return
+    }
+    didSeedFormRef.current = true
+    reset(formValuesFromGroup(group))
+  }, [group, reset])
+
+  if (group === undefined) {
+    return null
+  }
 
   const refreshGroup = async () => {
     queryClient.invalidateQueries({
@@ -129,14 +160,6 @@ function GroupLoopSettings({ groupId }: { groupId: string }) {
     )
     setEditMode(false)
   }
-
-  const defaultQuestionsMutation = useMutation({
-    ...replaceGroupDefaultQuestionsPartiesGroupGroupApiIdReplaceDefaultQuestionsPostMutation(),
-  })
-
-  const cycleUpdateMutation = useMutation({
-    ...updateGroupPartiesGroupGroupApiIdPatchMutation(),
-  })
 
   const onSubmit: SubmitHandler<FormData> = async (data) => {
     const currentMinResponderPercent = displayMinResponderPercent(
