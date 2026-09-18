@@ -203,24 +203,51 @@ def create_letter_with_questions(
     return letter
 
 
+def advance_cyclic_letter(
+    db: Session,
+    group: Group,
+    *,
+    after: Letter | None = None,
+) -> Letter | None:
+    """Ensure a cyclic group has an upcoming letter after ``after``.
+
+    This is the single owner of "create the next cyclic letter". Promote,
+    ``edit_letter``, postpend, and the send-email fallback all call it so
+    numbering, seeded questions, and successor send_at stay in one place.
+
+    If an upcoming cyclic letter already exists, it is returned unchanged.
+    Otherwise a new letter is created with ``create_letter_with_questions``
+    (group defaults + 3 bank questions, ``MAX(number)+1``).
+
+    ``after`` is the letter that just left the cadence (promoted or sent).
+    When omitted, the latest in-progress cyclic letter is used. Returns
+    None when there is no letter to advance from and no upcoming letter.
+    """
+    if group.upcoming_letters:
+        return group.upcoming_letters[0]
+    source = after
+    if source is None and group.in_progress_letters:
+        source = group.in_progress_letters[-1]
+    if source is None:
+        return None
+    return create_letter_with_questions(
+        db,
+        group.api_identifier,
+        source.send_at + timedelta(days=group.cycle_length),
+    )
+
+
 def ensure_upcoming_cyclic_letter(db: Session, group: Group) -> Letter | None:
     """Create the next upcoming cyclic letter when the group is missing one.
 
     Used after promoting a letter to IN_PROGRESS (scheduler or edit) so a
     number-gap unique violation or a manual status flip cannot leave the
-    cadence without a successor.
+    cadence without a successor. Returns None when an upcoming letter
+    already exists; otherwise delegates to ``advance_cyclic_letter``.
     """
     if group.upcoming_letters:
         return None
-    in_progress = group.in_progress_letters
-    if not in_progress:
-        return None
-    latest = in_progress[-1]
-    return create_letter_with_questions(
-        db,
-        group.api_identifier,
-        latest.send_at + timedelta(days=group.cycle_length),
-    )
+    return advance_cyclic_letter(db, group)
 
 
 def edit_letter(
@@ -701,12 +728,7 @@ def postpend_upcoming_letters_with_session(
             continue
         if not send_letter_email(db, letter):
             continue
-        if not letter.group.upcoming_letters:
-            create_letter_with_questions(
-                db,
-                letter.group.api_identifier,
-                letter.send_at + timedelta(days=letter.group.cycle_length),
-            )
+        advance_cyclic_letter(db, letter.group, after=letter)
     db.commit()
 
 
