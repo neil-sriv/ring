@@ -5,10 +5,12 @@ from __future__ import annotations
 from datetime import UTC, datetime, timedelta
 from unittest.mock import MagicMock, patch
 
+from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from ring.letters.constants import QUESTION_BANK, LetterStatus
 from ring.letters.crud import letter as letter_crud
+from ring.tasks.models.task_model import Task, TaskStatus, TaskType
 from ring.tests.factories.letters.default_question_factory import (
     DefaultQuestionFactory,
 )
@@ -148,9 +150,25 @@ class TestAdvanceCyclicLetter:
             send_at=send_at,
         )
         db_session.commit()
+        send_task = db_session.scalars(
+            select(Task).where(
+                Task.schedule_id == group.schedule.id,
+                Task.type == TaskType.SEND_EMAIL,
+                Task.execute_at == letter.send_at,
+            )
+        ).one()
+        send_task.status = TaskStatus.FAILED
+        db_session.commit()
 
-        with patch(
-            "ring.letters.crud.letter.send_letter_email", return_value=True
+        with (
+            patch(
+                "ring.letters.crud.letter.send_letter_email",
+                return_value=True,
+            ),
+            patch(
+                "ring.letters.crud.letter.hold_letter_for_send_threshold",
+                return_value=False,
+            ),
         ):
             letter_crud.postpend_upcoming_letters_with_session(
                 db_session, [letter.id]
