@@ -384,6 +384,42 @@ compose change is reverted. If needed, freeze automatic deploys with the
 aws logs put-retention-policy --log-group-name /ring/prod --retention-in-days 30
 ```
 
+### Metric filter + alarm: cyclic letter promote failures
+
+The scheduler poller runs every minute. A promote that keeps failing
+used to retry on that cadence (texas exes #24: the same
+`UniqueViolation` every minute for ~12 hours). The API now backs off
+in-process and logs a stable ERROR:
+
+```
+promote_and_create_new_letters failed
+```
+
+Create a metric filter on `/ring/prod` (stream `api`) and alarm on it:
+
+```bash
+aws logs put-metric-filter \
+  --log-group-name /ring/prod \
+  --filter-name promote-and-create-new-letters-failed \
+  --filter-pattern '"promote_and_create_new_letters failed"' \
+  --metric-transformations \
+    metricName=PromoteAndCreateNewLettersFailed,metricNamespace=Ring/Prod,metricValue=1,defaultValue=0
+
+aws cloudwatch put-metric-alarm \
+  --alarm-name ring-promote-and-create-new-letters-failed \
+  --metric-name PromoteAndCreateNewLettersFailed \
+  --namespace Ring/Prod \
+  --statistic Sum \
+  --period 300 \
+  --evaluation-periods 1 \
+  --threshold 1 \
+  --comparison-operator GreaterThanOrEqualToThreshold \
+  --treat-missing-data notBreaching
+```
+
+One ERROR is enough to page; backoff stops the minute-by-minute flood.
+The in-process skip resets on API restart, so a deploy is a fresh try.
+
 ---
 
 ## Frontend PR previews — Cloudflare Workers Builds

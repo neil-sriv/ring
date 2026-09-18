@@ -662,7 +662,17 @@ def promote_and_create_new_letters(db: Session, letter_ids: list[int]) -> None:
         db (Session): Database session
         letter_ids (list[int]): IDs of letters to promote
     """
-    promote_and_create_new_letters_with_session(db, letter_ids)
+    from ring.tasks.crud.promote_backoff import (
+        mark_promote_failed,
+        mark_promote_succeeded,
+    )
+
+    try:
+        promote_and_create_new_letters_with_session(db, letter_ids)
+    except Exception as exc:
+        mark_promote_failed(letter_ids, exc)
+        raise
+    mark_promote_succeeded(letter_ids)
 
 
 def postpend_upcoming_letters_with_session(
