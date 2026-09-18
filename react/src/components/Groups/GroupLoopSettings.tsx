@@ -2,7 +2,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { useMutation, useQueryClient } from "@tanstack/react-query"
-import { useEffect, useState } from "react"
+import { useEffect, useRef, useState } from "react"
 import {
   Controller,
   type SubmitHandler,
@@ -105,10 +105,17 @@ function GroupLoopSettings({ groupId }: { groupId: string }) {
     ...updateGroupPartiesGroupGroupApiIdPatchMutation(),
   })
 
+  // Sync the form when the *group data* changes (it is undefined on first
+  // render now that hooks run before the early return), not when `editMode`
+  // flips. `onSubmit` exits edit mode before `refreshGroup()` resolves, so
+  // keying off the transition would reset the form to the stale cached group
+  // and show pre-save questions after a successful save.
+  const syncedGroupRef = useRef<GroupLinked | undefined>(undefined)
   useEffect(() => {
-    if (!group || editMode) {
+    if (!group || editMode || syncedGroupRef.current === group) {
       return
     }
+    syncedGroupRef.current = group
     reset(formValuesFromGroup(group))
   }, [group, editMode, reset])
 
