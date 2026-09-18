@@ -7,7 +7,7 @@ function DraftLoop({
 }: { loop: PublicLetter; isGroupAdmin: boolean }) {
   return (
     <div className="w-full">
-      {loop.questions
+      {[...loop.questions]
         .sort(
           (a, b) =>
             new Date(b.created_at).getTime() - new Date(a.created_at).getTime(),
