@@ -1,17 +1,18 @@
 import { Button } from "@/components/ui/button"
-import { useQueryClient } from "@tanstack/react-query"
+import { useQuery } from "@tanstack/react-query"
 import { useState } from "react"
-import type { PublicLetter, UserLinked } from "../../client"
-import { readUserMePartiesMeGetQueryKey } from "../../client/@tanstack/react-query.gen"
+import type { PublicLetter } from "../../client"
+import { readUserMePartiesMeGetOptions } from "../../client/@tanstack/react-query.gen"
 import LateAnswerQuestion from "../Question/LateAnswerQuestion"
 import PublishedQuestion from "../Question/PublishedQuestion"
 
 function PublishedLoop({ loop }: { loop: PublicLetter }) {
   const [showLateAnswers, setShowLateAnswers] = useState(false)
-  const queryClient = useQueryClient()
-  const currentUser = queryClient.getQueryData<UserLinked>(
-    readUserMePartiesMeGetQueryKey(),
-  )
+  // Subscribe so the Late Answers banner updates when /me is refetched or
+  // overwritten in cache. getQueryData alone never re-renders this view.
+  const { data: currentUser } = useQuery({
+    ...readUserMePartiesMeGetOptions(),
+  })
 
   if (!currentUser) {
     return (
