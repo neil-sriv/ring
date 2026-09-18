@@ -154,19 +154,44 @@ function GroupLoopSettings({ groupId }: { groupId: string }) {
     }
 
     try {
-      if (Object.keys(groupPatch).length > 0) {
-        await cycleUpdateMutation.mutateAsync({
-          body: groupPatch,
-          path: { group_api_id: groupId },
-        })
-      }
-
+      // Apply default questions first so a questions failure cannot leave
+      // cycle / min_responder changes applied alone.
       await defaultQuestionsMutation.mutateAsync({
         body: {
           questions: data.questions.map((question) => question.question_text),
         },
         path: { group_api_id: groupId },
       })
+
+      if (Object.keys(groupPatch).length > 0) {
+        try {
+          await cycleUpdateMutation.mutateAsync({
+            body: groupPatch,
+            path: { group_api_id: groupId },
+          })
+        } catch (cycleErr) {
+          const axiosErr =
+            cycleErr as AxiosError<UpdateGroupPartiesGroupGroupApiIdPatchError>
+          showToast(
+            "Partially saved.",
+            `Default questions were updated, but cycle settings could not be saved. ${formatApiErrorDetail(
+              axiosErr.response?.data?.detail,
+            )}`,
+            "error",
+          )
+          // Questions persisted, the cycle patch did not. Re-baseline the form
+          // on what is actually on the server so a later Cancel can't roll the
+          // saved questions back and a later Save can't overwrite them with
+          // pre-save values. Stay in edit mode so the cycle change can be
+          // retried.
+          reset({
+            questions: data.questions,
+            cycle_length: group.cycle_length,
+            min_responder_percent: currentMinResponderPercent,
+          })
+          return
+        }
+      }
 
       showToast("Success!", "Loop settings updated successfully.", "success")
       await refreshGroup()
