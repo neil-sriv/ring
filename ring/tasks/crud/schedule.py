@@ -16,6 +16,7 @@ from loguru import logger
 from sqlalchemy import ColumnElement, or_, select
 
 from ring.api_identifier import util as api_identifier_crud
+from ring.async_scheduler import heartbeat
 from ring.async_scheduler.scheduler import interval_job_factory, scheduler
 from ring.parties.models.group_model import Group
 from ring.tasks.crud import task as task_crud
@@ -230,6 +231,7 @@ def poll_schedule_task(db: Session) -> dict[str, str]:
             [letter.id for letter in promote],
         )
     )
+    heartbeat.record_poll_completed()
     return {
         "status": "success",
         "message": f"task ids: {[task.id for task in tasks]}, postpend letter ids: {[letter.id for letter in postpend]}, promote letter ids: {[letter.id for letter in promote]}",
