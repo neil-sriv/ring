@@ -73,13 +73,15 @@ const UserInformation = () => {
   })
 
   const onSubmit: SubmitHandler<UserUpdate> = async (data) => {
-    mutation.mutate({ body: data })
+    await mutation.mutateAsync({ body: data })
   }
 
   const onCancel = () => {
     reset()
     setEditMode(false)
   }
+
+  const isSaving = isSubmitting || mutation.isPending
 
   const [isEnablingNotifications, setIsEnablingNotifications] = useState(false)
   const [notificationFeedback, setNotificationFeedback] = useState<{
@@ -139,6 +141,7 @@ const UserInformation = () => {
                 id="name"
                 {...register("name", { maxLength: 30 })}
                 type="text"
+                disabled={isSaving}
               />
             ) : (
               <p
@@ -167,6 +170,7 @@ const UserInformation = () => {
                   pattern: emailPattern,
                 })}
                 type="email"
+                disabled={isSaving}
               />
             ) : (
               <p className="text-sm text-foreground">{currentUser?.email}</p>
@@ -179,9 +183,9 @@ const UserInformation = () => {
             {editMode ? (
               <Button
                 type="submit"
-                disabled={isSubmitting || !isDirty || !getValues("email")}
+                disabled={isSaving || !isDirty || !getValues("email")}
               >
-                {isSubmitting && <Loader2 className="h-4 w-4 animate-spin" />}
+                {isSaving && <Loader2 className="h-4 w-4 animate-spin" />}
                 Save
               </Button>
             ) : (
@@ -194,7 +198,7 @@ const UserInformation = () => {
                 type="button"
                 variant="outline"
                 onClick={onCancel}
-                disabled={isSubmitting}
+                disabled={isSaving}
               >
                 Cancel
               </Button>

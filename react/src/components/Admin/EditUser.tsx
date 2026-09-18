@@ -83,8 +83,8 @@ const EditUser = ({ user, isOpen, onClose }: EditUserProps) => {
     },
   })
 
-  const onSubmit: SubmitHandler<UserUpdate> = (data) => {
-    mutation.mutate({
+  const onSubmit: SubmitHandler<UserUpdate> = async (data) => {
+    await mutation.mutateAsync({
       path: { user_api_id: user.api_identifier },
       body: {
         email: data.email,
@@ -98,11 +98,13 @@ const EditUser = ({ user, isOpen, onClose }: EditUserProps) => {
     onClose()
   }
 
+  const isSaving = isSubmitting || mutation.isPending
+
   return (
     <Dialog
       open={isOpen}
       onOpenChange={(open) => {
-        if (!open) onClose()
+        if (!open && !isSaving) onClose()
       }}
     >
       <DialogContent>
@@ -121,6 +123,7 @@ const EditUser = ({ user, isOpen, onClose }: EditUserProps) => {
                 })}
                 placeholder="Email"
                 type="email"
+                disabled={isSaving}
               />
               {errors.email && (
                 <p className="text-xs text-destructive">
@@ -130,15 +133,25 @@ const EditUser = ({ user, isOpen, onClose }: EditUserProps) => {
             </div>
             <div className="flex flex-col gap-1.5">
               <Label htmlFor="name">Full name</Label>
-              <Input id="name" {...register("name")} type="text" />
+              <Input
+                id="name"
+                {...register("name")}
+                type="text"
+                disabled={isSaving}
+              />
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={onCancel} type="button">
+            <Button
+              variant="outline"
+              onClick={onCancel}
+              type="button"
+              disabled={isSaving}
+            >
               Cancel
             </Button>
-            <Button type="submit" disabled={isSubmitting || !isDirty}>
-              {isSubmitting && <Loader2 className="h-4 w-4 animate-spin" />}
+            <Button type="submit" disabled={isSaving || !isDirty}>
+              {isSaving && <Loader2 className="h-4 w-4 animate-spin" />}
               Save
             </Button>
           </DialogFooter>

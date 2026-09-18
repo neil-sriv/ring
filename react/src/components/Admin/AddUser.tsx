@@ -74,17 +74,19 @@ const AddUser = ({ isOpen, onClose }: AddUserProps) => {
     },
   })
 
-  const onSubmit: SubmitHandler<UserCreateForm> = (data) => {
-    mutation.mutate({
+  const onSubmit: SubmitHandler<UserCreateForm> = async (data) => {
+    await mutation.mutateAsync({
       body: data,
     })
   }
+
+  const isSaving = isSubmitting || mutation.isPending
 
   return (
     <Dialog
       open={isOpen}
       onOpenChange={(open) => {
-        if (!open) onClose()
+        if (!open && !isSaving) onClose()
       }}
     >
       <DialogContent>
@@ -103,6 +105,7 @@ const AddUser = ({ isOpen, onClose }: AddUserProps) => {
                 })}
                 placeholder="Email"
                 type="email"
+                disabled={isSaving}
               />
               {errors.email && (
                 <p className="text-xs text-destructive">
@@ -117,6 +120,7 @@ const AddUser = ({ isOpen, onClose }: AddUserProps) => {
                 {...register("name")}
                 placeholder="Full name"
                 type="text"
+                disabled={isSaving}
               />
               {errors.name && (
                 <p className="text-xs text-destructive">
@@ -137,6 +141,7 @@ const AddUser = ({ isOpen, onClose }: AddUserProps) => {
                 })}
                 placeholder="Password"
                 type="password"
+                disabled={isSaving}
               />
               {errors.password && (
                 <p className="text-xs text-destructive">
@@ -156,6 +161,7 @@ const AddUser = ({ isOpen, onClose }: AddUserProps) => {
                 })}
                 placeholder="Password"
                 type="password"
+                disabled={isSaving}
               />
               {errors.confirm_password && (
                 <p className="text-xs text-destructive">
@@ -165,11 +171,16 @@ const AddUser = ({ isOpen, onClose }: AddUserProps) => {
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={onClose} type="button">
+            <Button
+              variant="outline"
+              onClick={onClose}
+              type="button"
+              disabled={isSaving}
+            >
               Cancel
             </Button>
-            <Button type="submit" disabled={isSubmitting}>
-              {isSubmitting && <Loader2 className="h-4 w-4 animate-spin" />}
+            <Button type="submit" disabled={isSaving}>
+              {isSaving && <Loader2 className="h-4 w-4 animate-spin" />}
               Save
             </Button>
           </DialogFooter>
