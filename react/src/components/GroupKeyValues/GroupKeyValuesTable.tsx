@@ -32,9 +32,12 @@ export function GroupKeyValuesTable({
   // when a full-replace PUT fails (otherwise the editor stays out of sync).
   const lastSavedRef = useRef(cloneKeyValues(keyValues.key_values))
   // Full-replace PUTs are not serialized, so an older attempt can settle after
-  // a newer one. Only the newest attempt may roll the editor back or advance
-  // the saved snapshot.
+  // a newer one. `saveGenerationRef` is the newest attempt started,
+  // `lastSuccessGenRef` the newest that succeeded, and `inFlightRef` how many
+  // are still outstanding.
   const saveGenerationRef = useRef(0)
+  const lastSuccessGenRef = useRef(0)
+  const inFlightRef = useRef(0)
   // react-json-view ignores later `src` changes; bump key on rollback to remount.
   const [editorKey, setEditorKey] = useState(0)
   const showToast = useCustomToast()
@@ -65,6 +68,7 @@ export function GroupKeyValuesTable({
 
   const handleEdit = ({ updated_src }: { updated_src: any }) => {
     const generation = ++saveGenerationRef.current
+    inFlightRef.current += 1
     setEditableData(updated_src)
     addKey.mutate(
       {
@@ -75,12 +79,26 @@ export function GroupKeyValuesTable({
       },
       {
         onSuccess: () => {
-          // A late-settling older PUT must not move the snapshot backwards past
-          // a newer attempt.
-          if (generation !== saveGenerationRef.current) {
+          // Compare against the newest *success*, not the newest attempt: a
+          // save that lands while a later one is still in flight is still the
+          // freshest thing on the server, and skipping it here would leave the
+          // snapshot behind for a subsequent rollback to restore.
+          if (generation < lastSuccessGenRef.current) {
             return
           }
+          lastSuccessGenRef.current = generation
           lastSavedRef.current = cloneKeyValues(updated_src)
+
+          // This success arrived after a newer attempt, which may already have
+          // rolled the editor back to an older snapshot. Once nothing else is
+          // outstanding, repaint so the tree matches what was persisted.
+          if (
+            generation !== saveGenerationRef.current &&
+            inFlightRef.current <= 1
+          ) {
+            setEditableData(cloneKeyValues(lastSavedRef.current))
+            setEditorKey((key) => key + 1)
+          }
         },
         onError: () => {
           // Rolling back a superseded attempt would show stale values while a
@@ -90,6 +108,9 @@ export function GroupKeyValuesTable({
           }
           setEditableData(cloneKeyValues(lastSavedRef.current))
           setEditorKey((key) => key + 1)
+        },
+        onSettled: () => {
+          inFlightRef.current -= 1
         },
       },
     )
