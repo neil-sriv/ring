@@ -40,7 +40,7 @@ dev push
                               ├─ pytest (target SHA)
                               ├─ alembic upgrade head + schema drift check
                               └─ SSH → deploy_host.sh --rollback-on-fail <sha>
-                                   └─ EC2: git checkout -f, prod.sh, migrate, compose up, /version gate
+                                   └─ EC2: git checkout -f, disk check, prod.sh, migrate, compose up, /version gate, image prune
 ```
 
 Frontend and API share `ring.neilsriv.tech` via Cloudflare Workers Routes:

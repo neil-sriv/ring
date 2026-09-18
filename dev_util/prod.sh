@@ -9,6 +9,8 @@
 # This only swaps the image (deps + RING_BUILD_GIT_* + baked Python).
 # Prod no longer bind-mounts ./ring, so a SHA pull is a code rollback.
 # Prefer deploy_host.sh so migrate / compose / verify stay in lockstep.
+# Do not prune here — the previous image is still in use until compose
+# recreates. deploy_host.sh prunes unused images after /version succeeds.
 
 set -euo pipefail
 
