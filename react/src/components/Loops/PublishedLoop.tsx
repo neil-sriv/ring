@@ -3,6 +3,7 @@ import { useQuery } from "@tanstack/react-query"
 import { useState } from "react"
 import type { PublicLetter } from "../../client"
 import { readUserMePartiesMeGetOptions } from "../../client/@tanstack/react-query.gen"
+import { compareQuestionsByDisplayOrder } from "../../util/questionOrder"
 import LateAnswerQuestion from "../Question/LateAnswerQuestion"
 import PublishedQuestion from "../Question/PublishedQuestion"
 
@@ -76,11 +77,7 @@ function PublishedLoop({ loop }: { loop: PublicLetter }) {
           All Questions and Responses
         </p>
         {[...loop.questions]
-          .sort(
-            (a, b) =>
-              new Date(b.created_at).getTime() -
-              new Date(a.created_at).getTime(),
-          )
+          .sort(compareQuestionsByDisplayOrder)
           .map((question) => {
             return (
               <PublishedQuestion

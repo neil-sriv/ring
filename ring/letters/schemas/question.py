@@ -43,6 +43,7 @@ class Question(QuestionBase):
 
     api_identifier: str
     created_at: AwareDatetime
+    position: int | None = None
 
 
 class QuestionUnlinked(Question):
