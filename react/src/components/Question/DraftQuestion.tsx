@@ -138,6 +138,14 @@ function ResponseBlock(props: ResponseBlockProps) {
         queuedSaveRef.current = null
 
         if (job.text === lastSavedTextRef.current) {
+          // Already on the server (e.g. the user typed back to the saved text
+          // while an earlier attempt was in flight) — resolve the spinner
+          // instead of leaving "Saving..." on screen forever.
+          if (job.showStatus && !queuedSaveRef.current) {
+            setSaveStatus(
+              responseTextRef.current === job.text ? "saved" : "idle",
+            )
+          }
           continue
         }
 
@@ -153,9 +161,14 @@ function ResponseBlock(props: ResponseBlockProps) {
             lastSavedTextRef.current = job.text
           }
         } catch (error) {
+          // Newer text is already queued, so retry that instead of reporting a
+          // terminal failure for text the user has moved past. Dropping the
+          // queue here would strand the newest answer unsaved with the spinner
+          // still showing.
+          if (queuedSaveRef.current) {
+            continue
+          }
           const axiosError = error as AxiosError<{ detail?: unknown }>
-          // Drop coalesced work on failure; user can edit again to retry.
-          queuedSaveRef.current = null
           if (job.showStatus) {
             showToast(
               "Error!",
