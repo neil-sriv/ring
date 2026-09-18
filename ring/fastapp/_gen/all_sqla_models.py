@@ -15,6 +15,7 @@ def import_all_sqla_models() -> None:
         Response,
     )
     from ring.notebook.models.document import Document, DocumentEdit
+    from ring.notifications.models.notification import Notification
     from ring.notifications.models.subscription import Subscription
     from ring.parties.models.group_key_value import GroupKeyValue
     from ring.parties.models.group_model import Group

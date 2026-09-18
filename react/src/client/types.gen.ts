@@ -527,6 +527,59 @@ export type NewPassword = {
 };
 
 /**
+ * Schema representing a notification in the system.
+ *
+ * Attributes:
+ * api_identifier (str): Unique API identifier with 'notif' prefix
+ * created_at (AwareDatetime): Timestamp of notification creation
+ * read_at (AwareDatetime | None): When the recipient read the
+ * notification, or null while unread
+ */
+export type Notification = {
+    type: NotificationType;
+    title: string;
+    body: string;
+    target_api_id?: string | null;
+    api_identifier: string;
+    created_at: string;
+    read_at?: string | null;
+};
+
+/**
+ * Response schema for the notification list endpoint.
+ *
+ * Attributes:
+ * notifications (list[Notification]): Page of notifications,
+ * newest first
+ * unread_count (int): Total unread notifications for the user
+ * total_count (int): Total notifications for the user
+ */
+export type NotificationList = {
+    notifications: Array<Notification>;
+    unread_count: number;
+    total_count: number;
+};
+
+/**
+ * Type of an in-app notification.
+ *
+ * Each value corresponds to a product event that can notify users. Types
+ * mirror the transactional emails first (letter lifecycle, group
+ * membership) and expand to richer in-app events over time.
+ */
+export type NotificationType = 'generic' | 'letter_sent' | 'responses_open' | 'letter_reminder' | 'awaiting_response' | 'added_to_group';
+
+/**
+ * Response schema for the unread-count endpoint.
+ *
+ * Attributes:
+ * unread_count (int): Total unread notifications for the user
+ */
+export type NotificationUnreadCount = {
+    unread_count: number;
+};
+
+/**
  * Public letter model with linked relationships.
  *
  * A version of the Letter model that includes public information about participants
@@ -2213,6 +2266,148 @@ export type PostSubscriptionNotificationsSubscriptionPostResponses = {
 };
 
 export type PostSubscriptionNotificationsSubscriptionPostResponse = PostSubscriptionNotificationsSubscriptionPostResponses[keyof PostSubscriptionNotificationsSubscriptionPostResponses];
+
+export type ListNotificationsNotificationsGetData = {
+    body?: never;
+    path?: never;
+    query?: {
+        unread_only?: boolean;
+        limit?: number;
+        offset?: number;
+    };
+    url: '/notifications/';
+};
+
+export type ListNotificationsNotificationsGetErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type ListNotificationsNotificationsGetError = ListNotificationsNotificationsGetErrors[keyof ListNotificationsNotificationsGetErrors];
+
+export type ListNotificationsNotificationsGetResponses = {
+    /**
+     * Successful Response
+     */
+    200: NotificationList;
+};
+
+export type ListNotificationsNotificationsGetResponse = ListNotificationsNotificationsGetResponses[keyof ListNotificationsNotificationsGetResponses];
+
+export type GetUnreadCountNotificationsUnreadCountGetData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/notifications/unread-count';
+};
+
+export type GetUnreadCountNotificationsUnreadCountGetResponses = {
+    /**
+     * Successful Response
+     */
+    200: NotificationUnreadCount;
+};
+
+export type GetUnreadCountNotificationsUnreadCountGetResponse = GetUnreadCountNotificationsUnreadCountGetResponses[keyof GetUnreadCountNotificationsUnreadCountGetResponses];
+
+export type MarkNotificationReadNotificationsNotificationApiIdReadPostData = {
+    body?: never;
+    path: {
+        notification_api_id: string;
+    };
+    query?: never;
+    url: '/notifications/{notification_api_id}:read';
+};
+
+export type MarkNotificationReadNotificationsNotificationApiIdReadPostErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type MarkNotificationReadNotificationsNotificationApiIdReadPostError = MarkNotificationReadNotificationsNotificationApiIdReadPostErrors[keyof MarkNotificationReadNotificationsNotificationApiIdReadPostErrors];
+
+export type MarkNotificationReadNotificationsNotificationApiIdReadPostResponses = {
+    /**
+     * Successful Response
+     */
+    200: Notification;
+};
+
+export type MarkNotificationReadNotificationsNotificationApiIdReadPostResponse = MarkNotificationReadNotificationsNotificationApiIdReadPostResponses[keyof MarkNotificationReadNotificationsNotificationApiIdReadPostResponses];
+
+export type MarkNotificationUnreadNotificationsNotificationApiIdUnreadPostData = {
+    body?: never;
+    path: {
+        notification_api_id: string;
+    };
+    query?: never;
+    url: '/notifications/{notification_api_id}:unread';
+};
+
+export type MarkNotificationUnreadNotificationsNotificationApiIdUnreadPostErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type MarkNotificationUnreadNotificationsNotificationApiIdUnreadPostError = MarkNotificationUnreadNotificationsNotificationApiIdUnreadPostErrors[keyof MarkNotificationUnreadNotificationsNotificationApiIdUnreadPostErrors];
+
+export type MarkNotificationUnreadNotificationsNotificationApiIdUnreadPostResponses = {
+    /**
+     * Successful Response
+     */
+    200: Notification;
+};
+
+export type MarkNotificationUnreadNotificationsNotificationApiIdUnreadPostResponse = MarkNotificationUnreadNotificationsNotificationApiIdUnreadPostResponses[keyof MarkNotificationUnreadNotificationsNotificationApiIdUnreadPostResponses];
+
+export type MarkAllNotificationsReadNotificationsReadAllPostData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/notifications/read-all';
+};
+
+export type MarkAllNotificationsReadNotificationsReadAllPostResponses = {
+    /**
+     * Successful Response
+     */
+    200: NotificationUnreadCount;
+};
+
+export type MarkAllNotificationsReadNotificationsReadAllPostResponse = MarkAllNotificationsReadNotificationsReadAllPostResponses[keyof MarkAllNotificationsReadNotificationsReadAllPostResponses];
+
+export type DeleteNotificationNotificationsNotificationApiIdDeleteData = {
+    body?: never;
+    path: {
+        notification_api_id: string;
+    };
+    query?: never;
+    url: '/notifications/{notification_api_id}';
+};
+
+export type DeleteNotificationNotificationsNotificationApiIdDeleteErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type DeleteNotificationNotificationsNotificationApiIdDeleteError = DeleteNotificationNotificationsNotificationApiIdDeleteErrors[keyof DeleteNotificationNotificationsNotificationApiIdDeleteErrors];
+
+export type DeleteNotificationNotificationsNotificationApiIdDeleteResponses = {
+    /**
+     * Successful Response
+     */
+    200: ResponseMessage;
+};
+
+export type DeleteNotificationNotificationsNotificationApiIdDeleteResponse = DeleteNotificationNotificationsNotificationApiIdDeleteResponses[keyof DeleteNotificationNotificationsNotificationApiIdDeleteResponses];
 
 export type RawSearchSearchRawSearchGetData = {
     body?: never;

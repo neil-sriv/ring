@@ -12,6 +12,7 @@ from ring.letters.models.letter_model import Letter
 from ring.letters.models.question_model import Question
 from ring.letters.models.response_model import Response
 from ring.notebook.models.document import Document
+from ring.notifications.models.notification import Notification
 from ring.parties.models.group_model import Group
 from ring.parties.models.user_model import User
 
@@ -80,6 +81,17 @@ def _add_g2_pairs(enforcer: Enforcer, pairs: set[tuple[str, str]]) -> None:
         enforcer.add_named_grouping_policy("g2", child, parent)
 
 
+def _add_self_policies(enforcer: Enforcer, sub_api_id: str) -> None:
+    """Grant the subject full access to itself as a policy object.
+
+    Combined with ``g2`` edges from user-owned resources (e.g. notifications)
+    to their owner, this lets owners read and write those resources. Casbin's
+    role manager treats ``g(x, x)`` as true, so no extra ``g`` edge is needed.
+    """
+    enforcer.add_policy(sub_api_id, sub_api_id, Action.READ.value)
+    enforcer.add_policy(sub_api_id, sub_api_id, Action.WRITE.value)
+
+
 def _load_full_g2(
     enforcer: Enforcer, db: Session, group_api_ids: Sequence[str]
 ) -> None:
@@ -137,6 +149,25 @@ def _load_full_g2(
     _add_g2_pairs(enforcer, document_pairs)
 
 
+def _load_own_notification_g2(
+    enforcer: Enforcer, db: Session, sub_api_id: str
+) -> None:
+    """Link all of the subject's own notifications to the subject."""
+    notification_api_ids = (
+        db.execute(
+            select(Notification.api_identifier)
+            .join(Notification.recipient)
+            .where(User.api_identifier == sub_api_id)
+        )
+        .scalars()
+        .all()
+    )
+    _add_g2_pairs(
+        enforcer,
+        {(api_id, sub_api_id) for api_id in notification_api_ids},
+    )
+
+
 def _prefix(api_id: str) -> str:
     return api_id.split("_", 1)[0]
 
@@ -172,6 +203,11 @@ def _load_scoped_g2(
         api_id
         for api_id in resource_api_ids
         if _prefix(api_id) == APIPrefix.DOCUMENT.value
+    }
+    notification_ids = {
+        api_id
+        for api_id in resource_api_ids
+        if _prefix(api_id) == APIPrefix.NOTIFICATION.value
     }
 
     if response_ids:
@@ -235,6 +271,19 @@ def _load_scoped_g2(
         }
         _add_g2_pairs(enforcer, document_pairs)
 
+    if notification_ids:
+        # Notifications are user-owned: link each to its recipient so only
+        # the recipient (via self policies) can act on it.
+        notification_pairs = {
+            (notification_api_id, user_api_id)
+            for notification_api_id, user_api_id in db.execute(
+                select(Notification.api_identifier, User.api_identifier)
+                .join(Notification.recipient)
+                .where(Notification.api_identifier.in_(notification_ids))
+            ).all()
+        }
+        _add_g2_pairs(enforcer, notification_pairs)
+
 
 def build_stateless_enforcer(db: Session, sub_api_id: str) -> Enforcer:
     """Build a stateless enforcer for a request.
@@ -244,6 +293,9 @@ def build_stateless_enforcer(db: Session, sub_api_id: str) -> Enforcer:
     deduplicates before inserting into Casbin.
     """
     enforcer = get_enforcer()
+
+    _add_self_policies(enforcer, sub_api_id)
+    _load_own_notification_g2(enforcer, db, sub_api_id)
 
     group_api_ids = _subject_group_api_ids(db, sub_api_id)
     if not group_api_ids:
@@ -272,8 +324,11 @@ def build_stateless_enforcer_for_resources(
     """
     enforcer = get_enforcer()
 
+    _add_self_policies(enforcer, sub_api_id)
+
     group_api_ids = _subject_group_api_ids(db, sub_api_id)
     if not group_api_ids:
+        _load_scoped_g2(enforcer, db, [], resource_api_ids)
         return enforcer
 
     _add_subject_membership_policies(
