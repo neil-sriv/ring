@@ -28,13 +28,12 @@ class TestCyclicLetterStatusIndexes:
         )
         db_session.commit()
 
-        LetterFactory.create(
-            group=group,
-            status=LetterStatus.UPCOMING,
-            send_at=send_at + timedelta(days=30),
-        )
         with pytest.raises(IntegrityError):
-            db_session.commit()
+            LetterFactory.create(
+                group=group,
+                status=LetterStatus.UPCOMING,
+                send_at=send_at + timedelta(days=30),
+            )
         db_session.rollback()
 
     def test_second_cyclic_in_progress_is_rejected(
@@ -47,12 +46,11 @@ class TestCyclicLetterStatusIndexes:
         )
         db_session.commit()
 
-        LetterFactory.create(
-            group=group,
-            status=LetterStatus.IN_PROGRESS,
-        )
         with pytest.raises(IntegrityError):
-            db_session.commit()
+            LetterFactory.create(
+                group=group,
+                status=LetterStatus.IN_PROGRESS,
+            )
         db_session.rollback()
 
     def test_one_upcoming_and_one_in_progress_are_allowed(
