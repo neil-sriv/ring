@@ -55,7 +55,7 @@ const GenerateQuestion = ({
     register,
     handleSubmit,
     reset,
-    formState: { errors },
+    formState: { errors, isSubmitting },
   } = useForm<QuestionFormProps>({
     mode: "onBlur",
     criteriaMode: "all",
@@ -85,6 +85,7 @@ const GenerateQuestion = ({
     onSuccess: () => {
       showToast("Success!", "New question created successfully.", "success")
       reset()
+      setGeneratedQuestion("")
       onClose()
     },
     onError: (
@@ -106,8 +107,14 @@ const GenerateQuestion = ({
     },
   })
 
-  const onGenerateQuestion: SubmitHandler<QuestionFormProps> = (data) => {
-    generateQuestionMutation.mutate({
+  const isBusy =
+    isSubmitting ||
+    generateQuestionMutation.isPending ||
+    addQuestionMutation.isPending
+
+  const onGenerateQuestion: SubmitHandler<QuestionFormProps> = async (data) => {
+    if (isBusy) return
+    await generateQuestionMutation.mutateAsync({
       body: {
         prompt: data.questionPrompt,
       },
@@ -115,7 +122,8 @@ const GenerateQuestion = ({
     })
   }
 
-  const onSaveQuestion = () => {
+  const onSaveQuestion = async () => {
+    if (isBusy) return
     if (!generatedQuestion) {
       showToast(
         "Error",
@@ -125,7 +133,7 @@ const GenerateQuestion = ({
       return
     }
 
-    addQuestionMutation.mutate({
+    await addQuestionMutation.mutateAsync({
       body: {
         question_text: generatedQuestion,
         author_api_id: currentUser?.api_identifier || null,
@@ -135,13 +143,19 @@ const GenerateQuestion = ({
   }
 
   const handleClose = () => {
+    if (isBusy) return
     reset()
     setGeneratedQuestion("")
     onClose()
   }
 
   return (
-    <Dialog open={isOpen} onOpenChange={(open) => !open && handleClose()}>
+    <Dialog
+      open={isOpen}
+      onOpenChange={(open) => {
+        if (!open && !isBusy) handleClose()
+      }}
+    >
       <DialogContent className="sm:max-w-md">
         <form onSubmit={handleSubmit(onGenerateQuestion)}>
           <DialogHeader>
@@ -160,6 +174,7 @@ const GenerateQuestion = ({
                   required: "Question prompt is required.",
                 })}
                 className="min-h-[100px]"
+                disabled={isBusy}
               />
               {errors.questionPrompt && (
                 <p className="text-xs text-destructive">
@@ -180,7 +195,7 @@ const GenerateQuestion = ({
           </div>
 
           <DialogFooter className="gap-3">
-            <Button type="submit" disabled={generateQuestionMutation.isPending}>
+            <Button type="submit" disabled={isBusy}>
               {generateQuestionMutation.isPending ? (
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
               ) : (
@@ -191,7 +206,7 @@ const GenerateQuestion = ({
             <Button
               type="button"
               onClick={onSaveQuestion}
-              disabled={addQuestionMutation.isPending || !generatedQuestion}
+              disabled={isBusy || !generatedQuestion}
               variant="outline"
             >
               {addQuestionMutation.isPending && (
