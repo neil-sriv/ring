@@ -22,10 +22,10 @@ import {
 } from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
 import { cn } from "@/lib/utils"
-import type { SearchHit, SearchableType, UserLinked } from "../../client"
+import type { SearchHit, SearchableType } from "../../client"
 import {
   performSearchSearchSearchGetOptions,
-  readUserMePartiesMeGetQueryKey,
+  readUserMePartiesMeGetOptions,
 } from "../../client/@tanstack/react-query.gen"
 import useAuth from "../../hooks/useAuth"
 import { useDebouncedValue } from "../../hooks/useDebouncedValue"
@@ -123,9 +123,11 @@ export function CommandPalette({
   const inputRef = useRef<HTMLInputElement>(null)
   const listRef = useRef<HTMLDivElement>(null)
 
-  const currentUser = queryClient.getQueryData<UserLinked>(
-    readUserMePartiesMeGetQueryKey(),
-  )
+  // Subscribe so Groups entries refresh when /me is invalidated (e.g. after
+  // create/join group). getQueryData alone never re-renders the palette.
+  const { data: currentUser } = useQuery({
+    ...readUserMePartiesMeGetOptions(),
+  })
 
   const groups = currentUser?.groups ?? []
 

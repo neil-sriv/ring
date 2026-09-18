@@ -25,10 +25,15 @@ const useAuth = (next?: string) => {
 
   const loginMutation = useMutation({
     ...loginAccessTokenLoginAccessTokenPostMutation(),
-    onSuccess: (data) => {
+    onSuccess: async (data) => {
       localStorage.setItem("access_token", data.access_token)
-      queryClient.ensureQueryData({
-        ...readUserMePartiesMeGetOptions({}),
+      // `_layout` redirects to /login with a soft SPA redirect, which keeps the
+      // QueryClient alive, so the previous session's cache can still be warm
+      // (dashboard letters included, at staleTime 30s). Wipe it like the logout
+      // paths do, then fetch the new identity before entering the shell.
+      queryClient.clear()
+      await queryClient.fetchQuery({
+        ...readUserMePartiesMeGetOptions(),
       })
       // Redirect to the next parameter if provided, otherwise go to home
       // Use TanStack Router's hash option to preserve hash fragments
