@@ -105,19 +105,21 @@ function GroupLoopSettings({ groupId }: { groupId: string }) {
     ...updateGroupPartiesGroupGroupApiIdPatchMutation(),
   })
 
-  // Sync the form when the *group data* changes (it is undefined on first
-  // render now that hooks run before the early return), not when `editMode`
-  // flips. `onSubmit` exits edit mode before `refreshGroup()` resolves, so
-  // keying off the transition would reset the form to the stale cached group
-  // and show pre-save questions after a successful save.
-  const syncedGroupRef = useRef<GroupLinked | undefined>(undefined)
+  // Hooks now run before the group early-return, so `group` can still be
+  // undefined on the first render and `defaultValues` falls back to
+  // `EMPTY_FORM_VALUES`. Seed the form once the group arrives, then leave it
+  // alone — matching the pre-refactor behaviour, where `defaultValues` was read
+  // from `group` exactly once. `enterEditMode` re-seeds from the freshest group
+  // anyway, so re-syncing on every later group object would only risk clobbering
+  // in-progress edits.
+  const didSeedFormRef = useRef(false)
   useEffect(() => {
-    if (!group || editMode || syncedGroupRef.current === group) {
+    if (!group || didSeedFormRef.current) {
       return
     }
-    syncedGroupRef.current = group
+    didSeedFormRef.current = true
     reset(formValuesFromGroup(group))
-  }, [group, editMode, reset])
+  }, [group, reset])
 
   if (group === undefined) {
     return null
