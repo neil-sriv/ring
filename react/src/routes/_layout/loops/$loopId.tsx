@@ -1,14 +1,14 @@
 import { Button } from "@/components/ui/button"
-import { useQueryClient, useSuspenseQuery } from "@tanstack/react-query"
+import { useQuery, useSuspenseQuery } from "@tanstack/react-query"
 import { Link, createFileRoute } from "@tanstack/react-router"
 import { Plus } from "lucide-react"
 import { Suspense, useState } from "react"
 import { ErrorBoundary } from "react-error-boundary"
-import type { PublicLetter, UserLinked } from "../../../client"
+import type { PublicLetter } from "../../../client"
 import {
   readGroupPartiesGroupGroupApiIdGetOptions,
   readLetterLettersLetterLetterApiIdGetOptions,
-  readUserMePartiesMeGetQueryKey,
+  readUserMePartiesMeGetOptions,
 } from "../../../client/@tanstack/react-query.gen"
 import DraftLoop from "../../../components/Loops/DraftLoop"
 import EditLetter from "../../../components/Loops/EditLoop"
@@ -47,10 +47,11 @@ function IssueContent() {
       path: { group_api_id: loop.group.api_identifier },
     }),
   })
-  const queryClient = useQueryClient()
-  const currentUser = queryClient.getQueryData<UserLinked>(
-    readUserMePartiesMeGetQueryKey(),
-  )
+  // Subscribe so admin chrome (Edit Loop, reply tracker) updates when /me
+  // changes in cache. getQueryData alone never re-renders this page.
+  const { data: currentUser } = useQuery({
+    ...readUserMePartiesMeGetOptions(),
+  })
   const localDueDate = new Date(loop.send_at)
   const isGroupAdmin =
     group.admin.api_identifier === currentUser?.api_identifier
