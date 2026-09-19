@@ -219,9 +219,13 @@ def poll_schedule_task(db: Session) -> dict[str, str]:
             args=[[letter.id for letter in postpend]],
         )
     if promote:
-        scheduler.add_job(
+        from ring.tasks.crud.promote_backoff import enqueue_promote_if_allowed
+
+        enqueue_promote_if_allowed(
+            [letter.id for letter in promote],
+            scheduler.add_job,
             promote_and_create_new_letters,
-            args=[[letter.id for letter in promote]],
+            now=curr_time,
         )
     logger.info(
         "task ids: {}, postpend letter ids: {}, promote letter ids: {}".format(
