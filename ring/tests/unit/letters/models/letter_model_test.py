@@ -109,8 +109,8 @@ class TestLetterModel:
     ) -> None:
         """Count-based numbering collides when a cyclic number is skipped."""
         group = GroupFactory.create()
-        LetterFactory.create(group=group, number=1)
-        LetterFactory.create(group=group, number=3)
+        LetterFactory.create(group=group, number=1, status=LetterStatus.SENT)
+        LetterFactory.create(group=group, number=3, status=LetterStatus.SENT)
         db_session.commit()
 
         letter = Letter(

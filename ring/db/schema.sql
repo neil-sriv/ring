@@ -78,6 +78,8 @@ CREATE TABLE public.letter (
 	title VARCHAR NULL,
 	CONSTRAINT letter_pkey PRIMARY KEY (id ASC),
 	UNIQUE INDEX unique_group_letter_number (group_id ASC, number ASC),
+	UNIQUE INDEX uniq_one_cyclic_upcoming_per_group (group_id ASC) WHERE letter_type = 'CYCLIC' AND status = 'UPCOMING',
+	UNIQUE INDEX uniq_one_cyclic_in_progress_per_group (group_id ASC) WHERE letter_type = 'CYCLIC' AND status = 'IN_PROGRESS',
 	UNIQUE INDEX ix_letter_api_identifier (api_identifier ASC),
 	INDEX ix_letter_created_at (created_at ASC),
 	INDEX ix_letter_id (id ASC)
