@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from collections.abc import Generator
+from datetime import UTC, datetime
 from typing import Any
 from unittest.mock import patch
 
@@ -10,6 +11,7 @@ import pytest
 from fastapi.testclient import TestClient
 
 from ring.fastapp.api import version as version_api
+from ring.fastapp.config import get_config
 from ring.fastapp.schemas.version import (
     DockerInfo,
     GitCommitInfo,
@@ -66,6 +68,11 @@ class TestVersionAPI:
         assert body["image_build"]["sha"] == "imagesha"
         assert body["docker"]["available"] is True
         assert body["docker"]["containers"] == []
+        assert body["scheduler"]["enabled"] == (
+            not get_config().DISABLE_SCHEDULER
+        )
+        assert body["scheduler"]["running"] is False
+        assert body["scheduler"]["last_poll_completed_at"] is None
 
     def test_version_returns_live_collection(
         self, unauthenticated_client: TestClient
@@ -92,3 +99,18 @@ class TestVersionAPI:
         serialized = str(body)
         assert "JWT_SIGNING_KEY" not in serialized
         assert "VAPID_PRIVATE_KEY" not in serialized
+
+    def test_version_reports_scheduler_heartbeat(
+        self, unauthenticated_client: TestClient
+    ) -> None:
+        poll_time = datetime(2026, 8, 25, 12, 0, tzinfo=UTC)
+        with patch(
+            "ring.async_scheduler.heartbeat.last_poll_completed_at",
+            return_value=poll_time,
+        ):
+            response = unauthenticated_client.get("/version")
+        assert response.status_code == 200
+        scheduler_body = response.json()["scheduler"]
+        assert scheduler_body["last_poll_completed_at"] == (
+            "2026-08-25T12:00:00Z"
+        )
