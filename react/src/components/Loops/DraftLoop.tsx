@@ -1,4 +1,5 @@
 import type { PublicLetter } from "../../client"
+import { compareQuestionsByDisplayOrder } from "../../util/questionOrder"
 import DraftQuestion from "../Question/DraftQuestion"
 
 function DraftLoop({
@@ -8,10 +9,7 @@ function DraftLoop({
   return (
     <div className="w-full">
       {[...loop.questions]
-        .sort(
-          (a, b) =>
-            new Date(b.created_at).getTime() - new Date(a.created_at).getTime(),
-        )
+        .sort(compareQuestionsByDisplayOrder)
         .map((question) => {
           return (
             <DraftQuestion

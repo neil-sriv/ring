@@ -9,7 +9,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from sqlalchemy import ForeignKey, String, Text
+from sqlalchemy import ForeignKey, Integer, String, Text
 from sqlalchemy.ext.hybrid import hybrid_property
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
@@ -62,12 +62,14 @@ class Question(Base, APIIdentified, PydanticModel, CreatedAtMixin):
 
     letter_id: Mapped[int] = mapped_column(ForeignKey("letter.id"))
     letter: Mapped["Letter"] = relationship(back_populates="questions")
+    position: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
 
     def __init__(
         self,
         letter: Letter,
         question_text: str,
         author: User | None,
+        position: int | None = None,
     ) -> None:
         """Initialize a new Question instance.
 
@@ -75,15 +77,25 @@ class Question(Base, APIIdentified, PydanticModel, CreatedAtMixin):
             letter (Letter): Letter to which this question belongs
             question_text (str): The actual text content of the question
             author (User | None): User who authored the question
+            position (int | None): Display order within the letter. Defaults
+                to the next index after existing questions.
         """
         APIIdentified.__init__(self)
+        if position is None:
+            existing = [question.position for question in letter.questions]
+            position = (max(existing) if existing else -1) + 1
         self.letter = letter
         self.question_text = question_text
         self.author = author
+        self.position = position
 
     @classmethod
     def create(
-        cls, letter: Letter, question_text: str, author: User | None = None
+        cls,
+        letter: Letter,
+        question_text: str,
+        author: User | None = None,
+        position: int | None = None,
     ) -> Question:
         """Create a new Question instance.
 
@@ -93,11 +105,12 @@ class Question(Base, APIIdentified, PydanticModel, CreatedAtMixin):
             letter (Letter): Letter to which this question belongs
             question_text (str): The actual text content of the question
             author (User | None, optional): User who authored the question. Defaults to None.
+            position (int | None, optional): Display order. Defaults to append.
 
         Returns:
             Question: New Question instance
         """
-        question = cls(letter, question_text, author)
+        question = cls(letter, question_text, author, position=position)
         return question
 
     @hybrid_property

@@ -3327,6 +3327,17 @@
             "format": "date-time",
             "title": "Created At"
           },
+          "position": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Position"
+          },
           "responded_participant_api_ids": {
             "items": {
               "type": "string"
@@ -4422,6 +4433,17 @@
             "format": "date-time",
             "title": "Created At"
           },
+          "position": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Position"
+          },
           "responses": {
             "items": {
               "$ref": "#/components/schemas/ResponseWithParticipant"
@@ -4492,6 +4514,17 @@
             "format": "date-time",
             "title": "Created At"
           },
+          "position": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Position"
+          },
           "letter": {
             "$ref": "#/components/schemas/LetterUnlinked"
           },
@@ -4532,6 +4565,17 @@
             "type": "string",
             "format": "date-time",
             "title": "Created At"
+          },
+          "position": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Position"
           }
         },
         "type": "object",
