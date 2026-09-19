@@ -26,6 +26,8 @@ import {
 } from "../../client"
 import {
   deleteQuestionQuestionsQuestionQuestionApiIdDeleteMutation,
+  listDashboardLettersLettersLettersDashboardGetQueryKey,
+  listLettersLettersLettersGetQueryKey,
   readLetterLettersLetterLetterApiIdGetQueryKey,
   readUserMePartiesMeGetQueryKey,
 } from "../../client/@tanstack/react-query.gen"
@@ -357,6 +359,23 @@ function DraftQuestion({
           path: { letter_api_id: loopApiId },
         }),
       })
+      // Home / group Loops cards use list queries with a 30s staleTime; without
+      // this, unanswered counts stay wrong until the cache expires.
+      queryClient.invalidateQueries({
+        queryKey: listDashboardLettersLettersLettersDashboardGetQueryKey(),
+      })
+      const letter = queryClient.getQueryData<PublicLetter>(
+        readLetterLettersLetterLetterApiIdGetQueryKey({
+          path: { letter_api_id: loopApiId },
+        }),
+      )
+      if (letter?.group.api_identifier) {
+        queryClient.invalidateQueries({
+          queryKey: listLettersLettersLettersGetQueryKey({
+            query: { group_api_id: letter.group.api_identifier },
+          }),
+        })
+      }
     },
     onError: (
       error: AxiosError<DeleteQuestionQuestionsQuestionQuestionApiIdDeleteError>,
@@ -395,6 +414,13 @@ function DraftQuestion({
   })
 
   const handleUpsert = async (responseText: string): Promise<void> => {
+    // First response for this question moves Home "Waiting on you" counts;
+    // later text edits do not. Skip list invalidation on edit so debounced
+    // autosave does not refetch the dashboard on every keystroke flush.
+    const isFirstResponseForUser = !question.responses.some(
+      (r) => r.participant.api_identifier === currentUser.api_identifier,
+    )
+
     const { data: updatedQuestion } =
       await upsertResponseQuestionsQuestionQuestionApiIdUpsertResponsePost({
         path: { question_api_id: question.api_identifier },
@@ -469,6 +495,22 @@ function DraftQuestion({
 
     if (!didPatch) {
       await queryClient.invalidateQueries({ queryKey: letterQueryKey })
+    }
+
+    if (isFirstResponseForUser) {
+      // Home dashboard / group Loops list use 30s staleTime; without this the
+      // card stays under "Waiting on you" until the cache expires (#421/#423).
+      queryClient.invalidateQueries({
+        queryKey: listDashboardLettersLettersLettersDashboardGetQueryKey(),
+      })
+      const letter = queryClient.getQueryData<PublicLetter>(letterQueryKey)
+      if (letter?.group.api_identifier) {
+        queryClient.invalidateQueries({
+          queryKey: listLettersLettersLettersGetQueryKey({
+            query: { group_api_id: letter.group.api_identifier },
+          }),
+        })
+      }
     }
   }
 
