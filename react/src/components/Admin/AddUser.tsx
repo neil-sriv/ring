@@ -1,5 +1,6 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query"
 import { Loader2 } from "lucide-react"
+import { useEffect } from "react"
 import { type SubmitHandler, useForm } from "react-hook-form"
 
 import type { AxiosError } from "axios"
@@ -31,6 +32,15 @@ interface UserCreateForm extends UserCreate {
   confirm_password: string
 }
 
+const freshDefaults = (): UserCreateForm => ({
+  email: "",
+  name: "",
+  password: "",
+  confirm_password: "",
+  // is_superuser: false,
+  // is_active: false,
+})
+
 const AddUser = ({ isOpen, onClose }: AddUserProps) => {
   const queryClient = useQueryClient()
   const showToast = useCustomToast()
@@ -43,21 +53,25 @@ const AddUser = ({ isOpen, onClose }: AddUserProps) => {
   } = useForm<UserCreateForm>({
     mode: "onBlur",
     criteriaMode: "all",
-    defaultValues: {
-      email: "",
-      name: "",
-      password: "",
-      confirm_password: "",
-      // is_superuser: false,
-      // is_active: false,
-    },
+    defaultValues: freshDefaults(),
   })
+
+  // Parent keeps this dialog mounted; clear credentials each open.
+  useEffect(() => {
+    if (isOpen) {
+      reset(freshDefaults(), {
+        keepErrors: false,
+        keepDirty: false,
+        keepTouched: false,
+      })
+    }
+  }, [isOpen, reset])
 
   const mutation = useMutation({
     ...createUserPartiesUserPostMutation(),
     onSuccess: () => {
       showToast("Success!", "User created successfully.", "success")
-      reset()
+      reset(freshDefaults())
       onClose()
     },
     onError: (error: AxiosError<CreateUserPartiesUserPostError>) => {
@@ -80,13 +94,18 @@ const AddUser = ({ isOpen, onClose }: AddUserProps) => {
     })
   }
 
+  const onCancel = () => {
+    reset(freshDefaults())
+    onClose()
+  }
+
   const isSaving = isSubmitting || mutation.isPending
 
   return (
     <Dialog
       open={isOpen}
       onOpenChange={(open) => {
-        if (!open && !isSaving) onClose()
+        if (!open && !isSaving) onCancel()
       }}
     >
       <DialogContent>
@@ -173,7 +192,7 @@ const AddUser = ({ isOpen, onClose }: AddUserProps) => {
           <DialogFooter>
             <Button
               variant="outline"
-              onClick={onClose}
+              onClick={onCancel}
               type="button"
               disabled={isSaving}
             >

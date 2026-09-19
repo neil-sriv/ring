@@ -1,4 +1,5 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query"
+import { useEffect } from "react"
 import { type SubmitHandler, useForm } from "react-hook-form"
 
 import { Button } from "@/components/ui/button"
@@ -37,6 +38,10 @@ interface AddQuestionProps {
   loopApiId: string
 }
 
+const freshDefaults = (): QuestionFormProps => ({
+  questionText: "",
+})
+
 const AddQuestion = ({ isOpen, onClose, loopApiId }: AddQuestionProps) => {
   const queryClient = useQueryClient()
   const currentUser = queryClient.getQueryData<UserLinked>(
@@ -52,13 +57,25 @@ const AddQuestion = ({ isOpen, onClose, loopApiId }: AddQuestionProps) => {
   } = useForm<QuestionFormProps>({
     mode: "onBlur",
     criteriaMode: "all",
+    defaultValues: freshDefaults(),
   })
+
+  // Parent keeps this dialog mounted; clear draft text each open.
+  useEffect(() => {
+    if (isOpen) {
+      reset(freshDefaults(), {
+        keepErrors: false,
+        keepDirty: false,
+        keepTouched: false,
+      })
+    }
+  }, [isOpen, reset])
 
   const mutation = useMutation({
     ...addQuestionLettersLetterLetterApiIdAddQuestionPostMutation(),
     onSuccess: () => {
       showToast("Success!", "New question created successfully.", "success")
-      reset()
+      reset(freshDefaults())
       onClose()
     },
     onError: (
@@ -90,8 +107,13 @@ const AddQuestion = ({ isOpen, onClose, loopApiId }: AddQuestionProps) => {
     })
   }
 
+  const onCancel = () => {
+    reset(freshDefaults())
+    onClose()
+  }
+
   return (
-    <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
+    <Dialog open={isOpen} onOpenChange={(open) => !open && onCancel()}>
       <DialogContent className="sm:max-w-md">
         <form onSubmit={handleSubmit(onSubmit)}>
           <DialogHeader>
@@ -126,7 +148,7 @@ const AddQuestion = ({ isOpen, onClose, loopApiId }: AddQuestionProps) => {
               )}
               Save
             </Button>
-            <Button type="button" onClick={onClose} variant="outline">
+            <Button type="button" onClick={onCancel} variant="outline">
               Cancel
             </Button>
           </DialogFooter>

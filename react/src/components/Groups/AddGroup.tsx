@@ -1,5 +1,6 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query"
 import { Loader2 } from "lucide-react"
+import { useEffect } from "react"
 import { type SubmitHandler, useForm } from "react-hook-form"
 
 import type { AxiosError } from "axios"
@@ -52,11 +53,21 @@ const AddGroup = ({ isOpen, onClose }: AddGroupProps) => {
     },
   })
 
+  // Parent keeps this dialog mounted; clear name each open.
+  useEffect(() => {
+    if (isOpen) {
+      reset(
+        { name: "" },
+        { keepErrors: false, keepDirty: false, keepTouched: false },
+      )
+    }
+  }, [isOpen, reset])
+
   const mutation = useMutation({
     ...createGroupPartiesGroupPostMutation(),
     onSuccess: () => {
       showToast("Success!", "Group created successfully.", "success")
-      reset()
+      reset({ name: "" })
       onClose()
     },
     onError: (err: AxiosError<CreateGroupPartiesGroupPostError>) => {
@@ -92,11 +103,16 @@ const AddGroup = ({ isOpen, onClose }: AddGroupProps) => {
     })
   }
 
+  const onCancel = () => {
+    reset({ name: "" })
+    onClose()
+  }
+
   return (
     <Dialog
       open={isOpen}
       onOpenChange={(open) => {
-        if (!open) onClose()
+        if (!open) onCancel()
       }}
     >
       <DialogContent>
@@ -123,7 +139,7 @@ const AddGroup = ({ isOpen, onClose }: AddGroupProps) => {
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={onClose} type="button">
+            <Button variant="outline" onClick={onCancel} type="button">
               Cancel
             </Button>
             <Button type="submit" disabled={isSubmitting}>
