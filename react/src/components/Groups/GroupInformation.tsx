@@ -1,22 +1,23 @@
-import { useQueryClient } from "@tanstack/react-query"
+import { useQuery } from "@tanstack/react-query"
 import { useEffect, useState } from "react"
 import { useForm } from "react-hook-form"
 
 import type { GroupLinked } from "../../client"
-import { readGroupPartiesGroupGroupApiIdGetQueryKey } from "../../client/@tanstack/react-query.gen"
+import { readGroupPartiesGroupGroupApiIdGetOptions } from "../../client/@tanstack/react-query.gen"
 
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 
 function GroupInformation({ groupId }: { groupId: string }) {
-  const queryClient = useQueryClient()
   const [editMode, setEditMode] = useState(false)
-  const group = queryClient.getQueryData<GroupLinked>(
-    readGroupPartiesGroupGroupApiIdGetQueryKey({
+  // Subscribe to the group query so cache writes (e.g. Edit Group rename via
+  // setQueryData) re-render this view. getQueryData alone never re-renders.
+  const { data: group } = useQuery({
+    ...readGroupPartiesGroupGroupApiIdGetOptions({
       path: { group_api_id: groupId },
     }),
-  )
+  })
 
   // Hooks must run unconditionally — never after the group early-return below.
   const { register, reset } = useForm<GroupLinked>({
