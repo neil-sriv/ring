@@ -11,12 +11,9 @@ import { RingMark } from "@/components/Common/RingMark"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { useQueryClient } from "@tanstack/react-query"
+import { useQuery } from "@tanstack/react-query"
 import type { UserCreate } from "../../client"
-import {
-  validateTokenInvitesTokenTokenGetOptions,
-  validateTokenInvitesTokenTokenGetQueryKey,
-} from "../../client/@tanstack/react-query.gen"
+import { validateTokenInvitesTokenTokenGetOptions } from "../../client/@tanstack/react-query.gen"
 import useRegister from "../../hooks/useRegister"
 import { emailPattern } from "../../util/misc"
 
@@ -46,38 +43,17 @@ export const Route = createFileRoute("/register/$token")({
 
 function Register() {
   const { token } = Route.useParams()
-  const queryClient = useQueryClient()
-  const validToken =
-    queryClient.getQueryData(
-      validateTokenInvitesTokenTokenGetQueryKey({
-        path: { token: token },
-      }),
-    ) ?? false
-      ? true
-      : false
-  if (!validToken) {
-    return (
-      <div className="flex min-h-screen flex-col items-center justify-center bg-background px-4">
-        <div className="w-full max-w-sm text-center">
-          <RouterLink
-            to="/"
-            className="inline-flex flex-col items-center gap-3 font-display text-3xl font-semibold tracking-tight text-foreground"
-          >
-            <RingMark className="h-10 w-10 text-primary" />
-            Ring
-          </RouterLink>
-          <h1 className="mt-6 text-lg font-semibold">Invite link invalid</h1>
-          <p className="mt-1 text-sm text-muted-foreground">
-            This invite may have expired, already been used, or the link is
-            incorrect. Ask a group admin for a new invite.
-          </p>
-          <Button asChild className="mt-8 w-full">
-            <RouterLink to="/login">Back to login</RouterLink>
-          </Button>
-        </div>
-      </div>
-    )
-  }
+  // Subscribe to the invite validation query so cache writes from the route
+  // loader (and later refetches) re-render this page. getQueryData alone never
+  // re-renders, and hooks below must run on every render — never after an
+  // early return for an invalid token (Rules of Hooks).
+  const { data: invite, isError: inviteInvalid } = useQuery({
+    ...validateTokenInvitesTokenTokenGetOptions({
+      path: { token },
+    }),
+    retry: false,
+  })
+  const validToken = Boolean(invite) && !inviteInvalid
 
   const [showPassword, setShowPassword] = useState(false)
   const { registerMutation, error, resetError } = useRegister()
@@ -110,6 +86,30 @@ function Register() {
     } catch {
       // error is handled by useRegister hook
     }
+  }
+
+  if (!validToken) {
+    return (
+      <div className="flex min-h-screen flex-col items-center justify-center bg-background px-4">
+        <div className="w-full max-w-sm text-center">
+          <RouterLink
+            to="/"
+            className="inline-flex flex-col items-center gap-3 font-display text-3xl font-semibold tracking-tight text-foreground"
+          >
+            <RingMark className="h-10 w-10 text-primary" />
+            Ring
+          </RouterLink>
+          <h1 className="mt-6 text-lg font-semibold">Invite link invalid</h1>
+          <p className="mt-1 text-sm text-muted-foreground">
+            This invite may have expired, already been used, or the link is
+            incorrect. Ask a group admin for a new invite.
+          </p>
+          <Button asChild className="mt-8 w-full">
+            <RouterLink to="/login">Back to login</RouterLink>
+          </Button>
+        </div>
+      </div>
+    )
   }
 
   return (
