@@ -1,4 +1,4 @@
-import { useMutation, useQueryClient } from "@tanstack/react-query"
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import { Loader2 } from "lucide-react"
 import { useEffect } from "react"
 import { type SubmitHandler, useForm } from "react-hook-form"
@@ -13,6 +13,7 @@ import type {
 import {
   listGroupsPartiesGroupsGetQueryKey,
   readGroupPartiesGroupGroupApiIdGetQueryKey,
+  readUserMePartiesMeGetOptions,
   readUserMePartiesMeGetQueryKey,
   updateGroupPartiesGroupGroupApiIdPatchMutation,
 } from "../../client/@tanstack/react-query.gen"
@@ -38,9 +39,11 @@ interface EditGroupProps {
 
 const EditGroup = ({ group, isOpen, onClose }: EditGroupProps) => {
   const queryClient = useQueryClient()
-  const currentUser = queryClient.getQueryData<UserLinked>(
-    readUserMePartiesMeGetQueryKey(),
-  )
+  // Subscribe so list invalidation uses a live /me id (same class of bug as
+  // other remaining getQueryData(/me) call sites).
+  const { data: currentUser } = useQuery({
+    ...readUserMePartiesMeGetOptions(),
+  })
   const showToast = useCustomToast()
   const {
     register,
@@ -74,6 +77,25 @@ const EditGroup = ({ group, isOpen, onClose }: EditGroupProps) => {
         }),
         updatedGroup,
       )
+      // Command Palette (and other /me.groups consumers) keep a 30s stale copy
+      // of group names. Patch /me immediately so Cmd+K shows the new name
+      // without waiting for staleTime; invalidate so a refetch confirms.
+      queryClient.setQueryData<UserLinked>(
+        readUserMePartiesMeGetQueryKey(),
+        (previous) => {
+          if (!previous) {
+            return previous
+          }
+          return {
+            ...previous,
+            groups: previous.groups.map((entry) =>
+              entry.api_identifier === group.api_identifier
+                ? { ...entry, name: updatedGroup.name }
+                : entry,
+            ),
+          }
+        },
+      )
       showToast("Success!", "Group updated successfully.", "success")
       reset({ name: variables.body.name ?? group.name })
       onClose()
@@ -86,15 +108,20 @@ const EditGroup = ({ group, isOpen, onClose }: EditGroupProps) => {
       )
     },
     onSettled: () => {
-      queryClient.invalidateQueries({
-        queryKey: listGroupsPartiesGroupsGetQueryKey({
-          query: { user_api_id: currentUser!.api_identifier },
-        }),
-      })
+      if (currentUser) {
+        queryClient.invalidateQueries({
+          queryKey: listGroupsPartiesGroupsGetQueryKey({
+            query: { user_api_id: currentUser.api_identifier },
+          }),
+        })
+      }
       queryClient.invalidateQueries({
         queryKey: readGroupPartiesGroupGroupApiIdGetQueryKey({
           path: { group_api_id: group.api_identifier },
         }),
+      })
+      queryClient.invalidateQueries({
+        queryKey: readUserMePartiesMeGetQueryKey(),
       })
     },
   })
