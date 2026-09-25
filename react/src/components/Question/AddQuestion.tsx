@@ -1,4 +1,4 @@
-import { useMutation, useQueryClient } from "@tanstack/react-query"
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import { useEffect } from "react"
 import { type SubmitHandler, useForm } from "react-hook-form"
 
@@ -16,14 +16,12 @@ import { Textarea } from "@/components/ui/textarea"
 import { useRouter } from "@tanstack/react-router"
 import type { AxiosError } from "axios"
 import { Loader2 } from "lucide-react"
-import type {
-  AddQuestionLettersLetterLetterApiIdAddQuestionPostError,
-  UserLinked,
-} from "../../client"
+import type { AddQuestionLettersLetterLetterApiIdAddQuestionPostError } from "../../client"
 import {
   addQuestionLettersLetterLetterApiIdAddQuestionPostMutation,
+  listDashboardLettersLettersLettersDashboardGetQueryKey,
   readLetterLettersLetterLetterApiIdGetQueryKey,
-  readUserMePartiesMeGetQueryKey,
+  readUserMePartiesMeGetOptions,
 } from "../../client/@tanstack/react-query.gen"
 import useCustomToast from "../../hooks/useCustomToast"
 import { formatApiErrorDetail } from "../../util/misc"
@@ -44,9 +42,11 @@ const freshDefaults = (): QuestionFormProps => ({
 
 const AddQuestion = ({ isOpen, onClose, loopApiId }: AddQuestionProps) => {
   const queryClient = useQueryClient()
-  const currentUser = queryClient.getQueryData<UserLinked>(
-    readUserMePartiesMeGetQueryKey(),
-  )
+  // Subscribe so author_api_id stays correct if /me is refetched mid-session
+  // (e.g. impersonation). getQueryData alone never re-renders this dialog.
+  const { data: currentUser } = useQuery({
+    ...readUserMePartiesMeGetOptions(),
+  })
   const router = useRouter()
   const showToast = useCustomToast()
   const {
@@ -93,15 +93,26 @@ const AddQuestion = ({ isOpen, onClose, loopApiId }: AddQuestionProps) => {
           path: { letter_api_id: loopApiId },
         }),
       })
+      // Home "Waiting on you" / unanswered counts use listDashboardLetters with
+      // a 30s staleTime; without this, soft-nav back to Home keeps the old
+      // question count after adding a question to an in-progress loop.
+      queryClient.invalidateQueries({
+        queryKey: listDashboardLettersLettersLettersDashboardGetQueryKey(),
+      })
+      // Group Loops cards also list unanswered counts from listLetters.
+      queryClient.invalidateQueries({
+        queryKey: [{ _id: "listLettersLettersLettersGet" }],
+      })
       router.invalidate()
     },
   })
 
   const onSubmit: SubmitHandler<QuestionFormProps> = (data) => {
+    if (!currentUser) return
     mutation.mutate({
       body: {
         question_text: data.questionText,
-        author_api_id: currentUser!.api_identifier,
+        author_api_id: currentUser.api_identifier,
       },
       path: { letter_api_id: loopApiId },
     })
