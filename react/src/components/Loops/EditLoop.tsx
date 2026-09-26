@@ -28,7 +28,10 @@ import useCustomToast from "../../hooks/useCustomToast"
 import { formatApiErrorDetail, toISOLocal } from "../../util/misc"
 
 type LetterFormProps = {
-  sendAt: Date | string
+  // datetime-local values are always strings ("YYYY-MM-DDTHH:mm"). Do not use
+  // react-hook-form's valueAsDate here: it desyncs from the controlled `values`
+  // string and falsely fails `required` until the user re-picks the date.
+  sendAt: string
   title: string
   isInProgress: boolean
 }
@@ -43,6 +46,13 @@ const EditLetter = ({ isOpen, onClose, loop }: EditLetterProps) => {
   const queryClient = useQueryClient()
   const showToast = useCustomToast()
   const previousSendAt = new Date(loop.send_at)
+  const previousSendAtLocal = toISOLocal(previousSendAt).slice(0, 16)
+  // Allow the letter's existing send_at even when it is already in the past
+  // (common for IN_PROGRESS); otherwise the browser marks the field invalid
+  // and status-only saves fail until the user re-picks a future time.
+  const sendAtMin = toISOLocal(
+    new Date(Math.min(Date.now(), previousSendAt.getTime())),
+  ).slice(0, 16)
   const {
     register,
     handleSubmit,
@@ -54,7 +64,7 @@ const EditLetter = ({ isOpen, onClose, loop }: EditLetterProps) => {
     criteriaMode: "all",
     values: isOpen
       ? {
-          sendAt: toISOLocal(new Date(loop.send_at)).slice(0, 16),
+          sendAt: previousSendAtLocal,
           title: loop.title || "",
           isInProgress: loop.status === "IN_PROGRESS",
         }
@@ -110,17 +120,13 @@ const EditLetter = ({ isOpen, onClose, loop }: EditLetterProps) => {
       status?: LetterStatus
     } = {}
 
-    // valueAsDate yields a Date; compare minute-precision local strings so
-    // an unchanged datetime-local value does not count as a change.
-    const previousSendAtLocal = toISOLocal(previousSendAt).slice(0, 16)
-    const nextSendAtLocal =
-      data.sendAt instanceof Date
-        ? toISOLocal(data.sendAt).slice(0, 16)
-        : String(data.sendAt).slice(0, 16)
+    // Compare minute-precision local strings so an unchanged datetime-local
+    // value does not count as a change. Convert to timezone-aware ISO only
+    // when the user actually changed the scheduled time.
+    const nextSendAtLocal = data.sendAt.slice(0, 16)
 
     if (nextSendAtLocal !== previousSendAtLocal) {
-      updateData.send_at =
-        data.sendAt instanceof Date ? toISOLocal(data.sendAt) : data.sendAt
+      updateData.send_at = toISOLocal(new Date(data.sendAt))
     }
 
     if (data.title !== (loop.title || "")) {
@@ -211,10 +217,9 @@ const EditLetter = ({ isOpen, onClose, loop }: EditLetterProps) => {
                 id="sendAt"
                 {...register("sendAt", {
                   required: "Send at is required.",
-                  valueAsDate: true,
                 })}
                 type="datetime-local"
-                min={toISOLocal(new Date()).slice(0, 16)}
+                min={sendAtMin}
                 disabled={isSaving}
               />
               {errors.sendAt && (
