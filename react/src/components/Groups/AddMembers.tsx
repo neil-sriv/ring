@@ -1,4 +1,4 @@
-import { useMutation, useQueryClient } from "@tanstack/react-query"
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import { Loader2 } from "lucide-react"
 import { useEffect } from "react"
 import { type SubmitHandler, useForm } from "react-hook-form"
@@ -7,13 +7,14 @@ import type { AxiosError } from "axios"
 import type {
   AddMembersPartiesGroupGroupApiIdAddMembersPostError,
   GroupLinked,
-  UserLinked,
 } from "../../client"
 import {
   addMembersPartiesGroupGroupApiIdAddMembersPostMutation,
+  listDashboardLettersLettersLettersDashboardGetQueryKey,
   listGroupsPartiesGroupsGetQueryKey,
+  listLettersLettersLettersGetQueryKey,
   readGroupPartiesGroupGroupApiIdGetQueryKey,
-  readUserMePartiesMeGetQueryKey,
+  readUserMePartiesMeGetOptions,
 } from "../../client/@tanstack/react-query.gen"
 import useCustomToast from "../../hooks/useCustomToast"
 import { formatApiErrorDetail } from "../../util/misc"
@@ -46,9 +47,11 @@ const freshDefaults = (): AddMembersFormType => ({
 const AddMembers = ({ group, isOpen, onClose }: AddMembersProps) => {
   const queryClient = useQueryClient()
   const showToast = useCustomToast()
-  const currentUser = queryClient.getQueryData<UserLinked>(
-    readUserMePartiesMeGetQueryKey(),
-  )
+  // Subscribe so listGroups invalidation keys track /me. getQueryData alone
+  // never re-renders this dialog when the cache is overwritten.
+  const { data: currentUser } = useQuery({
+    ...readUserMePartiesMeGetOptions(),
+  })
   const {
     register,
     handleSubmit,
@@ -100,6 +103,18 @@ const AddMembers = ({ group, isOpen, onClose }: AddMembersProps) => {
           }),
         })
       }
+      // New members are added to in-progress/upcoming letter participants
+      // (participant_count / required_responders). Home and group Loops cards
+      // use list queries with a 30s staleTime; without this they keep the old
+      // reply progress until the cache expires.
+      queryClient.invalidateQueries({
+        queryKey: listLettersLettersLettersGetQueryKey({
+          query: { group_api_id: group.api_identifier },
+        }),
+      })
+      queryClient.invalidateQueries({
+        queryKey: listDashboardLettersLettersLettersDashboardGetQueryKey(),
+      })
     },
   })
 

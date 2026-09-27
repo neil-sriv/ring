@@ -7,7 +7,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
 import { Button } from "@/components/ui/button"
-import { useMutation, useQueryClient } from "@tanstack/react-query"
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import { useRouter } from "@tanstack/react-router"
 import type { AxiosError } from "axios"
 import { Loader2 } from "lucide-react"
@@ -15,13 +15,14 @@ import { useForm } from "react-hook-form"
 
 import type {
   RemoveUserFromGroupPartiesGroupGroupApiIdRemoveMemberUserApiIdPostError,
-  UserLinked,
   UserUnlinked,
 } from "../../client"
 import {
+  listDashboardLettersLettersLettersDashboardGetQueryKey,
   listGroupsPartiesGroupsGetQueryKey,
+  listLettersLettersLettersGetQueryKey,
   readGroupPartiesGroupGroupApiIdGetQueryKey,
-  readUserMePartiesMeGetQueryKey,
+  readUserMePartiesMeGetOptions,
   removeUserFromGroupPartiesGroupGroupApiIdRemoveMemberUserApiIdPostMutation,
 } from "../../client/@tanstack/react-query.gen"
 import useCustomToast from "../../hooks/useCustomToast"
@@ -43,9 +44,11 @@ function RemoveMemberConfirmation({
   const queryClient = useQueryClient()
   const router = useRouter()
   const showToast = useCustomToast()
-  const currentUser = queryClient.getQueryData<UserLinked>(
-    readUserMePartiesMeGetQueryKey(),
-  )
+  // Subscribe so listGroups invalidation keys track /me. getQueryData alone
+  // never re-renders this dialog when the cache is overwritten.
+  const { data: currentUser } = useQuery({
+    ...readUserMePartiesMeGetOptions(),
+  })
   const {
     handleSubmit,
     formState: { isSubmitting },
@@ -83,6 +86,18 @@ function RemoveMemberConfirmation({
           }),
         })
       }
+      // Removing a member also drops them from in-progress/upcoming letter
+      // participants (participant_count / required_responders). Home and group
+      // Loops cards use list queries with a 30s staleTime; without this they
+      // keep the old reply progress until the cache expires.
+      queryClient.invalidateQueries({
+        queryKey: listLettersLettersLettersGetQueryKey({
+          query: { group_api_id: groupId },
+        }),
+      })
+      queryClient.invalidateQueries({
+        queryKey: listDashboardLettersLettersLettersDashboardGetQueryKey(),
+      })
       router.invalidate()
       await queryClient.refetchQueries({
         queryKey: readGroupPartiesGroupGroupApiIdGetQueryKey({
