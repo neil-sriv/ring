@@ -15,6 +15,8 @@ import type { AxiosError } from "axios"
 import { Loader2, Plus } from "lucide-react"
 import type { GroupLinked } from "../../client"
 import {
+  listDashboardLettersLettersLettersDashboardGetQueryKey,
+  listLettersLettersLettersGetQueryKey,
   readGroupPartiesGroupGroupApiIdGetOptions,
   readGroupPartiesGroupGroupApiIdGetQueryKey,
   replaceGroupDefaultQuestionsPartiesGroupGroupApiIdReplaceDefaultQuestionsPostMutation,
@@ -220,6 +222,20 @@ function GroupLoopSettings({ groupId }: { groupId: string }) {
       }
 
       showToast("Success!", "Loop settings updated successfully.", "success")
+      // required_responders on in-progress letters is derived from
+      // min_responder_ratio × participants. Home + group Loops cards use list
+      // queries with a 30s staleTime; without this they keep the old
+      // "N of M responses needed" until the cache expires.
+      if (groupPatch.min_responder_ratio !== undefined) {
+        queryClient.invalidateQueries({
+          queryKey: listLettersLettersLettersGetQueryKey({
+            query: { group_api_id: groupId },
+          }),
+        })
+        queryClient.invalidateQueries({
+          queryKey: listDashboardLettersLettersLettersDashboardGetQueryKey(),
+        })
+      }
       await refreshGroup()
       const refreshed = readFreshGroup()
       exitEditMode(refreshed ? formValuesFromGroup(refreshed) : data)
