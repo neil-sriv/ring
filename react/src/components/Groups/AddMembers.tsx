@@ -17,6 +17,7 @@ import {
   readUserMePartiesMeGetOptions,
 } from "../../client/@tanstack/react-query.gen"
 import useCustomToast from "../../hooks/useCustomToast"
+import { isGroupLetterDetailQuery } from "../../util/letterQueryCache"
 import { formatApiErrorDetail } from "../../util/misc"
 
 import { Button } from "@/components/ui/button"
@@ -114,6 +115,16 @@ const AddMembers = ({ group, isOpen, onClose }: AddMembersProps) => {
       })
       queryClient.invalidateQueries({
         queryKey: listDashboardLettersLettersLettersDashboardGetQueryKey(),
+      })
+      // Loop detail (LoopReplyTracker roster) is cached under readLetter; without
+      // this soft-nav back into a warmed letter keeps the old participant list.
+      queryClient.invalidateQueries({
+        predicate: (query) =>
+          isGroupLetterDetailQuery(
+            query.queryKey,
+            group.api_identifier,
+            query.state.data,
+          ),
       })
     },
   })

@@ -26,6 +26,7 @@ import {
   removeUserFromGroupPartiesGroupGroupApiIdRemoveMemberUserApiIdPostMutation,
 } from "../../client/@tanstack/react-query.gen"
 import useCustomToast from "../../hooks/useCustomToast"
+import { isGroupLetterDetailQuery } from "../../util/letterQueryCache"
 import { formatApiErrorDetail } from "../../util/misc"
 
 interface RemoveMemberConfirmationProps {
@@ -98,6 +99,13 @@ function RemoveMemberConfirmation({
       queryClient.invalidateQueries({
         queryKey: listDashboardLettersLettersLettersDashboardGetQueryKey(),
       })
+      // Loop detail (LoopReplyTracker roster) is cached under readLetter; without
+      // this soft-nav back into a warmed letter keeps the removed member visible
+      // until the cache expires.
+      queryClient.invalidateQueries({
+        predicate: (query) =>
+          isGroupLetterDetailQuery(query.queryKey, groupId, query.state.data),
+      })
       router.invalidate()
       await queryClient.refetchQueries({
         queryKey: readGroupPartiesGroupGroupApiIdGetQueryKey({
@@ -131,7 +139,7 @@ function RemoveMemberConfirmation({
             <AlertDialogTitle>Remove member?</AlertDialogTitle>
             <AlertDialogDescription>
               <span className="font-medium text-foreground">{memberLabel}</span>{" "}
-              will be removed from this group. They will no longer receive new
+              will be removed from the group. They will no longer receive new
               loops or be able to access group content. This action cannot be
               undone.
             </AlertDialogDescription>
