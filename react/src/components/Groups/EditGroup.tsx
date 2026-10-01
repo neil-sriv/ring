@@ -11,7 +11,9 @@ import type {
   UserLinked,
 } from "../../client"
 import {
+  listDashboardLettersLettersLettersDashboardGetQueryKey,
   listGroupsPartiesGroupsGetQueryKey,
+  listLettersLettersLettersGetQueryKey,
   readGroupPartiesGroupGroupApiIdGetQueryKey,
   readUserMePartiesMeGetOptions,
   readUserMePartiesMeGetQueryKey,
@@ -122,6 +124,17 @@ const EditGroup = ({ group, isOpen, onClose }: EditGroupProps) => {
       })
       queryClient.invalidateQueries({
         queryKey: readUserMePartiesMeGetQueryKey(),
+      })
+      // Home cards render nested loop.group.name from the dashboard list
+      // query (30s staleTime). Without this, soft-nav Home keeps the old
+      // name until the cache expires. Same for the group Loops list.
+      queryClient.invalidateQueries({
+        queryKey: listDashboardLettersLettersLettersDashboardGetQueryKey(),
+      })
+      queryClient.invalidateQueries({
+        queryKey: listLettersLettersLettersGetQueryKey({
+          query: { group_api_id: group.api_identifier },
+        }),
       })
     },
   })
