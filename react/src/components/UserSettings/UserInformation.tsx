@@ -11,6 +11,8 @@ import type {
   UserUpdate,
 } from "../../client"
 import {
+  listDashboardLettersLettersLettersDashboardGetQueryKey,
+  listGroupsPartiesGroupsGetQueryKey,
   readUserMePartiesMeGetOptions,
   readUserMePartiesMeGetQueryKey,
   readUsersPartiesUsersGetQueryKey,
@@ -68,6 +70,25 @@ const UserInformation = () => {
     onSettled: async () => {
       queryClient.invalidateQueries({
         queryKey: readUsersPartiesUsersGetQueryKey(),
+      })
+      // Groups list / membership / Home Facepile embed member names from
+      // list queries with a 30s staleTime. Refetching /me alone leaves those
+      // nested names stale on soft-nav until the cache expires.
+      if (currentUser?.api_identifier) {
+        queryClient.invalidateQueries({
+          queryKey: listGroupsPartiesGroupsGetQueryKey({
+            query: { user_api_id: currentUser.api_identifier },
+          }),
+        })
+      }
+      queryClient.invalidateQueries({
+        queryKey: [{ _id: "readGroupPartiesGroupGroupApiIdGet" }],
+      })
+      queryClient.invalidateQueries({
+        queryKey: listDashboardLettersLettersLettersDashboardGetQueryKey(),
+      })
+      queryClient.invalidateQueries({
+        queryKey: [{ _id: "readLetterLettersLetterLetterApiIdGet" }],
       })
       await queryClient.refetchQueries({
         queryKey: readUserMePartiesMeGetQueryKey(),
