@@ -83,31 +83,49 @@ class TestGroupApi:
             data,
         )
 
-    def test_create_group_invalid_admin(
+    def test_create_group_rejects_other_admin(
         self,
         authenticated_client: TestClient,
+        db_session: Session,
+        current_user: User,
     ):
-        """Test creating a group with an invalid admin.
+        """Test creating a group cannot assign a different user as admin.
 
-        This test verifies that:
-        1. Creating a group with a non-existent admin fails
-        2. The response contains the correct error message
+        The API must not trust a client-supplied admin_api_identifier that
+        differs from the authenticated caller (whether valid or invalid).
 
         Args:
             authenticated_client (TestClient): Authenticated test client
+            db_session (Session): Database session
+            current_user (User): Currently authenticated user
         """
-        input = {
-            "name": "Test Group",
-            "admin_api_identifier": "invalid-user",
-        }
-        response = authenticated_client.post(
-            "/parties/group",
-            json=input,
-        )
+        other_user = UserFactory.create()
+        db_session.commit()
+        assert other_user.api_identifier != current_user.api_identifier
 
-        assert response.status_code == 404
-        data = response.json()
-        assert_api_model_not_found(data, User, ["invalid-user"])
+        for admin_api_identifier in (
+            other_user.api_identifier,
+            "invalid-user",
+        ):
+            response = authenticated_client.post(
+                "/parties/group",
+                json={
+                    "name": "Test Group",
+                    "admin_api_identifier": admin_api_identifier,
+                },
+            )
+
+            assert response.status_code == 403
+            assert response.json() == {
+                "detail": "Cannot create a group with a different user as admin"
+            }
+
+        assert (
+            db_session.scalar(
+                sqlalchemy.select(Group).filter(Group.name == "Test Group")
+            )
+            is None
+        )
 
     def test_list_groups(
         self,
