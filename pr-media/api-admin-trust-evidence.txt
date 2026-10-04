@@ -1,0 +1,27 @@
+=== create_group admin trust — live API evidence ===
+
+1) Self as admin → 201
+{
+  "name": "API Self Admin Check 2",
+  "api_identifier": "grp_e61394cb-39e8-471b-9299-6916407f2102",
+  "created_at": "2026-10-04T13:25:43.830712Z",
+  "cycle_length": 30,
+  "min_responder_ratio": null,
+  "members": [
+    {
+      "email": "test@example.com",
+      "name": "Test User",
+      "api_identifier": "usr_1cd49b76-7a04-4a35-85af-2640fb470883",
+      "admin": false
+    }
+  ],
+  "admin": {
+    "email": "test@example.com",
+    "name": "Test User",
+    "api_identifier": "usr_1cd49b76-7a04-4a3
+
+2) Other user id as admin → 403
+{"detail": "Cannot create a group with a different user as admin"}
+
+3) Invalid admin id → 403
+{"detail": "Cannot create a group with a different user as admin"}
