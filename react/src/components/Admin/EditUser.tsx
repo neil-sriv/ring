@@ -10,6 +10,9 @@ import type {
   UserUpdate,
 } from "../../client"
 import {
+  listDashboardLettersLettersLettersDashboardGetQueryKey,
+  listGroupsPartiesGroupsGetQueryKey,
+  readUserMePartiesMeGetQueryKey,
   readUsersPartiesUsersGetQueryKey,
   updateUserByIdPartiesUserUserApiIdPatchMutation,
 } from "../../client/@tanstack/react-query.gen"
@@ -80,6 +83,34 @@ const EditUser = ({ user, isOpen, onClose }: EditUserProps) => {
       queryClient.invalidateQueries({
         queryKey: readUsersPartiesUsersGetQueryKey(),
       })
+      // Groups membership / Home Facepile / letter detail embed member names
+      // from list queries with a 30s staleTime. Invalidating only the admin
+      // users table leaves those nested names stale on soft-nav until expiry.
+      const currentUser = queryClient.getQueryData<UserLinked>(
+        readUserMePartiesMeGetQueryKey(),
+      )
+      if (currentUser?.api_identifier) {
+        queryClient.invalidateQueries({
+          queryKey: listGroupsPartiesGroupsGetQueryKey({
+            query: { user_api_id: currentUser.api_identifier },
+          }),
+        })
+      }
+      queryClient.invalidateQueries({
+        queryKey: [{ _id: "readGroupPartiesGroupGroupApiIdGet" }],
+      })
+      queryClient.invalidateQueries({
+        queryKey: listDashboardLettersLettersLettersDashboardGetQueryKey(),
+      })
+      queryClient.invalidateQueries({
+        queryKey: [{ _id: "readLetterLettersLetterLetterApiIdGet" }],
+      })
+      // Admin can edit their own row; keep /me (shell, Settings) in sync.
+      if (currentUser?.api_identifier === user.api_identifier) {
+        queryClient.invalidateQueries({
+          queryKey: readUserMePartiesMeGetQueryKey(),
+        })
+      }
     },
   })
 
