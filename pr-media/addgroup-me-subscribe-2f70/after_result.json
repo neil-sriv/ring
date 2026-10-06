@@ -1,0 +1,9 @@
+{
+  "label": "after",
+  "original_id": "usr_07f951fc-c656-44b7-aeb9-b1e6238dbe81",
+  "cache_live_id": "usr_CACHE_LIVE_SHOULD_WIN",
+  "posted_admin_api_identifier": "usr_CACHE_LIVE_SHOULD_WIN",
+  "followed_live_cache": true,
+  "stayed_on_stale_render": false,
+  "captured_url": "http://localhost:5173/api/v1/parties/group"
+}
