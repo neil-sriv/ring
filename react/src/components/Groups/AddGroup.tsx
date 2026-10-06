@@ -1,4 +1,4 @@
-import { useMutation, useQueryClient } from "@tanstack/react-query"
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import { Loader2 } from "lucide-react"
 import { useEffect } from "react"
 import { type SubmitHandler, useForm } from "react-hook-form"
@@ -7,12 +7,12 @@ import type { AxiosError } from "axios"
 import type {
   CreateGroupPartiesGroupPostError,
   GroupCreate,
-  UserLinked,
 } from "../../client"
 import {
   createGroupPartiesGroupPostMutation,
   listDashboardLettersLettersLettersDashboardGetQueryKey,
   listGroupsPartiesGroupsGetQueryKey,
+  readUserMePartiesMeGetOptions,
   readUserMePartiesMeGetQueryKey,
 } from "../../client/@tanstack/react-query.gen"
 import useCustomToast from "../../hooks/useCustomToast"
@@ -36,9 +36,13 @@ interface AddGroupProps {
 
 const AddGroup = ({ isOpen, onClose }: AddGroupProps) => {
   const queryClient = useQueryClient()
-  const currentUser = queryClient.getQueryData<UserLinked>(
-    readUserMePartiesMeGetQueryKey(),
-  )
+  // Subscribe so create uses the live /me identity (admin_api_identifier +
+  // listGroups invalidation key). getQueryData alone never re-renders when
+  // /me is rewritten in cache (e.g. after impersonation while this dialog
+  // stays mounted under Navbar on /groups).
+  const { data: currentUser } = useQuery({
+    ...readUserMePartiesMeGetOptions(),
+  })
   const showToast = useCustomToast()
   const {
     register,
@@ -78,10 +82,10 @@ const AddGroup = ({ isOpen, onClose }: AddGroupProps) => {
       )
     },
     onSettled: (data) => {
-      if (data) {
+      if (data && currentUser) {
         queryClient.invalidateQueries({
           queryKey: listGroupsPartiesGroupsGetQueryKey({
-            query: { user_api_id: currentUser!.api_identifier },
+            query: { user_api_id: currentUser.api_identifier },
           }),
         })
         queryClient.invalidateQueries({
@@ -95,9 +99,12 @@ const AddGroup = ({ isOpen, onClose }: AddGroupProps) => {
   })
 
   const onSubmit: SubmitHandler<GroupCreate> = (data) => {
+    if (!currentUser) {
+      return
+    }
     mutation.mutate({
       body: {
-        admin_api_identifier: currentUser!.api_identifier,
+        admin_api_identifier: currentUser.api_identifier,
         name: data.name,
       },
     })
@@ -108,11 +115,13 @@ const AddGroup = ({ isOpen, onClose }: AddGroupProps) => {
     onClose()
   }
 
+  const isSaving = isSubmitting || mutation.isPending
+
   return (
     <Dialog
       open={isOpen}
       onOpenChange={(open) => {
-        if (!open) onCancel()
+        if (!open && !isSaving) onCancel()
       }}
     >
       <DialogContent>
@@ -130,6 +139,7 @@ const AddGroup = ({ isOpen, onClose }: AddGroupProps) => {
                 })}
                 placeholder="Name"
                 type="text"
+                disabled={isSaving || !currentUser}
               />
               {errors.name && (
                 <p className="text-xs text-destructive">
@@ -139,11 +149,16 @@ const AddGroup = ({ isOpen, onClose }: AddGroupProps) => {
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={onCancel} type="button">
+            <Button
+              variant="outline"
+              onClick={onCancel}
+              type="button"
+              disabled={isSaving}
+            >
               Cancel
             </Button>
-            <Button type="submit" disabled={isSubmitting}>
-              {isSubmitting && <Loader2 className="h-4 w-4 animate-spin" />}
+            <Button type="submit" disabled={isSaving || !currentUser}>
+              {isSaving && <Loader2 className="h-4 w-4 animate-spin" />}
               Save
             </Button>
           </DialogFooter>
