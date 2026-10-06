@@ -21,6 +21,49 @@ class TestAuthnAPI:
         "a password recovery email has been sent"
     )
 
+    def test_login_access_token_success(
+        self, unauthenticated_client: TestClient, db_session: Session
+    ) -> None:
+        """Valid credentials return a bearer token (bcrypt runs in a threadpool)."""
+        user = UserFactory.create(password="test-password")
+        db_session.commit()
+
+        response = unauthenticated_client.post(
+            "/login/access-token",
+            data={"username": user.email, "password": "test-password"},
+        )
+
+        assert response.status_code == 200
+        body = response.json()
+        assert body["token_type"] == "bearer"
+        assert body["access_token"]
+
+    def test_login_access_token_rejects_bad_password(
+        self, unauthenticated_client: TestClient, db_session: Session
+    ) -> None:
+        """Unknown users and bad passwords share the same 400 (no enumeration)."""
+        user = UserFactory.create(password="test-password")
+        db_session.commit()
+
+        bad_password = unauthenticated_client.post(
+            "/login/access-token",
+            data={"username": user.email, "password": "wrong-password"},
+        )
+        unknown_user = unauthenticated_client.post(
+            "/login/access-token",
+            data={
+                "username": "nobody@example.com",
+                "password": "test-password",
+            },
+        )
+
+        assert bad_password.status_code == 400
+        assert unknown_user.status_code == 400
+        assert (
+            bad_password.json()["detail"] == "Incorrect username or password"
+        )
+        assert unknown_user.json()["detail"] == bad_password.json()["detail"]
+
     def test_deprecated_endpoints_return_501(
         self, unauthenticated_client: TestClient
     ) -> None:

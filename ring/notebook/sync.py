@@ -4,7 +4,8 @@ Serves the standard Yjs sync + awareness WebSocket protocol (the one spoken by
 ``y-websocket`` / TipTap's Collaboration extensions) using pycrdt, and persists
 document updates into the ``document_edits`` table.
 
-Rooms are process-local, matching the single-process uvicorn deployment.
+Rooms are process-local (one in-memory Yjs set per uvicorn worker). Prod
+runs ``--workers 2``; persistence still goes through ``document_edits``.
 """
 
 from __future__ import annotations

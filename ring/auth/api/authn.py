@@ -9,6 +9,7 @@ from __future__ import annotations
 
 from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordRequestForm
+from starlette.concurrency import run_in_threadpool
 
 from ring.api_identifier.util import get_model
 from ring.async_scheduler.scheduler import scheduler
@@ -31,7 +32,7 @@ from ring.parties.models.one_time_token_model import TokenType
 from ring.parties.models.user_model import User
 from ring.parties.schemas.user import NewPassword
 from ring.ring_pydantic.core import ResponseMessage
-from ring.security import create_access_token
+from ring.security import create_access_token, verify_password
 
 router = APIRouter()
 
@@ -57,12 +58,14 @@ async def login_access_token(
     Raises:
         HTTPException: 400 if credentials are invalid
     """
-    user = user_crud.authenticate_user(
-        req_dep.db,
-        form_data.username,
+    # bcrypt is ~200ms of sync CPU. Keep it off the event loop so /version
+    # and other routes are not queued behind login.
+    user = user_crud.get_user_by_email(req_dep.db, form_data.username)
+    if not user or not await run_in_threadpool(
+        verify_password,
         form_data.password,
-    )
-    if not user:
+        user.hashed_password,
+    ):
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Incorrect username or password",
