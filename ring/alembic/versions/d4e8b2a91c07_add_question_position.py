@@ -1,7 +1,7 @@
 """add question position
 
 Revision ID: d4e8b2a91c07
-Revises: cd37cfa88894
+Revises: a7c3e91f0b24
 Create Date: 2026-09-18 03:40:00.000000
 
 Hand-written: column add plus a Cockroach UPDATE ... FROM backfill.
@@ -18,7 +18,7 @@ from alembic import op
 
 # revision identifiers, used by Alembic.
 revision: str = "d4e8b2a91c07"
-down_revision: Union[str, None] = "cd37cfa88894"
+down_revision: Union[str, None] = "a7c3e91f0b24"
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
 
