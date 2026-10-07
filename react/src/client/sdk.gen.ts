@@ -1312,10 +1312,11 @@ export const deleteImageResponsesResponseResponseApiIdDeleteImageDelete = <Throw
 };
 
 /**
- * Score Response
- * Score how completely a response answers its question.
+ * Check whether your draft answers the prompt
+ * Check whether your draft answers the prompt.
  *
- * Calls System One and returns the score. Nothing is written.
+ * Only the person who wrote the draft can call this, and only before
+ * the letter is sent. Nothing is written.
  */
 export const scoreResponseResponsesResponseResponseApiIdScorePost = <ThrowOnError extends boolean = false>(options: Options<ScoreResponseResponsesResponseResponseApiIdScorePostData, ThrowOnError>) => {
     return (options.client ?? _heyApiClient).post<ScoreResponseResponsesResponseResponseApiIdScorePostResponse, ScoreResponseResponsesResponseResponseApiIdScorePostError, ThrowOnError>({

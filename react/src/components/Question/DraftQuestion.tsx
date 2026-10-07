@@ -18,6 +18,7 @@ import {
   type DeleteQuestionQuestionsQuestionQuestionApiIdDeleteError,
   type PublicLetter,
   type PublicQuestion,
+  type ResponseScore,
   type ResponseWithParticipant,
   type UserLinked,
   deleteImageResponsesResponseResponseApiIdDeleteImageDelete,
@@ -28,6 +29,7 @@ import {
   deleteQuestionQuestionsQuestionQuestionApiIdDeleteMutation,
   readLetterLettersLetterLetterApiIdGetQueryKey,
   readUserMePartiesMeGetQueryKey,
+  scoreResponseResponsesResponseResponseApiIdScorePostMutation,
 } from "../../client/@tanstack/react-query.gen"
 import { useAutoResizeTextarea } from "../../hooks/useAutoResizeTextarea"
 import useCustomToast from "../../hooks/useCustomToast"
@@ -49,6 +51,76 @@ type ResponseBlockProps = {
 }
 
 type DraftSaveStatus = "idle" | "saving" | "saved" | "error"
+
+function draftAnswerLabel(score: ResponseScore): string | null {
+  const indexes = Object.keys(score.legend)
+    .map((key) => Number(key))
+    .filter((index) => Number.isFinite(index))
+    .sort((left, right) => left - right)
+  if (indexes.length === 0) {
+    return null
+  }
+  const lowest = indexes[0]
+  const highest = indexes[indexes.length - 1]
+  const rounded = Math.round(score.score)
+  const clamped = Math.min(Math.max(rounded, lowest), highest)
+  return score.legend[String(clamped)] ?? null
+}
+
+function DraftAnswerCheck({
+  responseApiId,
+  draftText,
+}: {
+  responseApiId: string
+  draftText: string
+}): JSX.Element {
+  const showToast = useCustomToast()
+  const [result, setResult] = useState<ResponseScore | null>(null)
+  const [checkedText, setCheckedText] = useState<string | null>(null)
+  const checkMutation = useMutation({
+    ...scoreResponseResponsesResponseResponseApiIdScorePostMutation(),
+    onSuccess: (data) => {
+      setResult(data)
+      setCheckedText(draftText)
+    },
+    onError: (err) => {
+      const detail = (err.response?.data as { detail?: unknown } | undefined)
+        ?.detail
+      showToast(
+        "Could not check this draft.",
+        formatApiErrorDetail(detail),
+        "error",
+      )
+    },
+  })
+  const label =
+    result != null && checkedText === draftText
+      ? draftAnswerLabel(result)
+      : null
+
+  return (
+    <div className="mt-2 space-y-1.5">
+      <Button
+        type="button"
+        variant="outline"
+        size="sm"
+        disabled={checkMutation.isPending}
+        onClick={() => {
+          checkMutation.mutate({
+            path: { response_api_id: responseApiId },
+          })
+        }}
+      >
+        {checkMutation.isPending
+          ? "Checking..."
+          : "Check if this answers the prompt"}
+      </Button>
+      {label != null && (
+        <p className="text-xs text-muted-foreground">{label}</p>
+      )}
+    </div>
+  )
+}
 
 function DraftSaveStatusLine({ status }: { status: DraftSaveStatus }) {
   switch (status) {
@@ -302,6 +374,16 @@ function ResponseBlock(props: ResponseBlockProps) {
           }`}
         />
         {!props.readOnly && <DraftSaveStatusLine status={saveStatus} />}
+        {!props.readOnly &&
+          props.response?.api_identifier &&
+          responseText.trim().length > 0 &&
+          responseText === lastSavedTextRef.current &&
+          saveStatus !== "saving" && (
+            <DraftAnswerCheck
+              responseApiId={props.response.api_identifier}
+              draftText={responseText}
+            />
+          )}
       </div>
       {!props.readOnly && (
         <SingleUploadImage

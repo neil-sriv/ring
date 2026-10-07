@@ -2362,8 +2362,8 @@
         "tags": [
           "responses"
         ],
-        "summary": "Score Response",
-        "description": "Score how completely a response answers its question.\n\nCalls System One and returns the score. Nothing is written.",
+        "summary": "Check whether your draft answers the prompt",
+        "description": "Check whether your draft answers the prompt.\n\nOnly the person who wrote the draft can call this, and only before\nthe letter is sent. Nothing is written.",
         "operationId": "score_response_responses_response__response_api_id__score_post",
         "security": [
           {
@@ -4795,7 +4795,7 @@
           "legend"
         ],
         "title": "ResponseScore",
-        "description": "Ephemeral completeness score for a response.\n\nNot stored. ``score`` is the probability-weighted level index on\n``legend`` (0 is the lowest level)."
+        "description": "Private check of whether your draft answers its prompt.\n\nNot stored. ``score`` is the probability-weighted level index on\n``legend`` (0 is the lowest level)."
       },
       "ResponseUnlinked": {
         "properties": {
