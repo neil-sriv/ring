@@ -31,6 +31,7 @@ from ring.letters.send_threshold import (
     has_send_date_arrived,
     hold_letter_for_send_threshold,
 )
+from ring.notifications.crud.dispatch import notify_users
 from ring.parties.models.group_model import Group
 from ring.parties.models.user_model import User
 from ring.search.crud.hybrid_search import (
@@ -541,6 +542,13 @@ def send_letter_email(db: Session, letter: Letter) -> bool:
     letter.status = LetterStatus.SENT
     logger.info("Message ID:" + message_id)
     logger.info("Sent letter email to {}".format(recipients))
+    notify_users(
+        db,
+        letter.participants,
+        title="New letter",
+        body=f"{letter_email_title(letter)} is ready to read",
+        target_api_id=letter.api_identifier,
+    )
     return True
 
 

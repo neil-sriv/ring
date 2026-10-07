@@ -12,6 +12,7 @@ from ring.letters.models.letter_model import Letter
 from ring.letters.models.question_model import Question
 from ring.letters.models.response_model import Response
 from ring.notebook.models.document import Document
+from ring.notifications.models.inbox_item import InboxItem
 from ring.parties.models.group_model import Group
 from ring.parties.models.user_model import User
 
@@ -260,6 +261,39 @@ def build_stateless_enforcer(db: Session, sub_api_id: str) -> Enforcer:
     return enforcer
 
 
+def _load_scoped_inbox(
+    enforcer: Enforcer,
+    db: Session,
+    sub_api_id: str,
+    resource_api_ids: Sequence[str],
+) -> None:
+    """Grant the subject read/write on their own inbox ids in this check.
+
+    Loaded only when an ``inbx_`` id is being authorized. The full enforcer
+    build does not pull every inbox row.
+    """
+    inbox_ids = [
+        api_id
+        for api_id in resource_api_ids
+        if _prefix(api_id) == APIPrefix.INBOX.value
+    ]
+    if not inbox_ids:
+        return
+    enforcer.add_grouping_policy(sub_api_id, sub_api_id)
+    enforcer.add_policy(sub_api_id, sub_api_id, Action.READ.value)
+    enforcer.add_policy(sub_api_id, sub_api_id, Action.WRITE.value)
+    pairs = {
+        (inbox_api_id, user_api_id)
+        for inbox_api_id, user_api_id in db.execute(
+            select(InboxItem.api_identifier, User.api_identifier)
+            .join(InboxItem.user)
+            .where(InboxItem.api_identifier.in_(inbox_ids))
+            .where(User.api_identifier == sub_api_id)
+        ).all()
+    }
+    _add_g2_pairs(enforcer, pairs)
+
+
 def build_stateless_enforcer_for_resources(
     db: Session,
     sub_api_id: str,
@@ -269,8 +303,11 @@ def build_stateless_enforcer_for_resources(
 
     Still decides authorization via Casbin ``enforce``; only the policy corpus
     loaded for ``g2`` is scoped to ``resource_api_ids`` (plus parent links).
+    Inbox rows are included only when one of those ids is an inbox item, and
+    only for the subject who owns it — including users who belong to no group.
     """
     enforcer = get_enforcer()
+    _load_scoped_inbox(enforcer, db, sub_api_id, resource_api_ids)
 
     group_api_ids = _subject_group_api_ids(db, sub_api_id)
     if not group_api_ids:
