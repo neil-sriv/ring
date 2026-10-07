@@ -78,3 +78,16 @@ class ResponseUnlinked(Response):
     """
 
     pass
+
+
+class ResponseScore(BaseModel):
+    """Ephemeral completeness score for a response.
+
+    Not stored. ``score`` is the probability-weighted level index on
+    ``legend`` (0 is the lowest level).
+    """
+
+    model: str
+    score: float
+    confidence: float
+    legend: dict[str, str]
