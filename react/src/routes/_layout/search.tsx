@@ -9,21 +9,47 @@ import { useEffect, useRef, useState } from "react"
 
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { useInfiniteQuery } from "@tanstack/react-query"
-import type { SearchHit, SearchableType } from "../../client"
-import { performSearchSearchSearchGetInfiniteOptions } from "../../client/@tanstack/react-query.gen"
+import { useInfiniteQuery, useQuery } from "@tanstack/react-query"
+import type { SearchHit, SearchSort, SearchableType } from "../../client"
+import {
+  performSearchSearchSearchGetInfiniteOptions,
+  readGroupPartiesGroupGroupApiIdGetOptions,
+  readUserMePartiesMeGetOptions,
+} from "../../client/@tanstack/react-query.gen"
+import { SearchFilters } from "../../components/Common/SearchFilters"
 import { SearchResultRow } from "../../components/Common/SearchResultRow"
 import { registerSearchFocusHandler } from "../../lib/globalKeyboardShortcuts"
 
+const SEARCH_SORTS = [
+  "relevance",
+  "created_at_desc",
+  "created_at_asc",
+] as const satisfies readonly SearchSort[]
+
 interface SearchRouteParams {
   q?: string
+  group?: string
+  responder?: string
+  sort?: SearchSort
+}
+
+function trimmedParam(value: unknown) {
+  return typeof value === "string" && value.trim() ? value : undefined
 }
 
 export const Route = createFileRoute("/_layout/search")({
   component: Search,
   validateSearch: (search: Record<string, unknown>): SearchRouteParams => {
-    const q = search.q
-    return typeof q === "string" && q.trim() ? { q } : {}
+    const q = trimmedParam(search.q)
+    const group = trimmedParam(search.group)
+    const responder = group ? trimmedParam(search.responder) : undefined
+    const sort = SEARCH_SORTS.find((option) => option === search.sort)
+    return {
+      ...(q ? { q } : {}),
+      ...(group ? { group } : {}),
+      ...(responder ? { responder } : {}),
+      ...(sort && sort !== "relevance" ? { sort } : {}),
+    }
   },
 })
 
@@ -38,8 +64,24 @@ const SEARCH_TYPE_FILTERS: { value: SearchableType; label: string }[] = [
 ]
 
 function SearchContent() {
-  const { q } = Route.useSearch()
+  const { q, group, responder, sort } = Route.useSearch()
+  const activeSort: SearchSort = sort ?? "relevance"
   const navigate = useNavigate()
+  const { data: currentUser } = useQuery({
+    ...readUserMePartiesMeGetOptions(),
+  })
+  const { data: selectedGroup } = useQuery({
+    ...readGroupPartiesGroupGroupApiIdGetOptions({
+      path: { group_api_id: group ?? "" },
+    }),
+    enabled: Boolean(group),
+  })
+  const groups = [...(currentUser?.groups ?? [])].sort((left, right) =>
+    left.name.localeCompare(right.name),
+  )
+  const members = [...(selectedGroup?.members ?? [])].sort((left, right) =>
+    (left.name || left.email).localeCompare(right.name || right.email),
+  )
   const [searchQuery, setSearchQuery] = useState(q ?? "")
   const [submittedQuery, setSubmittedQuery] = useState(q?.trim() ?? "")
   const [hasSubmittedSearch, setHasSubmittedSearch] = useState(
@@ -101,6 +143,9 @@ function SearchContent() {
         query: submittedQuery,
         limit: SEARCH_PAGE_SIZE,
         ...(activeTypes.length > 0 ? { types: activeTypes } : {}),
+        ...(group ? { group_api_id: group } : {}),
+        ...(responder ? { participant_api_id: responder } : {}),
+        ...(activeSort !== "relevance" ? { sort: activeSort } : {}),
       },
     }),
     initialPageParam: 0,
@@ -150,7 +195,12 @@ function SearchContent() {
     if (trimmedQuery !== q) {
       navigate({
         to: "/search",
-        search: { q: trimmedQuery },
+        search: {
+          q: trimmedQuery,
+          ...(group ? { group } : {}),
+          ...(responder ? { responder } : {}),
+          ...(sort ? { sort } : {}),
+        },
         replace: true,
       })
     }
@@ -239,6 +289,49 @@ function SearchContent() {
         )}
       </div>
 
+      <SearchFilters
+        groups={groups}
+        members={members}
+        groupApiId={group}
+        participantApiId={responder}
+        sort={activeSort}
+        onGroupChange={(groupApiId) => {
+          navigate({
+            to: "/search",
+            search: {
+              ...(q ? { q } : {}),
+              ...(groupApiId ? { group: groupApiId } : {}),
+              ...(sort ? { sort } : {}),
+            },
+            replace: true,
+          })
+        }}
+        onParticipantChange={(participantApiId) => {
+          navigate({
+            to: "/search",
+            search: {
+              ...(q ? { q } : {}),
+              ...(group ? { group } : {}),
+              ...(participantApiId ? { responder: participantApiId } : {}),
+              ...(sort ? { sort } : {}),
+            },
+            replace: true,
+          })
+        }}
+        onSortChange={(nextSort) => {
+          navigate({
+            to: "/search",
+            search: {
+              ...(q ? { q } : {}),
+              ...(group ? { group } : {}),
+              ...(responder ? { responder } : {}),
+              ...(nextSort !== "relevance" ? { sort: nextSort } : {}),
+            },
+            replace: true,
+          })
+        }}
+      />
+
       {showInitialLoading && (
         <div className="flex items-center justify-center gap-2 py-12 text-sm text-muted-foreground">
           <Loader2 className="h-4 w-4 animate-spin" />
@@ -262,7 +355,9 @@ function SearchContent() {
           <h3 className="mt-4 font-display text-lg font-medium">No results</h3>
           <p className="mt-1 max-w-sm text-sm text-muted-foreground">
             No results found for "{submittedQuery}"
-            {selectedTypes.length > 0 ? " with the selected filters" : ""}.
+            {selectedTypes.length > 0 || group || responder
+              ? " with the selected filters."
+              : "."}
           </p>
         </div>
       )}
@@ -276,7 +371,11 @@ function SearchContent() {
           </p>
           <div className="mt-2 flex flex-col gap-0.5">
             {searchHits.map((result: SearchHit) => (
-              <SearchResultRow key={result.api_identifier} result={result} />
+              <SearchResultRow
+                key={result.api_identifier}
+                result={result}
+                showTimestamp={activeSort !== "relevance"}
+              />
             ))}
           </div>
           <div ref={loadMoreRef} aria-hidden="true" />

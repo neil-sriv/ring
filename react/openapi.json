@@ -814,7 +814,7 @@
           "parties"
         ],
         "summary": "Create Group",
-        "description": "Create a new group.\n\nArgs:\n    group (GroupCreate): Group creation parameters\n    req_dep (AuthenticatedRequestDependencies): Request dependencies\n\nReturns:\n    Group: Created group\n\nRaises:\n    HTTPException: If group creation fails",
+        "description": "Create a new group.\n\nThe authenticated caller is always the group admin. Clients may still\nsend ``admin_api_identifier`` for backwards compatibility, but it must\nmatch the current user — another user's id is rejected.\n\nArgs:\n    group (GroupCreate): Group creation parameters\n    req_dep (AuthenticatedRequestDependencies): Request dependencies\n\nReturns:\n    Group: Created group\n\nRaises:\n    HTTPException: If admin_api_identifier is not the current user, or\n        group creation fails",
         "operationId": "create_group_parties_group_post",
         "requestBody": {
           "content": {
@@ -2500,7 +2500,7 @@
           "search"
         ],
         "summary": "Raw Search",
-        "description": "Search the search table for a given query.\n\nArgs:\n    query: The search query string\n    search_type: Type of search to perform (semantic, keyword, or dual)\n    limit: Maximum number of results to return\n    req_dep: Authenticated request dependencies\n\nReturns:\n    RawSearchResponse containing matching results and total count",
+        "description": "Search the search table for a given query.\n\nArgs:\n    query: The search query string\n    search_type: Type of search to perform (semantic, keyword, or dual)\n    limit: Maximum number of results to return\n    group_api_id: Optional group. Keeps that group and its letters,\n        questions, and responses.\n    participant_api_id: Optional responder. Keeps that person's responses.\n    sort: Relevance (the search type's existing ranking) or entity time.\n    req_dep: Authenticated request dependencies\n\nReturns:\n    RawSearchResponse containing matching results and total count",
         "operationId": "raw_search_search_raw_search_get",
         "security": [
           {
@@ -2535,6 +2535,47 @@
               "default": 10,
               "title": "Limit"
             }
+          },
+          {
+            "name": "group_api_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Group Api Id"
+            }
+          },
+          {
+            "name": "participant_api_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Participant Api Id"
+            }
+          },
+          {
+            "name": "sort",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/SearchSort",
+              "default": "relevance"
+            }
           }
         ],
         "responses": {
@@ -2567,7 +2608,7 @@
           "search"
         ],
         "summary": "Perform Search",
-        "description": "Search groups, letters, questions, and responses.\n\nThe query supports GitHub-style qualifiers in addition to free text:\n- `author:name` or `author:\"Full Name\"` — questions by that author and\n  responses by that participant (name or email, case-insensitive)\n- `status:open` — currently in-progress issues\n- `status:published` — sent issues\n- `status:upcoming` — scheduled issues\n- `is:open` / `is:published` — aliases of `status:`\n- `author:@me` — the current user",
+        "description": "Search groups, letters, questions, and responses.\n\nThe query supports GitHub-style qualifiers in addition to free text:\n- `author:name` or `author:\"Full Name\"` — questions by that author and\n  responses by that participant (name or email, case-insensitive)\n- `status:open` — currently in-progress issues\n- `status:published` — sent issues\n- `status:upcoming` — scheduled issues\n- `is:open` / `is:published` — aliases of `status:`\n- `author:@me` — the current user\n\n``group_api_id`` keeps that group plus its letters, questions, and\nresponses. ``participant_api_id`` keeps responses by that person.\n``sort`` is ``relevance`` (the search type's existing ranking),\n``created_at_desc`` (newest entity), or ``created_at_asc`` (oldest).\nHits the caller cannot read are omitted.",
         "operationId": "perform_search_search_search_get",
         "security": [
           {
@@ -2630,6 +2671,47 @@
                 }
               ],
               "title": "Types"
+            }
+          },
+          {
+            "name": "group_api_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Group Api Id"
+            }
+          },
+          {
+            "name": "participant_api_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Participant Api Id"
+            }
+          },
+          {
+            "name": "sort",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/SearchSort",
+              "default": "relevance"
             }
           }
         ],
@@ -4968,6 +5050,18 @@
               }
             ],
             "title": "Group Count"
+          },
+          "created_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Created At"
           }
         },
         "type": "object",
@@ -4998,6 +5092,16 @@
           "total"
         ],
         "title": "SearchResponse"
+      },
+      "SearchSort": {
+        "type": "string",
+        "enum": [
+          "relevance",
+          "created_at_desc",
+          "created_at_asc"
+        ],
+        "title": "SearchSort",
+        "description": "How to order search hits.\n\n``relevance`` keeps the ranking each search type already uses (keyword\nts_rank, semantic distance, or document id when the query has no text).\nThe created-at sorts use the source entity's ``created_at``."
       },
       "SearchType": {
         "type": "string",
