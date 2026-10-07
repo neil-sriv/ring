@@ -141,7 +141,10 @@ class TestLetterAPI:
             db_session (Session): Database session
         """
         group = GroupFactory.create()
-        letters = [LetterFactory.create(group=group) for _ in range(5)]
+        letters = [
+            LetterFactory.create(group=group, status=LetterStatus.SENT)
+            for _ in range(5)
+        ]
         db_session.commit()
         response = authenticated_client.get(
             f"/letters/letters/?group_api_id={group.api_identifier}"
