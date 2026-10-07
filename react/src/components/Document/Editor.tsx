@@ -560,16 +560,21 @@ const CollabEditorInner: React.FC<{
             // invalidate listDocuments there. Content projection uses a raw
             // fetch, so without this the Documents tab cards keep a stale
             // preview / updated_at for up to the 30s list staleTime.
+            // Debounced PUTs can overlap; only the latest generation may
+            // write the detail cache. Check after json() so a newer sync
+            // that finishes during parse still wins.
             const updated = (await response.json()) as DocumentResponse
-            queryClientRef.current.setQueryData(
-              getDocumentEndpointNotebookDocumentsDocumentApiIdGetQueryKey({
-                path: { document_api_id: docId },
-              }),
-              updated,
-            )
-            queryClientRef.current.invalidateQueries({
-              predicate: (query) => isListDocumentsQueryKey(query.queryKey),
-            })
+            if (syncGeneration === syncGenerationRef.current) {
+              queryClientRef.current.setQueryData(
+                getDocumentEndpointNotebookDocumentsDocumentApiIdGetQueryKey({
+                  path: { document_api_id: docId },
+                }),
+                updated,
+              )
+              queryClientRef.current.invalidateQueries({
+                predicate: (query) => isListDocumentsQueryKey(query.queryKey),
+              })
+            }
           } catch (error) {
             console.error("Failed to sync content projection:", error)
             if (syncGeneration === syncGenerationRef.current) {
