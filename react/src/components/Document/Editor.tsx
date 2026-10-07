@@ -1,4 +1,8 @@
-import { readUserMePartiesMeGetOptions } from "@/client/@tanstack/react-query.gen"
+import type { DocumentResponse } from "@/client"
+import {
+  getDocumentEndpointNotebookDocumentsDocumentApiIdGetQueryKey,
+  readUserMePartiesMeGetOptions,
+} from "@/client/@tanstack/react-query.gen"
 import { Button } from "@/components/ui/button"
 import {
   Tooltip,
@@ -8,7 +12,7 @@ import {
 } from "@/components/ui/tooltip"
 import { apiUrl, wsUrl } from "@/lib/apiUrl"
 import { cn } from "@/lib/utils"
-import { useQuery } from "@tanstack/react-query"
+import { useQuery, useQueryClient } from "@tanstack/react-query"
 import Collaboration from "@tiptap/extension-collaboration"
 import CollaborationCaret from "@tiptap/extension-collaboration-caret"
 import Placeholder from "@tiptap/extension-placeholder"
@@ -40,6 +44,16 @@ import { WebsocketProvider } from "y-websocket"
 import * as Y from "yjs"
 
 export type NotebookWsStatus = "connecting" | "connected" | "reconnecting"
+
+function isListDocumentsQueryKey(queryKey: readonly unknown[]): boolean {
+  const first = queryKey[0]
+  return (
+    typeof first === "object" &&
+    first !== null &&
+    "_id" in first &&
+    (first as { _id: string })._id === "listDocumentsNotebookDocumentsGet"
+  )
+}
 
 const CARET_COLORS = [
   "#b45309", // amber
@@ -464,6 +478,7 @@ const CollabEditorInner: React.FC<{
   onEditingChange,
   onSyncError,
 }) => {
+  const queryClient = useQueryClient()
   const { data: me } = useQuery({ ...readUserMePartiesMeGetOptions({}) })
   const editingTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const saveTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
@@ -474,9 +489,11 @@ const CollabEditorInner: React.FC<{
   const onSavingChangeRef = useRef(onSavingChange)
   const onEditingChangeRef = useRef(onEditingChange)
   const onSyncErrorRef = useRef(onSyncError)
+  const queryClientRef = useRef(queryClient)
   onSavingChangeRef.current = onSavingChange
   onEditingChangeRef.current = onEditingChange
   onSyncErrorRef.current = onSyncError
+  queryClientRef.current = queryClient
 
   const editor = useEditor(
     {
@@ -538,6 +555,25 @@ const CollabEditorInner: React.FC<{
             )
             if (!response.ok) {
               throw new Error(`Sync failed with status ${response.status}`)
+            }
+            // Title renames go through the TanStack mutation in $documentId and
+            // invalidate listDocuments there. Content projection uses a raw
+            // fetch, so without this the Documents tab cards keep a stale
+            // preview / updated_at for up to the 30s list staleTime.
+            // Debounced PUTs can overlap; only the latest generation may
+            // write the detail cache. Check after json() so a newer sync
+            // that finishes during parse still wins.
+            const updated = (await response.json()) as DocumentResponse
+            if (syncGeneration === syncGenerationRef.current) {
+              queryClientRef.current.setQueryData(
+                getDocumentEndpointNotebookDocumentsDocumentApiIdGetQueryKey({
+                  path: { document_api_id: docId },
+                }),
+                updated,
+              )
+              queryClientRef.current.invalidateQueries({
+                predicate: (query) => isListDocumentsQueryKey(query.queryKey),
+              })
             }
           } catch (error) {
             console.error("Failed to sync content projection:", error)
