@@ -7,11 +7,16 @@ deprecated in favor of the question-level image upload endpoint.
 
 from __future__ import annotations
 
+from typing import cast
+
 from fastapi import APIRouter, Depends, HTTPException, UploadFile, status
+from loguru import logger
 
 from ring.api_identifier import (
     util as api_identifier_crud,
 )
+from ring.authz.authz import load_and_check
+from ring.authz.enforcer import Action
 from ring.fastapp.dependencies import (
     AuthenticatedRequestDependencies,
     get_request_dependencies,
@@ -23,9 +28,13 @@ from ring.letters.crud import (
     response as response_crud,
 )
 from ring.letters.crud.response import delete_image_from_response
+from ring.letters.crud.response_score import (
+    score_response as score_response_text,
+)
 from ring.letters.models.response_model import Response
-from ring.letters.schemas.response import ResponseCreateBase
+from ring.letters.schemas.response import ResponseCreateBase, ResponseScore
 from ring.ring_pydantic.linked_schemas import ResponseLinked
+from ring.systemone.client import SystemOneClientError
 
 router = APIRouter()
 
@@ -145,3 +154,38 @@ async def delete_image(
     req_dep.db.commit()
 
     return db_response
+
+
+@router.post(
+    "/response/{response_api_id}:score",
+    response_model=ResponseScore,
+)
+async def score_response(
+    response_api_id: str,
+    req_dep: AuthenticatedRequestDependencies = Depends(
+        get_request_dependencies,
+    ),
+) -> ResponseScore:
+    """Score how completely a response answers its question.
+
+    Calls System One and returns the score. Nothing is written.
+    """
+    db_response = cast(
+        Response,
+        load_and_check(
+            req_dep.db,
+            req_dep.current_user,
+            Action.READ,
+            response_api_id,
+        ),
+    )
+    try:
+        return score_response_text(db_response)
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+    except SystemOneClientError as exc:
+        logger.warning("systemone score failed status={}", exc.status_code)
+        raise HTTPException(
+            status_code=502,
+            detail="Could not score this response",
+        ) from exc
