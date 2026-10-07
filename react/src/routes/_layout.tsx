@@ -2,13 +2,11 @@ import { Outlet, createFileRoute, redirect } from "@tanstack/react-router"
 import { Loader2 } from "lucide-react"
 import { useEffect } from "react"
 
-import { useQueryClient } from "@tanstack/react-query"
+import { useQuery } from "@tanstack/react-query"
 import {
   listDashboardLettersLettersLettersDashboardGetOptions,
   readUserMePartiesMeGetOptions,
-  readUserMePartiesMeGetQueryKey,
 } from "../client/@tanstack/react-query.gen"
-import type { UserLinked } from "../client/types.gen"
 import { KeyboardShortcuts } from "../components/Common/KeyboardShortcuts"
 import Sidebar from "../components/Common/Sidebar"
 import UserMenu from "../components/Common/UserMenu"
@@ -47,10 +45,12 @@ export const Route = createFileRoute("/_layout")({
 })
 
 function Layout() {
-  const queryClient = useQueryClient()
-  const currentUser = queryClient.getQueryData<UserLinked>(
-    readUserMePartiesMeGetQueryKey(),
-  )
+  // Subscribe so push re-binds when /me changes mid-session (impersonation /
+  // login). getQueryData alone never re-runs this effect after identity swap
+  // because Layout stays mounted across /_layout child routes.
+  const { data: currentUser } = useQuery({
+    ...readUserMePartiesMeGetOptions(),
+  })
   const userApiId = currentUser?.api_identifier
   const isLoading = false
 

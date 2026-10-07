@@ -12,7 +12,6 @@ import type {
 import {
   impersonateUserTokenImpersonateUserTokenPostMutation,
   readUserMePartiesMeGetOptions,
-  readUsersPartiesUsersGetQueryKey,
 } from "../../client/@tanstack/react-query.gen"
 import useCustomToast from "../../hooks/useCustomToast"
 import { formatApiErrorDetail } from "../../util/misc"
@@ -59,14 +58,29 @@ const ImpersonateUser = ({ user, isOpen, onClose }: ImpersonateUserProps) => {
 
   const mutation = useMutation({
     ...impersonateUserTokenImpersonateUserTokenPostMutation(),
-    onSuccess: (data: Token) => {
+    onSuccess: async (data: Token) => {
       showToast("Success!", "Impersonated user successfully.", "success")
       reset()
       onClose()
       localStorage.setItem("access_token", data.access_token)
-      queryClient.invalidateQueries()
-      queryClient.ensureQueryData({
-        ...readUserMePartiesMeGetOptions({}),
+      // Soft SPA navigations keep the QueryClient alive with the admin's /me
+      // and dashboard still warm (30s staleTime). Refetch /me in place so
+      // mounted shell observers (App/Layout/Sidebar/UserMenu) stay subscribed
+      // — removeQueries()/clear() on /me orphans those observers with stale
+      // React state. Then drop every other cached query for the prior identity.
+      // Login can clear() because the shell is not mounted on /login.
+      // staleTime: 0 forces a network refetch; otherwise fetchQuery returns the
+      // still-fresh admin /me from the default 30s cache.
+      await queryClient.cancelQueries()
+      await queryClient.fetchQuery({
+        ...readUserMePartiesMeGetOptions(),
+        staleTime: 0,
+      })
+      queryClient.removeQueries({
+        predicate: (query) => {
+          const head = query.queryKey[0] as { _id?: string } | undefined
+          return head?._id !== "readUserMePartiesMeGet"
+        },
       })
       navigate({ to: "/" })
     },
@@ -78,11 +92,6 @@ const ImpersonateUser = ({ user, isOpen, onClose }: ImpersonateUserProps) => {
         formatApiErrorDetail(err.response?.data?.detail),
         "error",
       )
-    },
-    onSettled: () => {
-      queryClient.invalidateQueries({
-        queryKey: readUsersPartiesUsersGetQueryKey(),
-      })
     },
   })
 
