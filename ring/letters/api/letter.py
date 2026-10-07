@@ -41,6 +41,18 @@ from ring.ring_pydantic.linked_schemas import DashboardLetters, MinimalLetter
 
 router = APIRouter()
 
+_LIVE_LETTER_STATUSES = (LetterStatus.IN_PROGRESS, LetterStatus.UPCOMING)
+
+
+def _assert_no_live_letter(
+    letters: Sequence[Letter],
+    statuses: Sequence[LetterStatus] = _LIVE_LETTER_STATUSES,
+) -> None:
+    if any(letter.status in statuses for letter in letters):
+        raise ValueError(
+            "There is already a letter in progress or upcoming for this group"
+        )
+
 
 @router.post("/letter", response_model=LetterSchema)
 async def add_next_letter(
@@ -67,13 +79,7 @@ async def add_next_letter(
     group_letters = letter_crud.get_letters(
         req_dep.db, group_api_id=letter.group_api_identifier
     )
-    if any(
-        letter.status in [LetterStatus.IN_PROGRESS, LetterStatus.UPCOMING]
-        for letter in group_letters
-    ):
-        raise ValueError(
-            "There is already a letter in progress or upcoming for this group"
-        )
+    _assert_no_live_letter(group_letters)
     db_letter = letter_crud.create_letter_with_questions(
         req_dep.db,
         group_api_id=letter.group_api_identifier,
@@ -98,6 +104,8 @@ async def add_next_letter(
         Action.READ,
         letter.group_api_identifier,
     )
+    if letter_type == LetterType.CYCLIC:
+        _assert_no_live_letter(db_group.cyclic_letters)
     db_letter = letter_crud.create_letter(
         req_dep.db,
         group_api_id=db_group.api_identifier,
@@ -260,6 +268,15 @@ async def edit_letter(
             )
         else:
             assert letter.send_at > curr_time
+    if (
+        letter.status in _LIVE_LETTER_STATUSES
+        and db_letter.letter_type == LetterType.CYCLIC
+        and letter.status != db_letter.status
+    ):
+        _assert_no_live_letter(
+            db_letter.group.cyclic_letters,
+            statuses=(letter.status,),
+        )
 
     letter_crud.edit_letter(
         req_dep.db,
