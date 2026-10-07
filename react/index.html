@@ -5,6 +5,23 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="theme-color" content="#fbfaf7" />
     <title>Ring</title>
+    <!-- Baseline link preview. Crawlers never run JavaScript, so these tags
+         are what a shared URL previews as unless the Worker (src/worker.ts)
+         or the Vite open-graph plugin served path-specific copy. One tag per
+         line: the crawlers that read them are not all full HTML parsers. -->
+    <meta name="description" content="Ring asks your group the same few questions on a cadence, then collects everyone's answers into one newsletter." />
+    <meta property="og:site_name" content="Ring" />
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="Ring" />
+    <meta property="og:description" content="Ring asks your group the same few questions on a cadence, then collects everyone's answers into one newsletter." />
+    <meta property="og:image" content="https://ring.neilsriv.tech/assets/images/og-card.png" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:alt" content="The Ring logo" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="Ring" />
+    <meta name="twitter:description" content="Ring asks your group the same few questions on a cadence, then collects everyone's answers into one newsletter." />
+    <meta name="twitter:image" content="https://ring.neilsriv.tech/assets/images/og-card.png" />
     <link rel="icon" type="image/x-icon" href="./assets/images/favicon.ico" />
     <link
       rel="icon"
