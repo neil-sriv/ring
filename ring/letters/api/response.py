@@ -21,6 +21,7 @@ from ring.fastapp.dependencies import (
     AuthenticatedRequestDependencies,
     get_request_dependencies,
 )
+from ring.letters.constants import LetterStatus
 from ring.letters.crud import (
     question as question_crud,
 )
@@ -159,6 +160,7 @@ async def delete_image(
 @router.post(
     "/response/{response_api_id}:score",
     response_model=ResponseScore,
+    summary="Check whether your draft answers the prompt",
 )
 async def score_response(
     response_api_id: str,
@@ -166,9 +168,10 @@ async def score_response(
         get_request_dependencies,
     ),
 ) -> ResponseScore:
-    """Score how completely a response answers its question.
+    """Check whether your draft answers the prompt.
 
-    Calls System One and returns the score. Nothing is written.
+    Only the person who wrote the draft can call this, and only before
+    the letter is sent. Nothing is written.
     """
     db_response = cast(
         Response,
@@ -179,13 +182,23 @@ async def score_response(
             response_api_id,
         ),
     )
+    if db_response.participant_id != req_dep.current_user.id:
+        raise HTTPException(
+            status_code=403,
+            detail="You can only check your own draft",
+        )
+    if db_response.question.letter.status == LetterStatus.SENT:
+        raise HTTPException(
+            status_code=400,
+            detail="You can only check a draft before the letter is sent",
+        )
     try:
         return score_response_text(db_response)
     except ValueError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
     except SystemOneClientError as exc:
-        logger.warning("systemone score failed status={}", exc.status_code)
+        logger.warning("draft check failed status={}", exc.status_code)
         raise HTTPException(
             status_code=502,
-            detail="Could not score this response",
+            detail="Could not check this draft",
         ) from exc

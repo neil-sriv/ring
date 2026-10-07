@@ -81,7 +81,7 @@ class ResponseUnlinked(Response):
 
 
 class ResponseScore(BaseModel):
-    """Ephemeral completeness score for a response.
+    """Private check of whether your draft answers its prompt.
 
     Not stored. ``score`` is the probability-weighted level index on
     ``legend`` (0 is the lowest level).
