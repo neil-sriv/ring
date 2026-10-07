@@ -22,6 +22,7 @@ from ring.letters.crud import letter as letter_crud
 from ring.letters.models.letter_model import Letter
 from ring.letters.send_threshold import defer_letter_send_if_below_threshold
 from ring.lib.util import RegistrationDict
+from ring.notifications.crud.dispatch import notify_users
 from ring.tasks.crud.reminder_email_task import construct_reminder_email
 from ring.tasks.crud.response_open_email_task import (
     construct_response_open_email,
@@ -92,6 +93,18 @@ def execute_reminder_email_task(
                 [u.email for u in letter_to_send.participants]
             )
         )
+
+    if letter_to_send.status == LetterStatus.UPCOMING:
+        reminder_body = f"Add questions for the next letter in {group.name}"
+    else:
+        reminder_body = f"Respond to the letter in {group.name}"
+    notify_users(
+        db,
+        letter_to_send.participants,
+        title="Letter reminder",
+        body=reminder_body,
+        target_api_id=letter_to_send.api_identifier,
+    )
 
     db.commit()
 
@@ -283,6 +296,14 @@ def send_response_open_email(db: Session, letter_id: int) -> None:
         logger.info(
             f"Sent response open email for letter {letter_id} to {recipients}"
         )
+    notify_users(
+        db,
+        letter.participants,
+        title="Responses are open",
+        body=(f"{letter_title} in {letter.group.name} is open for responses"),
+        target_api_id=letter.api_identifier,
+    )
+    db.commit()
 
 
 @job_factory("send_waiting_response_email")
@@ -321,6 +342,21 @@ def send_waiting_response_email(db: Session, letter_id: int) -> None:
                 letter_id, recipients
             )
         )
+    responder_ids = {user.id for user in letter.responders}
+    non_responders = [
+        user for user in letter.participants if user.id not in responder_ids
+    ]
+    notify_users(
+        db,
+        non_responders,
+        title="Waiting on your response",
+        body=(
+            f"{letter_display_title(letter)} in {letter.group.name} "
+            "is waiting for your response"
+        ),
+        target_api_id=letter.api_identifier,
+    )
+    db.commit()
 
 
 # TASK_REGISTRY: RegistrationDict[TaskType, Callable[[Any], None]] = (

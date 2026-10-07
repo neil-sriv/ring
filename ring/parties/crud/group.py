@@ -16,6 +16,7 @@ from ring.letters.constants import DEFAULT_QUESTIONS, LetterStatus
 from ring.letters.crud.default_question import replace_default_questions
 from ring.letters.models.letter_model import Letter
 from ring.letters.send_threshold import set_group_min_responder_ratio
+from ring.notifications.crud.dispatch import notify_users
 from ring.parties.models.group_model import Group
 from ring.parties.models.user_model import User
 from ring.search.crud.hybrid_search import (
@@ -150,6 +151,13 @@ def add_member(db: Session, group_api_id: str, user_api_id: str) -> Group:
             or letter.status == LetterStatus.UPCOMING
         ):
             letter.participants.append(db_user)
+    notify_users(
+        db,
+        [db_user],
+        title="Added to a group",
+        body=f"You were added to {db_group.name}",
+        target_api_id=db_group.api_identifier,
+    )
     return db_group
 
 
@@ -235,6 +243,13 @@ def add_members(db: Session, group: Group, members: Sequence[User]) -> None:
             or letter.status == LetterStatus.UPCOMING
         ):
             letter.participants.extend(new_members)
+    notify_users(
+        db,
+        new_members,
+        title="Added to a group",
+        body=f"You were added to {group.name}",
+        target_api_id=group.api_identifier,
+    )
 
 
 @register_search_function(SearchableType.GROUP, Group)
