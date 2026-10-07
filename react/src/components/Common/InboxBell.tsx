@@ -72,12 +72,16 @@ export function InboxBell() {
   })
 
   async function openItem(item: InboxItemResponse) {
-    if (item.unread) {
-      await markRead.mutateAsync({
-        path: { inbox_api_id: item.api_identifier },
-      })
-    }
     setOpen(false)
+    if (item.unread) {
+      try {
+        await markRead.mutateAsync({
+          path: { inbox_api_id: item.api_identifier },
+        })
+      } catch {
+        // Navigation does not depend on mark-read succeeding.
+      }
+    }
     await navigate(inboxDestination(item.href))
   }
 
