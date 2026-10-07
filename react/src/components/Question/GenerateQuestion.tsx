@@ -9,22 +9,20 @@ import {
 } from "@/components/ui/dialog"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
-import { useMutation, useQueryClient } from "@tanstack/react-query"
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import { type SubmitHandler, useForm } from "react-hook-form"
 
 import { useRouter } from "@tanstack/react-router"
 import type { AxiosError } from "axios"
 import { Loader2, Sparkles } from "lucide-react"
-import { useState } from "react"
-import type {
-  AddQuestionLettersLetterLetterApiIdAddQuestionPostError,
-  UserLinked,
-} from "../../client"
+import { useEffect, useState } from "react"
+import type { AddQuestionLettersLetterLetterApiIdAddQuestionPostError } from "../../client"
 import {
   addQuestionLettersLetterLetterApiIdAddQuestionPostMutation,
   generateQuestionLettersLetterLetterApiIdGenerateQuestionPostMutation,
+  listDashboardLettersLettersLettersDashboardGetQueryKey,
   readLetterLettersLetterLetterApiIdGetQueryKey,
-  readUserMePartiesMeGetQueryKey,
+  readUserMePartiesMeGetOptions,
 } from "../../client/@tanstack/react-query.gen"
 import useCustomToast from "../../hooks/useCustomToast"
 import { formatApiErrorDetail } from "../../util/misc"
@@ -39,15 +37,21 @@ interface GenerateQuestionProps {
   loopApiId: string
 }
 
+const freshDefaults = (): QuestionFormProps => ({
+  questionPrompt: "",
+})
+
 const GenerateQuestion = ({
   isOpen,
   onClose,
   loopApiId,
 }: GenerateQuestionProps) => {
   const queryClient = useQueryClient()
-  const currentUser = queryClient.getQueryData<UserLinked>(
-    readUserMePartiesMeGetQueryKey(),
-  )
+  // Subscribe so author_api_id stays correct if /me is refetched mid-session.
+  // getQueryData alone never re-renders this dialog.
+  const { data: currentUser } = useQuery({
+    ...readUserMePartiesMeGetOptions(),
+  })
   const router = useRouter()
   const showToast = useCustomToast()
   const [generatedQuestion, setGeneratedQuestion] = useState<string>("")
@@ -59,7 +63,20 @@ const GenerateQuestion = ({
   } = useForm<QuestionFormProps>({
     mode: "onBlur",
     criteriaMode: "all",
+    defaultValues: freshDefaults(),
   })
+
+  // Parent keeps this dialog mounted; clear prompt + generated text each open.
+  useEffect(() => {
+    if (isOpen) {
+      reset(freshDefaults(), {
+        keepErrors: false,
+        keepDirty: false,
+        keepTouched: false,
+      })
+      setGeneratedQuestion("")
+    }
+  }, [isOpen, reset])
 
   const generateQuestionMutation = useMutation({
     ...generateQuestionLettersLetterLetterApiIdGenerateQuestionPostMutation({
@@ -84,7 +101,7 @@ const GenerateQuestion = ({
     ...addQuestionLettersLetterLetterApiIdAddQuestionPostMutation(),
     onSuccess: () => {
       showToast("Success!", "New question created successfully.", "success")
-      reset()
+      reset(freshDefaults())
       setGeneratedQuestion("")
       onClose()
     },
@@ -102,6 +119,14 @@ const GenerateQuestion = ({
         queryKey: readLetterLettersLetterLetterApiIdGetQueryKey({
           path: { letter_api_id: loopApiId },
         }),
+      })
+      // Same 30s staleTime issue as AddQuestion: Home unanswered counts stay
+      // stale until dashboard (+ group letters list) are invalidated.
+      queryClient.invalidateQueries({
+        queryKey: listDashboardLettersLettersLettersDashboardGetQueryKey(),
+      })
+      queryClient.invalidateQueries({
+        queryKey: [{ _id: "listLettersLettersLettersGet" }],
       })
       router.invalidate()
     },
@@ -144,7 +169,7 @@ const GenerateQuestion = ({
 
   const handleClose = () => {
     if (isBusy) return
-    reset()
+    reset(freshDefaults())
     setGeneratedQuestion("")
     onClose()
   }
