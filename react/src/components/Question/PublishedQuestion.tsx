@@ -1,4 +1,5 @@
 import { Badge } from "@/components/ui/badge"
+import { Button } from "@/components/ui/button"
 import {
   Dialog,
   DialogClose,
@@ -6,11 +7,19 @@ import {
   DialogPortal,
   DialogTitle,
 } from "@/components/ui/dialog"
+import { useMutation } from "@tanstack/react-query"
 import { ChevronLeft, ChevronRight, X } from "lucide-react"
 import { Dialog as DialogPrimitive } from "radix-ui"
 import { useEffect, useRef, useState } from "react"
-import type { PublicQuestion, ResponseWithParticipant } from "../../client"
+import type {
+  PublicQuestion,
+  ResponseScore,
+  ResponseWithParticipant,
+} from "../../client"
+import { scoreResponseResponsesResponseResponseApiIdScorePostMutation } from "../../client/@tanstack/react-query.gen"
+import useCustomToast from "../../hooks/useCustomToast"
 import { URLMatch, splitText } from "../../util/URLParse"
+import { formatApiErrorDetail } from "../../util/misc"
 import LinkPreviewCard from "../Common/LinkPreviewCard"
 import { MediaCarousel } from "../Common/MediaCarousel"
 import { S3Video } from "../Common/SingleUploadImage"
@@ -47,6 +56,69 @@ function TextBlockWithUrls({
     }
   })
   return <>{elements}</>
+}
+
+function scoreLevelLabel(score: ResponseScore): string {
+  const indexes = Object.keys(score.legend)
+    .map((key) => Number(key))
+    .filter((index) => Number.isFinite(index))
+    .sort((left, right) => left - right)
+  if (indexes.length === 0) {
+    return score.score.toFixed(2)
+  }
+  const lowest = indexes[0]
+  const highest = indexes[indexes.length - 1]
+  const rounded = Math.round(score.score)
+  const clamped = Math.min(Math.max(rounded, lowest), highest)
+  return score.legend[String(clamped)] ?? score.score.toFixed(2)
+}
+
+function ResponseScoreControl({
+  responseApiId,
+}: {
+  responseApiId: string
+}): JSX.Element {
+  const showToast = useCustomToast()
+  const [score, setScore] = useState<ResponseScore | null>(null)
+  const scoreMutation = useMutation({
+    ...scoreResponseResponsesResponseResponseApiIdScorePostMutation(),
+    onSuccess: (data) => {
+      setScore(data)
+    },
+    onError: (err) => {
+      const detail = (err.response?.data as { detail?: unknown } | undefined)
+        ?.detail
+      showToast(
+        "Could not score this response.",
+        formatApiErrorDetail(detail),
+        "error",
+      )
+    },
+  })
+  const label = score == null ? null : scoreLevelLabel(score)
+
+  return (
+    <div className="mt-2 flex flex-wrap items-center gap-2">
+      <Button
+        type="button"
+        variant="outline"
+        size="sm"
+        disabled={scoreMutation.isPending}
+        onClick={() => {
+          scoreMutation.mutate({
+            path: { response_api_id: responseApiId },
+          })
+        }}
+      >
+        {scoreMutation.isPending ? "Scoring..." : "Score"}
+      </Button>
+      {label != null && score != null && (
+        <span className="text-xs text-muted-foreground">
+          {label} · {score.score.toFixed(2)}
+        </span>
+      )}
+    </div>
+  )
 }
 
 function ResponseBlock({
@@ -190,6 +262,7 @@ function ResponseBlock({
           responseApiId={response.api_identifier}
         />
       </div>
+      <ResponseScoreControl responseApiId={response.api_identifier} />
       {mediaItems.length > 0 && (
         <div className="mt-3">
           <MediaCarousel items={mediaItems} />
