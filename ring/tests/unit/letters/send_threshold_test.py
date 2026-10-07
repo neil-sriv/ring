@@ -15,6 +15,7 @@ from ring.letters.send_threshold import (
     effective_send_threshold_ratio,
     get_group_min_responder_ratio,
     is_below_send_threshold,
+    is_stale_send_invocation,
     letter_responder_count,
     minimum_responders_required,
     parse_positive_int,
@@ -68,6 +69,22 @@ class TestParseHelpers:
     )
     def test_parse_ratio(self, value: object, expected: float | None) -> None:
         assert parse_ratio(value) == expected
+
+
+class TestStaleSendInvocation:
+    """Tests for treating task.execute_at as a send-deadline generation token."""
+
+    def test_current_deadline_is_not_stale(self, db_session: Session) -> None:
+        send_at = datetime.now(tz=UTC)
+        letter = LetterFactory.create(send_at=send_at)
+        db_session.commit()
+        assert is_stale_send_invocation(letter, send_at) is False
+
+    def test_deferred_deadline_is_stale(self, db_session: Session) -> None:
+        send_at = datetime.now(tz=UTC)
+        letter = LetterFactory.create(send_at=send_at + timedelta(days=1))
+        db_session.commit()
+        assert is_stale_send_invocation(letter, send_at) is True
 
 
 class TestSendThresholdPolicy:
