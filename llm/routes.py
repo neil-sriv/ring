@@ -6,6 +6,7 @@ from llm.auth.api.auth import router as auth_router
 from llm.completions.api.completions import router as completions_router
 from llm.embeddings.api.embeddings import router as embeddings_router
 from llm.rag.api.rag import router as rag_router
+from llm.systemone.api import router as systemone_router
 
 router = APIRouter()
 
@@ -17,3 +18,4 @@ router.include_router(rag_router, prefix="/rag", tags=["rag"])
 router.include_router(
     embeddings_router, prefix="/embeddings", tags=["embeddings"]
 )
+router.include_router(systemone_router, tags=["systemone"])
