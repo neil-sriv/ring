@@ -16,6 +16,10 @@ class LLMConfig(BaseSettings):
         "https://generativelanguage.googleapis.com/v1beta/openai/"
     )
     ollama_base_url: str = "http://host.docker.internal:11434/v1"
+    # Empty key keeps decisions on the local chat wrapper. A key proxies
+    # POST /systemone to TypeSafe's public System One API.
+    jev_api_key: str = ""
+    jev_base_url: str = "https://api.typesafe.ai/v1"
 
 
 @lru_cache
