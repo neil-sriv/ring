@@ -28,8 +28,10 @@ from ring.letters.models.letter_model import Letter
 from ring.letters.models.question_model import Question
 from ring.letters.models.response_model import Response
 from ring.letters.send_threshold import (
+    defer_letter_send,
     has_send_date_arrived,
     hold_letter_for_send_threshold,
+    letter_send_is_stale,
 )
 from ring.notifications.crud.dispatch import notify_users
 from ring.parties.models.group_model import Group
@@ -375,7 +377,7 @@ def upsert_letter_tasks(
                 )
 
     # reminder email 2
-    if send_at - timedelta(days=1) < datetime.now(tz=UTC):
+    if send_at - timedelta(days=1) <= datetime.now(tz=UTC):
         schedule_crud.unregister_task(
             db,
             letter.group.schedule,
@@ -539,6 +541,9 @@ def send_letter_email(db: Session, letter: Letter) -> bool:
             "in progress for retry".format(letter.id)
         )
         return False
+    from ring.tasks.crud.task import _note_email_dispatched
+
+    _note_email_dispatched()
     letter.status = LetterStatus.SENT
     logger.info("Message ID:" + message_id)
     logger.info("Sent letter email to {}".format(recipients))
@@ -737,6 +742,9 @@ def postpend_upcoming_letters_with_session(
                 "Not postpending letter {}: a send-email task is still "
                 "responsible for it".format(letter.id)
             )
+            continue
+        if letter_send_is_stale(letter.send_at):
+            defer_letter_send(db, letter)
             continue
         if hold_letter_for_send_threshold(db, letter):
             continue

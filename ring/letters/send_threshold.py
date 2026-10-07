@@ -21,6 +21,7 @@ GROUP_SETTING_MIN_RESPONDERS_KEY = "letter_send_min_responders"
 GROUP_SETTING_MIN_RESPONDER_RATIO_KEY = "letter_send_min_responder_ratio"
 DEFAULT_MIN_RESPONDER_RATIO_TO_SEND = 0.5
 LETTER_SEND_DEFERRAL_DAYS = 1
+STALE_LETTER_SEND_AGE = timedelta(hours=48)
 
 
 def parse_positive_int(value: Any) -> int | None:
@@ -177,13 +178,39 @@ def is_stale_send_invocation(letter: Letter, scheduled_at: datetime) -> bool:
     return letter.send_at > scheduled_at
 
 
+def letter_send_is_stale(
+    send_at: datetime, now: datetime | None = None
+) -> bool:
+    """Return True when a send date is more than 48h in the past."""
+    now = now or datetime.now(tz=UTC)
+    if send_at.tzinfo is None:
+        send_at = send_at.replace(tzinfo=UTC)
+    return send_at < now - STALE_LETTER_SEND_AGE
+
+
+def next_deferred_send_at(
+    send_at: datetime, now: datetime | None = None
+) -> datetime:
+    """Return a deferral deadline that lands in the future.
+
+    Adding the deferral interval to a long-overdue ``send_at`` stays in
+    the past, so the next poll defers and emails again. Anchor on
+    ``max(send_at, now)`` instead.
+    """
+    now = now or datetime.now(tz=UTC)
+    if send_at.tzinfo is None:
+        send_at = send_at.replace(tzinfo=UTC)
+    return max(send_at, now) + timedelta(days=LETTER_SEND_DEFERRAL_DAYS)
+
+
 def defer_letter_send(db: Session, letter: Letter) -> bool:
     """Push a letter's send date out by the deferral interval.
 
     Idempotent across callers that may both run at the same deadline moment
     (send-email task and postpend): once ``send_at`` is in the future, further
-    calls are a no-op. A successful deferral also schedules a one-shot email
-    to participants who have not yet responded.
+    calls are a no-op. A deferral that moves a still-recent deadline
+    schedules one waiting-response email after the new date is committed.
+    A deadline more than 48h in the past is moved forward with no email.
 
     Returns:
         True if the send date was deferred, False if it had not yet arrived
@@ -192,10 +219,12 @@ def defer_letter_send(db: Session, letter: Letter) -> bool:
     # Imported here because ring.letters.crud.letter imports this module.
     from ring.letters.crud import letter as letter_crud
 
-    if not has_send_date_arrived(letter):
+    now = datetime.now(tz=UTC)
+    if not has_send_date_arrived(letter, now):
         return False
 
-    new_send_at = letter.send_at + timedelta(days=LETTER_SEND_DEFERRAL_DAYS)
+    new_send_at = next_deferred_send_at(letter.send_at, now)
+    stale = letter_send_is_stale(letter.send_at, now)
     logger.info(
         "Deferring letter {} send from {} to {}: responders {}/{}".format(
             letter.id,
@@ -205,8 +234,15 @@ def defer_letter_send(db: Session, letter: Letter) -> bool:
             minimum_responders_required(letter),
         )
     )
+    if stale:
+        logger.info(
+            "Skipping email for letter {}: send_at {} is more than 48h "
+            "in the past".format(letter.id, letter.send_at)
+        )
     letter_crud.edit_letter(db, letter, send_at=new_send_at)
-    _schedule_waiting_response_email(letter.id)
+    db.commit()
+    if not stale:
+        _schedule_waiting_response_email(letter.id)
     return True
 
 
@@ -216,12 +252,16 @@ def _schedule_waiting_response_email(letter_id: int) -> None:
     Imported lazily because ``ring.tasks.crud.task`` imports this module.
     """
     from ring.async_scheduler.scheduler import scheduler
-    from ring.tasks.crud.task import send_waiting_response_email
+    from ring.tasks.crud.task import (
+        _note_email_dispatched,
+        send_waiting_response_email,
+    )
 
     scheduler.add_job(
         send_waiting_response_email,
         args=[letter_id],
     )
+    _note_email_dispatched()
 
 
 def defer_letter_send_if_below_threshold(db: Session, letter: Letter) -> bool:
