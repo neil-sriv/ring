@@ -7,6 +7,7 @@ It verifies both successful operations and error cases.
 
 from __future__ import annotations
 
+from datetime import UTC, datetime
 from unittest.mock import MagicMock, patch
 
 from fastapi.testclient import TestClient
@@ -20,9 +21,10 @@ from ring.search.crud.hybrid_search import (
     SearchableType,
     create_hybrid_search_document,
 )
-from ring.search.schemas.search import SearchHit, SearchResponse
+from ring.search.schemas.search import SearchHit, SearchResponse, SearchSort
 from ring.tests.factories.letters.letter_factory import LetterFactory
 from ring.tests.factories.letters.question_factory import QuestionFactory
+from ring.tests.factories.letters.response_factory import ResponseFactory
 from ring.tests.factories.parties.group_factory import GroupFactory
 from ring.tests.factories.parties.user_factory import UserFactory
 from ring.tests.lib.utils import (
@@ -449,3 +451,110 @@ class TestSearchAPI:
             for hit in combined_response.json()["results"]
         }
         assert combined_ids == {zelda_published.api_identifier}
+
+    def test_hydrated_search_group_responder_and_time_sort(
+        self,
+        authenticated_client: TestClient,
+        current_user: User,
+        db_session: Session,
+    ) -> None:
+        """Group and responder filters survive hydration, authz, and time sort."""
+        group_a = GroupFactory.create(
+            admin=current_user, members=[current_user]
+        )
+        group_b = GroupFactory.create(
+            admin=current_user, members=[current_user]
+        )
+        ada = UserFactory.create(name="Ada Hydrated")
+        bea = UserFactory.create(name="Bea Hydrated")
+        group_a.members.extend([ada, bea])
+        group_b.members.append(ada)
+        letter_a = LetterFactory.create(group=group_a)
+        letter_b = LetterFactory.create(group=group_b)
+        question_early = QuestionFactory.create(
+            letter=letter_a, question_text="numbat snack"
+        )
+        question_late = QuestionFactory.create(
+            letter=letter_a, question_text="numbat snack"
+        )
+        question_b = QuestionFactory.create(
+            letter=letter_b, question_text="numbat snack"
+        )
+        older = ResponseFactory.create(
+            question=question_early,
+            participant=ada,
+            response_text="numbat snack early",
+        )
+        newer = ResponseFactory.create(
+            question=question_late,
+            participant=ada,
+            response_text="numbat snack late",
+        )
+        other_person = ResponseFactory.create(
+            question=question_early,
+            participant=bea,
+            response_text="numbat snack from bea",
+        )
+        other_group = ResponseFactory.create(
+            question=question_b,
+            participant=ada,
+            response_text="numbat snack elsewhere",
+        )
+        older.created_at = datetime(2021, 3, 1, tzinfo=UTC)
+        newer.created_at = datetime(2023, 8, 1, tzinfo=UTC)
+        for response in (older, newer, other_person, other_group):
+            create_hybrid_search_document(
+                db_session,
+                raw_text=response.response_text,
+                model_api_identifier=response.api_identifier,
+                model_type=SearchableType.RESPONSE,
+            )
+        db_session.commit()
+
+        filtered = authenticated_client.get(
+            "/search/search",
+            params={
+                "query": "numbat",
+                "group_api_id": group_a.api_identifier,
+                "participant_api_id": ada.api_identifier,
+                "sort": SearchSort.CREATED_AT_DESC.value,
+            },
+        )
+        assert filtered.status_code == 200
+        filtered_ids = [
+            hit["api_identifier"] for hit in filtered.json()["results"]
+        ]
+        assert filtered_ids == [
+            newer.api_identifier,
+            older.api_identifier,
+        ]
+        assert filtered.json()["results"][0]["created_at"]
+
+        hidden = GroupFactory.create()
+        hidden_letter = LetterFactory.create(group=hidden)
+        hidden_question = QuestionFactory.create(
+            letter=hidden_letter, question_text="numbat secret"
+        )
+        hidden_response = ResponseFactory.create(
+            question=hidden_question,
+            participant=ada,
+            response_text="numbat secret answer",
+        )
+        create_hybrid_search_document(
+            db_session,
+            raw_text=hidden_response.response_text,
+            model_api_identifier=hidden_response.api_identifier,
+            model_type=SearchableType.RESPONSE,
+        )
+        db_session.commit()
+
+        denied = authenticated_client.get(
+            "/search/search",
+            params={
+                "query": "numbat",
+                "group_api_id": hidden.api_identifier,
+                "participant_api_id": ada.api_identifier,
+            },
+        )
+        assert denied.status_code == 200
+        assert denied.json()["results"] == []

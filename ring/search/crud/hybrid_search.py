@@ -4,7 +4,7 @@ from collections import defaultdict
 from dataclasses import dataclass
 from enum import Enum
 from functools import wraps
-from typing import Callable, Sequence
+from typing import Any, Callable, Sequence
 
 from llm_service import (
     ApiClient,
@@ -35,7 +35,7 @@ from ring.search.query import (
     expand_author_me,
     parse_search_query,
 )
-from ring.search.schemas.search import SearchType
+from ring.search.schemas.search import SearchSort, SearchType
 
 SearchModelReference = tuple[SearchableType, str]
 SEARCH_AUTHZ_OVERFETCH_MULTIPLIER = 3
@@ -275,20 +275,147 @@ def _association_qualifier_clause(parsed: ParsedSearchQuery):
     return and_(*clauses)
 
 
+def _present_api_id(value: str | None) -> str | None:
+    if value is None:
+        return None
+    stripped = value.strip()
+    return stripped or None
+
+
+def _group_scope_clause(group_api_id: str):
+    """Match the group itself and the letters, questions, and responses in it.
+
+    User documents are excluded: a person can belong to many groups, and the
+    responder filter selects their responses instead.
+    """
+    group_ids = select(Group.id).where(Group.api_identifier == group_api_id)
+    letter_ids = select(Letter.api_identifier).where(
+        Letter.group_id.in_(group_ids)
+    )
+    question_ids = (
+        select(Question.api_identifier)
+        .join(Question.letter)
+        .where(Letter.group_id.in_(group_ids))
+    )
+    response_ids = (
+        select(Response.api_identifier)
+        .join(Response.question)
+        .join(Question.letter)
+        .where(Letter.group_id.in_(group_ids))
+    )
+    association = HybridSearchDocumentAssociation
+    return or_(
+        and_(
+            association.model_type == SearchableType.GROUP.value,
+            association.model_api_identifier == group_api_id,
+        ),
+        and_(
+            association.model_type == SearchableType.LETTER.value,
+            association.model_api_identifier.in_(letter_ids),
+        ),
+        and_(
+            association.model_type == SearchableType.QUESTION.value,
+            association.model_api_identifier.in_(question_ids),
+        ),
+        and_(
+            association.model_type == SearchableType.RESPONSE.value,
+            association.model_api_identifier.in_(response_ids),
+        ),
+    )
+
+
+def _participant_scope_clause(participant_api_id: str):
+    """Match responses written by this participant.
+
+    Questions they authored stay on the ``author:`` qualifier. A responder
+    filter is specifically "answers from this person."
+    """
+    response_ids = (
+        select(Response.api_identifier)
+        .join(User, Response.participant_id == User.id)
+        .where(User.api_identifier == participant_api_id)
+    )
+    return and_(
+        HybridSearchDocumentAssociation.model_type
+        == SearchableType.RESPONSE.value,
+        HybridSearchDocumentAssociation.model_api_identifier.in_(response_ids),
+    )
+
+
 def _apply_parsed_search_filters(
     db_query: Query[HybridSearchDocument],
     parsed: ParsedSearchQuery,
     model_types: Sequence[SearchableType] | None,
+    group_api_id: str | None = None,
+    participant_api_id: str | None = None,
 ) -> Query[HybridSearchDocument]:
     db_query = _filter_to_model_types(db_query, model_types)
     if parsed.match_nothing:
         return db_query.filter(false())
+    clauses = []
     qualifier_clause = _association_qualifier_clause(parsed)
-    if qualifier_clause is None:
+    if qualifier_clause is not None:
+        clauses.append(qualifier_clause)
+    if group_api_id:
+        clauses.append(_group_scope_clause(group_api_id))
+    if participant_api_id:
+        clauses.append(_participant_scope_clause(participant_api_id))
+    if not clauses:
         return db_query
     return db_query.filter(
-        HybridSearchDocument.associations.any(qualifier_clause)
+        HybridSearchDocument.associations.any(and_(*clauses))
     )
+
+
+def _entity_created_at_for(model: type[Any], searchable_type: SearchableType):
+    """Scalar created_at of the associated entity of this type, or NULL."""
+    association = HybridSearchDocumentAssociation
+    return (
+        select(model.created_at)
+        .select_from(association)
+        .join(
+            model,
+            association.model_api_identifier == model.api_identifier,
+        )
+        .where(
+            association.model_type == searchable_type.value,
+            association.hybrid_search_document_id == HybridSearchDocument.id,
+        )
+        .correlate(HybridSearchDocument)
+        .limit(1)
+        .scalar_subquery()
+    )
+
+
+def _entity_created_at_expr():
+    """Created_at of whichever entity this document indexes."""
+    return func.coalesce(
+        _entity_created_at_for(User, SearchableType.USER),
+        _entity_created_at_for(Group, SearchableType.GROUP),
+        _entity_created_at_for(Letter, SearchableType.LETTER),
+        _entity_created_at_for(Question, SearchableType.QUESTION),
+        _entity_created_at_for(Response, SearchableType.RESPONSE),
+    )
+
+
+def _ordered_search_results(
+    db_query: Query[HybridSearchDocument],
+    sort: SearchSort,
+    relevance_order: Sequence[Any],
+    limit: int,
+) -> list[HybridSearchDocument]:
+    if sort == SearchSort.CREATED_AT_DESC:
+        created_at = _entity_created_at_expr()
+        order = (
+            created_at.desc().nulls_last(),
+            HybridSearchDocument.id.desc(),
+        )
+    elif sort == SearchSort.CREATED_AT_ASC:
+        created_at = _entity_created_at_expr()
+        order = (created_at.asc().nulls_last(), HybridSearchDocument.id.asc())
+    else:
+        order = tuple(relevance_order)
+    return db_query.order_by(*order).limit(limit).all()
 
 
 def semantic_search_hybrid_search_document(
@@ -296,28 +423,37 @@ def semantic_search_hybrid_search_document(
     query: str,
     limit: int = 10,
     model_types: Sequence[SearchableType] | None = None,
+    *,
+    group_api_id: str | None = None,
+    participant_api_id: str | None = None,
+    sort: SearchSort = SearchSort.RELEVANCE,
 ) -> list[HybridSearchDocument]:
     parsed = parse_search_query(query)
     text = _tsquery_safe_text(parsed.text)
+    group_api_id = _present_api_id(group_api_id)
+    participant_api_id = _present_api_id(participant_api_id)
     db_query = db.query(HybridSearchDocument)
-    db_query = _apply_parsed_search_filters(db_query, parsed, model_types)
+    db_query = _apply_parsed_search_filters(
+        db_query,
+        parsed,
+        model_types,
+        group_api_id=group_api_id,
+        participant_api_id=participant_api_id,
+    )
     if not text:
-        return (
-            db_query.order_by(HybridSearchDocument.id.desc())
-            .limit(limit)
-            .all()
+        return _ordered_search_results(
+            db_query, sort, (HybridSearchDocument.id.desc(),), limit
         )
     text_embedding = _generate_text_embedding(text)
     db_query = db_query.filter(
         HybridSearchDocument.text_embedding_768.l2_distance(text_embedding)
         < 0.5
     )
-    return (
-        db_query.order_by(
-            HybridSearchDocument.text_embedding_768.l2_distance(text_embedding)
-        )
-        .limit(limit)
-        .all()
+    return _ordered_search_results(
+        db_query,
+        sort,
+        (HybridSearchDocument.text_embedding_768.l2_distance(text_embedding),),
+        limit,
     )
 
 
@@ -326,31 +462,42 @@ def keyword_search_hybrid_search_document(
     query: str,
     limit: int = 10,
     model_types: Sequence[SearchableType] | None = None,
+    *,
+    group_api_id: str | None = None,
+    participant_api_id: str | None = None,
+    sort: SearchSort = SearchSort.RELEVANCE,
 ) -> list[HybridSearchDocument]:
     parsed = parse_search_query(query)
     text = _tsquery_safe_text(parsed.text)
+    group_api_id = _present_api_id(group_api_id)
+    participant_api_id = _present_api_id(participant_api_id)
     db_query = db.query(HybridSearchDocument).options(
         load_only(HybridSearchDocument.id, HybridSearchDocument.raw_text)
     )
-    db_query = _apply_parsed_search_filters(db_query, parsed, model_types)
+    db_query = _apply_parsed_search_filters(
+        db_query,
+        parsed,
+        model_types,
+        group_api_id=group_api_id,
+        participant_api_id=participant_api_id,
+    )
     if not text:
-        return (
-            db_query.order_by(HybridSearchDocument.id.desc())
-            .limit(limit)
-            .all()
+        return _ordered_search_results(
+            db_query, sort, (HybridSearchDocument.id.desc(),), limit
         )
     tsquery = func.plainto_tsquery("english", text)
     db_query = db_query.filter(
         HybridSearchDocument.text_tsv_expr_literal.op("@@")(tsquery)
     )
-    return (
-        db_query.order_by(
+    return _ordered_search_results(
+        db_query,
+        sort,
+        (
             func.ts_rank(
                 HybridSearchDocument.text_tsv_expr_literal, tsquery
-            ).desc()
-        )
-        .limit(limit)
-        .all()
+            ).desc(),
+        ),
+        limit,
     )
 
 
@@ -359,16 +506,26 @@ def dual_search_hybrid_search_document(
     query: str,
     limit: int = 10,
     model_types: Sequence[SearchableType] | None = None,
+    *,
+    group_api_id: str | None = None,
+    participant_api_id: str | None = None,
+    sort: SearchSort = SearchSort.RELEVANCE,
 ) -> list[HybridSearchDocument]:
     parsed = parse_search_query(query)
     text = _tsquery_safe_text(parsed.text)
+    group_api_id = _present_api_id(group_api_id)
+    participant_api_id = _present_api_id(participant_api_id)
     db_query = db.query(HybridSearchDocument)
-    db_query = _apply_parsed_search_filters(db_query, parsed, model_types)
+    db_query = _apply_parsed_search_filters(
+        db_query,
+        parsed,
+        model_types,
+        group_api_id=group_api_id,
+        participant_api_id=participant_api_id,
+    )
     if not text:
-        return (
-            db_query.order_by(HybridSearchDocument.id.desc())
-            .limit(limit)
-            .all()
+        return _ordered_search_results(
+            db_query, sort, (HybridSearchDocument.id.desc(),), limit
         )
     text_embedding = _generate_text_embedding(text)
     tsquery = func.plainto_tsquery("english", text)
@@ -379,17 +536,18 @@ def dual_search_hybrid_search_document(
             HybridSearchDocument.text_tsv_expr_literal.op("@@")(tsquery),
         )
     )
-    return (
-        db_query.order_by(
+    return _ordered_search_results(
+        db_query,
+        sort,
+        (
             HybridSearchDocument.text_embedding_768.l2_distance(
                 text_embedding
             ),
             func.ts_rank(
                 HybridSearchDocument.text_tsv_expr_literal, tsquery
             ).desc(),
-        )
-        .limit(limit)
-        .all()
+        ),
+        limit,
     )
 
 
@@ -465,16 +623,13 @@ def search(
     offset: int = 0,
     search_type: SearchType = SearchType.KEYWORD,
     model_types: Sequence[SearchableType] | None = None,
+    group_api_id: str | None = None,
+    participant_api_id: str | None = None,
+    sort: SearchSort = SearchSort.RELEVANCE,
 ) -> list[APIIdentified]:
     # Resolve the search function at call time (rather than via a module-level
     # dict) so the names stay patchable in tests.
-    search_dispatch: dict[
-        SearchType,
-        Callable[
-            [Session, str, int, Sequence[SearchableType] | None],
-            list[HybridSearchDocument],
-        ],
-    ] = {
+    search_dispatch = {
         SearchType.SEMANTIC: semantic_search_hybrid_search_document,
         SearchType.KEYWORD: keyword_search_hybrid_search_document,
         SearchType.DUAL: dual_search_hybrid_search_document,
@@ -486,8 +641,16 @@ def search(
 
     # Offset pagination is applied after authz filtering, so every page must
     # re-fetch the raw window covering [0, offset + limit) and slice.
+    # Group, responder, and time sort are applied in that SQL window so a
+    # later page is not filled with rows the filters would have dropped.
     search_results = search_dispatch[search_type](
-        db, query, _search_overfetch_limit(offset + limit), model_types
+        db,
+        query,
+        _search_overfetch_limit(offset + limit),
+        model_types,
+        group_api_id=group_api_id,
+        participant_api_id=participant_api_id,
+        sort=sort,
     )
     model_references = get_model_ids_from_hybrid_search_documents(
         db, search_results
