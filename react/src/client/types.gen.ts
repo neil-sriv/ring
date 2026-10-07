@@ -688,6 +688,21 @@ export type ResponseMessage = {
 };
 
 /**
+ * Ephemeral completeness score for a response.
+ *
+ * Not stored. ``score`` is the probability-weighted level index on
+ * ``legend`` (0 is the lowest level).
+ */
+export type ResponseScore = {
+    model: string;
+    score: number;
+    confidence: number;
+    legend: {
+        [key: string]: string;
+    };
+};
+
+/**
  * Schema for response without linked relationships.
  *
  * Inherits all fields from Response but excludes relationship data.
@@ -2140,6 +2155,33 @@ export type DeleteImageResponsesResponseResponseApiIdDeleteImageDeleteResponses 
 };
 
 export type DeleteImageResponsesResponseResponseApiIdDeleteImageDeleteResponse = DeleteImageResponsesResponseResponseApiIdDeleteImageDeleteResponses[keyof DeleteImageResponsesResponseResponseApiIdDeleteImageDeleteResponses];
+
+export type ScoreResponseResponsesResponseResponseApiIdScorePostData = {
+    body?: never;
+    path: {
+        response_api_id: string;
+    };
+    query?: never;
+    url: '/responses/response/{response_api_id}:score';
+};
+
+export type ScoreResponseResponsesResponseResponseApiIdScorePostErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type ScoreResponseResponsesResponseResponseApiIdScorePostError = ScoreResponseResponsesResponseResponseApiIdScorePostErrors[keyof ScoreResponseResponsesResponseResponseApiIdScorePostErrors];
+
+export type ScoreResponseResponsesResponseResponseApiIdScorePostResponses = {
+    /**
+     * Successful Response
+     */
+    200: ResponseScore;
+};
+
+export type ScoreResponseResponsesResponseResponseApiIdScorePostResponse = ScoreResponseResponsesResponseResponseApiIdScorePostResponses[keyof ScoreResponseResponsesResponseResponseApiIdScorePostResponses];
 
 export type CreateInviteInvitesPostData = {
     body: InviteCreate;
