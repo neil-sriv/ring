@@ -763,12 +763,22 @@ export type SearchHit = {
     participant_count?: number | null;
     question_count?: number | null;
     group_count?: number | null;
+    created_at?: string | null;
 };
 
 export type SearchResponse = {
     results: Array<SearchHit>;
     total: number;
 };
+
+/**
+ * How to order search hits.
+ *
+ * ``relevance`` keeps the ranking each search type already uses (keyword
+ * ts_rank, semantic distance, or document id when the query has no text).
+ * The created-at sorts use the source entity's ``created_at``.
+ */
+export type SearchSort = 'relevance' | 'created_at_desc' | 'created_at_asc';
 
 export type SearchType = 'semantic' | 'keyword' | 'dual';
 
@@ -2225,6 +2235,9 @@ export type RawSearchSearchRawSearchGetData = {
         query: string;
         search_type?: SearchType;
         limit?: number;
+        group_api_id?: string | null;
+        participant_api_id?: string | null;
+        sort?: SearchSort;
     };
     url: '/search/raw-search';
 };
@@ -2256,6 +2269,9 @@ export type PerformSearchSearchSearchGetData = {
         limit?: number;
         offset?: number;
         types?: Array<SearchableType> | null;
+        group_api_id?: string | null;
+        participant_api_id?: string | null;
+        sort?: SearchSort;
     };
     url: '/search/search';
 };

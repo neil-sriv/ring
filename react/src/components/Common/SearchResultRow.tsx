@@ -10,6 +10,19 @@ import type { SearchHit } from "../../client"
 
 interface SearchResultRowProps {
   result: SearchHit
+  showTimestamp?: boolean
+}
+
+function formatSearchTimestamp(value: string) {
+  const date = new Date(value)
+  if (Number.isNaN(date.getTime())) {
+    return null
+  }
+  return date.toLocaleDateString(undefined, {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+  })
 }
 
 const iconByType: Record<SearchHit["type"], typeof Mail> = {
@@ -28,8 +41,12 @@ const labelByType: Record<SearchHit["type"], string> = {
   response: "Response",
 }
 
-function SearchResultContent({ result }: SearchResultRowProps) {
+function SearchResultContent({ result, showTimestamp }: SearchResultRowProps) {
   const Icon = iconByType[result.type]
+  const timestamp =
+    showTimestamp && result.created_at
+      ? formatSearchTimestamp(result.created_at)
+      : null
 
   return (
     <div className="flex items-start gap-3">
@@ -42,6 +59,7 @@ function SearchResultContent({ result }: SearchResultRowProps) {
           <span className="text-sm font-medium">{result.title}</span>
           <span className="text-xs text-muted-foreground">
             {labelByType[result.type]}
+            {timestamp ? ` · ${timestamp}` : ""}
           </span>
         </div>
         {result.type === "response" && result.detail && (
@@ -64,8 +82,13 @@ function SearchResultContent({ result }: SearchResultRowProps) {
   )
 }
 
-export function SearchResultRow({ result }: SearchResultRowProps) {
-  const content = <SearchResultContent result={result} />
+export function SearchResultRow({
+  result,
+  showTimestamp = false,
+}: SearchResultRowProps) {
+  const content = (
+    <SearchResultContent result={result} showTimestamp={showTimestamp} />
+  )
 
   if (result.href_loop_id) {
     return (

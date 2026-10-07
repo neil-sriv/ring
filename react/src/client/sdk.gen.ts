@@ -470,6 +470,10 @@ export const updateUserPartiesUserIdPatch = <ThrowOnError extends boolean = fals
  * Create Group
  * Create a new group.
  *
+ * The authenticated caller is always the group admin. Clients may still
+ * send ``admin_api_identifier`` for backwards compatibility, but it must
+ * match the current user — another user's id is rejected.
+ *
  * Args:
  * group (GroupCreate): Group creation parameters
  * req_dep (AuthenticatedRequestDependencies): Request dependencies
@@ -478,7 +482,8 @@ export const updateUserPartiesUserIdPatch = <ThrowOnError extends boolean = fals
  * Group: Created group
  *
  * Raises:
- * HTTPException: If group creation fails
+ * HTTPException: If admin_api_identifier is not the current user, or
+ * group creation fails
  */
 export const createGroupPartiesGroupPost = <ThrowOnError extends boolean = false>(options: Options<CreateGroupPartiesGroupPostData, ThrowOnError>) => {
     return (options.client ?? _heyApiClient).post<CreateGroupPartiesGroupPostResponse, CreateGroupPartiesGroupPostError, ThrowOnError>({
@@ -1401,6 +1406,10 @@ export const postSubscriptionNotificationsSubscriptionPost = <ThrowOnError exten
  * query: The search query string
  * search_type: Type of search to perform (semantic, keyword, or dual)
  * limit: Maximum number of results to return
+ * group_api_id: Optional group. Keeps that group and its letters,
+ * questions, and responses.
+ * participant_api_id: Optional responder. Keeps that person's responses.
+ * sort: Relevance (the search type's existing ranking) or entity time.
  * req_dep: Authenticated request dependencies
  *
  * Returns:
@@ -1431,6 +1440,12 @@ export const rawSearchSearchRawSearchGet = <ThrowOnError extends boolean = false
  * - `status:upcoming` — scheduled issues
  * - `is:open` / `is:published` — aliases of `status:`
  * - `author:@me` — the current user
+ *
+ * ``group_api_id`` keeps that group plus its letters, questions, and
+ * responses. ``participant_api_id`` keeps responses by that person.
+ * ``sort`` is ``relevance`` (the search type's existing ranking),
+ * ``created_at_desc`` (newest entity), or ``created_at_asc`` (oldest).
+ * Hits the caller cannot read are omitted.
  */
 export const performSearchSearchSearchGet = <ThrowOnError extends boolean = false>(options: Options<PerformSearchSearchSearchGetData, ThrowOnError>) => {
     return (options.client ?? _heyApiClient).get<PerformSearchSearchSearchGetResponse, PerformSearchSearchSearchGetError, ThrowOnError>({
