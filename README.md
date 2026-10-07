@@ -169,7 +169,7 @@ Database management commands:
 
 ```bash
 ring db upgrade     # Run database migrations
-ring db generate    # Generate new migration
+ring db generate    # Generate new migration and pin ring/alembic/head
 ring db cockroach   # Open CockroachDB SQL shell
 ring db alembic     # Run alembic commands directly
 ```

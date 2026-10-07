@@ -192,7 +192,11 @@ frontend image anymore — the SPA ships only via Workers Builds.
    every Alembic revision to an empty test CockroachDB and compares
    table/column names to `ring/db/schema.sql` (pytest builds from that
    dump). After adding a migration, run `ring db autogenerate-schema`
-   when the dump should change.
+   when the dump should change. Concurrent migration PRs must also
+   update `ring/alembic/head` (the current revision id; `ring db generate`
+   pins it). Two PRs forked from the same parent both rewrite that
+   one-line file and git-conflict, so GitHub cannot stay MERGEABLE on a
+   two-head Alembic fork. CI also runs `ring db check-alembic-head`.
 3. **Backend-first PRs** ([`ring-split-pr`](../.cursor/skills/ring-split-pr/SKILL.md)).
    The frontend track deploys within minutes of merge; OpenAPI-consuming
    UI must land only after the API change is live.

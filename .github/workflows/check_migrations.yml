@@ -40,6 +40,12 @@ jobs:
       - name: Install project
         run: uv pip install -e .
 
+      # One-line pin of the current Alembic head. Concurrent migration
+      # PRs both rewrite ring/alembic/head and become a git conflict;
+      # this check keeps the file honest vs `alembic heads`.
+      - name: Check alembic head file
+        run: uv run ring db check-alembic-head
+
       - name: Docker set-up
         run: |
           docker login ghcr.io -u neil-sriv -p ${{ secrets.GITHUB_TOKEN }}
