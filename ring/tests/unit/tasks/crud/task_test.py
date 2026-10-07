@@ -2,14 +2,19 @@
 
 from __future__ import annotations
 
+from collections.abc import Iterator
+from contextlib import contextmanager
 from datetime import UTC, datetime, timedelta
 from unittest.mock import patch
 
 import pytest
+from fastapi.testclient import TestClient
 from sqlalchemy import select
 from sqlalchemy.exc import OperationalError
 from sqlalchemy.orm import Session
 
+from ring.fastapp.config import get_config
+from ring.fastapp.fast import app
 from ring.letters.constants import LetterStatus
 from ring.letters.crud import letter as letter_crud
 from ring.letters.send_threshold import (
@@ -22,6 +27,7 @@ from ring.letters.send_threshold import (
 from ring.tasks.crud import schedule as schedule_crud
 from ring.tasks.crud import task as task_crud
 from ring.tasks.models.task_model import (
+    ReminderEmailTask,
     SendEmailTask,
     Task,
     TaskStatus,
@@ -37,6 +43,15 @@ from ring.tests.lib.utils import (
     is_waiting_response_email,
     run_scheduled_jobs_inline,
 )
+
+
+def _assert_deferred_into_future(actual: datetime) -> None:
+    """A deferral anchored on now lands one day ahead, not on the old date."""
+    skew = actual - (
+        datetime.now(tz=UTC) + timedelta(days=LETTER_SEND_DEFERRAL_DAYS)
+    )
+    assert abs(skew.total_seconds()) < 30
+    assert actual > datetime.now(tz=UTC)
 
 
 class TestTaskCrud:
@@ -85,8 +100,8 @@ class TestTaskCrud:
 
         db_session.refresh(letter)
 
-        expected_send_at = send_at + timedelta(days=LETTER_SEND_DEFERRAL_DAYS)
-        assert letter.send_at == expected_send_at
+        _assert_deferred_into_future(letter.send_at)
+        expected_send_at = letter.send_at
         assert letter.status == LetterStatus.IN_PROGRESS
 
         rescheduled_send_task = db_session.scalars(
@@ -223,9 +238,7 @@ class TestTaskCrud:
             members[3].email,
         }
         db_session.refresh(letter)
-        assert letter.send_at == send_at + timedelta(
-            days=LETTER_SEND_DEFERRAL_DAYS
-        )
+        _assert_deferred_into_future(letter.send_at)
 
     def test_execute_send_email_task_ignores_invalid_threshold_config(
         self, db_session: Session
@@ -310,9 +323,7 @@ class TestTaskCrud:
         mock_send_email.assert_called_once()
         assert is_waiting_response_email(mock_send_email)
         db_session.refresh(letter)
-        assert letter.send_at == send_at + timedelta(
-            days=LETTER_SEND_DEFERRAL_DAYS
-        )
+        _assert_deferred_into_future(letter.send_at)
 
     def test_execute_send_email_task_sends_when_threshold_disabled(
         self, db_session: Session
@@ -520,29 +531,174 @@ class TestTaskCrud:
         assert requeued.status == TaskStatus.PENDING
         assert "transient database error" in requeued.message
 
-    def test_requeue_in_progress_tasks_resets_stranded_tasks(
+    def test_transient_error_after_email_does_not_requeue(
         self, db_session: Session
     ) -> None:
-        """Put stranded IN_PROGRESS tasks back in PENDING at startup.
+        """Do not retry a send or reminder once its email has gone out.
 
-        Regression test: a restart or deploy wipes the APScheduler
-        jobstore, so tasks claimed by the previous process stayed
-        IN_PROGRESS forever — never re-collected by the poll loop, while
-        the postpend job skipped their letters because a send task still
-        appeared responsible. The letter behind the task was frozen: no
-        email, no deferral, nothing at its due date.
+        Regression: two stale send tasks deferred the same letter, the
+        waiting-response email was accepted, then CockroachDB raised
+        WriteTooOldError. The task was put back in PENDING and the next
+        poll sent the email again.
         """
         admin = UserFactory.create()
         group = GroupFactory.create(admin=admin, members=[admin])
         db_session.commit()
-        stranded = schedule_crud.register_task(
+
+        def send_then_fail(*args: object, **kwargs: object) -> None:
+            task_crud._note_email_dispatched()
+            raise OperationalError(
+                "UPDATE letter", {}, Exception("WriteTooOldError")
+            )
+
+        cases = (
+            (TaskType.SEND_EMAIL, SendEmailTask),
+            (TaskType.REMINDER_EMAIL, ReminderEmailTask),
+        )
+        for task_type, task_class in cases:
+            task = schedule_crud.register_task(
+                db_session,
+                group.schedule,
+                task_type,
+                datetime.now(tz=UTC) - timedelta(minutes=1),
+                {"letter_id": None},
+            )
+            db_session.commit()
+            task_id = task.id
+            with (
+                patch.object(db_session, "rollback"),
+                pytest.raises(OperationalError),
+            ):
+                task_crud._find_and_execute_task(
+                    db_session,
+                    task_id,
+                    task_class,
+                    send_then_fail,
+                )
+
+            db_session.expire_all()
+            failed = db_session.scalars(
+                select(Task).where(Task.id == task_id)
+            ).one()
+            assert failed.status == TaskStatus.FAILED
+            assert "email already sent" in failed.message
+            assert "not retrying" in failed.message
+
+    def test_deferral_persist_failure_does_not_send_email(
+        self, db_session: Session
+    ) -> None:
+        """A deferral that fails to commit must not email non-responders."""
+        admin = UserFactory.create()
+        members = [admin] + [UserFactory.create() for _ in range(3)]
+        group = GroupFactory.create(admin=admin, members=members)
+        letter = LetterFactory.create(
+            group=group,
+            status=LetterStatus.IN_PROGRESS,
+            send_at=datetime.now(tz=UTC) - timedelta(minutes=1),
+        )
+        question = QuestionFactory.create(letter=letter)
+        ResponseFactory.create(question=question, participant=members[0])
+        db_session.commit()
+
+        def fail_commit() -> None:
+            raise OperationalError("COMMIT", {}, Exception("WriteTooOldError"))
+
+        with (
+            patch("ring.tasks.crud.task.send_email") as mock_send_email,
+            patch.object(db_session, "commit", fail_commit),
+            pytest.raises(OperationalError),
+        ):
+            defer_letter_send_if_below_threshold(db_session, letter)
+
+        mock_send_email.assert_not_called()
+
+    def test_stale_send_and_reminder_tasks_are_not_executed(
+        self, db_session: Session
+    ) -> None:
+        """Reminder tasks older than 48h are failed and not run.
+
+        Send tasks still run so the letter can be deferred without an
+        email. A 47h-old send task is unchanged.
+        """
+        admin = UserFactory.create()
+        group = GroupFactory.create(admin=admin, members=[admin])
+        db_session.commit()
+        now = datetime.now(tz=UTC)
+        stale_send = schedule_crud.register_task(
             db_session,
             group.schedule,
             TaskType.SEND_EMAIL,
-            datetime.now(tz=UTC) - timedelta(hours=1),
+            now - timedelta(hours=49),
             {"letter_id": None},
         )
-        stranded.status = TaskStatus.IN_PROGRESS
+        stale_reminder = schedule_crud.register_task(
+            db_session,
+            group.schedule,
+            TaskType.REMINDER_EMAIL,
+            now - timedelta(hours=49),
+            {"letter_id": None},
+        )
+        recent_send = schedule_crud.register_task(
+            db_session,
+            group.schedule,
+            TaskType.SEND_EMAIL,
+            now - timedelta(hours=47),
+            {"letter_id": None},
+        )
+        db_session.commit()
+
+        scheduled: list[int] = []
+        with patch(
+            "ring.tasks.crud.task.scheduler.add_job",
+            side_effect=lambda job, args, kwargs: scheduled.append(args[0]),
+        ):
+            task_crud.execute_tasks(
+                db_session,
+                [stale_send.id, stale_reminder.id, recent_send.id],
+            )
+
+        assert set(scheduled) == {stale_send.id, recent_send.id}
+        assert stale_reminder.status == TaskStatus.FAILED
+        assert "48h" in stale_reminder.message
+        assert stale_send.status == TaskStatus.IN_PROGRESS
+        assert recent_send.status == TaskStatus.IN_PROGRESS
+
+        executed = False
+
+        def execute(*args: object, **kwargs: object) -> None:
+            nonlocal executed
+            executed = True
+
+        task_crud._find_and_execute_task(
+            db_session,
+            stale_reminder.id,
+            ReminderEmailTask,
+            execute,
+        )
+        assert executed is False
+        assert stale_reminder.status == TaskStatus.FAILED
+
+    def test_app_startup_leaves_in_progress_tasks_unchanged(
+        self, db_session: Session
+    ) -> None:
+        """App startup must not reset IN_PROGRESS tasks to PENDING.
+
+        Regression: the lifespan called requeue_in_progress_tasks with
+        no age bound, so every restart flipped stale send and reminder
+        rows back to PENDING and the poll loop emailed them.
+        """
+        admin = UserFactory.create()
+        group = GroupFactory.create(admin=admin, members=[admin])
+        db_session.commit()
+        claimed = schedule_crud.register_task(
+            db_session,
+            group.schedule,
+            TaskType.SEND_EMAIL,
+            datetime.now(tz=UTC) - timedelta(days=90),
+            {"letter_id": None},
+        )
+        claimed.status = TaskStatus.IN_PROGRESS
+        claimed.message = "claimed by the previous process"
         completed = schedule_crud.register_task(
             db_session,
             group.schedule,
@@ -551,15 +707,38 @@ class TestTaskCrud:
             {"letter_id": None},
         )
         completed.status = TaskStatus.COMPLETED
+        completed.message = "sent"
         db_session.commit()
 
-        requeued = task_crud.requeue_in_progress_tasks(db_session)
+        enabled = get_config().model_copy(update={"DISABLE_SCHEDULER": False})
 
-        assert requeued == 1
+        @contextmanager
+        def _startup_session() -> Iterator[Session]:
+            yield db_session
+
+        with (
+            patch("ring.fastapp.fast.get_config", return_value=enabled),
+            patch("ring.fastapp.fast.scheduler.start") as start,
+            patch("ring.fastapp.fast.scheduler.shutdown"),
+            patch(
+                "ring.fastapp.fast.SessionLocal",
+                _startup_session,
+                create=True,
+            ),
+            patch(
+                "ring.sqlalchemy_base.SessionLocal",
+                _startup_session,
+            ),
+        ):
+            with TestClient(app):
+                pass
+
+        start.assert_called_once()
         db_session.expire_all()
-        assert stranded.status == TaskStatus.PENDING
-        assert "requeued at startup" in stranded.message
+        assert claimed.status == TaskStatus.IN_PROGRESS
+        assert claimed.message == "claimed by the previous process"
         assert completed.status == TaskStatus.COMPLETED
+        assert completed.message == "sent"
 
     def test_execute_tasks_skips_task_without_executor(
         self, db_session: Session
@@ -674,9 +853,7 @@ class TestTaskCrud:
         assert is_waiting_response_email(mock_send_email)
         db_session.refresh(letter)
         assert letter.status == LetterStatus.IN_PROGRESS
-        assert letter.send_at == send_at + timedelta(
-            days=LETTER_SEND_DEFERRAL_DAYS
-        )
+        _assert_deferred_into_future(letter.send_at)
 
     def test_execute_send_email_task_skips_stale_task_even_if_threshold_met(
         self, db_session: Session
@@ -727,6 +904,4 @@ class TestTaskCrud:
         assert is_waiting_response_email(mock_send_email)
         db_session.refresh(letter)
         assert letter.status == LetterStatus.IN_PROGRESS
-        assert letter.send_at == send_at + timedelta(
-            days=LETTER_SEND_DEFERRAL_DAYS
-        )
+        _assert_deferred_into_future(letter.send_at)

@@ -16,6 +16,8 @@ from ring.letters.send_threshold import (
     defer_letter_send_if_below_threshold,
     hold_letter_for_send_threshold,
 )
+from ring.tasks.crud import schedule as schedule_crud
+from ring.tasks.crud import task as task_crud
 from ring.tasks.models.task_model import Task, TaskStatus, TaskType
 from ring.tests.factories.letters.letter_factory import (
     LetterFactory,
@@ -30,6 +32,28 @@ from ring.tests.lib.utils import (
     is_waiting_response_email,
     run_scheduled_jobs_inline,
 )
+
+
+def _run_schedule_poll(db_session: Session) -> None:
+    """Run one poll's task execution and postpend, in that order."""
+    now = datetime.now(tz=UTC)
+    tasks = schedule_crud.collect_pending_tasks(db_session, now)
+    if tasks:
+        task_crud.execute_tasks(db_session, [task.id for task in tasks])
+    postpend, _promote = letter_crud.collect_future_letters(db_session, now)
+    if postpend:
+        letter_crud.postpend_upcoming_letters_with_session(
+            db_session, [letter.id for letter in postpend]
+        )
+
+
+def _assert_deferred_into_future(actual: datetime) -> None:
+    """A deferral anchored on now lands one day ahead, not on the old date."""
+    skew = actual - (
+        datetime.now(tz=UTC) + timedelta(days=LETTER_SEND_DEFERRAL_DAYS)
+    )
+    assert abs(skew.total_seconds()) < 30
+    assert actual > datetime.now(tz=UTC)
 
 
 class TestPostpendLetters:
@@ -90,9 +114,7 @@ class TestPostpendLetters:
         db_session.refresh(letter)
 
         assert letter.status == LetterStatus.IN_PROGRESS
-        assert letter.send_at == send_at + timedelta(
-            days=LETTER_SEND_DEFERRAL_DAYS
-        )
+        _assert_deferred_into_future(letter.send_at)
 
     def test_postpend_does_not_defer_before_send_date(
         self, db_session: Session
@@ -158,9 +180,87 @@ class TestPostpendLetters:
         db_session.refresh(letter)
 
         assert letter.status == LetterStatus.IN_PROGRESS
-        assert letter.send_at == send_at + timedelta(
-            days=LETTER_SEND_DEFERRAL_DAYS
+        _assert_deferred_into_future(letter.send_at)
+
+    def test_polls_email_once_when_deferred_date_would_stay_past(
+        self, db_session: Session
+    ) -> None:
+        """One waiting email across polls when send_at + 1 day is still past.
+
+        Regression: deferral added a day to the old send_at, so the letter
+        stayed overdue. Every poll listed it for postpend, created another
+        send task, and sent another waiting-response email.
+        """
+        admin = UserFactory.create()
+        members = [admin] + [UserFactory.create() for _ in range(3)]
+        group = GroupFactory.create(admin=admin, members=members)
+        letter = LetterFactory.create(
+            group=group,
+            status=LetterStatus.IN_PROGRESS,
+            send_at=datetime.now(tz=UTC) - timedelta(hours=36),
         )
+        question = QuestionFactory.create(letter=letter)
+        ResponseFactory.create(question=question, participant=members[0])
+        db_session.commit()
+
+        with (
+            run_scheduled_jobs_inline(db_session),
+            patch(
+                "ring.tasks.crud.task.send_email", return_value="message-id"
+            ) as mock_send_email,
+        ):
+            for _ in range(3):
+                _run_schedule_poll(db_session)
+
+        waiting_calls = [
+            index
+            for index in range(mock_send_email.call_count)
+            if is_waiting_response_email(mock_send_email, index)
+        ]
+        assert len(waiting_calls) == 1
+        db_session.refresh(letter)
+        assert letter.status == LetterStatus.IN_PROGRESS
+        _assert_deferred_into_future(letter.send_at)
+
+    def test_polls_skip_email_when_send_at_is_more_than_48h_past(
+        self, db_session: Session
+    ) -> None:
+        """A long-overdue letter is deferred forward and not emailed.
+
+        The group is over the send threshold, so the only thing stopping
+        the letter email is the 48h cutoff.
+        """
+        admin = UserFactory.create()
+        members = [admin] + [UserFactory.create() for _ in range(3)]
+        group = GroupFactory.create(admin=admin, members=members)
+        letter = LetterFactory.create(
+            group=group,
+            status=LetterStatus.IN_PROGRESS,
+            send_at=datetime.now(tz=UTC) - timedelta(days=10),
+        )
+        question = QuestionFactory.create(letter=letter)
+        for member in members:
+            ResponseFactory.create(question=question, participant=member)
+        db_session.commit()
+
+        with (
+            run_scheduled_jobs_inline(db_session),
+            patch(
+                "ring.tasks.crud.task.send_email", return_value="message-id"
+            ) as task_send_email,
+            patch(
+                "ring.letters.crud.letter.send_email",
+                return_value="message-id",
+            ) as letter_send_email,
+        ):
+            for _ in range(3):
+                _run_schedule_poll(db_session)
+
+        task_send_email.assert_not_called()
+        letter_send_email.assert_not_called()
+        db_session.refresh(letter)
+        assert letter.status == LetterStatus.IN_PROGRESS
+        _assert_deferred_into_future(letter.send_at)
 
     def test_send_email_and_postpend_defer_send_date_once(
         self, db_session: Session
@@ -199,9 +299,7 @@ class TestPostpendLetters:
         db_session.refresh(letter)
 
         assert letter.status == LetterStatus.IN_PROGRESS
-        assert letter.send_at == send_at + timedelta(
-            days=LETTER_SEND_DEFERRAL_DAYS
-        )
+        _assert_deferred_into_future(letter.send_at)
 
     def test_postpend_then_send_email_defers_send_date_once(
         self, db_session: Session
@@ -237,9 +335,7 @@ class TestPostpendLetters:
         db_session.refresh(letter)
 
         assert letter.status == LetterStatus.IN_PROGRESS
-        assert letter.send_at == send_at + timedelta(
-            days=LETTER_SEND_DEFERRAL_DAYS
-        )
+        _assert_deferred_into_future(letter.send_at)
 
     def test_postpend_sends_and_marks_sent_when_threshold_met(
         self, db_session: Session

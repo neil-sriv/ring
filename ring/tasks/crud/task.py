@@ -7,7 +7,8 @@ It includes both synchronous execution functions and their asynchronous job wrap
 
 from __future__ import annotations
 
-from datetime import timedelta
+from contextvars import ContextVar
+from datetime import UTC, datetime, timedelta
 from typing import Any, Callable
 
 import sqlalchemy
@@ -21,8 +22,10 @@ from ring.letters.constants import LetterStatus
 from ring.letters.crud import letter as letter_crud
 from ring.letters.models.letter_model import Letter
 from ring.letters.send_threshold import (
+    defer_letter_send,
     defer_letter_send_if_below_threshold,
     is_stale_send_invocation,
+    letter_send_is_stale,
 )
 from ring.lib.util import RegistrationDict
 from ring.notifications.crud.dispatch import notify_users
@@ -42,6 +45,35 @@ from ring.tasks.models.task_model import (
     TaskStatus,
     TaskType,
 )
+
+_email_dispatched: ContextVar[bool] = ContextVar(
+    "email_dispatched", default=False
+)
+_STALE_EMAIL_TASK_AGE = timedelta(hours=48)
+
+
+def _note_email_dispatched() -> None:
+    _email_dispatched.set(True)
+
+
+def _fail_stale_email_task(task: Task) -> bool:
+    """Fail reminder tasks scheduled more than 48h ago.
+
+    Send tasks are left to run so a long-overdue letter is deferred
+    forward instead of being abandoned. ``letter_send_is_stale``
+    suppresses the email.
+    """
+    if task.type != TaskType.REMINDER_EMAIL:
+        return False
+    if task.execute_at >= datetime.now(tz=UTC) - _STALE_EMAIL_TASK_AGE:
+        return False
+    task.status = TaskStatus.FAILED
+    task.message = "skipped: execute_at is more than 48h in the past"
+    logger.warning(
+        "Skipping {} task {}: execute_at {} is more than 48h "
+        "in the past".format(task.type, task.id, task.execute_at)
+    )
+    return True
 
 
 def execute_reminder_email_task(
@@ -90,6 +122,7 @@ def execute_reminder_email_task(
         )
     )
     if message_id:
+        _note_email_dispatched()
         logger.info("Message ID:" + message_id)
         logger.info(
             "Sent reminder email to {}".format(
@@ -172,6 +205,11 @@ def execute_send_email_task(
         db.commit()
         return
 
+    if letter_send_is_stale(letter_to_send.send_at):
+        defer_letter_send(db, letter_to_send)
+        db.commit()
+        return
+
     if letter_crud.send_letter_email(db, letter_to_send):
         letter_crud.advance_cyclic_letter(
             db, letter_to_send.group, after=letter_to_send
@@ -201,34 +239,52 @@ def _find_and_execute_task(
     Raises:
         Exception: Any error that occurred during task execution
     """
-    task = db.query(task_class).filter(task_class.id == task_id).one()
+    dispatched = _email_dispatched.set(False)
     try:
-        execute_fn(db, task, **kwargs)
-    except OperationalError as e:
-        # Transient database errors (e.g. CockroachDB serialization
-        # failures) must not kill the task for good: put it back in
-        # PENDING so the next scheduler poll retries it.
-        db.rollback()
-        task.status = TaskStatus.PENDING
-        task.message = f"retrying after transient database error: {e}"
-        db.commit()
-        logger.info(
-            "Task {} hit a transient database error and will be "
-            "retried: {}".format(task_id, e)
-        )
-        raise e
-    except Exception as e:
-        db.rollback()
-        task.status = TaskStatus.FAILED
-        task.message = str(e)
-        db.commit()
-        logger.info("Failed to execute task {}: {}".format(task_id, e))
-        raise e
-    else:
-        task.message = ""
-        task.status = TaskStatus.COMPLETED
-        logger.info("Task {} executed successfully".format(task_id))
-    return task
+        task = db.query(task_class).filter(task_class.id == task_id).one()
+        try:
+            if _fail_stale_email_task(task):
+                db.commit()
+                return task
+            execute_fn(db, task, **kwargs)
+        except OperationalError as e:
+            already_sent = _email_dispatched.get()
+            db.rollback()
+            if already_sent:
+                task.status = TaskStatus.FAILED
+                task.message = (
+                    "email already sent; not retrying after transient "
+                    "database error: {}".format(e)
+                )
+                logger.info(
+                    "Task {} already sent email and will not be retried "
+                    "after a transient database error: {}".format(task_id, e)
+                )
+            else:
+                task.status = TaskStatus.PENDING
+                task.message = (
+                    "retrying after transient database error: {}".format(e)
+                )
+                logger.info(
+                    "Task {} hit a transient database error and will be "
+                    "retried: {}".format(task_id, e)
+                )
+            db.commit()
+            raise e
+        except Exception as e:
+            db.rollback()
+            task.status = TaskStatus.FAILED
+            task.message = str(e)
+            db.commit()
+            logger.info("Failed to execute task {}: {}".format(task_id, e))
+            raise e
+        else:
+            task.message = ""
+            task.status = TaskStatus.COMPLETED
+            logger.info("Task {} executed successfully".format(task_id))
+        return task
+    finally:
+        _email_dispatched.reset(dispatched)
 
 
 @job_factory("send_email_task")
@@ -273,40 +329,6 @@ ASYNC_TASK_TO_EXECUTE_MAPPING: dict[
     TaskType.SEND_EMAIL: async_send_email_task,
     TaskType.REMINDER_EMAIL: async_reminder_email_task,
 }
-
-
-def requeue_in_progress_tasks(db: Session) -> int:
-    """Reset tasks stranded IN_PROGRESS back to PENDING.
-
-    Called at app startup, right after the APScheduler jobstore has been
-    wiped: any task still IN_PROGRESS at that point was claimed by a poll
-    cycle whose jobs died with the previous process (restart or deploy),
-    so nothing will ever execute or repair it. Without this, the letter
-    behind a stranded send task is frozen: the task is never re-collected
-    (only PENDING tasks are), and the postpend job skips the letter
-    because a send task still appears responsible for it.
-
-    Returns:
-        int: Number of tasks put back in PENDING.
-    """
-    stranded = db.scalars(
-        sqlalchemy.select(Task).where(
-            Task.status == TaskStatus.IN_PROGRESS,
-        )
-    ).all()
-    for task in stranded:
-        task.status = TaskStatus.PENDING
-        task.message = (
-            "requeued at startup: task was in progress when the previous "
-            "process stopped"
-        )
-        logger.info(
-            "Requeueing task {} ({}) stranded in progress at {}".format(
-                task.id, task.type, task.execute_at
-            )
-        )
-    db.commit()
-    return len(stranded)
 
 
 @job_factory("send_response_open_email")
@@ -458,6 +480,8 @@ def execute_tasks(db: Session, task_ids: list[int]) -> None:
                     task.id, task.type
                 )
             )
+            continue
+        if _fail_stale_email_task(task):
             continue
         scheduler.add_job(
             task_to_execute,
