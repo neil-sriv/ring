@@ -20,11 +20,6 @@ import {
 import type { InboxItemResponse } from "../../client/types.gen"
 import { inboxDestination } from "../../util/inboxHref"
 
-const listOptions = listInboxNotificationsInboxGetOptions({
-  query: { limit: 20 },
-})
-const countOptions = getUnreadCountNotificationsInboxUnreadCountGetOptions()
-
 function formatInboxTime(iso: string) {
   return new Date(iso).toLocaleString(undefined, {
     month: "short",
@@ -38,6 +33,13 @@ export function InboxBell() {
   const navigate = useNavigate()
   const queryClient = useQueryClient()
   const [open, setOpen] = useState(false)
+  // Build options during render. Module scope runs before main.tsx
+  // calls client.setConfig, and the generated query key freezes that
+  // empty baseURL, so the request skips /api/v1 and Vite returns HTML.
+  const listOptions = listInboxNotificationsInboxGetOptions({
+    query: { limit: 20 },
+  })
+  const countOptions = getUnreadCountNotificationsInboxUnreadCountGetOptions()
   const { data: unread } = useQuery({
     ...countOptions,
     refetchInterval: 60_000,
@@ -46,6 +48,7 @@ export function InboxBell() {
     ...listOptions,
     enabled: open,
   })
+  const inboxItems = Array.isArray(items) ? items : []
   const unreadCount = unread?.unread_count ?? 0
 
   function refreshInbox() {
@@ -117,12 +120,12 @@ export function InboxBell() {
               <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
             </div>
           )}
-          {!isLoading && (items?.length ?? 0) === 0 && (
+          {!isLoading && inboxItems.length === 0 && (
             <p className="px-3 py-8 text-center text-sm text-muted-foreground">
               No notifications yet
             </p>
           )}
-          {items?.map((item) => (
+          {inboxItems.map((item) => (
             <button
               key={item.api_identifier}
               type="button"
