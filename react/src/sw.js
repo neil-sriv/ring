@@ -27,12 +27,39 @@ self.addEventListener("push", (event) => {
   }
 })
 
-// Handle notification click
+// Focus an already-open tab and go to the payload URL. Opening a new
+// window is only the fallback when no same-origin client exists.
 self.addEventListener("notificationclick", (event) => {
   event.notification.close()
-  if (event.notification.data) {
-    event.waitUntil(clients.openWindow("ring"))
+  const targetUrl = event.notification.data
+  if (!targetUrl || typeof targetUrl !== "string") {
+    return
   }
+  event.waitUntil(
+    (async () => {
+      const target = new URL(targetUrl, self.location.origin)
+      const windowClients = await self.clients.matchAll({
+        type: "window",
+        includeUncontrolled: true,
+      })
+      for (const client of windowClients) {
+        if (new URL(client.url).origin !== target.origin) {
+          continue
+        }
+        await client.focus()
+        if ("navigate" in client) {
+          try {
+            await client.navigate(target.href)
+            return
+          } catch {
+            // navigate can reject if the client is closing; open a window
+          }
+        }
+        break
+      }
+      await self.clients.openWindow(target.href)
+    })(),
+  )
 })
 
 // Handle onpushsubscriptionchange event
