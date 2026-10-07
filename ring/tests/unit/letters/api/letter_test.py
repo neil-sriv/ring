@@ -13,7 +13,7 @@ import pytest
 from fastapi.testclient import TestClient
 from sqlalchemy.orm import Session
 
-from ring.letters.constants import LetterStatus
+from ring.letters.constants import LetterStatus, LetterType
 from ring.letters.models.letter_model import Letter
 from ring.parties.models.group_model import Group
 from ring.ring_pydantic.linked_schemas import DashboardLetter, MinimalLetter
@@ -124,6 +124,155 @@ class TestLetterAPI:
             match="There is already a letter in progress or upcoming for this group",
         ):
             authenticated_client.post("/letters/letter", json=input)
+
+    def test_add_cyclic_letter(
+        self,
+        authenticated_client: TestClient,
+        db_session: Session,
+        current_user: UserFactory,
+    ):
+        group = GroupFactory.create(admin=current_user)
+        db_session.commit()
+        send_at = datetime.now(tz=UTC) + timedelta(days=2)
+        response = authenticated_client.post(
+            "/letters/letter:CYCLIC",
+            json={
+                "group_api_identifier": group.api_identifier,
+                "send_at": send_at.isoformat(),
+            },
+        )
+        assert response.status_code == 200
+        data = response.json()
+        assert data["letter_type"] == LetterType.CYCLIC
+        assert data["status"] == LetterStatus.UPCOMING
+        assert data["group"]["api_identifier"] == group.api_identifier
+
+    def test_add_cyclic_letter_with_existing_upcoming(
+        self,
+        authenticated_client: TestClient,
+        db_session: Session,
+        current_user: UserFactory,
+    ):
+        group = GroupFactory.create(admin=current_user)
+        LetterFactory.create(group=group, status=LetterStatus.UPCOMING)
+        db_session.commit()
+        with pytest.raises(
+            ValueError,
+            match="There is already a letter in progress or upcoming for this group",
+        ):
+            authenticated_client.post(
+                "/letters/letter:CYCLIC",
+                json={
+                    "group_api_identifier": group.api_identifier,
+                    "send_at": (
+                        datetime.now(tz=UTC) + timedelta(days=2)
+                    ).isoformat(),
+                },
+            )
+
+    def test_add_cyclic_letter_with_existing_in_progress(
+        self,
+        authenticated_client: TestClient,
+        db_session: Session,
+        current_user: UserFactory,
+    ):
+        group = GroupFactory.create(admin=current_user)
+        LetterFactory.create(group=group, status=LetterStatus.IN_PROGRESS)
+        db_session.commit()
+        with pytest.raises(
+            ValueError,
+            match="There is already a letter in progress or upcoming for this group",
+        ):
+            authenticated_client.post(
+                "/letters/letter:CYCLIC",
+                json={
+                    "group_api_identifier": group.api_identifier,
+                    "send_at": (
+                        datetime.now(tz=UTC) + timedelta(days=2)
+                    ).isoformat(),
+                },
+            )
+
+    def test_add_cyclic_letter_allows_existing_adhoc(
+        self,
+        authenticated_client: TestClient,
+        db_session: Session,
+        current_user: UserFactory,
+    ):
+        group = GroupFactory.create(admin=current_user)
+        LetterFactory.create(
+            group=group,
+            status=LetterStatus.UPCOMING,
+            letter_type=LetterType.ADHOC,
+        )
+        db_session.commit()
+        response = authenticated_client.post(
+            "/letters/letter:CYCLIC",
+            json={
+                "group_api_identifier": group.api_identifier,
+                "send_at": (
+                    datetime.now(tz=UTC) + timedelta(days=2)
+                ).isoformat(),
+            },
+        )
+        assert response.status_code == 200
+        assert response.json()["letter_type"] == LetterType.CYCLIC
+
+    def test_add_cyclic_letter_rejects_live_letter_past_page_limit(
+        self,
+        authenticated_client: TestClient,
+        db_session: Session,
+        current_user: UserFactory,
+    ):
+        group = GroupFactory.create(admin=current_user)
+        for number in range(1, 101):
+            LetterFactory.create(
+                group=group,
+                status=LetterStatus.SENT,
+                number=number,
+            )
+        LetterFactory.create(
+            group=group,
+            status=LetterStatus.UPCOMING,
+            number=101,
+            send_at=datetime.now(tz=UTC) + timedelta(days=2),
+        )
+        db_session.commit()
+        with pytest.raises(
+            ValueError,
+            match="There is already a letter in progress or upcoming for this group",
+        ):
+            authenticated_client.post(
+                "/letters/letter:CYCLIC",
+                json={
+                    "group_api_identifier": group.api_identifier,
+                    "send_at": (
+                        datetime.now(tz=UTC) + timedelta(days=4)
+                    ).isoformat(),
+                },
+            )
+
+    def test_add_adhoc_letter_with_existing_cyclic_upcoming(
+        self,
+        authenticated_client: TestClient,
+        db_session: Session,
+        current_user: UserFactory,
+    ):
+        group = GroupFactory.create(admin=current_user)
+        LetterFactory.create(group=group, status=LetterStatus.UPCOMING)
+        db_session.commit()
+        response = authenticated_client.post(
+            "/letters/letter:ADHOC",
+            json={
+                "group_api_identifier": group.api_identifier,
+                "send_at": (
+                    datetime.now(tz=UTC) + timedelta(days=2)
+                ).isoformat(),
+                "title": "Off cycle",
+            },
+        )
+        assert response.status_code == 200
+        assert response.json()["letter_type"] == LetterType.ADHOC
 
     def test_list_letters(
         self, authenticated_client: TestClient, db_session: Session
@@ -430,6 +579,148 @@ class TestLetterAPI:
                 f"/letters/letter/{letter.api_identifier}:edit_letter",
                 json=input,
             )
+
+    def test_edit_letter_rejects_second_cyclic_in_progress(
+        self, authenticated_client: TestClient, db_session: Session
+    ):
+        group = GroupFactory.create()
+        LetterFactory.create(group=group, status=LetterStatus.IN_PROGRESS)
+        upcoming = LetterFactory.create(
+            group=group,
+            status=LetterStatus.UPCOMING,
+            send_at=datetime.now(tz=UTC) + timedelta(days=20),
+        )
+        db_session.commit()
+        with pytest.raises(
+            ValueError,
+            match="There is already a letter in progress or upcoming for this group",
+        ):
+            authenticated_client.post(
+                f"/letters/letter/{upcoming.api_identifier}:edit_letter",
+                json={"status": LetterStatus.IN_PROGRESS},
+            )
+        db_session.refresh(upcoming)
+        assert upcoming.status == LetterStatus.UPCOMING
+
+    def test_edit_letter_rejects_second_cyclic_upcoming(
+        self, authenticated_client: TestClient, db_session: Session
+    ):
+        group = GroupFactory.create()
+        in_progress = LetterFactory.create(
+            group=group, status=LetterStatus.IN_PROGRESS
+        )
+        LetterFactory.create(
+            group=group,
+            status=LetterStatus.UPCOMING,
+            send_at=datetime.now(tz=UTC) + timedelta(days=20),
+        )
+        db_session.commit()
+        with pytest.raises(
+            ValueError,
+            match="There is already a letter in progress or upcoming for this group",
+        ):
+            authenticated_client.post(
+                f"/letters/letter/{in_progress.api_identifier}:edit_letter",
+                json={"status": LetterStatus.UPCOMING},
+            )
+        db_session.refresh(in_progress)
+        assert in_progress.status == LetterStatus.IN_PROGRESS
+
+    def test_edit_letter_rejects_second_in_progress_past_page_limit(
+        self, authenticated_client: TestClient, db_session: Session
+    ):
+        group = GroupFactory.create()
+        for number in range(1, 101):
+            LetterFactory.create(
+                group=group,
+                status=LetterStatus.SENT,
+                number=number,
+            )
+        LetterFactory.create(
+            group=group,
+            status=LetterStatus.IN_PROGRESS,
+            number=101,
+        )
+        upcoming = LetterFactory.create(
+            group=group,
+            status=LetterStatus.UPCOMING,
+            number=102,
+            send_at=datetime.now(tz=UTC) + timedelta(days=20),
+        )
+        db_session.commit()
+        with pytest.raises(
+            ValueError,
+            match="There is already a letter in progress or upcoming for this group",
+        ):
+            authenticated_client.post(
+                f"/letters/letter/{upcoming.api_identifier}:edit_letter",
+                json={"status": LetterStatus.IN_PROGRESS},
+            )
+        db_session.refresh(upcoming)
+        assert upcoming.status == LetterStatus.UPCOMING
+
+    def test_edit_letter_to_in_progress_when_no_other_live_cyclic(
+        self, authenticated_client: TestClient, db_session: Session
+    ):
+        group = GroupFactory.create()
+        letter = LetterFactory.create(
+            group=group,
+            status=LetterStatus.UPCOMING,
+            send_at=datetime.now(tz=UTC) + timedelta(days=10),
+        )
+        db_session.commit()
+        response = authenticated_client.post(
+            f"/letters/letter/{letter.api_identifier}:edit_letter",
+            json={"status": LetterStatus.IN_PROGRESS},
+        )
+        assert response.status_code == 200
+        assert response.json()["status"] == LetterStatus.IN_PROGRESS
+        db_session.expire_all()
+        upcoming = [
+            group_letter
+            for group_letter in group.letters
+            if group_letter.status == LetterStatus.UPCOMING
+        ]
+        assert len(upcoming) == 1
+        assert upcoming[0].id != letter.id
+
+    def test_edit_cyclic_to_upcoming_ignores_adhoc(
+        self, authenticated_client: TestClient, db_session: Session
+    ):
+        group = GroupFactory.create()
+        cyclic = LetterFactory.create(
+            group=group, status=LetterStatus.IN_PROGRESS
+        )
+        LetterFactory.create(
+            group=group,
+            status=LetterStatus.UPCOMING,
+            letter_type=LetterType.ADHOC,
+        )
+        db_session.commit()
+        response = authenticated_client.post(
+            f"/letters/letter/{cyclic.api_identifier}:edit_letter",
+            json={"status": LetterStatus.UPCOMING},
+        )
+        assert response.status_code == 200
+        assert response.json()["status"] == LetterStatus.UPCOMING
+
+    def test_edit_adhoc_status_ignores_cyclic_upcoming(
+        self, authenticated_client: TestClient, db_session: Session
+    ):
+        group = GroupFactory.create()
+        LetterFactory.create(group=group, status=LetterStatus.UPCOMING)
+        adhoc = LetterFactory.create(
+            group=group,
+            status=LetterStatus.IN_PROGRESS,
+            letter_type=LetterType.ADHOC,
+        )
+        db_session.commit()
+        response = authenticated_client.post(
+            f"/letters/letter/{adhoc.api_identifier}:edit_letter",
+            json={"status": LetterStatus.UPCOMING},
+        )
+        assert response.status_code == 200
+        assert response.json()["status"] == LetterStatus.UPCOMING
 
     def test_add_question(
         self, authenticated_client: TestClient, db_session: Session
