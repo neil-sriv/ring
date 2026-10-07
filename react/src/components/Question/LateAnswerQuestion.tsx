@@ -1,18 +1,20 @@
 import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
-import { useMutation, useQueryClient } from "@tanstack/react-query"
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import type { AxiosError } from "axios"
 import { Loader2 } from "lucide-react"
 import { useState } from "react"
 import {
+  type PublicLetter,
   type PublicQuestion,
   type UpsertResponseQuestionsQuestionQuestionApiIdUpsertResponsePostError,
-  type UserLinked,
   upsertResponseQuestionsQuestionQuestionApiIdUpsertResponsePost,
 } from "../../client"
 import {
+  listDashboardLettersLettersLettersDashboardGetQueryKey,
+  listLettersLettersLettersGetQueryKey,
   readLetterLettersLetterLetterApiIdGetQueryKey,
-  readUserMePartiesMeGetQueryKey,
+  readUserMePartiesMeGetOptions,
 } from "../../client/@tanstack/react-query.gen"
 import { useAutoResizeTextarea } from "../../hooks/useAutoResizeTextarea"
 import useCustomToast from "../../hooks/useCustomToast"
@@ -28,9 +30,11 @@ function LateAnswerQuestion({
   loopApiId,
 }: LateAnswerQuestionProps): JSX.Element {
   const queryClient = useQueryClient()
-  const currentUser = queryClient.getQueryData<UserLinked>(
-    readUserMePartiesMeGetQueryKey(),
-  )
+  // Subscribe so late-answer UI tracks /me (e.g. after profile save). getQueryData
+  // alone never re-renders this component when the cache is overwritten.
+  const { data: currentUser } = useQuery({
+    ...readUserMePartiesMeGetOptions(),
+  })
   const showToast = useCustomToast()
   const [responseText, setResponseText] = useState("")
   const textareaRef = useAutoResizeTextarea(responseText)
@@ -57,11 +61,26 @@ function LateAnswerQuestion({
     onSuccess: () => {
       showToast("Success!", "Your late answer has been submitted.", "success")
       setResponseText("")
-      queryClient.invalidateQueries({
-        queryKey: readLetterLettersLetterLetterApiIdGetQueryKey({
-          path: { letter_api_id: loopApiId },
-        }),
+      const letterQueryKey = readLetterLettersLetterLetterApiIdGetQueryKey({
+        path: { letter_api_id: loopApiId },
       })
+      queryClient.invalidateQueries({
+        queryKey: letterQueryKey,
+      })
+      // Home / group Loops cards use list queries with a 30s staleTime; without
+      // this, published contributor counts and unanswered badges stay wrong until
+      // the cache expires (same class of bug as DraftQuestion / EditLoop).
+      queryClient.invalidateQueries({
+        queryKey: listDashboardLettersLettersLettersDashboardGetQueryKey(),
+      })
+      const letter = queryClient.getQueryData<PublicLetter>(letterQueryKey)
+      if (letter?.group.api_identifier) {
+        queryClient.invalidateQueries({
+          queryKey: listLettersLettersLettersGetQueryKey({
+            query: { group_api_id: letter.group.api_identifier },
+          }),
+        })
+      }
     },
     onError: (
       err: AxiosError<UpsertResponseQuestionsQuestionQuestionApiIdUpsertResponsePostError>,
