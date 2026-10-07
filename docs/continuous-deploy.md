@@ -53,8 +53,8 @@ Never attach the custom domain directly to the Worker — that swallows
 `/api/*` and takes the API down.
 
 Prod API runs the **image filesystem** (no `./ring` bind-mount, no
-uvicorn `--reload`, `--workers 2`). The host git checkout only supplies
-compose, nginx, and `.env`. Migrations run *inside* the API container.
+uvicorn `--reload`). The host git checkout only supplies compose, nginx,
+and `.env`. Migrations run *inside* the API container.
 
 ---
 

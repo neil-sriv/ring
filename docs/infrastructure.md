@@ -83,7 +83,6 @@ flowchart TB
 | S3 / CloudFront | Same AWS resources (boto3 uses instance/profile creds locally if configured) | EC2 IAM role |
 | LLM | Optional Compose service (`llm/`) | Optional `ring-llm` container from ECR |
 | TLS | Self-signed local certs (`ring setup local-ssl`) | Let's Encrypt (`compose.prod.yml` certbot profile) |
-| API workers | uvicorn `--reload` (one worker). Override the command to drop `--reload` / add `--workers` when measuring. | uvicorn `--workers 2` (`compose.prod.yml`) |
 
 ---
 
@@ -257,8 +256,8 @@ will not forward SSH on the orange `ring.neilsriv.tech`),
 key). Optional vars: `PROD_SSH_PORT` (22), `PROD_APP_DIR` (`$HOME/ring`).
 
 Prod runs the API **image filesystem** (no `./ring` bind-mount, no
-uvicorn `--reload`, `--workers 2`). The host script force-checkouts git
-so compose/nginx on disk match the deploy:
+uvicorn `--reload`). The host script force-checkouts git so compose/nginx
+on disk match the deploy:
 
 ```bash
 cd ring
