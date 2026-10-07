@@ -7,6 +7,7 @@ import {
   listDashboardLettersLettersLettersDashboardGetOptions,
   readUserMePartiesMeGetOptions,
 } from "../client/@tanstack/react-query.gen"
+import { InboxBell } from "../components/Common/InboxBell"
 import { KeyboardShortcuts } from "../components/Common/KeyboardShortcuts"
 import Sidebar from "../components/Common/Sidebar"
 import UserMenu from "../components/Common/UserMenu"
@@ -81,6 +82,9 @@ function Layout() {
           <Outlet />
         </main>
       )}
+      <div className="fixed top-1.5 right-2 z-40 md:top-4 md:right-[calc(4.25rem_+_var(--removed-body-scroll-bar-size,0px))]">
+        <InboxBell />
+      </div>
       <UserMenu />
       <KeyboardShortcuts />
     </div>
