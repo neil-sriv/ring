@@ -2,14 +2,19 @@
 
 from __future__ import annotations
 
+from collections.abc import Iterator
+from contextlib import contextmanager
 from datetime import UTC, datetime, timedelta
 from unittest.mock import patch
 
 import pytest
+from fastapi.testclient import TestClient
 from sqlalchemy import select
 from sqlalchemy.exc import OperationalError
 from sqlalchemy.orm import Session
 
+from ring.fastapp.config import get_config
+from ring.fastapp.fast import app
 from ring.letters.constants import LetterStatus
 from ring.letters.crud import letter as letter_crud
 from ring.letters.send_threshold import (
@@ -520,29 +525,27 @@ class TestTaskCrud:
         assert requeued.status == TaskStatus.PENDING
         assert "transient database error" in requeued.message
 
-    def test_requeue_in_progress_tasks_resets_stranded_tasks(
+    def test_app_startup_leaves_in_progress_tasks_unchanged(
         self, db_session: Session
     ) -> None:
-        """Put stranded IN_PROGRESS tasks back in PENDING at startup.
+        """App startup must not reset IN_PROGRESS tasks to PENDING.
 
-        Regression test: a restart or deploy wipes the APScheduler
-        jobstore, so tasks claimed by the previous process stayed
-        IN_PROGRESS forever — never re-collected by the poll loop, while
-        the postpend job skipped their letters because a send task still
-        appeared responsible. The letter behind the task was frozen: no
-        email, no deferral, nothing at its due date.
+        Regression: the lifespan called requeue_in_progress_tasks with
+        no age bound, so every restart flipped stale send and reminder
+        rows back to PENDING and the poll loop emailed them.
         """
         admin = UserFactory.create()
         group = GroupFactory.create(admin=admin, members=[admin])
         db_session.commit()
-        stranded = schedule_crud.register_task(
+        claimed = schedule_crud.register_task(
             db_session,
             group.schedule,
             TaskType.SEND_EMAIL,
-            datetime.now(tz=UTC) - timedelta(hours=1),
+            datetime.now(tz=UTC) - timedelta(days=90),
             {"letter_id": None},
         )
-        stranded.status = TaskStatus.IN_PROGRESS
+        claimed.status = TaskStatus.IN_PROGRESS
+        claimed.message = "claimed by the previous process"
         completed = schedule_crud.register_task(
             db_session,
             group.schedule,
@@ -551,15 +554,38 @@ class TestTaskCrud:
             {"letter_id": None},
         )
         completed.status = TaskStatus.COMPLETED
+        completed.message = "sent"
         db_session.commit()
 
-        requeued = task_crud.requeue_in_progress_tasks(db_session)
+        enabled = get_config().model_copy(update={"DISABLE_SCHEDULER": False})
 
-        assert requeued == 1
+        @contextmanager
+        def _startup_session() -> Iterator[Session]:
+            yield db_session
+
+        with (
+            patch("ring.fastapp.fast.get_config", return_value=enabled),
+            patch("ring.fastapp.fast.scheduler.start") as start,
+            patch("ring.fastapp.fast.scheduler.shutdown"),
+            patch(
+                "ring.fastapp.fast.SessionLocal",
+                _startup_session,
+                create=True,
+            ),
+            patch(
+                "ring.sqlalchemy_base.SessionLocal",
+                _startup_session,
+            ),
+        ):
+            with TestClient(app):
+                pass
+
+        start.assert_called_once()
         db_session.expire_all()
-        assert stranded.status == TaskStatus.PENDING
-        assert "requeued at startup" in stranded.message
+        assert claimed.status == TaskStatus.IN_PROGRESS
+        assert claimed.message == "claimed by the previous process"
         assert completed.status == TaskStatus.COMPLETED
+        assert completed.message == "sent"
 
     def test_execute_tasks_skips_task_without_executor(
         self, db_session: Session

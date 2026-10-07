@@ -275,40 +275,6 @@ ASYNC_TASK_TO_EXECUTE_MAPPING: dict[
 }
 
 
-def requeue_in_progress_tasks(db: Session) -> int:
-    """Reset tasks stranded IN_PROGRESS back to PENDING.
-
-    Called at app startup, right after the APScheduler jobstore has been
-    wiped: any task still IN_PROGRESS at that point was claimed by a poll
-    cycle whose jobs died with the previous process (restart or deploy),
-    so nothing will ever execute or repair it. Without this, the letter
-    behind a stranded send task is frozen: the task is never re-collected
-    (only PENDING tasks are), and the postpend job skips the letter
-    because a send task still appears responsible for it.
-
-    Returns:
-        int: Number of tasks put back in PENDING.
-    """
-    stranded = db.scalars(
-        sqlalchemy.select(Task).where(
-            Task.status == TaskStatus.IN_PROGRESS,
-        )
-    ).all()
-    for task in stranded:
-        task.status = TaskStatus.PENDING
-        task.message = (
-            "requeued at startup: task was in progress when the previous "
-            "process stopped"
-        )
-        logger.info(
-            "Requeueing task {} ({}) stranded in progress at {}".format(
-                task.id, task.type, task.execute_at
-            )
-        )
-    db.commit()
-    return len(stranded)
-
-
 @job_factory("send_response_open_email")
 def send_response_open_email(db: Session, letter_id: int) -> None:
     """Send an email notifying participants that a newsletter is open for responses.
