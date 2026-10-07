@@ -2,7 +2,9 @@
 
 from __future__ import annotations
 
+import json
 from collections.abc import Callable
+from datetime import UTC, datetime, timedelta
 
 import httpx
 import pytest
@@ -10,6 +12,7 @@ from fastapi.testclient import TestClient
 from sqlalchemy.orm import Session
 
 from ring.fastapp.config import get_config
+from ring.letters.constants import LetterStatus, LetterType
 from ring.parties.models.user_model import User
 from ring.spotify.models.user_spotify_playlist import UserSpotifyPlaylist
 from ring.spotify.oauth import create_oauth_state
@@ -475,6 +478,126 @@ class TestGroupPlaylist:
         )
         assert second.status_code == 200
         assert second.json()["playlist_id"] == "pl_2"
+
+    def test_playlist_uris_follow_letter_and_question_order(
+        self,
+        authenticated_client: TestClient,
+        current_user: User,
+        db_session: Session,
+        monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
+        """Out-of-order inserts still sync in letter number and position."""
+        title_id = "1" * 22
+        first_question_id = "2" * 22
+        response_id = "3" * 22
+        second_question_id = "4" * 22
+        third_question_id = "5" * 22
+        later_first_id = "6" * 22
+        later_second_id = "7" * 22
+        adhoc_id = "8" * 22
+        playlist_uris: list[list[str]] = []
+
+        def handler(request: httpx.Request) -> httpx.Response:
+            token = _token_ok(request)
+            if token is not None:
+                return token
+            if (
+                request.method == "POST"
+                and request.url.path == "/v1/me/playlists"
+            ):
+                return httpx.Response(201, json={"id": "pl_order"})
+            if request.method == "PUT" and request.url.path.endswith("/items"):
+                body = json.loads(request.content)
+                playlist_uris.append(list(body["uris"]))
+                return httpx.Response(200, json={"snapshot_id": "s"})
+            return httpx.Response(200, json={"snapshot_id": "s"})
+
+        _configure(monkeypatch, handler)
+        current_user.spotify_refresh_token = "refresh-1"
+        group = GroupFactory.create()
+        group.members.append(current_user)
+        now = datetime.now(tz=UTC)
+        # Unnumbered letter and the later issue are inserted first. A query
+        # without ORDER BY, or questions walked in insert order, would not
+        # match reading order.
+        LetterFactory.create(
+            group=group,
+            letter_type=LetterType.ADHOC,
+            status=LetterStatus.SENT,
+            title=f"spotify:track:{adhoc_id}",
+            send_at=now - timedelta(days=30),
+        )
+        later = LetterFactory.create(
+            group=group,
+            number=2,
+            status=LetterStatus.SENT,
+            title="later issue",
+            send_at=now - timedelta(days=1),
+        )
+        QuestionFactory.create(
+            letter=later,
+            position=1,
+            question_text=f"https://open.spotify.com/track/{later_second_id}",
+        )
+        QuestionFactory.create(
+            letter=later,
+            position=0,
+            question_text=f"spotify:track:{later_first_id}",
+        )
+        earlier = LetterFactory.create(
+            group=group,
+            number=1,
+            status=LetterStatus.SENT,
+            title=f"https://open.spotify.com/track/{title_id}",
+            send_at=now - timedelta(days=14),
+        )
+        QuestionFactory.create(
+            letter=earlier,
+            position=2,
+            question_text=f"spotify:track:{third_question_id}",
+        )
+        first_question = QuestionFactory.create(
+            letter=earlier,
+            position=0,
+            question_text=(
+                f"https://open.spotify.com/track/{first_question_id}"
+            ),
+        )
+        ResponseFactory.create(
+            question=first_question,
+            participant=current_user,
+            response_text=f"spotify:track:{response_id}",
+        )
+        QuestionFactory.create(
+            letter=earlier,
+            position=1,
+            question_text=f"spotify:track:{second_question_id}",
+        )
+        QuestionFactory.create(
+            letter=later,
+            position=2,
+            question_text=f"spotify:track:{first_question_id}",
+        )
+        db_session.commit()
+        db_session.expire_all()
+
+        response = authenticated_client.post(
+            f"/spotify/groups/{group.api_identifier}/playlist"
+        )
+        assert response.status_code == 200
+        assert response.json()["track_count"] == 8
+        assert playlist_uris == [
+            [
+                f"spotify:track:{title_id}",
+                f"spotify:track:{first_question_id}",
+                f"spotify:track:{response_id}",
+                f"spotify:track:{second_question_id}",
+                f"spotify:track:{third_question_id}",
+                f"spotify:track:{later_first_id}",
+                f"spotify:track:{later_second_id}",
+                f"spotify:track:{adhoc_id}",
+            ]
+        ]
 
     def test_not_a_member(
         self,

@@ -12,9 +12,12 @@ from ring.spotify.tracks import extract_spotify_track_ids_from_parts
 
 
 def letter_text_parts(letter: Letter) -> list[str | None]:
-    """Title, question text, and response text for one letter."""
+    """Title, then each question and its responses in display order."""
     parts: list[str | None] = [letter.title]
-    for question in letter.questions:
+    questions = sorted(
+        letter.questions, key=lambda question: question.position
+    )
+    for question in questions:
         parts.append(question.question_text)
         for response in question.responses:
             parts.append(response.response_text)
@@ -38,11 +41,17 @@ def load_letter_with_content(db: Session, letter: Letter) -> Letter:
 
 
 def load_group_letters(db: Session, group: Group) -> list[Letter]:
-    """Load every letter in a group with questions and responses."""
+    """Load a group's letters in stable reading order.
+
+    Numbered letters come first, lowest number first. Letters with no
+    number (adhoc) follow, and equal keys break by primary key so a
+    playlist sync does not reshuffle when the track set is unchanged.
+    """
     return list(
         db.scalars(
             select(Letter)
             .where(Letter.group_id == group.id)
+            .order_by(Letter.number.asc().nulls_last(), Letter.id.asc())
             .options(
                 selectinload(Letter.questions).selectinload(Question.responses)
             )
