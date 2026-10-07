@@ -17,6 +17,7 @@ from ring.notebook.api import document
 from ring.notifications.api import inbox, subscription
 from ring.parties.api import group, group_key_value, invite, user
 from ring.search.api import search
+from ring.spotify.api import spotify
 from ring.tasks.api import schedule
 
 router = APIRouter()
@@ -52,6 +53,7 @@ router.include_router(
 )
 
 router.include_router(search.router, prefix="/search", tags=["search"])
+router.include_router(spotify.router, prefix="/spotify", tags=["spotify"])
 
 router.include_router(unfurl.router, prefix="/links", tags=["links"])
 

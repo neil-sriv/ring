@@ -835,6 +835,46 @@ export type SingleGroupKeyValueUpdate = {
 };
 
 /**
+ * Where to send the browser after Spotify redirects back.
+ */
+export type SpotifyAuthorizeRequest = {
+    return_to?: string;
+};
+
+/**
+ * Spotify authorization URL for the browser to open.
+ */
+export type SpotifyAuthorizeResponse = {
+    authorization_url: string;
+};
+
+/**
+ * Tracks from a letter that were saved to the user's library.
+ */
+export type SpotifyLibrarySaveResponse = {
+    saved_count: number;
+    track_ids?: Array<string>;
+};
+
+/**
+ * A playlist in the current user's Spotify account.
+ */
+export type SpotifyPlaylistResponse = {
+    playlist_id: string;
+    playlist_url: string;
+    name: string;
+    track_count: number;
+};
+
+/**
+ * Whether this server can link Spotify and whether the user has.
+ */
+export type SpotifyStatus = {
+    configured: boolean;
+    linked: boolean;
+};
+
+/**
  * Schema for creating a new subscription.
  *
  * Inherits endpoint and keys from SubscriptionBase and adds user identification.
@@ -2402,6 +2442,155 @@ export type PerformSearchSearchSearchGetResponses = {
 };
 
 export type PerformSearchSearchSearchGetResponse = PerformSearchSearchSearchGetResponses[keyof PerformSearchSearchSearchGetResponses];
+
+export type ReadSpotifyStatusSpotifyStatusGetData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/spotify/status';
+};
+
+export type ReadSpotifyStatusSpotifyStatusGetResponses = {
+    /**
+     * Successful Response
+     */
+    200: SpotifyStatus;
+};
+
+export type ReadSpotifyStatusSpotifyStatusGetResponse = ReadSpotifyStatusSpotifyStatusGetResponses[keyof ReadSpotifyStatusSpotifyStatusGetResponses];
+
+export type StartSpotifyAuthorizationSpotifyAuthorizePostData = {
+    body: SpotifyAuthorizeRequest;
+    path?: never;
+    query?: never;
+    url: '/spotify/authorize';
+};
+
+export type StartSpotifyAuthorizationSpotifyAuthorizePostErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type StartSpotifyAuthorizationSpotifyAuthorizePostError = StartSpotifyAuthorizationSpotifyAuthorizePostErrors[keyof StartSpotifyAuthorizationSpotifyAuthorizePostErrors];
+
+export type StartSpotifyAuthorizationSpotifyAuthorizePostResponses = {
+    /**
+     * Successful Response
+     */
+    200: SpotifyAuthorizeResponse;
+};
+
+export type StartSpotifyAuthorizationSpotifyAuthorizePostResponse = StartSpotifyAuthorizationSpotifyAuthorizePostResponses[keyof StartSpotifyAuthorizationSpotifyAuthorizePostResponses];
+
+export type SpotifyOauthCallbackSpotifyCallbackGetData = {
+    body?: never;
+    path?: never;
+    query?: {
+        code?: string | null;
+        state?: string | null;
+        error?: string | null;
+    };
+    url: '/spotify/callback';
+};
+
+export type SpotifyOauthCallbackSpotifyCallbackGetErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type SpotifyOauthCallbackSpotifyCallbackGetError = SpotifyOauthCallbackSpotifyCallbackGetErrors[keyof SpotifyOauthCallbackSpotifyCallbackGetErrors];
+
+export type SpotifyOauthCallbackSpotifyCallbackGetResponses = {
+    /**
+     * Successful Response
+     */
+    200: unknown;
+};
+
+export type SaveLetterTracksToSpotifyLibrarySpotifyLettersLetterApiIdLibraryPostData = {
+    body?: never;
+    path: {
+        letter_api_id: string;
+    };
+    query?: never;
+    url: '/spotify/letters/{letter_api_id}/library';
+};
+
+export type SaveLetterTracksToSpotifyLibrarySpotifyLettersLetterApiIdLibraryPostErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type SaveLetterTracksToSpotifyLibrarySpotifyLettersLetterApiIdLibraryPostError = SaveLetterTracksToSpotifyLibrarySpotifyLettersLetterApiIdLibraryPostErrors[keyof SaveLetterTracksToSpotifyLibrarySpotifyLettersLetterApiIdLibraryPostErrors];
+
+export type SaveLetterTracksToSpotifyLibrarySpotifyLettersLetterApiIdLibraryPostResponses = {
+    /**
+     * Successful Response
+     */
+    200: SpotifyLibrarySaveResponse;
+};
+
+export type SaveLetterTracksToSpotifyLibrarySpotifyLettersLetterApiIdLibraryPostResponse = SaveLetterTracksToSpotifyLibrarySpotifyLettersLetterApiIdLibraryPostResponses[keyof SaveLetterTracksToSpotifyLibrarySpotifyLettersLetterApiIdLibraryPostResponses];
+
+export type ReadGroupSpotifyPlaylistSpotifyGroupsGroupApiIdPlaylistGetData = {
+    body?: never;
+    path: {
+        group_api_id: string;
+    };
+    query?: never;
+    url: '/spotify/groups/{group_api_id}/playlist';
+};
+
+export type ReadGroupSpotifyPlaylistSpotifyGroupsGroupApiIdPlaylistGetErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type ReadGroupSpotifyPlaylistSpotifyGroupsGroupApiIdPlaylistGetError = ReadGroupSpotifyPlaylistSpotifyGroupsGroupApiIdPlaylistGetErrors[keyof ReadGroupSpotifyPlaylistSpotifyGroupsGroupApiIdPlaylistGetErrors];
+
+export type ReadGroupSpotifyPlaylistSpotifyGroupsGroupApiIdPlaylistGetResponses = {
+    /**
+     * Successful Response
+     */
+    200: SpotifyPlaylistResponse;
+};
+
+export type ReadGroupSpotifyPlaylistSpotifyGroupsGroupApiIdPlaylistGetResponse = ReadGroupSpotifyPlaylistSpotifyGroupsGroupApiIdPlaylistGetResponses[keyof ReadGroupSpotifyPlaylistSpotifyGroupsGroupApiIdPlaylistGetResponses];
+
+export type EnsureGroupSpotifyPlaylistSpotifyGroupsGroupApiIdPlaylistPostData = {
+    body?: never;
+    path: {
+        group_api_id: string;
+    };
+    query?: never;
+    url: '/spotify/groups/{group_api_id}/playlist';
+};
+
+export type EnsureGroupSpotifyPlaylistSpotifyGroupsGroupApiIdPlaylistPostErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type EnsureGroupSpotifyPlaylistSpotifyGroupsGroupApiIdPlaylistPostError = EnsureGroupSpotifyPlaylistSpotifyGroupsGroupApiIdPlaylistPostErrors[keyof EnsureGroupSpotifyPlaylistSpotifyGroupsGroupApiIdPlaylistPostErrors];
+
+export type EnsureGroupSpotifyPlaylistSpotifyGroupsGroupApiIdPlaylistPostResponses = {
+    /**
+     * Successful Response
+     */
+    200: SpotifyPlaylistResponse;
+};
+
+export type EnsureGroupSpotifyPlaylistSpotifyGroupsGroupApiIdPlaylistPostResponse = EnsureGroupSpotifyPlaylistSpotifyGroupsGroupApiIdPlaylistPostResponses[keyof EnsureGroupSpotifyPlaylistSpotifyGroupsGroupApiIdPlaylistPostResponses];
 
 export type UnfurlLinkLinksUnfurlPostData = {
     body: LinkPreviewRequest;

@@ -2917,6 +2917,302 @@
         }
       }
     },
+    "/spotify/status": {
+      "get": {
+        "tags": [
+          "spotify"
+        ],
+        "summary": "Read Spotify Status",
+        "description": "Report whether linking is configured and whether this user linked.",
+        "operationId": "read_spotify_status_spotify_status_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SpotifyStatus"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ]
+      }
+    },
+    "/spotify/authorize": {
+      "post": {
+        "tags": [
+          "spotify"
+        ],
+        "summary": "Start Spotify Authorization",
+        "description": "Return the Spotify authorization URL for the current user.",
+        "operationId": "start_spotify_authorization_spotify_authorize_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SpotifyAuthorizeRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SpotifyAuthorizeResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ]
+      }
+    },
+    "/spotify/callback": {
+      "get": {
+        "tags": [
+          "spotify"
+        ],
+        "summary": "Spotify Oauth Callback",
+        "description": "Exchange the Spotify code and send the browser back to the app.",
+        "operationId": "spotify_oauth_callback_spotify_callback_get",
+        "parameters": [
+          {
+            "name": "code",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Code"
+            }
+          },
+          {
+            "name": "state",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "State"
+            }
+          },
+          {
+            "name": "error",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Error"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/spotify/letters/{letter_api_id}/library": {
+      "post": {
+        "tags": [
+          "spotify"
+        ],
+        "summary": "Save Letter Tracks To Spotify Library",
+        "description": "Save this letter's Spotify tracks to the current user's library.",
+        "operationId": "save_letter_tracks_to_spotify_library_spotify_letters__letter_api_id__library_post",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "letter_api_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Letter Api Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SpotifyLibrarySaveResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/spotify/groups/{group_api_id}/playlist": {
+      "get": {
+        "tags": [
+          "spotify"
+        ],
+        "summary": "Read Group Spotify Playlist",
+        "description": "Return the current user's playlist link for this group, if created.",
+        "operationId": "read_group_spotify_playlist_spotify_groups__group_api_id__playlist_get",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "group_api_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Group Api Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SpotifyPlaylistResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "spotify"
+        ],
+        "summary": "Ensure Group Spotify Playlist",
+        "description": "Create or update the current user's playlist for this group.",
+        "operationId": "ensure_group_spotify_playlist_spotify_groups__group_api_id__playlist_post",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "group_api_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Group Api Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SpotifyPlaylistResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/links/unfurl": {
       "post": {
         "tags": [
@@ -5414,6 +5710,101 @@
         ],
         "title": "SingleGroupKeyValueUpdate",
         "description": "Schema for updating a single group key-value pair.\n\nThis model extends GroupKeyValueBase to include an operation field that specifies\nwhether to set or delete the key-value pair.\n\nAttributes:\n    key (str): The key identifier to update\n    value (Any | None): The value to set (required for 'set' operation, ignored for 'delete')\n    operation (Literal[\"set\", \"delete\"]): The operation to perform on the key-value pair\n\nNote:\n    For 'delete' operations, the value field is ignored"
+      },
+      "SpotifyAuthorizeRequest": {
+        "properties": {
+          "return_to": {
+            "type": "string",
+            "title": "Return To",
+            "default": "/"
+          }
+        },
+        "type": "object",
+        "title": "SpotifyAuthorizeRequest",
+        "description": "Where to send the browser after Spotify redirects back."
+      },
+      "SpotifyAuthorizeResponse": {
+        "properties": {
+          "authorization_url": {
+            "type": "string",
+            "title": "Authorization Url"
+          }
+        },
+        "type": "object",
+        "required": [
+          "authorization_url"
+        ],
+        "title": "SpotifyAuthorizeResponse",
+        "description": "Spotify authorization URL for the browser to open."
+      },
+      "SpotifyLibrarySaveResponse": {
+        "properties": {
+          "saved_count": {
+            "type": "integer",
+            "title": "Saved Count"
+          },
+          "track_ids": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Track Ids"
+          }
+        },
+        "type": "object",
+        "required": [
+          "saved_count"
+        ],
+        "title": "SpotifyLibrarySaveResponse",
+        "description": "Tracks from a letter that were saved to the user's library."
+      },
+      "SpotifyPlaylistResponse": {
+        "properties": {
+          "playlist_id": {
+            "type": "string",
+            "title": "Playlist Id"
+          },
+          "playlist_url": {
+            "type": "string",
+            "title": "Playlist Url"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "track_count": {
+            "type": "integer",
+            "title": "Track Count"
+          }
+        },
+        "type": "object",
+        "required": [
+          "playlist_id",
+          "playlist_url",
+          "name",
+          "track_count"
+        ],
+        "title": "SpotifyPlaylistResponse",
+        "description": "A playlist in the current user's Spotify account."
+      },
+      "SpotifyStatus": {
+        "properties": {
+          "configured": {
+            "type": "boolean",
+            "title": "Configured"
+          },
+          "linked": {
+            "type": "boolean",
+            "title": "Linked"
+          }
+        },
+        "type": "object",
+        "required": [
+          "configured",
+          "linked"
+        ],
+        "title": "SpotifyStatus",
+        "description": "Whether this server can link Spotify and whether the user has."
       },
       "SubscriptionCreate": {
         "properties": {
