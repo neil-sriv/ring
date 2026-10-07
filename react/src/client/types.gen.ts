@@ -131,6 +131,7 @@ export type DashboardQuestion = {
     question_text: string;
     api_identifier: string;
     created_at: string;
+    position?: number | null;
     responded_participant_api_ids: Array<string>;
 };
 
@@ -571,6 +572,7 @@ export type PublicQuestion = {
     question_text: string;
     api_identifier: string;
     created_at: string;
+    position?: number | null;
     responses: Array<ResponseWithParticipant>;
     author: UserUnlinked | null;
 };
@@ -600,6 +602,7 @@ export type QuestionLinked = {
     question_text: string;
     api_identifier: string;
     created_at: string;
+    position?: number | null;
     letter: LetterUnlinked;
     group: GroupUnlinked;
     responses: Array<ResponseUnlinked>;
@@ -614,6 +617,7 @@ export type QuestionUnlinked = {
     question_text: string;
     api_identifier: string;
     created_at: string;
+    position?: number | null;
 };
 
 export type RawSearchResponse = {
