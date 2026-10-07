@@ -10,7 +10,11 @@ import {
 } from "@/components/ui/alert-dialog"
 import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
-import { useMutation, useQueryClient } from "@tanstack/react-query"
+import {
+  type QueryClient,
+  useMutation,
+  useQueryClient,
+} from "@tanstack/react-query"
 import type { AxiosError } from "axios"
 import { Check, Loader2, Trash2 } from "lucide-react"
 import { useEffect, useRef, useState } from "react"
@@ -26,6 +30,8 @@ import {
 } from "../../client"
 import {
   deleteQuestionQuestionsQuestionQuestionApiIdDeleteMutation,
+  listDashboardLettersLettersLettersDashboardGetQueryKey,
+  listLettersLettersLettersGetQueryKey,
   readLetterLettersLetterLetterApiIdGetQueryKey,
   readUserMePartiesMeGetQueryKey,
 } from "../../client/@tanstack/react-query.gen"
@@ -330,6 +336,22 @@ function ResponseBlock(props: ResponseBlockProps) {
   )
 }
 
+function invalidateDashboardAndGroupLetterLists(
+  queryClient: QueryClient,
+  letter: PublicLetter | undefined,
+): void {
+  queryClient.invalidateQueries({
+    queryKey: listDashboardLettersLettersLettersDashboardGetQueryKey(),
+  })
+  if (letter?.group.api_identifier) {
+    queryClient.invalidateQueries({
+      queryKey: listLettersLettersLettersGetQueryKey({
+        query: { group_api_id: letter.group.api_identifier },
+      }),
+    })
+  }
+}
+
 function DraftQuestion({
   question,
   loopApiId,
@@ -347,6 +369,10 @@ function DraftQuestion({
   )
   const showToast = useCustomToast()
   const [deleteOpen, setDeleteOpen] = useState(false)
+  // Multi-file upload calls newHandleUpload once per file before `question`
+  // re-renders, so the prop still looks unanswered. Remember that we already
+  // invalidated lists for this question's first response.
+  const didInvalidateListsForFirstResponseRef = useRef(false)
 
   const deleteMutation = useMutation({
     ...deleteQuestionQuestionsQuestionQuestionApiIdDeleteMutation(),
@@ -357,6 +383,16 @@ function DraftQuestion({
           path: { letter_api_id: loopApiId },
         }),
       })
+      // Home / group Loops cards use list queries with a 30s staleTime; without
+      // this, unanswered counts stay wrong until the cache expires.
+      invalidateDashboardAndGroupLetterLists(
+        queryClient,
+        queryClient.getQueryData<PublicLetter>(
+          readLetterLettersLetterLetterApiIdGetQueryKey({
+            path: { letter_api_id: loopApiId },
+          }),
+        ),
+      )
     },
     onError: (
       error: AxiosError<DeleteQuestionQuestionsQuestionQuestionApiIdDeleteError>,
@@ -395,6 +431,15 @@ function DraftQuestion({
   })
 
   const handleUpsert = async (responseText: string): Promise<void> => {
+    // First response for this question moves Home "Waiting on you" counts;
+    // later text edits do not. Skip list invalidation on edit so debounced
+    // autosave does not refetch the dashboard on every keystroke flush.
+    const isFirstResponseForUser =
+      !didInvalidateListsForFirstResponseRef.current &&
+      !question.responses.some(
+        (r) => r.participant.api_identifier === currentUser.api_identifier,
+      )
+
     const { data: updatedQuestion } =
       await upsertResponseQuestionsQuestionQuestionApiIdUpsertResponsePost({
         path: { question_api_id: question.api_identifier },
@@ -470,9 +515,27 @@ function DraftQuestion({
     if (!didPatch) {
       await queryClient.invalidateQueries({ queryKey: letterQueryKey })
     }
+
+    if (isFirstResponseForUser) {
+      // Home dashboard / group Loops list use 30s staleTime; without this the
+      // card stays under "Waiting on you" until the cache expires (#421/#423).
+      didInvalidateListsForFirstResponseRef.current = true
+      invalidateDashboardAndGroupLetterLists(
+        queryClient,
+        queryClient.getQueryData<PublicLetter>(letterQueryKey),
+      )
+    }
   }
 
   const newHandleUpload = async (file: File) => {
+    // :upload_image creates an empty response when none exists, which Home
+    // counts as answered. Invalidate lists only for that first response, not
+    // on later files (the ref covers the rest of one multi-file picker).
+    const isFirstResponseForUser =
+      !didInvalidateListsForFirstResponseRef.current &&
+      !question.responses.some(
+        (r) => r.participant.api_identifier === currentUser.api_identifier,
+      )
     try {
       await uploadImageQuestionsQuestionQuestionApiIdUploadImagePost({
         path: { question_api_id: question.api_identifier },
@@ -486,6 +549,13 @@ function DraftQuestion({
           path: { letter_api_id: loopApiId },
         }),
       })
+      if (isFirstResponseForUser) {
+        didInvalidateListsForFirstResponseRef.current = true
+        invalidateDashboardAndGroupLetterLists(
+          queryClient,
+          queryClient.getQueryData<PublicLetter>(letterQueryKey),
+        )
+      }
     } catch (error) {
       const axiosError = error as AxiosError<{ detail?: unknown }>
       showToast(
