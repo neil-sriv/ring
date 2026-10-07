@@ -32,6 +32,9 @@ _SENSITIVE_QUERY_KEYS: Final[frozenset[str]] = frozenset(
         "refresh_token",
         "password",
         "authorization",
+        # Spotify OAuth callback carries a one-time code and a signed state.
+        "code",
+        "state",
     }
 )
 
