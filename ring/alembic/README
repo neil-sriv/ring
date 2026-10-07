@@ -1,1 +1,6 @@
 Generic single-database configuration.
+
+`head` is the current Alembic head revision id. Every new revision must
+replace that line (`ring db generate` does this). Two migration PRs
+forked from the same parent both rewrite the file, so git conflicts
+instead of merging into two Alembic heads.

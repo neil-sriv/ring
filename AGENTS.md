@@ -64,12 +64,15 @@ Merges to `dev` ship themselves. Treat every backend-touching PR as a
 prod deploy:
 
 - **Additive migrations only.** Auto-deploy runs `alembic upgrade head`
-  against CockroachDB Cloud with nobody watching. Drops/renames are
-  two-step. CI gate: `.github/workflows/check_migrations.yml` (also
-  `ring db check-migrations` / `ring db check-schema-drift` locally).
-  After a migration that changes tables/columns, refresh
-  `ring/db/schema.sql` with `ring db autogenerate-schema` — pytest builds
-  from that dump, not from Alembic.
+ against CockroachDB Cloud with nobody watching. Drops/renames are
+ two-step. CI gate: `.github/workflows/check_migrations.yml` (also
+ `ring db check-migrations` / `ring db check-schema-drift` /
+ `ring db check-alembic-head` locally). After a migration that changes
+ tables/columns, refresh `ring/db/schema.sql` with
+ `ring db autogenerate-schema` — pytest builds from that dump, not from
+ Alembic. Pin `ring/alembic/head` to the new revision (`ring db generate`
+ does this). Two concurrent migration PRs both rewrite that file and
+ git-conflict, so a sibling cannot land as a second Alembic head.
 - **Backend-first PRs** ([`ring-split-pr`](.cursor/skills/ring-split-pr/SKILL.md)).
   Frontend deploys within minutes of merge; OpenAPI-consuming UI must
   land only after the API change is live (check
@@ -168,7 +171,7 @@ ring fe dev               # Vite at https://localhost:5173
 When backend API shape changes:
 
 ```bash
-ring db generate "<message>"  # create alembic revision (autogenerate)
+ring db generate "<message>"  # create alembic revision + pin ring/alembic/head
 ring db upgrade               # apply
 ring fe regen                 # refresh react/src/client/ from OpenAPI
 ```
@@ -211,7 +214,7 @@ this mode.
 | TypeScript           | `cd react && npx tsc --noEmit`                                 |
 | Frontend build       | `cd react && pnpm run build`                                   |
 | Backend tests        | `ring test run` (Compose `compose.test.yml`, profile `test`)   |
-| Migrations (CD gate) | `ring db check-migrations` then `ring db check-schema-drift`   |
+| Migrations (CD gate) | `ring db check-alembic-head` then `check-migrations` then `check-schema-drift` |
 
 Backend tests run inside a dedicated `ring-test-runner` container against a
 separate CockroachDB instance on port 8008. The migration gate applies every

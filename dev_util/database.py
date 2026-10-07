@@ -5,9 +5,10 @@ from typing import Any
 
 import click
 
-from dev_util.compose import compose_exec
+from dev_util.compose import compose_exec, compose_starter
 from dev_util.dev import ROOT_DIR, dev_command, dev_group, subprocess_run
 from dev_util.schema_drift import clean_dump, compare
+from ring.lib.alembic_head import AlembicHeadError, check_committed_head
 
 # Prod DB is CockroachDB Cloud (cluster ring-db), not RDS. See docs/infrastructure.md.
 LOCAL_COCKROACH_URI = "postgresql://root@127.0.0.1:26257/ring"
@@ -122,15 +123,58 @@ def db_check_schema_drift(
     click.echo("db/schema.sql matches the migrated schema.")
 
 
-@compose_exec("generate", db, "api", "ring")
+@dev_command("check-alembic-head", db)
+def db_check_alembic_head(
+    ctx: click.Context,
+    *args: list[Any],
+    **kwargs: dict[Any, Any],
+) -> None:
+    """Require ring/alembic/head to match the sole Alembic script head."""
+    try:
+        revision = check_committed_head()
+    except AlembicHeadError as exc:
+        raise click.ClickException(str(exc)) from exc
+    click.echo(f"ring/alembic/head matches alembic heads ({revision}).")
+
+
+@dev_command("generate", db)
 @click.argument("message")
+@click.option("--profile", type=str, default="dev")
 def db_generate(
     ctx: click.Context,
     message: str,
+    profile: str,
     *args: list[Any],
     **kwargs: dict[Any, Any],
-) -> list[str]:
-    return ["alembic", "revision", "--autogenerate", "-m", message]
+) -> None:
+    """Autogenerate a revision and pin ring/alembic/head to it.
+
+    The committed head file is what makes two concurrent migration PRs
+    git-conflict instead of landing as two Alembic heads.
+    """
+    from ring.lib.alembic_head import write_committed_head
+
+    subprocess_run(
+        compose_starter(profile)
+        + [
+            "exec",
+            "-w",
+            "/src/ring",
+            "api",
+            "alembic",
+            "revision",
+            "--autogenerate",
+            "-m",
+            message,
+        ]
+        + list(ctx.args),
+        cwd=ROOT_DIR,
+    )
+    try:
+        revision = write_committed_head()
+    except AlembicHeadError as exc:
+        raise click.ClickException(str(exc)) from exc
+    click.echo(f"Pinned ring/alembic/head to {revision}.")
 
 
 @compose_exec("alembic", db, "api", "ring")
