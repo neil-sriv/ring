@@ -469,6 +469,18 @@ Production:  https://ring.neilsriv.tech
   that file into `dist/` and the API rejects it as an infinite loop
   (error 100324) because default HTML handling already strips
   `.html` / `/index`.
+- Link-preview crawlers (Slack, iMessage, Facebook, Twitter, and the
+  other agents matched in
+  [react/src/og/preview.ts](../react/src/og/preview.ts)) do not run
+  JavaScript. [react/src/worker.ts](../react/src/worker.ts) answers their
+  page requests with Open Graph HTML before the SPA shell. Copy is chosen
+  from the path and is static: a newsletter, invite, notebook, or group
+  link never includes that resource's name or body. Browsers, `/api/*`,
+  and any request whose last segment looks like a file still receive the
+  built assets. `vite dev` and `vite preview` apply the same split via
+  [react/plugins/open-graph.ts](../react/plugins/open-graph.ts). Cards
+  are `Cache-Control: private, no-store` because Cloudflare does not
+  honor `Vary`, and a cached card on the page URL would replace the app.
 - [react/.nvmrc](../react/.nvmrc) pins Node 22.14.0 for the build image.
 
 ### Create the project (current dashboard)

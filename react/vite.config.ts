@@ -6,6 +6,7 @@ import { defineConfig } from "vite"
 import { VitePWA, type VitePWAOptions } from "vite-plugin-pwa"
 import topLevelAwait from "vite-plugin-top-level-await"
 import wasm from "vite-plugin-wasm"
+import { openGraph } from "./plugins/open-graph"
 import { VERSION_FILE_NAME, versionStamp } from "./plugins/version-stamp"
 
 const pwaOptions: Partial<VitePWAOptions> = {
@@ -106,6 +107,7 @@ export default defineConfig({
     wasm(),
     topLevelAwait(),
     versionStamp(),
+    openGraph(),
   ],
   resolve: {
     alias: {
