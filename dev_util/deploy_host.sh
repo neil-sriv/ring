@@ -52,7 +52,7 @@ Full host rollout: git sync, pull ECR image, migrate, compose up, verify.
   --skip-git            Do not fetch/checkout (use to roll back the image
                         without reverting compose to a pre-cutover SHA)
   --skip-pull           Do not run prod.sh
-  --skip-migrate        Do not run `uv run ring db upgrade --profile prod`
+  --skip-migrate        Do not run alembic upgrade head
   --skip-verify         Do not curl GET /api/v1/version
   --rollback-on-fail    On verify failure, re-run against the pre-deploy
                         image SHA (live image_build.sha; HEAD if probe fails)
@@ -247,9 +247,52 @@ if [[ "$SKIP_PULL" -eq 0 ]]; then
   "${ROOT}/dev_util/prod.sh" "$SHA"
 fi
 
+# docker compose run from the image prod.sh just tagged (prod-ring-api).
+# `exec` would migrate the already-running container, one deploy behind.
+compose_prod() {
+  docker compose -f compose.core.yml -f compose.prod.yml --profile prod "$@"
+}
+
+# Exit 0 when this image's scripts contain the DB revision. Exit 2 when
+# the database is already past this image (rollback onto an older image):
+# `alembic upgrade head` would die with "Can't locate revision" and, under
+# set -e, skip the compose recreate. Any other failure is fatal.
+image_can_migrate() {
+  compose_prod run --rm --no-deps -T -w /src/ring api python -c '
+import os
+import sys
+
+from alembic.config import Config
+from alembic.script import ScriptDirectory
+from sqlalchemy import create_engine, text
+
+known = {
+    rev.revision
+    for rev in ScriptDirectory.from_config(Config("alembic.ini")).walk_revisions()
+}
+engine = create_engine(os.environ["COCKROACH_DATABASE_URI"])
+with engine.connect() as conn:
+    current = conn.execute(
+        text("SELECT version_num FROM alembic_version")
+    ).scalar()
+if current is not None and current not in known:
+    sys.exit(2)
+'
+}
+
 if [[ "$SKIP_MIGRATE" -eq 0 ]]; then
   echo "==> Running migrations"
-  ring_cmd db upgrade --profile prod
+  if image_can_migrate; then
+    # -T: Actions SSH has no TTY.
+    compose_prod run --rm --no-deps -T -w /src/ring api alembic upgrade head
+  else
+    migrate_status=$?
+    if [[ "$migrate_status" -eq 2 ]]; then
+      echo "==> Database revision is newer than this image; skipping alembic upgrade" >&2
+    else
+      exit "$migrate_status"
+    fi
+  fi
 fi
 
 echo "==> Recreating Compose (prod)"

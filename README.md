@@ -246,7 +246,7 @@ cd ring
 ```
 
 That force-checkouts git (compose/nginx), pulls `ring-api:<sha>`, runs
-`uv run ring db upgrade --profile prod`, recreates Compose, and checks
+`alembic upgrade head` in a new container, recreates Compose, and checks
 `GET /api/v1/version` (`image_build.sha`). Pass a SHA that
 `publish_api.yml` actually tagged. Image-only restore:
 `./dev_util/deploy_host.sh --skip-git <sha>`.
