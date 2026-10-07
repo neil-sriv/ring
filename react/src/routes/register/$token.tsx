@@ -47,13 +47,16 @@ function Register() {
   // loader (and later refetches) re-render this page. getQueryData alone never
   // re-renders, and hooks below must run on every render — never after an
   // early return for an invalid token (Rules of Hooks).
-  const { data: invite, isError: inviteInvalid } = useQuery({
+  const { data: invite } = useQuery({
     ...validateTokenInvitesTokenTokenGetOptions({
       path: { token },
     }),
     retry: false,
   })
-  const validToken = Boolean(invite) && !inviteInvalid
+  // Trust the cached invite. A later refetch that errors keeps the last
+  // successful payload (isError flips true while data stays set), so tying
+  // validity to isError would wipe a filled form on a transient blip.
+  const validToken = Boolean(invite)
 
   const [showPassword, setShowPassword] = useState(false)
   const { registerMutation, error, resetError } = useRegister()
