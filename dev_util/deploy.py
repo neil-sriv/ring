@@ -296,7 +296,7 @@ def deploy_history(
     "--skip-migrate/--no-skip-migrate",
     default=False,
     show_default=True,
-    help="Skip `ring db upgrade --profile prod`.",
+    help="Skip `alembic upgrade head`.",
 )
 @click.option(
     "--skip-verify/--no-skip-verify",
