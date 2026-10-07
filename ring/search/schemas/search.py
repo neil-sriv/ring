@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from datetime import datetime
 from enum import Enum
 from typing import Any, Literal
 
@@ -24,6 +25,19 @@ class SearchType(str, Enum):
     DUAL = "dual"
 
 
+class SearchSort(str, Enum):
+    """How to order search hits.
+
+    ``relevance`` keeps the ranking each search type already uses (keyword
+    ts_rank, semantic distance, or document id when the query has no text).
+    The created-at sorts use the source entity's ``created_at``.
+    """
+
+    RELEVANCE = "relevance"
+    CREATED_AT_DESC = "created_at_desc"
+    CREATED_AT_ASC = "created_at_asc"
+
+
 SearchHitType = Literal["user", "group", "letter", "question", "response"]
 
 
@@ -41,6 +55,7 @@ class SearchHit(BaseModel):
     participant_count: int | None = None
     question_count: int | None = None
     group_count: int | None = None
+    created_at: datetime | None = None
 
     @classmethod
     def from_model(cls, model: Any) -> "SearchHit":
@@ -57,6 +72,7 @@ class SearchHit(BaseModel):
                 title=model.name or model.email,
                 subtitle=f"Member of {len(model.groups)} groups",
                 group_count=len(model.groups),
+                created_at=model.created_at,
             )
 
         if isinstance(model, Group):
@@ -70,6 +86,7 @@ class SearchHit(BaseModel):
                 href_group_id=model.api_identifier,
                 member_count=member_count,
                 letter_count=letter_count,
+                created_at=model.created_at,
             )
 
         if isinstance(model, Letter):
@@ -85,6 +102,7 @@ class SearchHit(BaseModel):
                 href_loop_id=model.api_identifier,
                 participant_count=participant_count,
                 question_count=question_count,
+                created_at=model.created_at,
             )
 
         if isinstance(model, Question):
@@ -98,6 +116,7 @@ class SearchHit(BaseModel):
                 detail=f"{response_count} responses",
                 href_loop_id=letter.api_identifier,
                 response_count=response_count,
+                created_at=model.created_at,
             )
 
         if isinstance(model, Response):
@@ -111,6 +130,7 @@ class SearchHit(BaseModel):
                 subtitle=model.response_text,
                 detail=f"Q: {question.question_text} • by {author}",
                 href_loop_id=letter.api_identifier,
+                created_at=model.created_at,
             )
 
         raise ValueError(f"Unsupported search result model: {type(model)}")

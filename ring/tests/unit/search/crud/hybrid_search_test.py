@@ -7,6 +7,7 @@ It verifies both basic operations and edge cases.
 
 from __future__ import annotations
 
+from datetime import UTC, datetime
 from unittest.mock import MagicMock, patch
 
 from faker import Faker
@@ -30,7 +31,7 @@ from ring.search.models.hybrid_search import (
     HybridSearchDocumentAssociation,
     SearchableType,
 )
-from ring.search.schemas.search import SearchType
+from ring.search.schemas.search import SearchSort, SearchType
 from ring.tests.factories.letters.letter_factory import LetterFactory
 from ring.tests.factories.letters.question_factory import QuestionFactory
 from ring.tests.factories.letters.response_factory import ResponseFactory
@@ -323,7 +324,13 @@ class TestHybridSearchCRUD:
 
         assert results == mock_ranked_results
         mock_dual_search.assert_called_once_with(
-            db_session, "test query", 30, None
+            db_session,
+            "test query",
+            30,
+            None,
+            group_api_id=None,
+            participant_api_id=None,
+            sort=SearchSort.RELEVANCE,
         )
         mock_get_model_ids.assert_called_once_with(db_session, mock_documents)
         assert mock_hydrate.call_args_list[0].args == (
@@ -393,7 +400,13 @@ class TestHybridSearchCRUD:
 
         assert results == [mock_users[1]]
         mock_dual_search.assert_called_once_with(
-            db_session, "test query", 6, None
+            db_session,
+            "test query",
+            6,
+            None,
+            group_api_id=None,
+            participant_api_id=None,
+            sort=SearchSort.RELEVANCE,
         )
 
         results_past_end = search(
@@ -460,7 +473,13 @@ class TestHybridSearchCRUD:
 
         assert results == [mock_user_1, mock_user_2]
         mock_dual_search.assert_called_once_with(
-            db_session, "test query", 30, [SearchableType.USER]
+            db_session,
+            "test query",
+            30,
+            [SearchableType.USER],
+            group_api_id=None,
+            participant_api_id=None,
+            sort=SearchSort.RELEVANCE,
         )
         assert len(mock_hydrate.call_args_list) == 1
         assert mock_hydrate.call_args_list[0].args == (
@@ -733,3 +752,242 @@ class TestHybridSearchCRUD:
             for association in document.associations
         }
         assert result_ids == {question.api_identifier}
+
+
+def _indexed_ids(documents: list[HybridSearchDocument]) -> list[str]:
+    return [
+        association.model_api_identifier
+        for document in documents
+        for association in document.associations
+    ]
+
+
+class TestSearchFiltersAndSort:
+    """Group, responder, and time-sort constraints applied in SQL."""
+
+    def test_keyword_search_filters_by_group(
+        self, db_session: Session
+    ) -> None:
+        """A group filter keeps that group and its letter content only."""
+        group_a = GroupFactory.create()
+        group_b = GroupFactory.create()
+        outsider = UserFactory.create(name="Outsider Profile")
+        letter_a = LetterFactory.create(group=group_a)
+        letter_b = LetterFactory.create(group=group_b)
+        question_a = QuestionFactory.create(
+            letter=letter_a, question_text="capybara picnic plans"
+        )
+        question_b = QuestionFactory.create(
+            letter=letter_b, question_text="capybara picnic plans"
+        )
+        response_a = ResponseFactory.create(
+            question=question_a,
+            response_text="capybara picnic was lovely",
+        )
+        indexed = [
+            (group_a, SearchableType.GROUP, group_a.name + " capybara"),
+            (group_b, SearchableType.GROUP, group_b.name + " capybara"),
+            (letter_a, SearchableType.LETTER, "capybara letter"),
+            (question_a, SearchableType.QUESTION, question_a.question_text),
+            (question_b, SearchableType.QUESTION, question_b.question_text),
+            (response_a, SearchableType.RESPONSE, response_a.response_text),
+            (outsider, SearchableType.USER, "capybara outsider"),
+        ]
+        for model, model_type, raw_text in indexed:
+            create_hybrid_search_document(
+                db_session,
+                raw_text=raw_text,
+                model_api_identifier=model.api_identifier,
+                model_type=model_type,
+            )
+        db_session.commit()
+
+        results = keyword_search_hybrid_search_document(
+            db_session,
+            "capybara",
+            limit=10,
+            group_api_id=group_a.api_identifier,
+        )
+        result_ids = set(_indexed_ids(results))
+        assert result_ids == {
+            group_a.api_identifier,
+            letter_a.api_identifier,
+            question_a.api_identifier,
+            response_a.api_identifier,
+        }
+
+    def test_keyword_search_filters_by_responder(
+        self, db_session: Session
+    ) -> None:
+        """A responder filter keeps that person's responses, not their questions."""
+        group = GroupFactory.create()
+        ada = UserFactory.create(name="Ada Responder")
+        bea = UserFactory.create(name="Bea Responder")
+        letter = LetterFactory.create(group=group)
+        ada_question = QuestionFactory.create(
+            letter=letter,
+            author=ada,
+            question_text="iguana migration question",
+        )
+        ada_response = ResponseFactory.create(
+            question=ada_question,
+            participant=ada,
+            response_text="iguana migration answer",
+        )
+        bea_response = ResponseFactory.create(
+            question=ada_question,
+            participant=bea,
+            response_text="iguana migration answer",
+        )
+        for model, model_type, raw_text in (
+            (
+                ada_question,
+                SearchableType.QUESTION,
+                ada_question.question_text,
+            ),
+            (
+                ada_response,
+                SearchableType.RESPONSE,
+                ada_response.response_text,
+            ),
+            (
+                bea_response,
+                SearchableType.RESPONSE,
+                bea_response.response_text,
+            ),
+        ):
+            create_hybrid_search_document(
+                db_session,
+                raw_text=raw_text,
+                model_api_identifier=model.api_identifier,
+                model_type=model_type,
+            )
+        db_session.commit()
+
+        results = keyword_search_hybrid_search_document(
+            db_session,
+            "iguana",
+            participant_api_id=ada.api_identifier,
+        )
+        assert _indexed_ids(results) == [ada_response.api_identifier]
+
+    def test_keyword_search_group_and_responder_together(
+        self, db_session: Session
+    ) -> None:
+        """Group and responder filters both have to match the same document."""
+        group_a = GroupFactory.create()
+        group_b = GroupFactory.create()
+        ada = UserFactory.create(name="Ada Both")
+        letter_a = LetterFactory.create(group=group_a)
+        letter_b = LetterFactory.create(group=group_b)
+        question_a = QuestionFactory.create(
+            letter=letter_a, question_text="platypus note"
+        )
+        question_b = QuestionFactory.create(
+            letter=letter_b, question_text="platypus note"
+        )
+        response_a = ResponseFactory.create(
+            question=question_a,
+            participant=ada,
+            response_text="platypus note from ada",
+        )
+        response_b = ResponseFactory.create(
+            question=question_b,
+            participant=ada,
+            response_text="platypus note from ada",
+        )
+        for model in (response_a, response_b):
+            create_hybrid_search_document(
+                db_session,
+                raw_text=model.response_text,
+                model_api_identifier=model.api_identifier,
+                model_type=SearchableType.RESPONSE,
+            )
+        db_session.commit()
+
+        results = keyword_search_hybrid_search_document(
+            db_session,
+            "platypus",
+            group_api_id=group_a.api_identifier,
+            participant_api_id=ada.api_identifier,
+        )
+        assert _indexed_ids(results) == [response_a.api_identifier]
+
+    def test_keyword_search_sorts_by_entity_created_at(
+        self, db_session: Session
+    ) -> None:
+        """Time sort uses the entity timestamp and is applied before limit."""
+        group = GroupFactory.create()
+        letter = LetterFactory.create(group=group)
+        question = QuestionFactory.create(
+            letter=letter, question_text="shared kookaburra prompt"
+        )
+        older = ResponseFactory.create(
+            question=question, response_text="kookaburra called once"
+        )
+        newer = ResponseFactory.create(
+            question=question, response_text="kookaburra called twice"
+        )
+        older.created_at = datetime(2020, 1, 1, tzinfo=UTC)
+        newer.created_at = datetime(2024, 6, 1, tzinfo=UTC)
+        for model in (older, newer):
+            create_hybrid_search_document(
+                db_session,
+                raw_text=model.response_text,
+                model_api_identifier=model.api_identifier,
+                model_type=SearchableType.RESPONSE,
+            )
+        db_session.commit()
+
+        newest_first = keyword_search_hybrid_search_document(
+            db_session, "kookaburra", sort=SearchSort.CREATED_AT_DESC
+        )
+        assert _indexed_ids(newest_first) == [
+            newer.api_identifier,
+            older.api_identifier,
+        ]
+
+        oldest_first = keyword_search_hybrid_search_document(
+            db_session,
+            "kookaburra",
+            limit=1,
+            sort=SearchSort.CREATED_AT_ASC,
+        )
+        assert _indexed_ids(oldest_first) == [older.api_identifier]
+
+    def test_group_filter_is_applied_before_limit(
+        self, db_session: Session
+    ) -> None:
+        """A tight limit still returns the matching group, not a nearer miss."""
+        group_a = GroupFactory.create()
+        group_b = GroupFactory.create()
+        letter_a = LetterFactory.create(group=group_a)
+        letter_b = LetterFactory.create(group=group_b)
+        question_a = QuestionFactory.create(
+            letter=letter_a, question_text="quokka uniquely here"
+        )
+        for _ in range(3):
+            other = QuestionFactory.create(
+                letter=letter_b, question_text="quokka uniquely here"
+            )
+            create_hybrid_search_document(
+                db_session,
+                raw_text=other.question_text,
+                model_api_identifier=other.api_identifier,
+                model_type=SearchableType.QUESTION,
+            )
+        create_hybrid_search_document(
+            db_session,
+            raw_text=question_a.question_text,
+            model_api_identifier=question_a.api_identifier,
+            model_type=SearchableType.QUESTION,
+        )
+        db_session.commit()
+
+        results = keyword_search_hybrid_search_document(
+            db_session,
+            "quokka",
+            limit=1,
+            group_api_id=group_a.api_identifier,
+        )
+        assert _indexed_ids(results) == [question_a.api_identifier]
