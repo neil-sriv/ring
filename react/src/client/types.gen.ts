@@ -355,6 +355,27 @@ export type Image = {
 };
 
 /**
+ * One inbox row as returned by the API.
+ */
+export type InboxItemResponse = {
+    api_identifier: string;
+    title: string;
+    body: string;
+    target_api_id: string | null;
+    href: string;
+    read_at: string | null;
+    created_at: string;
+    unread: boolean;
+};
+
+/**
+ * Unread total for the current user.
+ */
+export type InboxUnreadCount = {
+    unread_count: number;
+};
+
+/**
  * Schema for creating a new invite.
  *
  * Attributes:
@@ -2217,6 +2238,94 @@ export type PostSubscriptionNotificationsSubscriptionPostResponses = {
 };
 
 export type PostSubscriptionNotificationsSubscriptionPostResponse = PostSubscriptionNotificationsSubscriptionPostResponses[keyof PostSubscriptionNotificationsSubscriptionPostResponses];
+
+export type ListInboxNotificationsInboxGetData = {
+    body?: never;
+    path?: never;
+    query?: {
+        skip?: number;
+        limit?: number;
+        unread_only?: boolean;
+    };
+    url: '/notifications/inbox';
+};
+
+export type ListInboxNotificationsInboxGetErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type ListInboxNotificationsInboxGetError = ListInboxNotificationsInboxGetErrors[keyof ListInboxNotificationsInboxGetErrors];
+
+export type ListInboxNotificationsInboxGetResponses = {
+    /**
+     * Successful Response
+     */
+    200: Array<InboxItemResponse>;
+};
+
+export type ListInboxNotificationsInboxGetResponse = ListInboxNotificationsInboxGetResponses[keyof ListInboxNotificationsInboxGetResponses];
+
+export type GetUnreadCountNotificationsInboxUnreadCountGetData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/notifications/inbox/unread-count';
+};
+
+export type GetUnreadCountNotificationsInboxUnreadCountGetResponses = {
+    /**
+     * Successful Response
+     */
+    200: InboxUnreadCount;
+};
+
+export type GetUnreadCountNotificationsInboxUnreadCountGetResponse = GetUnreadCountNotificationsInboxUnreadCountGetResponses[keyof GetUnreadCountNotificationsInboxUnreadCountGetResponses];
+
+export type ReadAllInboxNotificationsInboxReadAllPostData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/notifications/inbox/read-all';
+};
+
+export type ReadAllInboxNotificationsInboxReadAllPostResponses = {
+    /**
+     * Successful Response
+     */
+    200: ResponseMessage;
+};
+
+export type ReadAllInboxNotificationsInboxReadAllPostResponse = ReadAllInboxNotificationsInboxReadAllPostResponses[keyof ReadAllInboxNotificationsInboxReadAllPostResponses];
+
+export type ReadInboxItemNotificationsInboxInboxApiIdReadPostData = {
+    body?: never;
+    path: {
+        inbox_api_id: string;
+    };
+    query?: never;
+    url: '/notifications/inbox/{inbox_api_id}/read';
+};
+
+export type ReadInboxItemNotificationsInboxInboxApiIdReadPostErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type ReadInboxItemNotificationsInboxInboxApiIdReadPostError = ReadInboxItemNotificationsInboxInboxApiIdReadPostErrors[keyof ReadInboxItemNotificationsInboxInboxApiIdReadPostErrors];
+
+export type ReadInboxItemNotificationsInboxInboxApiIdReadPostResponses = {
+    /**
+     * Successful Response
+     */
+    200: InboxItemResponse;
+};
+
+export type ReadInboxItemNotificationsInboxInboxApiIdReadPostResponse = ReadInboxItemNotificationsInboxInboxApiIdReadPostResponses[keyof ReadInboxItemNotificationsInboxInboxApiIdReadPostResponses];
 
 export type RawSearchSearchRawSearchGetData = {
     body?: never;

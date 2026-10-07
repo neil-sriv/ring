@@ -814,7 +814,7 @@
           "parties"
         ],
         "summary": "Create Group",
-        "description": "Create a new group.\n\nArgs:\n    group (GroupCreate): Group creation parameters\n    req_dep (AuthenticatedRequestDependencies): Request dependencies\n\nReturns:\n    Group: Created group\n\nRaises:\n    HTTPException: If group creation fails",
+        "description": "Create a new group.\n\nThe authenticated caller is always the group admin. Clients may still\nsend ``admin_api_identifier`` for backwards compatibility, but it must\nmatch the current user — another user's id is rejected.\n\nArgs:\n    group (GroupCreate): Group creation parameters\n    req_dep (AuthenticatedRequestDependencies): Request dependencies\n\nReturns:\n    Group: Created group\n\nRaises:\n    HTTPException: If admin_api_identifier is not the current user, or\n        group creation fails",
         "operationId": "create_group_parties_group_post",
         "requestBody": {
           "content": {
@@ -2494,6 +2494,184 @@
         ]
       }
     },
+    "/notifications/inbox": {
+      "get": {
+        "tags": [
+          "notifications"
+        ],
+        "summary": "List Inbox",
+        "description": "List the current user's inbox, newest first.\n\nRows are selected by recipient. Other users' items are not loaded.",
+        "operationId": "list_inbox_notifications_inbox_get",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "skip",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 0,
+              "default": 0,
+              "title": "Skip"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 100,
+              "minimum": 1,
+              "default": 50,
+              "title": "Limit"
+            }
+          },
+          {
+            "name": "unread_only",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "default": false,
+              "title": "Unread Only"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/InboxItemResponse"
+                  },
+                  "title": "Response List Inbox Notifications Inbox Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/notifications/inbox/unread-count": {
+      "get": {
+        "tags": [
+          "notifications"
+        ],
+        "summary": "Get Unread Count",
+        "description": "Return how many of the current user's inbox rows are unread.",
+        "operationId": "get_unread_count_notifications_inbox_unread_count_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InboxUnreadCount"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ]
+      }
+    },
+    "/notifications/inbox/read-all": {
+      "post": {
+        "tags": [
+          "notifications"
+        ],
+        "summary": "Read All Inbox",
+        "description": "Mark every unread inbox row for the current user as read.",
+        "operationId": "read_all_inbox_notifications_inbox_read_all_post",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResponseMessage"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ]
+      }
+    },
+    "/notifications/inbox/{inbox_api_id}/read": {
+      "post": {
+        "tags": [
+          "notifications"
+        ],
+        "summary": "Read Inbox Item",
+        "description": "Mark one inbox item read.\n\nAuthorization uses the scoped enforcer for this id. A missing id and\nanother user's id both return 403.",
+        "operationId": "read_inbox_item_notifications_inbox__inbox_api_id__read_post",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "inbox_api_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Inbox Api Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InboxItemResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/search/raw-search": {
       "get": {
         "tags": [
@@ -3900,6 +4078,85 @@
         ],
         "title": "Image",
         "description": "Schema for image data.\n\nRepresents an image stored in S3 with its media type.\n\nAttributes:\n    s3_url (str): S3 key/path for the image\n    media_type (MediaType): Type of media (image/video)"
+      },
+      "InboxItemResponse": {
+        "properties": {
+          "api_identifier": {
+            "type": "string",
+            "title": "Api Identifier"
+          },
+          "title": {
+            "type": "string",
+            "title": "Title"
+          },
+          "body": {
+            "type": "string",
+            "title": "Body"
+          },
+          "target_api_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Target Api Id"
+          },
+          "href": {
+            "type": "string",
+            "title": "Href"
+          },
+          "read_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Read At"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          },
+          "unread": {
+            "type": "boolean",
+            "title": "Unread"
+          }
+        },
+        "type": "object",
+        "required": [
+          "api_identifier",
+          "title",
+          "body",
+          "target_api_id",
+          "href",
+          "read_at",
+          "created_at",
+          "unread"
+        ],
+        "title": "InboxItemResponse",
+        "description": "One inbox row as returned by the API."
+      },
+      "InboxUnreadCount": {
+        "properties": {
+          "unread_count": {
+            "type": "integer",
+            "title": "Unread Count"
+          }
+        },
+        "type": "object",
+        "required": [
+          "unread_count"
+        ],
+        "title": "InboxUnreadCount",
+        "description": "Unread total for the current user."
       },
       "InviteCreate": {
         "properties": {
