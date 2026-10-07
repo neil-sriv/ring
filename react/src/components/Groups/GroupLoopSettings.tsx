@@ -1,7 +1,7 @@
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { useMutation, useQueryClient } from "@tanstack/react-query"
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import { useEffect, useRef, useState } from "react"
 import {
   Controller,
@@ -15,6 +15,7 @@ import type { AxiosError } from "axios"
 import { Loader2, Plus } from "lucide-react"
 import type { GroupLinked } from "../../client"
 import {
+  readGroupPartiesGroupGroupApiIdGetOptions,
   readGroupPartiesGroupGroupApiIdGetQueryKey,
   replaceGroupDefaultQuestionsPartiesGroupGroupApiIdReplaceDefaultQuestionsPostMutation,
   updateGroupPartiesGroupGroupApiIdPatchMutation,
@@ -68,11 +69,13 @@ function GroupLoopSettings({ groupId }: { groupId: string }) {
   const showToast = useCustomToast()
   const [editMode, setEditMode] = useState(false)
   const router = useRouter()
-  const group = queryClient.getQueryData<GroupLinked>(
-    readGroupPartiesGroupGroupApiIdGetQueryKey({
+  // Subscribe so view-mode cycle / questions update when the group query is
+  // refetched or overwritten in cache. getQueryData alone never re-renders.
+  const { data: group } = useQuery({
+    ...readGroupPartiesGroupGroupApiIdGetOptions({
       path: { group_api_id: groupId },
     }),
-  )
+  })
 
   // Hooks must run unconditionally — never after the group early-return below.
   const {
