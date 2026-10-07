@@ -41,6 +41,10 @@ async def create_group(
 ) -> Group:
     """Create a new group.
 
+    The authenticated caller is always the group admin. Clients may still
+    send ``admin_api_identifier`` for backwards compatibility, but it must
+    match the current user — another user's id is rejected.
+
     Args:
         group (GroupCreate): Group creation parameters
         req_dep (AuthenticatedRequestDependencies): Request dependencies
@@ -49,10 +53,18 @@ async def create_group(
         Group: Created group
 
     Raises:
-        HTTPException: If group creation fails
+        HTTPException: If admin_api_identifier is not the current user, or
+            group creation fails
     """
+    if group.admin_api_identifier != req_dep.current_user.api_identifier:
+        raise HTTPException(
+            status.HTTP_403_FORBIDDEN,
+            "Cannot create a group with a different user as admin",
+        )
     db_group = group_crud.create_group(
-        db=req_dep.db, admin_api_id=group.admin_api_identifier, name=group.name
+        db=req_dep.db,
+        admin_api_id=req_dep.current_user.api_identifier,
+        name=group.name,
     )
     req_dep.db.commit()
     return db_group
