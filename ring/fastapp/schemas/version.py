@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from datetime import datetime
 from typing import Literal
 
 from pydantic import BaseModel, Field
@@ -60,6 +61,24 @@ class DockerInfo(BaseModel):
     containers: list[ContainerVersion] = Field(default_factory=list)
 
 
+class SchedulerStatus(BaseModel):
+    """Liveness of the in-process APScheduler poll loop."""
+
+    enabled: bool = Field(
+        description="False when DISABLE_SCHEDULER is set for this process"
+    )
+    running: bool = Field(
+        description="Whether the APScheduler instance is currently started"
+    )
+    last_poll_completed_at: datetime | None = Field(
+        default=None,
+        description=(
+            "When the schedule poll job last finished in this process; "
+            "null until the first poll completes (polls run every minute)"
+        ),
+    )
+
+
 class VersionResponse(BaseModel):
     """Deploy diagnostic payload for GET /version."""
 
@@ -67,3 +86,4 @@ class VersionResponse(BaseModel):
     git: GitCommitInfo
     image_build: GitCommitInfo
     docker: DockerInfo
+    scheduler: SchedulerStatus | None = None

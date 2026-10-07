@@ -24,6 +24,8 @@ from ring.lib.request_logging import (
     sanitize_request_url,
 )
 from ring.notebook.sync import notebook_websocket_server
+from ring.sqlalchemy_base import SessionLocal
+from ring.tasks.crud import task as task_crud
 
 
 @asynccontextmanager
@@ -33,6 +35,16 @@ async def lifespan(app: FastAPI):
 
     ring_config = get_config()
     if not ring_config.DISABLE_SCHEDULER:
+        # The jobstore was wiped when the app modules initialized, so any
+        # task still IN_PROGRESS was stranded by the previous process and
+        # must go back to PENDING before the poll loop starts.
+        with SessionLocal() as db:
+            requeued = task_crud.requeue_in_progress_tasks(db)
+            if requeued:
+                logger.info(
+                    "Requeued {} task(s) stranded in progress by the "
+                    "previous process".format(requeued)
+                )
         scheduler.start()
 
     # Runs the notebook CRDT rooms' task group for the app's lifetime.
