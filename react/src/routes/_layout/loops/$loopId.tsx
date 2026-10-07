@@ -16,12 +16,32 @@ import { LoopReplyTracker } from "../../../components/Loops/LoopReplyTracker"
 import PublishedLoop from "../../../components/Loops/PublishedLoop"
 import AddQuestion from "../../../components/Question/AddQuestion"
 import GenerateQuestion from "../../../components/Question/GenerateQuestion"
+import { AddSongsToSpotify } from "../../../components/Spotify/AddSongsToSpotify"
 
 type IssueLoaderProps = {
   loop: PublicLetter
 }
 
+type LoopSearch = {
+  spotify?: string
+  spotify_action?: string
+  spotify_error?: string
+}
+
 export const Route = createFileRoute("/_layout/loops/$loopId")({
+  validateSearch: (search: Record<string, unknown>): LoopSearch => {
+    return {
+      spotify: typeof search.spotify === "string" ? search.spotify : undefined,
+      spotify_action:
+        typeof search.spotify_action === "string"
+          ? search.spotify_action
+          : undefined,
+      spotify_error:
+        typeof search.spotify_error === "string"
+          ? search.spotify_error
+          : undefined,
+    }
+  },
   loader: async ({ params, context }): Promise<IssueLoaderProps> => {
     const loop = await context.queryClient.ensureQueryData({
       ...readLetterLettersLetterLetterApiIdGetOptions({
@@ -52,6 +72,7 @@ function IssueContent() {
   const { data: currentUser } = useQuery({
     ...readUserMePartiesMeGetOptions(),
   })
+  const { spotify, spotify_action, spotify_error } = Route.useSearch()
   const localDueDate = new Date(loop.send_at)
   const isGroupAdmin =
     group.admin.api_identifier === currentUser?.api_identifier
@@ -123,6 +144,14 @@ function IssueContent() {
         ) : (
           <DraftLoop loop={loop} isGroupAdmin={isGroupAdmin} />
         )}
+      </div>
+      <div className="mt-10 border-t pt-6">
+        <AddSongsToSpotify
+          loopApiId={loop.api_identifier}
+          spotify={spotify}
+          spotifyAction={spotify_action}
+          spotifyError={spotify_error}
+        />
       </div>
       <EditLetter
         isOpen={editLoopOpen}
