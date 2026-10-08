@@ -20,8 +20,8 @@ import {
 } from "../../client/@tanstack/react-query.gen"
 import type { InboxItemResponse } from "../../client/types.gen"
 import useCustomToast from "../../hooks/useCustomToast"
-import { formatApiErrorDetail } from "../../util/misc"
 import { inboxDestination } from "../../util/inboxHref"
+import { formatApiErrorDetail } from "../../util/misc"
 
 function formatInboxTime(iso: string) {
   return new Date(iso).toLocaleString(undefined, {
