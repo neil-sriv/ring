@@ -1,5 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import { useNavigate } from "@tanstack/react-router"
+import type { AxiosError } from "axios"
 import { Bell, Loader2 } from "lucide-react"
 import { useState } from "react"
 
@@ -18,7 +19,9 @@ import {
   readInboxItemNotificationsInboxInboxApiIdReadPostMutation,
 } from "../../client/@tanstack/react-query.gen"
 import type { InboxItemResponse } from "../../client/types.gen"
+import useCustomToast from "../../hooks/useCustomToast"
 import { inboxDestination } from "../../util/inboxHref"
+import { formatApiErrorDetail } from "../../util/misc"
 
 function formatInboxTime(iso: string) {
   return new Date(iso).toLocaleString(undefined, {
@@ -32,6 +35,7 @@ function formatInboxTime(iso: string) {
 export function InboxBell() {
   const navigate = useNavigate()
   const queryClient = useQueryClient()
+  const showToast = useCustomToast()
   const [open, setOpen] = useState(false)
   // Build options during render. Module scope runs before main.tsx
   // calls client.setConfig, and the generated query key freezes that
@@ -62,13 +66,30 @@ export function InboxBell() {
     })
   }
 
+  function toastInboxError(err: AxiosError<{ detail?: unknown }>) {
+    showToast(
+      "Something went wrong.",
+      formatApiErrorDetail(
+        err.response?.data?.detail,
+        "Couldn't update inbox. Please try again.",
+      ),
+      "error",
+    )
+  }
+
   const markRead = useMutation({
     ...readInboxItemNotificationsInboxInboxApiIdReadPostMutation(),
     onSuccess: refreshInbox,
+    onError: (err: AxiosError<{ detail?: unknown }>) => {
+      toastInboxError(err)
+    },
   })
   const markAll = useMutation({
     ...readAllInboxNotificationsInboxReadAllPostMutation(),
     onSuccess: refreshInbox,
+    onError: (err: AxiosError<{ detail?: unknown }>) => {
+      toastInboxError(err)
+    },
   })
 
   async function openItem(item: InboxItemResponse) {
@@ -79,10 +100,19 @@ export function InboxBell() {
           path: { inbox_api_id: item.api_identifier },
         })
       } catch {
-        // Navigation does not depend on mark-read succeeding.
+        // onError already toasted; navigation does not depend on mark-read.
       }
     }
     await navigate(inboxDestination(item.href))
+  }
+
+  async function handleMarkAllRead() {
+    if (markAll.isPending) return
+    try {
+      await markAll.mutateAsync({})
+    } catch {
+      // onError already toasted
+    }
   }
 
   return (
@@ -110,10 +140,15 @@ export function InboxBell() {
           {unreadCount > 0 && (
             <button
               type="button"
-              className="text-xs font-medium text-primary hover:underline disabled:opacity-50"
+              className="inline-flex items-center gap-1 text-xs font-medium text-primary hover:underline disabled:opacity-50"
               disabled={markAll.isPending}
-              onClick={() => markAll.mutate({})}
+              onClick={() => {
+                void handleMarkAllRead()
+              }}
             >
+              {markAll.isPending && (
+                <Loader2 className="h-3 w-3 animate-spin" />
+              )}
               Mark all read
             </button>
           )}
