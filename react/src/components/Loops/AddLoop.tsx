@@ -90,8 +90,8 @@ const AddLetter = ({ isOpen, onClose, groupApiId }: AddLetterProps) => {
     },
   })
 
-  const onSubmit: SubmitHandler<LetterFormProps> = (data) => {
-    mutation.mutate({
+  const onSubmit: SubmitHandler<LetterFormProps> = async (data) => {
+    await mutation.mutateAsync({
       body: {
         group_api_identifier: groupApiId,
         send_at:
@@ -105,11 +105,15 @@ const AddLetter = ({ isOpen, onClose, groupApiId }: AddLetterProps) => {
     onClose()
   }
 
+  // RHF isSubmitting clears as soon as fire-and-forget mutate() returns;
+  // keep Save disabled for the full request via mutateAsync + isPending.
+  const isSaving = isSubmitting || mutation.isPending
+
   return (
     <Dialog
       open={isOpen}
       onOpenChange={(open) => {
-        if (!open) onCancel()
+        if (!open && !isSaving) onCancel()
       }}
     >
       <DialogContent className="sm:max-w-md">
@@ -130,6 +134,7 @@ const AddLetter = ({ isOpen, onClose, groupApiId }: AddLetterProps) => {
                 })}
                 type="datetime-local"
                 min={toISOLocal(new Date()).slice(0, 16)}
+                disabled={isSaving}
               />
               {errors.sendAt && (
                 <p className="text-xs text-destructive">
@@ -140,13 +145,16 @@ const AddLetter = ({ isOpen, onClose, groupApiId }: AddLetterProps) => {
           </div>
 
           <DialogFooter className="gap-2">
-            <Button type="submit" disabled={isSubmitting}>
-              {isSubmitting && (
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              )}
+            <Button type="submit" disabled={isSaving}>
+              {isSaving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
               Save
             </Button>
-            <Button type="button" variant="outline" onClick={onCancel}>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={onCancel}
+              disabled={isSaving}
+            >
               Cancel
             </Button>
           </DialogFooter>
