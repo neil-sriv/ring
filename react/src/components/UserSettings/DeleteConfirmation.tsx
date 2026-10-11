@@ -67,14 +67,18 @@ const DeleteConfirmation = ({ isOpen, onClose }: DeleteProps) => {
   })
 
   const onSubmit = async () => {
-    mutation.mutate()
+    // Await so RHF isSubmitting stays true for the full request; isPending
+    // covers the gap if the promise settles while React is still painting.
+    await mutation.mutateAsync()
   }
+
+  const isSaving = isSubmitting || mutation.isPending
 
   return (
     <AlertDialog
       open={isOpen}
       onOpenChange={(open) => {
-        if (!open) onClose()
+        if (!open && !isSaving) onClose()
       }}
     >
       <AlertDialogContent>
@@ -92,13 +96,13 @@ const DeleteConfirmation = ({ isOpen, onClose }: DeleteProps) => {
             <Button
               variant="outline"
               onClick={onClose}
-              disabled={isSubmitting}
+              disabled={isSaving}
               type="button"
             >
               Cancel
             </Button>
-            <Button variant="destructive" type="submit" disabled={isSubmitting}>
-              {isSubmitting && <Loader2 className="h-4 w-4 animate-spin" />}
+            <Button variant="destructive" type="submit" disabled={isSaving}>
+              {isSaving && <Loader2 className="h-4 w-4 animate-spin" />}
               Confirm
             </Button>
           </AlertDialogFooter>
