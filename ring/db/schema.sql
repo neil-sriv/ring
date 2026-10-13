@@ -11,6 +11,7 @@ CREATE TABLE public."user" (
 	api_identifier VARCHAR NOT NULL,
 	created_at TIMESTAMPTZ NOT NULL DEFAULT now():::TIMESTAMPTZ,
 	admin BOOL NOT NULL DEFAULT false,
+	spotify_refresh_token VARCHAR NULL,
 	CONSTRAINT user_pkey PRIMARY KEY (id ASC),
 	UNIQUE INDEX ix_user_api_identifier (api_identifier ASC),
 	INDEX ix_user_created_at (created_at ASC),
@@ -264,6 +265,19 @@ CREATE TABLE public.document_edits (
 	UNIQUE INDEX unique_document_edit_version (document_id ASC, version ASC),
 	INDEX ix_document_edits_created_at (created_at ASC)
 );
+CREATE TABLE public.user_spotify_playlist (
+	id INT8 NOT NULL DEFAULT unique_rowid(),
+	user_id INT8 NOT NULL,
+	group_id INT8 NOT NULL,
+	spotify_playlist_id VARCHAR NOT NULL,
+	created_at TIMESTAMPTZ NOT NULL DEFAULT now():::TIMESTAMPTZ,
+	CONSTRAINT user_spotify_playlist_pkey PRIMARY KEY (id ASC),
+	CONSTRAINT uq_user_group_spotify_playlist UNIQUE (user_id ASC, group_id ASC),
+	INDEX ix_user_spotify_playlist_id (id ASC),
+	INDEX ix_user_spotify_playlist_user_id (user_id ASC),
+	INDEX ix_user_spotify_playlist_group_id (group_id ASC),
+	INDEX ix_user_spotify_playlist_created_at (created_at ASC)
+);
 ALTER TABLE public."group" ADD CONSTRAINT group_admin_id_fkey FOREIGN KEY (admin_id) REFERENCES public."user"(id);
 ALTER TABLE public.default_question ADD CONSTRAINT default_question_group_id_fkey FOREIGN KEY (group_id) REFERENCES public."group"(id);
 ALTER TABLE public.group_key_value ADD CONSTRAINT group_key_value_group_id_fkey FOREIGN KEY (group_id) REFERENCES public."group"(id);
@@ -290,6 +304,8 @@ ALTER TABLE public.hybrid_search_document_association ADD CONSTRAINT association
 ALTER TABLE public.documents ADD CONSTRAINT documents_group_id_fkey FOREIGN KEY (group_id) REFERENCES public."group"(id);
 ALTER TABLE public.document_edits ADD CONSTRAINT document_edits_author_id_fkey FOREIGN KEY (author_id) REFERENCES public."user"(id);
 ALTER TABLE public.document_edits ADD CONSTRAINT document_edits_document_id_fkey FOREIGN KEY (document_id) REFERENCES public.documents(id);
+ALTER TABLE public.user_spotify_playlist ADD CONSTRAINT user_spotify_playlist_user_id_fkey FOREIGN KEY (user_id) REFERENCES public."user"(id);
+ALTER TABLE public.user_spotify_playlist ADD CONSTRAINT user_spotify_playlist_group_id_fkey FOREIGN KEY (group_id) REFERENCES public."group"(id);
 -- Validate foreign key constraints. These can fail if there was unvalidated data during the SHOW CREATE ALL TABLES
 ALTER TABLE public."group" VALIDATE CONSTRAINT group_admin_id_fkey;
 ALTER TABLE public.default_question VALIDATE CONSTRAINT default_question_group_id_fkey;
@@ -317,3 +333,5 @@ ALTER TABLE public.hybrid_search_document_association VALIDATE CONSTRAINT associ
 ALTER TABLE public.documents VALIDATE CONSTRAINT documents_group_id_fkey;
 ALTER TABLE public.document_edits VALIDATE CONSTRAINT document_edits_author_id_fkey;
 ALTER TABLE public.document_edits VALIDATE CONSTRAINT document_edits_document_id_fkey;
+ALTER TABLE public.user_spotify_playlist VALIDATE CONSTRAINT user_spotify_playlist_user_id_fkey;
+ALTER TABLE public.user_spotify_playlist VALIDATE CONSTRAINT user_spotify_playlist_group_id_fkey;

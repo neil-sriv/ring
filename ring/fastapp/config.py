@@ -49,6 +49,9 @@ class RingConfig(BaseSettings):
         BACKEND_CORS_ORIGINS (list[AnyUrl] | str): List of allowed CORS origins
         BACKEND_CORS_ORIGIN_REGEX (str): Regex matched against the Origin header
             to allow additional origins (e.g. per-PR preview deploys)
+        SPOTIFY_CLIENT_ID (str): Spotify app client id; empty disables linking
+        SPOTIFY_CLIENT_SECRET (str): Spotify app client secret
+        SPOTIFY_REDIRECT_URI (str): Registered OAuth redirect URI
     """
 
     environment: str
@@ -84,6 +87,11 @@ class RingConfig(BaseSettings):
     )
     # In-process cache TTL for previews; set to 0 to disable caching.
     LINK_UNFURL_CACHE_TTL_SECONDS: int = 900
+    # Spotify OAuth (authorization code). All three must be non-empty for
+    # account linking. Leave them blank to report linking as unavailable.
+    SPOTIFY_CLIENT_ID: str = ""
+    SPOTIFY_CLIENT_SECRET: str = ""
+    SPOTIFY_REDIRECT_URI: str = ""
 
 
 @lru_cache

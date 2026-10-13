@@ -53,6 +53,10 @@ from ring.lib.request_logging import (
             "http://test/api/v1/search/?q=hello&access_token=leak",
             "http://test/api/v1/search/?q=hello&access_token=%5BREDACTED%5D",
         ),
+        (
+            "/api/v1/spotify/callback?code=auth-code&state=signed.jwt",
+            "/api/v1/spotify/callback?code=%5BREDACTED%5D&state=%5BREDACTED%5D",
+        ),
     ],
 )
 def test_sanitize_request_url_redacts_secrets(raw: str, expected: str) -> None:

@@ -30,6 +30,9 @@ def import_all_sqla_models() -> None:
         HybridSearchDocument,
         HybridSearchDocumentAssociation,
     )
+    from ring.spotify.models.user_spotify_playlist import (
+        UserSpotifyPlaylist,
+    )
     from ring.tasks.models.schedule_model import Schedule
     from ring.tasks.models.task_model import (
         ReminderEmailTask,

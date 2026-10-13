@@ -8,6 +8,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Optional
 
+from sqlalchemy import Text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from ring.api_identifier.api_identified_model import APIIdentified
@@ -42,6 +43,7 @@ class User(Base, APIIdentified, PydanticModel, CreatedAtMixin):
         responses (list[Response]): User's responses to questions
         notification_subscriptions (list[Subscription]): Web push subscriptions
         inbox_items (list[InboxItem]): In-app inbox rows for this user
+        spotify_refresh_token (str | None): Spotify refresh token, if linked
         created_at (datetime): Timestamp of user creation
     """
 
@@ -58,6 +60,11 @@ class User(Base, APIIdentified, PydanticModel, CreatedAtMixin):
     api_identifier: Mapped[str] = mapped_column(unique=True, index=True)
     admin: Mapped[bool] = mapped_column(
         default=False, server_default="false", nullable=False
+    )
+    # OAuth refresh token for the user's own Spotify account. Never serialize
+    # this onto API responses; the user schemas do not declare the field.
+    spotify_refresh_token: Mapped[Optional[str]] = mapped_column(
+        Text, nullable=True, default=None
     )
 
     groups: Mapped[list["Group"]] = relationship(
