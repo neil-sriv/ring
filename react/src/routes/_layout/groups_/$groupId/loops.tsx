@@ -11,11 +11,15 @@ import { DocumentsGrid } from "../../../../components/Document/DocumentsGrid"
 import { GroupKeyValuesTable } from "../../../../components/GroupKeyValues/GroupKeyValuesTable"
 import { AdhocLoopsTab } from "../../../../components/Loops/AdhocLoopsTab"
 import { LoopsTab } from "../../../../components/Loops/LoopsTab"
+import { GroupSpotifyPlaylist } from "../../../../components/Spotify/GroupSpotifyPlaylist"
 import { useGroupKeyValues } from "../../../../hooks/useGroupKeyValues"
 
 type LoopsSearchParams = {
   offset?: number
   limit?: number
+  spotify?: string
+  spotify_action?: string
+  spotify_error?: string
 }
 
 const GROUP_TAB_HASHES = ["loops", "adhoc-loops", "store", "documents"] as const
@@ -25,10 +29,20 @@ function isGroupTabHash(hash: string): boolean {
 }
 
 export const Route = createFileRoute("/_layout/groups/$groupId/loops")({
-  validateSearch: (search: Record<string, string>): LoopsSearchParams => {
+  validateSearch: (search: Record<string, unknown>): LoopsSearchParams => {
+    const raw = search as Record<string, string>
     return {
-      offset: Number.parseInt(search.offset) || undefined,
-      limit: Number.parseInt(search.limit) || undefined,
+      offset: Number.parseInt(raw.offset) || undefined,
+      limit: Number.parseInt(raw.limit) || undefined,
+      spotify: typeof search.spotify === "string" ? search.spotify : undefined,
+      spotify_action:
+        typeof search.spotify_action === "string"
+          ? search.spotify_action
+          : undefined,
+      spotify_error:
+        typeof search.spotify_error === "string"
+          ? search.spotify_error
+          : undefined,
     }
   },
   component: LoopsContent,
@@ -36,7 +50,8 @@ export const Route = createFileRoute("/_layout/groups/$groupId/loops")({
 
 function LoopsContentLoader() {
   const groupId = Route.useParams().groupId
-  const { offset, limit } = Route.useSearch()
+  const { offset, limit, spotify, spotify_action, spotify_error } =
+    Route.useSearch()
 
   const { data: loops } = useSuspenseQuery({
     ...listLettersLettersLettersGetOptions({
@@ -134,6 +149,15 @@ function LoopsContentLoader() {
       <h1 className="font-display text-2xl font-semibold tracking-tight md:text-3xl">
         {group!.name}
       </h1>
+      <GroupSpotifyPlaylist
+        groupId={group!.api_identifier}
+        groupName={group!.name}
+        offset={offset}
+        limit={limit}
+        spotify={spotify}
+        spotifyAction={spotify_action}
+        spotifyError={spotify_error}
+      />
       <div className="mt-6">
         <Tabs value={activeTab} onValueChange={handleTabChange}>
           <TabsList className="w-full">
