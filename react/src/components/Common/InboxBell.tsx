@@ -66,13 +66,12 @@ export function InboxBell() {
     })
   }
 
-  function toastInboxError(err: AxiosError<{ detail?: unknown }>) {
+  function toastInboxError(err: unknown) {
+    const detail = (err as AxiosError<{ detail?: unknown }>).response?.data
+      ?.detail
     showToast(
       "Something went wrong.",
-      formatApiErrorDetail(
-        err.response?.data?.detail,
-        "Couldn't update inbox. Please try again.",
-      ),
+      formatApiErrorDetail(detail, "Couldn't update inbox. Please try again."),
       "error",
     )
   }
@@ -80,14 +79,14 @@ export function InboxBell() {
   const markRead = useMutation({
     ...readInboxItemNotificationsInboxInboxApiIdReadPostMutation(),
     onSuccess: refreshInbox,
-    onError: (err: AxiosError<{ detail?: unknown }>) => {
+    onError: (err) => {
       toastInboxError(err)
     },
   })
   const markAll = useMutation({
     ...readAllInboxNotificationsInboxReadAllPostMutation(),
     onSuccess: refreshInbox,
-    onError: (err: AxiosError<{ detail?: unknown }>) => {
+    onError: (err) => {
       toastInboxError(err)
     },
   })
