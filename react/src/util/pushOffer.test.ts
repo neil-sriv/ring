@@ -3,7 +3,9 @@ import test from "node:test"
 
 import {
   type PushClientFacts,
+  isPushOfferDismissed,
   pushOfferCopy,
+  pushOfferDismissKey,
   pushOfferKind,
 } from "./pushOffer.ts"
 
@@ -113,6 +115,23 @@ test("a Mac Safari tab with Push is not treated as iOS", () => {
     ),
     "enable",
   )
+})
+
+test("dismissing the iOS Home Screen tip does not hide the later Enable offer", () => {
+  const stored = new Map<string, string>()
+  stored.set(pushOfferDismissKey("ios_home_screen"), "1")
+  // The previous shared flag must not count as a dismiss of every kind.
+  stored.set("ring.push-offer-dismissed", "1")
+  const getItem = (key: string) => stored.get(key) ?? null
+  assert.equal(isPushOfferDismissed("ios_home_screen", getItem), true)
+  assert.equal(isPushOfferDismissed("enable", getItem), false)
+})
+
+test("dismissing Enable does not hide the iOS Home Screen tip", () => {
+  const stored = new Map<string, string>([[pushOfferDismissKey("enable"), "1"]])
+  const getItem = (key: string) => stored.get(key) ?? null
+  assert.equal(isPushOfferDismissed("enable", getItem), true)
+  assert.equal(isPushOfferDismissed("ios_home_screen", getItem), false)
 })
 
 test("a browser missing Push and not iOS stays unsupported", () => {

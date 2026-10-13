@@ -50,6 +50,20 @@ export function pushOfferKind(facts: PushClientFacts): PushOfferKind {
   return "unsupported"
 }
 
+export function pushOfferDismissKey(kind: PushOfferKind): string {
+  return `ring.push-offer-dismissed.${kind}`
+}
+
+// Dismiss is per offer. iOS shares site storage with the Home Screen web
+// app, so a "Not now" on the Add to Home Screen tip must not hide the
+// later Enable button once Push is available.
+export function isPushOfferDismissed(
+  kind: PushOfferKind,
+  getItem: (key: string) => string | null,
+): boolean {
+  return getItem(pushOfferDismissKey(kind)) === "1"
+}
+
 export function pushOfferCopy(kind: PushOfferKind): string {
   switch (kind) {
     case "enable":

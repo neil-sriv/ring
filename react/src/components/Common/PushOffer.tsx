@@ -7,12 +7,26 @@ import { Button } from "@/components/ui/button"
 import { subscribeToPush } from "../../util/notifications"
 import {
   type PushOfferKind,
+  isPushOfferDismissed,
   pushOfferCopy,
+  pushOfferDismissKey,
   pushOfferKind,
   readPushClientFacts,
 } from "../../util/pushOffer"
 
-const DISMISS_KEY = "ring.push-offer-dismissed"
+const BANNER_KINDS = ["enable", "ios_home_screen"] as const
+
+function readDismissedBannerKinds(): Set<PushOfferKind> {
+  const dismissed = new Set<PushOfferKind>()
+  for (const offer of BANNER_KINDS) {
+    if (
+      isPushOfferDismissed(offer, (key) => window.localStorage.getItem(key))
+    ) {
+      dismissed.add(offer)
+    }
+  }
+  return dismissed
+}
 
 function usePushOffer() {
   const [kind, setKind] = useState<PushOfferKind>(() =>
@@ -97,11 +111,9 @@ export function PushOfferBanner({ userApiId }: { userApiId: string }) {
     select: (state) => state.location.pathname,
   })
   const { kind, refresh } = usePushOffer()
-  const [dismissed, setDismissed] = useState(
-    () => window.localStorage.getItem(DISMISS_KEY) === "1",
-  )
+  const [dismissedKinds, setDismissedKinds] = useState(readDismissedBannerKinds)
   if (
-    dismissed ||
+    dismissedKinds.has(kind) ||
     pathname === "/settings" ||
     (kind !== "enable" && kind !== "ios_home_screen")
   ) {
@@ -109,8 +121,12 @@ export function PushOfferBanner({ userApiId }: { userApiId: string }) {
   }
 
   function dismiss() {
-    window.localStorage.setItem(DISMISS_KEY, "1")
-    setDismissed(true)
+    window.localStorage.setItem(pushOfferDismissKey(kind), "1")
+    setDismissedKinds((current) => {
+      const next = new Set(current)
+      next.add(kind)
+      return next
+    })
   }
 
   return (
