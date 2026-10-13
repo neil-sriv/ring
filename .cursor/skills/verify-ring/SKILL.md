@@ -123,7 +123,9 @@ bash .cursor/skills/verify-ring/scripts/preview.sh
 ```
 
 The script builds `react/` with `VITE_API_URL=""` and `SW_DEV=false`
-(`pnpm run build`, which is `tsc && vite build`), then serves
+(`pnpm run build`, which is `tsc && vite build`). If `react/dist` exists but
+is not writable (nginx's bind mount creates it as root on a fresh checkout),
+the script runs `sudo chown` on that directory before the build. It then serves
 `pnpm exec vite preview --host 127.0.0.1 --port 4173 --strictPort` in tmux
 session `verify-ring-preview`.
 

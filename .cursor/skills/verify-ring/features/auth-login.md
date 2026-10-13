@@ -38,9 +38,11 @@ Preconditions:
 - **Sign in.** Fill `Email` with `test@example.com` and `Password` with
   `testpassword123`, then choose `Sign In`. The app navigates to `/`. The
   heading matches `Good morning, Test`, `Good afternoon, Test`, or
-  `Good evening, Test`. The sidebar shows `test@example.com` and links named
-  `Home`, `Groups`, `Search`, and `Settings`. A fresh user also sees
-  `No letters yet`. Screenshot `$EVIDENCE_DIR/auth-login/home.png`.
+  `Good evening, Test`. The sidebar shows `test@example.com`. Sidebar links
+  expose their shortcuts in the accessible name: `Home g h`, `Groups g g`,
+  `Search g s`, `Settings g p`. A fresh user also sees `No letters yet`. If a
+  banner offers `Enable notifications` and `Not now`, choose `Not now`.
+  Screenshot `$EVIDENCE_DIR/auth-login/home.png`.
 - **Confirm the account row.** Run:
   ```bash
   bash .cursor/skills/verify-ring/scripts/db-query.sh \
@@ -75,6 +77,11 @@ Preconditions:
 
 - The password field's eye icon has no accessible name. Do not click it;
   clicking it flips the input type and can drop a filled value.
+- Sidebar link accessible names include the shortcut (`Groups g g`, not
+  `Groups`). A substring match on `Groups` also hits Home's `View groups`
+  link.
+- Home may show a push banner (`Enable notifications` / `Not now`) from
+  `PushOfferBanner`. Dismiss it with `Not now`. It is not part of sign-in.
 - The API says `Incorrect username or password` even though the label is
   `Email`. Assert that string.
 - An already-authenticated visit to `/login` redirects to `/`. Log out before

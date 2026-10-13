@@ -38,7 +38,7 @@ Preconditions:
   unmet: report that, and do not flip a different group's letter to make the
   button appear.
 
-- **Open the group.** From `Groups`, choose the link
+- **Open the group.** Choose the sidebar link `Groups g g`, then choose the link
   `Verify-empty-<RUN_ID>`. The heading is that group name. Tabs include
   `Loops`, `Adhoc Loops`, `Store`, and `Documents`. The Loops tab shows
   `No loops yet` and a button named `Start Next Loop`.

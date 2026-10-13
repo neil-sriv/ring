@@ -38,9 +38,10 @@ Preconditions:
 
 - **Open groups as the seeded user.** Sign in as `test@example.com` /
   `testpassword123` (see [auth-login.md](./auth-login.md) `auth-success`).
-  Choose the link named `Groups`. The heading is `Groups`. With zero groups
-  the page shows `No groups yet`, a button named `Create group`, and a button
-  named `Add Group`.
+  If the push banner is up, choose `Not now`. Choose the sidebar link whose
+  accessible name is `Groups g g`. Do not choose Home's `View groups` link.
+  The heading is `Groups`. With zero groups the page shows `No groups yet`,
+  a button named `Create group`, and a button named `Add Group`.
 - **Empty-state entry.** Choose `Create group`. A dialog named `Add Group`
   appears with a textbox named `Name` and a button named `Save`. Wait until
   `Save` is enabled (it stays disabled until `/parties/me` has loaded). Fill
@@ -73,13 +74,19 @@ Preconditions:
     -d '{"name":"Verify Outsider","email":"verify-outsider-<RUN_ID>@example.com","password":"verify-outsider-pass"}'
   ```
   HTTP 201. This is the same public create used by `dev_util/cloud-seed.sh`.
-- **Home entry, outsider.** Log out. Sign in as
-  `verify-outsider-<RUN_ID>@example.com` / `verify-outsider-pass`. Home shows
+  Read `email` from the response. `POST /parties/user` stores an `EmailStr`,
+  which lowercases the address (`T` and `Z` in `<RUN_ID>` become `t` and `z`).
+  Login compares that stored string exactly, so sign in with the response
+  email, not the request casing.
+- **Home entry, outsider.** Choose the sidebar button named `Log out`.
+  Sign in with that stored email and password `verify-outsider-pass`. Dismiss
+  `Not now` if the push banner is shown. Home shows
   `Good morning, Verify`, `Good afternoon, Verify`, or `Good evening, Verify`,
   plus `No letters yet` and a button named `Create a group`. Choose
   `Create a group`. In the `Add Group` dialog, fill `Name` with
-  `Verify-home-<RUN_ID>` and choose `Save`. Choose `Groups` and confirm the
-  link `Verify-home-<RUN_ID>` is listed. `Verify-empty-<RUN_ID>` is not listed
+  `Verify-home-<RUN_ID>` and choose `Save`. Choose the sidebar link
+  `Groups g g` and confirm the link `Verify-home-<RUN_ID>` is listed.
+  `Verify-empty-<RUN_ID>` is not listed
   for this account. Screenshot `$EVIDENCE_DIR/groups-create/home-entry.png`.
 - **Outsider row.** Run the same SQL shape for `Verify-home-<RUN_ID>`. One
   row, email `verify-outsider-<RUN_ID>@example.com`. Save it to
@@ -124,6 +131,8 @@ Preconditions:
 ## Gotchas
 
 - Group names are unique across the whole database. Include `<RUN_ID>`.
+- The create-user response email is lowercased. Signing in with the original
+  `<RUN_ID>` casing returns `Incorrect username or password`.
 - `Create group` (groups empty state) and `Create a group` (Home) are
   different buttons, and each disappears after that user has a group. Driving
   Home after the seeded user already created a group does not cover the Home

@@ -35,6 +35,15 @@ if curl -sf -o /dev/null "http://127.0.0.1:4173/"; then
   exit 1
 fi
 
+# Nginx bind-mounts react/dist. If that directory was created by root before
+# a build existed, pnpm cannot write sw.mjs (EACCES) and the blank-page check
+# never starts. Take ownership of the output dir, then build.
+dist_dir="${REPO_ROOT}/react/dist"
+if [[ -d "${dist_dir}" && ! -w "${dist_dir}" ]]; then
+  echo "react/dist is not writable; chown to the current user"
+  sudo chown -R "$(id -u):$(id -g)" "${dist_dir}"
+fi
+
 echo "Building react/ with VITE_API_URL empty and SW_DEV=false"
 (
   cd "${REPO_ROOT}/react"
