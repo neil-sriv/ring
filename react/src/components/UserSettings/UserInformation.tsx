@@ -4,7 +4,6 @@ import { useState } from "react"
 import { type SubmitHandler, useForm } from "react-hook-form"
 
 import type { AxiosError } from "axios"
-import { toast } from "sonner"
 import type {
   UpdateUserMePartiesMePatchError,
   UserLinked,
@@ -20,8 +19,8 @@ import {
 } from "../../client/@tanstack/react-query.gen"
 import useCustomToast from "../../hooks/useCustomToast"
 import { emailPattern, formatApiErrorDetail } from "../../util/misc"
-import { subscribeToPush } from "../../util/notifications"
 
+import { PushNotificationSettings } from "@/components/Common/PushOffer"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -123,41 +122,6 @@ const UserInformation = () => {
 
   const isSaving = isSubmitting || mutation.isPending
 
-  const [isEnablingNotifications, setIsEnablingNotifications] = useState(false)
-  const [notificationFeedback, setNotificationFeedback] = useState<{
-    tone: "success" | "error"
-    message: string
-  } | null>(null)
-
-  const handleEnableNotifications = async () => {
-    if (!currentUser?.api_identifier || isEnablingNotifications) {
-      return
-    }
-    setIsEnablingNotifications(true)
-    setNotificationFeedback(null)
-    try {
-      const result = await subscribeToPush(currentUser.api_identifier)
-      if (result.ok) {
-        const message = "Push notifications are enabled for this browser."
-        setNotificationFeedback({ tone: "success", message })
-        toast.success("Success!", {
-          id: "enable-notifications",
-          description: message,
-          duration: 8000,
-        })
-        return
-      }
-      setNotificationFeedback({ tone: "error", message: result.message })
-      toast.error("Couldn't enable notifications", {
-        id: "enable-notifications",
-        description: result.message,
-        duration: 8000,
-      })
-    } finally {
-      setIsEnablingNotifications(false)
-    }
-  }
-
   return (
     <div className="flex w-full flex-col gap-10">
       <section>
@@ -246,44 +210,7 @@ const UserInformation = () => {
           </div>
         </form>
       </section>
-      <section>
-        <h3 className="text-base font-semibold">Notifications</h3>
-        <p className="mt-1 text-sm text-muted-foreground">
-          Get a push notification in this browser when something new arrives.
-        </p>
-        <div className="mt-5 flex flex-col gap-1.5">
-          <div>
-            <Button
-              variant="outline"
-              type="button"
-              disabled={isEnablingNotifications}
-              onClick={() => {
-                void handleEnableNotifications()
-              }}
-            >
-              {isEnablingNotifications && (
-                <Loader2 className="h-4 w-4 animate-spin" />
-              )}
-              Enable notifications
-            </Button>
-          </div>
-          {notificationFeedback && (
-            <p
-              role="status"
-              aria-live="polite"
-              className={
-                notificationFeedback.tone === "error"
-                  ? "max-w-md text-sm text-destructive"
-                  : "max-w-md text-sm text-muted-foreground"
-              }
-            >
-              {notificationFeedback.tone === "error"
-                ? `Couldn't enable notifications: ${notificationFeedback.message}`
-                : notificationFeedback.message}
-            </p>
-          )}
-        </div>
-      </section>
+      <PushNotificationSettings userApiId={currentUser?.api_identifier} />
     </div>
   )
 }
