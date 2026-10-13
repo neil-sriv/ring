@@ -6,6 +6,7 @@ import {
 } from "@tanstack/react-query"
 import type { AxiosError } from "axios"
 import { FileText, Loader2 } from "lucide-react"
+import { useRef } from "react"
 import type {
   CreateDocumentEndpointNotebookDocumentsPostError,
   DocumentResponse,
@@ -32,6 +33,9 @@ export function DocumentsGrid(props: {
 
   const queryClient = useQueryClient()
   const showToast = useCustomToast()
+  // disabled={isPending} alone still lets a second click through before React
+  // re-renders; this ref closes that same-tick double-create window.
+  const createInFlightRef = useRef(false)
 
   const createDocumentMutation = useMutation({
     ...createDocumentEndpointNotebookDocumentsPostMutation(),
@@ -53,26 +57,40 @@ export function DocumentsGrid(props: {
     },
   })
 
+  const isCreating = createDocumentMutation.isPending
+
+  const createDocument = async (name: string) => {
+    if (createInFlightRef.current || isCreating) {
+      return
+    }
+    createInFlightRef.current = true
+    try {
+      await createDocumentMutation.mutateAsync({
+        body: {
+          group_api_id: props.groupApiId,
+          name,
+          content: "",
+        },
+      })
+    } catch {
+      // onError already toasts
+    } finally {
+      createInFlightRef.current = false
+    }
+  }
+
   return (
     <div className="flex w-full flex-col gap-6">
       <div className="flex w-full items-center justify-between gap-4">
         <h3 className="text-base font-semibold">Documents</h3>
         <Button
           size="sm"
-          disabled={createDocumentMutation.isPending}
+          disabled={isCreating}
           onClick={() => {
-            createDocumentMutation.mutate({
-              body: {
-                group_api_id: props.groupApiId,
-                name: "Untitled Document",
-                content: "",
-              },
-            })
+            void createDocument("Untitled Document")
           }}
         >
-          {createDocumentMutation.isPending && (
-            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-          )}
+          {isCreating && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
           New Document
         </Button>
       </div>
@@ -91,20 +109,12 @@ export function DocumentsGrid(props: {
           </p>
           <Button
             className="mt-6"
-            disabled={createDocumentMutation.isPending}
+            disabled={isCreating}
             onClick={() => {
-              createDocumentMutation.mutate({
-                body: {
-                  group_api_id: props.groupApiId,
-                  name: "My First Document",
-                  content: "",
-                },
-              })
+              void createDocument("My First Document")
             }}
           >
-            {createDocumentMutation.isPending && (
-              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-            )}
+            {isCreating && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
             Create Document
           </Button>
         </div>
