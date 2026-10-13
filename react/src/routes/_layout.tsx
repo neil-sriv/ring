@@ -9,9 +9,11 @@ import {
 } from "../client/@tanstack/react-query.gen"
 import { InboxBell } from "../components/Common/InboxBell"
 import { KeyboardShortcuts } from "../components/Common/KeyboardShortcuts"
+import { PushOfferBanner } from "../components/Common/PushOffer"
 import Sidebar from "../components/Common/Sidebar"
 import UserMenu from "../components/Common/UserMenu"
 import { subscribeToPush } from "../util/notifications"
+import { pushOfferKind, readPushClientFacts } from "../util/pushOffer"
 
 export const Route = createFileRoute("/_layout")({
   component: Layout,
@@ -46,9 +48,9 @@ export const Route = createFileRoute("/_layout")({
 })
 
 function Layout() {
-  // Subscribe so push re-binds when /me changes mid-session (impersonation /
-  // login). getQueryData alone never re-runs this effect after identity swap
-  // because Layout stays mounted across /_layout child routes.
+  // Follow /me so an identity swap (impersonation / login) re-runs the
+  // effect below. Layout stays mounted across child routes, so getQueryData
+  // alone would keep the previous user.
   const { data: currentUser } = useQuery({
     ...readUserMePartiesMeGetOptions(),
   })
@@ -57,6 +59,12 @@ function Layout() {
 
   useEffect(() => {
     if (!userApiId) {
+      return
+    }
+    // Only refresh a subscription the browser already allowed. A normal
+    // visit opts in from the banner or Settings, where the click can
+    // request permission. This effect must not prompt on its own.
+    if (pushOfferKind(readPushClientFacts()) !== "enabled") {
       return
     }
     const subscribe = () => {
@@ -79,6 +87,7 @@ function Layout() {
         </div>
       ) : (
         <main className="flex-1 overflow-auto">
+          {userApiId && <PushOfferBanner userApiId={userApiId} />}
           <Outlet />
         </main>
       )}

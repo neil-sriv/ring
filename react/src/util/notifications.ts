@@ -4,6 +4,7 @@ import {
   postSubscriptionNotificationsSubscriptionPost,
 } from "../client"
 import { formatApiErrorDetail } from "./misc"
+import { pushOfferCopy, pushOfferKind, readPushClientFacts } from "./pushOffer"
 
 export type SubscribeToPushResult =
   | { ok: true }
@@ -12,6 +13,7 @@ export type SubscribeToPushResult =
       reason:
         | "no_user"
         | "unsupported"
+        | "ios_home_screen"
         | "no_service_worker"
         | "permission_denied"
         | "missing_subscription"
@@ -27,12 +29,12 @@ async function getPushRegistration(): Promise<ServiceWorkerRegistration | null> 
   if (existing) {
     return existing
   }
-  // Avoid hanging forever on `.ready` when no SW is registered (common in
-  // cloud/dev when SW_DEV/VITE_SW_DEV is false).
+  // `.ready` never resolves when the dev server has the service worker
+  // disabled. Cap the wait so an explicit enable click can report that.
   return Promise.race([
     navigator.serviceWorker.ready,
     new Promise<null>((resolve) => {
-      window.setTimeout(() => resolve(null), 800)
+      window.setTimeout(() => resolve(null), 4000)
     }),
   ])
 }
@@ -60,11 +62,40 @@ export async function subscribeToPush(
       message: "You must be signed in to enable notifications.",
     }
   }
-  if (!("serviceWorker" in navigator) || !("PushManager" in window)) {
+  const offer = pushOfferKind(readPushClientFacts())
+  if (offer === "ios_home_screen") {
+    return {
+      ok: false,
+      reason: "ios_home_screen",
+      message: pushOfferCopy(offer),
+    }
+  }
+  if (offer === "unsupported") {
     return {
       ok: false,
       reason: "unsupported",
-      message: "Push notifications are not supported in this browser.",
+      message: pushOfferCopy(offer),
+    }
+  }
+  if (offer === "denied") {
+    return {
+      ok: false,
+      reason: "permission_denied",
+      message: pushOfferCopy(offer),
+    }
+  }
+
+  // requestPermission has to run before any await so the click's user
+  // activation is still valid. Already-granted permission resolves immediately.
+  const permission = await Notification.requestPermission()
+  if (permission !== "granted") {
+    return {
+      ok: false,
+      reason: "permission_denied",
+      message:
+        permission === "denied"
+          ? pushOfferCopy("denied")
+          : "Notification permission is required to enable push alerts.",
     }
   }
 
@@ -74,19 +105,7 @@ export async function subscribeToPush(
       ok: false,
       reason: "no_service_worker",
       message:
-        "Notifications need the app service worker. Try again after a full reload, or enable the PWA service worker in this environment.",
-    }
-  }
-
-  const permission = await Notification.requestPermission()
-  if (permission !== "granted") {
-    return {
-      ok: false,
-      reason: "permission_denied",
-      message:
-        permission === "denied"
-          ? "Notification permission was blocked. Allow notifications for this site in your browser settings."
-          : "Notification permission is required to enable push alerts.",
+        "Notifications need this site's service worker. Reload the page and try again.",
     }
   }
 
