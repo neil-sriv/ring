@@ -51,6 +51,12 @@ RUN update-alternatives --set iptables /usr/sbin/iptables-legacy && \
 ########################################################
 
 ARG NODE_VERSION=22.14.0
+# Corepack's default home is ~/.cache/node/corepack. prepare runs as root, but
+# the install script runs as ubuntu, so pin a shared home. Node 22.14's
+# Corepack (0.31) also auto-pins the latest pnpm when packageManager is absent;
+# that latest is pnpm 12, whose bin/pnpm.mjs this Corepack cannot launch.
+ENV COREPACK_HOME=/opt/corepack
+ENV COREPACK_ENABLE_AUTO_PIN=0
 RUN ARCH="$(dpkg --print-architecture)" \
     && case "$ARCH" in \
       amd64) NODE_ARCH=x64 ;; \
@@ -61,7 +67,8 @@ RUN ARCH="$(dpkg --print-architecture)" \
       "https://nodejs.org/dist/v${NODE_VERSION}/node-v${NODE_VERSION}-linux-${NODE_ARCH}.tar.xz" \
     | tar -xJ -C /usr/local --strip-components=1 \
     && corepack enable \
-    && corepack prepare pnpm@10.33.3 --activate
+    && corepack prepare pnpm@10.33.3 --activate \
+    && chmod -R a+rX "$COREPACK_HOME"
 
 ########################################################
 # Ubuntu user (Cloud Agents run as ubuntu)
