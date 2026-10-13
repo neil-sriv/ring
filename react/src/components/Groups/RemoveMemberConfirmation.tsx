@@ -116,7 +116,9 @@ function RemoveMemberConfirmation({
   })
 
   const onSubmit = async () => {
-    mutation.mutate({
+    // Await so RHF isSubmitting stays true for the full request; isPending
+    // covers the gap if the promise settles while React is still painting.
+    await mutation.mutateAsync({
       path: {
         group_api_id: groupId,
         user_api_id: member.api_identifier,
@@ -124,13 +126,14 @@ function RemoveMemberConfirmation({
     })
   }
 
+  const isSaving = isSubmitting || mutation.isPending
   const memberLabel = member.name || member.email
 
   return (
     <AlertDialog
       open={isOpen}
       onOpenChange={(open) => {
-        if (!open) onClose()
+        if (!open && !isSaving) onClose()
       }}
     >
       <AlertDialogContent>
@@ -148,13 +151,13 @@ function RemoveMemberConfirmation({
             <Button
               variant="outline"
               onClick={onClose}
-              disabled={isSubmitting}
+              disabled={isSaving}
               type="button"
             >
               Cancel
             </Button>
-            <Button variant="destructive" type="submit" disabled={isSubmitting}>
-              {isSubmitting && <Loader2 className="h-4 w-4 animate-spin" />}
+            <Button variant="destructive" type="submit" disabled={isSaving}>
+              {isSaving && <Loader2 className="h-4 w-4 animate-spin" />}
               Remove
             </Button>
           </AlertDialogFooter>

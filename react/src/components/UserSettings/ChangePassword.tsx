@@ -52,10 +52,14 @@ const ChangePassword = () => {
   })
 
   const onSubmit: SubmitHandler<UpdatePasswordForm> = async (data) => {
-    mutation.mutate({
+    // Await so RHF isSubmitting stays true for the full request; isPending
+    // covers the gap if the promise settles while React is still painting.
+    await mutation.mutateAsync({
       body: data,
     })
   }
+
+  const isSaving = isSubmitting || mutation.isPending
 
   return (
     <div className="w-full">
@@ -74,6 +78,7 @@ const ChangePassword = () => {
             {...register("current_password")}
             placeholder="Password"
             type="password"
+            disabled={isSaving}
           />
           {errors.current_password && (
             <p className="text-xs text-destructive">
@@ -88,6 +93,7 @@ const ChangePassword = () => {
             {...register("new_password", passwordRules())}
             placeholder="Password"
             type="password"
+            disabled={isSaving}
           />
           {errors.new_password && (
             <p className="text-xs text-destructive">
@@ -102,6 +108,7 @@ const ChangePassword = () => {
             {...register("confirm_password", confirmPasswordRules(getValues))}
             placeholder="Password"
             type="password"
+            disabled={isSaving}
           />
           {errors.confirm_password && (
             <p className="text-xs text-destructive">
@@ -110,8 +117,8 @@ const ChangePassword = () => {
           )}
         </div>
         <div>
-          <Button type="submit" disabled={isSubmitting}>
-            {isSubmitting && <Loader2 className="h-4 w-4 animate-spin" />}
+          <Button type="submit" disabled={isSaving}>
+            {isSaving && <Loader2 className="h-4 w-4 animate-spin" />}
             Save
           </Button>
         </div>

@@ -140,11 +140,15 @@ const EditGroup = ({ group, isOpen, onClose }: EditGroupProps) => {
   })
 
   const onSubmit: SubmitHandler<GroupUpdate> = async (data) => {
-    mutation.mutate({
+    // Await so RHF isSubmitting stays true for the full request; isPending
+    // covers the gap if the promise settles while React is still painting.
+    await mutation.mutateAsync({
       path: { group_api_id: group.api_identifier },
       body: data,
     })
   }
+
+  const isSaving = isSubmitting || mutation.isPending
 
   const onCancel = () => {
     reset({ name: group.name })
@@ -155,7 +159,7 @@ const EditGroup = ({ group, isOpen, onClose }: EditGroupProps) => {
     <Dialog
       open={isOpen}
       onOpenChange={(open) => {
-        if (!open) onCancel()
+        if (!open && !isSaving) onCancel()
       }}
     >
       <DialogContent>
@@ -172,6 +176,7 @@ const EditGroup = ({ group, isOpen, onClose }: EditGroupProps) => {
                   required: "Name is required",
                 })}
                 type="text"
+                disabled={isSaving}
               />
               {errors.name && (
                 <p className="text-xs text-destructive">
@@ -181,11 +186,16 @@ const EditGroup = ({ group, isOpen, onClose }: EditGroupProps) => {
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={onCancel} type="button">
+            <Button
+              variant="outline"
+              onClick={onCancel}
+              type="button"
+              disabled={isSaving}
+            >
               Cancel
             </Button>
-            <Button type="submit" disabled={isSubmitting || !isDirty}>
-              {isSubmitting && <Loader2 className="h-4 w-4 animate-spin" />}
+            <Button type="submit" disabled={isSaving || !isDirty}>
+              {isSaving && <Loader2 className="h-4 w-4 animate-spin" />}
               Save
             </Button>
           </DialogFooter>
