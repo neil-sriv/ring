@@ -256,3 +256,6 @@ because pytest builds schema from `ring/db/schema.sql`, not Alembic.
   - `ring-db-migration/` — generate/modify Alembic migrations the correct way
   - `ring-cloud-dev/` — Cursor Cloud VM bootstrap, health checks, browser testing
   - `ring-cloud-prod-db/` — point cloud Vite/API at CockroachDB Cloud (prod/staging)
+  - [`verify-ring/`](.cursor/skills/verify-ring/SKILL.md) — drive the running app the way a user does and capture evidence
+
+Before marking a behavior-changing PR ready, run verify-ring for touched features and attach evidence.
