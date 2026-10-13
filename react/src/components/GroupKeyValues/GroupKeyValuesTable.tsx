@@ -99,10 +99,12 @@ export function GroupKeyValuesTable({
     onError: (
       err: AxiosError<FullReplaceGroupKeyValuesPartiesGroupGroupApiIdKeyValuePutError>,
     ) => {
+      // The pending payload is a newer full-replace, not a retry of the
+      // failed body. Leave it queued so onSettled can flush it.
+      if (pendingFlushRef.current) {
+        return
+      }
       setSaveStatus("error")
-      // Roll the editor back to the last known-good snapshot. Clear any
-      // coalesced pending flush so we don't immediately re-PUT the bad tree.
-      pendingFlushRef.current = false
       latestPayloadRef.current = cloneKeyValues(lastSavedRef.current)
       setEditableData(cloneKeyValues(lastSavedRef.current))
       setEditorKey((key) => key + 1)
@@ -112,14 +114,14 @@ export function GroupKeyValuesTable({
         "error",
       )
     },
-    onSettled: (_data, error) => {
+    onSettled: () => {
       queryClient.invalidateQueries({
         queryKey: readGroupKeyValuesPartiesGroupGroupApiIdKeyValueGetQueryKey({
           path: { group_api_id: groupApiId },
         }),
       })
       saveInFlightRef.current = false
-      if (!error && pendingFlushRef.current) {
+      if (pendingFlushRef.current) {
         pendingFlushRef.current = false
         flushLatest()
       }
