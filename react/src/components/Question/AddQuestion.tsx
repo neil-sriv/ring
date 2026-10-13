@@ -107,9 +107,9 @@ const AddQuestion = ({ isOpen, onClose, loopApiId }: AddQuestionProps) => {
     },
   })
 
-  const onSubmit: SubmitHandler<QuestionFormProps> = (data) => {
+  const onSubmit: SubmitHandler<QuestionFormProps> = async (data) => {
     if (!currentUser) return
-    mutation.mutate({
+    await mutation.mutateAsync({
       body: {
         question_text: data.questionText,
         author_api_id: currentUser.api_identifier,
@@ -123,8 +123,17 @@ const AddQuestion = ({ isOpen, onClose, loopApiId }: AddQuestionProps) => {
     onClose()
   }
 
+  // RHF isSubmitting clears as soon as fire-and-forget mutate() returns;
+  // keep Save disabled for the full request via mutateAsync + isPending.
+  const isSaving = isSubmitting || mutation.isPending
+
   return (
-    <Dialog open={isOpen} onOpenChange={(open) => !open && onCancel()}>
+    <Dialog
+      open={isOpen}
+      onOpenChange={(open) => {
+        if (!open && !isSaving) onCancel()
+      }}
+    >
       <DialogContent className="sm:max-w-md">
         <form onSubmit={handleSubmit(onSubmit)}>
           <DialogHeader>
@@ -143,6 +152,7 @@ const AddQuestion = ({ isOpen, onClose, loopApiId }: AddQuestionProps) => {
                 })}
                 className="min-h-[100px]"
                 placeholder="Enter your question here..."
+                disabled={isSaving}
               />
               {errors.questionText && (
                 <p className="text-xs text-destructive">
@@ -153,13 +163,16 @@ const AddQuestion = ({ isOpen, onClose, loopApiId }: AddQuestionProps) => {
           </div>
 
           <DialogFooter className="gap-3">
-            <Button type="submit" disabled={isSubmitting}>
-              {isSubmitting && (
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              )}
+            <Button type="submit" disabled={isSaving || !currentUser}>
+              {isSaving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
               Save
             </Button>
-            <Button type="button" onClick={onCancel} variant="outline">
+            <Button
+              type="button"
+              onClick={onCancel}
+              variant="outline"
+              disabled={isSaving}
+            >
               Cancel
             </Button>
           </DialogFooter>

@@ -98,11 +98,13 @@ const AddGroup = ({ isOpen, onClose }: AddGroupProps) => {
     },
   })
 
-  const onSubmit: SubmitHandler<GroupCreate> = (data) => {
+  const onSubmit: SubmitHandler<GroupCreate> = async (data) => {
     if (!currentUser) {
       return
     }
-    mutation.mutate({
+    // Await so RHF isSubmitting stays true for the full request (isPending
+    // alone can lose a double-click race before the next React render).
+    await mutation.mutateAsync({
       body: {
         admin_api_identifier: currentUser.api_identifier,
         name: data.name,
