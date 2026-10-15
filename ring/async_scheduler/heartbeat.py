@@ -2,6 +2,9 @@
 
 The public /version endpoint exposes this so a plain curl against prod can
 tell whether the scheduler is alive and when it last completed a poll.
+
+Blindfold's push heartbeat is ``ring.lib.blindfold_heartbeat``. This
+record stays on GET /version.
 """
 
 from __future__ import annotations

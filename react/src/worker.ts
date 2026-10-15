@@ -8,6 +8,7 @@
  * in `index.html`.
  */
 
+import { sendHeartbeat } from "./heartbeat"
 import { previewFor } from "./og/preview"
 
 interface AssetFetcher {
@@ -16,6 +17,9 @@ interface AssetFetcher {
 
 interface Env {
   ASSETS: AssetFetcher
+  HEARTBEAT_URL?: string
+  HEARTBEAT_KEY_ID?: string
+  HEARTBEAT_SECRET?: string
 }
 
 const worker = {
@@ -35,6 +39,10 @@ const worker = {
       status: preview.status,
       headers: preview.headers,
     })
+  },
+  // Once a minute. No-op until the three HEARTBEAT_* Worker secrets exist.
+  async scheduled(_event: unknown, env: Env): Promise<void> {
+    await sendHeartbeat(env, "ok")
   },
 }
 
