@@ -6,7 +6,6 @@ from datetime import UTC, datetime
 
 import pytest
 from fastapi.testclient import TestClient
-from genesis_idp import FakeIdentityClient, IdentityUpsert, format_created_at
 from sqlalchemy.orm import Session
 
 from ring.auth.dual_sync.metrics import metrics
@@ -17,6 +16,11 @@ from ring.parties.models.user_model import User
 from ring.tests.factories.parties.invite_factory import InviteFactory
 from ring.tests.factories.parties.user_factory import UserFactory
 from ring.tests.unit.conftest import TClientForUser
+from ring.vendor.genesis_idp import (
+    FakeIdentityClient,
+    IdentityUpsert,
+    format_created_at,
+)
 
 HASH = "$2b$12$" + ("a" * 53)
 

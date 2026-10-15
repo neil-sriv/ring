@@ -2,14 +2,13 @@
 
 from __future__ import annotations
 
-from genesis_idp import FakeIdentityClient
-
 from ring.auth.dual_sync.metrics import metrics
 from ring.auth.idp_client.factory import set_identity_client_override
 from ring.scripts.dependencies import ScriptDependencies
 from ring.scripts.parties.backfill_authn_identities import run_script
 from ring.tests.factories.parties.user_factory import UserFactory
 from ring.tests.unit.scripts.script_tester import ScriptTestBase
+from ring.vendor.genesis_idp import FakeIdentityClient
 
 
 class TestBackfillAuthnIdentities(ScriptTestBase):

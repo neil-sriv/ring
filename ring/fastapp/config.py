@@ -99,11 +99,12 @@ class RingConfig(BaseSettings):
     SPOTIFY_CLIENT_ID: str = ""
     SPOTIFY_CLIENT_SECRET: str = ""
     SPOTIFY_REDIRECT_URI: str = ""
-    # Genesis IdP dual-sync (v2) via genesis-idp (sync client only).
-    # Both flags default off. Dual-write and dual-read never fail the Ring
-    # request; they run in BackgroundTasks with this HTTP timeout. IdP
-    # origin is https://id.neilsriv.tech (prod) or http://127.0.0.1:4465
-    # (local stub: uvicorn genesis_idp.stub:app --port 4465). Ring does
+    # Genesis IdP dual-sync (v2) via vendored genesis-idp (sync client
+    # only). Both flags default off. Dual-write and dual-read never fail
+    # the Ring request; they run in BackgroundTasks with this HTTP
+    # timeout. IdP origin is https://id.neilsriv.tech (prod) or
+    # http://127.0.0.1:4465 (local stub:
+    # uvicorn ring.vendor.genesis_idp.stub:app --port 4465). Ring does
     # not call AuthN. Auth is Authorization: Bearer $IDP_DIRECTORY_API_TOKEN.
     IDENTITY_SERVICE_BASE_URL: str = ""
     IDP_DIRECTORY_API_TOKEN: str = ""

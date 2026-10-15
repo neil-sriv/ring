@@ -6,13 +6,12 @@ FastAPI BackgroundTasks and CLI scripts.
 
 from __future__ import annotations
 
-from genesis_idp import (
+from ring.fastapp.config import RingConfig, get_config
+from ring.vendor.genesis_idp import (
     HttpIdentityClient,
     IdentityClient,
     IdentityClientConfig,
 )
-
-from ring.fastapp.config import RingConfig, get_config
 
 _override: IdentityClient | None = None
 _http_client: HttpIdentityClient | None = None

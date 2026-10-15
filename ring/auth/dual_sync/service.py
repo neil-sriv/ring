@@ -12,18 +12,18 @@ from dataclasses import dataclass
 from datetime import datetime
 
 from fastapi import BackgroundTasks
-from genesis_idp import (
-    Identity,
-    IdentityUpsert,
-    created_at_equal,
-    format_created_at,
-)
 from loguru import logger
 
 from ring.auth.dual_sync.metrics import DualSyncSnapshot, metrics
 from ring.auth.idp_client.factory import get_identity_client
 from ring.fastapp.config import get_config
 from ring.parties.models.user_model import User
+from ring.vendor.genesis_idp import (
+    Identity,
+    IdentityUpsert,
+    created_at_equal,
+    format_created_at,
+)
 
 _DIFF_FIELDS = (
     "external_id",
