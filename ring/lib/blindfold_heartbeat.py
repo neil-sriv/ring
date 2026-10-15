@@ -10,8 +10,9 @@ POST ``HEARTBEAT_URL`` with HMAC-SHA256 over
 which is also the provisioned key id.
 
 No network call unless ``HEARTBEAT_URL``, ``HEARTBEAT_KEY_ID``, and
-``HEARTBEAT_SECRET`` are all non-empty. A shutdown beat uses status
-``stopping``.
+``HEARTBEAT_SECRET`` are all non-empty. Beats go out every 300 seconds
+and report ``intervalSeconds`` 300, so Blindfold treats them as stale
+after about 12.5 minutes. A shutdown beat uses status ``stopping``.
 """
 
 from __future__ import annotations
@@ -30,7 +31,7 @@ from typing import Any
 from loguru import logger
 
 SERVICE_ID = "ring-api"
-INTERVAL_SECONDS = 60
+INTERVAL_SECONDS = 300
 _POST_TIMEOUT_SECONDS = 5
 
 

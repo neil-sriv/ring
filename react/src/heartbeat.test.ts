@@ -4,9 +4,9 @@ import test from "node:test"
 import { encodeBody, sendHeartbeat, signBody } from "./heartbeat.ts"
 
 const VECTOR_BODY =
-  '{"instance":"ring-api","intervalSeconds":60,"kind":"heartbeat","serviceId":"ring-api","status":"ok","version":"abc"}'
+  '{"instance":"ring-api","intervalSeconds":300,"kind":"heartbeat","serviceId":"ring-api","status":"ok","version":"abc"}'
 const VECTOR_SIG =
-  "41e07c1e11767ee36f1492014524c8e055fd04caae117f335cb3fc266321e425"
+  "90f343d950cb9ae2573067b446ca0bd7d59c668f54588c3f5fd7078584220ceb"
 
 test("body encoding is sorted and compact", () => {
   assert.equal(
@@ -15,7 +15,7 @@ test("body encoding is sorted and compact", () => {
       status: "ok",
       serviceId: "ring-api",
       kind: "heartbeat",
-      intervalSeconds: 60,
+      intervalSeconds: 300,
       instance: "ring-api",
     }),
     VECTOR_BODY,
@@ -81,6 +81,10 @@ test("send posts the signed body and not the secret", async () => {
   const headers = new Headers(captured.init.headers)
   assert.equal(headers.get("X-Heartbeat-Key-Id"), "ring-frontend")
   assert.equal(headers.get("X-Heartbeat-Timestamp"), "1700000000")
+  assert.equal(
+    String(captured.init.body).includes('"intervalSeconds":300'),
+    true,
+  )
   assert.equal(captured.init.body?.toString().includes("test-secret"), false)
   assert.notEqual(headers.get("X-Heartbeat-Signature"), "test-secret")
   const signature = await signBody(

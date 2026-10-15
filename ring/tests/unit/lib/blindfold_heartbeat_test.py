@@ -16,11 +16,11 @@ from ring.lib.blindfold_heartbeat import (
 )
 
 VECTOR_BODY = (
-    b'{"instance":"ring-api","intervalSeconds":60,'
+    b'{"instance":"ring-api","intervalSeconds":300,'
     b'"kind":"heartbeat","serviceId":"ring-api",'
     b'"status":"ok","version":"abc"}'
 )
-VECTOR_SIG = "41e07c1e11767ee36f1492014524c8e055fd04caae117f335cb3fc266321e425"
+VECTOR_SIG = "90f343d950cb9ae2573067b446ca0bd7d59c668f54588c3f5fd7078584220ceb"
 
 
 def test_missing_or_blank_env_is_unconfigured() -> None:

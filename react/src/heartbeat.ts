@@ -9,13 +9,15 @@
  * provisioned key id.
  *
  * No request unless `HEARTBEAT_URL`, `HEARTBEAT_KEY_ID`, and
- * `HEARTBEAT_SECRET` are all set.
+ * `HEARTBEAT_SECRET` are all set. Beats report `intervalSeconds` 300,
+ * matching the five-minute cron, so Blindfold marks them stale after
+ * about 12.5 minutes.
  */
 
 import { serviceName } from "./observability"
 
 export const SERVICE_ID = "ring-frontend"
-export const INTERVAL_SECONDS = 60
+export const INTERVAL_SECONDS = 300
 
 export type HeartbeatStatus = "ok" | "degraded" | "down" | "stopping"
 

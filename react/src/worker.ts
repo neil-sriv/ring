@@ -40,7 +40,7 @@ const worker = {
       headers: preview.headers,
     })
   },
-  // Once a minute. No-op until the three HEARTBEAT_* Worker secrets exist.
+  // Every five minutes. No-op until the three HEARTBEAT_* Worker secrets exist.
   async scheduled(_event: unknown, env: Env): Promise<void> {
     await sendHeartbeat(env, "ok")
   },
