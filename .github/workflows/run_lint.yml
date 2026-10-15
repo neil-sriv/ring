@@ -31,4 +31,5 @@ jobs:
     
     - name: Run lint
       run: uv run ring check lint
+      # ring check lint includes `ring gen imports --check`
     
