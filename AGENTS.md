@@ -258,4 +258,4 @@ because pytest builds schema from `ring/db/schema.sql`, not Alembic.
   - `ring-cloud-prod-db/` — point cloud Vite/API at CockroachDB Cloud (prod/staging)
   - [`verify-ring/`](.cursor/skills/verify-ring/SKILL.md) — drive the running app the way a user does and capture evidence
 
-Before marking a behavior-changing PR ready, run verify-ring for touched features and attach evidence.
+Before marking a behavior-changing PR ready, run verify-ring for touched features and keep the proof under `/opt/cursor/artifacts/verify-ring/<run-id>/`. Do not attach images, recordings, or other binary evidence to the PR.

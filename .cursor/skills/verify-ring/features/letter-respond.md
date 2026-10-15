@@ -80,14 +80,32 @@ Preconditions:
        AND r.response_text = 'Verify reply <RUN_ID>'"
   ```
   One row. Save the output to `$EVIDENCE_DIR/letter-respond/response-row.txt`.
-- **Letter through nginx.** Read the issue id from the URL (`lttr_...`) and:
+- **Letter through nginx.** Read the issue id from the URL (`lttr_...`).
+  Mint a token in this recipe. `cleanup.sh` deletes `/tmp/verify-ring/*.token`,
+  and `groups-create.md` is the only other place that writes `owner.token`,
+  so a letter drive cannot assume that file is present.
   ```bash
+  mkdir -p /tmp/verify-ring
+  umask 077
+  bash .cursor/skills/verify-ring/scripts/api.sh POST /login/access-token \
+    -H 'Content-Type: application/x-www-form-urlencoded' \
+    -d 'username=test@example.com&password=testpassword123' \
+    -o /tmp/verify-ring/owner-login.json
+  chmod 600 /tmp/verify-ring/owner-login.json
+  python3 - <<'PY'
+import json
+from pathlib import Path
+login = json.loads(Path("/tmp/verify-ring/owner-login.json").read_text())
+token = Path("/tmp/verify-ring/owner.token")
+token.write_text(login["access_token"])
+token.chmod(0o600)
+PY
   bash .cursor/skills/verify-ring/scripts/api.sh GET /letters/letter/<LETTER_API_ID> \
     -H "Authorization: Bearer $(cat /tmp/verify-ring/owner.token)" \
     -o "$EVIDENCE_DIR/letter-respond/letter.json"
   ```
   HTTP 200. The JSON includes `Verify reply <RUN_ID>` on the One Good Thing
-  question. Strip any token if you copy the command into notes.
+  question. Do not copy the token into the evidence file or the PR.
 
 ## Gotchas
 
@@ -110,3 +128,5 @@ Preconditions:
   [groups-create.md](./groups-create.md). Do not replace this UI journey with
   that POST.
 - A `Saved` status without the reload and the `response` row is not proof.
+- `/tmp/verify-ring/owner.token` is not part of this recipe's preconditions.
+  Mint it in the nginx step above. `cleanup.sh` removes it.

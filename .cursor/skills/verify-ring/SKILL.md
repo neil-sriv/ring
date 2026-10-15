@@ -163,7 +163,9 @@ endpoints or direct ORM writes. Mocks are out of scope; Spotify staying
 unconfigured is a real boundary, and the groups recipe treats the post-authz
 Spotify status as the member's result.
 
-Do not put JWTs, passwords, or `hashed_password` in evidence files.
+Do not put JWTs, passwords, or `hashed_password` in evidence files. Leave
+screenshots and other proof in that artifacts tree. Do not commit them, and
+do not attach images, recordings, or other binary evidence to the PR.
 
 ## Cleanup
 
