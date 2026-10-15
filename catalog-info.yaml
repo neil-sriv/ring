@@ -1,0 +1,120 @@
+# Catalog for Blindfold (internal.neilsriv.tech).
+# Owner is the handle "neil", not a Backstage user ref.
+---
+apiVersion: backstage.io/v1alpha1
+kind: Component
+metadata:
+  name: ring-frontend
+  description: Ring web app. React SPA on the Cloudflare Worker ring-frontend.
+  links:
+    - url: https://ring.neilsriv.tech
+      title: Production
+    - url: https://github.com/neil-sriv/ring
+      title: Repository
+  annotations:
+    backstage.io/techdocs-ref: dir:docs
+    neilsriv.tech/forge: github
+    neilsriv.tech/repo: neil-sriv/ring
+    neilsriv.tech/repo-verification: verified 2026-10-07
+    neilsriv.tech/health-url: https://ring.neilsriv.tech/
+    neilsriv.tech/health-expect: 2xx
+    neilsriv.tech/health-via: binding:RING_FRONTEND
+    neilsriv.tech/package-manager: pnpm
+    neilsriv.tech/scripts: build,lint
+spec:
+  type: website
+  lifecycle: production
+  owner: neil
+  system: ring
+  dependsOn:
+    - component:ring-api
+  consumesApis:
+    - ring
+  domains:
+    - host: ring.neilsriv.tech
+      state: reachable
+      note: Workers Routes serve the SPA. /api/* and /.well-known/* pass through to the EC2 origin. Reachable on the 2026-10-07 catalog check.
+      checkedAt: "2026-10-07T16:12:00Z"
+  pipelines:
+    - adapter: cloudflare-git
+      target: ring-frontend
+      verification: verified
+      note: Cloudflare Workers Builds. Branch dev deploys; other branches are preview versions. Script name is react/wrangler.jsonc.
+---
+apiVersion: backstage.io/v1alpha1
+kind: Component
+metadata:
+  name: ring-api
+  description: Ring HTTP API. FastAPI on one AWS EC2 host, in Docker Compose.
+  links:
+    - url: https://ring.neilsriv.tech
+      title: Production
+    - url: https://github.com/neil-sriv/ring
+      title: Repository
+    - url: https://ring.neilsriv.tech/api/v1/openapi.json
+      title: OpenAPI
+  annotations:
+    backstage.io/techdocs-ref: dir:docs
+    neilsriv.tech/forge: github
+    neilsriv.tech/repo: neil-sriv/ring
+    neilsriv.tech/repo-verification: verified 2026-10-07
+    neilsriv.tech/migrations: ring/alembic
+    neilsriv.tech/package-manager: uv
+spec:
+  type: service
+  lifecycle: production
+  owner: neil
+  system: ring
+  dependsOn:
+    - resource:ring-db
+  providesApis:
+    - ring
+  domains:
+    - host: ring.neilsriv.tech
+      state: unverified
+      note: Public API under /api/* on the EC2 origin. The catalog check got 404 on /api/ and no health path was checked. Not probed.
+  pipelines:
+    - adapter: github-actions-ec2
+      target: deploy_api.yml
+      verification: verified
+      note: Workflow Deploy ring-api, environment production-api. Public repo, tokenless Actions read. The GitHub deployment row is the EC2 status.
+---
+apiVersion: backstage.io/v1alpha1
+kind: API
+metadata:
+  name: ring
+  description: OpenAPI for the Ring API. Routes are not copied into this file.
+  links:
+    - url: https://ring.neilsriv.tech/api/v1/openapi.json
+      title: OpenAPI
+    - url: https://github.com/neil-sriv/ring/blob/dev/react/openapi.json
+      title: Committed spec
+  annotations:
+    neilsriv.tech/forge: github
+    neilsriv.tech/repo: neil-sriv/ring
+spec:
+  type: openapi
+  lifecycle: production
+  owner: neil
+  system: ring
+  definition:
+    $text: ./react/openapi.json
+---
+apiVersion: backstage.io/v1alpha1
+kind: Resource
+metadata:
+  name: ring-db
+  description: CockroachDB Cloud cluster ring-db (GCP us-east1). Staging is ring-db-staging.
+  annotations:
+    neilsriv.tech/repo: ""
+    neilsriv.tech/repo-verification: unverified
+spec:
+  type: database
+  lifecycle: production
+  owner: neil
+  system: ring
+  pipelines:
+    - adapter: none
+      target: ring-db
+      verification: unverified
+      note: CockroachDB Cloud cluster ring-db. This repo does not own the cluster. No deploy adapter.

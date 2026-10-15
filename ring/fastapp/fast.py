@@ -18,6 +18,7 @@ from ring.api_identifier.util import IDNotFoundException
 from ring.async_scheduler.scheduler import scheduler
 from ring.fastapp.config import get_config
 from ring.fastapp.init_app_modules import init_app_modules
+from ring.fastapp.obs import install as install_observability
 from ring.fastapp.routes import router
 from ring.lib.request_logging import (
     install_uvicorn_access_log_redaction,
@@ -68,6 +69,7 @@ def create_app() -> FastAPI:
         )
 
     app.include_router(router)
+    install_observability(app)
 
     return app
 

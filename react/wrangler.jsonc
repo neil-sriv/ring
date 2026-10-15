@@ -36,5 +36,11 @@
       "persist": true,
       "head_sampling_rate": 1
     }
+  },
+  // Blindfold heartbeat, every 5 minutes. The scheduled handler returns
+  // immediately unless HEARTBEAT_URL, HEARTBEAT_KEY_ID (ring-frontend), and
+  // HEARTBEAT_SECRET are set as Worker secrets. Do not put those values here.
+  "triggers": {
+    "crons": ["*/5 * * * *"]
   }
 }

@@ -2,6 +2,10 @@
 
 The public /version endpoint exposes this so a plain curl against prod can
 tell whether the scheduler is alive and when it last completed a poll.
+
+Blindfold's push heartbeat is the APScheduler job
+``blindfold_heartbeat`` in ``ring.fastapp.blindfold_job``, every five
+minutes, in this same process. This record stays on GET /version.
 """
 
 from __future__ import annotations

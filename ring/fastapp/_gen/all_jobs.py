@@ -3,6 +3,7 @@ from __future__ import annotations
 
 def import_all_jobs() -> None:
     """Import all jobs."""
+    from ring.fastapp.blindfold_job import blindfold_heartbeat
     from ring.letters.crud.letter import (
         postpend_upcoming_letters,
         promote_and_create_new_letters,
