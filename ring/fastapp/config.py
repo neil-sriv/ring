@@ -52,6 +52,13 @@ class RingConfig(BaseSettings):
         SPOTIFY_CLIENT_ID (str): Spotify app client id; empty disables linking
         SPOTIFY_CLIENT_SECRET (str): Spotify app client secret
         SPOTIFY_REDIRECT_URI (str): Registered OAuth redirect URI
+        IDENTITY_SERVICE_BASE_URL (str): IdP origin; empty disables HTTP
+        IDP_DIRECTORY_API_TOKEN (str): Static Bearer token for identity routes
+        IDENTITY_SERVICE_IDENTITY_PATH (str): PUT/GET/PATCH path template
+        IDENTITY_SERVICE_COLLECTION_PATH (str): POST and GET-by-email path
+        AUTH_DUAL_WRITE (bool): Upsert identities on user changes
+        AUTH_DUAL_READ (bool): GET identities after login /me and log diffs
+        AUTH_DUAL_SYNC_TIMEOUT_SECONDS (float): Identity-service HTTP timeout
     """
 
     environment: str
@@ -92,6 +99,18 @@ class RingConfig(BaseSettings):
     SPOTIFY_CLIENT_ID: str = ""
     SPOTIFY_CLIENT_SECRET: str = ""
     SPOTIFY_REDIRECT_URI: str = ""
+    # Genesis IdP dual-sync (v2). Both flags default off. Dual-write and
+    # dual-read never fail the Ring request; they run in BackgroundTasks
+    # with this HTTP timeout. IdP origin is https://id.neilsriv.tech
+    # (prod) or http://127.0.0.1:4465 (local). Ring does not call AuthN.
+    # Auth is Authorization: Bearer $IDP_DIRECTORY_API_TOKEN.
+    IDENTITY_SERVICE_BASE_URL: str = ""
+    IDP_DIRECTORY_API_TOKEN: str = ""
+    IDENTITY_SERVICE_IDENTITY_PATH: str = "/api/v1/identities/{external_id}"
+    IDENTITY_SERVICE_COLLECTION_PATH: str = "/api/v1/identities"
+    AUTH_DUAL_WRITE: bool = False
+    AUTH_DUAL_READ: bool = False
+    AUTH_DUAL_SYNC_TIMEOUT_SECONDS: float = 2.0
 
 
 @lru_cache
