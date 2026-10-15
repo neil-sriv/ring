@@ -257,6 +257,14 @@ function GroupLoopSettings({ groupId }: { groupId: string }) {
     exitEditMode()
   }
 
+  // Keep every editable control locked for the full questions + cycle PATCH
+  // sequence. Save/Cancel already waited on isPending; field-array edits
+  // mid-flight can race exitEditMode/reset after settle.
+  const isSaving =
+    isSubmitting ||
+    defaultQuestionsMutation.isPending ||
+    cycleUpdateMutation.isPending
+
   return (
     <div className="w-full max-w-xl">
       <h3 className="text-base font-semibold">Loop Settings</h3>
@@ -280,6 +288,7 @@ function GroupLoopSettings({ groupId }: { groupId: string }) {
                   },
                 })}
                 type="number"
+                disabled={isSaving}
               />
             ) : (
               <p className="text-sm">{group.cycle_length} days</p>
@@ -311,6 +320,7 @@ function GroupLoopSettings({ groupId }: { groupId: string }) {
                 })}
                 type="number"
                 step={5}
+                disabled={isSaving}
               />
             ) : (
               <p className="text-sm">
@@ -347,6 +357,7 @@ function GroupLoopSettings({ groupId }: { groupId: string }) {
                           <Input
                             {...register(`questions.${index}.question_text`)}
                             {...field}
+                            disabled={isSaving}
                           />
                         )}
                       />
@@ -356,6 +367,7 @@ function GroupLoopSettings({ groupId }: { groupId: string }) {
                         size="sm"
                         variant="ghost"
                         className="text-muted-foreground hover:text-destructive"
+                        disabled={isSaving}
                       >
                         Remove
                       </Button>
@@ -374,6 +386,7 @@ function GroupLoopSettings({ groupId }: { groupId: string }) {
                   variant="outline"
                   size="sm"
                   onClick={() => append({ question_text: "" })}
+                  disabled={isSaving}
                 >
                   <Plus className="h-4 w-4" />
                   Add question
@@ -393,21 +406,11 @@ function GroupLoopSettings({ groupId }: { groupId: string }) {
           <Button
             onClick={editMode ? undefined : enterEditMode}
             type={editMode ? "submit" : "button"}
-            disabled={
-              editMode
-                ? !isDirty ||
-                  isSubmitting ||
-                  cycleUpdateMutation.isPending ||
-                  defaultQuestionsMutation.isPending
-                : false
-            }
+            disabled={editMode ? !isDirty || isSaving : false}
           >
-            {editMode &&
-              (isSubmitting ||
-                cycleUpdateMutation.isPending ||
-                defaultQuestionsMutation.isPending) && (
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              )}
+            {editMode && isSaving && (
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+            )}
             {editMode ? "Save" : "Edit"}
           </Button>
           {editMode && (
@@ -415,11 +418,7 @@ function GroupLoopSettings({ groupId }: { groupId: string }) {
               type="button"
               variant="outline"
               onClick={onCancel}
-              disabled={
-                isSubmitting ||
-                cycleUpdateMutation.isPending ||
-                defaultQuestionsMutation.isPending
-              }
+              disabled={isSaving}
             >
               Cancel
             </Button>
