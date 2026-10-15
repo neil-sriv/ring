@@ -39,7 +39,10 @@ class TestRegistries:
         import_all_jobs()
         tables = set(CREATE_TABLE_RE.findall(SCHEMA_SQL.read_text()))
         tables.discard(ALEMBIC_VERSION_TABLE)
-        missing = tables - set(Base.metadata.tables)
+        metadata_tables = {
+            name.split(".")[-1] for name in Base.metadata.tables
+        }
+        missing = tables - metadata_tables
         assert missing == set()
 
     def test_discovered_jobs_are_in_registry(self) -> None:
