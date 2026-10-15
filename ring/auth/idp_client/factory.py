@@ -1,7 +1,7 @@
 """Thin Ring wiring over vendored genesis-idp.
 
-Sync ``HttpIdentityClient`` only (not ``genesis_idp.aio``). Dual-sync runs in
-FastAPI BackgroundTasks and CLI scripts.
+Sync ``HttpIdentityClient`` only. Dual-sync runs in FastAPI BackgroundTasks
+and CLI scripts.
 """
 
 from __future__ import annotations
@@ -26,8 +26,6 @@ def identity_client_config_from_ring(
         base_url=ring_config.IDENTITY_SERVICE_BASE_URL,
         api_token=ring_config.IDP_DIRECTORY_API_TOKEN,
         timeout_seconds=ring_config.AUTH_DUAL_SYNC_TIMEOUT_SECONDS,
-        identity_path=ring_config.IDENTITY_SERVICE_IDENTITY_PATH,
-        collection_path=ring_config.IDENTITY_SERVICE_COLLECTION_PATH,
     )
 
 

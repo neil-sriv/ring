@@ -1,5 +1,5 @@
 source_repo=https://origin.cursor.com/git/neil/genesis.git
 source_path=sdk/python/idp
-commit=4feb400
+commit=bbdf2aa6c02ddb61d2a08fc1ac37fedbc31e0925
 package=genesis_idp
-note=sync client only; aio/ is not vendored. Refresh with `ring gen genesis-idp --from <genesis-clone>`.
+note=Refresh with `ring gen genesis-idp --from <genesis clone or extracted sdk/python/idp>`.

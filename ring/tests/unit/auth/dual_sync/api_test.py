@@ -170,7 +170,7 @@ def test_login_succeeds_and_dual_reads_without_serving_new_path(
     remote = fake_identity.get_identity(user.api_identifier)
     assert remote is not None
     assert remote.credential_present is True
-    assert "hashed_password" not in remote.model_dump()
+    assert not hasattr(remote, "hashed_password")
     metrics.reset()
     again = unauthenticated_client.post(
         "/login/access-token",
