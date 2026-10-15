@@ -1,10 +1,17 @@
-"""Ring wiring for the extractable identity-service client."""
+"""Thin Ring wiring over the genesis-idp SDK.
+
+Sync ``HttpIdentityClient`` only (not ``genesis_idp.aio``). Dual-sync runs in
+FastAPI BackgroundTasks and CLI scripts.
+"""
 
 from __future__ import annotations
 
-from ring.auth.idp_client.config import IdentityClientConfig
-from ring.auth.idp_client.http import HttpIdentityClient
-from ring.auth.idp_client.protocol import IdentityClient
+from genesis_idp import (
+    HttpIdentityClient,
+    IdentityClient,
+    IdentityClientConfig,
+)
+
 from ring.fastapp.config import RingConfig, get_config
 
 _override: IdentityClient | None = None
@@ -14,7 +21,7 @@ _http_client: HttpIdentityClient | None = None
 def identity_client_config_from_ring(
     config: RingConfig | None = None,
 ) -> IdentityClientConfig:
-    """Map Ring settings onto the extractable client config."""
+    """Map Ring settings onto genesis-idp ``IdentityClientConfig``."""
     ring_config = config or get_config()
     return IdentityClientConfig(
         base_url=ring_config.IDENTITY_SERVICE_BASE_URL,

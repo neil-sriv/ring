@@ -4,6 +4,8 @@ from __future__ import annotations
 
 from datetime import UTC, datetime
 
+from genesis_idp import FakeIdentityClient, Identity, IdentityUpsert
+
 from ring.auth.dual_sync.metrics import metrics
 from ring.auth.dual_sync.service import (
     LocalIdentity,
@@ -12,8 +14,6 @@ from ring.auth.dual_sync.service import (
     run_identity_upsert,
 )
 from ring.auth.idp_client.factory import set_identity_client_override
-from ring.auth.idp_client.fake import FakeIdentityClient
-from ring.auth.idp_client.models import Identity, IdentityUpsert
 
 HASH = "$2b$12$" + ("a" * 53)
 CREATED = datetime(2024, 1, 15, 12, 0, 0, tzinfo=UTC)

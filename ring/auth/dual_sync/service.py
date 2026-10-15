@@ -12,12 +12,16 @@ from dataclasses import dataclass
 from datetime import datetime
 
 from fastapi import BackgroundTasks
+from genesis_idp import (
+    Identity,
+    IdentityUpsert,
+    created_at_equal,
+    format_created_at,
+)
 from loguru import logger
 
 from ring.auth.dual_sync.metrics import DualSyncSnapshot, metrics
 from ring.auth.idp_client.factory import get_identity_client
-from ring.auth.idp_client.models import Identity, IdentityUpsert
-from ring.auth.idp_client.times import created_at_equal, format_created_at
 from ring.fastapp.config import get_config
 from ring.parties.models.user_model import User
 

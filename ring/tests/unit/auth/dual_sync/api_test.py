@@ -6,14 +6,12 @@ from datetime import UTC, datetime
 
 import pytest
 from fastapi.testclient import TestClient
+from genesis_idp import FakeIdentityClient, IdentityUpsert, format_created_at
 from sqlalchemy.orm import Session
 
 from ring.auth.dual_sync.metrics import metrics
 from ring.auth.dual_sync.service import LocalIdentity, run_identity_upsert
 from ring.auth.idp_client.factory import set_identity_client_override
-from ring.auth.idp_client.fake import FakeIdentityClient
-from ring.auth.idp_client.models import IdentityUpsert
-from ring.auth.idp_client.times import format_created_at
 from ring.fastapp.config import get_config
 from ring.parties.models.user_model import User
 from ring.tests.factories.parties.invite_factory import InviteFactory

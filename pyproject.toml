@@ -27,6 +27,7 @@ required-imports = ["from __future__ import annotations"]
 [tool.uv.sources]
 llm-service = { path = "ring/packages/service_clients/llm_service" }
 llm = { workspace = true }
+genesis-idp = { git = "https://origin.cursor.com/git/neil/genesis.git", rev = "4feb400", subdirectory = "sdk/python/idp" }
 
 [tool.uv.workspace]
 members = [
@@ -82,6 +83,7 @@ dependencies = [
     "httpx>=0.28.1",
     "pycrdt>=0.14.3",
     "pycrdt-websocket>=0.16.4",
+    "genesis-idp @ git+https://origin.cursor.com/git/neil/genesis.git@4feb400#subdirectory=sdk/python/idp",
 ]
 
 [dependency-groups]
@@ -93,6 +95,7 @@ dev = [
     "pytest-xdist>=3.6.1",
     "ipdb>=0.13.13",
     "playwright>=1.62.0",
+    "genesis-idp[stub] @ git+https://origin.cursor.com/git/neil/genesis.git@4feb400#subdirectory=sdk/python/idp",
 ]
 ai = [
     "llm-service",
