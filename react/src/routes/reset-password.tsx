@@ -93,6 +93,7 @@ function ResetPasswordRequest() {
               })}
               placeholder="Email"
               type="email"
+              disabled={isSubmitting}
               className={errors.email ? "border-destructive" : ""}
             />
             {errors.email && (

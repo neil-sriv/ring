@@ -38,7 +38,7 @@ function ResetPassword() {
     handleSubmit,
     getValues,
     reset,
-    formState: { errors },
+    formState: { errors, isSubmitting },
   } = useForm<NewPasswordForm>({
     mode: "onBlur",
     criteriaMode: "all",
@@ -68,11 +68,15 @@ function ResetPassword() {
 
   const onSubmit: SubmitHandler<NewPasswordForm> = async (data) => {
     if (!token) return
-    mutation.mutate({
+    // Await so RHF isSubmitting stays true for the full request; isPending
+    // covers the gap if the promise settles while React is still painting.
+    await mutation.mutateAsync({
       path: { token: token },
       body: data,
     })
   }
+
+  const isSaving = isSubmitting || mutation.isPending
 
   return (
     <div className="flex min-h-screen flex-col items-center justify-center bg-background px-4">
@@ -101,6 +105,7 @@ function ResetPassword() {
               {...register("new_password", passwordRules())}
               placeholder="Password"
               type="password"
+              disabled={isSaving}
               className={errors.new_password ? "border-destructive" : ""}
             />
             {errors.new_password && (
@@ -117,6 +122,7 @@ function ResetPassword() {
               {...register("confirm_password", confirmPasswordRules(getValues))}
               placeholder="Confirm password"
               type="password"
+              disabled={isSaving}
               className={errors.confirm_password ? "border-destructive" : ""}
             />
             {errors.confirm_password && (
@@ -126,12 +132,8 @@ function ResetPassword() {
             )}
           </div>
 
-          <Button
-            type="submit"
-            disabled={mutation.isPending}
-            className="w-full"
-          >
-            {mutation.isPending && <Loader2 className="h-4 w-4 animate-spin" />}
+          <Button type="submit" disabled={isSaving} className="w-full">
+            {isSaving && <Loader2 className="h-4 w-4 animate-spin" />}
             Reset Password
           </Button>
 
