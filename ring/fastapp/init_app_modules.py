@@ -4,13 +4,12 @@ from loguru import logger
 
 
 def init_app_modules() -> None:
-    from ring.fastapp._gen.all_jobs import schedule_all_interval_jobs
-
     """Initialize all app modules.
 
-    This function is called when the app is initialized. It calls all functions in
-    the manually (for now) generated _gen.all_ files.
+    Imports generated registries and schedules interval jobs. Called from
+    ``create_app``.
     """
+    from ring.async_scheduler.schedule import schedule_all_interval_jobs
 
     logger.info("Initializing app modules")
 

@@ -36,4 +36,5 @@ def lint(
             "check",
         ]
         + (["--fix"] if fix else []),
+        ["uv", "run", "ring", "gen", "imports"] + ([] if fix else ["--check"]),
     ]

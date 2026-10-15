@@ -118,6 +118,8 @@ Important domains and shared modules:
 - `ring/api_identifier/` — `APIIdentified` mixin + `APIPrefix` enum
 - `ring/fastapp/` — app factory; routers are wired in
   [ring/fastapp/routes.py](ring/fastapp/routes.py)
+- `ring/fastapp/_gen/` and `ring/search/_gen/` — generated import
+  factories (`ring gen imports`); do not edit by hand
 - `ring/security.py` — password hashing, JWT access tokens
 - `ring/alembic/` — migrations
 
@@ -147,6 +149,14 @@ Important domains and shared modules:
   After backend changes that touch the OpenAPI surface, regenerate with
   `ring fe regen` and use the generated TanStack Query hooks under
   `react/src/client/`.
+- **Generated import factories.** Decorator registries
+  (`JOB_REGISTRY`, `SEARCH_REGISTRY`, `API_CLASS_REGISTRY`,
+  `ALL_FACTORIES`) and SQLAlchemy `Base.metadata` only fill on import.
+  After adding a model, `@job_factory` / `@interval_job_factory`,
+  `@register_search_function`, `@register_api_class`, or
+  `@register_factory`, run `ring gen imports`. `ring check lint` runs
+  `ring gen imports --check`. Do not hand-edit `_gen` files or
+  `ring/tests/factories/entrypoint/hydrate_registries.py`.
 - **Generic attachable entities.** Secondary entities that can attach to many
   parent types should use a **weak reference** — store the parent's
   `api_identifier` in a `target_api_id` column, look it up with
@@ -166,6 +176,12 @@ source .venv/bin/activate
 ring compose up           # CockroachDB + API + Nginx
 ring db upgrade           # apply migrations
 ring fe dev               # Vite at https://localhost:5173
+```
+
+When adding a model, job, search registration, or test factory:
+
+```bash
+ring gen imports              # refresh _gen import factories
 ```
 
 When backend API shape changes:
@@ -209,7 +225,7 @@ this mode.
 
 | Check                | Command                                                        |
 |----------------------|----------------------------------------------------------------|
-| Python lint/format   | `ring check lint` (`uv run ruff format --diff && ruff check`)  |
+| Python lint/format   | `ring check lint` (`ruff format --diff && ruff check` and `ring gen imports --check`) |
 | Frontend lint        | `cd react && pnpm run lint` (Biome; ~21 pre-existing warnings) |
 | TypeScript           | `cd react && npx tsc --noEmit`                                 |
 | Frontend build       | `cd react && pnpm run build`                                   |

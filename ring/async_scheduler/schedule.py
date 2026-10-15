@@ -37,3 +37,19 @@ def register_interval_job_schedule(
         job=job,
         kwargs=kwargs,
     )
+
+
+def schedule_all_interval_jobs() -> None:
+    """Replace the scheduler's interval jobs from the registry."""
+    from ring.async_scheduler.scheduler import scheduler
+
+    scheduler.remove_all_jobs()
+
+    for job_name, job_info in INTERVAL_JOB_SCHEDULE_REGISTRY.items():
+        scheduler.add_job(
+            job_info.job,
+            id=job_name,
+            trigger="interval",
+            replace_existing=True,
+            **job_info.kwargs,
+        )

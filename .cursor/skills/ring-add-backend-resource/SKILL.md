@@ -23,6 +23,7 @@ Task progress:
 - [ ] Generate and apply an Alembic migration
 - [ ] Add authz checks where applicable
 - [ ] Add unit tests and a factory
+- [ ] Run `ring gen imports` so the model, search/job decorators, and factory are imported
 ```
 
 ### 1. Pick the domain package
@@ -42,6 +43,8 @@ In `ring/<domain>/models/<resource>_model.py`:
   (3–6 chars, lowercase).
 - Decorate the class with `@register_api_class(APIPrefix.X)`.
 - Set `API_ID_PREFIX` and `PYDANTIC_MODEL` on the class.
+- After the model (and any `@register_search_function` / `@job_factory`)
+  exists, run `ring gen imports` so Alembic and app startup import it.
 
 For entities that attach to many different parent types, prefer a **weak
 reference** column `target_api_id: Mapped[str]` over a polymorphic FK; resolve
@@ -106,11 +109,16 @@ from `ring/authz/authz.py` before reads and writes. Follow the
 
 ### 9. Tests
 
-- Add a factory in `ring/tests/factories/<domain>/`.
+- Add a factory in `ring/tests/factories/<domain>/` and decorate it with
+  `@register_factory`.
 - Add unit tests under `ring/tests/unit/<domain>/` covering create, read,
   permission-denied, and not-found paths.
 - Use the `admin` marker (see [ring/tests/pytest.ini](../../../ring/tests/pytest.ini))
   when an authenticated admin client is needed.
+- Run `ring gen imports` so `_gen` import factories and
+  `hydrate_registries.py` pick up the model, any
+  `@register_search_function` / `@job_factory`, and the new factory.
+  Do not edit those files by hand.
 
 Run with:
 

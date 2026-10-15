@@ -176,7 +176,7 @@ def test_job_is_wired_to_the_scheduler_import() -> None:
     from ring.fastapp._gen import all_jobs
 
     source = inspect.getsource(all_jobs.import_all_jobs)
-    assert "blindfold_heartbeat" in source
+    assert "ring.fastapp.blindfold_job" in source
     import ring.fastapp
 
     job = Path(ring.fastapp.__file__).resolve().parent / "blindfold_job.py"
