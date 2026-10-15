@@ -257,14 +257,14 @@ class _StarletteTransport(httpx.BaseTransport):
         with TestClient(app) as inner:
             response = inner.request(
                 request.method,
-                request.url.path
-                + (f"?{request.url.query}" if request.url.query else ""),
+                request.url.path,
                 headers={
                     key: value
                     for key, value in request.headers.items()
                     if key.lower() != "host"
                 },
                 content=request.content,
+                params=dict(request.url.params),
             )
         return httpx.Response(
             response.status_code,
