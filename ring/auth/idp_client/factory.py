@@ -1,4 +1,4 @@
-"""Thin Ring wiring over the genesis-idp SDK.
+"""Thin Ring wiring over vendored genesis-idp.
 
 Sync ``HttpIdentityClient`` only (not ``genesis_idp.aio``). Dual-sync runs in
 FastAPI BackgroundTasks and CLI scripts.
