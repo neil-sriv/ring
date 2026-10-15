@@ -2,17 +2,21 @@
 
 from __future__ import annotations
 
-import asyncio
+import inspect
+import urllib.error
+from pathlib import Path
 
 import pytest
 
 from ring.lib.blindfold_heartbeat import (
+    INTERVAL_SECONDS,
     HeartbeatConfig,
     config_from_env,
     encode_payload,
+    local_health_url,
+    run_heartbeat,
     sign_body,
     signed_headers,
-    start_if_configured,
 )
 
 VECTOR_BODY = (
@@ -21,6 +25,29 @@ VECTOR_BODY = (
     b'"status":"ok","version":"abc"}'
 )
 VECTOR_SIG = "90f343d950cb9ae2573067b446ca0bd7d59c668f54588c3f5fd7078584220ceb"
+
+_ENV = {
+    "HEARTBEAT_URL": "https://example.test/api/heartbeat",
+    "HEARTBEAT_KEY_ID": "ring-api",
+    "HEARTBEAT_SECRET": "test-secret",
+    "API_PORT": "8001",
+    "RING_GIT_SHA": "abc",
+}
+
+
+class _Response:
+    def __init__(self, status: int, body: bytes = b"") -> None:
+        self.status = status
+        self._body = body
+
+    def read(self) -> bytes:
+        return self._body
+
+    def __enter__(self) -> _Response:
+        return self
+
+    def __exit__(self, *_args: object) -> bool:
+        return False
 
 
 def test_missing_or_blank_env_is_unconfigured() -> None:
@@ -53,6 +80,7 @@ def test_encode_and_sign_match_the_documented_construction() -> None:
         version="abc",
     )
     assert body == VECTOR_BODY
+    assert INTERVAL_SECONDS == 300
     assert sign_body("test-secret", "1700000000", body) == VECTOR_SIG
 
 
@@ -70,13 +98,9 @@ def test_headers_carry_the_signature_and_not_the_secret() -> None:
     assert b"test-secret" not in VECTOR_BODY
 
 
-def test_unconfigured_start_does_not_post(
+def test_unconfigured_run_does_not_post(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    monkeypatch.delenv("HEARTBEAT_URL", raising=False)
-    monkeypatch.delenv("HEARTBEAT_KEY_ID", raising=False)
-    monkeypatch.delenv("HEARTBEAT_SECRET", raising=False)
-
     def explode(*_args: object, **_kwargs: object) -> None:
         raise AssertionError("posted")
 
@@ -84,5 +108,78 @@ def test_unconfigured_start_does_not_post(
         "ring.lib.blindfold_heartbeat.urllib.request.urlopen",
         explode,
     )
-    stop = start_if_configured()
-    asyncio.run(stop())
+    assert run_heartbeat({}) is None
+
+
+def test_ok_beat_follows_a_local_health_200(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    seen: list[str] = []
+
+    def urlopen(
+        request: urllib.request.Request, timeout: float = 0
+    ) -> _Response:
+        seen.append(request.full_url)
+        if request.full_url == local_health_url(_ENV):
+            return _Response(200, b'{"message":"Hello World!"}')
+        body = request.data or b""
+        assert b'"intervalSeconds":300' in body
+        assert b'"status":"ok"' in body
+        assert b"test-secret" not in body
+        return _Response(204)
+
+    monkeypatch.setattr(
+        "ring.lib.blindfold_heartbeat.urllib.request.urlopen",
+        urlopen,
+    )
+    assert run_heartbeat(_ENV) == "ok"
+    assert seen == [
+        "http://127.0.0.1:8001/",
+        "https://example.test/api/heartbeat",
+    ]
+
+
+def test_http_error_posts_down(monkeypatch: pytest.MonkeyPatch) -> None:
+    def urlopen(
+        request: urllib.request.Request, timeout: float = 0
+    ) -> _Response:
+        if request.full_url.startswith("http://127.0.0.1"):
+            raise urllib.error.HTTPError(
+                request.full_url, 500, "down", None, None
+            )
+        assert b'"status":"down"' in (request.data or b"")
+        return _Response(204)
+
+    monkeypatch.setattr(
+        "ring.lib.blindfold_heartbeat.urllib.request.urlopen",
+        urlopen,
+    )
+    assert run_heartbeat(_ENV) == "down"
+
+
+def test_unreachable_api_does_not_post(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    def urlopen(
+        request: urllib.request.Request, timeout: float = 0
+    ) -> _Response:
+        raise urllib.error.URLError("connection refused")
+
+    monkeypatch.setattr(
+        "ring.lib.blindfold_heartbeat.urllib.request.urlopen",
+        urlopen,
+    )
+    assert run_heartbeat(_ENV) is None
+
+
+def test_job_is_wired_to_the_scheduler_import() -> None:
+    from ring.fastapp._gen import all_jobs
+
+    source = inspect.getsource(all_jobs.import_all_jobs)
+    assert "blindfold_heartbeat" in source
+    import ring.fastapp
+
+    job = Path(ring.fastapp.__file__).resolve().parent / "blindfold_job.py"
+    text = job.read_text()
+    assert "minutes=INTERVAL_SECONDS // 60" in text
+    assert "run_heartbeat" in text

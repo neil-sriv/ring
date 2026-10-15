@@ -20,7 +20,6 @@ from ring.fastapp.config import get_config
 from ring.fastapp.init_app_modules import init_app_modules
 from ring.fastapp.obs import install as install_observability
 from ring.fastapp.routes import router
-from ring.lib.blindfold_heartbeat import start_if_configured
 from ring.lib.request_logging import (
     install_uvicorn_access_log_redaction,
     sanitize_request_url,
@@ -38,13 +37,8 @@ async def lifespan(app: FastAPI):
         scheduler.start()
 
     # Runs the notebook CRDT rooms' task group for the app's lifetime.
-    # Blindfold heartbeats no-op unless the three HEARTBEAT_* vars are set.
-    stop_blindfold_heartbeat = start_if_configured()
-    try:
-        async with notebook_websocket_server:
-            yield
-    finally:
-        await stop_blindfold_heartbeat()
+    async with notebook_websocket_server:
+        yield
 
     if not ring_config.DISABLE_SCHEDULER:
         scheduler.shutdown()

@@ -1,30 +1,37 @@
 """Blindfold push heartbeat for the Ring API.
 
-``@neilsriv/uptime`` is TypeScript-only and is not on npm, and the
-Python sender is not published yet. This module is that sender.
+``@neilsriv/uptime`` is not on npm, and there is no Python package yet,
+so this module is the sender. The schedule lives in
+``ring.fastapp.blindfold_job``: an APScheduler interval job in this
+API process, not a separate worker.
 
 POST ``HEARTBEAT_URL`` with HMAC-SHA256 over
 ``timestamp + "\\n" + body`` (lowercase hex). Headers are
 ``X-Heartbeat-Key-Id``, ``X-Heartbeat-Timestamp``, and
-``X-Heartbeat-Signature``. The body ``serviceId`` is ``ring-api``,
-which is also the provisioned key id.
+``X-Heartbeat-Signature``. ``serviceId`` is ``ring-api``.
 
 No network call unless ``HEARTBEAT_URL``, ``HEARTBEAT_KEY_ID``, and
-``HEARTBEAT_SECRET`` are all non-empty. Beats go out every 300 seconds
-and report ``intervalSeconds`` 300, so Blindfold treats them as stale
-after about 12.5 minutes. A shutdown beat uses status ``stopping``.
+``HEARTBEAT_SECRET`` are all set. Each beat reports
+``intervalSeconds`` 300. Blindfold treats that as stale after about
+12.5 minutes. There is no ``stopping`` beat: a deploy finishes well
+inside that window, and a crash would not send one anyway.
+
+An ``ok`` beat means the scheduler job ran and ``GET /`` on
+``127.0.0.1:$API_PORT`` returned 2xx. It does not prove nginx,
+Cloudflare, or the public hostname. If that request never connects,
+nothing is posted.
 """
 
 from __future__ import annotations
 
-import asyncio
 import hashlib
 import hmac
 import json
 import os
 import time
+import urllib.error
 import urllib.request
-from collections.abc import Awaitable, Callable, Mapping
+from collections.abc import Mapping
 from dataclasses import dataclass
 from typing import Any
 
@@ -32,7 +39,8 @@ from loguru import logger
 
 SERVICE_ID = "ring-api"
 INTERVAL_SECONDS = 300
-_POST_TIMEOUT_SECONDS = 5
+_TIMEOUT_SECONDS = 5
+_UNREACHABLE = "unreachable"
 
 
 @dataclass(frozen=True)
@@ -104,11 +112,45 @@ def beat_version(environ: Mapping[str, str] | None = None) -> str:
     ).strip()
 
 
-def _post(cfg: HeartbeatConfig, status: str) -> None:
+def local_health_url(environ: Mapping[str, str] | None = None) -> str:
+    """Loopback URL for the API's ``GET /`` health route."""
+    env = os.environ if environ is None else environ
+    port = env.get("API_PORT", "").strip() or "8001"
+    return f"http://127.0.0.1:{port}/"
+
+
+def probe_local_api(environ: Mapping[str, str] | None = None) -> str:
+    """Return ``ok``, ``down``, or ``unreachable``.
+
+    ``GET /`` is the in-process health route. Connection failure is
+    ``unreachable`` so a startup race does not post ``down``.
+    """
+    request = urllib.request.Request(local_health_url(environ), method="GET")
+    try:
+        with urllib.request.urlopen(
+            request, timeout=_TIMEOUT_SECONDS
+        ) as response:
+            if 200 <= response.status < 300:
+                return "ok"
+            return "down"
+    except urllib.error.HTTPError as exc:
+        if 200 <= exc.code < 300:
+            return "ok"
+        return "down"
+    except (urllib.error.URLError, TimeoutError, OSError):
+        return _UNREACHABLE
+
+
+def post_beat(
+    cfg: HeartbeatConfig,
+    status: str,
+    *,
+    version: str | None = None,
+) -> None:
     body = encode_payload(
         service_id=cfg.service_id,
         status=status,
-        version=beat_version(),
+        version=beat_version() if version is None else version,
         interval_seconds=cfg.interval_seconds,
     )
     timestamp = str(int(time.time()))
@@ -118,48 +160,28 @@ def _post(cfg: HeartbeatConfig, status: str) -> None:
         headers=signed_headers(cfg, timestamp, body),
         method="POST",
     )
-    with urllib.request.urlopen(
-        request, timeout=_POST_TIMEOUT_SECONDS
-    ) as response:
+    with urllib.request.urlopen(request, timeout=_TIMEOUT_SECONDS) as response:
         response.read()
 
 
-async def _loop(cfg: HeartbeatConfig) -> None:
-    while True:
-        try:
-            await asyncio.to_thread(_post, cfg, "ok")
-        except Exception:
-            logger.warning("Blindfold heartbeat failed")
-        await asyncio.sleep(cfg.interval_seconds)
+def run_heartbeat(environ: Mapping[str, str] | None = None) -> str | None:
+    """Probe local health and post one beat.
 
-
-def start_if_configured() -> Callable[[], Awaitable[None]]:
-    """Start the beat loop, or return a no-op shutdown.
-
-    Call from a running event loop (the FastAPI lifespan). The returned
-    coroutine sends status ``stopping`` when a loop was started.
+    Returns the posted status, or None when unconfigured, when the
+    local server did not connect, or when the POST failed.
     """
-    cfg = config_from_env()
+    cfg = config_from_env(environ)
     if cfg is None:
-
-        async def stop_unconfigured() -> None:
-            return
-
-        return stop_unconfigured
-
-    task = asyncio.create_task(_loop(cfg), name="blindfold-heartbeat")
-
-    async def stop() -> None:
-        task.cancel()
-        try:
-            await task
-        except asyncio.CancelledError:
-            pass
-        except Exception:
-            logger.warning("Blindfold heartbeat loop stopped")
-        try:
-            await asyncio.to_thread(_post, cfg, "stopping")
-        except Exception:
-            logger.warning("Blindfold stopping heartbeat failed")
-
-    return stop
+        return None
+    status = probe_local_api(environ)
+    if status == _UNREACHABLE:
+        logger.warning(
+            "Blindfold heartbeat skipped; local API did not respond"
+        )
+        return None
+    try:
+        post_beat(cfg, status)
+    except (urllib.error.URLError, TimeoutError, OSError):
+        logger.warning("Blindfold heartbeat failed")
+        return None
+    return status
