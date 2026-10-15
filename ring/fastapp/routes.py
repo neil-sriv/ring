@@ -9,7 +9,7 @@ from __future__ import annotations
 
 from fastapi import APIRouter
 
-from ring.auth.api import authn
+from ring.auth.api import authn, dual_sync
 from ring.fastapp.api import version
 from ring.letters.api import letter, question, response
 from ring.link_unfurl.api import unfurl
@@ -24,6 +24,7 @@ router = APIRouter()
 
 # Authentication routes
 router.include_router(authn.router, tags=["login"])
+router.include_router(dual_sync.router, tags=["login"])
 router.include_router(version.router, tags=["meta"])
 
 # User and group management routes

@@ -7,12 +7,16 @@ and password recovery workflows.
 
 from __future__ import annotations
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordRequestForm
 from starlette.concurrency import run_in_threadpool
 
 from ring.api_identifier.util import get_model
 from ring.async_scheduler.scheduler import scheduler
+from ring.auth.dual_sync.service import (
+    schedule_identity_compare,
+    schedule_identity_upsert,
+)
 from ring.auth.schemas.token import Token
 from ring.fastapp.dependencies import (
     RequestDependenciesBase,
@@ -39,6 +43,7 @@ router = APIRouter()
 
 @router.post("/login/access-token")
 async def login_access_token(
+    background_tasks: BackgroundTasks,
     form_data: OAuth2PasswordRequestForm = Depends(),
     req_dep: RequestDependenciesBase = Depends(
         get_unauthenticated_request_dependencies
@@ -70,6 +75,7 @@ async def login_access_token(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Incorrect username or password",
         )
+    schedule_identity_compare(background_tasks, user)
     return Token(
         access_token=create_access_token(data={"sub": user.email}),
         token_type="bearer",
@@ -157,6 +163,7 @@ async def reset_password_request(
 async def reset_password(
     token: str,
     new_password_data: NewPassword,
+    background_tasks: BackgroundTasks,
     req_dep: RequestDependenciesBase = Depends(
         get_unauthenticated_request_dependencies
     ),
@@ -192,6 +199,7 @@ async def reset_password(
     reset_user_password(db_user, new_password_data.new_password)
     ott.used = True
     req_dep.db.commit()
+    schedule_identity_upsert(background_tasks, db_user)
     return ResponseMessage(message="Password updated successfully")
 
 

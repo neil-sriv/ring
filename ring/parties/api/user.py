@@ -2,9 +2,13 @@ from __future__ import annotations
 
 from typing import Sequence
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException
 
 from ring.api_identifier import util as api_identifier_crud
+from ring.auth.dual_sync.service import (
+    schedule_identity_compare,
+    schedule_identity_upsert,
+)
 from ring.fastapp.dependencies import (
     AuthenticatedRequestDependencies,
     RequestDependenciesBase,
@@ -38,6 +42,7 @@ router = APIRouter()
 
 @router.get("/me", response_model=UserSchema)
 async def read_user_me(
+    background_tasks: BackgroundTasks,
     req_dep: AuthenticatedRequestDependencies = Depends(
         get_request_dependencies,
     ),
@@ -45,11 +50,13 @@ async def read_user_me(
     """Get the current authenticated user's information.
 
     Args:
+        background_tasks (BackgroundTasks): Dual-read compare after response
         req_dep (AuthenticatedRequestDependencies): Request dependencies
 
     Returns:
         User: Current user's information
     """
+    schedule_identity_compare(background_tasks, req_dep.current_user)
     return req_dep.current_user
 
 
@@ -58,6 +65,7 @@ async def read_user_me(
 )
 async def create_user(
     user: UserCreate,
+    background_tasks: BackgroundTasks,
     req_dep: RequestDependenciesBase = Depends(
         get_unauthenticated_request_dependencies,
     ),
@@ -87,6 +95,7 @@ async def create_user(
         password=user.password,
     )
     req_dep.db.commit()
+    schedule_identity_upsert(background_tasks, db_user)
     return db_user
 
 
@@ -94,6 +103,7 @@ async def create_user(
 async def register_user(
     token: str,
     user: UserCreate,
+    background_tasks: BackgroundTasks,
     req_dep: RequestDependenciesBase = Depends(
         get_unauthenticated_request_dependencies,
     ),
@@ -134,6 +144,7 @@ async def register_user(
         req_dep.db, db_group.api_identifier, db_user.api_identifier
     )
     req_dep.db.commit()
+    schedule_identity_upsert(background_tasks, db_user)
     return db_user
 
 
@@ -190,6 +201,7 @@ async def read_user_by_id(
 async def update_user_by_id(
     user_api_id: str,
     user_update: UserUpdate,
+    background_tasks: BackgroundTasks,
     req_dep: AuthenticatedRequestDependencies = Depends(
         get_request_dependencies,
     ),
@@ -228,6 +240,7 @@ async def update_user_by_id(
     if user_update.name is not None:
         db_user.name = user_update.name
     req_dep.db.commit()
+    schedule_identity_upsert(background_tasks, db_user)
     return db_user
 
 
@@ -237,6 +250,7 @@ async def update_user_by_id(
 )
 async def update_user_me(
     current_user_update_data: UserUpdate,
+    background_tasks: BackgroundTasks,
     req_dep: AuthenticatedRequestDependencies = Depends(
         get_request_dependencies,
     ),
@@ -267,12 +281,14 @@ async def update_user_me(
     if current_user_update_data.name:
         req_dep.current_user.name = current_user_update_data.name
     req_dep.db.commit()
+    schedule_identity_upsert(background_tasks, req_dep.current_user)
     return req_dep.current_user
 
 
 @router.patch("/me/password", response_model=ResponseMessage)
 async def update_password_me(
     update_password_data: UserUpdatePassword,
+    background_tasks: BackgroundTasks,
     req_dep: AuthenticatedRequestDependencies = Depends(
         get_request_dependencies,
     ),
@@ -308,12 +324,14 @@ async def update_password_me(
     )
     req_dep.current_user.hashed_password = hashed_password
     req_dep.db.commit()
+    schedule_identity_upsert(background_tasks, req_dep.current_user)
     return ResponseMessage(message="Password updated successfully")
 
 
 @router.patch("/{user_api_id}/admin", response_model=ResponseMessage)
 async def update_user_admin(
     user_api_id: str,
+    background_tasks: BackgroundTasks,
     req_dep: AuthenticatedRequestDependencies = Depends(
         get_request_dependencies
     ),
@@ -343,6 +361,7 @@ async def update_user_admin(
         raise HTTPException(status_code=400, detail="User is already an admin")
     user_crud.make_user_admin(req_dep.db, user)
     req_dep.db.commit()
+    schedule_identity_upsert(background_tasks, user)
     return ResponseMessage(message="User admin status updated successfully")
 
 

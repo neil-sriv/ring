@@ -12,6 +12,7 @@ namespaces = false
 
 [tool.ruff]
 line-length = 79
+extend-exclude = ["ring/vendor/genesis_idp"]
 
 [tool.ruff.lint]
 select  = [
@@ -35,6 +36,7 @@ members = [
 
 [tool.pyright]
 typeCheckingMode = "basic"
+exclude = ["ring/vendor/genesis_idp"]
 
 
 [project]
