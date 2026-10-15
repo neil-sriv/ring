@@ -3,13 +3,16 @@
 from __future__ import annotations
 
 import inspect
+import io
 import urllib.error
 from pathlib import Path
 
 import pytest
+from loguru import logger
 
 from ring.lib.blindfold_heartbeat import (
     INTERVAL_SECONDS,
+    USER_AGENT,
     HeartbeatConfig,
     config_from_env,
     encode_payload,
@@ -91,6 +94,8 @@ def test_headers_carry_the_signature_and_not_the_secret() -> None:
         secret="test-secret",
     )
     headers = signed_headers(cfg, "1700000000", VECTOR_BODY)
+    assert headers["User-Agent"] == USER_AGENT
+    assert "Python-urllib" not in headers["User-Agent"]
     assert headers["X-Heartbeat-Key-Id"] == "ring-api"
     assert headers["X-Heartbeat-Timestamp"] == "1700000000"
     assert headers["X-Heartbeat-Signature"] == VECTOR_SIG
@@ -155,6 +160,82 @@ def test_http_error_posts_down(monkeypatch: pytest.MonkeyPatch) -> None:
         urlopen,
     )
     assert run_heartbeat(_ENV) == "down"
+
+
+def _capture_logs() -> tuple[list[str], int]:
+    captured: list[str] = []
+    handler_id = logger.add(lambda message: captured.append(str(message)))
+    return captured, handler_id
+
+
+def test_post_http_error_logs_status_and_short_body(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    prefix = b"error code: 1010"
+    body = prefix + (b"x" * (200 - len(prefix))) + b"TAIL_MARKER"
+    seen_agent: list[str | None] = []
+
+    def urlopen(
+        request: urllib.request.Request, timeout: float = 0
+    ) -> _Response:
+        if request.full_url.startswith("http://127.0.0.1"):
+            return _Response(200, b'{"message":"Hello World!"}')
+        seen_agent.append(request.get_header("User-agent"))
+        raise urllib.error.HTTPError(
+            request.full_url,
+            403,
+            "Forbidden",
+            hdrs=None,
+            fp=io.BytesIO(body),
+        )
+
+    monkeypatch.setattr(
+        "ring.lib.blindfold_heartbeat.time.time",
+        lambda: 1700000000,
+    )
+    monkeypatch.setattr(
+        "ring.lib.blindfold_heartbeat.urllib.request.urlopen",
+        urlopen,
+    )
+    captured, handler_id = _capture_logs()
+    try:
+        assert run_heartbeat(_ENV) is None
+    finally:
+        logger.remove(handler_id)
+
+    text = "\n".join(captured)
+    assert seen_agent == [USER_AGENT]
+    assert "HTTP 403" in text
+    assert body[:200].decode() in text
+    assert "TAIL_MARKER" not in text
+    assert "test-secret" not in text
+    assert VECTOR_SIG not in text
+
+
+def test_post_url_error_logs_exception_class(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    def urlopen(
+        request: urllib.request.Request, timeout: float = 0
+    ) -> _Response:
+        if request.full_url.startswith("http://127.0.0.1"):
+            return _Response(200, b"ok")
+        raise urllib.error.URLError("connection refused")
+
+    monkeypatch.setattr(
+        "ring.lib.blindfold_heartbeat.urllib.request.urlopen",
+        urlopen,
+    )
+    captured, handler_id = _capture_logs()
+    try:
+        assert run_heartbeat(_ENV) is None
+    finally:
+        logger.remove(handler_id)
+
+    text = "\n".join(captured)
+    assert "URLError" in text
+    assert "connection refused" in text
+    assert "test-secret" not in text
 
 
 def test_unreachable_api_does_not_post(

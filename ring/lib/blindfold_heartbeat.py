@@ -7,8 +7,8 @@ API process, not a separate worker.
 
 POST ``HEARTBEAT_URL`` with HMAC-SHA256 over
 ``timestamp + "\\n" + body`` (lowercase hex). Headers are
-``X-Heartbeat-Key-Id``, ``X-Heartbeat-Timestamp``, and
-``X-Heartbeat-Signature``. ``serviceId`` is ``ring-api``.
+``User-Agent``, ``X-Heartbeat-Key-Id``, ``X-Heartbeat-Timestamp``,
+and ``X-Heartbeat-Signature``. ``serviceId`` is ``ring-api``.
 
 No network call unless ``HEARTBEAT_URL``, ``HEARTBEAT_KEY_ID``, and
 ``HEARTBEAT_SECRET`` are all set. Each beat reports
@@ -39,7 +39,10 @@ from loguru import logger
 
 SERVICE_ID = "ring-api"
 INTERVAL_SECONDS = 300
+# Cloudflare blocks Python-urllib's default User-Agent (403, error 1010).
+USER_AGENT = "ring-api-heartbeat/1.0 (+https://ring.neilsriv.tech)"
 _TIMEOUT_SECONDS = 5
+_ERROR_BODY_LIMIT = 200
 _UNREACHABLE = "unreachable"
 
 
@@ -99,6 +102,7 @@ def signed_headers(
 ) -> dict[str, str]:
     return {
         "Content-Type": "application/json",
+        "User-Agent": USER_AGENT,
         "X-Heartbeat-Key-Id": cfg.key_id,
         "X-Heartbeat-Signature": sign_body(cfg.secret, timestamp, body),
         "X-Heartbeat-Timestamp": timestamp,
@@ -181,7 +185,21 @@ def run_heartbeat(environ: Mapping[str, str] | None = None) -> str | None:
         return None
     try:
         post_beat(cfg, status)
-    except (urllib.error.URLError, TimeoutError, OSError):
-        logger.warning("Blindfold heartbeat failed")
+    except urllib.error.HTTPError as exc:
+        # HTTPError subclasses URLError, so it must be handled first.
+        with exc:
+            raw = exc.read(_ERROR_BODY_LIMIT)[:_ERROR_BODY_LIMIT]
+        logger.warning(
+            "Blindfold heartbeat failed: HTTP {} {}",
+            exc.code,
+            raw.decode("utf-8", errors="replace"),
+        )
+        return None
+    except (urllib.error.URLError, TimeoutError, OSError) as exc:
+        logger.warning(
+            "Blindfold heartbeat failed: {}: {}",
+            type(exc).__name__,
+            exc,
+        )
         return None
     return status
