@@ -38,5 +38,7 @@ def test_manifest_round_trip() -> None:
     entries = parse_manifest(rendered)
     assert "VENDORED_FROM" in entries
     assert "__init__.py" in entries
-    assert "stub.py" in entries
+    assert "client.py" in entries
+    assert "fake.py" in entries
+    assert "stub.py" not in entries
     assert "aio.py" not in entries

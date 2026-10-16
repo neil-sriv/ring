@@ -17,17 +17,16 @@ VENDOR_ROOT = Path(__file__).resolve().parents[1] / "vendor"
 PACKAGE_DIR = VENDOR_ROOT / "genesis_idp"
 MANIFEST_PATH = VENDOR_ROOT / "genesis_idp.sha256"
 VENDORED_FROM_NAME = "VENDORED_FROM"
-DEFAULT_COMMIT = "4feb400"
+DEFAULT_COMMIT = "c5d1c2e764965d29adddfa8b3159a606ffd80002"
 DEFAULT_SOURCE_REPO = "https://origin.cursor.com/git/neil/genesis.git"
 DEFAULT_SOURCE_PATH = "sdk/python/idp"
 _SKIP_DIR_NAMES = {
     "__pycache__",
-    "aio",
     "tests",
     "test",
     ".pytest_cache",
 }
-_SKIP_FILE_NAMES = {"aio.py"}
+_SKIP_FILE_NAMES: set[str] = set()
 _IMPORT_FROM_PKG = re.compile(
     r"^(\s*(?:from|import)\s+)genesis_idp((?:\.\w+)*\s+)",
     re.M,
@@ -170,8 +169,8 @@ def write_vendored_from(
                 f"source_path={source_path}",
                 f"commit={commit}",
                 "package=genesis_idp",
-                "note=sync client only; aio/ is not vendored. "
-                "Refresh with `ring gen genesis-idp --from <genesis-clone>`.",
+                "note=Refresh with `ring gen genesis-idp --from "
+                "<genesis clone or extracted sdk/python/idp>`.",
                 "",
             ]
         )

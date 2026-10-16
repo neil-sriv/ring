@@ -63,7 +63,7 @@ def gen_imports(
     "genesis_root",
     type=click.Path(path_type=Path, exists=True, file_okay=False),
     default=None,
-    help="Local neil/genesis checkout to recopy sdk/python/idp from.",
+    help=("Local neil/genesis checkout or extracted sdk/python/idp tree."),
 )
 @click.option(
     "--commit",
