@@ -87,8 +87,10 @@ function Login() {
     },
   })
 
+  const isSaving = isSubmitting || loginMutation.isPending
+
   const onSubmit: SubmitHandler<AccessToken> = async (data) => {
-    if (isSubmitting) return
+    if (isSaving) return
 
     resetError()
 
@@ -131,6 +133,7 @@ function Login() {
               placeholder="you@example.com"
               type="email"
               required
+              disabled={isSaving}
               className={errors.username || error ? "border-destructive" : ""}
             />
             {errors.username && (
@@ -149,12 +152,14 @@ function Login() {
                 type={showPassword ? "text" : "password"}
                 placeholder="Password"
                 required
+                disabled={isSaving}
                 className={error ? "border-destructive pr-10" : "pr-10"}
               />
               <button
                 type="button"
                 onClick={() => setShowPassword(!showPassword)}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                disabled={isSaving}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors disabled:pointer-events-none disabled:opacity-50"
               >
                 {showPassword ? (
                   <EyeOff className="h-4 w-4" />
@@ -166,8 +171,8 @@ function Login() {
             {error && <p className="text-xs text-destructive">{error}</p>}
           </div>
 
-          <Button type="submit" disabled={isSubmitting} className="w-full">
-            {isSubmitting && <Loader2 className="h-4 w-4 animate-spin" />}
+          <Button type="submit" disabled={isSaving} className="w-full">
+            {isSaving && <Loader2 className="h-4 w-4 animate-spin" />}
             Sign In
           </Button>
 
