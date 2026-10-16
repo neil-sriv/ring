@@ -8,6 +8,8 @@
     "dev": "vite",
     "build": "tsc && vite build",
     "lint": "biome check --apply-unsafe --no-errors-on-unmatched --files-ignore-unknown=true ./",
+    "check:query-cache": "node --experimental-strip-types --test src/lib/queryCachePolicy.test.ts",
+    "prove:query-cache": "node --experimental-strip-types src/lib/checkQueryCache.ts --prove",
     "preview": "vite preview",
     "generate-client": "openapi-ts -f openapi-ts.config.ts",
     "generate-pwa-assets": "pwa-assets-generator"
