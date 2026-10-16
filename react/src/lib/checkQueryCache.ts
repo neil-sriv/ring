@@ -2,10 +2,15 @@ import { readFileSync } from "node:fs"
 
 import { EDIT_LOOP_PRE_421_SOURCE } from "./fixtures/edit-loop-pre-421.ts"
 import {
+  MUTATION_CACHE_POLICY,
   type MutationCacheId,
   invalidatedQueryIds,
   missingPolicyQueryIds,
 } from "./queryCachePolicy.ts"
+
+function isMutationCacheId(cache: string): cache is MutationCacheId {
+  return cache in MUTATION_CACHE_POLICY
+}
 
 function failPastEditLoop(): number {
   const missing = missingPolicyQueryIds(
@@ -18,26 +23,27 @@ function failPastEditLoop(): number {
     )
     return 1
   }
-  console.error(
+  console.log(
     `query-cache policy editLetter rejected f0d0533^ (#421) EditLoop; missing ${missing.join(
       ", ",
     )}`,
   )
-  return 1
+  return 0
 }
 
 function checkSource(path: string, cache: string): number {
+  if (!isMutationCacheId(cache)) {
+    console.error(`unknown mutation cache id: ${cache}`)
+    return 1
+  }
   const source = readFileSync(path, "utf8")
-  const missing = missingPolicyQueryIds(
-    cache as MutationCacheId,
-    invalidatedQueryIds(source),
-  )
-  if (missing.length > 0) {
-    console.error(
-      `query-cache policy ${cache} rejected ${path}; missing ${missing.join(
-        ", ",
-      )}`,
-    )
+  const cacheDecl = new RegExp(`cache:\\s*["']${cache}["']`)
+  if (!cacheDecl.test(source)) {
+    console.error(`${path} does not declare cache: "${cache}"`)
+    return 1
+  }
+  if (source.includes("invalidateQueries")) {
+    console.error(`${path} still calls invalidateQueries`)
     return 1
   }
   return 0
