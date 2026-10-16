@@ -1,5 +1,5 @@
 source_repo=https://origin.cursor.com/git/neil/genesis.git
 source_path=sdk/python/idp
-commit=bbdf2aa6c02ddb61d2a08fc1ac37fedbc31e0925
+commit=c5d1c2e764965d29adddfa8b3159a606ffd80002
 package=genesis_idp
 note=Refresh with `ring gen genesis-idp --from <genesis clone or extracted sdk/python/idp>`.
