@@ -13,6 +13,7 @@ import { Textarea } from "@/components/ui/textarea"
 import {
   type QueryClient,
   useMutation,
+  useQuery,
   useQueryClient,
 } from "@tanstack/react-query"
 import type { AxiosError } from "axios"
@@ -23,7 +24,6 @@ import {
   type PublicLetter,
   type PublicQuestion,
   type ResponseWithParticipant,
-  type UserLinked,
   deleteImageResponsesResponseResponseApiIdDeleteImageDelete,
   uploadImageQuestionsQuestionQuestionApiIdUploadImagePost,
   upsertResponseQuestionsQuestionQuestionApiIdUpsertResponsePost,
@@ -33,7 +33,7 @@ import {
   listDashboardLettersLettersLettersDashboardGetQueryKey,
   listLettersLettersLettersGetQueryKey,
   readLetterLettersLetterLetterApiIdGetQueryKey,
-  readUserMePartiesMeGetQueryKey,
+  readUserMePartiesMeGetOptions,
 } from "../../client/@tanstack/react-query.gen"
 import { useAutoResizeTextarea } from "../../hooks/useAutoResizeTextarea"
 import useCustomToast from "../../hooks/useCustomToast"
@@ -364,9 +364,12 @@ function DraftQuestion({
   isGroupAdmin?: boolean
 }): JSX.Element {
   const queryClient = useQueryClient()
-  const currentUser = queryClient.getQueryData<UserLinked>(
-    readUserMePartiesMeGetQueryKey(),
-  )
+  // Subscribe so response matching, author checks, and optimistic participant
+  // fields stay correct if /me is rewritten mid-session (e.g. impersonation).
+  // getQueryData alone never re-renders this question card.
+  const { data: currentUser } = useQuery({
+    ...readUserMePartiesMeGetOptions(),
+  })
   const showToast = useCustomToast()
   const [deleteOpen, setDeleteOpen] = useState(false)
   // Multi-file upload calls newHandleUpload once per file before `question`
