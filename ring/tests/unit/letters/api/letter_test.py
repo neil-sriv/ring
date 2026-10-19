@@ -510,6 +510,44 @@ class TestLetterAPI:
         data = response.json()
         assert datetime.fromisoformat(data["send_at"]) == new_send_at
 
+    def test_edit_letter_send_at_resets_automatic_deferral_count(
+        self, authenticated_client: TestClient, db_session: Session
+    ) -> None:
+        """A person choosing a new send time starts the deferral budget over."""
+        letter = LetterFactory.create(
+            status=LetterStatus.IN_PROGRESS,
+            send_at=datetime.now(tz=UTC) + timedelta(days=2),
+        )
+        letter.automatic_send_deferral_count = 2
+        db_session.commit()
+        new_send_at = datetime.now(tz=UTC) + timedelta(days=30)
+        response = authenticated_client.post(
+            f"/letters/letter/{letter.api_identifier}:edit_letter",
+            json={"send_at": new_send_at.isoformat()},
+        )
+        assert response.status_code == 200
+        db_session.refresh(letter)
+        assert letter.send_at == new_send_at
+        assert letter.automatic_send_deferral_count == 0
+
+    def test_edit_letter_title_keeps_automatic_deferral_count(
+        self, authenticated_client: TestClient, db_session: Session
+    ) -> None:
+        """Title and status edits are not a reschedule."""
+        letter = LetterFactory.create(status=LetterStatus.IN_PROGRESS)
+        letter.automatic_send_deferral_count = 2
+        original_send_at = letter.send_at
+        db_session.commit()
+        response = authenticated_client.post(
+            f"/letters/letter/{letter.api_identifier}:edit_letter",
+            json={"title": "Renamed"},
+        )
+        assert response.status_code == 200
+        db_session.refresh(letter)
+        assert letter.title == "Renamed"
+        assert letter.send_at == original_send_at
+        assert letter.automatic_send_deferral_count == 2
+
     def test_edit_letter_upcoming_invalid_past_send_at(
         self, authenticated_client: TestClient, db_session: Session
     ):

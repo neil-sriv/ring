@@ -73,6 +73,8 @@ class Letter(Base, APIIdentified, PydanticModel, CreatedAtMixin):
         api_identifier (Mapped[str]): Unique API identifier for the letter
         status (Mapped[str]): Current status of the letter
         send_at (Mapped[datetime]): Scheduled send time of the letter
+        automatic_send_deferral_count (Mapped[int]): Automatic threshold
+            pushbacks already applied to this letter
         participants (Mapped[list[User]]): List of users participating in the letter
         group (Mapped[Group]): Group to which the letter belongs
         questions (Mapped[list[Question]]): List of questions in the letter
@@ -93,6 +95,14 @@ class Letter(Base, APIIdentified, PydanticModel, CreatedAtMixin):
     )
     letter_type: Mapped[str] = mapped_column()
     title: Mapped[str] = mapped_column(nullable=True)
+    # Automatic send-threshold pushbacks only. User edits of send_at reset
+    # this; the 48h stale catch-up does not increment it.
+    automatic_send_deferral_count: Mapped[int] = mapped_column(
+        Integer,
+        nullable=False,
+        default=0,
+        server_default=text("0"),
+    )
 
     participants: Mapped[list["User"]] = relationship(
         secondary=letter_to_user_assocation
@@ -166,6 +176,7 @@ class Letter(Base, APIIdentified, PydanticModel, CreatedAtMixin):
         self.status = status
         self.letter_type = letter_type
         self.title = title
+        self.automatic_send_deferral_count = 0
 
     @classmethod
     def create(

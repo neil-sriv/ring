@@ -149,6 +149,77 @@ class TestTaskCrud:
         assert set(email_draft_recipients(mock_send_email)) == {
             member.email for member in members[1:]
         }
+        db_session.refresh(letter)
+        assert letter.automatic_send_deferral_count == 1
+
+    def test_execute_send_email_task_sends_after_three_automatic_deferrals(
+        self, db_session: Session
+    ) -> None:
+        """Three deferrals and waiting emails, then the letter sends."""
+        admin = UserFactory.create()
+        members = [admin] + [UserFactory.create() for _ in range(3)]
+        group = GroupFactory.create(admin=admin, members=members)
+        letter = LetterFactory.create(
+            group=group,
+            status=LetterStatus.IN_PROGRESS,
+            send_at=datetime.now(tz=UTC) - timedelta(minutes=1),
+        )
+        question = QuestionFactory.create(letter=letter)
+        ResponseFactory.create(question=question, participant=members[0])
+        db_session.commit()
+
+        send_task = db_session.scalars(
+            select(Task).where(
+                Task.schedule_id == group.schedule.id,
+                Task.type == TaskType.SEND_EMAIL,
+                Task.arguments == {"letter_id": letter.id},
+            )
+        ).one()
+
+        with (
+            run_scheduled_jobs_inline(db_session),
+            patch(
+                "ring.tasks.crud.task.send_email", return_value="message-id"
+            ) as waiting_email,
+            patch(
+                "ring.letters.crud.letter.send_email",
+                return_value="message-id",
+            ) as letter_email,
+        ):
+            for expected_count in range(1, 4):
+                due = datetime.now(tz=UTC) - timedelta(minutes=1)
+                letter.send_at = due
+                send_task.execute_at = due
+                send_task.status = TaskStatus.IN_PROGRESS
+                db_session.commit()
+                task_crud.execute_send_email_task(
+                    db_session, send_task, letter_id=letter.id
+                )
+                db_session.refresh(letter)
+                assert letter.status == LetterStatus.IN_PROGRESS
+                assert letter.automatic_send_deferral_count == expected_count
+                _assert_deferred_into_future(letter.send_at)
+                assert waiting_email.call_count == expected_count
+                assert is_waiting_response_email(
+                    waiting_email, expected_count - 1
+                )
+                assert letter_email.call_count == 0
+
+            due = datetime.now(tz=UTC) - timedelta(minutes=1)
+            letter.send_at = due
+            send_task.execute_at = due
+            send_task.status = TaskStatus.IN_PROGRESS
+            db_session.commit()
+            task_crud.execute_send_email_task(
+                db_session, send_task, letter_id=letter.id
+            )
+
+        assert waiting_email.call_count == 3
+        letter_email.assert_called_once()
+        assert not is_waiting_response_email(letter_email)
+        db_session.refresh(letter)
+        assert letter.status == LetterStatus.SENT
+        assert letter.automatic_send_deferral_count == 3
 
     def test_execute_send_email_task_sends_when_responders_meet_threshold(
         self, db_session: Session
