@@ -178,6 +178,7 @@ function GroupInformation({ groupId }: { groupId: string }) {
                   },
                 })}
                 type="text"
+                disabled={isSaving}
               />
             ) : (
               <p className="text-sm">{group.name || "N/A"}</p>
