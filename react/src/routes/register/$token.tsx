@@ -74,8 +74,13 @@ function Register() {
     },
   })
 
+  // RHF isSubmitting clears as soon as the async submit settles; keep fields
+  // locked for the full request via mutateAsync + isPending (same pattern as
+  // login). Without this, users can edit name/email/password mid-flight.
+  const isSaving = isSubmitting || registerMutation.isPending
+
   const onSubmit: SubmitHandler<UserCreate> = async (data) => {
-    if (isSubmitting) return
+    if (isSaving) return
 
     resetError()
 
@@ -143,6 +148,7 @@ function Register() {
               placeholder="Name"
               type="text"
               required
+              disabled={isSaving}
               className={errors.name ? "border-destructive" : ""}
             />
             {errors.name && (
@@ -160,6 +166,7 @@ function Register() {
               placeholder="Email"
               type="email"
               required
+              disabled={isSaving}
               className={errors.email || error ? "border-destructive" : ""}
             />
             {errors.email && (
@@ -176,12 +183,14 @@ function Register() {
                 type={showPassword ? "text" : "password"}
                 placeholder="Password"
                 required
+                disabled={isSaving}
                 className={error ? "border-destructive pr-10" : "pr-10"}
               />
               <button
                 type="button"
                 onClick={() => setShowPassword(!showPassword)}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                disabled={isSaving}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors disabled:pointer-events-none disabled:opacity-50"
               >
                 {showPassword ? (
                   <EyeOff className="h-4 w-4" />
@@ -193,8 +202,8 @@ function Register() {
             {error && <p className="text-xs text-destructive">{error}</p>}
           </div>
 
-          <Button type="submit" disabled={isSubmitting} className="w-full">
-            {isSubmitting && <Loader2 className="h-4 w-4 animate-spin" />}
+          <Button type="submit" disabled={isSaving} className="w-full">
+            {isSaving && <Loader2 className="h-4 w-4 animate-spin" />}
             Register
           </Button>
 
