@@ -22,6 +22,7 @@ from ring.letters.constants import LetterStatus
 from ring.letters.crud import letter as letter_crud
 from ring.letters.models.letter_model import Letter
 from ring.letters.send_threshold import (
+    automatic_send_deferrals_exhausted,
     defer_letter_send,
     defer_letter_send_if_below_threshold,
     is_stale_send_invocation,
@@ -205,7 +206,9 @@ def execute_send_email_task(
         db.commit()
         return
 
-    if letter_send_is_stale(letter_to_send.send_at):
+    if letter_send_is_stale(
+        letter_to_send.send_at
+    ) and not automatic_send_deferrals_exhausted(letter_to_send):
         defer_letter_send(db, letter_to_send)
         db.commit()
         return

@@ -13,6 +13,7 @@ from ring.letters.crud import letter as letter_crud
 from ring.letters.models.letter_model import Letter
 from ring.letters.send_threshold import (
     LETTER_SEND_DEFERRAL_DAYS,
+    MAX_AUTOMATIC_SEND_DEFERRALS,
     defer_letter_send_if_below_threshold,
     hold_letter_for_send_threshold,
 )
@@ -260,6 +261,7 @@ class TestPostpendLetters:
         letter_send_email.assert_not_called()
         db_session.refresh(letter)
         assert letter.status == LetterStatus.IN_PROGRESS
+        assert letter.automatic_send_deferral_count == 0
         _assert_deferred_into_future(letter.send_at)
 
     def test_send_email_and_postpend_defer_send_date_once(
@@ -336,6 +338,47 @@ class TestPostpendLetters:
 
         assert letter.status == LetterStatus.IN_PROGRESS
         _assert_deferred_into_future(letter.send_at)
+
+    def test_postpend_sends_after_automatic_deferral_cap(
+        self, db_session: Session
+    ) -> None:
+        """After three automatic deferrals, postpend sends the letter."""
+        admin = UserFactory.create()
+        members = [admin] + [UserFactory.create() for _ in range(3)]
+        group = GroupFactory.create(admin=admin, members=members)
+        send_at = datetime.now(tz=UTC) - timedelta(minutes=1)
+        letter = LetterFactory.create(
+            group=group,
+            status=LetterStatus.IN_PROGRESS,
+            send_at=send_at,
+        )
+        question = QuestionFactory.create(letter=letter)
+        ResponseFactory.create(question=question, participant=members[0])
+        letter.automatic_send_deferral_count = MAX_AUTOMATIC_SEND_DEFERRALS
+        db_session.commit()
+        self.orphan_send_task(db_session, letter)
+
+        with (
+            run_scheduled_jobs_inline(db_session),
+            patch(
+                "ring.tasks.crud.task.send_email", return_value="message-id"
+            ) as waiting_email,
+            patch(
+                "ring.letters.crud.letter.send_email",
+                return_value="message-id",
+            ) as letter_email,
+        ):
+            self.run_postpend_job(db_session, [letter.id])
+
+        waiting_email.assert_not_called()
+        letter_email.assert_called_once()
+        assert not is_waiting_response_email(letter_email)
+        db_session.refresh(letter)
+        assert letter.status == LetterStatus.SENT
+        assert letter.automatic_send_deferral_count == (
+            MAX_AUTOMATIC_SEND_DEFERRALS
+        )
+        assert letter.send_at == send_at
 
     def test_postpend_sends_and_marks_sent_when_threshold_met(
         self, db_session: Session

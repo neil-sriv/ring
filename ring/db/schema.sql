@@ -77,6 +77,7 @@ CREATE TABLE public.letter (
 	created_at TIMESTAMPTZ NOT NULL DEFAULT now():::TIMESTAMPTZ,
 	letter_type VARCHAR NOT NULL DEFAULT 'CYCLIC':::STRING,
 	title VARCHAR NULL,
+	automatic_send_deferral_count INT8 NOT NULL DEFAULT 0:::INT8,
 	CONSTRAINT letter_pkey PRIMARY KEY (id ASC),
 	UNIQUE INDEX unique_group_letter_number (group_id ASC, number ASC),
 	UNIQUE INDEX uniq_one_cyclic_upcoming_per_group (group_id ASC) WHERE letter_type = 'CYCLIC' AND status = 'UPCOMING',

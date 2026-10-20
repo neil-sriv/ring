@@ -284,6 +284,9 @@ async def edit_letter(
         send_at=letter.send_at,
         title=letter.title,
         status=letter.status,
+        reset_automatic_send_deferrals=(
+            letter.send_at is not None and letter.send_at != db_letter.send_at
+        ),
     )
     req_dep.db.commit()
     return db_letter

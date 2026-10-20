@@ -28,6 +28,7 @@ from ring.letters.models.letter_model import Letter
 from ring.letters.models.question_model import Question
 from ring.letters.models.response_model import Response
 from ring.letters.send_threshold import (
+    automatic_send_deferrals_exhausted,
     defer_letter_send,
     has_send_date_arrived,
     hold_letter_for_send_threshold,
@@ -257,8 +258,14 @@ def edit_letter(
     send_at: datetime | None = None,
     title: str | None = None,
     status: LetterStatus | None = None,
+    *,
+    reset_automatic_send_deferrals: bool = False,
 ) -> Letter:
     """Update a letter's send time and associated tasks.
+
+    ``reset_automatic_send_deferrals`` is for a person choosing a new
+    ``send_at``. Automatic deferrals call this without the flag so they
+    keep the counter, then increment it themselves.
 
     Args:
         db (Session): Database session
@@ -271,6 +278,8 @@ def edit_letter(
     if send_at:
         upsert_letter_tasks(db, letter, send_at)
         letter.send_at = send_at
+        if reset_automatic_send_deferrals:
+            letter.automatic_send_deferral_count = 0
     if status:
         previous_status = letter.status
         letter.status = status
@@ -743,7 +752,9 @@ def postpend_upcoming_letters_with_session(
                 "responsible for it".format(letter.id)
             )
             continue
-        if letter_send_is_stale(letter.send_at):
+        if letter_send_is_stale(
+            letter.send_at
+        ) and not automatic_send_deferrals_exhausted(letter):
             defer_letter_send(db, letter)
             continue
         if hold_letter_for_send_threshold(db, letter):

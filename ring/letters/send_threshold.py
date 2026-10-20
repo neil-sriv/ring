@@ -21,6 +21,7 @@ GROUP_SETTING_MIN_RESPONDERS_KEY = "letter_send_min_responders"
 GROUP_SETTING_MIN_RESPONDER_RATIO_KEY = "letter_send_min_responder_ratio"
 DEFAULT_MIN_RESPONDER_RATIO_TO_SEND = 0.5
 LETTER_SEND_DEFERRAL_DAYS = 1
+MAX_AUTOMATIC_SEND_DEFERRALS = 3
 STALE_LETTER_SEND_AGE = timedelta(hours=48)
 
 
@@ -203,7 +204,17 @@ def next_deferred_send_at(
     return max(send_at, now) + timedelta(days=LETTER_SEND_DEFERRAL_DAYS)
 
 
-def defer_letter_send(db: Session, letter: Letter) -> bool:
+def automatic_send_deferrals_exhausted(letter: Letter) -> bool:
+    """Return True once this letter has used its automatic deferral budget."""
+    return letter.automatic_send_deferral_count >= MAX_AUTOMATIC_SEND_DEFERRALS
+
+
+def defer_letter_send(
+    db: Session,
+    letter: Letter,
+    *,
+    record_automatic_deferral: bool = False,
+) -> bool:
     """Push a letter's send date out by the deferral interval.
 
     Idempotent across callers that may both run at the same deadline moment
@@ -212,15 +223,29 @@ def defer_letter_send(db: Session, letter: Letter) -> bool:
     schedules one waiting-response email after the new date is committed.
     A deadline more than 48h in the past is moved forward with no email.
 
+    ``record_automatic_deferral`` counts a send-threshold pushback. The 48h
+    stale catch-up leaves it false so that silent move does not consume the
+    budget. Once the budget is spent, a recorded call does not move
+    ``send_at`` and does not email.
+
     Returns:
-        True if the send date was deferred, False if it had not yet arrived
-        (or had already been deferred into the future).
+        True if the send date was deferred, False if it had not yet arrived,
+        had already been deferred into the future, or the automatic budget
+        was already spent.
     """
     # Imported here because ring.letters.crud.letter imports this module.
     from ring.letters.crud import letter as letter_crud
 
     now = datetime.now(tz=UTC)
     if not has_send_date_arrived(letter, now):
+        return False
+    if record_automatic_deferral and automatic_send_deferrals_exhausted(
+        letter
+    ):
+        logger.info(
+            "Letter {} has had {} automatic send deferrals; not deferring "
+            "again".format(letter.id, letter.automatic_send_deferral_count)
+        )
         return False
 
     new_send_at = next_deferred_send_at(letter.send_at, now)
@@ -240,6 +265,8 @@ def defer_letter_send(db: Session, letter: Letter) -> bool:
             "in the past".format(letter.id, letter.send_at)
         )
     letter_crud.edit_letter(db, letter, send_at=new_send_at)
+    if record_automatic_deferral:
+        letter.automatic_send_deferral_count += 1
     db.commit()
     if not stale:
         _schedule_waiting_response_email(letter.id)
@@ -269,7 +296,8 @@ def defer_letter_send_if_below_threshold(db: Session, letter: Letter) -> bool:
 
     Intended for the send-email task. Defers ``send_at`` once the deadline has
     arrived; if another caller already pushed the deadline forward, that
-    deferral is left in place.
+    deferral is left in place. After ``MAX_AUTOMATIC_SEND_DEFERRALS``
+    recorded pushbacks, a due letter is sent with the responses it has.
 
     Returns:
         True if the send should be skipped, False if it may proceed.
@@ -280,7 +308,12 @@ def defer_letter_send_if_below_threshold(db: Session, letter: Letter) -> bool:
     if not is_below_send_threshold(letter):
         return False
 
-    defer_letter_send(db, letter)
+    if has_send_date_arrived(letter) and automatic_send_deferrals_exhausted(
+        letter
+    ):
+        return False
+
+    defer_letter_send(db, letter, record_automatic_deferral=True)
     return True
 
 
@@ -291,16 +324,11 @@ def hold_letter_for_send_threshold(db: Session, letter: Letter) -> bool:
     caller is responsible for not postpending letters before their deadline.
     Deferral is idempotent via ``defer_letter_send``, so a concurrent
     send-email task that already pushed ``send_at`` will not stack a second
-    day.
+    day. The automatic deferral cap matches
+    ``defer_letter_send_if_below_threshold``.
 
     Returns:
-        True if the letter is below its send threshold, False otherwise.
+        True if the letter is below its send threshold and still has
+        automatic deferrals left, False otherwise.
     """
-    if letter.status != LetterStatus.IN_PROGRESS:
-        return False
-
-    if not is_below_send_threshold(letter):
-        return False
-
-    defer_letter_send(db, letter)
-    return True
+    return defer_letter_send_if_below_threshold(db, letter)
