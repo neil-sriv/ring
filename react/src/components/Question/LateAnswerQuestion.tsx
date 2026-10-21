@@ -3,7 +3,7 @@ import { Textarea } from "@/components/ui/textarea"
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import type { AxiosError } from "axios"
 import { Loader2 } from "lucide-react"
-import { useState } from "react"
+import { useRef, useState } from "react"
 import {
   type PublicLetter,
   type PublicQuestion,
@@ -38,6 +38,10 @@ function LateAnswerQuestion({
   const showToast = useCustomToast()
   const [responseText, setResponseText] = useState("")
   const textareaRef = useAutoResizeTextarea(responseText)
+  // disabled={isPending} alone still lets a second click through before React
+  // re-renders; this ref closes that same-tick double-submit window (same
+  // pattern as DocumentsGrid create).
+  const submitInFlightRef = useRef(false)
 
   const mutation = useMutation({
     mutationFn: async ({
@@ -116,16 +120,23 @@ function LateAnswerQuestion({
   }
 
   const handleSubmit = async () => {
-    if (isSaving) return
+    if (submitInFlightRef.current || isSaving) return
     if (!responseText.trim()) {
       showToast("Error", "Please enter your answer before submitting.", "error")
       return
     }
-    await mutation.mutateAsync({
-      text: responseText,
-      questionApiId: question.api_identifier,
-      participantApiId: currentUser.api_identifier,
-    })
+    submitInFlightRef.current = true
+    try {
+      await mutation.mutateAsync({
+        text: responseText,
+        questionApiId: question.api_identifier,
+        participantApiId: currentUser.api_identifier,
+      })
+    } catch {
+      // onError already toasts
+    } finally {
+      submitInFlightRef.current = false
+    }
   }
 
   return (
