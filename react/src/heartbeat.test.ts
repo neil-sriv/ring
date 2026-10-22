@@ -94,3 +94,139 @@ test("send posts the signed body and not the secret", async () => {
   )
   assert.equal(headers.get("X-Heartbeat-Signature"), signature)
 })
+
+const FAILURE_ENV = {
+  HEARTBEAT_URL: "https://example.test/api/heartbeat",
+  HEARTBEAT_KEY_ID: "kid-do-not-log",
+  HEARTBEAT_SECRET: "test-secret",
+}
+const FAILURE_BODY = encodeBody({
+  instance: "ring-frontend",
+  intervalSeconds: 300,
+  kind: "heartbeat",
+  serviceId: "ring-frontend",
+  status: "ok",
+  version: "",
+})
+const FAILURE_SIGNATURE = await signBody(
+  FAILURE_ENV.HEARTBEAT_SECRET,
+  "1700000000",
+  FAILURE_BODY,
+)
+
+function assertRecord(
+  value: unknown,
+): asserts value is Record<string, unknown> {
+  assert.equal(typeof value, "object")
+  assert.notEqual(value, null)
+  assert.equal(Array.isArray(value), false)
+}
+
+async function loggedFailure(run: () => Promise<void>) {
+  const lines: unknown[][] = []
+  const original = console.error
+  console.error = (...args: unknown[]) => {
+    lines.push(args)
+  }
+  try {
+    await run()
+  } finally {
+    console.error = original
+  }
+  assert.equal(lines.length, 1)
+  const line = lines[0]
+  assert.equal(line.length, 1)
+  const raw = line[0]
+  assert.equal(typeof raw, "string")
+  const text = String(raw)
+  assert.equal(text.includes(FAILURE_ENV.HEARTBEAT_SECRET), false)
+  assert.equal(text.includes(FAILURE_ENV.HEARTBEAT_KEY_ID), false)
+  assert.equal(text.includes(FAILURE_SIGNATURE), false)
+  const log: unknown = JSON.parse(text)
+  assertRecord(log)
+  assert.equal(log.service, "ring-frontend")
+  assert.equal(log.msg, "heartbeat failed")
+  assert.equal(Number.isInteger(log.elapsedMs), true)
+  assert.ok(Number(log.elapsedMs) >= 0)
+  return log
+}
+
+test("a signing error logs sign_error and elapsed ms", async () => {
+  let calls = 0
+  const originalFetch = globalThis.fetch
+  const originalSign = crypto.subtle.sign
+  globalThis.fetch = async () => {
+    calls += 1
+    return new Response()
+  }
+  crypto.subtle.sign = async () => {
+    throw new Error("sign failed")
+  }
+  try {
+    const log = await loggedFailure(() =>
+      sendHeartbeat(FAILURE_ENV, "ok", 1700000000),
+    )
+    assert.equal(calls, 0)
+    assert.equal(log.reason, "sign_error")
+    assert.equal("status" in log, false)
+  } finally {
+    globalThis.fetch = originalFetch
+    crypto.subtle.sign = originalSign
+  }
+})
+
+test("a non-OK response logs http_status, status, and elapsed ms", async () => {
+  const originalFetch = globalThis.fetch
+  let body = ""
+  globalThis.fetch = async (_input, init) => {
+    body = String(init?.body ?? "")
+    return new Response("no", { status: 503 })
+  }
+  try {
+    const log = await loggedFailure(() =>
+      sendHeartbeat(FAILURE_ENV, "ok", 1700000000),
+    )
+    assert.equal(body, FAILURE_BODY)
+    assert.equal(log.reason, "http_status")
+    assert.equal(log.status, 503)
+  } finally {
+    globalThis.fetch = originalFetch
+  }
+})
+
+test("a 5s timeout logs timeout and elapsed ms", async () => {
+  const originalTimeout = AbortSignal.timeout
+  let timeoutMs = 0
+  AbortSignal.timeout = (ms: number) => {
+    timeoutMs = ms
+    const controller = new AbortController()
+    controller.abort(new DOMException("timeout", "TimeoutError"))
+    return controller.signal
+  }
+  try {
+    const log = await loggedFailure(() =>
+      sendHeartbeat(FAILURE_ENV, "ok", 1700000000),
+    )
+    assert.equal(timeoutMs, 5000)
+    assert.equal(log.reason, "timeout")
+    assert.equal("status" in log, false)
+  } finally {
+    AbortSignal.timeout = originalTimeout
+  }
+})
+
+test("a fetch exception logs network and elapsed ms", async () => {
+  const originalFetch = globalThis.fetch
+  globalThis.fetch = async () => {
+    throw new TypeError("fetch failed")
+  }
+  try {
+    const log = await loggedFailure(() =>
+      sendHeartbeat(FAILURE_ENV, "ok", 1700000000),
+    )
+    assert.equal(log.reason, "network")
+    assert.equal("status" in log, false)
+  } finally {
+    globalThis.fetch = originalFetch
+  }
+})
