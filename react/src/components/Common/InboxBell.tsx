@@ -2,7 +2,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import { useNavigate } from "@tanstack/react-router"
 import type { AxiosError } from "axios"
 import { Bell, Loader2 } from "lucide-react"
-import { useState } from "react"
+import { useRef, useState } from "react"
 
 import { Button } from "@/components/ui/button"
 import {
@@ -90,6 +90,9 @@ export function InboxBell() {
       toastInboxError(err)
     },
   })
+  // disabled={isPending} alone still lets a second click through before React
+  // re-renders; this ref closes that same-tick double mark-all window.
+  const markAllInFlightRef = useRef(false)
 
   async function openItem(item: InboxItemResponse) {
     setOpen(false)
@@ -106,11 +109,16 @@ export function InboxBell() {
   }
 
   async function handleMarkAllRead() {
-    if (markAll.isPending) return
+    if (markAllInFlightRef.current || markAll.isPending) {
+      return
+    }
+    markAllInFlightRef.current = true
     try {
       await markAll.mutateAsync({})
     } catch {
       // onError already toasted
+    } finally {
+      markAllInFlightRef.current = false
     }
   }
 
