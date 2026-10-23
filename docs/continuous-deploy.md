@@ -7,7 +7,7 @@ API track entirely — they still redeploy an identical frontend bundle.
 
 This is the live prod path. Topology and Cloudflare/EC2 wiring live in
 [infrastructure.md](infrastructure.md). Agent-facing rules are summarized
-in [AGENTS.md](../AGENTS.md).
+in [deploy.md](deploy.md).
 
 ---
 

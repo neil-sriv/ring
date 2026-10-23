@@ -4,8 +4,8 @@ How Ring is hosted and which external services it uses. This is a side project
 running on a single VM with a few managed cloud services — not a multi-AZ or
 Kubernetes setup.
 
-For local development topology, see the Architecture table in
-[AGENTS.md](../AGENTS.md). For setup commands, see [README.md](../README.md).
+For local development topology, see the Stack section in
+[AGENTS.md](../AGENTS.md#stack). For setup commands, see [README.md](../README.md).
 
 ---
 
