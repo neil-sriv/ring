@@ -93,19 +93,30 @@ export function InboxBell() {
   // disabled={isPending} alone still lets a second click through before React
   // re-renders; this ref closes that same-tick double mark-all window.
   const markAllInFlightRef = useRef(false)
+  // Same race for per-item open: dropdown close is async, so a double-click
+  // can fire two mark-read POSTs before navigation.
+  const openItemInFlightRef = useRef(false)
 
   async function openItem(item: InboxItemResponse) {
-    setOpen(false)
-    if (item.unread) {
-      try {
-        await markRead.mutateAsync({
-          path: { inbox_api_id: item.api_identifier },
-        })
-      } catch {
-        // onError already toasted; navigation does not depend on mark-read.
-      }
+    if (openItemInFlightRef.current || markRead.isPending) {
+      return
     }
-    await navigate(inboxDestination(item.href))
+    openItemInFlightRef.current = true
+    setOpen(false)
+    try {
+      if (item.unread) {
+        try {
+          await markRead.mutateAsync({
+            path: { inbox_api_id: item.api_identifier },
+          })
+        } catch {
+          // onError already toasted; navigation does not depend on mark-read.
+        }
+      }
+      await navigate(inboxDestination(item.href))
+    } finally {
+      openItemInFlightRef.current = false
+    }
   }
 
   async function handleMarkAllRead() {
