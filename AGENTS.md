@@ -1,101 +1,74 @@
-# AGENTS.md
+# ring
 
-Project guide for AI coding agents working on **Ring**, a collaborative
-letter/newsletter platform (LetterLoop-style). Human-oriented setup lives in
-[README.md](README.md); this file focuses on what agents need to be productive.
+A collaborative letter/newsletter platform (LetterLoop-style). A group answers prompts on a cadence, and Ring publishes the responses as a letter. Setup is in [README.md](README.md).
 
----
+Merges to `dev` deploy to production on their own. Treat every backend-touching PR as a deploy. Identifiers and agent deploy rules: [docs/deploy.md](docs/deploy.md). Topology: [docs/infrastructure.md](docs/infrastructure.md). Deploy runbook: [docs/continuous-deploy.md](docs/continuous-deploy.md).
 
-## Overview
+## Stack
 
-Ring lets a group of people answer prompts on a cadence, then publishes the
-collected responses as a "letter." It is built as a FastAPI backend with a
-React/Vite frontend, fronted by Nginx, backed by CockroachDB, with an optional
-LLM microservice.
+| Part | Tech | Default |
+| --- | --- | --- |
+| Backend `ring/` | FastAPI, SQLAlchemy 2, Alembic | 8001 (Docker). Direct `:8001` is tooling only, such as the OpenAPI fetch. |
+| Frontend `react/` | React, Vite, Tailwind v4, Radix and shadcn, TanStack | `http://localhost:5173` |
+| Proxy | Nginx, TLS, API at `/api/v1/` | 443 and 80. The app API base is `https://localhost/api/v1/`. |
+| Database | CockroachDB, Postgres-compatible | 26257 |
+| LLM `llm/` | Optional microservice | 8006 (`LLM_PORT`) |
 
-## Architecture
+Do not assume ECS, RDS, Route 53, Redis or Celery, Lambda, or Bedrock. Embeddings go through the optional `ring-llm` microservice. Background work is in-process APScheduler.
 
-| Component       | Tech                                         | Default port  |
-|-----------------|----------------------------------------------|---------------|
-| Backend API     | FastAPI + SQLAlchemy 2 + Alembic             | 8001 (Docker) |
-| Frontend        | React + Vite + Tailwind v4 + Radix/shadcn + TanStack | 5173 (Vite dev)|
-| Reverse proxy   | Nginx (TLS, `/api/v1/`)                      | 443/80        |
-| Database        | CockroachDB (Postgres-compatible)            | 26257         |
-| LLM (optional)  | Local microservice in [llm/](llm/)           | varies        |
+`ring fe dev` proxies `/api/v1` to port 8001. Local env sets `BACKEND_CORS_ORIGINS` to `https://localhost:5173` and `http://localhost:5173`.
 
-The frontend talks to the backend via the Nginx proxy at
-`https://localhost/api/v1/`. Direct access to the API container on `:8001` is
-used only by tooling (e.g. OpenAPI spec fetching).
+## Commands
 
-### Infrastructure & external services (production)
+The `ring` CLI comes from `uv sync --group dev --group ai`. Activate with `source .venv/bin/activate`.
 
-Local dev uses Docker Compose with a local CockroachDB container. **Production**
-is a single EC2 host running the same Compose stack, plus managed services below.
-Full topology, request flows, and Cloudflare/EC2 wiring:
-[docs/infrastructure.md](docs/infrastructure.md). Continuous deploy path:
-[docs/continuous-deploy.md](docs/continuous-deploy.md).
+```bash
+ring compose up        # CockroachDB, API, Nginx
+ring db upgrade        # apply migrations
+ring fe dev            # Vite at http://localhost:5173
+ring db generate "<message>"   # new Alembic revision, pins ring/alembic/head
+ring fe regen          # refresh react/src/client/ from OpenAPI
+ring gen imports       # after adding a model, job, search function, API class, or test factory
+ring deploy status     # what frontend and API are running
+```
 
-| Service | Identifier / endpoint | Code / config |
-|---------|----------------------|---------------|
-| Compute | EC2 + Docker Compose (`ring.neilsriv.tech`) | [compose.prod.yml](compose.prod.yml), [prod.nginx.conf](prod.nginx.conf) |
-| Database | CockroachDB Cloud `ring-db` (not RDS) | `COCKROACH_DATABASE_URI` in server `.env` |
-| S3 uploads | Bucket `rings3files` (`us-east-1`) | [ring/fastapp/config.py](ring/fastapp/config.py) `BUCKET_NAME`; upload in [ring/letters/crud/response.py](ring/letters/crud/response.py) |
-| CDN | `du32exnxihxuf.cloudfront.net` | [ring/s3/models/s3_model.py](ring/s3/models/s3_model.py) `qualified_s3_url` |
-| Email (SES) | `us-east-1`, sender `ring@neilsriv.tech` | [ring/email_util.py](ring/email_util.py) |
-| Logs (CloudWatch) | Log group `/ring/prod` (`us-east-1`) | `logging:` blocks in [compose.prod.yml](compose.prod.yml); viewing/IAM in [docs/infrastructure.md](docs/infrastructure.md) |
-| Container registry | ECR Public `public.ecr.aws/z2k1e8p1/` | [dev_util/docker.py](dev_util/docker.py), [dev_util/prod.sh](dev_util/prod.sh), [dev_util/deploy_host.sh](dev_util/deploy_host.sh) |
-| Frontend hosting | Cloudflare Workers Builds (`ring-frontend`), auto-deploys every push to `dev` | [react/wrangler.jsonc](react/wrangler.jsonc), [react/plugins/version-stamp.ts](react/plugins/version-stamp.ts) |
+Cloud agent VM: use [`.cursor/skills/ring-cloud-dev/SKILL.md`](.cursor/skills/ring-cloud-dev/SKILL.md). Bootstrap is [`.cursor/cloud-start.sh`](.cursor/cloud-start.sh) and [`.cursor/environment.json`](.cursor/environment.json). Copy [`.env.cloud.example`](.env.cloud.example) for cloud `.env` defaults.
 
-Both halves of prod deploy themselves from `dev`: the frontend about a
-minute after any push, the API about 2–3 minutes after a backend-touching
-push (Publish ring-api → Deploy ring-api). Docs-only merges deploy nothing
-for the API. `ring deploy status` prints what each is running.
+```bash
+bash .cursor/cloud-start.sh --bootstrap-only
+bash dev_util/cloud-health.sh
+```
 
-Canonical deploy doc: [docs/continuous-deploy.md](docs/continuous-deploy.md).
-Topology: [docs/infrastructure.md](docs/infrastructure.md).
+Do not hand-roll compose unless debugging. The start script handles network, SSL, the vector index, migrations, and a test user seed.
 
-Do not assume ECS, RDS, Route 53, Redis/Celery, Lambda, or Bedrock — none are
-in the current prod path. Embeddings go through the optional `ring-llm`
-microservice; background work uses in-process APScheduler, not Celery.
+To point local Vite and the local API at CockroachDB Cloud, use [`.cursor/skills/ring-cloud-prod-db/SKILL.md`](.cursor/skills/ring-cloud-prod-db/SKILL.md):
 
-### Continuous deploy (agents)
+```bash
+ring cloud prod-db enable --staging --yes   # or: ring cloud prod-db enable --yes
+ring cloud prod-db disable                  # back to local
+```
 
-Merges to `dev` ship themselves. Treat every backend-touching PR as a
-prod deploy:
+That mode needs Cursor secrets `RING_PROD_COCKROACH_DATABASE_URI`, `RING_STAGING_COCKROACH_DATABASE_URI`, and `RING_COCKROACH_CA_CERT`, plus egress to the Cockroach Cloud SQL host.
 
-- **Additive migrations only.** Auto-deploy runs `alembic upgrade head`
- against CockroachDB Cloud with nobody watching. Drops/renames are
- two-step. CI gate: `.github/workflows/check_migrations.yml` (also
- `ring db check-migrations` / `ring db check-schema-drift` /
- `ring db check-alembic-head` locally). After a migration that changes
- tables/columns, refresh `ring/db/schema.sql` with
- `ring db autogenerate-schema` — pytest builds from that dump, not from
- Alembic. Pin `ring/alembic/head` to the new revision (`ring db generate`
- does this). Two concurrent migration PRs both rewrite that file and
- git-conflict, so a sibling cannot land as a second Alembic head.
-- **Backend-first PRs** ([`ring-split-pr`](.cursor/skills/ring-split-pr/SKILL.md)).
-  Frontend deploys within minutes of merge; OpenAPI-consuming UI must
-  land only after the API change is live (check
-  `https://ring.neilsriv.tech/api/v1/version` / `ring deploy status`).
-- **Do not invent laptop `ring deploy prod` for `ring-api`.** CI publishes
-  images. That command defaults to `ring-llm` and confirms before
-  building `ring-api`. There is no frontend image — the SPA ships only
-  via Cloudflare Workers Builds. Host rollout is
-  `deploy_host.sh` / Actions → **Deploy ring-api**.
-- **Incident freeze:** repo variable `DEPLOY_PAUSED=true` stops automatic
-  EC2 rollouts; manual Deploy still works for rollback. Pick a prior SHA
-  with `ring deploy history` (or `ring deploy status` for what's live).
-- **Never** build images on the EC2 host or attach `ring.neilsriv.tech`
-  as a Cloudflare Worker custom domain (use Workers Routes with `/api/*`
-  and `/.well-known/*` passthrough — see continuous-deploy.md).
-- Bundler / `vite.config.ts` build changes need a `vite preview` browser
-  check; `pnpm run build` alone has shipped a blank runtime page.
+## Quality gates
 
-## Codebase map
+| Check | Command |
+| --- | --- |
+| Python lint | `ring check lint` (`ruff format --diff`, `ruff check`, `ring gen imports --check`, `ring gen genesis-idp --check`) |
+| Frontend lint | `cd react && pnpm run lint`. It runs Biome with `--apply-unsafe` and rewrites files, so read the diff. |
+| Types and build | `cd react && pnpm run build` (`tsc && vite build`) |
+| Backend tests | `ring test run` |
+| Migrations | `ring db check-alembic-head`, `ring db check-migrations`, `ring db check-schema-drift` |
 
-### Backend (`ring/`)
+CI runs lint and tests on every PR and migration checks in [`.github/workflows/check_migrations.yml`](.github/workflows/check_migrations.yml). Backend tests run in the `ring-test-runner` container ([`compose.test.yml`](compose.test.yml), profile `test`) against a separate CockroachDB. That file publishes the test node's HTTP port as 8008. The migration workflow applies every Alembic revision to an empty test database, because pytest builds schema from `ring/db/schema.sql`, not from Alembic.
 
-Domain packages each follow the same internal shape:
+A change to [`react/vite.config.ts`](react/vite.config.ts) or the bundler also needs a `vite preview` check in a browser, because `pnpm run build` alone has shipped a blank page.
+
+Before you mark a behavior-changing PR ready, run [`.cursor/skills/verify-ring/SKILL.md`](.cursor/skills/verify-ring/SKILL.md) for the touched features. Keep proof under `/opt/cursor/artifacts/verify-ring/<run-id>/`. Do not attach images, recordings, or other binaries to the PR.
+
+## Codebase
+
+Domain packages use this shape:
 
 ```
 ring/<domain>/
@@ -105,173 +78,69 @@ ring/<domain>/
   schemas/    # Pydantic request/response schemas
 ```
 
-Important domains and shared modules:
-
 - `ring/parties/` — users, groups, invites, group key/values
 - `ring/letters/` — letters, questions, responses, default questions
 - `ring/tasks/` — scheduling
 - `ring/notifications/` — push/email subscriptions
-- `ring/notebook/` — collaborative notebook (Automerge / Y.js)
+- `ring/notebook/` — collaborative notebook (Y.js via pycrdt)
 - `ring/search/` — search endpoints (CockroachDB vector index)
 - `ring/auth/` — authentication routes
-- `ring/authz/` — Casbin-based authorization ([authz.py](ring/authz/authz.py))
-- `ring/api_identifier/` — `APIIdentified` mixin + `APIPrefix` enum
-- `ring/fastapp/` — app factory; routers are wired in
-  [ring/fastapp/routes.py](ring/fastapp/routes.py)
-- `ring/fastapp/_gen/` and `ring/search/_gen/` — generated import
-  factories (`ring gen imports`); do not edit by hand
-- `ring/security.py` — password hashing, JWT access tokens
+- `ring/authz/` — Casbin authorization ([`authz.py`](ring/authz/authz.py))
+- `ring/api_identifier/` — `APIIdentified` mixin and `APIPrefix` ([`api_identified_model.py`](ring/api_identifier/api_identified_model.py))
+- `ring/fastapp/` — app factory; routers are wired in [`routes.py`](ring/fastapp/routes.py)
+- `ring/fastapp/_gen/` and `ring/search/_gen/` — generated import factories (`ring gen imports`)
+- `ring/security.py` — password hashing and JWT access tokens
 - `ring/alembic/` — migrations
 
-### Frontend (`react/src/`)
+Frontend under `react/src/`:
 
-- `client/` — generated `@hey-api` SDK + TanStack Query hooks
-  (`sdk.gen.ts`, `types.gen.ts`, `client.gen.ts`, `@tanstack/`)
+- `client/` — generated `@hey-api` SDK and TanStack Query hooks (`sdk.gen.ts`, `types.gen.ts`, `client.gen.ts`, `@tanstack/`)
 - `components/` — feature components; `components/ui/` holds shadcn primitives
-- `routes/` — TanStack Router file-based routes; `routeTree.gen.ts` is generated
+- `routes/` — TanStack Router file routes. [`routeTree.gen.ts`](react/src/routeTree.gen.ts) is written by the TanStack Router Vite plugin.
 - `hooks/`, `lib/`, `util/` — shared frontend code
 
-## Key conventions
+## Conventions
 
-- **API identifiers.** Models that are addressable through the API extend
-  `APIIdentified` (see
-  [ring/api_identifier/api_identified_model.py](ring/api_identifier/api_identified_model.py)),
-  declare an `API_ID_PREFIX` from `APIPrefix`, and register with
-  `@register_api_class(APIPrefix.X)`. IDs look like `grp_<uuid>`, `lttr_<uuid>`,
-  etc. Use `bulk_get_models` / `get_model` to look them up by prefix.
-- **Authz.** Use `ring/authz/authz.py` helpers (`load_and_check`,
-  `bulk_load_and_check`, `check`, `filter_to_authorized`,
-  `bulk_can_or_inaccessible`) for permission checks. Follow patterns in sibling
-  routes inside the same domain rather than inventing new flows.
-- **Routers.** All routers are registered in
-  [ring/fastapp/routes.py](ring/fastapp/routes.py); add new ones there.
-- **Generated frontend client.** The frontend never hand-writes API calls.
-  After backend changes that touch the OpenAPI surface, regenerate with
-  `ring fe regen` and use the generated TanStack Query hooks under
-  `react/src/client/`.
-- **Generated import factories.** Decorator registries
-  (`JOB_REGISTRY`, `SEARCH_REGISTRY`, `API_CLASS_REGISTRY`,
-  `ALL_FACTORIES`) and SQLAlchemy `Base.metadata` only fill on import.
-  After adding a model, `@job_factory` / `@interval_job_factory`,
-  `@register_search_function`, `@register_api_class`, or
-  `@register_factory`, run `ring gen imports`. `ring check lint` runs
-  `ring gen imports --check`. Do not hand-edit `_gen` files or
-  `ring/tests/factories/entrypoint/hydrate_registries.py`.
-- **Generic attachable entities.** Secondary entities that can attach to many
-  parent types should use a **weak reference** — store the parent's
-  `api_identifier` in a `target_api_id` column, look it up with
-  `bulk_get_models`, and skip polymorphic FKs. Prefer **hard deletes** over
-  soft-delete columns unless a specific feature requires undo. Pick a new
-  3–6 character prefix in `APIPrefix` when adding such an entity.
+- Models addressable through the API extend `APIIdentified`, declare `API_ID_PREFIX` from `APIPrefix`, and register with `@register_api_class(APIPrefix.X)`. IDs look like `grp_<uuid>` and `lttr_<uuid>`. Look them up with `bulk_get_models` and `get_model`.
+- Check permissions with the helpers in `ring/authz/authz.py`: `load_and_check`, `bulk_load_and_check`, `check`, `filter_to_authorized`, `bulk_can_or_inaccessible`. Copy the pattern of sibling routes in the same domain. See [`.cursor/skills/ring-authz-checklist/SKILL.md`](.cursor/skills/ring-authz-checklist/SKILL.md).
+- Register every router in `ring/fastapp/routes.py`.
+- Never hand-write API calls in the frontend. Run `ring fe regen` and use the generated hooks in `react/src/client/`.
+- Decorator registries (`JOB_REGISTRY`, `SEARCH_REGISTRY`, `API_CLASS_REGISTRY`, `ALL_FACTORIES`) and SQLAlchemy `Base.metadata` fill on import. After adding a model, `@job_factory`, `@interval_job_factory`, `@register_search_function`, `@register_api_class`, or `@register_factory`, run `ring gen imports`.
+- A secondary entity that attaches to many parent types stores the parent's `api_identifier` in `target_api_id` and is loaded with `bulk_get_models`. Use no polymorphic FKs. Prefer hard deletes over soft-delete columns unless a feature requires undo. A new prefix in `APIPrefix` is 3–6 characters.
+- Do not assume features that are not there. The JWT access token lasts about a week ([`ring/security.py`](ring/security.py)) and there is no refresh-token flow. Add one only when asked, and document it then.
+- Prefer existing timeout mechanisms (Nginx proxy timeouts, botocore, boto3, FastAPI) over custom middleware, including for long-running image uploads.
 
-## Dev workflow
+## Migrations and deploys
 
-The `ring` CLI (installed via `uv sync`) wraps Docker Compose and common
-commands. See [README.md](README.md) for the full list and one-time setup.
+- Migrations must be additive. Drops and renames take two steps. Auto-deploy runs `alembic upgrade head` against CockroachDB Cloud unattended.
+- After a table or column change, run `ring db autogenerate-schema` to refresh `ring/db/schema.sql`. Pytest builds from that dump, not from Alembic. `ring db generate` pins `ring/alembic/head`. Two concurrent migration PRs both rewrite that file and conflict, so a sibling cannot land as a second Alembic head.
+- Land backend changes first. The frontend half of a stack can reach production minutes after merge while the API half is still rolling or paused. Land UI that consumes new OpenAPI only after the API is live. See [`.cursor/skills/ring-split-pr/SKILL.md`](.cursor/skills/ring-split-pr/SKILL.md).
+- CI publishes `ring-api` images. Laptop `ring deploy prod` is not the normal ship path: it defaults to `ring-llm`, and `-i ring-api` continues only after confirmation, when CI or ECR is down. Do not build images on the EC2 host. There is no frontend image.
+- Never run migrations against a cloud database URI from `ring cloud prod-db` mode.
 
-Common loop:
+## Do not edit by hand
 
-```bash
-source .venv/bin/activate
-ring compose up           # CockroachDB + API + Nginx
-ring db upgrade           # apply migrations
-ring fe dev               # Vite at https://localhost:5173
-```
+- `ring/fastapp/_gen/`, `ring/search/_gen/`, and `ring/tests/factories/entrypoint/hydrate_registries.py`. Run `ring gen imports`.
+- `react/src/client/`. Run `ring fe regen`.
+- `react/src/routeTree.gen.ts`. The TanStack Router Vite plugin writes it. `ring fe regen` does not.
+- `ring/vendor/genesis_idp`. It is vendored from neil/genesis. Recopy with `ring gen genesis-idp --from <genesis clone>`.
 
-When adding a model, job, search registration, or test factory:
+## PRs
 
-```bash
-ring gen imports              # refresh _gen import factories
-```
+- Split big changes: backend first, then `ring fe regen` and UI. Each PR must pass `ring check lint` and its tests alone. Land stacked PRs in order, rebasing the rest onto `dev` after each merge.
+- Merge manually, squash and delete the branch. Ignore `aviator-app` comments and the `mergequeue` label.
 
-When backend API shape changes:
+## Skills
 
-```bash
-ring db generate "<message>"  # create alembic revision + pin ring/alembic/head
-ring db upgrade               # apply
-ring fe regen                 # refresh react/src/client/ from OpenAPI
-```
+File-scoped style rules are in [`.cursor/rules/`](.cursor/rules/) (`python.mdc`, `react.mdc`).
 
-### Cursor Cloud Agent VM
+[`.cursor/skills/`](.cursor/skills/) holds playbooks:
 
-Use the [**ring-cloud-dev** skill](.cursor/skills/ring-cloud-dev/SKILL.md).
-Bootstrap is automated via [`.cursor/cloud-start.sh`](.cursor/cloud-start.sh)
-and [`.cursor/environment.json`](.cursor/environment.json); copy
-[`.env.cloud.example`](.env.cloud.example) for cloud `.env` defaults.
-
-```bash
-bash .cursor/cloud-start.sh --bootstrap-only
-bash dev_util/cloud-health.sh
-```
-
-Do not hand-roll compose unless debugging — the start script handles network,
-SSL, vector index, migrations, and a test user seed.
-
-To point the **local Vite frontend + local API** at CockroachDB Cloud (prod or
-staging) instead of Docker Cockroach, use
-[**ring-cloud-prod-db**](.cursor/skills/ring-cloud-prod-db/SKILL.md):
-
-```bash
-ring cloud prod-db enable --staging --yes   # or: ring cloud prod-db enable --yes
-ring cloud prod-db disable                  # back to local
-```
-
-Requires Cursor secrets `RING_PROD_COCKROACH_DATABASE_URI` /
-`RING_STAGING_COCKROACH_DATABASE_URI` and `RING_COCKROACH_CA_CERT`, plus egress
-for Cockroach Cloud SQL hosts. Never run migrations against the cloud URI from
-this mode.
-
-## Quality gates
-
-| Check                | Command                                                        |
-|----------------------|----------------------------------------------------------------|
-| Python lint/format   | `ring check lint` (`ruff format --diff && ruff check` and `ring gen imports --check`) |
-| Frontend lint        | `cd react && pnpm run lint` (Biome; ~21 pre-existing warnings) |
-| TypeScript           | `cd react && npx tsc --noEmit`                                 |
-| Frontend build       | `cd react && pnpm run build`                                   |
-| Backend tests        | `ring test run` (Compose `compose.test.yml`, profile `test`)   |
-| Migrations (CD gate) | `ring db check-alembic-head` then `check-migrations` then `check-schema-drift` |
-
-Backend tests run inside a dedicated `ring-test-runner` container against a
-separate CockroachDB instance on port 8008. The migration gate applies every
-Alembic revision to an empty test DB (CI: `check_migrations.yml`) — required
-because pytest builds schema from `ring/db/schema.sql`, not Alembic.
-
-## Design preferences
-
-- **Split big changes into PRs.** Land backend (models, migrations, API,
-  tests, OpenAPI) first; follow with `ring fe regen` + UI in a second PR. Each
-  PR should pass `ring check lint` and the relevant tests on its own. Under
-  continuous deploy this is load-bearing: the frontend half of a stacked
-  change can reach prod minutes after merge while the API half is still
-  rolling (or paused).
-- **Merge PRs manually (squash + delete branch).** Aviator is no longer
-  used — ignore `aviator-app` bot comments suggesting `/aviator merge` or
-  the `mergequeue` label. Land stacked PRs in order (backend first, and for
-  API-consuming UI, after the backend deploy is live), rebasing the rest of
-  the stack onto `dev` after each merge.
-- **Prefer existing timeout mechanisms.** For operational resilience (e.g.
-  long-running image uploads), use Nginx proxy timeouts and the
-  botocore/boto3 / FastAPI built-in timeouts rather than rolling custom
-  middleware.
-- **Don't assume features that aren't there.** Today the JWT access token is
-  long-lived (~1 week, see [ring/security.py](ring/security.py)) and there is
-  no refresh-token flow. Don't invent one as a "preference" — implement it
-  explicitly if asked, and document the change at that point.
-
-## Agent resources
-
-- [.cursor/rules/](.cursor/rules/) — file-scoped style rules (`python.mdc`,
-  `react.mdc`).
-- [.cursor/skills/](.cursor/skills/) — repeatable task playbooks:
-  - `ring-add-backend-resource/` — new domain endpoint/model/CRUD
-  - `ring-regen-frontend-client/` — refresh `react/src/client/` after API
-    changes
-  - `ring-authz-checklist/` — permission-check patterns for new routes
-  - `ring-split-pr/` — splitting backend + frontend work into separate PRs
-  - `ring-db-migration/` — generate/modify Alembic migrations the correct way
-  - `ring-cloud-dev/` — Cursor Cloud VM bootstrap, health checks, browser testing
-  - `ring-cloud-prod-db/` — point cloud Vite/API at CockroachDB Cloud (prod/staging)
-  - [`verify-ring/`](.cursor/skills/verify-ring/SKILL.md) — drive the running app the way a user does and capture evidence
-
-Before marking a behavior-changing PR ready, run verify-ring for touched features and keep the proof under `/opt/cursor/artifacts/verify-ring/<run-id>/`. Do not attach images, recordings, or other binary evidence to the PR.
+- `ring-add-backend-resource` — new domain endpoint, model, and CRUD
+- `ring-regen-frontend-client` — refresh `react/src/client/` after API changes
+- `ring-authz-checklist` — permission checks for new routes
+- `ring-split-pr` — split backend and frontend into separate PRs
+- `ring-db-migration` — generate or modify Alembic migrations
+- `ring-cloud-dev` — Cloud VM bootstrap, health checks, and browser testing
+- `ring-cloud-prod-db` — point cloud Vite and the API at CockroachDB Cloud
+- `verify-ring` — drive the running app and capture evidence
