@@ -21,6 +21,12 @@ export const INTERVAL_SECONDS = 300
 
 export type HeartbeatStatus = "ok" | "degraded" | "down" | "stopping"
 
+type HeartbeatFailureReason =
+  | "sign_error"
+  | "http_status"
+  | "timeout"
+  | "network"
+
 export interface HeartbeatEnv {
   HEARTBEAT_URL?: string
   HEARTBEAT_KEY_ID?: string
@@ -57,10 +63,21 @@ export async function signBody(
     .join("")
 }
 
-function logFailure(): void {
-  console.error(
-    JSON.stringify({ service: serviceName, msg: "heartbeat failed" }),
-  )
+function logFailure(
+  reason: HeartbeatFailureReason,
+  started: number,
+  status?: number,
+): void {
+  const record: Record<string, string | number> = {
+    service: serviceName,
+    msg: "heartbeat failed",
+    reason,
+    elapsedMs: Math.round(performance.now() - started),
+  }
+  if (status !== undefined) {
+    record.status = status
+  }
+  console.error(JSON.stringify(record))
 }
 
 export async function sendHeartbeat(
@@ -83,11 +100,12 @@ export async function sendHeartbeat(
     version: "",
   })
   const timestamp = String(nowSeconds)
+  const started = performance.now()
   let signature: string
   try {
     signature = await signBody(secret, timestamp, body)
   } catch {
-    logFailure()
+    logFailure("sign_error", started)
     return
   }
   try {
@@ -103,9 +121,14 @@ export async function sendHeartbeat(
       signal: AbortSignal.timeout(5000),
     })
     if (!response.ok) {
-      logFailure()
+      logFailure("http_status", started, response.status)
     }
-  } catch {
-    logFailure()
+  } catch (error) {
+    logFailure(
+      error instanceof Error && error.name === "TimeoutError"
+        ? "timeout"
+        : "network",
+      started,
+    )
   }
 }
