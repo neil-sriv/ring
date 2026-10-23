@@ -40,8 +40,8 @@ ring compose up
 ring compose ps  # confirm `api` is healthy
 ```
 
-In the Cursor Cloud VM, use the raw compose form documented in
-[AGENTS.md](../../../AGENTS.md#cursor-cloud-agent-vm).
+In the Cursor Cloud VM, use the raw compose form in
+[ring-cloud-dev](../ring-cloud-dev/SKILL.md#raw-compose-debugging-only).
 
 ### 2. Regenerate
 
