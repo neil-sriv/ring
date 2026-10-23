@@ -1,0 +1,5 @@
+FAIL: expected exactly 1 mark-read POST, got 3
+held_count=3 final_count=3
+  POST http://localhost:5173/api/v1/notifications/inbox/inbx_e2e_openitem_1/read
+  POST http://localhost:5173/api/v1/notifications/inbox/inbx_e2e_openitem_1/read
+  POST http://localhost:5173/api/v1/notifications/inbox/inbx_e2e_openitem_1/read

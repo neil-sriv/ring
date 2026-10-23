@@ -1,0 +1,3 @@
+held_count=1 final_count=1
+  POST http://localhost:5173/api/v1/notifications/inbox/inbx_e2e_openitem_1/read
+PASS: exactly one mark-read POST on double-click
