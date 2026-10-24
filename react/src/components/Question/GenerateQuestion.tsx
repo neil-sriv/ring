@@ -15,7 +15,7 @@ import { type SubmitHandler, useForm } from "react-hook-form"
 import { useRouter } from "@tanstack/react-router"
 import type { AxiosError } from "axios"
 import { Loader2, Sparkles } from "lucide-react"
-import { useEffect, useState } from "react"
+import { useEffect, useRef, useState } from "react"
 import type { AddQuestionLettersLetterLetterApiIdAddQuestionPostError } from "../../client"
 import {
   addQuestionLettersLetterLetterApiIdAddQuestionPostMutation,
@@ -55,6 +55,11 @@ const GenerateQuestion = ({
   const router = useRouter()
   const showToast = useCustomToast()
   const [generatedQuestion, setGeneratedQuestion] = useState<string>("")
+  // disabled={isPending} / isBusy alone still lets a second click through
+  // before React re-renders; these refs close that same-tick double-submit
+  // window (same pattern as DocumentsGrid / LateAnswerQuestion).
+  const generateInFlightRef = useRef(false)
+  const saveInFlightRef = useRef(false)
   const {
     register,
     handleSubmit,
@@ -138,17 +143,28 @@ const GenerateQuestion = ({
     addQuestionMutation.isPending
 
   const onGenerateQuestion: SubmitHandler<QuestionFormProps> = async (data) => {
-    if (isBusy) return
-    await generateQuestionMutation.mutateAsync({
-      body: {
-        prompt: data.questionPrompt,
-      },
-      path: { letter_api_id: loopApiId },
-    })
+    if (generateInFlightRef.current || saveInFlightRef.current || isBusy) {
+      return
+    }
+    generateInFlightRef.current = true
+    try {
+      await generateQuestionMutation.mutateAsync({
+        body: {
+          prompt: data.questionPrompt,
+        },
+        path: { letter_api_id: loopApiId },
+      })
+    } catch {
+      // onError already toasts
+    } finally {
+      generateInFlightRef.current = false
+    }
   }
 
   const onSaveQuestion = async () => {
-    if (isBusy) return
+    if (generateInFlightRef.current || saveInFlightRef.current || isBusy) {
+      return
+    }
     if (!generatedQuestion) {
       showToast(
         "Error",
@@ -158,13 +174,20 @@ const GenerateQuestion = ({
       return
     }
 
-    await addQuestionMutation.mutateAsync({
-      body: {
-        question_text: generatedQuestion,
-        author_api_id: currentUser?.api_identifier || null,
-      },
-      path: { letter_api_id: loopApiId },
-    })
+    saveInFlightRef.current = true
+    try {
+      await addQuestionMutation.mutateAsync({
+        body: {
+          question_text: generatedQuestion,
+          author_api_id: currentUser?.api_identifier || null,
+        },
+        path: { letter_api_id: loopApiId },
+      })
+    } catch {
+      // onError already toasts
+    } finally {
+      saveInFlightRef.current = false
+    }
   }
 
   const handleClose = () => {
