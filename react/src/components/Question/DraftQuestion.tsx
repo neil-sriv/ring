@@ -378,6 +378,9 @@ function DraftQuestion({
   const didInvalidateListsForFirstResponseRef = useRef(false)
   // Parent-level guard against overlapping deletes for the same S3 key.
   const deletingImageUrlsRef = useRef(new Set<string>())
+  // disabled={isPending} alone still lets a second Delete click through before
+  // React re-renders; this ref closes that same-tick double-delete window.
+  const deleteInFlightRef = useRef(false)
 
   const deleteMutation = useMutation({
     ...deleteQuestionQuestionsQuestionQuestionApiIdDeleteMutation(),
@@ -422,14 +425,24 @@ function DraftQuestion({
     question.author?.api_identifier === currentUser.api_identifier
   const canDelete = isAuthor || isGroupAdmin
 
-  const handleDelete = async () => {
-    await deleteMutation.mutateAsync({
-      path: { question_api_id: question.api_identifier },
-    })
-    setDeleteOpen(false)
-  }
-
   const isDeleting = deleteMutation.isPending
+
+  const handleDelete = async () => {
+    if (deleteInFlightRef.current || isDeleting) {
+      return
+    }
+    deleteInFlightRef.current = true
+    try {
+      await deleteMutation.mutateAsync({
+        path: { question_api_id: question.api_identifier },
+      })
+      setDeleteOpen(false)
+    } catch {
+      // onError already toasts
+    } finally {
+      deleteInFlightRef.current = false
+    }
+  }
 
   const letterQueryKey = readLetterLettersLetterLetterApiIdGetQueryKey({
     path: { letter_api_id: loopApiId },
