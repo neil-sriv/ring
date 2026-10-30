@@ -1,6 +1,6 @@
 import { useRouterState } from "@tanstack/react-router"
 import { Loader2 } from "lucide-react"
-import { useState } from "react"
+import { useRef, useState } from "react"
 import { toast } from "sonner"
 
 import { Button } from "@/components/ui/button"
@@ -47,11 +47,15 @@ function EnablePushButton({
 }) {
   const [pending, setPending] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  // `pending` alone is not enough: same-tick double-clicks both pass
+  // `if (pending)` before React re-renders with disabled={true}.
+  const enableInFlightRef = useRef(false)
 
   async function onClick() {
-    if (pending) {
+    if (enableInFlightRef.current || pending) {
       return
     }
+    enableInFlightRef.current = true
     setPending(true)
     setError(null)
     try {
@@ -73,6 +77,7 @@ function EnablePushButton({
         duration: 8000,
       })
     } finally {
+      enableInFlightRef.current = false
       setPending(false)
     }
   }
