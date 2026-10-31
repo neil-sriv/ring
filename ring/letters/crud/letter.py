@@ -19,6 +19,7 @@ from ring.async_scheduler.scheduler import job_factory
 from ring.email_util import send_email
 from ring.letters.constants import (
     DEFAULT_QUESTIONS,
+    LETTER_PROMOTION_LOOKAHEAD,
     QUESTION_BANK,
     LetterStatus,
     LetterType,
@@ -586,9 +587,6 @@ def has_outstanding_send_task(db: Session, letter: Letter) -> bool:
         .limit(1)
     ).first()
     return outstanding is not None
-
-
-LETTER_PROMOTION_LOOKAHEAD = timedelta(days=7)
 
 
 def collect_future_letters(
