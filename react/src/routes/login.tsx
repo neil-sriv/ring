@@ -4,7 +4,7 @@ import {
   redirect,
 } from "@tanstack/react-router"
 import { Eye, EyeOff, Loader2 } from "lucide-react"
-import { useState } from "react"
+import { useRef, useState } from "react"
 import { type SubmitHandler, useForm } from "react-hook-form"
 
 import { RingMark } from "@/components/Common/RingMark"
@@ -88,9 +88,15 @@ function Login() {
   })
 
   const isSaving = isSubmitting || loginMutation.isPending
+  // disabled={isSaving} / if (isSaving) alone still lets a second submit
+  // through before React re-renders; this ref closes that same-tick window.
+  const loginInFlightRef = useRef(false)
 
   const onSubmit: SubmitHandler<AccessToken> = async (data) => {
-    if (isSaving) return
+    if (loginInFlightRef.current || isSaving) {
+      return
+    }
+    loginInFlightRef.current = true
 
     resetError()
 
@@ -100,6 +106,8 @@ function Login() {
       })
     } catch {
       // error is handled by useAuth hook
+    } finally {
+      loginInFlightRef.current = false
     }
   }
 
