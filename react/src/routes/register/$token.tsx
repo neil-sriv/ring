@@ -4,7 +4,7 @@ import {
   redirect,
 } from "@tanstack/react-router"
 import { Eye, EyeOff, Loader2 } from "lucide-react"
-import { useState } from "react"
+import { useRef, useState } from "react"
 import { type SubmitHandler, useForm } from "react-hook-form"
 
 import { RingMark } from "@/components/Common/RingMark"
@@ -78,9 +78,15 @@ function Register() {
   // locked for the full request via mutateAsync + isPending (same pattern as
   // login). Without this, users can edit name/email/password mid-flight.
   const isSaving = isSubmitting || registerMutation.isPending
+  // disabled={isSaving} / if (isSaving) alone still lets a second submit
+  // through before React re-renders; this ref closes that same-tick window.
+  const registerInFlightRef = useRef(false)
 
   const onSubmit: SubmitHandler<UserCreate> = async (data) => {
-    if (isSaving) return
+    if (registerInFlightRef.current || isSaving) {
+      return
+    }
+    registerInFlightRef.current = true
 
     resetError()
 
@@ -93,6 +99,8 @@ function Register() {
       await registerMutation.mutateAsync(formData)
     } catch {
       // error is handled by useRegister hook
+    } finally {
+      registerInFlightRef.current = false
     }
   }
 
