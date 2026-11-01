@@ -1,5 +1,6 @@
 import { useMutation } from "@tanstack/react-query"
 import { Loader2 } from "lucide-react"
+import { useRef } from "react"
 import { type SubmitHandler, useForm } from "react-hook-form"
 
 import type { AxiosError } from "axios"
@@ -51,15 +52,26 @@ const ChangePassword = () => {
     },
   })
 
+  const isSaving = isSubmitting || mutation.isPending
+  // disabled={isSaving} alone still lets a second submit through before
+  // React re-renders; this ref closes that same-tick window (login pattern).
+  const saveInFlightRef = useRef(false)
+
   const onSubmit: SubmitHandler<UpdatePasswordForm> = async (data) => {
+    if (saveInFlightRef.current || isSaving) {
+      return
+    }
+    saveInFlightRef.current = true
     // Await so RHF isSubmitting stays true for the full request; isPending
     // covers the gap if the promise settles while React is still painting.
-    await mutation.mutateAsync({
-      body: data,
-    })
+    try {
+      await mutation.mutateAsync({
+        body: data,
+      })
+    } finally {
+      saveInFlightRef.current = false
+    }
   }
-
-  const isSaving = isSubmitting || mutation.isPending
 
   return (
     <div className="w-full">
