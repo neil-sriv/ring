@@ -9,10 +9,12 @@ password resets in production.
 
 from __future__ import annotations
 
+from datetime import UTC, datetime, timedelta
+
 from sqlalchemy.orm import Session
 
 from ring.email_util import EmailDraft
-from ring.letters.constants import LetterStatus
+from ring.letters.constants import LetterStatus, LetterType
 from ring.lib.app_links import app_url
 from ring.parties.crud.authn import construct_password_reset_email
 from ring.parties.crud.invite import construct_invite_email
@@ -89,6 +91,8 @@ class TestOutboundEmailLinks:
                     group.name,
                     letter_api_id,
                     LetterStatus.IN_PROGRESS,
+                    datetime.now(tz=UTC) + timedelta(days=1),
+                    LetterType.CYCLIC,
                 ),
                 letter_url,
             ),
@@ -98,6 +102,7 @@ class TestOutboundEmailLinks:
                     group.name,
                     letter_api_id,
                     "#1",
+                    datetime.now(tz=UTC) + timedelta(days=1),
                 ),
                 letter_url,
             ),

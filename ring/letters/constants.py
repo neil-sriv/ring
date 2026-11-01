@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from datetime import timedelta
 from enum import StrEnum
 
 
@@ -21,6 +22,9 @@ class LetterType(StrEnum):
 
     CYCLIC = "CYCLIC"
     ADHOC = "ADHOC"
+
+
+LETTER_PROMOTION_LOOKAHEAD = timedelta(days=7)
 
 
 #  Default questions that are automatically added to new letters

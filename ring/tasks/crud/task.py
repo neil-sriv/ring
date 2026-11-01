@@ -120,6 +120,8 @@ def execute_reminder_email_task(
             group.name,
             letter_to_send.api_identifier,
             letter_to_send.status,
+            letter_to_send.send_at,
+            letter_to_send.letter_type,
         )
     )
     if message_id:
@@ -408,6 +410,7 @@ def send_waiting_response_email(db: Session, letter_id: int) -> None:
         letter.group.name,
         letter.api_identifier,
         letter_display_title(letter),
+        letter.send_at,
     )
     message_id = send_email(email_draft)
     if message_id:

@@ -8,6 +8,7 @@ to letters in Ring.
 from __future__ import annotations
 
 import html
+from datetime import datetime
 
 from ring.email_template import (
     render_button,
@@ -18,6 +19,7 @@ from ring.email_template import (
 )
 from ring.email_util import EmailDraft, construct_email_draft
 from ring.letters.constants import LetterStatus
+from ring.letters.time_left import days_left_to, reminder_deadline
 from ring.lib.app_links import app_url
 
 
@@ -26,6 +28,10 @@ def construct_reminder_email(
     group_name: str,
     letter_api_id: str,
     letter_status: str,
+    send_at: datetime,
+    letter_type: str,
+    *,
+    now: datetime | None = None,
 ) -> EmailDraft:
     """Construct a reminder email draft.
 
@@ -38,6 +44,9 @@ def construct_reminder_email(
         group_name: Name of the group
         letter_api_id: API identifier of the letter
         letter_status: Status of the letter (UPCOMING or IN_PROGRESS)
+        send_at: When the letter is scheduled to send
+        letter_type: Type of the letter (CYCLIC or ADHOC)
+        now: Clock for the day count. Defaults to the current time.
 
     Returns:
         EmailDraft: A draft email ready to be sent
@@ -47,16 +56,14 @@ def construct_reminder_email(
         if letter_status == LetterStatus.UPCOMING
         else "respond"
     )
-
-    question_text = "Today is the last day to {} for the newsletter. Please visit the link above to {}.".format(
+    lead = days_left_to(
         subject_text,
-        subject_text,
+        reminder_deadline(send_at, letter_status, letter_type),
+        now,
     )
 
-    # The email body for recipients with non-HTML email clients.
-    BODY_TEXT = question_text
-
     letter_url = app_url(f"loops/{letter_api_id}")
+    BODY_TEXT = f"{lead} for the newsletter.\n\nVisit: {letter_url}"
     cta_label = (
         "Add questions"
         if letter_status == LetterStatus.UPCOMING
@@ -64,8 +71,8 @@ def construct_reminder_email(
     )
     content_html = (
         render_paragraph(
-            f"Today is the last day to {html.escape(subject_text)} for the "
-            f"latest <strong>{html.escape(group_name)}</strong> letter."
+            f"{html.escape(lead)} for the latest "
+            f"<strong>{html.escape(group_name)}</strong> letter."
         )
         + render_button(cta_label, letter_url)
         + render_muted_line(
@@ -75,20 +82,14 @@ def construct_reminder_email(
 
     # The HTML body of the email.
     BODY_HTML = render_email_shell(
-        title=f"Last day to {subject_text}",
+        title=lead,
         eyebrow=group_name,
-        preheader=(
-            f"Today is the last day to {subject_text} for {group_name}."
-        ),
+        preheader=f"{lead} for {group_name}.",
         content_html=content_html,
         footer_note="You are receiving this email as a member of a Ring loop.",
     )
 
-    # Try to send the email.
-    subject = "Ring Reminder: Last day to {} for {}".format(
-        subject_text,
-        group_name,
-    )
+    subject = f"Ring Reminder: {lead} for {group_name}"
     email_draft = construct_email_draft(
         recipients, subject, BODY_HTML, BODY_TEXT
     )
