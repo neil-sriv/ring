@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import { Loader2 } from "lucide-react"
-import { useEffect } from "react"
+import { useEffect, useRef } from "react"
 import { type SubmitHandler, useForm } from "react-hook-form"
 
 import type { AxiosError } from "axios"
@@ -98,26 +98,37 @@ const AddGroup = ({ isOpen, onClose }: AddGroupProps) => {
     },
   })
 
+  const isSaving = isSubmitting || mutation.isPending
+  // disabled={isSaving} alone still lets a second submit through before
+  // React re-renders; this ref closes that same-tick window (login pattern).
+  const saveInFlightRef = useRef(false)
+
   const onSubmit: SubmitHandler<GroupCreate> = async (data) => {
     if (!currentUser) {
       return
     }
-    // Await so RHF isSubmitting stays true for the full request (isPending
-    // alone can lose a double-click race before the next React render).
-    await mutation.mutateAsync({
-      body: {
-        admin_api_identifier: currentUser.api_identifier,
-        name: data.name,
-      },
-    })
+    if (saveInFlightRef.current || isSaving) {
+      return
+    }
+    saveInFlightRef.current = true
+    // Await so RHF isSubmitting stays true for the full request; isPending
+    // covers the gap if the promise settles while React is still painting.
+    try {
+      await mutation.mutateAsync({
+        body: {
+          admin_api_identifier: currentUser.api_identifier,
+          name: data.name,
+        },
+      })
+    } finally {
+      saveInFlightRef.current = false
+    }
   }
 
   const onCancel = () => {
     reset({ name: "" })
     onClose()
   }
-
-  const isSaving = isSubmitting || mutation.isPending
 
   return (
     <Dialog
