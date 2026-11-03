@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
-import { useEffect } from "react"
+import { useEffect, useRef } from "react"
 import { type SubmitHandler, useForm } from "react-hook-form"
 
 import { Button } from "@/components/ui/button"
@@ -107,25 +107,36 @@ const AddQuestion = ({ isOpen, onClose, loopApiId }: AddQuestionProps) => {
     },
   })
 
+  // RHF isSubmitting clears as soon as fire-and-forget mutate() returns;
+  // keep Save disabled for the full request via mutateAsync + isPending.
+  const isSaving = isSubmitting || mutation.isPending
+  // disabled={isSaving} alone still lets a second submit through before
+  // React re-renders; this ref closes that same-tick window (AddGroup pattern).
+  const saveInFlightRef = useRef(false)
+
   const onSubmit: SubmitHandler<QuestionFormProps> = async (data) => {
     if (!currentUser) return
-    await mutation.mutateAsync({
-      body: {
-        question_text: data.questionText,
-        author_api_id: currentUser.api_identifier,
-      },
-      path: { letter_api_id: loopApiId },
-    })
+    if (saveInFlightRef.current || isSaving) {
+      return
+    }
+    saveInFlightRef.current = true
+    try {
+      await mutation.mutateAsync({
+        body: {
+          question_text: data.questionText,
+          author_api_id: currentUser.api_identifier,
+        },
+        path: { letter_api_id: loopApiId },
+      })
+    } finally {
+      saveInFlightRef.current = false
+    }
   }
 
   const onCancel = () => {
     reset(freshDefaults())
     onClose()
   }
-
-  // RHF isSubmitting clears as soon as fire-and-forget mutate() returns;
-  // keep Save disabled for the full request via mutateAsync + isPending.
-  const isSaving = isSubmitting || mutation.isPending
 
   return (
     <Dialog
