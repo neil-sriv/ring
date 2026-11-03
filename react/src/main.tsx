@@ -1,9 +1,5 @@
 import { Toaster } from "@/components/ui/sonner"
-import {
-  QueryClient,
-  QueryClientProvider,
-  useQuery,
-} from "@tanstack/react-query"
+import { QueryClientProvider, useQuery } from "@tanstack/react-query"
 import { RouterProvider, createRouter } from "@tanstack/react-router"
 import ReactDOM from "react-dom/client"
 import { routeTree } from "./routeTree.gen"
@@ -15,6 +11,7 @@ import "./app.css"
 import { registerSW } from "virtual:pwa-register"
 import { readUserMePartiesMeGetOptions } from "./client/@tanstack/react-query.gen"
 import { client } from "./client/client.gen"
+import { createAppQueryClient } from "./lib/createQueryClient"
 import { initGlobalKeyboardShortcuts } from "./lib/globalKeyboardShortcuts"
 import { isPublicAuthPath } from "./util/authRoutes"
 import { httpsUpgradeUrl } from "./util/httpsUpgrade"
@@ -80,14 +77,7 @@ client.instance.interceptors.response.use(
 )
 /**/
 
-const queryClient = new QueryClient({
-  defaultOptions: {
-    queries: {
-      staleTime: 30_000,
-      refetchOnWindowFocus: true,
-    },
-  },
-})
+const queryClient = createAppQueryClient()
 
 const router = createRouter({
   routeTree,

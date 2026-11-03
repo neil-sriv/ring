@@ -1,4 +1,4 @@
-import { useMutation, useQueryClient } from "@tanstack/react-query"
+import { useQueryClient } from "@tanstack/react-query"
 import { type SubmitHandler, useForm } from "react-hook-form"
 
 import { Button } from "@/components/ui/button"
@@ -20,11 +20,10 @@ import type {
 } from "../../client"
 import {
   editLetterLettersLetterLetterApiIdEditLetterPostMutation,
-  listDashboardLettersLettersLettersDashboardGetQueryKey,
-  listLettersLettersLettersGetQueryKey,
   readLetterLettersLetterLetterApiIdGetQueryKey,
 } from "../../client/@tanstack/react-query.gen"
 import useCustomToast from "../../hooks/useCustomToast"
+import { useAppMutation } from "../../lib/useAppMutation"
 import { formatApiErrorDetail, toISOLocal } from "../../util/misc"
 
 type LetterFormProps = {
@@ -71,10 +70,10 @@ const EditLetter = ({ isOpen, onClose, loop }: EditLetterProps) => {
       : undefined,
   })
 
-  const mutation = useMutation({
+  const mutation = useAppMutation({
     ...editLetterLettersLetterLetterApiIdEditLetterPostMutation(),
+    cache: "editLetter",
     onSuccess: (data) => {
-      // Keep detail warm so the open loop page reflects the save immediately.
       queryClient.setQueryData(
         readLetterLettersLetterLetterApiIdGetQueryKey({
           path: { letter_api_id: loop.api_identifier },
@@ -93,23 +92,6 @@ const EditLetter = ({ isOpen, onClose, loop }: EditLetterProps) => {
         formatApiErrorDetail(err.response?.data?.detail),
         "error",
       )
-    },
-    onSettled: () => {
-      queryClient.invalidateQueries({
-        queryKey: readLetterLettersLetterLetterApiIdGetQueryKey({
-          path: { letter_api_id: loop.api_identifier },
-        }),
-      })
-      // Group Loops / dashboard cards use list queries with a 30s staleTime;
-      // without this, renamed titles stay wrong until the cache expires.
-      queryClient.invalidateQueries({
-        queryKey: listLettersLettersLettersGetQueryKey({
-          query: { group_api_id: loop.group.api_identifier },
-        }),
-      })
-      queryClient.invalidateQueries({
-        queryKey: listDashboardLettersLettersLettersDashboardGetQueryKey(),
-      })
     },
   })
 
