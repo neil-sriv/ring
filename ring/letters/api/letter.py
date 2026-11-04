@@ -34,6 +34,7 @@ from ring.letters.schemas.question import (
     GenerateQuestionRequest,
     GenerateQuestionResponse,
     QuestionCreate,
+    QuestionReorder,
 )
 from ring.parties.models.user_model import User
 from ring.ring_pydantic import PublicLetter as LetterSchema
@@ -336,6 +337,56 @@ async def add_question(
         req_dep.db, db_letter, question.question_text, author=db_author
     )
     req_dep.db.refresh(db_letter)
+    req_dep.db.commit()
+    return db_letter
+
+
+@router.post(
+    "/letter/{letter_api_id}:reorder_questions",
+    response_model=LetterSchema,
+)
+async def reorder_questions(
+    letter_api_id: str,
+    question_order: QuestionReorder,
+    req_dep: AuthenticatedRequestDependencies = Depends(
+        get_request_dependencies,
+    ),
+) -> Letter:
+    """Reorder a letter's questions.
+
+    The body lists every question on the letter exactly once. Only the
+    group admin may reorder, and only while the letter is upcoming or in
+    progress. Positions are rewritten to 0..n-1 in the submitted order.
+    """
+    db_letter = api_identifier_crud.get_model(
+        req_dep.db,
+        Letter,
+        api_id=letter_api_id,
+    )
+    if req_dep.current_user != db_letter.group.admin:
+        raise HTTPException(
+            status_code=403,
+            detail="Only the group admin can reorder questions",
+        )
+    if db_letter.status not in _LIVE_LETTER_STATUSES:
+        raise HTTPException(
+            status_code=400,
+            detail=(
+                "Questions can only be reordered while a letter is "
+                "upcoming or in progress"
+            ),
+        )
+    try:
+        letter_crud.reorder_questions(
+            req_dep.db,
+            db_letter,
+            question_order.question_api_identifiers,
+        )
+    except ValueError as error:
+        raise HTTPException(
+            status_code=400,
+            detail=str(error),
+        ) from error
     req_dep.db.commit()
     return db_letter
 

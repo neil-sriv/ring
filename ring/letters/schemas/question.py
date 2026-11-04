@@ -30,6 +30,12 @@ class QuestionCreate(QuestionBase):
     author_api_id: str | None
 
 
+class QuestionReorder(BaseModel):
+    """Full permutation of a letter's questions, in the new display order."""
+
+    question_api_identifiers: list[str]
+
+
 class Question(QuestionBase):
     """Schema representing a question in the system.
 

@@ -14,10 +14,7 @@ from ring.spotify.tracks import extract_spotify_track_ids_from_parts
 def letter_text_parts(letter: Letter) -> list[str | None]:
     """Title, then each question and its responses in display order."""
     parts: list[str | None] = [letter.title]
-    questions = sorted(
-        letter.questions, key=lambda question: question.position
-    )
-    for question in questions:
+    for question in letter.ordered_questions():
         parts.append(question.question_text)
         for response in question.responses:
             parts.append(response.response_text)

@@ -415,6 +415,41 @@ def upsert_letter_tasks(
             )
 
 
+def reorder_questions(
+    db: Session,
+    letter: Letter,
+    question_api_identifiers: Sequence[str],
+) -> Letter:
+    """Set each question's position from a full permutation of the letter.
+
+    Args:
+        db (Session): Database session
+        letter (Letter): Letter whose questions are reordered
+        question_api_identifiers (Sequence[str]): Every question on the
+            letter exactly once, in the new display order
+
+    Returns:
+        Letter: The same letter, with positions 0..n-1
+
+    Raises:
+        ValueError: If the ids are missing, duplicated, or from another letter
+    """
+    questions_by_api_id = {
+        question.api_identifier: question for question in letter.questions
+    }
+    submitted = list(question_api_identifiers)
+    expected = set(questions_by_api_id)
+    if len(submitted) != len(expected) or set(submitted) != expected:
+        raise ValueError(
+            "question_api_identifiers must list each of this letter's "
+            "questions exactly once"
+        )
+    for position, api_identifier in enumerate(submitted):
+        questions_by_api_id[api_identifier].position = position
+    db.flush()
+    return letter
+
+
 def add_question(
     db: Session, letter: Letter, question_text: str, author: User | None = None
 ) -> Question:
@@ -508,7 +543,7 @@ def compile_letter_dict(
             )
             for response in question.responses
         ]
-        for question in sorted(letter.questions, key=lambda q: q.position)
+        for question in letter.ordered_questions()
     }
 
 
@@ -804,7 +839,7 @@ def create_letter_search_document(
         HybridSearchDocument: Search document for the letter
     """
     question_texts = " ".join(
-        question.question_text for question in letter.questions
+        question.question_text for question in letter.ordered_questions()
     )
     participant_names = " ".join(
         participant.name for participant in letter.participants
