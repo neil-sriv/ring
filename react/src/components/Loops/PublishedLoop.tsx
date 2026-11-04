@@ -3,7 +3,7 @@ import { useQuery } from "@tanstack/react-query"
 import { useState } from "react"
 import type { PublicLetter } from "../../client"
 import { readUserMePartiesMeGetOptions } from "../../client/@tanstack/react-query.gen"
-import { compareQuestionsByDisplayOrder } from "../../util/questionOrder"
+import { questionsInDisplayOrder } from "../../util/questionOrder"
 import LateAnswerQuestion from "../Question/LateAnswerQuestion"
 import PublishedQuestion from "../Question/PublishedQuestion"
 
@@ -21,8 +21,10 @@ function PublishedLoop({ loop }: { loop: PublicLetter }) {
     )
   }
 
+  const questions = questionsInDisplayOrder(loop.questions)
+
   // Get questions the user hasn't answered
-  const unansweredQuestions = loop.questions.filter((question) => {
+  const unansweredQuestions = questions.filter((question) => {
     return !question.responses.some(
       (response) =>
         response.participant.api_identifier === currentUser.api_identifier,
@@ -76,17 +78,13 @@ function PublishedLoop({ loop }: { loop: PublicLetter }) {
         <p className="mb-4 text-base font-semibold">
           All Questions and Responses
         </p>
-        {[...loop.questions]
-          .sort(compareQuestionsByDisplayOrder)
-          .map((question) => {
-            return (
-              <PublishedQuestion
-                question={question}
-                key={question.api_identifier}
-                letterSendAt={loop.send_at}
-              />
-            )
-          })}
+        {questions.map((question) => (
+          <PublishedQuestion
+            question={question}
+            key={question.api_identifier}
+            letterSendAt={loop.send_at}
+          />
+        ))}
       </div>
     </div>
   )

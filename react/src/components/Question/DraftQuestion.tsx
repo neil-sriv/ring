@@ -662,7 +662,7 @@ function DraftQuestion({
   }
 
   return (
-    <div className="border-b py-6 first:pt-0 last:border-b-0">
+    <>
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0 space-y-1">
           {question.author != null && (
@@ -733,7 +733,7 @@ function DraftQuestion({
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-    </div>
+    </>
   )
 }
 
