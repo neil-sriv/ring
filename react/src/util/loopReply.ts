@@ -1,4 +1,5 @@
 import type { DashboardLetter, DashboardQuestion } from "../client"
+import { questionsInDisplayOrder } from "./questionOrder"
 
 export function getUnansweredQuestions(
   loop: DashboardLetter,
@@ -7,8 +8,10 @@ export function getUnansweredQuestions(
   if (!userApiId) {
     return []
   }
-  return loop.questions.filter(
-    (question) => !question.responded_participant_api_ids.includes(userApiId),
+  return questionsInDisplayOrder(
+    loop.questions.filter(
+      (question) => !question.responded_participant_api_ids.includes(userApiId),
+    ),
   )
 }
 
