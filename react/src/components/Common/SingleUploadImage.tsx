@@ -8,7 +8,9 @@ import {
 } from "@/components/ui/dialog"
 import { ImagePlus, Loader2, X } from "lucide-react"
 import { Dialog as DialogPrimitive } from "radix-ui"
-import { useRef, useState } from "react"
+import { useState } from "react"
+
+import { useSubmitOnce } from "../../hooks/useSubmitOnce"
 
 /**
  * SingleUploadImage Component
@@ -59,34 +61,33 @@ export function SingleUploadImage({
   name,
   onUploadsComplete,
 }: SingleUploadImageProps): JSX.Element {
-  const [isUploading, setIsUploading] = useState(false)
+  const uploadOnce = useSubmitOnce()
 
-  const handleFileChange = async (
-    event: React.ChangeEvent<HTMLInputElement>,
-  ) => {
+  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const { files } = event.target
     if (!files || files.length === 0) {
       return
     }
-    setIsUploading(true)
-    let successCount = 0
-    try {
-      // Upload one file at a time. The question upload endpoint creates a
-      // response on first attach; parallel first uploads race on the unique
-      // (participant, question) constraint and can fail or double-create.
-      for (const file of Array.from(files)) {
-        await onUpdateFile(file)
-        successCount += 1
+    const selected = Array.from(files)
+    void uploadOnce.run(async () => {
+      let successCount = 0
+      try {
+        // Upload one file at a time. The question upload endpoint creates a
+        // response on first attach; parallel first uploads race on the unique
+        // (participant, question) constraint and can fail or double-create.
+        for (const file of selected) {
+          await onUpdateFile(file)
+          successCount += 1
+        }
+        if (successCount > 0) {
+          onUploadsComplete?.(successCount)
+        }
+      } catch {
+        // Caller surfaces upload failures (e.g. toast); keep input usable.
+      } finally {
+        event.target.value = ""
       }
-      if (successCount > 0) {
-        onUploadsComplete?.(successCount)
-      }
-    } catch {
-      // Caller surfaces upload failures (e.g. toast); keep input usable.
-    } finally {
-      setIsUploading(false)
-      event.target.value = ""
-    }
+    })
   }
 
   return (
@@ -94,12 +95,12 @@ export function SingleUploadImage({
       htmlFor={name}
       className="inline-flex w-fit cursor-pointer items-center gap-2 rounded-lg border border-dashed px-3 py-2 text-xs font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground"
     >
-      {isUploading ? (
+      {uploadOnce.pending ? (
         <Loader2 className="h-4 w-4 animate-spin" />
       ) : (
         <ImagePlus className="h-4 w-4" />
       )}
-      {isUploading ? "Uploading..." : "Attach media"}
+      {uploadOnce.pending ? "Uploading..." : "Attach media"}
 
       <input
         style={{ display: "none" }}
@@ -108,7 +109,7 @@ export function SingleUploadImage({
         name={name}
         multiple
         onChange={handleFileChange}
-        disabled={isUploading}
+        disabled={uploadOnce.pending}
         accept="image/*, video/*"
       />
     </label>
@@ -138,35 +139,26 @@ function S3MediaDeleteButton({
   handleDelete: () => void | Promise<void>
   label: string
 }) {
-  const [isDeleting, setIsDeleting] = useState(false)
-  // Sync guard: React state alone cannot block a second click before re-render.
-  const isDeletingRef = useRef(false)
+  const deleteOnce = useSubmitOnce()
 
-  const onDeleteClick = async () => {
-    if (isDeletingRef.current) {
-      return
-    }
-    isDeletingRef.current = true
-    setIsDeleting(true)
-    try {
+  const onDeleteClick = () =>
+    deleteOnce.run(async () => {
       await handleDelete()
-    } finally {
-      isDeletingRef.current = false
-      setIsDeleting(false)
-    }
-  }
+    })
 
   return (
     <Button
       variant="outline"
       size="icon"
       className="absolute top-2 right-2 h-7 w-7 text-muted-foreground hover:text-destructive"
-      onClick={onDeleteClick}
-      disabled={isDeleting}
-      aria-busy={isDeleting}
-      aria-label={isDeleting ? `Deleting ${label}` : `Delete ${label}`}
+      onClick={() => {
+        void onDeleteClick()
+      }}
+      disabled={deleteOnce.pending}
+      aria-busy={deleteOnce.pending}
+      aria-label={deleteOnce.pending ? `Deleting ${label}` : `Delete ${label}`}
     >
-      {isDeleting ? (
+      {deleteOnce.pending ? (
         <Loader2 className="h-4 w-4 animate-spin" />
       ) : (
         <X className="h-4 w-4" />

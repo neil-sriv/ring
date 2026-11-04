@@ -18,6 +18,7 @@ import type {
 } from "../../client"
 import { resetPasswordResetPasswordTokenPostMutation } from "../../client/@tanstack/react-query.gen"
 import useCustomToast from "../../hooks/useCustomToast"
+import { useSubmitOnce } from "../../hooks/useSubmitOnce"
 import {
   confirmPasswordRules,
   formatApiErrorDetail,
@@ -66,17 +67,19 @@ function ResetPassword() {
     },
   })
 
+  const submitOnce = useSubmitOnce()
+
   const onSubmit: SubmitHandler<NewPasswordForm> = async (data) => {
     if (!token) return
-    // Await so RHF isSubmitting stays true for the full request; isPending
-    // covers the gap if the promise settles while React is still painting.
-    await mutation.mutateAsync({
-      path: { token: token },
-      body: data,
-    })
+    await submitOnce.run(() =>
+      mutation.mutateAsync({
+        path: { token: token },
+        body: data,
+      }),
+    )
   }
 
-  const isSaving = isSubmitting || mutation.isPending
+  const isSaving = isSubmitting || mutation.isPending || submitOnce.pending
 
   return (
     <div className="flex min-h-screen flex-col items-center justify-center bg-background px-4">

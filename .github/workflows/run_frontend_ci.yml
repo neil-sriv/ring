@@ -39,6 +39,10 @@ jobs:
         working-directory: react
         run: pnpm run lint
 
+      - name: Run frontend tests
+        working-directory: react
+        run: pnpm test
+
       - name: Run frontend build
         working-directory: react
         env:

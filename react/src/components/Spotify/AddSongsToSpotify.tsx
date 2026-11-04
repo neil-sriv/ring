@@ -5,6 +5,7 @@ import { useEffect, useRef } from "react"
 
 import { saveLetterTracksToSpotifyLibrarySpotifyLettersLetterApiIdLibraryPostMutation } from "@/client/@tanstack/react-query.gen"
 import useCustomToast from "@/hooks/useCustomToast"
+import { useSubmitOnce } from "@/hooks/useSubmitOnce"
 import { formatApiErrorDetail } from "@/util/misc"
 import {
   axiosDetail,
@@ -36,6 +37,7 @@ export function AddSongsToSpotify({
   const navigate = useNavigate()
   const showToast = useCustomToast()
   const { statusQuery, startLink, isStartingLink } = useSpotifyAccount()
+  const submitOnce = useSubmitOnce()
   const handledReturn = useRef(false)
   const save = useMutation({
     ...saveLetterTracksToSpotifyLibrarySpotifyLettersLetterApiIdLibraryPostMutation(),
@@ -85,13 +87,20 @@ export function AddSongsToSpotify({
       return
     }
     if (spotify === "linked" && spotifyAction === "save") {
-      save.mutate({ path: { letter_api_id: loopApiId } })
+      void submitOnce.run(async () => {
+        try {
+          await save.mutateAsync({ path: { letter_api_id: loopApiId } })
+        } catch {
+          // onError already toasts or starts linking
+        }
+      })
     }
   }, [
     loopApiId,
     navigate,
     save,
     showToast,
+    submitOnce.run,
     spotify,
     spotifyAction,
     spotifyError,
@@ -104,7 +113,7 @@ export function AddSongsToSpotify({
     return unavailableMessage()
   }
 
-  const pending = isStartingLink || save.isPending
+  const pending = isStartingLink || save.isPending || submitOnce.pending
 
   return (
     <div className="flex flex-col items-start gap-2">
@@ -117,7 +126,13 @@ export function AddSongsToSpotify({
             void startLink(`/loops/${loopApiId}?spotify_action=save`)
             return
           }
-          save.mutate({ path: { letter_api_id: loopApiId } })
+          void submitOnce.run(async () => {
+            try {
+              await save.mutateAsync({ path: { letter_api_id: loopApiId } })
+            } catch {
+              // onError already toasts or starts linking
+            }
+          })
         }}
       >
         Add these songs to your Spotify account

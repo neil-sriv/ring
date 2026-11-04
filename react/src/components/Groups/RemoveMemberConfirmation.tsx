@@ -26,6 +26,7 @@ import {
   removeUserFromGroupPartiesGroupGroupApiIdRemoveMemberUserApiIdPostMutation,
 } from "../../client/@tanstack/react-query.gen"
 import useCustomToast from "../../hooks/useCustomToast"
+import { useSubmitOnce } from "../../hooks/useSubmitOnce"
 import { isGroupLetterDetailQuery } from "../../util/letterQueryCache"
 import { formatApiErrorDetail } from "../../util/misc"
 
@@ -115,18 +116,20 @@ function RemoveMemberConfirmation({
     },
   })
 
+  const submitOnce = useSubmitOnce()
+
   const onSubmit = async () => {
-    // Await so RHF isSubmitting stays true for the full request; isPending
-    // covers the gap if the promise settles while React is still painting.
-    await mutation.mutateAsync({
-      path: {
-        group_api_id: groupId,
-        user_api_id: member.api_identifier,
-      },
-    })
+    await submitOnce.run(() =>
+      mutation.mutateAsync({
+        path: {
+          group_api_id: groupId,
+          user_api_id: member.api_identifier,
+        },
+      }),
+    )
   }
 
-  const isSaving = isSubmitting || mutation.isPending
+  const isSaving = isSubmitting || mutation.isPending || submitOnce.pending
   const memberLabel = member.name || member.email
 
   return (

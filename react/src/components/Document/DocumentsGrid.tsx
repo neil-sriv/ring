@@ -6,7 +6,6 @@ import {
 } from "@tanstack/react-query"
 import type { AxiosError } from "axios"
 import { FileText, Loader2 } from "lucide-react"
-import { useRef } from "react"
 import type {
   CreateDocumentEndpointNotebookDocumentsPostError,
   DocumentResponse,
@@ -17,6 +16,7 @@ import {
   listDocumentsNotebookDocumentsGetQueryKey,
 } from "../../client/@tanstack/react-query.gen"
 import useCustomToast from "../../hooks/useCustomToast"
+import { useSubmitOnce } from "../../hooks/useSubmitOnce"
 import { formatApiErrorDetail } from "../../util/misc"
 import { DocumentCard } from "./DocumentCard"
 
@@ -33,9 +33,7 @@ export function DocumentsGrid(props: {
 
   const queryClient = useQueryClient()
   const showToast = useCustomToast()
-  // disabled={isPending} alone still lets a second click through before React
-  // re-renders; this ref closes that same-tick double-create window.
-  const createInFlightRef = useRef(false)
+  const submitOnce = useSubmitOnce()
 
   const createDocumentMutation = useMutation({
     ...createDocumentEndpointNotebookDocumentsPostMutation(),
@@ -57,27 +55,22 @@ export function DocumentsGrid(props: {
     },
   })
 
-  const isCreating = createDocumentMutation.isPending
+  const isCreating = createDocumentMutation.isPending || submitOnce.pending
 
-  const createDocument = async (name: string) => {
-    if (createInFlightRef.current || isCreating) {
-      return
-    }
-    createInFlightRef.current = true
-    try {
-      await createDocumentMutation.mutateAsync({
-        body: {
-          group_api_id: props.groupApiId,
-          name,
-          content: "",
-        },
-      })
-    } catch {
-      // onError already toasts
-    } finally {
-      createInFlightRef.current = false
-    }
-  }
+  const createDocument = (name: string) =>
+    submitOnce.run(async () => {
+      try {
+        await createDocumentMutation.mutateAsync({
+          body: {
+            group_api_id: props.groupApiId,
+            name,
+            content: "",
+          },
+        })
+      } catch {
+        // onError already toasts
+      }
+    })
 
   return (
     <div className="flex w-full flex-col gap-6">

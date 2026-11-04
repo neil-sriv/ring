@@ -4,7 +4,7 @@ import {
   redirect,
 } from "@tanstack/react-router"
 import { Eye, EyeOff, Loader2 } from "lucide-react"
-import { useRef, useState } from "react"
+import { useState } from "react"
 import { type SubmitHandler, useForm } from "react-hook-form"
 
 import { RingMark } from "@/components/Common/RingMark"
@@ -13,6 +13,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import type { BodyLoginAccessTokenLoginAccessTokenPost as AccessToken } from "../client"
 import useAuth from "../hooks/useAuth"
+import { useSubmitOnce } from "../hooks/useSubmitOnce"
 import { emailPattern } from "../util/misc"
 
 export const Route = createFileRoute("/login")({
@@ -87,28 +88,20 @@ function Login() {
     },
   })
 
-  const isSaving = isSubmitting || loginMutation.isPending
-  // disabled={isSaving} / if (isSaving) alone still lets a second submit
-  // through before React re-renders; this ref closes that same-tick window.
-  const loginInFlightRef = useRef(false)
+  const submitOnce = useSubmitOnce()
+  const isSaving = isSubmitting || loginMutation.isPending || submitOnce.pending
 
   const onSubmit: SubmitHandler<AccessToken> = async (data) => {
-    if (loginInFlightRef.current || isSaving) {
-      return
-    }
-    loginInFlightRef.current = true
-
-    resetError()
-
-    try {
-      await loginMutation.mutateAsync({
-        body: data,
-      })
-    } catch {
-      // error is handled by useAuth hook
-    } finally {
-      loginInFlightRef.current = false
-    }
+    await submitOnce.run(async () => {
+      resetError()
+      try {
+        await loginMutation.mutateAsync({
+          body: data,
+        })
+      } catch {
+        // error is handled by useAuth hook
+      }
+    })
   }
 
   return (

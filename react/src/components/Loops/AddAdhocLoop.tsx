@@ -21,6 +21,7 @@ import {
   listLettersLettersLettersGetQueryKey,
 } from "../../client/@tanstack/react-query.gen"
 import useCustomToast from "../../hooks/useCustomToast"
+import { useSubmitOnce } from "../../hooks/useSubmitOnce"
 import {
   defaultLocalDateTimeValue,
   formatApiErrorDetail,
@@ -95,16 +96,20 @@ const AddAdhocLoop = ({ isOpen, onClose, groupApiId }: AddAdhocLoopProps) => {
     },
   })
 
+  const submitOnce = useSubmitOnce()
+
   const onSubmit: SubmitHandler<AdhocLetterFormProps> = async (data) => {
-    await mutation.mutateAsync({
-      path: { letter_type: "ADHOC" },
-      body: {
-        group_api_identifier: groupApiId,
-        send_at:
-          data.sendAt instanceof Date ? toISOLocal(data.sendAt) : data.sendAt,
-        title: data.title || null,
-      },
-    })
+    await submitOnce.run(() =>
+      mutation.mutateAsync({
+        path: { letter_type: "ADHOC" },
+        body: {
+          group_api_identifier: groupApiId,
+          send_at:
+            data.sendAt instanceof Date ? toISOLocal(data.sendAt) : data.sendAt,
+          title: data.title || null,
+        },
+      }),
+    )
   }
 
   const onCancel = () => {
@@ -112,9 +117,7 @@ const AddAdhocLoop = ({ isOpen, onClose, groupApiId }: AddAdhocLoopProps) => {
     onClose()
   }
 
-  // RHF isSubmitting clears as soon as fire-and-forget mutate() returns;
-  // keep Create disabled for the full request via mutateAsync + isPending.
-  const isSaving = isSubmitting || mutation.isPending
+  const isSaving = isSubmitting || mutation.isPending || submitOnce.pending
 
   return (
     <Dialog

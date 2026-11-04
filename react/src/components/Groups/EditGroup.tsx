@@ -20,6 +20,7 @@ import {
   updateGroupPartiesGroupGroupApiIdPatchMutation,
 } from "../../client/@tanstack/react-query.gen"
 import useCustomToast from "../../hooks/useCustomToast"
+import { useSubmitOnce } from "../../hooks/useSubmitOnce"
 import { formatApiErrorDetail } from "../../util/misc"
 
 import { Button } from "@/components/ui/button"
@@ -139,16 +140,18 @@ const EditGroup = ({ group, isOpen, onClose }: EditGroupProps) => {
     },
   })
 
+  const submitOnce = useSubmitOnce()
+
   const onSubmit: SubmitHandler<GroupUpdate> = async (data) => {
-    // Await so RHF isSubmitting stays true for the full request; isPending
-    // covers the gap if the promise settles while React is still painting.
-    await mutation.mutateAsync({
-      path: { group_api_id: group.api_identifier },
-      body: data,
-    })
+    await submitOnce.run(() =>
+      mutation.mutateAsync({
+        path: { group_api_id: group.api_identifier },
+        body: data,
+      }),
+    )
   }
 
-  const isSaving = isSubmitting || mutation.isPending
+  const isSaving = isSubmitting || mutation.isPending || submitOnce.pending
 
   const onCancel = () => {
     reset({ name: group.name })
