@@ -1,5 +1,5 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query"
-import { useEffect } from "react"
+import { useEffect, useRef } from "react"
 import { type SubmitHandler, useForm } from "react-hook-form"
 
 import { Button } from "@/components/ui/button"
@@ -90,24 +90,37 @@ const AddLetter = ({ isOpen, onClose, groupApiId }: AddLetterProps) => {
     },
   })
 
+  // RHF isSubmitting clears as soon as fire-and-forget mutate() returns;
+  // keep Save disabled for the full request via mutateAsync + isPending.
+  const isSaving = isSubmitting || mutation.isPending
+  // disabled={isSaving} alone still lets a second submit through before
+  // React re-renders; this ref closes that same-tick window (AddGroup pattern).
+  const saveInFlightRef = useRef(false)
+
   const onSubmit: SubmitHandler<LetterFormProps> = async (data) => {
-    await mutation.mutateAsync({
-      body: {
-        group_api_identifier: groupApiId,
-        send_at:
-          data.sendAt instanceof Date ? toISOLocal(data.sendAt) : data.sendAt,
-      },
-    })
+    if (saveInFlightRef.current || isSaving) {
+      return
+    }
+    saveInFlightRef.current = true
+    // Await so RHF isSubmitting stays true for the full request; isPending
+    // covers the gap if the promise settles while React is still painting.
+    try {
+      await mutation.mutateAsync({
+        body: {
+          group_api_identifier: groupApiId,
+          send_at:
+            data.sendAt instanceof Date ? toISOLocal(data.sendAt) : data.sendAt,
+        },
+      })
+    } finally {
+      saveInFlightRef.current = false
+    }
   }
 
   const onCancel = () => {
     reset(freshDefaults())
     onClose()
   }
-
-  // RHF isSubmitting clears as soon as fire-and-forget mutate() returns;
-  // keep Save disabled for the full request via mutateAsync + isPending.
-  const isSaving = isSubmitting || mutation.isPending
 
   return (
     <Dialog
