@@ -264,13 +264,40 @@
         }
       }
     },
+    "/auth/dual-sync/stats": {
+      "get": {
+        "tags": [
+          "login"
+        ],
+        "summary": "Read Dual Sync Stats",
+        "description": "Return dual-write success rate and dual-read drift counts.\n\nRing admin only. Counters are process-local and reset on restart.",
+        "operationId": "readAuthDualSyncStats",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DualSyncStats"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ]
+      }
+    },
     "/version": {
       "get": {
         "tags": [
           "meta"
         ],
         "summary": "Read Version",
-        "description": "Return git commit metadata and Docker image identities.\n\nUnauthenticated so a host-side `curl` can tell which commit and images\nare actually running after a deploy. Cached briefly in-process so\nrepeated public hits do not shell out to git on every request.",
+        "description": "Return git commit metadata, image identities, and scheduler health.\n\nUnauthenticated so a host-side `curl` can tell which commit and images\nare actually running after a deploy, and whether the letter scheduler\nis alive. Version metadata is cached briefly in-process; the scheduler\nstatus is computed fresh on every request.",
         "operationId": "readVersion",
         "responses": {
           "200": {
@@ -292,7 +319,7 @@
           "parties"
         ],
         "summary": "Read User Me",
-        "description": "Get the current authenticated user's information.\n\nArgs:\n    req_dep (AuthenticatedRequestDependencies): Request dependencies\n\nReturns:\n    User: Current user's information",
+        "description": "Get the current authenticated user's information.\n\nArgs:\n    background_tasks (BackgroundTasks): Dual-read compare after response\n    req_dep (AuthenticatedRequestDependencies): Request dependencies\n\nReturns:\n    User: Current user's information",
         "operationId": "read_user_me_parties_me_get",
         "responses": {
           "200": {
@@ -1892,6 +1919,64 @@
             "application/json": {
               "schema": {
                 "$ref": "#/components/schemas/QuestionCreate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PublicLetter"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/letters/letter/{letter_api_id}:reorder_questions": {
+      "post": {
+        "tags": [
+          "letters"
+        ],
+        "summary": "Reorder Questions",
+        "description": "Set question positions from a full permutation of the letter.",
+        "operationId": "reorder_questions_letters_letter__letter_api_id__reorder_questions_post",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "letter_api_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Letter Api Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/QuestionReorder"
               }
             }
           }
@@ -4097,6 +4182,93 @@
         "title": "DocumentUpdate",
         "description": "Schema for updating a document."
       },
+      "DualSyncStats": {
+        "properties": {
+          "dual_write_enabled": {
+            "type": "boolean",
+            "title": "Dual Write Enabled"
+          },
+          "dual_read_enabled": {
+            "type": "boolean",
+            "title": "Dual Read Enabled"
+          },
+          "identity_configured": {
+            "type": "boolean",
+            "title": "Identity Configured"
+          },
+          "write_attempts": {
+            "type": "integer",
+            "title": "Write Attempts"
+          },
+          "write_successes": {
+            "type": "integer",
+            "title": "Write Successes"
+          },
+          "write_failures": {
+            "type": "integer",
+            "title": "Write Failures"
+          },
+          "write_skipped": {
+            "type": "integer",
+            "title": "Write Skipped"
+          },
+          "write_success_rate": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Write Success Rate",
+            "description": "write_successes / write_attempts, or null if no attempts"
+          },
+          "read_attempts": {
+            "type": "integer",
+            "title": "Read Attempts"
+          },
+          "read_matches": {
+            "type": "integer",
+            "title": "Read Matches"
+          },
+          "read_missing": {
+            "type": "integer",
+            "title": "Read Missing"
+          },
+          "read_mismatches": {
+            "type": "integer",
+            "title": "Read Mismatches"
+          },
+          "read_failures": {
+            "type": "integer",
+            "title": "Read Failures"
+          },
+          "drift_count": {
+            "type": "integer",
+            "title": "Drift Count",
+            "description": "Identity missing + field mismatches"
+          }
+        },
+        "type": "object",
+        "required": [
+          "dual_write_enabled",
+          "dual_read_enabled",
+          "identity_configured",
+          "write_attempts",
+          "write_successes",
+          "write_failures",
+          "write_skipped",
+          "read_attempts",
+          "read_matches",
+          "read_missing",
+          "read_mismatches",
+          "read_failures",
+          "drift_count"
+        ],
+        "title": "DualSyncStats",
+        "description": "In-process dual-write / dual-read counters. Resets on process restart."
+      },
       "GenerateQuestionRequest": {
         "properties": {
           "prompt": {
@@ -5186,6 +5358,22 @@
         "title": "QuestionLinked",
         "description": "Question model with linked relationships.\n\nExtends the base Question model to include the parent letter and responses.\n\nAttributes:\n    letter (LetterUnlinked): Letter containing this question\n    responses (list[ResponseUnlinked]): Responses to this question"
       },
+      "QuestionReorder": {
+        "properties": {
+          "question_api_identifiers": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Question Api Identifiers"
+          }
+        },
+        "type": "object",
+        "required": [
+          "question_api_identifiers"
+        ],
+        "title": "QuestionReorder"
+      },
       "QuestionUnlinked": {
         "properties": {
           "question_text": {
@@ -5472,6 +5660,40 @@
         ],
         "title": "ScheduleLinked",
         "description": "Schedule model with linked relationships.\n\nExtends the base Schedule model to include the associated group and tasks.\n\nAttributes:\n    group (GroupUnlinked): The group this schedule belongs to\n    tasks (list[TaskUnlinked]): Tasks in the schedule"
+      },
+      "SchedulerStatus": {
+        "properties": {
+          "enabled": {
+            "type": "boolean",
+            "title": "Enabled",
+            "description": "False when DISABLE_SCHEDULER is set for this process"
+          },
+          "running": {
+            "type": "boolean",
+            "title": "Running",
+            "description": "Whether the APScheduler instance is currently started"
+          },
+          "last_poll_completed_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Last Poll Completed At",
+            "description": "When the schedule poll job last finished in this process; null until the first poll completes (polls run every minute)"
+          }
+        },
+        "type": "object",
+        "required": [
+          "enabled",
+          "running"
+        ],
+        "title": "SchedulerStatus",
+        "description": "Liveness of the in-process APScheduler poll loop."
       },
       "SearchHit": {
         "properties": {
@@ -6078,6 +6300,16 @@
           },
           "docker": {
             "$ref": "#/components/schemas/DockerInfo"
+          },
+          "scheduler": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/SchedulerStatus"
+              },
+              {
+                "type": "null"
+              }
+            ]
           }
         },
         "type": "object",

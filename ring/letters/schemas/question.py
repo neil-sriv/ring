@@ -30,6 +30,10 @@ class QuestionCreate(QuestionBase):
     author_api_id: str | None
 
 
+class QuestionReorder(BaseModel):
+    question_api_identifiers: list[str]
+
+
 class Question(QuestionBase):
     """Schema representing a question in the system.
 

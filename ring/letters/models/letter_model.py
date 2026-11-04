@@ -111,7 +111,7 @@ class Letter(Base, APIIdentified, PydanticModel, CreatedAtMixin):
     group: Mapped["Group"] = relationship(back_populates="letters")
 
     questions: Mapped[list["Question"]] = relationship(
-        back_populates="letter", cascade="all"
+        back_populates="letter", cascade="all", order_by=Question.position
     )
 
     @declared_attr  # type: ignore
