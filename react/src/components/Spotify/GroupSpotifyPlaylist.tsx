@@ -11,6 +11,7 @@ import {
   readGroupSpotifyPlaylistSpotifyGroupsGroupApiIdPlaylistGetQueryKey,
 } from "@/client/@tanstack/react-query.gen"
 import useCustomToast from "@/hooks/useCustomToast"
+import { useSubmitOnce } from "@/hooks/useSubmitOnce"
 import { formatApiErrorDetail } from "@/util/misc"
 import {
   axiosDetail,
@@ -49,6 +50,7 @@ export function GroupSpotifyPlaylist({
   const queryClient = useQueryClient()
   const showToast = useCustomToast()
   const { statusQuery, startLink, isStartingLink } = useSpotifyAccount()
+  const submitOnce = useSubmitOnce()
   const handledReturn = useRef(false)
   const linked = Boolean(statusQuery.data?.linked)
   const configured = Boolean(statusQuery.data?.configured)
@@ -108,11 +110,18 @@ export function GroupSpotifyPlaylist({
       return
     }
     if (spotify === "linked" && spotifyAction === "playlist") {
-      ensure.mutate({ path: { group_api_id: groupId } })
+      void submitOnce.run(async () => {
+        try {
+          await ensure.mutateAsync({ path: { group_api_id: groupId } })
+        } catch {
+          // onError already toasts or starts linking
+        }
+      })
     }
   }, [
     ensure,
     groupId,
+    submitOnce.run,
     limit,
     navigate,
     offset,
@@ -134,14 +143,20 @@ export function GroupSpotifyPlaylist({
   const missingPlaylist =
     axiosStatus(playlistQuery.error) === 404 ||
     axiosDetail(playlistQuery.error) === "no_spotify_playlist"
-  const pending = isStartingLink || ensure.isPending
+  const pending = isStartingLink || ensure.isPending || submitOnce.pending
 
   function syncOrLink() {
     if (!linked) {
       void startLink(returnTo(groupId))
       return
     }
-    ensure.mutate({ path: { group_api_id: groupId } })
+    void submitOnce.run(async () => {
+      try {
+        await ensure.mutateAsync({ path: { group_api_id: groupId } })
+      } catch {
+        // onError already toasts or starts linking
+      }
+    })
   }
 
   return (

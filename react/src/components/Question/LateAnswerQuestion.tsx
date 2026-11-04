@@ -3,7 +3,7 @@ import { Textarea } from "@/components/ui/textarea"
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import type { AxiosError } from "axios"
 import { Loader2 } from "lucide-react"
-import { useRef, useState } from "react"
+import { useState } from "react"
 import {
   type PublicLetter,
   type PublicQuestion,
@@ -18,6 +18,7 @@ import {
 } from "../../client/@tanstack/react-query.gen"
 import { useAutoResizeTextarea } from "../../hooks/useAutoResizeTextarea"
 import useCustomToast from "../../hooks/useCustomToast"
+import { useSubmitOnce } from "../../hooks/useSubmitOnce"
 import { formatApiErrorDetail } from "../../util/misc"
 
 interface LateAnswerQuestionProps {
@@ -38,10 +39,7 @@ function LateAnswerQuestion({
   const showToast = useCustomToast()
   const [responseText, setResponseText] = useState("")
   const textareaRef = useAutoResizeTextarea(responseText)
-  // disabled={isPending} alone still lets a second click through before React
-  // re-renders; this ref closes that same-tick double-submit window (same
-  // pattern as DocumentsGrid create).
-  const submitInFlightRef = useRef(false)
+  const submitOnce = useSubmitOnce()
 
   const mutation = useMutation({
     mutationFn: async ({
@@ -113,30 +111,28 @@ function LateAnswerQuestion({
     return <></>
   }
 
-  const isSaving = mutation.isPending
+  const isSaving = mutation.isPending || submitOnce.pending
 
   const handleResponseChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     setResponseText(e.target.value)
   }
 
   const handleSubmit = async () => {
-    if (submitInFlightRef.current || isSaving) return
     if (!responseText.trim()) {
       showToast("Error", "Please enter your answer before submitting.", "error")
       return
     }
-    submitInFlightRef.current = true
-    try {
-      await mutation.mutateAsync({
-        text: responseText,
-        questionApiId: question.api_identifier,
-        participantApiId: currentUser.api_identifier,
-      })
-    } catch {
-      // onError already toasts
-    } finally {
-      submitInFlightRef.current = false
-    }
+    await submitOnce.run(async () => {
+      try {
+        await mutation.mutateAsync({
+          text: responseText,
+          questionApiId: question.api_identifier,
+          participantApiId: currentUser.api_identifier,
+        })
+      } catch {
+        // onError already toasts
+      }
+    })
   }
 
   return (

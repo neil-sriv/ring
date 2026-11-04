@@ -25,6 +25,7 @@ import {
   readLetterLettersLetterLetterApiIdGetQueryKey,
 } from "../../client/@tanstack/react-query.gen"
 import useCustomToast from "../../hooks/useCustomToast"
+import { useSubmitOnce } from "../../hooks/useSubmitOnce"
 import { formatApiErrorDetail, toISOLocal } from "../../util/misc"
 
 type LetterFormProps = {
@@ -113,44 +114,52 @@ const EditLetter = ({ isOpen, onClose, loop }: EditLetterProps) => {
     },
   })
 
+  const submitOnce = useSubmitOnce()
+
   const onSubmit: SubmitHandler<LetterFormProps> = async (data) => {
-    const updateData: {
-      send_at?: string
-      title?: string
-      status?: LetterStatus
-    } = {}
+    await submitOnce.run(async () => {
+      const updateData: {
+        send_at?: string
+        title?: string
+        status?: LetterStatus
+      } = {}
 
-    // Compare minute-precision local strings so an unchanged datetime-local
-    // value does not count as a change. Convert to timezone-aware ISO only
-    // when the user actually changed the scheduled time.
-    const nextSendAtLocal = data.sendAt.slice(0, 16)
+      // Compare minute-precision local strings so an unchanged datetime-local
+      // value does not count as a change. Convert to timezone-aware ISO only
+      // when the user actually changed the scheduled time.
+      const nextSendAtLocal = data.sendAt.slice(0, 16)
 
-    if (nextSendAtLocal !== previousSendAtLocal) {
-      updateData.send_at = toISOLocal(new Date(data.sendAt))
-    }
+      if (nextSendAtLocal !== previousSendAtLocal) {
+        updateData.send_at = toISOLocal(new Date(data.sendAt))
+      }
 
-    if (data.title !== (loop.title || "")) {
-      updateData.title = data.title || undefined
-    }
+      if (data.title !== (loop.title || "")) {
+        updateData.title = data.title || undefined
+      }
 
-    const newStatus = data.isInProgress ? "IN_PROGRESS" : "UPCOMING"
-    if (newStatus !== loop.status) {
-      updateData.status = newStatus
-    }
+      const newStatus = data.isInProgress ? "IN_PROGRESS" : "UPCOMING"
+      if (newStatus !== loop.status) {
+        updateData.status = newStatus
+      }
 
-    // Only submit if there are changes
-    if (Object.keys(updateData).length > 0) {
-      await mutation.mutateAsync({
-        body: updateData,
-        path: { letter_api_id: loop.api_identifier },
-      })
-    } else {
-      showToast("No changes", "No changes were made to the letter.", "success")
-      onClose()
-    }
+      // Only submit if there are changes
+      if (Object.keys(updateData).length > 0) {
+        await mutation.mutateAsync({
+          body: updateData,
+          path: { letter_api_id: loop.api_identifier },
+        })
+      } else {
+        showToast(
+          "No changes",
+          "No changes were made to the letter.",
+          "success",
+        )
+        onClose()
+      }
+    })
   }
 
-  const isSaving = isSubmitting || mutation.isPending
+  const isSaving = isSubmitting || mutation.isPending || submitOnce.pending
 
   return (
     <Dialog

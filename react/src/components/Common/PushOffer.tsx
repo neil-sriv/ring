@@ -1,9 +1,10 @@
 import { useRouterState } from "@tanstack/react-router"
 import { Loader2 } from "lucide-react"
-import { useRef, useState } from "react"
+import { useState } from "react"
 import { toast } from "sonner"
 
 import { Button } from "@/components/ui/button"
+import { useSubmitOnce } from "../../hooks/useSubmitOnce"
 import { subscribeToPush } from "../../util/notifications"
 import {
   type PushOfferKind,
@@ -45,20 +46,12 @@ function EnablePushButton({
   userApiId: string
   onComplete: () => void
 }) {
-  const [pending, setPending] = useState(false)
+  const { pending, run } = useSubmitOnce()
   const [error, setError] = useState<string | null>(null)
-  // `pending` alone is not enough: same-tick double-clicks both pass
-  // `if (pending)` before React re-renders with disabled={true}.
-  const enableInFlightRef = useRef(false)
 
   async function onClick() {
-    if (enableInFlightRef.current || pending) {
-      return
-    }
-    enableInFlightRef.current = true
-    setPending(true)
-    setError(null)
-    try {
+    await run(async () => {
+      setError(null)
       const result = await subscribeToPush(userApiId)
       if (result.ok) {
         toast.success("Notifications are on", {
@@ -76,10 +69,7 @@ function EnablePushButton({
         description: result.message,
         duration: 8000,
       })
-    } finally {
-      enableInFlightRef.current = false
-      setPending(false)
-    }
+    })
   }
 
   return (

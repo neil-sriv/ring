@@ -24,6 +24,7 @@ import {
   updateGroupPartiesGroupGroupApiIdPatchMutation,
 } from "../../client/@tanstack/react-query.gen"
 import useCustomToast from "../../hooks/useCustomToast"
+import { useSubmitOnce } from "../../hooks/useSubmitOnce"
 import { formatApiErrorDetail } from "../../util/misc"
 
 function GroupInformation({ groupId }: { groupId: string }) {
@@ -67,6 +68,7 @@ function GroupInformation({ groupId }: { groupId: string }) {
   const mutation = useMutation({
     ...updateGroupPartiesGroupGroupApiIdPatchMutation(),
   })
+  const submitOnce = useSubmitOnce()
 
   if (group === undefined) {
     return null
@@ -126,28 +128,30 @@ function GroupInformation({ groupId }: { groupId: string }) {
 
   const onSubmit: SubmitHandler<GroupUpdate> = async (data) => {
     const nextName = data.name?.trim() ?? ""
-    try {
-      const updated = await mutation.mutateAsync({
-        path: { group_api_id: groupId },
-        body: { name: nextName },
-      })
-      showToast(
-        "Success!",
-        "Group information updated successfully.",
-        "success",
-      )
-      reset({ name: updated.name })
-      setEditMode(false)
-      await refreshCaches(updated.name)
-    } catch (err) {
-      const axiosErr =
-        err as AxiosError<UpdateGroupPartiesGroupGroupApiIdPatchError>
-      showToast(
-        "Something went wrong.",
-        formatApiErrorDetail(axiosErr.response?.data?.detail),
-        "error",
-      )
-    }
+    await submitOnce.run(async () => {
+      try {
+        const updated = await mutation.mutateAsync({
+          path: { group_api_id: groupId },
+          body: { name: nextName },
+        })
+        showToast(
+          "Success!",
+          "Group information updated successfully.",
+          "success",
+        )
+        reset({ name: updated.name })
+        setEditMode(false)
+        await refreshCaches(updated.name)
+      } catch (err) {
+        const axiosErr =
+          err as AxiosError<UpdateGroupPartiesGroupGroupApiIdPatchError>
+        showToast(
+          "Something went wrong.",
+          formatApiErrorDetail(axiosErr.response?.data?.detail),
+          "error",
+        )
+      }
+    })
   }
 
   const onCancel = () => {
@@ -155,7 +159,7 @@ function GroupInformation({ groupId }: { groupId: string }) {
     setEditMode(false)
   }
 
-  const isSaving = isSubmitting || mutation.isPending
+  const isSaving = isSubmitting || mutation.isPending || submitOnce.pending
 
   return (
     <div className="w-full max-w-xl">

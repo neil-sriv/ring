@@ -2,7 +2,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import { useNavigate } from "@tanstack/react-router"
 import type { AxiosError } from "axios"
 import { Bell, Loader2 } from "lucide-react"
-import { useRef, useState } from "react"
+import { useState } from "react"
 
 import { Button } from "@/components/ui/button"
 import {
@@ -20,6 +20,7 @@ import {
 } from "../../client/@tanstack/react-query.gen"
 import type { InboxItemResponse } from "../../client/types.gen"
 import useCustomToast from "../../hooks/useCustomToast"
+import { useSubmitOnce } from "../../hooks/useSubmitOnce"
 import { inboxDestination } from "../../util/inboxHref"
 import { formatApiErrorDetail } from "../../util/misc"
 
@@ -90,20 +91,12 @@ export function InboxBell() {
       toastInboxError(err)
     },
   })
-  // disabled={isPending} alone still lets a second click through before React
-  // re-renders; this ref closes that same-tick double mark-all window.
-  const markAllInFlightRef = useRef(false)
-  // Same race for per-item open: dropdown close is async, so a double-click
-  // can fire two mark-read POSTs before navigation.
-  const openItemInFlightRef = useRef(false)
+  const markAllOnce = useSubmitOnce()
+  const openOnce = useSubmitOnce()
 
   async function openItem(item: InboxItemResponse) {
-    if (openItemInFlightRef.current || markRead.isPending) {
-      return
-    }
-    openItemInFlightRef.current = true
-    setOpen(false)
-    try {
+    await openOnce.run(async () => {
+      setOpen(false)
       if (item.unread) {
         try {
           await markRead.mutateAsync({
@@ -114,23 +107,17 @@ export function InboxBell() {
         }
       }
       await navigate(inboxDestination(item.href))
-    } finally {
-      openItemInFlightRef.current = false
-    }
+    })
   }
 
   async function handleMarkAllRead() {
-    if (markAllInFlightRef.current || markAll.isPending) {
-      return
-    }
-    markAllInFlightRef.current = true
-    try {
-      await markAll.mutateAsync({})
-    } catch {
-      // onError already toasted
-    } finally {
-      markAllInFlightRef.current = false
-    }
+    await markAllOnce.run(async () => {
+      try {
+        await markAll.mutateAsync({})
+      } catch {
+        // onError already toasted
+      }
+    })
   }
 
   return (
@@ -159,12 +146,12 @@ export function InboxBell() {
             <button
               type="button"
               className="inline-flex items-center gap-1 text-xs font-medium text-primary hover:underline disabled:opacity-50"
-              disabled={markAll.isPending}
+              disabled={markAll.isPending || markAllOnce.pending}
               onClick={() => {
                 void handleMarkAllRead()
               }}
             >
-              {markAll.isPending && (
+              {(markAll.isPending || markAllOnce.pending) && (
                 <Loader2 className="h-3 w-3 animate-spin" />
               )}
               Mark all read
@@ -186,7 +173,8 @@ export function InboxBell() {
             <button
               key={item.api_identifier}
               type="button"
-              className="flex w-full flex-col gap-0.5 border-b border-border px-3 py-2.5 text-left last:border-b-0 hover:bg-accent"
+              className="flex w-full flex-col gap-0.5 border-b border-border px-3 py-2.5 text-left last:border-b-0 hover:bg-accent disabled:opacity-50"
+              disabled={openOnce.pending}
               onClick={() => {
                 void openItem(item)
               }}

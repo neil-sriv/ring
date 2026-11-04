@@ -15,7 +15,7 @@ import { type SubmitHandler, useForm } from "react-hook-form"
 import { useRouter } from "@tanstack/react-router"
 import type { AxiosError } from "axios"
 import { Loader2, Sparkles } from "lucide-react"
-import { useEffect, useRef, useState } from "react"
+import { useEffect, useState } from "react"
 import type { AddQuestionLettersLetterLetterApiIdAddQuestionPostError } from "../../client"
 import {
   addQuestionLettersLetterLetterApiIdAddQuestionPostMutation,
@@ -25,6 +25,7 @@ import {
   readUserMePartiesMeGetOptions,
 } from "../../client/@tanstack/react-query.gen"
 import useCustomToast from "../../hooks/useCustomToast"
+import { useSubmitOnce } from "../../hooks/useSubmitOnce"
 import { formatApiErrorDetail } from "../../util/misc"
 
 type QuestionFormProps = {
@@ -55,11 +56,7 @@ const GenerateQuestion = ({
   const router = useRouter()
   const showToast = useCustomToast()
   const [generatedQuestion, setGeneratedQuestion] = useState<string>("")
-  // disabled={isPending} / isBusy alone still lets a second click through
-  // before React re-renders; these refs close that same-tick double-submit
-  // window (same pattern as DocumentsGrid / LateAnswerQuestion).
-  const generateInFlightRef = useRef(false)
-  const saveInFlightRef = useRef(false)
+  const submitOnce = useSubmitOnce()
   const {
     register,
     handleSubmit,
@@ -139,32 +136,26 @@ const GenerateQuestion = ({
 
   const isBusy =
     isSubmitting ||
+    submitOnce.pending ||
     generateQuestionMutation.isPending ||
     addQuestionMutation.isPending
 
   const onGenerateQuestion: SubmitHandler<QuestionFormProps> = async (data) => {
-    if (generateInFlightRef.current || saveInFlightRef.current || isBusy) {
-      return
-    }
-    generateInFlightRef.current = true
-    try {
-      await generateQuestionMutation.mutateAsync({
-        body: {
-          prompt: data.questionPrompt,
-        },
-        path: { letter_api_id: loopApiId },
-      })
-    } catch {
-      // onError already toasts
-    } finally {
-      generateInFlightRef.current = false
-    }
+    await submitOnce.run(async () => {
+      try {
+        await generateQuestionMutation.mutateAsync({
+          body: {
+            prompt: data.questionPrompt,
+          },
+          path: { letter_api_id: loopApiId },
+        })
+      } catch {
+        // onError already toasts
+      }
+    })
   }
 
   const onSaveQuestion = async () => {
-    if (generateInFlightRef.current || saveInFlightRef.current || isBusy) {
-      return
-    }
     if (!generatedQuestion) {
       showToast(
         "Error",
@@ -173,21 +164,19 @@ const GenerateQuestion = ({
       )
       return
     }
-
-    saveInFlightRef.current = true
-    try {
-      await addQuestionMutation.mutateAsync({
-        body: {
-          question_text: generatedQuestion,
-          author_api_id: currentUser?.api_identifier || null,
-        },
-        path: { letter_api_id: loopApiId },
-      })
-    } catch {
-      // onError already toasts
-    } finally {
-      saveInFlightRef.current = false
-    }
+    await submitOnce.run(async () => {
+      try {
+        await addQuestionMutation.mutateAsync({
+          body: {
+            question_text: generatedQuestion,
+            author_api_id: currentUser?.api_identifier || null,
+          },
+          path: { letter_api_id: loopApiId },
+        })
+      } catch {
+        // onError already toasts
+      }
+    })
   }
 
   const handleClose = () => {

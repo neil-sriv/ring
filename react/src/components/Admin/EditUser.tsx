@@ -17,6 +17,7 @@ import {
   updateUserByIdPartiesUserUserApiIdPatchMutation,
 } from "../../client/@tanstack/react-query.gen"
 import useCustomToast from "../../hooks/useCustomToast"
+import { useSubmitOnce } from "../../hooks/useSubmitOnce"
 import { emailPattern, formatApiErrorDetail } from "../../util/misc"
 
 import { Button } from "@/components/ui/button"
@@ -114,14 +115,18 @@ const EditUser = ({ user, isOpen, onClose }: EditUserProps) => {
     },
   })
 
+  const submitOnce = useSubmitOnce()
+
   const onSubmit: SubmitHandler<UserUpdate> = async (data) => {
-    await mutation.mutateAsync({
-      path: { user_api_id: user.api_identifier },
-      body: {
-        email: data.email,
-        name: data.name,
-      },
-    })
+    await submitOnce.run(() =>
+      mutation.mutateAsync({
+        path: { user_api_id: user.api_identifier },
+        body: {
+          email: data.email,
+          name: data.name,
+        },
+      }),
+    )
   }
 
   const onCancel = () => {
@@ -129,7 +134,7 @@ const EditUser = ({ user, isOpen, onClose }: EditUserProps) => {
     onClose()
   }
 
-  const isSaving = isSubmitting || mutation.isPending
+  const isSaving = isSubmitting || mutation.isPending || submitOnce.pending
 
   return (
     <Dialog

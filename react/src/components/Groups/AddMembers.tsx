@@ -17,6 +17,7 @@ import {
   readUserMePartiesMeGetOptions,
 } from "../../client/@tanstack/react-query.gen"
 import useCustomToast from "../../hooks/useCustomToast"
+import { useSubmitOnce } from "../../hooks/useSubmitOnce"
 import { isGroupLetterDetailQuery } from "../../util/letterQueryCache"
 import { formatApiErrorDetail } from "../../util/misc"
 
@@ -129,14 +130,18 @@ const AddMembers = ({ group, isOpen, onClose }: AddMembersProps) => {
     },
   })
 
+  const submitOnce = useSubmitOnce()
+
   const onSubmit: SubmitHandler<AddMembersFormType> = async (data) => {
     const memberEmails = data.member_emails
       .split(",")
       .map((email) => email.trim())
-    await mutation.mutateAsync({
-      body: { member_emails: memberEmails },
-      path: { group_api_id: group.api_identifier },
-    })
+    await submitOnce.run(() =>
+      mutation.mutateAsync({
+        body: { member_emails: memberEmails },
+        path: { group_api_id: group.api_identifier },
+      }),
+    )
   }
 
   const onCancel = () => {
@@ -144,7 +149,7 @@ const AddMembers = ({ group, isOpen, onClose }: AddMembersProps) => {
     onClose()
   }
 
-  const isSaving = isSubmitting || mutation.isPending
+  const isSaving = isSubmitting || mutation.isPending || submitOnce.pending
 
   return (
     <Dialog

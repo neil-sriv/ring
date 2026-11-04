@@ -14,6 +14,7 @@ import {
   readUserMePartiesMeGetOptions,
 } from "../../client/@tanstack/react-query.gen"
 import useCustomToast from "../../hooks/useCustomToast"
+import { useSubmitOnce } from "../../hooks/useSubmitOnce"
 import { formatApiErrorDetail } from "../../util/misc"
 
 import { Button } from "@/components/ui/button"
@@ -95,12 +96,16 @@ const ImpersonateUser = ({ user, isOpen, onClose }: ImpersonateUserProps) => {
     },
   })
 
+  const submitOnce = useSubmitOnce()
+
   const onSubmit: SubmitHandler<UserImpersonateForm> = async () => {
-    await mutation.mutateAsync({
-      query: {
-        user_api_id: user.api_identifier,
-      },
-    })
+    await submitOnce.run(() =>
+      mutation.mutateAsync({
+        query: {
+          user_api_id: user.api_identifier,
+        },
+      }),
+    )
   }
 
   const onCancel = () => {
@@ -108,7 +113,7 @@ const ImpersonateUser = ({ user, isOpen, onClose }: ImpersonateUserProps) => {
     onClose()
   }
 
-  const isSaving = isSubmitting || mutation.isPending
+  const isSaving = isSubmitting || mutation.isPending || submitOnce.pending
 
   return (
     <Dialog

@@ -10,6 +10,7 @@ import {
   readUsersPartiesUsersGetQueryKey,
 } from "../../client/@tanstack/react-query.gen"
 import useCustomToast from "../../hooks/useCustomToast"
+import { useSubmitOnce } from "../../hooks/useSubmitOnce"
 import { emailPattern, formatApiErrorDetail } from "../../util/misc"
 
 import { Button } from "@/components/ui/button"
@@ -88,10 +89,14 @@ const AddUser = ({ isOpen, onClose }: AddUserProps) => {
     },
   })
 
+  const submitOnce = useSubmitOnce()
+
   const onSubmit: SubmitHandler<UserCreateForm> = async (data) => {
-    await mutation.mutateAsync({
-      body: data,
-    })
+    await submitOnce.run(() =>
+      mutation.mutateAsync({
+        body: data,
+      }),
+    )
   }
 
   const onCancel = () => {
@@ -99,7 +104,7 @@ const AddUser = ({ isOpen, onClose }: AddUserProps) => {
     onClose()
   }
 
-  const isSaving = isSubmitting || mutation.isPending
+  const isSaving = isSubmitting || mutation.isPending || submitOnce.pending
 
   return (
     <Dialog

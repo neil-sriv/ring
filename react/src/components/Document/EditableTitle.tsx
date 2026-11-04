@@ -4,6 +4,7 @@ import type { AxiosError } from "axios"
 import { Loader2 } from "lucide-react"
 import { useEffect, useRef, useState } from "react"
 import useCustomToast from "../../hooks/useCustomToast"
+import { useSubmitOnce } from "../../hooks/useSubmitOnce"
 import { formatApiErrorDetail } from "../../util/misc"
 
 interface EditableTitleProps {
@@ -25,14 +26,11 @@ export function EditableTitle({
 }: EditableTitleProps) {
   const [isEditing, setIsEditing] = useState(false)
   const [editValue, setEditValue] = useState(title)
-  const [isSaving, setIsSaving] = useState(false)
   const inputRef = useRef<HTMLInputElement>(null)
-  // Guards against Enter + blur (or double blur) firing two PUTs before
-  // parent isPending / local isSaving can disable the input.
-  const saveInFlightRef = useRef(false)
+  const submitOnce = useSubmitOnce()
   const showToast = useCustomToast()
 
-  const busy = isLoading || isSaving
+  const busy = isLoading || submitOnce.pending
 
   // Update editValue when title prop changes
   useEffect(() => {
@@ -54,13 +52,13 @@ export function EditableTitle({
   }
 
   const handleCancelEdit = () => {
-    if (saveInFlightRef.current) return
+    if (submitOnce.isLocked()) return
     setIsEditing(false)
     setEditValue(title)
   }
 
   const handleSaveEdit = async () => {
-    if (saveInFlightRef.current) return
+    if (submitOnce.isLocked()) return
 
     if (editValue.trim() === title.trim()) {
       setIsEditing(false)
@@ -74,27 +72,24 @@ export function EditableTitle({
       return
     }
 
-    saveInFlightRef.current = true
-    setIsSaving(true)
-    try {
-      await onTitleChange(editValue.trim())
-      setIsEditing(false)
-    } catch (error) {
-      const axiosError = error as AxiosError<{ detail?: unknown }>
-      showToast(
-        "Failed to update title",
-        formatApiErrorDetail(
-          axiosError.response?.data?.detail,
-          "Please try again",
-        ),
-        "error",
-      )
-      setEditValue(title) // Reset to original value
-      setIsEditing(false)
-    } finally {
-      saveInFlightRef.current = false
-      setIsSaving(false)
-    }
+    await submitOnce.run(async () => {
+      try {
+        await onTitleChange(editValue.trim())
+        setIsEditing(false)
+      } catch (error) {
+        const axiosError = error as AxiosError<{ detail?: unknown }>
+        showToast(
+          "Failed to update title",
+          formatApiErrorDetail(
+            axiosError.response?.data?.detail,
+            "Please try again",
+          ),
+          "error",
+        )
+        setEditValue(title) // Reset to original value
+        setIsEditing(false)
+      }
+    })
   }
 
   const handleKeyDown = (e: React.KeyboardEvent) => {

@@ -14,6 +14,7 @@ import type { AxiosError } from "axios"
 import type { ResetPasswordRequestResetPasswordRequestEmailPostError } from "../client"
 import { resetPasswordRequestResetPasswordRequestEmailPost } from "../client/sdk.gen"
 import useCustomToast from "../hooks/useCustomToast"
+import { useSubmitOnce } from "../hooks/useSubmitOnce"
 import { emailPattern, formatApiErrorDetail } from "../util/misc"
 
 interface FormData {
@@ -40,27 +41,31 @@ function ResetPasswordRequest() {
     formState: { errors, isSubmitting },
   } = useForm<FormData>()
   const showToast = useCustomToast()
+  const submitOnce = useSubmitOnce()
+  const isSaving = isSubmitting || submitOnce.pending
 
   const onSubmit: SubmitHandler<FormData> = async (data) => {
-    try {
-      await resetPasswordRequestResetPasswordRequestEmailPost({
-        path: { email: data.email },
-        throwOnError: true,
-      })
-      showToast(
-        "Check your email.",
-        "If an account exists for that address, we sent a link to reset your password.",
-        "success",
-      )
-    } catch (err) {
-      const axiosErr =
-        err as AxiosError<ResetPasswordRequestResetPasswordRequestEmailPostError>
-      showToast(
-        "Something went wrong.",
-        formatApiErrorDetail(axiosErr.response?.data?.detail),
-        "error",
-      )
-    }
+    await submitOnce.run(async () => {
+      try {
+        await resetPasswordRequestResetPasswordRequestEmailPost({
+          path: { email: data.email },
+          throwOnError: true,
+        })
+        showToast(
+          "Check your email.",
+          "If an account exists for that address, we sent a link to reset your password.",
+          "success",
+        )
+      } catch (err) {
+        const axiosErr =
+          err as AxiosError<ResetPasswordRequestResetPasswordRequestEmailPostError>
+        showToast(
+          "Something went wrong.",
+          formatApiErrorDetail(axiosErr.response?.data?.detail),
+          "error",
+        )
+      }
+    })
   }
 
   return (
@@ -93,7 +98,7 @@ function ResetPasswordRequest() {
               })}
               placeholder="Email"
               type="email"
-              disabled={isSubmitting}
+              disabled={isSaving}
               className={errors.email ? "border-destructive" : ""}
             />
             {errors.email && (
@@ -101,8 +106,8 @@ function ResetPasswordRequest() {
             )}
           </div>
 
-          <Button type="submit" disabled={isSubmitting} className="w-full">
-            {isSubmitting && <Loader2 className="h-4 w-4 animate-spin" />}
+          <Button type="submit" disabled={isSaving} className="w-full">
+            {isSaving && <Loader2 className="h-4 w-4 animate-spin" />}
             Continue
           </Button>
 

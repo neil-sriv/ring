@@ -16,6 +16,7 @@ import { deleteUserMePartiesMeDelete } from "../../client"
 import { readUserMePartiesMeGetQueryKey } from "../../client/@tanstack/react-query.gen"
 import useAuth from "../../hooks/useAuth"
 import useCustomToast from "../../hooks/useCustomToast"
+import { useSubmitOnce } from "../../hooks/useSubmitOnce"
 import { formatApiErrorDetail } from "../../util/misc"
 
 interface DeleteProps {
@@ -66,13 +67,13 @@ const DeleteConfirmation = ({ isOpen, onClose }: DeleteProps) => {
     },
   })
 
+  const submitOnce = useSubmitOnce()
+
   const onSubmit = async () => {
-    // Await so RHF isSubmitting stays true for the full request; isPending
-    // covers the gap if the promise settles while React is still painting.
-    await mutation.mutateAsync()
+    await submitOnce.run(() => mutation.mutateAsync())
   }
 
-  const isSaving = isSubmitting || mutation.isPending
+  const isSaving = isSubmitting || mutation.isPending || submitOnce.pending
 
   return (
     <AlertDialog

@@ -27,6 +27,7 @@ import type {
   UpdateGroupPartiesGroupGroupApiIdPatchError,
 } from "../../client/types.gen"
 import useCustomToast from "../../hooks/useCustomToast"
+import { useSubmitOnce } from "../../hooks/useSubmitOnce"
 import { formatApiErrorDetail } from "../../util/misc"
 
 type QuestionField = {
@@ -125,6 +126,7 @@ function GroupLoopSettings({ groupId }: { groupId: string }) {
     didSeedFormRef.current = true
     reset(formValuesFromGroup(group))
   }, [group, reset])
+  const submitOnce = useSubmitOnce()
 
   if (group === undefined) {
     return null
@@ -181,76 +183,78 @@ function GroupLoopSettings({ groupId }: { groupId: string }) {
       groupPatch.min_responder_ratio = data.min_responder_percent / 100
     }
 
-    try {
-      // Apply default questions first so a questions failure cannot leave
-      // cycle / min_responder changes applied alone.
-      await defaultQuestionsMutation.mutateAsync({
-        body: {
-          questions: data.questions.map((question) => question.question_text),
-        },
-        path: { group_api_id: groupId },
-      })
+    await submitOnce.run(async () => {
+      try {
+        // Apply default questions first so a questions failure cannot leave
+        // cycle / min_responder changes applied alone.
+        await defaultQuestionsMutation.mutateAsync({
+          body: {
+            questions: data.questions.map((question) => question.question_text),
+          },
+          path: { group_api_id: groupId },
+        })
 
-      if (Object.keys(groupPatch).length > 0) {
-        try {
-          await cycleUpdateMutation.mutateAsync({
-            body: groupPatch,
-            path: { group_api_id: groupId },
-          })
-        } catch (cycleErr) {
-          const axiosErr =
-            cycleErr as AxiosError<UpdateGroupPartiesGroupGroupApiIdPatchError>
-          showToast(
-            "Partially saved.",
-            `Default questions were updated, but cycle settings could not be saved. ${formatApiErrorDetail(
-              axiosErr.response?.data?.detail,
-            )}`,
-            "error",
-          )
-          // Questions persisted, the cycle patch did not. Re-baseline the form
-          // on what is actually on the server so a later Cancel can't roll the
-          // saved questions back and a later Save can't overwrite them with
-          // pre-save values. Stay in edit mode so the cycle change can be
-          // retried.
-          reset({
-            questions: data.questions,
-            cycle_length: group.cycle_length,
-            min_responder_percent: currentMinResponderPercent,
-          })
-          return
+        if (Object.keys(groupPatch).length > 0) {
+          try {
+            await cycleUpdateMutation.mutateAsync({
+              body: groupPatch,
+              path: { group_api_id: groupId },
+            })
+          } catch (cycleErr) {
+            const axiosErr =
+              cycleErr as AxiosError<UpdateGroupPartiesGroupGroupApiIdPatchError>
+            showToast(
+              "Partially saved.",
+              `Default questions were updated, but cycle settings could not be saved. ${formatApiErrorDetail(
+                axiosErr.response?.data?.detail,
+              )}`,
+              "error",
+            )
+            // Questions persisted, the cycle patch did not. Re-baseline the form
+            // on what is actually on the server so a later Cancel can't roll the
+            // saved questions back and a later Save can't overwrite them with
+            // pre-save values. Stay in edit mode so the cycle change can be
+            // retried.
+            reset({
+              questions: data.questions,
+              cycle_length: group.cycle_length,
+              min_responder_percent: currentMinResponderPercent,
+            })
+            return
+          }
         }
-      }
 
-      showToast("Success!", "Loop settings updated successfully.", "success")
-      // required_responders on in-progress letters is derived from
-      // min_responder_ratio × participants. Home + group Loops cards use list
-      // queries with a 30s staleTime; without this they keep the old
-      // "N of M responses needed" until the cache expires.
-      if (groupPatch.min_responder_ratio !== undefined) {
-        queryClient.invalidateQueries({
-          queryKey: listLettersLettersLettersGetQueryKey({
-            query: { group_api_id: groupId },
-          }),
-        })
-        queryClient.invalidateQueries({
-          queryKey: listDashboardLettersLettersLettersDashboardGetQueryKey(),
-        })
+        showToast("Success!", "Loop settings updated successfully.", "success")
+        // required_responders on in-progress letters is derived from
+        // min_responder_ratio × participants. Home + group Loops cards use list
+        // queries with a 30s staleTime; without this they keep the old
+        // "N of M responses needed" until the cache expires.
+        if (groupPatch.min_responder_ratio !== undefined) {
+          queryClient.invalidateQueries({
+            queryKey: listLettersLettersLettersGetQueryKey({
+              query: { group_api_id: groupId },
+            }),
+          })
+          queryClient.invalidateQueries({
+            queryKey: listDashboardLettersLettersLettersDashboardGetQueryKey(),
+          })
+        }
+        await refreshGroup()
+        const refreshed = readFreshGroup()
+        exitEditMode(refreshed ? formValuesFromGroup(refreshed) : data)
+      } catch (err) {
+        const axiosErr = err as AxiosError<
+          | ReplaceGroupDefaultQuestionsPartiesGroupGroupApiIdReplaceDefaultQuestionsPostError
+          | UpdateGroupPartiesGroupGroupApiIdPatchError
+        >
+        showToast(
+          "Something went wrong.",
+          formatApiErrorDetail(axiosErr.response?.data?.detail),
+          "error",
+        )
+        await refreshGroup()
       }
-      await refreshGroup()
-      const refreshed = readFreshGroup()
-      exitEditMode(refreshed ? formValuesFromGroup(refreshed) : data)
-    } catch (err) {
-      const axiosErr = err as AxiosError<
-        | ReplaceGroupDefaultQuestionsPartiesGroupGroupApiIdReplaceDefaultQuestionsPostError
-        | UpdateGroupPartiesGroupGroupApiIdPatchError
-      >
-      showToast(
-        "Something went wrong.",
-        formatApiErrorDetail(axiosErr.response?.data?.detail),
-        "error",
-      )
-      await refreshGroup()
-    }
+    })
   }
 
   const onCancel = () => {
@@ -262,6 +266,7 @@ function GroupLoopSettings({ groupId }: { groupId: string }) {
   // mid-flight can race exitEditMode/reset after settle.
   const isSaving =
     isSubmitting ||
+    submitOnce.pending ||
     defaultQuestionsMutation.isPending ||
     cycleUpdateMutation.isPending
 
