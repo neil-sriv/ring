@@ -210,6 +210,32 @@ export type DocumentUpdate = {
     content?: string | null;
 };
 
+/**
+ * In-process dual-write / dual-read counters. Resets on process restart.
+ */
+export type DualSyncStats = {
+    dual_write_enabled: boolean;
+    dual_read_enabled: boolean;
+    identity_configured: boolean;
+    write_attempts: number;
+    write_successes: number;
+    write_failures: number;
+    write_skipped: number;
+    /**
+     * write_successes / write_attempts, or null if no attempts
+     */
+    write_success_rate?: number | null;
+    read_attempts: number;
+    read_matches: number;
+    read_missing: number;
+    read_mismatches: number;
+    read_failures: number;
+    /**
+     * Identity missing + field mismatches
+     */
+    drift_count: number;
+};
+
 export type GenerateQuestionRequest = {
     prompt: string;
 };
@@ -629,6 +655,10 @@ export type QuestionLinked = {
     responses: Array<ResponseUnlinked>;
 };
 
+export type QuestionReorder = {
+    question_api_identifiers: Array<string>;
+};
+
 /**
  * Schema for question without linked relationships.
  *
@@ -768,6 +798,24 @@ export type ResponseWithParticipant = {
 export type ScheduleLinked = {
     group: GroupUnlinked;
     tasks: Array<TaskUnlinked>;
+};
+
+/**
+ * Liveness of the in-process APScheduler poll loop.
+ */
+export type SchedulerStatus = {
+    /**
+     * False when DISABLE_SCHEDULER is set for this process
+     */
+    enabled: boolean;
+    /**
+     * Whether the APScheduler instance is currently started
+     */
+    running: boolean;
+    /**
+     * When the schedule poll job last finished in this process; null until the first poll completes (polls run every minute)
+     */
+    last_poll_completed_at?: string | null;
 };
 
 export type SearchHit = {
@@ -1003,6 +1051,7 @@ export type VersionResponse = {
     git: GitCommitInfo;
     image_build: GitCommitInfo;
     docker: DockerInfo;
+    scheduler?: SchedulerStatus | null;
 };
 
 export type LoginAccessTokenLoginAccessTokenPostData = {
@@ -1153,6 +1202,22 @@ export type RecoverPasswordHtmlContentPasswordRecoveryHtmlContentEmailPostRespon
 };
 
 export type RecoverPasswordHtmlContentPasswordRecoveryHtmlContentEmailPostResponse = RecoverPasswordHtmlContentPasswordRecoveryHtmlContentEmailPostResponses[keyof RecoverPasswordHtmlContentPasswordRecoveryHtmlContentEmailPostResponses];
+
+export type ReadAuthDualSyncStatsData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/auth/dual-sync/stats';
+};
+
+export type ReadAuthDualSyncStatsResponses = {
+    /**
+     * Successful Response
+     */
+    200: DualSyncStats;
+};
+
+export type ReadAuthDualSyncStatsResponse = ReadAuthDualSyncStatsResponses[keyof ReadAuthDualSyncStatsResponses];
 
 export type ReadVersionData = {
     body?: never;
@@ -1993,6 +2058,33 @@ export type AddQuestionLettersLetterLetterApiIdAddQuestionPostResponses = {
 };
 
 export type AddQuestionLettersLetterLetterApiIdAddQuestionPostResponse = AddQuestionLettersLetterLetterApiIdAddQuestionPostResponses[keyof AddQuestionLettersLetterLetterApiIdAddQuestionPostResponses];
+
+export type ReorderQuestionsLettersLetterLetterApiIdReorderQuestionsPostData = {
+    body: QuestionReorder;
+    path: {
+        letter_api_id: string;
+    };
+    query?: never;
+    url: '/letters/letter/{letter_api_id}:reorder_questions';
+};
+
+export type ReorderQuestionsLettersLetterLetterApiIdReorderQuestionsPostErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type ReorderQuestionsLettersLetterLetterApiIdReorderQuestionsPostError = ReorderQuestionsLettersLetterLetterApiIdReorderQuestionsPostErrors[keyof ReorderQuestionsLettersLetterLetterApiIdReorderQuestionsPostErrors];
+
+export type ReorderQuestionsLettersLetterLetterApiIdReorderQuestionsPostResponses = {
+    /**
+     * Successful Response
+     */
+    200: PublicLetter;
+};
+
+export type ReorderQuestionsLettersLetterLetterApiIdReorderQuestionsPostResponse = ReorderQuestionsLettersLetterLetterApiIdReorderQuestionsPostResponses[keyof ReorderQuestionsLettersLetterLetterApiIdReorderQuestionsPostResponses];
 
 export type GenerateQuestionLettersLetterLetterApiIdGenerateQuestionPostData = {
     body: GenerateQuestionRequest;
