@@ -543,7 +543,7 @@ def compile_letter_dict(
             )
             for response in question.responses
         ]
-        for question in letter.ordered_questions()
+        for question in sorted(letter.questions, key=lambda q: q.position)
     }
 
 
@@ -839,7 +839,7 @@ def create_letter_search_document(
         HybridSearchDocument: Search document for the letter
     """
     question_texts = " ".join(
-        question.question_text for question in letter.ordered_questions()
+        question.question_text for question in letter.questions
     )
     participant_names = " ".join(
         participant.name for participant in letter.participants

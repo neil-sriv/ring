@@ -156,9 +156,7 @@ def generate_question(prompt: str, letter: Letter | None = None) -> str:
 
     def _compile_existing_questions(letter: Letter) -> str:
         logger.warning(f"Letter: {letter}")
-        return "\n".join(
-            question.question_text for question in letter.ordered_questions()
-        )
+        return "\n".join([q.question_text for q in letter.questions])
 
     # generate system prompt
     system_prompt = f"""

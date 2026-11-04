@@ -111,9 +111,7 @@ class Letter(Base, APIIdentified, PydanticModel, CreatedAtMixin):
     group: Mapped["Group"] = relationship(back_populates="letters")
 
     questions: Mapped[list["Question"]] = relationship(
-        back_populates="letter",
-        cascade="all",
-        order_by=Question.position,
+        back_populates="letter", cascade="all", order_by=Question.position
     )
 
     @declared_attr  # type: ignore
@@ -213,10 +211,6 @@ class Letter(Base, APIIdentified, PydanticModel, CreatedAtMixin):
             title=title,
         )
         return letter
-
-    def ordered_questions(self) -> list[Question]:
-        """Questions in display order, lowest position first."""
-        return sorted(self.questions, key=lambda question: question.position)
 
     @hybrid_property
     def responders(self) -> list[User]:

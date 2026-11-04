@@ -352,12 +352,7 @@ async def reorder_questions(
         get_request_dependencies,
     ),
 ) -> Letter:
-    """Reorder a letter's questions.
-
-    The body lists every question on the letter exactly once. Only the
-    group admin may reorder, and only while the letter is upcoming or in
-    progress. Positions are rewritten to 0..n-1 in the submitted order.
-    """
+    """Set question positions from a full permutation of the letter."""
     db_letter = api_identifier_crud.get_model(
         req_dep.db,
         Letter,

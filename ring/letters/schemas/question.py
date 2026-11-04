@@ -31,8 +31,6 @@ class QuestionCreate(QuestionBase):
 
 
 class QuestionReorder(BaseModel):
-    """Full permutation of a letter's questions, in the new display order."""
-
     question_api_identifiers: list[str]
 
 
