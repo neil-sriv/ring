@@ -14,8 +14,6 @@ from fastapi.testclient import TestClient
 from sqlalchemy.orm import Session
 
 from ring.letters.constants import LetterStatus, LetterType
-from ring.letters.models.letter_model import Letter
-from ring.parties.models.group_model import Group
 from ring.ring_pydantic.linked_schemas import DashboardLetter, MinimalLetter
 from ring.tests.factories.letters.letter_factory import LetterFactory
 from ring.tests.factories.letters.question_factory import QuestionFactory
@@ -23,7 +21,6 @@ from ring.tests.factories.letters.response_factory import ResponseFactory
 from ring.tests.factories.parties.group_factory import GroupFactory
 from ring.tests.factories.parties.user_factory import UserFactory
 from ring.tests.lib.utils import (
-    assert_api_model_not_found,
     assert_pydantic_model_json_dump_equivalent_to_response_dict,
     assert_pydantic_models_json_dump_in_response_dict,
 )
@@ -37,7 +34,10 @@ class TestLetterAPI:
     """
 
     def test_add_next_letter(
-        self, authenticated_client: TestClient, db_session: Session
+        self,
+        authenticated_client: TestClient,
+        db_session: Session,
+        current_user: UserFactory,
     ):
         """Test adding a new letter to a group.
 
@@ -51,7 +51,7 @@ class TestLetterAPI:
             authenticated_client (TestClient): Authenticated test client
             db_session (Session): Database session
         """
-        group = GroupFactory.create()
+        group = GroupFactory.create(admin=current_user)
         db_session.commit()
         send_at = datetime.now(tz=UTC) + timedelta(days=2)
         input = {
@@ -68,7 +68,10 @@ class TestLetterAPI:
         )
 
     def test_add_next_letter_with_existing_letter_upcoming(
-        self, authenticated_client: TestClient, db_session: Session
+        self,
+        authenticated_client: TestClient,
+        db_session: Session,
+        current_user: UserFactory,
     ):
         """Test adding a letter when an upcoming letter exists.
 
@@ -82,7 +85,7 @@ class TestLetterAPI:
             authenticated_client (TestClient): Authenticated test client
             db_session (Session): Database session
         """
-        group = GroupFactory.create()
+        group = GroupFactory.create(admin=current_user)
         LetterFactory.create(group=group, status=LetterStatus.UPCOMING)
         db_session.commit()
         send_at = datetime.now(tz=UTC) + timedelta(days=2)
@@ -97,7 +100,10 @@ class TestLetterAPI:
             authenticated_client.post("/letters/letter", json=input)
 
     def test_add_next_letter_with_existing_letter_in_progress(
-        self, authenticated_client: TestClient, db_session: Session
+        self,
+        authenticated_client: TestClient,
+        db_session: Session,
+        current_user: UserFactory,
     ):
         """Test adding a letter when an in-progress letter exists.
 
@@ -111,7 +117,7 @@ class TestLetterAPI:
             authenticated_client (TestClient): Authenticated test client
             db_session (Session): Database session
         """
-        group = GroupFactory.create()
+        group = GroupFactory.create(admin=current_user)
         LetterFactory.create(group=group, status=LetterStatus.IN_PROGRESS)
         db_session.commit()
         send_at = datetime.now(tz=UTC) + timedelta(days=2)
@@ -275,7 +281,10 @@ class TestLetterAPI:
         assert response.json()["letter_type"] == LetterType.ADHOC
 
     def test_list_letters(
-        self, authenticated_client: TestClient, db_session: Session
+        self,
+        authenticated_client: TestClient,
+        db_session: Session,
+        current_user: UserFactory,
     ):
         """Test listing letters for a group.
 
@@ -289,7 +298,7 @@ class TestLetterAPI:
             authenticated_client (TestClient): Authenticated test client
             db_session (Session): Database session
         """
-        group = GroupFactory.create()
+        group = GroupFactory.create(admin=current_user)
         letters = [
             LetterFactory.create(group=group, status=LetterStatus.SENT)
             for _ in range(5)
@@ -308,28 +317,21 @@ class TestLetterAPI:
     def test_list_letters_not_found(
         self, authenticated_client: TestClient, db_session: Session
     ):
-        """Test listing letters for a non-existent group.
-
-        This test verifies that:
-        1. Listing letters for a non-existent group fails
-        2. The response contains the correct error message
-        3. The response indicates the group was not found
-        4. The database state remains unchanged
-
-        Args:
-            authenticated_client (TestClient): Authenticated test client
-            db_session (Session): Database session
-        """
+        """Missing groups look like forbidden access (no existence leak)."""
         db_session.commit()
         response = authenticated_client.get(
             "/letters/letters/?group_api_id=invalid-group"
         )
-        assert response.status_code == 404
-        data = response.json()
-        assert_api_model_not_found(data, Group, ["invalid-group"])
+        assert response.status_code == 403
+        assert response.json()["detail"] == (
+            "Not authorized to access this resource"
+        )
 
     def test_read_letter(
-        self, authenticated_client: TestClient, db_session: Session
+        self,
+        authenticated_client: TestClient,
+        db_session: Session,
+        current_user: UserFactory,
     ):
         """Test reading a specific letter.
 
@@ -343,7 +345,9 @@ class TestLetterAPI:
             authenticated_client (TestClient): Authenticated test client
             db_session (Session): Database session
         """
-        letter = LetterFactory.create()
+        letter = LetterFactory.create(
+            group=GroupFactory.create(admin=current_user)
+        )
         db_session.commit()
         response = authenticated_client.get(
             f"/letters/letter/{letter.api_identifier}"
@@ -357,23 +361,13 @@ class TestLetterAPI:
     def test_read_letter_not_found(
         self, authenticated_client: TestClient, db_session: Session
     ):
-        """Test reading a non-existent letter.
-
-        This test verifies that:
-        1. Reading a non-existent letter fails
-        2. The response contains the correct error message
-        3. The response indicates the letter was not found
-        4. The database state remains unchanged
-
-        Args:
-            authenticated_client (TestClient): Authenticated test client
-            db_session (Session): Database session
-        """
+        """Missing letters look like forbidden access (no existence leak)."""
         db_session.commit()
         response = authenticated_client.get("/letters/letter/invalid-letter")
-        assert response.status_code == 404
-        data = response.json()
-        assert_api_model_not_found(data, Letter, ["invalid-letter"])
+        assert response.status_code == 403
+        assert response.json()["detail"] == (
+            "Not authorized to access this resource"
+        )
 
     def test_list_dashboard_letters(
         self,
@@ -485,7 +479,10 @@ class TestLetterAPI:
         assert data["recently_completed"] == []
 
     def test_edit_letter(
-        self, authenticated_client: TestClient, db_session: Session
+        self,
+        authenticated_client: TestClient,
+        db_session: Session,
+        current_user: UserFactory,
     ):
         """Test editing a letter's send time.
 
@@ -499,7 +496,10 @@ class TestLetterAPI:
             authenticated_client (TestClient): Authenticated test client
             db_session (Session): Database session
         """
-        letter = LetterFactory.create(status=LetterStatus.UPCOMING)
+        letter = LetterFactory.create(
+            group=GroupFactory.create(admin=current_user),
+            status=LetterStatus.UPCOMING,
+        )
         db_session.commit()
         new_send_at = datetime.now(tz=UTC) + timedelta(days=30)
         input = {"send_at": new_send_at.isoformat()}
@@ -511,10 +511,14 @@ class TestLetterAPI:
         assert datetime.fromisoformat(data["send_at"]) == new_send_at
 
     def test_edit_letter_send_at_resets_automatic_deferral_count(
-        self, authenticated_client: TestClient, db_session: Session
+        self,
+        authenticated_client: TestClient,
+        db_session: Session,
+        current_user: UserFactory,
     ) -> None:
         """A person choosing a new send time starts the deferral budget over."""
         letter = LetterFactory.create(
+            group=GroupFactory.create(admin=current_user),
             status=LetterStatus.IN_PROGRESS,
             send_at=datetime.now(tz=UTC) + timedelta(days=2),
         )
@@ -531,10 +535,16 @@ class TestLetterAPI:
         assert letter.automatic_send_deferral_count == 0
 
     def test_edit_letter_title_keeps_automatic_deferral_count(
-        self, authenticated_client: TestClient, db_session: Session
+        self,
+        authenticated_client: TestClient,
+        db_session: Session,
+        current_user: UserFactory,
     ) -> None:
         """Title and status edits are not a reschedule."""
-        letter = LetterFactory.create(status=LetterStatus.IN_PROGRESS)
+        letter = LetterFactory.create(
+            group=GroupFactory.create(admin=current_user),
+            status=LetterStatus.IN_PROGRESS,
+        )
         letter.automatic_send_deferral_count = 2
         original_send_at = letter.send_at
         db_session.commit()
@@ -549,7 +559,10 @@ class TestLetterAPI:
         assert letter.automatic_send_deferral_count == 2
 
     def test_edit_letter_upcoming_invalid_past_send_at(
-        self, authenticated_client: TestClient, db_session: Session
+        self,
+        authenticated_client: TestClient,
+        db_session: Session,
+        current_user: UserFactory,
     ):
         """Test editing an upcoming letter with a past send time.
 
@@ -563,7 +576,10 @@ class TestLetterAPI:
             authenticated_client (TestClient): Authenticated test client
             db_session (Session): Database session
         """
-        letter = LetterFactory.create(status=LetterStatus.UPCOMING)
+        letter = LetterFactory.create(
+            group=GroupFactory.create(admin=current_user),
+            status=LetterStatus.UPCOMING,
+        )
         db_session.commit()
         input = {"send_at": datetime.now(tz=UTC).isoformat()}
 
@@ -574,7 +590,10 @@ class TestLetterAPI:
             )
 
     def test_edit_letter_in_progress_invalid_past_send_at(
-        self, authenticated_client: TestClient, db_session: Session
+        self,
+        authenticated_client: TestClient,
+        db_session: Session,
+        current_user: UserFactory,
     ):
         """Test editing an in-progress letter with a past send time.
 
@@ -588,7 +607,10 @@ class TestLetterAPI:
             authenticated_client (TestClient): Authenticated test client
             db_session (Session): Database session
         """
-        letter = LetterFactory.create(status=LetterStatus.IN_PROGRESS)
+        letter = LetterFactory.create(
+            group=GroupFactory.create(admin=current_user),
+            status=LetterStatus.IN_PROGRESS,
+        )
         db_session.commit()
         input = {"send_at": datetime.now(tz=UTC).isoformat()}
 
@@ -599,9 +621,15 @@ class TestLetterAPI:
             )
 
     def test_edit_letter_upcoming_conflicting_in_progress_send_at(
-        self, authenticated_client: TestClient, db_session: Session
+        self,
+        authenticated_client: TestClient,
+        db_session: Session,
+        current_user: UserFactory,
     ):
-        letter = LetterFactory.create(status=LetterStatus.UPCOMING)
+        letter = LetterFactory.create(
+            group=GroupFactory.create(admin=current_user),
+            status=LetterStatus.UPCOMING,
+        )
         in_progress_letter = LetterFactory.create(
             group=letter.group, status=LetterStatus.IN_PROGRESS
         )
@@ -619,9 +647,12 @@ class TestLetterAPI:
             )
 
     def test_edit_letter_rejects_second_cyclic_in_progress(
-        self, authenticated_client: TestClient, db_session: Session
+        self,
+        authenticated_client: TestClient,
+        db_session: Session,
+        current_user: UserFactory,
     ):
-        group = GroupFactory.create()
+        group = GroupFactory.create(admin=current_user)
         LetterFactory.create(group=group, status=LetterStatus.IN_PROGRESS)
         upcoming = LetterFactory.create(
             group=group,
@@ -641,9 +672,12 @@ class TestLetterAPI:
         assert upcoming.status == LetterStatus.UPCOMING
 
     def test_edit_letter_rejects_second_cyclic_upcoming(
-        self, authenticated_client: TestClient, db_session: Session
+        self,
+        authenticated_client: TestClient,
+        db_session: Session,
+        current_user: UserFactory,
     ):
-        group = GroupFactory.create()
+        group = GroupFactory.create(admin=current_user)
         in_progress = LetterFactory.create(
             group=group, status=LetterStatus.IN_PROGRESS
         )
@@ -665,9 +699,12 @@ class TestLetterAPI:
         assert in_progress.status == LetterStatus.IN_PROGRESS
 
     def test_edit_letter_rejects_second_in_progress_past_page_limit(
-        self, authenticated_client: TestClient, db_session: Session
+        self,
+        authenticated_client: TestClient,
+        db_session: Session,
+        current_user: UserFactory,
     ):
-        group = GroupFactory.create()
+        group = GroupFactory.create(admin=current_user)
         for number in range(1, 101):
             LetterFactory.create(
                 group=group,
@@ -698,9 +735,12 @@ class TestLetterAPI:
         assert upcoming.status == LetterStatus.UPCOMING
 
     def test_edit_letter_to_in_progress_when_no_other_live_cyclic(
-        self, authenticated_client: TestClient, db_session: Session
+        self,
+        authenticated_client: TestClient,
+        db_session: Session,
+        current_user: UserFactory,
     ):
-        group = GroupFactory.create()
+        group = GroupFactory.create(admin=current_user)
         letter = LetterFactory.create(
             group=group,
             status=LetterStatus.UPCOMING,
@@ -723,9 +763,12 @@ class TestLetterAPI:
         assert upcoming[0].id != letter.id
 
     def test_edit_cyclic_to_upcoming_ignores_adhoc(
-        self, authenticated_client: TestClient, db_session: Session
+        self,
+        authenticated_client: TestClient,
+        db_session: Session,
+        current_user: UserFactory,
     ):
-        group = GroupFactory.create()
+        group = GroupFactory.create(admin=current_user)
         cyclic = LetterFactory.create(
             group=group, status=LetterStatus.IN_PROGRESS
         )
@@ -743,9 +786,12 @@ class TestLetterAPI:
         assert response.json()["status"] == LetterStatus.UPCOMING
 
     def test_edit_adhoc_status_ignores_cyclic_upcoming(
-        self, authenticated_client: TestClient, db_session: Session
+        self,
+        authenticated_client: TestClient,
+        db_session: Session,
+        current_user: UserFactory,
     ):
-        group = GroupFactory.create()
+        group = GroupFactory.create(admin=current_user)
         LetterFactory.create(group=group, status=LetterStatus.UPCOMING)
         adhoc = LetterFactory.create(
             group=group,
@@ -761,9 +807,14 @@ class TestLetterAPI:
         assert response.json()["status"] == LetterStatus.UPCOMING
 
     def test_add_question(
-        self, authenticated_client: TestClient, db_session: Session
+        self,
+        authenticated_client: TestClient,
+        db_session: Session,
+        current_user: UserFactory,
     ):
-        letter = LetterFactory.create()
+        letter = LetterFactory.create(
+            group=GroupFactory.create(admin=current_user)
+        )
         user = UserFactory.create()
         db_session.commit()
         input = {
