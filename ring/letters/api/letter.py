@@ -10,16 +10,15 @@ from __future__ import annotations
 import itertools
 from collections import defaultdict
 from datetime import UTC, datetime, timedelta
-from typing import Sequence
+from typing import Sequence, cast
 
 from fastapi import APIRouter, Depends, HTTPException
-from loguru import logger
 from sqlalchemy import ColumnElement, and_, or_
 
 from ring.api_identifier import (
     util as api_identifier_crud,
 )
-from ring.authz.authz import bulk_load_and_check, load_and_check
+from ring.authz.authz import load_and_check
 from ring.authz.enforcer import Action
 from ring.fastapp.dependencies import (
     AuthenticatedRequestDependencies,
@@ -36,6 +35,7 @@ from ring.letters.schemas.question import (
     QuestionCreate,
     QuestionReorder,
 )
+from ring.parties.models.group_model import Group
 from ring.parties.models.user_model import User
 from ring.ring_pydantic import PublicLetter as LetterSchema
 from ring.ring_pydantic.linked_schemas import DashboardLetters, MinimalLetter
@@ -55,6 +55,15 @@ def _assert_no_live_letter(
         )
 
 
+def _require_group_admin(user: User, group: Group, action: str) -> None:
+    """Match the UI: Start Next Loop / Edit Loop / reorder are admin-only."""
+    if user != group.admin:
+        raise HTTPException(
+            status_code=403,
+            detail=f"Only the group admin can {action}",
+        )
+
+
 @router.post("/letter", response_model=LetterSchema)
 async def add_next_letter(
     letter: LetterCreate,
@@ -65,7 +74,8 @@ async def add_next_letter(
     """Create a new letter for a group.
 
     Creates a new letter with default questions if there are no letters
-    currently in progress or upcoming for the group.
+    currently in progress or upcoming for the group. Only the group admin
+    may create the next cyclic letter.
 
     Args:
         letter (LetterCreate): Letter creation parameters
@@ -76,14 +86,24 @@ async def add_next_letter(
 
     Raises:
         ValueError: If there is already a letter in progress or upcoming
+        HTTPException: If the caller is not the group admin
     """
-    group_letters = letter_crud.get_letters(
-        req_dep.db, group_api_id=letter.group_api_identifier
+    db_group = cast(
+        Group,
+        load_and_check(
+            req_dep.db,
+            req_dep.current_user,
+            Action.READ,
+            letter.group_api_identifier,
+        ),
     )
-    _assert_no_live_letter(group_letters)
+    _require_group_admin(
+        req_dep.current_user, db_group, "create the next letter"
+    )
+    _assert_no_live_letter(db_group.cyclic_letters)
     db_letter = letter_crud.create_letter_with_questions(
         req_dep.db,
-        group_api_id=letter.group_api_identifier,
+        group_api_id=db_group.api_identifier,
         send_at=letter.send_at,
         letter_status=LetterStatus.UPCOMING,
     )
@@ -99,13 +119,19 @@ async def add_next_letter(
         get_request_dependencies,
     ),
 ) -> Letter:
-    db_group = load_and_check(
-        req_dep.db,
-        req_dep.current_user,
-        Action.READ,
-        letter.group_api_identifier,
+    db_group = cast(
+        Group,
+        load_and_check(
+            req_dep.db,
+            req_dep.current_user,
+            Action.READ,
+            letter.group_api_identifier,
+        ),
     )
     if letter_type == LetterType.CYCLIC:
+        _require_group_admin(
+            req_dep.current_user, db_group, "create the next letter"
+        )
         _assert_no_live_letter(db_group.cyclic_letters)
     db_letter = letter_crud.create_letter(
         req_dep.db,
@@ -132,6 +158,7 @@ async def list_letters(
     """List letters for a specific group.
 
     Retrieves a paginated list of letters belonging to the specified group.
+    Caller must be a member of the group.
 
     Args:
         group_api_id (str): API identifier of the group
@@ -142,6 +169,12 @@ async def list_letters(
     Returns:
         Sequence[Letter]: List of letters
     """
+    load_and_check(
+        req_dep.db,
+        req_dep.current_user,
+        Action.READ,
+        group_api_id,
+    )
     letters = letter_crud.get_letters(
         req_dep.db,
         group_api_id=group_api_id,
@@ -161,22 +194,25 @@ async def read_letter(
 ) -> Letter:
     """Retrieve a specific letter by its API identifier.
 
+    Caller must be a member of the letter's group. Missing letters look like
+    forbidden access so callers cannot probe for ids.
+
     Args:
         letter_api_id (str): API identifier of the letter
         req_dep (AuthenticatedRequestDependencies): Request dependencies including database session and auth
 
     Returns:
         Letter: The requested letter
-
-    Raises:
-        IDNotFoundException: If letter with given API ID is not found
     """
-    db_letter = api_identifier_crud.get_model(
-        req_dep.db,
+    return cast(
         Letter,
-        api_id=letter_api_id,
+        load_and_check(
+            req_dep.db,
+            req_dep.current_user,
+            Action.READ,
+            letter_api_id,
+        ),
     )
-    return db_letter
 
 
 @router.get("/letters:dashboard", response_model=DashboardLetters)
@@ -247,12 +283,20 @@ async def edit_letter(
 
     Raises:
         AssertionError: If new send time violates timing constraints
-        IDNotFoundException: If letter with given API ID is not found
+        HTTPException: If the caller is not the group admin
+        PermissionError: If the letter is missing or the caller cannot read it
     """
-    db_letter = api_identifier_crud.get_model(
-        req_dep.db,
+    db_letter = cast(
         Letter,
-        api_id=letter_api_id,
+        load_and_check(
+            req_dep.db,
+            req_dep.current_user,
+            Action.READ,
+            letter_api_id,
+        ),
+    )
+    _require_group_admin(
+        req_dep.current_user, db_letter.group, "edit this letter"
     )
     if db_letter.status == LetterStatus.SENT:
         raise HTTPException(
@@ -315,14 +359,19 @@ async def add_question(
     :type question: QuestionCreate
     :param req_dep: Request dependencies including database session and auth
     :type req_dep: AuthenticatedRequestDependencies
-    :raises IDNotFoundException: If letter or author with given API ID is not found
+    :raises PermissionError: If the caller cannot read the letter
+    :raises IDNotFoundException: If author with given API ID is not found
     :return: Updated letter with the new question
     :rtype: Letter
     """
-    db_letter = api_identifier_crud.get_model(
-        req_dep.db,
+    db_letter = cast(
         Letter,
-        api_id=letter_api_id,
+        load_and_check(
+            req_dep.db,
+            req_dep.current_user,
+            Action.READ,
+            letter_api_id,
+        ),
     )
     db_author = (
         api_identifier_crud.get_model(
@@ -353,16 +402,18 @@ async def reorder_questions(
     ),
 ) -> Letter:
     """Set question positions from a full permutation of the letter."""
-    db_letter = api_identifier_crud.get_model(
-        req_dep.db,
+    db_letter = cast(
         Letter,
-        api_id=letter_api_id,
+        load_and_check(
+            req_dep.db,
+            req_dep.current_user,
+            Action.READ,
+            letter_api_id,
+        ),
     )
-    if req_dep.current_user != db_letter.group.admin:
-        raise HTTPException(
-            status_code=403,
-            detail="Only the group admin can reorder questions",
-        )
+    _require_group_admin(
+        req_dep.current_user, db_letter.group, "reorder questions"
+    )
     if db_letter.status not in _LIVE_LETTER_STATUSES:
         raise HTTPException(
             status_code=400,
@@ -398,8 +449,14 @@ async def generate_question(
     ),
 ) -> GenerateQuestionResponse:
     """Generate a question using LLM without saving it."""
-    db_letter = api_identifier_crud.get_model(
-        req_dep.db, Letter, api_id=letter_api_id
+    db_letter = cast(
+        Letter,
+        load_and_check(
+            req_dep.db,
+            req_dep.current_user,
+            Action.READ,
+            letter_api_id,
+        ),
     )
     generated_text = question_crud.generate_question(request.prompt, db_letter)
     return GenerateQuestionResponse(generated_text=generated_text)
