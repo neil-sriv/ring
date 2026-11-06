@@ -4,6 +4,7 @@ import {
   useQueryClient,
   useSuspenseQuery,
 } from "@tanstack/react-query"
+import { useNavigate } from "@tanstack/react-router"
 import type { AxiosError } from "axios"
 import { FileText, Loader2 } from "lucide-react"
 import type {
@@ -32,16 +33,22 @@ export function DocumentsGrid(props: {
   })
 
   const queryClient = useQueryClient()
+  const navigate = useNavigate()
   const showToast = useCustomToast()
   const submitOnce = useSubmitOnce()
 
   const createDocumentMutation = useMutation({
     ...createDocumentEndpointNotebookDocumentsPostMutation(),
-    onSuccess: () => {
+    onSuccess: (document) => {
+      showToast("Success!", "Document created successfully.", "success")
       queryClient.invalidateQueries({
         queryKey: listDocumentsNotebookDocumentsGetQueryKey({
           query: { group_api_id: props.groupApiId },
         }),
+      })
+      void navigate({
+        to: "/documents/$documentId",
+        params: { documentId: document.api_identifier },
       })
     },
     onError: (
