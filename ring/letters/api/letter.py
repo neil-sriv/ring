@@ -56,7 +56,7 @@ def _assert_no_live_letter(
 
 
 def _require_group_admin(user: User, group: Group, action: str) -> None:
-    """Match the UI: Start Next Loop / Edit Loop / reorder are admin-only."""
+    """Match the UI: Start Next Loop / Create Adhoc / Edit Loop / reorder are admin-only."""
     if user != group.admin:
         raise HTTPException(
             status_code=403,
@@ -119,6 +119,11 @@ async def add_next_letter(
         get_request_dependencies,
     ),
 ) -> Letter:
+    """Create a cyclic or adhoc letter for a group.
+
+    Only the group admin may create letters. Cyclic creates additionally
+    reject when a live cyclic letter already exists.
+    """
     db_group = cast(
         Group,
         load_and_check(
@@ -128,10 +133,13 @@ async def add_next_letter(
             letter.group_api_identifier,
         ),
     )
+    action = (
+        "create the next letter"
+        if letter_type == LetterType.CYCLIC
+        else "create an adhoc letter"
+    )
+    _require_group_admin(req_dep.current_user, db_group, action)
     if letter_type == LetterType.CYCLIC:
-        _require_group_admin(
-            req_dep.current_user, db_group, "create the next letter"
-        )
         _assert_no_live_letter(db_group.cyclic_letters)
     db_letter = letter_crud.create_letter(
         req_dep.db,
