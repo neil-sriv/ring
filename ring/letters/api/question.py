@@ -6,12 +6,13 @@ creating, updating, and uploading images for responses.
 
 from __future__ import annotations
 
+from typing import cast
+
 from fastapi import APIRouter, Depends, HTTPException, UploadFile, status
 from loguru import logger
 
-from ring.api_identifier import (
-    util as api_identifier_crud,
-)
+from ring.authz.authz import load_and_check
+from ring.authz.enforcer import Action
 from ring.fastapp.dependencies import (
     AuthenticatedRequestDependencies,
     get_request_dependencies,
@@ -21,9 +22,25 @@ from ring.letters.crud.response import upload_image as upload_image_crud
 from ring.letters.models.question_model import Question
 from ring.letters.models.response_model import Response
 from ring.letters.schemas.response import ResponseUpsert
+from ring.parties.models.user_model import User
 from ring.ring_pydantic.linked_schemas import QuestionLinked
 
 router = APIRouter()
+
+
+def _require_response_owner_or_admin(user: User, response: Response) -> None:
+    """Match the UI: only the author (or group admin) may mutate a response."""
+    if (
+        user == response.participant
+        or user == response.question.letter.group.admin
+    ):
+        return
+    raise HTTPException(
+        status_code=status.HTTP_403_FORBIDDEN,
+        detail=(
+            "Only the response author or group admin can modify this response"
+        ),
+    )
 
 
 @router.post(
@@ -40,7 +57,7 @@ async def upsert_response(
     """Create or update a response to a question.
 
     If a response already exists (identified by api_identifier or participant),
-    updates it. Otherwise, creates a new response.
+    updates it. Otherwise, creates a new response for the current user.
 
     Args:
         question_api_id (str): API identifier of the question
@@ -51,22 +68,49 @@ async def upsert_response(
         Question: Updated question with the new/updated response
 
     Raises:
+        PermissionError: If the caller is not a member of the question's group
+        HTTPException: If the caller tries to write another member's response
         IDNotFoundException: If question or response with given API ID is not found
     """
     logger.info(response)
-    db_question = api_identifier_crud.get_model(
-        req_dep.db, Question, api_id=question_api_id
+    db_question = cast(
+        Question,
+        load_and_check(
+            req_dep.db,
+            req_dep.current_user,
+            Action.READ,
+            question_api_id,
+        ),
     )
     if response.api_identifier:
-        db_response = api_identifier_crud.get_model(
-            req_dep.db, Response, api_id=response.api_identifier
+        db_response = cast(
+            Response,
+            load_and_check(
+                req_dep.db,
+                req_dep.current_user,
+                Action.READ,
+                response.api_identifier,
+            ),
         )
+        _require_response_owner_or_admin(req_dep.current_user, db_response)
         question_crud.edit_response(
             req_dep.db,
             db_response,
             response.response_text,
         )
     elif response.participant_api_identifier:
+        if (
+            response.participant_api_identifier
+            != req_dep.current_user.api_identifier
+            and req_dep.current_user != db_question.letter.group.admin
+        ):
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail=(
+                    "Only the response author or group admin can modify "
+                    "this response"
+                ),
+            )
         db_responses = [
             resp
             for resp in db_question.responses
@@ -75,13 +119,22 @@ async def upsert_response(
         ]
         if db_responses:
             db_response = db_responses[0]
+            _require_response_owner_or_admin(req_dep.current_user, db_response)
             question_crud.edit_response(
                 req_dep.db,
                 db_response,
                 response.response_text,
             )
         else:
-            db_response = question_crud.add_response(
+            if (
+                response.participant_api_identifier
+                != req_dep.current_user.api_identifier
+            ):
+                raise HTTPException(
+                    status_code=status.HTTP_403_FORBIDDEN,
+                    detail="Cannot create a response for another participant",
+                )
+            question_crud.add_response(
                 req_dep.db,
                 db_question,
                 req_dep.current_user,
@@ -116,10 +169,17 @@ async def upload_image(
         Question: Updated question with the response containing the new image
 
     Raises:
+        PermissionError: If the caller is not a member of the question's group
         IDNotFoundException: If question with given API ID is not found
     """
-    db_question = api_identifier_crud.get_model(
-        req_dep.db, Question, api_id=question_api_id
+    db_question = cast(
+        Question,
+        load_and_check(
+            req_dep.db,
+            req_dep.current_user,
+            Action.READ,
+            question_api_id,
+        ),
     )
     response = [
         resp
@@ -163,10 +223,17 @@ async def delete_question(
         req_dep (AuthenticatedRequestDependencies): Request dependencies including database session and auth
 
     Raises:
-        HTTPException: If question not found, user not authorized, or question has responses
+        PermissionError: If the caller is not a member of the question's group
+        HTTPException: If user not authorized, or question has responses
     """
-    db_question = api_identifier_crud.get_model(
-        req_dep.db, Question, api_id=question_api_id
+    db_question = cast(
+        Question,
+        load_and_check(
+            req_dep.db,
+            req_dep.current_user,
+            Action.READ,
+            question_api_id,
+        ),
     )
 
     # Check if user is authorized to delete the question

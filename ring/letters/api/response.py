@@ -7,11 +7,12 @@ deprecated in favor of the question-level image upload endpoint.
 
 from __future__ import annotations
 
-from fastapi import APIRouter, Depends, HTTPException, UploadFile, status
+from typing import cast
 
-from ring.api_identifier import (
-    util as api_identifier_crud,
-)
+from fastapi import APIRouter, Depends, HTTPException, UploadFile
+
+from ring.authz.authz import load_and_check
+from ring.authz.enforcer import Action
 from ring.fastapp.dependencies import (
     AuthenticatedRequestDependencies,
     get_request_dependencies,
@@ -25,9 +26,25 @@ from ring.letters.crud import (
 from ring.letters.crud.response import delete_image_from_response
 from ring.letters.models.response_model import Response
 from ring.letters.schemas.response import ResponseCreateBase
+from ring.parties.models.user_model import User
 from ring.ring_pydantic.linked_schemas import ResponseLinked
 
 router = APIRouter()
+
+
+def _require_response_owner_or_admin(user: User, response: Response) -> None:
+    """Match the UI: only the author (or group admin) may mutate a response."""
+    if (
+        user == response.participant
+        or user == response.question.letter.group.admin
+    ):
+        return
+    raise HTTPException(
+        status_code=403,
+        detail=(
+            "Only the response author or group admin can modify this response"
+        ),
+    )
 
 
 @router.post(
@@ -52,11 +69,20 @@ async def edit_response(
         Response: Updated response
 
     Raises:
+        PermissionError: If the caller is not a member of the response's group
+        HTTPException: If the caller is not the author or group admin
         IDNotFoundException: If response with given API ID is not found
     """
-    update_response = api_identifier_crud.get_model(
-        req_dep.db, Response, api_id=response_api_id
+    update_response = cast(
+        Response,
+        load_and_check(
+            req_dep.db,
+            req_dep.current_user,
+            Action.READ,
+            response_api_id,
+        ),
     )
+    _require_response_owner_or_admin(req_dep.current_user, update_response)
     question_crud.edit_response(
         req_dep.db,
         update_response,
@@ -91,11 +117,20 @@ async def upload_image(
         Response: Updated response with attached images
 
     Raises:
+        PermissionError: If the caller is not a member of the response's group
+        HTTPException: If the caller is not the author or group admin
         IDNotFoundException: If response with given API ID is not found
     """
-    update_response = api_identifier_crud.get_model(
-        req_dep.db, Response, api_id=response_api_id
+    update_response = cast(
+        Response,
+        load_and_check(
+            req_dep.db,
+            req_dep.current_user,
+            Action.READ,
+            response_api_id,
+        ),
     )
+    _require_response_owner_or_admin(req_dep.current_user, update_response)
     await response_crud.a_upload_image(
         req_dep.db,
         update_response,
@@ -130,12 +165,21 @@ async def delete_image(
         Response: Updated response without the deleted image
 
     Raises:
+        PermissionError: If the caller is not a member of the response's group
+        HTTPException: If the caller is not the author or group admin
         IDNotFoundException: If response with given API ID is not found
         ValueError: If image is not found in the response
     """
-    db_response = api_identifier_crud.get_model(
-        req_dep.db, Response, api_id=response_api_id
+    db_response = cast(
+        Response,
+        load_and_check(
+            req_dep.db,
+            req_dep.current_user,
+            Action.READ,
+            response_api_id,
+        ),
     )
+    _require_response_owner_or_admin(req_dep.current_user, db_response)
 
     delete_image_from_response(
         req_dep.db,
