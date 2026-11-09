@@ -158,6 +158,9 @@ async def add_user_to_group(
 ) -> Group:
     """Add a user to a group.
 
+    Any group member may add members. Callers who are not members of the
+    group receive a generic 403 so resource existence cannot be probed.
+
     Args:
         group_api_id (str): API identifier of the group
         user_api_id (str): API identifier of the user to add
@@ -167,8 +170,15 @@ async def add_user_to_group(
         Group: Updated group
 
     Raises:
-        HTTPException: If group or user not found
+        HTTPException: If the user to add is not found
+        PermissionError: If the group is missing or the caller cannot read it
     """
+    load_and_check(
+        req_dep.db,
+        req_dep.current_user,
+        Action.READ,
+        group_api_id,
+    )
     group = group_crud.add_member(
         req_dep.db, group_api_id=group_api_id, user_api_id=user_api_id
     )
@@ -319,6 +329,10 @@ async def add_members(
 ) -> Group:
     """Add multiple members to a group.
 
+    Any group member may add members or send invites. Callers who are not
+    members of the group receive a generic 403 so resource existence cannot
+    be probed.
+
     Args:
         group_api_id (str): API identifier of the group
         add_members (AddMembers): List of email addresses to invite
@@ -327,13 +341,22 @@ async def add_members(
     Returns:
         Group: Updated group
 
+    Raises:
+        PermissionError: If the group is missing or the caller cannot read it
+
     Note:
         - Existing users will be added directly to the group
         - Non-registered users will receive email invitations
         - New members are automatically added to in-progress and upcoming letters
     """
-    db_group = api_identifier_crud.get_model(
-        req_dep.db, Group, api_id=group_api_id
+    db_group = cast(
+        Group,
+        load_and_check(
+            req_dep.db,
+            req_dep.current_user,
+            Action.READ,
+            group_api_id,
+        ),
     )
     if not add_members.member_emails:
         return db_group
