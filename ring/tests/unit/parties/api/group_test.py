@@ -254,21 +254,23 @@ class TestGroupApi:
     def test_add_member(
         self,
         authenticated_client: TestClient,
+        current_user: User,
         db_session: Session,
     ):
         """Test adding a member to a group.
 
         This test verifies that:
-        1. A user can be added as a member
+        1. A user can be added as a member by the group admin
         2. The response contains the updated group data
         3. The user is actually added to the group
         4. The database state is updated correctly
 
         Args:
             authenticated_client (TestClient): Authenticated test client
+            current_user (User): Currently authenticated user (group admin)
             db_session (Session): Database session
         """
-        group = GroupFactory.create()
+        group = GroupFactory.create(admin=current_user)
         db_session.commit()
 
         user = UserFactory.create()
@@ -291,6 +293,7 @@ class TestGroupApi:
     def test_add_member_duplicate(
         self,
         authenticated_client: TestClient,
+        current_user: User,
         db_session: Session,
     ):
         """Test adding a member who is already in the group.
@@ -303,9 +306,10 @@ class TestGroupApi:
 
         Args:
             authenticated_client (TestClient): Authenticated test client
+            current_user (User): Currently authenticated user (group admin)
             db_session (Session): Database session
         """
-        group = GroupFactory.create()
+        group = GroupFactory.create(admin=current_user)
         user = UserFactory.create()
         group.members.append(user)
         db_session.commit()
@@ -325,21 +329,24 @@ class TestGroupApi:
     def test_add_member_not_found(
         self,
         authenticated_client: TestClient,
+        current_user: User,
         db_session: Session,
     ):
         """Test adding a non-existent member to a group.
 
         This test verifies that:
-        1. Adding a non-existent user fails
-        2. Adding to a non-existent group fails
+        1. Adding a non-existent user fails with 404
+        2. Adding to a missing/inaccessible group fails with 403
+           (load_and_check anti-enumeration)
         3. The response contains the correct error message
         4. The database state remains unchanged
 
         Args:
             authenticated_client (TestClient): Authenticated test client
+            current_user (User): Currently authenticated user (group admin)
             db_session (Session): Database session
         """
-        group = GroupFactory.create()
+        group = GroupFactory.create(admin=current_user)
         db_session.commit()
 
         response = authenticated_client.post(
@@ -354,9 +361,9 @@ class TestGroupApi:
             f"/parties/group/invalid-group:add_member/invalid-user"
         )
 
-        assert response.status_code == 404
+        assert response.status_code == 403
         data = response.json()
-        assert_api_model_not_found(data, Group, ["invalid-group"])
+        assert data == {"detail": "Not authorized to access this resource"}
 
     def test_add_members(
         self,
