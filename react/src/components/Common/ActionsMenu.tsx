@@ -5,11 +5,13 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
+import { useQuery } from "@tanstack/react-query"
 import { Edit, MoreVertical, Settings, User, UserPlus } from "lucide-react"
 import { useState } from "react"
 
 import { useNavigate } from "@tanstack/react-router"
 import type { GroupLinked, UserLinked } from "../../client"
+import { readUserMePartiesMeGetOptions } from "../../client/@tanstack/react-query.gen"
 import EditUser from "../Admin/EditUser"
 import ImpersonateUser from "../Admin/ImpersonateUser"
 import AddMembers from "../Groups/AddMembers"
@@ -26,6 +28,14 @@ const ActionsMenu = ({ type, value, disabled }: ActionsMenuProps) => {
   const [isAddMembersOpen, setIsAddMembersOpen] = useState(false)
   const [isImpersonateOpen, setIsImpersonateOpen] = useState(false)
   const navigate = useNavigate()
+  // Subscribe so admin-only items (Add Members) update when /me is
+  // refetched or overwritten in cache. getQueryData alone never re-renders.
+  const { data: currentUser } = useQuery({
+    ...readUserMePartiesMeGetOptions(),
+  })
+  const isGroupAdmin =
+    type === "Group" &&
+    (value as GroupLinked).admin.api_identifier === currentUser?.api_identifier
 
   return (
     <>
@@ -56,10 +66,12 @@ const ActionsMenu = ({ type, value, disabled }: ActionsMenuProps) => {
           )}
           {type === "Group" && (
             <>
-              <DropdownMenuItem onClick={() => setIsAddMembersOpen(true)}>
-                <UserPlus className="h-4 w-4" />
-                Add Members
-              </DropdownMenuItem>
+              {isGroupAdmin && (
+                <DropdownMenuItem onClick={() => setIsAddMembersOpen(true)}>
+                  <UserPlus className="h-4 w-4" />
+                  Add Members
+                </DropdownMenuItem>
+              )}
               <DropdownMenuItem
                 onClick={() =>
                   navigate({
