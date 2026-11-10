@@ -20,7 +20,7 @@ from ring.api_identifier import (
 )
 from ring.authz.authz import load_and_check
 from ring.authz.enforcer import Action
-from ring.authz.grants import require_permission
+from ring.authz.grants import grant_permission, require_permission
 from ring.authz.permission_grant import Permission
 from ring.fastapp.dependencies import (
     AuthenticatedRequestDependencies,
@@ -150,6 +150,13 @@ async def add_next_letter(
         letter_type=letter_type,
         title=letter.title,
     )
+    if letter_type == LetterType.ADHOC:
+        grant_permission(
+            req_dep.db,
+            req_dep.current_user.api_identifier,
+            db_letter.api_identifier,
+            Permission.ADMIN,
+        )
     req_dep.db.commit()
     return db_letter
 

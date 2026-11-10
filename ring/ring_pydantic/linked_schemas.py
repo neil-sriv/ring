@@ -63,6 +63,22 @@ def _populate_letter_send_threshold_fields[T: BaseModel](
     )
 
 
+def _caller_can_admin(resource: Any) -> bool:
+    if isinstance(resource, BaseModel):
+        return False
+    from ring.authz.grants import caller_can_admin
+
+    return caller_can_admin(resource)
+
+
+def _with_caller_can_admin[T: BaseModel](model: T, resource: Any) -> T:
+    if isinstance(resource, BaseModel):
+        return model
+    return model.model_copy(
+        update={"caller_can_admin": _caller_can_admin(resource)}
+    )
+
+
 class UserLinked(User):
     """User model with group memberships.
 
@@ -88,11 +104,21 @@ class GroupLinked(Group):
         members (list[UserUnlinked]): Users who are members of the group
         admin (UserUnlinked): The group administrator
         default_questions (list[QuestionUnlinked]): Default questions for group letters
+        caller_can_admin (bool): Whether the caller holds admin on this group
     """
 
     members: list["UserUnlinked"]
     admin: "UserUnlinked"
     default_questions: list["QuestionUnlinked"]
+
+    @model_validator(mode="wrap")
+    @classmethod
+    def populate_caller_can_admin(
+        cls,
+        data: Any,
+        handler: ModelWrapValidatorHandler[Self],
+    ) -> Self:
+        return _with_caller_can_admin(handler(data), data)
 
 
 class ScheduleLinked(Schedule):
@@ -154,7 +180,8 @@ class MinimalLetter(Letter):
         handler: ModelWrapValidatorHandler[Self],
     ) -> Self:
         model = handler(data)
-        return _populate_letter_send_threshold_fields(model, data)
+        model = _populate_letter_send_threshold_fields(model, data)
+        return _with_caller_can_admin(model, data)
 
 
 class PublicLetter(Letter):
@@ -190,7 +217,8 @@ class PublicLetter(Letter):
     ) -> Self:
         """Fill send-threshold progress fields when validating from ORM letters."""
         model = handler(data)
-        return _populate_letter_send_threshold_fields(model, data)
+        model = _populate_letter_send_threshold_fields(model, data)
+        return _with_caller_can_admin(model, data)
 
 
 class DashboardQuestion(Question):
