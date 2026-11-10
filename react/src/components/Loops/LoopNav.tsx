@@ -2,13 +2,10 @@ import { Plus } from "lucide-react"
 import { useState } from "react"
 
 import { Button } from "@/components/ui/button"
-import { useQuery, useQueryClient } from "@tanstack/react-query"
+import { useQueryClient } from "@tanstack/react-query"
 import { useRouter } from "@tanstack/react-router"
 import type { GroupLinked, MinimalLetter } from "../../client"
-import {
-  listLettersLettersLettersGetQueryKey,
-  readUserMePartiesMeGetOptions,
-} from "../../client/@tanstack/react-query.gen"
+import { listLettersLettersLettersGetQueryKey } from "../../client/@tanstack/react-query.gen"
 import AddLetter from "./AddLoop"
 
 type LoopNavProps = {
@@ -22,11 +19,6 @@ function LoopNav(props: LoopNavProps): JSX.Element {
     props.loops.filter((loop) => loop.status === "UPCOMING").length === 0
   const queryClient = useQueryClient()
   const router = useRouter()
-  // Subscribe so admin chrome ("Start Next Loop") updates when /me is
-  // refetched or overwritten in cache. getQueryData alone never re-renders.
-  const { data: currentUser } = useQuery({
-    ...readUserMePartiesMeGetOptions(),
-  })
 
   const onClick = (): void => {
     queryClient.invalidateQueries({
@@ -40,7 +32,7 @@ function LoopNav(props: LoopNavProps): JSX.Element {
   return (
     <>
       <div className="flex">
-        {props.group.admin.api_identifier === currentUser?.api_identifier && (
+        {props.group.caller_can_admin && (
           <Button onClick={() => onClick()} disabled={!enabled}>
             <Plus className="h-4 w-4" />
             {enabled ? "Start Next Loop" : "Upcoming loop scheduled"}

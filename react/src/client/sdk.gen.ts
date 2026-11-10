@@ -886,7 +886,8 @@ export const bulkUpdateGroupKeyValuesPartiesGroupGroupApiIdKeyValueBulkUpdatePos
  * Create a new letter for a group.
  *
  * Creates a new letter with default questions if there are no letters
- * currently in progress or upcoming for the group.
+ * currently in progress or upcoming for the group. Creating the next
+ * cyclic letter requires admin permission on the group.
  *
  * Args:
  * letter (LetterCreate): Letter creation parameters
@@ -897,6 +898,7 @@ export const bulkUpdateGroupKeyValuesPartiesGroupGroupApiIdKeyValueBulkUpdatePos
  *
  * Raises:
  * ValueError: If there is already a letter in progress or upcoming
+ * HTTPException: If the caller lacks admin permission on the group
  */
 export const addNextLetterLettersLetterPost = <ThrowOnError extends boolean = false>(options: Options<AddNextLetterLettersLetterPostData, ThrowOnError>) => {
     return (options.client ?? _heyApiClient).post<AddNextLetterLettersLetterPostResponse, AddNextLetterLettersLetterPostError, ThrowOnError>({
@@ -940,6 +942,7 @@ export const addNextLetterLettersLetterLetterTypePost = <ThrowOnError extends bo
  * List letters for a specific group.
  *
  * Retrieves a paginated list of letters belonging to the specified group.
+ * Caller must be a member of the group.
  *
  * Args:
  * group_api_id (str): API identifier of the group
@@ -967,15 +970,15 @@ export const listLettersLettersLettersGet = <ThrowOnError extends boolean = fals
  * Read Letter
  * Retrieve a specific letter by its API identifier.
  *
+ * Caller must be a member of the letter's group. Missing letters look like
+ * forbidden access so callers cannot probe for ids.
+ *
  * Args:
  * letter_api_id (str): API identifier of the letter
  * req_dep (AuthenticatedRequestDependencies): Request dependencies including database session and auth
  *
  * Returns:
  * Letter: The requested letter
- *
- * Raises:
- * IDNotFoundException: If letter with given API ID is not found
  */
 export const readLetterLettersLetterLetterApiIdGet = <ThrowOnError extends boolean = false>(options: Options<ReadLetterLettersLetterLetterApiIdGetData, ThrowOnError>) => {
     return (options.client ?? _heyApiClient).get<ReadLetterLettersLetterLetterApiIdGetResponse, ReadLetterLettersLetterLetterApiIdGetError, ThrowOnError>({
@@ -1033,7 +1036,8 @@ export const listDashboardLettersLettersLettersDashboardGet = <ThrowOnError exte
  *
  * Raises:
  * AssertionError: If new send time violates timing constraints
- * IDNotFoundException: If letter with given API ID is not found
+ * HTTPException: If the caller lacks admin permission on the letter
+ * PermissionError: If the letter is missing or the caller cannot read it
  */
 export const editLetterLettersLetterLetterApiIdEditLetterPost = <ThrowOnError extends boolean = false>(options: Options<EditLetterLettersLetterLetterApiIdEditLetterPostData, ThrowOnError>) => {
     return (options.client ?? _heyApiClient).post<EditLetterLettersLetterLetterApiIdEditLetterPostResponse, EditLetterLettersLetterLetterApiIdEditLetterPostError, ThrowOnError>({
@@ -1065,7 +1069,8 @@ export const editLetterLettersLetterLetterApiIdEditLetterPost = <ThrowOnError ex
  * :type question: QuestionCreate
  * :param req_dep: Request dependencies including database session and auth
  * :type req_dep: AuthenticatedRequestDependencies
- * :raises IDNotFoundException: If letter or author with given API ID is not found
+ * :raises PermissionError: If the caller cannot read the letter
+ * :raises IDNotFoundException: If author with given API ID is not found
  * :return: Updated letter with the new question
  * :rtype: Letter
  */
@@ -1230,8 +1235,8 @@ export const uploadImageQuestionsQuestionQuestionApiIdUploadImagePost = <ThrowOn
  * Delete Question
  * Delete a question.
  *
- * Only the question author or group admin can delete a question.
- * Questions with responses cannot be deleted.
+ * Only the question author, or someone with admin permission on the
+ * letter, can delete a question. Questions with responses cannot be deleted.
  *
  * Args:
  * question_api_id (str): API identifier of the question to delete

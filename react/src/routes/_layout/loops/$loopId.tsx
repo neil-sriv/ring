@@ -1,5 +1,5 @@
 import { Button } from "@/components/ui/button"
-import { useQuery, useSuspenseQuery } from "@tanstack/react-query"
+import { useSuspenseQuery } from "@tanstack/react-query"
 import { Link, createFileRoute } from "@tanstack/react-router"
 import { Plus } from "lucide-react"
 import { Suspense, useState } from "react"
@@ -8,7 +8,6 @@ import type { PublicLetter } from "../../../client"
 import {
   readGroupPartiesGroupGroupApiIdGetOptions,
   readLetterLettersLetterLetterApiIdGetOptions,
-  readUserMePartiesMeGetOptions,
 } from "../../../client/@tanstack/react-query.gen"
 import DraftLoop from "../../../components/Loops/DraftLoop"
 import EditLetter from "../../../components/Loops/EditLoop"
@@ -67,15 +66,9 @@ function IssueContent() {
       path: { group_api_id: loop.group.api_identifier },
     }),
   })
-  // Subscribe so admin chrome (Edit Loop, reply tracker) updates when /me
-  // changes in cache. getQueryData alone never re-renders this page.
-  const { data: currentUser } = useQuery({
-    ...readUserMePartiesMeGetOptions(),
-  })
   const { spotify, spotify_action, spotify_error } = Route.useSearch()
   const localDueDate = new Date(loop.send_at)
-  const isGroupAdmin =
-    group.admin.api_identifier === currentUser?.api_identifier
+  const canManageLoop = loop.caller_can_admin === true
   const [editLoopOpen, setEditLoopOpen] = useState(false)
   const [addQuestionOpen, setAddQuestionOpen] = useState(false)
   const [generateQuestionOpen, setGenerateQuestionOpen] = useState(false)
@@ -108,7 +101,7 @@ function IssueContent() {
               </p>
             )}
           </div>
-          {isGroupAdmin && loop.status !== "SENT" && (
+          {canManageLoop && loop.status !== "SENT" && (
             <Button variant="outline" onClick={() => setEditLoopOpen(true)}>
               Edit Loop
             </Button>
@@ -118,7 +111,7 @@ function IssueContent() {
 
       {/* Reply tracker: everyone sees it while the loop is in progress;
           once sent, the "Didn't reply" view stays admin-only. */}
-      {(loop.status === "IN_PROGRESS" || isGroupAdmin) && (
+      {(loop.status === "IN_PROGRESS" || canManageLoop) && (
         <div className="mt-6">
           <LoopReplyTracker loop={loop} />
         </div>
@@ -142,7 +135,7 @@ function IssueContent() {
         {loop.status === "SENT" ? (
           <PublishedLoop loop={loop} />
         ) : (
-          <DraftLoop loop={loop} isGroupAdmin={isGroupAdmin} />
+          <DraftLoop loop={loop} canManage={canManageLoop} />
         )}
       </div>
       <div className="mt-10 border-t pt-6">
