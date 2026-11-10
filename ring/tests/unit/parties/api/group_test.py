@@ -634,6 +634,6 @@ class TestGroupApi:
 
         assert response.status_code == 403
         assert response.json() == {
-            "detail": "Only the group admin can update the group information"
+            "detail": "Not authorized to update the group information"
         }
         assert group.cycle_length == original_cycle_length
