@@ -11,6 +11,8 @@ from typing import TYPE_CHECKING
 
 from fastapi import APIRouter, Depends
 
+from ring.authz.authz import load_and_check
+from ring.authz.enforcer import Action
 from ring.fastapp.dependencies import (
     AuthenticatedRequestDependencies,
     get_request_dependencies,
@@ -38,6 +40,9 @@ async def get_schedule_for_group(
 ) -> Schedule:
     """Get a group's schedule by its API identifier.
 
+    Caller must be a member of the group. Missing groups look like forbidden
+    access so callers cannot probe for ids.
+
     Args:
         group_api_id: API identifier of the group
         req_dep: Request dependencies including database session
@@ -48,4 +53,10 @@ async def get_schedule_for_group(
     Raises:
         HTTPException: If the group is not found or user lacks permission
     """
+    load_and_check(
+        req_dep.db,
+        req_dep.current_user,
+        Action.READ,
+        group_api_id,
+    )
     return schedule_crud.get_schedule_for_group(req_dep.db, group_api_id)
