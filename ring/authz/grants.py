@@ -291,23 +291,20 @@ def register_grant_sync() -> None:
         return
     from sqlalchemy import event
 
-    syncing = False
-
     @event.listens_for(Session, "before_flush")
     def _sync_baseline_grants(
         db: Session,
         flush_context: object,
         instances: object,
     ) -> None:
-        nonlocal syncing
-        if syncing:
+        if db.info.get("permission_grant_syncing"):
             return
-        syncing = True
+        db.info["permission_grant_syncing"] = True
         try:
             with db.no_autoflush:
                 for group in _groups_pending_baseline_sync(db):
                     sync_group_baseline_grants(db, group)
         finally:
-            syncing = False
+            db.info.pop("permission_grant_syncing", None)
 
     _SYNC_REGISTERED = True
