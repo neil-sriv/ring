@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from datetime import timezone
-from typing import Sequence
+from typing import Sequence, cast
 
 from fastapi import APIRouter, Depends, HTTPException, status
 
@@ -9,6 +9,8 @@ from ring.api_identifier import (
     util as api_identifier_crud,
 )
 from ring.async_scheduler.scheduler import scheduler
+from ring.authz.authz import load_and_check
+from ring.authz.enforcer import Action
 from ring.fastapp.dependencies import (
     AuthenticatedRequestDependencies,
     get_request_dependencies,
@@ -108,6 +110,9 @@ async def read_group(
 ) -> Group:
     """Get details of a specific group.
 
+    Caller must be a member of the group. Missing groups look like forbidden
+    access so callers cannot probe for ids.
+
     Args:
         group_api_id (str): API identifier of the group
         req_dep (AuthenticatedRequestDependencies): Request dependencies
@@ -116,19 +121,17 @@ async def read_group(
         Group: Group details
 
     Raises:
-        HTTPException: If group not found or user is not a member
+        PermissionError: If the group is missing or the caller cannot read it
     """
-    db_group = api_identifier_crud.get_model(
-        req_dep.db,
+    return cast(
         Group,
-        api_id=group_api_id,
+        load_and_check(
+            req_dep.db,
+            req_dep.current_user,
+            Action.READ,
+            group_api_id,
+        ),
     )
-    if req_dep.current_user not in db_group.members:
-        raise HTTPException(
-            status.HTTP_404_NOT_FOUND,
-            "Group not found",
-        )
-    return db_group
 
 
 @router.post(
@@ -184,16 +187,18 @@ async def remove_user_from_group(
         Group: Updated group
 
     Raises:
-        HTTPException: If group not found, user not authorized, or invalid operation
+        HTTPException: If user not authorized, or invalid operation
+        PermissionError: If the group is missing or the caller cannot read it
     """
-    db_group = api_identifier_crud.get_model(
-        req_dep.db, Group, api_id=group_api_id
+    db_group = cast(
+        Group,
+        load_and_check(
+            req_dep.db,
+            req_dep.current_user,
+            Action.READ,
+            group_api_id,
+        ),
     )
-    if req_dep.current_user not in db_group.members:
-        raise HTTPException(
-            status.HTTP_404_NOT_FOUND,
-            "Group not found",
-        )
     if req_dep.current_user != db_group.admin:
         raise HTTPException(
             status.HTTP_403_FORBIDDEN,
@@ -242,6 +247,7 @@ async def update_group(
 
     Raises:
         HTTPException: If no updates provided, user not authorized, or invalid cycle length
+        PermissionError: If the group is missing or the caller cannot read it
     """
     if (
         not group.name
@@ -250,8 +256,14 @@ async def update_group(
         and "min_responder_ratio" not in group.model_fields_set
     ):
         raise HTTPException(status.HTTP_400_BAD_REQUEST, "No updates provided")
-    db_group = api_identifier_crud.get_model(
-        req_dep.db, Group, api_id=group_api_id
+    db_group = cast(
+        Group,
+        load_and_check(
+            req_dep.db,
+            req_dep.current_user,
+            Action.READ,
+            group_api_id,
+        ),
     )
     if req_dep.current_user != db_group.admin:
         raise HTTPException(
@@ -360,10 +372,17 @@ async def replace_group_default_questions(
         Group: Updated group
 
     Raises:
-        HTTPException: If group not found or user not authorized
+        HTTPException: If user not authorized
+        PermissionError: If the group is missing or the caller cannot read it
     """
-    db_group = api_identifier_crud.get_model(
-        req_dep.db, Group, api_id=group_api_id
+    db_group = cast(
+        Group,
+        load_and_check(
+            req_dep.db,
+            req_dep.current_user,
+            Action.READ,
+            group_api_id,
+        ),
     )
     if req_dep.current_user != db_group.admin:
         raise HTTPException(
