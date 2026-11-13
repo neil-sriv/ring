@@ -1,0 +1,16 @@
+{
+  "marker": "zebu-rawsearch-9968b23e",
+  "group_id": "grp_b5dd211c-af87-48d4-a8a2-5c5e19b505b9",
+  "outsider_email": "outsider-f213ee0c@example.com",
+  "member_raw_total": 1,
+  "member_raw_texts": [
+    "zebu-rawsearch-9968b23e secret group notes"
+  ],
+  "outsider_raw_total": 0,
+  "outsider_raw_texts": [],
+  "member_hydrated_total": 1,
+  "outsider_hydrated_total": 0,
+  "assert_member_sees": true,
+  "assert_outsider_empty": true,
+  "assert_hydrated_parity": true
+}
