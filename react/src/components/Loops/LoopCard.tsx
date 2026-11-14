@@ -1,9 +1,9 @@
 import { Badge } from "@/components/ui/badge"
 import { Card } from "@/components/ui/card"
-import { useQueryClient } from "@tanstack/react-query"
+import { useQuery } from "@tanstack/react-query"
 import { Link } from "@tanstack/react-router"
-import type { MinimalLetter, PublicLetter, UserLinked } from "../../client"
-import { readUserMePartiesMeGetQueryKey } from "../../client/@tanstack/react-query.gen"
+import type { MinimalLetter, PublicLetter } from "../../client"
+import { readUserMePartiesMeGetOptions } from "../../client/@tanstack/react-query.gen"
 import { getLoopDisplayTitle } from "../../util/loopDisplay"
 import { formatResponderProgress } from "../../util/loopResponderProgress"
 
@@ -13,10 +13,12 @@ export function LoopCard(props: {
   showLoopTypeLabel?: boolean
   showResponderCount?: boolean
 }): JSX.Element {
-  const queryClient = useQueryClient()
-  const currentUser = queryClient.getQueryData<UserLinked>(
-    readUserMePartiesMeGetQueryKey(),
-  )
+  // Subscribe so unanswered badges update when /me loads or is rewritten in
+  // cache (e.g. impersonation). getQueryData alone never re-renders this card,
+  // so a mount before /me is cached can leave unansweredCount stuck at 0.
+  const { data: currentUser } = useQuery({
+    ...readUserMePartiesMeGetOptions(),
+  })
 
   const sendDate = new Date(props.loop.send_at)
 
