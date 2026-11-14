@@ -79,20 +79,31 @@ async def list_groups(
         get_request_dependencies,
     ),
 ) -> Sequence[Group]:
-    """List all groups a user is a member of.
+    """List all groups the authenticated user is a member of.
+
+    Clients may still send ``user_api_id`` for backwards compatibility, but it
+    must match the current user — another user's id is rejected.
 
     Args:
-        user_api_id (str): API identifier of the user
+        user_api_id (str): API identifier of the user (must be the caller)
         skip (int, optional): Number of records to skip. Defaults to 0.
         limit (int, optional): Maximum number of records to return. Defaults to 100.
         req_dep (AuthenticatedRequestDependencies): Request dependencies
 
     Returns:
         Sequence[Group]: List of groups
+
+    Raises:
+        HTTPException: If ``user_api_id`` does not match the authenticated user
     """
+    if user_api_id != req_dep.current_user.api_identifier:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Cannot list groups for a different user",
+        )
     groups = group_crud.get_groups(
         req_dep.db,
-        user_api_id=user_api_id,
+        user_api_id=req_dep.current_user.api_identifier,
         skip=skip,
         limit=limit,
     )

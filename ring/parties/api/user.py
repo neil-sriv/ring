@@ -156,7 +156,7 @@ async def read_users(
         get_request_dependencies,
     ),
 ) -> Sequence[User]:
-    """Get a list of users with pagination.
+    """Get a list of users with pagination (admin only).
 
     Args:
         skip (int, optional): Number of records to skip. Defaults to 0.
@@ -165,7 +165,13 @@ async def read_users(
 
     Returns:
         Sequence[User]: List of users
+
+    Raises:
+        HTTPException: If the caller is not an admin
     """
+    if not req_dep.current_user.admin:
+        raise HTTPException(status_code=403, detail="Unauthorized")
+
     users = user_crud.get_users(req_dep.db, skip=skip, limit=limit)
     return users
 
@@ -177,7 +183,7 @@ async def read_user_by_id(
         get_request_dependencies,
     ),
 ) -> User:
-    """Get a user by their API identifier.
+    """Get a user by their API identifier (admin only).
 
     Args:
         user_api_id (str): API identifier of the user
@@ -187,8 +193,11 @@ async def read_user_by_id(
         User: User information
 
     Raises:
-        HTTPException: If user not found
+        HTTPException: If the caller is not an admin, or the user is not found
     """
+    if not req_dep.current_user.admin:
+        raise HTTPException(status_code=403, detail="Unauthorized")
+
     db_user = api_identifier_crud.get_model(
         req_dep.db,
         User,
