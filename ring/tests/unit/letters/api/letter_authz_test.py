@@ -1,8 +1,8 @@
 """Authz coverage for letter create / edit / read / add-question.
 
-The UI already hides Start Next Loop and Edit Loop from non-admins. These
-tests pin the matching API gates so membership and admin checks stay enforced
-even when a caller hits the endpoints directly.
+The UI already hides Start Next Loop, Create Adhoc Loop, and Edit Loop from
+non-admins. These tests pin the matching API gates so membership and admin
+checks stay enforced even when a caller hits the endpoints directly.
 """
 
 from __future__ import annotations
@@ -85,7 +85,7 @@ class TestLetterAuthz:
             "Only the group admin can create the next letter"
         )
 
-    def test_member_can_create_adhoc_letter(
+    def test_non_admin_member_cannot_create_adhoc_letter(
         self,
         authenticated_client: TestClient,
         current_user: User,
@@ -93,6 +93,28 @@ class TestLetterAuthz:
     ) -> None:
         admin = UserFactory.create()
         group = GroupFactory.create(admin=admin, members=[admin, current_user])
+        db_session.commit()
+
+        response = authenticated_client.post(
+            "/letters/letter:ADHOC",
+            json={
+                **_send_at_payload(group.api_identifier),
+                "title": "Off cycle",
+            },
+        )
+
+        assert response.status_code == 403
+        assert response.json()["detail"] == (
+            "Only the group admin can create an adhoc letter"
+        )
+
+    def test_admin_can_create_adhoc_letter(
+        self,
+        authenticated_client: TestClient,
+        current_user: User,
+        db_session: Session,
+    ) -> None:
+        group = GroupFactory.create(admin=current_user)
         db_session.commit()
 
         response = authenticated_client.post(
