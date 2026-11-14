@@ -20,6 +20,7 @@ from ring.parties.models.user_model import User
 from ring.tests.factories.letters.letter_factory import LetterFactory
 from ring.tests.factories.parties.group_factory import GroupFactory
 from ring.tests.factories.parties.user_factory import UserFactory
+from ring.tests.unit.conftest import TClientForUser
 
 
 def _send_at_payload(group_api_id: str) -> dict[str, str]:
@@ -373,4 +374,78 @@ class TestLetterPermissionGrants:
         assert response.status_code == 403
         assert response.json()["detail"] == (
             "Not authorized to create the next letter"
+        )
+
+    def test_member_creates_adhoc_and_manages_only_their_loop(
+        self,
+        authenticated_client: TestClient,
+        current_user: User,
+        get_client_for_user: TClientForUser,
+        db_session: Session,
+    ) -> None:
+        admin = UserFactory.create()
+        other = UserFactory.create()
+        outsider = UserFactory.create()
+        group = GroupFactory.create(
+            admin=admin, members=[admin, current_user, other]
+        )
+        db_session.commit()
+
+        created = authenticated_client.post(
+            "/letters/letter:ADHOC",
+            json={**_send_at_payload(group.api_identifier), "title": "Mine"},
+        )
+        assert created.status_code == 200
+        mine = created.json()
+        assert mine["caller_can_admin"] is True
+        assert (
+            _edit(authenticated_client, mine["api_identifier"]).status_code
+            == 200
+        )
+
+        other_client = get_client_for_user(other)
+        other_created = other_client.post(
+            "/letters/letter:ADHOC",
+            json={
+                **_send_at_payload(group.api_identifier),
+                "title": "Theirs",
+            },
+        )
+        assert other_created.status_code == 200
+        theirs = other_created.json()
+        assert theirs["caller_can_admin"] is True
+
+        member_client = get_client_for_user(current_user)
+        denied = _edit(member_client, theirs["api_identifier"])
+        assert denied.status_code == 403
+        assert denied.json()["detail"] == "Not authorized to edit this letter"
+        assert _edit(member_client, mine["api_identifier"]).status_code == 200
+        read_theirs = member_client.get(
+            f"/letters/letter/{theirs['api_identifier']}"
+        )
+        assert read_theirs.status_code == 200
+        assert read_theirs.json()["caller_can_admin"] is False
+        group_as_member = member_client.get(
+            f"/parties/group/{group.api_identifier}"
+        )
+        assert group_as_member.status_code == 200
+        assert group_as_member.json()["caller_can_admin"] is False
+
+        admin_client = get_client_for_user(admin)
+        assert _edit(admin_client, mine["api_identifier"]).status_code == 200
+        assert _edit(admin_client, theirs["api_identifier"]).status_code == 200
+        admin_letter = admin_client.get(
+            f"/letters/letter/{mine['api_identifier']}"
+        )
+        assert admin_letter.json()["caller_can_admin"] is True
+        admin_group = admin_client.get(
+            f"/parties/group/{group.api_identifier}"
+        )
+        assert admin_group.json()["caller_can_admin"] is True
+
+        outsider_client = get_client_for_user(outsider)
+        outsider_edit = _edit(outsider_client, mine["api_identifier"])
+        assert outsider_edit.status_code == 403
+        assert outsider_edit.json()["detail"] == (
+            "Not authorized to access this resource"
         )

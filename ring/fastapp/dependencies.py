@@ -7,6 +7,7 @@ FastAPI's dependency injection system to provide these dependencies to route han
 
 from __future__ import annotations
 
+from collections.abc import AsyncIterator
 from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
@@ -16,6 +17,10 @@ from fastapi import Depends, HTTPException, WebSocket, status
 from loguru import logger
 from mypy_boto3_s3 import S3Client
 
+from ring.authz.grants import (
+    reset_permission_caller,
+    set_permission_caller,
+)
 from ring.parties.crud import user as user_crud
 from ring.parties.models.user_model import User
 from ring.security import decode_token, oauth2_scheme
@@ -82,7 +87,7 @@ async def get_current_user(
 async def get_request_dependencies(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
-) -> AuthenticatedRequestDependencies:
+) -> AsyncIterator[AuthenticatedRequestDependencies]:
     """Get dependencies for authenticated requests.
 
     This dependency combines a database session with an authenticated user.
@@ -94,7 +99,13 @@ async def get_request_dependencies(
     Returns:
         AuthenticatedRequestDependencies: Combined dependencies
     """
-    return AuthenticatedRequestDependencies(db=db, current_user=current_user)
+    token = set_permission_caller(db, current_user)
+    try:
+        yield AuthenticatedRequestDependencies(
+            db=db, current_user=current_user
+        )
+    finally:
+        reset_permission_caller(token)
 
 
 async def get_unauthenticated_request_dependencies(
