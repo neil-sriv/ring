@@ -227,9 +227,9 @@ class TestGroupApi:
             f"/parties/group/{group.api_identifier}"
         )
 
-        assert response.status_code == 404
+        assert response.status_code == 403
         data = response.json()
-        assert data == {"detail": "Group not found"}
+        assert data == {"detail": "Not authorized to access this resource"}
 
     def test_read_group_not_found(
         self,
@@ -237,19 +237,17 @@ class TestGroupApi:
     ):
         """Test reading a non-existent group.
 
-        This test verifies that:
-        1. Reading a non-existent group fails
-        2. The response contains the correct error message
-        3. The response indicates the group was not found
+        Missing groups look like forbidden access so callers cannot probe
+        for ids via membership-gated reads.
 
         Args:
             authenticated_client (TestClient): Authenticated test client
         """
-        response = authenticated_client.get(f"/parties/group/invalid-group")
+        response = authenticated_client.get("/parties/group/invalid-group")
 
-        assert response.status_code == 404
+        assert response.status_code == 403
         data = response.json()
-        assert_api_model_not_found(data, Group, ["invalid-group"])
+        assert data == {"detail": "Not authorized to access this resource"}
 
     def test_add_member(
         self,
@@ -482,9 +480,9 @@ class TestGroupApi:
             f"/parties/group/invalid-group:remove_member/invalid-user"
         )
 
-        assert response.status_code == 404
+        assert response.status_code == 403
         data = response.json()
-        assert_api_model_not_found(data, Group, ["invalid-group"])
+        assert data == {"detail": "Not authorized to access this resource"}
 
     def test_remove_member_not_member(
         self,
