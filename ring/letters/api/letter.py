@@ -20,6 +20,8 @@ from ring.api_identifier import (
 )
 from ring.authz.authz import load_and_check
 from ring.authz.enforcer import Action
+from ring.authz.grants import require_permission
+from ring.authz.permission_grant import Permission
 from ring.fastapp.dependencies import (
     AuthenticatedRequestDependencies,
     get_request_dependencies,
@@ -55,15 +57,6 @@ def _assert_no_live_letter(
         )
 
 
-def _require_group_admin(user: User, group: Group, action: str) -> None:
-    """Match the UI: Start Next Loop / Edit Loop / reorder are admin-only."""
-    if user != group.admin:
-        raise HTTPException(
-            status_code=403,
-            detail=f"Only the group admin can {action}",
-        )
-
-
 @router.post("/letter", response_model=LetterSchema)
 async def add_next_letter(
     letter: LetterCreate,
@@ -74,8 +67,8 @@ async def add_next_letter(
     """Create a new letter for a group.
 
     Creates a new letter with default questions if there are no letters
-    currently in progress or upcoming for the group. Only the group admin
-    may create the next cyclic letter.
+    currently in progress or upcoming for the group. Creating the next
+    cyclic letter requires admin permission on the group.
 
     Args:
         letter (LetterCreate): Letter creation parameters
@@ -86,7 +79,7 @@ async def add_next_letter(
 
     Raises:
         ValueError: If there is already a letter in progress or upcoming
-        HTTPException: If the caller is not the group admin
+        HTTPException: If the caller lacks admin permission on the group
     """
     db_group = cast(
         Group,
@@ -97,8 +90,12 @@ async def add_next_letter(
             letter.group_api_identifier,
         ),
     )
-    _require_group_admin(
-        req_dep.current_user, db_group, "create the next letter"
+    require_permission(
+        req_dep.db,
+        req_dep.current_user,
+        Permission.ADMIN,
+        db_group,
+        action="create the next letter",
     )
     _assert_no_live_letter(db_group.cyclic_letters)
     db_letter = letter_crud.create_letter_with_questions(
@@ -129,10 +126,22 @@ async def add_next_letter(
         ),
     )
     if letter_type == LetterType.CYCLIC:
-        _require_group_admin(
-            req_dep.current_user, db_group, "create the next letter"
+        require_permission(
+            req_dep.db,
+            req_dep.current_user,
+            Permission.ADMIN,
+            db_group,
+            action="create the next letter",
         )
         _assert_no_live_letter(db_group.cyclic_letters)
+    else:
+        require_permission(
+            req_dep.db,
+            req_dep.current_user,
+            Permission.MEMBER,
+            db_group,
+            action="create an adhoc letter",
+        )
     db_letter = letter_crud.create_letter(
         req_dep.db,
         group_api_id=db_group.api_identifier,
@@ -283,7 +292,7 @@ async def edit_letter(
 
     Raises:
         AssertionError: If new send time violates timing constraints
-        HTTPException: If the caller is not the group admin
+        HTTPException: If the caller lacks admin permission on the letter
         PermissionError: If the letter is missing or the caller cannot read it
     """
     db_letter = cast(
@@ -295,8 +304,12 @@ async def edit_letter(
             letter_api_id,
         ),
     )
-    _require_group_admin(
-        req_dep.current_user, db_letter.group, "edit this letter"
+    require_permission(
+        req_dep.db,
+        req_dep.current_user,
+        Permission.ADMIN,
+        db_letter,
+        action="edit this letter",
     )
     if db_letter.status == LetterStatus.SENT:
         raise HTTPException(
@@ -411,8 +424,12 @@ async def reorder_questions(
             letter_api_id,
         ),
     )
-    _require_group_admin(
-        req_dep.current_user, db_letter.group, "reorder questions"
+    require_permission(
+        req_dep.db,
+        req_dep.current_user,
+        Permission.ADMIN,
+        db_letter,
+        action="reorder questions",
     )
     if db_letter.status not in _LIVE_LETTER_STATUSES:
         raise HTTPException(

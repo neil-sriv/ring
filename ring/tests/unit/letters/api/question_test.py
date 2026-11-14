@@ -115,7 +115,7 @@ class TestQuestionAPI:
         assert response.status_code == 403
         assert (
             response.json()["detail"]
-            == "Only the question author or group admin can delete a question"
+            == "Not authorized to delete this question"
         )
 
         # Verify question still exists
