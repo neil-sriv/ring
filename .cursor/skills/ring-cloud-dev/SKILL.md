@@ -36,12 +36,16 @@ bash dev_util/cloud-health.sh
 
 ## Test login
 
-Seeded on bootstrap (idempotent):
+Seeded on bootstrap (idempotent via [`dev_util/cloud-seed.sh`](../../../dev_util/cloud-seed.sh)):
 
 - Email: `test@example.com`
 - Password: `testpassword123`
+- Sample group: `Cloud Seed Group` (override with `CLOUD_SEED_GROUP_NAME`)
+- Upcoming cyclic letter on that group (send_at ≈ now + `CLOUD_SEED_LETTER_SEND_IN_DAYS`, default 14)
 
 Re-seed manually: `bash dev_util/cloud-seed.sh`
+
+After seed, Home / Groups / Loops should show content for the test user instead of an empty dashboard.
 
 ## API client from browser
 
