@@ -115,6 +115,7 @@ print_ready_banner() {
   API:    http://localhost:8001/api/v1/docs
   Nginx:  https://localhost/api/v1/docs
   Login:  test@example.com / testpassword123
+  Sample: Cloud Seed Group (+ upcoming letter)
   Health: bash dev_util/cloud-health.sh
 ${vite_note}
 EOF
