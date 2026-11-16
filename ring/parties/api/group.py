@@ -9,6 +9,8 @@ from ring.api_identifier import (
     util as api_identifier_crud,
 )
 from ring.async_scheduler.scheduler import scheduler
+from ring.authz.grants import require_permission
+from ring.authz.permission_grant import Permission
 from ring.fastapp.dependencies import (
     AuthenticatedRequestDependencies,
     get_request_dependencies,
@@ -194,11 +196,13 @@ async def remove_user_from_group(
             status.HTTP_404_NOT_FOUND,
             "Group not found",
         )
-    if req_dep.current_user != db_group.admin:
-        raise HTTPException(
-            status.HTTP_403_FORBIDDEN,
-            "Only the group admin can remove members",
-        )
+    require_permission(
+        req_dep.db,
+        req_dep.current_user,
+        Permission.ADMIN,
+        db_group,
+        action="remove members",
+    )
     if user_api_id == req_dep.current_user.api_identifier:
         raise HTTPException(
             status.HTTP_400_BAD_REQUEST,
@@ -253,11 +257,13 @@ async def update_group(
     db_group = api_identifier_crud.get_model(
         req_dep.db, Group, api_id=group_api_id
     )
-    if req_dep.current_user != db_group.admin:
-        raise HTTPException(
-            status.HTTP_403_FORBIDDEN,
-            "Only the group admin can update the group information",
-        )
+    require_permission(
+        req_dep.db,
+        req_dep.current_user,
+        Permission.ADMIN,
+        db_group,
+        action="update the group information",
+    )
     if group.name:
         db_group.name = group.name
     if group.cycle_length is not None:
@@ -365,11 +371,13 @@ async def replace_group_default_questions(
     db_group = api_identifier_crud.get_model(
         req_dep.db, Group, api_id=group_api_id
     )
-    if req_dep.current_user != db_group.admin:
-        raise HTTPException(
-            status.HTTP_403_FORBIDDEN,
-            "Only the group admin can update the default questions",
-        )
+    require_permission(
+        req_dep.db,
+        req_dep.current_user,
+        Permission.ADMIN,
+        db_group,
+        action="update the default questions",
+    )
     replace_default_questions(
         req_dep.db, db_group, default_questions.questions
     )

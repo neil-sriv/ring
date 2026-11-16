@@ -2,8 +2,8 @@
 
 Proposed contract: ``POST /letters/letter/{letter_api_id}:reorder_questions``
 with ``{"question_api_identifiers": [...]}`` listing every question on the
-letter exactly once, in the new display order. Only the group admin may
-reorder, and only while the letter is UPCOMING or IN_PROGRESS. Returns the
+letter exactly once, in the new display order. Admin permission on the
+letter is required, and only while the letter is UPCOMING or IN_PROGRESS. Returns the
 letter with positions 0..n-1 following the submitted order.
 """
 
