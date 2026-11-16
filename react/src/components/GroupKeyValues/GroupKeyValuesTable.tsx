@@ -1,7 +1,7 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query"
 import type { AxiosError } from "axios"
 import { Loader2 } from "lucide-react"
-import { Suspense, lazy, useRef, useState } from "react"
+import { Suspense, lazy, useCallback, useRef, useState } from "react"
 import type {
   FullReplaceGroupKeyValuesPartiesGroupGroupApiIdKeyValuePutError,
   GroupKeyValue,
@@ -11,14 +11,24 @@ import {
   readGroupKeyValuesPartiesGroupGroupApiIdKeyValueGetQueryKey,
 } from "../../client/@tanstack/react-query.gen"
 import useCustomToast from "../../hooks/useCustomToast"
+import { useDebouncedFlush } from "../../hooks/useDebouncedFlush"
 import { formatApiErrorDetail } from "../../util/misc"
 
 const ReactJson = lazy(() => import("react-json-view"))
 
 type SaveStatus = "idle" | "saving" | "saved" | "error"
 
+const SAVE_DEBOUNCE_MS = 1000
+
 function cloneKeyValues(value: Record<string, unknown>) {
   return structuredClone(value)
+}
+
+function sameKeyValues(
+  left: Record<string, unknown>,
+  right: Record<string, unknown>,
+) {
+  return JSON.stringify(left) === JSON.stringify(right)
 }
 
 function GroupStoreSaveStatus({ status }: { status: SaveStatus }) {
@@ -128,7 +138,14 @@ export function GroupKeyValuesTable({
     },
   })
 
-  function flushLatest() {
+  const flushLatest = useCallback(() => {
+    if (
+      sameKeyValues(latestPayloadRef.current, lastSavedRef.current) &&
+      !saveInFlightRef.current
+    ) {
+      pendingFlushRef.current = false
+      return
+    }
     if (saveInFlightRef.current) {
       pendingFlushRef.current = true
       return
@@ -143,12 +160,22 @@ export function GroupKeyValuesTable({
         key_values: payload,
       },
     })
-  }
+  }, [addKey, groupApiId])
+
+  // Coalesce keystrokes / rapid field edits into one PUT, same window as
+  // draft response autosave. Unmount / pagehide flush covers Store tab switches.
+  const { schedule: scheduleSave } = useDebouncedFlush(
+    flushLatest,
+    SAVE_DEBOUNCE_MS,
+  )
 
   const handleEdit = ({ updated_src }: { updated_src: any }) => {
     setEditableData(updated_src)
     latestPayloadRef.current = updated_src
-    flushLatest()
+    setSaveStatus(
+      sameKeyValues(updated_src, lastSavedRef.current) ? "saved" : "idle",
+    )
+    scheduleSave()
   }
 
   return (
