@@ -65,6 +65,7 @@ class Letter(LetterBase):
     created_at: AwareDatetime
     title: str | None = None
     letter_type: LetterType
+    caller_can_admin: bool = False
 
 
 class LetterUnlinked(Letter):

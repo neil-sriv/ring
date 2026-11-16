@@ -78,6 +78,7 @@ class Group(GroupBase):
     created_at: AwareDatetime
     cycle_length: int
     min_responder_ratio: float | None = None
+    caller_can_admin: bool = False
 
 
 class GroupUnlinked(Group):

@@ -9,6 +9,7 @@ group satisfies ``admin`` and ``member`` on that group's loops. An explicit
 
 from __future__ import annotations
 
+from contextvars import ContextVar, Token
 from typing import Iterable
 
 from fastapi import HTTPException, status
@@ -24,6 +25,10 @@ from ring.parties.models.user_model import User
 
 _GRANT_CACHE = "permission_grant_cache"
 _SYNC_REGISTERED = False
+_caller: ContextVar[tuple[Session, User] | None] = ContextVar(
+    "permission_caller",
+    default=None,
+)
 
 
 def subject_api_ids(user: User) -> list[str]:
@@ -101,6 +106,26 @@ def holds_permission(
             if resource_api_id in ancestors and granted in allowed:
                 return True
     return False
+
+
+def set_permission_caller(
+    db: Session, user: User
+) -> Token[tuple[Session, User] | None]:
+    """Remember the caller while a request serializes permission flags."""
+    return _caller.set((db, user))
+
+
+def reset_permission_caller(token: Token[tuple[Session, User] | None]) -> None:
+    _caller.reset(token)
+
+
+def caller_can_admin(resource: APIIdentified) -> bool:
+    """Whether the active request caller holds admin on ``resource``."""
+    current = _caller.get()
+    if current is None:
+        return False
+    db, user = current
+    return holds_permission(db, user, Permission.ADMIN, resource)
 
 
 def require_permission(
