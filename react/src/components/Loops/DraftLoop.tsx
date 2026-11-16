@@ -6,11 +6,10 @@ import { useReorderLetterQuestions } from "./useReorderLetterQuestions"
 
 function DraftLoop({
   loop,
-  isGroupAdmin,
-}: { loop: PublicLetter; isGroupAdmin: boolean }) {
+  canManage,
+}: { loop: PublicLetter; canManage: boolean }) {
   const questions = questionsInDisplayOrder(loop.questions)
-  const canReorder =
-    isGroupAdmin && loop.status !== "SENT" && questions.length > 1
+  const canReorder = canManage && loop.status !== "SENT" && questions.length > 1
   const reorder = useReorderLetterQuestions(loop.api_identifier)
   const orderedIds = questions.map((question) => question.api_identifier)
 
@@ -36,7 +35,7 @@ function DraftLoop({
               question={question}
               readOnly={loop.status === "UPCOMING"}
               loopApiId={loop.api_identifier}
-              isGroupAdmin={isGroupAdmin}
+              canManage={canManage}
             />
           </div>
         </div>

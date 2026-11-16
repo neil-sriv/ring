@@ -357,12 +357,12 @@ function DraftQuestion({
   question,
   loopApiId,
   readOnly = false,
-  isGroupAdmin = false,
+  canManage = false,
 }: {
   question: PublicQuestion
   loopApiId: string
   readOnly?: boolean
-  isGroupAdmin?: boolean
+  canManage?: boolean
 }): JSX.Element {
   const queryClient = useQueryClient()
   // Subscribe so response matching, author checks, and optimistic participant
@@ -422,7 +422,7 @@ function DraftQuestion({
 
   const isAuthor =
     question.author?.api_identifier === currentUser.api_identifier
-  const canDelete = isAuthor || isGroupAdmin
+  const canDelete = isAuthor || canManage
 
   const isDeleting = deleteMutation.isPending || deleteOnce.pending
 

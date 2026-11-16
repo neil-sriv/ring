@@ -1571,7 +1571,7 @@
           "letters"
         ],
         "summary": "Add Next Letter",
-        "description": "Create a new letter for a group.\n\nCreates a new letter with default questions if there are no letters\ncurrently in progress or upcoming for the group.\n\nArgs:\n    letter (LetterCreate): Letter creation parameters\n    req_dep (AuthenticatedRequestDependencies): Request dependencies including database session and auth\n\nReturns:\n    Letter: Newly created letter\n\nRaises:\n    ValueError: If there is already a letter in progress or upcoming",
+        "description": "Create a new letter for a group.\n\nCreates a new letter with default questions if there are no letters\ncurrently in progress or upcoming for the group. Creating the next\ncyclic letter requires admin permission on the group.\n\nArgs:\n    letter (LetterCreate): Letter creation parameters\n    req_dep (AuthenticatedRequestDependencies): Request dependencies including database session and auth\n\nReturns:\n    Letter: Newly created letter\n\nRaises:\n    ValueError: If there is already a letter in progress or upcoming\n    HTTPException: If the caller lacks admin permission on the group",
         "operationId": "add_next_letter_letters_letter_post",
         "requestBody": {
           "content": {
@@ -1674,7 +1674,7 @@
           "letters"
         ],
         "summary": "List Letters",
-        "description": "List letters for a specific group.\n\nRetrieves a paginated list of letters belonging to the specified group.\n\nArgs:\n    group_api_id (str): API identifier of the group\n    skip (int, optional): Number of records to skip for pagination. Defaults to 0.\n    limit (int, optional): Maximum number of records to return. Defaults to 100.\n    req_dep (AuthenticatedRequestDependencies): Request dependencies including database session and auth\n\nReturns:\n    Sequence[Letter]: List of letters",
+        "description": "List letters for a specific group.\n\nRetrieves a paginated list of letters belonging to the specified group.\nCaller must be a member of the group.\n\nArgs:\n    group_api_id (str): API identifier of the group\n    skip (int, optional): Number of records to skip for pagination. Defaults to 0.\n    limit (int, optional): Maximum number of records to return. Defaults to 100.\n    req_dep (AuthenticatedRequestDependencies): Request dependencies including database session and auth\n\nReturns:\n    Sequence[Letter]: List of letters",
         "operationId": "list_letters_letters_letters__get",
         "security": [
           {
@@ -1762,7 +1762,7 @@
           "letters"
         ],
         "summary": "Read Letter",
-        "description": "Retrieve a specific letter by its API identifier.\n\nArgs:\n    letter_api_id (str): API identifier of the letter\n    req_dep (AuthenticatedRequestDependencies): Request dependencies including database session and auth\n\nReturns:\n    Letter: The requested letter\n\nRaises:\n    IDNotFoundException: If letter with given API ID is not found",
+        "description": "Retrieve a specific letter by its API identifier.\n\nCaller must be a member of the letter's group. Missing letters look like\nforbidden access so callers cannot probe for ids.\n\nArgs:\n    letter_api_id (str): API identifier of the letter\n    req_dep (AuthenticatedRequestDependencies): Request dependencies including database session and auth\n\nReturns:\n    Letter: The requested letter",
         "operationId": "read_letter_letters_letter__letter_api_id__get",
         "security": [
           {
@@ -1837,7 +1837,7 @@
           "letters"
         ],
         "summary": "Edit Letter",
-        "description": "Update a letter's details.\n\nUpdates the send time of a letter. For upcoming letters, ensures the new\nsend time is after any in-progress letter's send time.\n\nArgs:\n    letter_api_id (str): API identifier of the letter to edit\n    letter (LetterUpdate): Updated letter details\n    req_dep (AuthenticatedRequestDependencies): Request dependencies including database session and auth\n\nReturns:\n    Letter: Updated letter\n\nRaises:\n    AssertionError: If new send time violates timing constraints\n    IDNotFoundException: If letter with given API ID is not found",
+        "description": "Update a letter's details.\n\nUpdates the send time of a letter. For upcoming letters, ensures the new\nsend time is after any in-progress letter's send time.\n\nArgs:\n    letter_api_id (str): API identifier of the letter to edit\n    letter (LetterUpdate): Updated letter details\n    req_dep (AuthenticatedRequestDependencies): Request dependencies including database session and auth\n\nReturns:\n    Letter: Updated letter\n\nRaises:\n    AssertionError: If new send time violates timing constraints\n    HTTPException: If the caller lacks admin permission on the letter\n    PermissionError: If the letter is missing or the caller cannot read it",
         "operationId": "edit_letter_letters_letter__letter_api_id__edit_letter_post",
         "security": [
           {
@@ -1895,7 +1895,7 @@
           "letters"
         ],
         "summary": "Add Question",
-        "description": "Add a new question to a letter.\n\nCreates and adds a new question to the specified letter. The question can\noptionally be associated with an author.\n\n:param letter_api_id: API identifier of the letter\n:type letter_api_id: str\n:param question: Question creation parameters\n:type question: QuestionCreate\n:param req_dep: Request dependencies including database session and auth\n:type req_dep: AuthenticatedRequestDependencies\n:raises IDNotFoundException: If letter or author with given API ID is not found\n:return: Updated letter with the new question\n:rtype: Letter",
+        "description": "Add a new question to a letter.\n\nCreates and adds a new question to the specified letter. The question can\noptionally be associated with an author.\n\n:param letter_api_id: API identifier of the letter\n:type letter_api_id: str\n:param question: Question creation parameters\n:type question: QuestionCreate\n:param req_dep: Request dependencies including database session and auth\n:type req_dep: AuthenticatedRequestDependencies\n:raises PermissionError: If the caller cannot read the letter\n:raises IDNotFoundException: If author with given API ID is not found\n:return: Updated letter with the new question\n:rtype: Letter",
         "operationId": "add_question_letters_letter__letter_api_id__add_question_post",
         "security": [
           {
@@ -2233,7 +2233,7 @@
           "questions"
         ],
         "summary": "Delete Question",
-        "description": "Delete a question.\n\nOnly the question author or group admin can delete a question.\nQuestions with responses cannot be deleted.\n\nArgs:\n    question_api_id (str): API identifier of the question to delete\n    req_dep (AuthenticatedRequestDependencies): Request dependencies including database session and auth\n\nRaises:\n    HTTPException: If question not found, user not authorized, or question has responses",
+        "description": "Delete a question.\n\nOnly the question author, or someone with admin permission on the\nletter, can delete a question. Questions with responses cannot be deleted.\n\nArgs:\n    question_api_id (str): API identifier of the question to delete\n    req_dep (AuthenticatedRequestDependencies): Request dependencies including database session and auth\n\nRaises:\n    HTTPException: If question not found, user not authorized, or question has responses",
         "operationId": "delete_question_questions_question__question_api_id__delete",
         "security": [
           {
@@ -3862,6 +3862,11 @@
           "letter_type": {
             "$ref": "#/components/schemas/LetterType"
           },
+          "caller_can_admin": {
+            "type": "boolean",
+            "title": "Caller Can Admin",
+            "default": false
+          },
           "group": {
             "$ref": "#/components/schemas/GroupUnlinked"
           },
@@ -4486,6 +4491,11 @@
             ],
             "title": "Min Responder Ratio"
           },
+          "caller_can_admin": {
+            "type": "boolean",
+            "title": "Caller Can Admin",
+            "default": false
+          },
           "members": {
             "items": {
               "$ref": "#/components/schemas/UserUnlinked"
@@ -4515,7 +4525,7 @@
           "default_questions"
         ],
         "title": "GroupLinked",
-        "description": "Group model with members and settings.\n\nUsed for group list/detail. Letters are fetched from ``/letters/`` (and\nthe dashboard) rather than being nested on every group payload. Schedule\ntasks are internal and unused by the frontend.\n\nAttributes:\n    members (list[UserUnlinked]): Users who are members of the group\n    admin (UserUnlinked): The group administrator\n    default_questions (list[QuestionUnlinked]): Default questions for group letters"
+        "description": "Group model with members and settings.\n\nUsed for group list/detail. Letters are fetched from ``/letters/`` (and\nthe dashboard) rather than being nested on every group payload. Schedule\ntasks are internal and unused by the frontend.\n\nAttributes:\n    members (list[UserUnlinked]): Users who are members of the group\n    admin (UserUnlinked): The group administrator\n    default_questions (list[QuestionUnlinked]): Default questions for group letters\n    caller_can_admin (bool): Whether the caller holds admin on this group"
       },
       "GroupUnlinked": {
         "properties": {
@@ -4546,6 +4556,11 @@
               }
             ],
             "title": "Min Responder Ratio"
+          },
+          "caller_can_admin": {
+            "type": "boolean",
+            "title": "Caller Can Admin",
+            "default": false
           }
         },
         "type": "object",
@@ -4867,6 +4882,11 @@
           },
           "letter_type": {
             "$ref": "#/components/schemas/LetterType"
+          },
+          "caller_can_admin": {
+            "type": "boolean",
+            "title": "Caller Can Admin",
+            "default": false
           }
         },
         "type": "object",
@@ -5061,6 +5081,11 @@
           "letter_type": {
             "$ref": "#/components/schemas/LetterType"
           },
+          "caller_can_admin": {
+            "type": "boolean",
+            "title": "Caller Can Admin",
+            "default": false
+          },
           "group": {
             "$ref": "#/components/schemas/GroupUnlinked"
           },
@@ -5163,6 +5188,11 @@
           },
           "letter_type": {
             "$ref": "#/components/schemas/LetterType"
+          },
+          "caller_can_admin": {
+            "type": "boolean",
+            "title": "Caller Can Admin",
+            "default": false
           },
           "group": {
             "$ref": "#/components/schemas/GroupUnlinked"

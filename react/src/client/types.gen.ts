@@ -89,6 +89,7 @@ export type DashboardLetter = {
     created_at: string;
     title?: string | null;
     letter_type: LetterType;
+    caller_can_admin?: boolean;
     group: GroupUnlinked;
     responders: Array<UserUnlinked>;
     required_responders?: number;
@@ -321,6 +322,7 @@ export type GroupKeyValueBase = {
  * members (list[UserUnlinked]): Users who are members of the group
  * admin (UserUnlinked): The group administrator
  * default_questions (list[QuestionUnlinked]): Default questions for group letters
+ * caller_can_admin (bool): Whether the caller holds admin on this group
  */
 export type GroupLinked = {
     name: string;
@@ -328,6 +330,7 @@ export type GroupLinked = {
     created_at: string;
     cycle_length: number;
     min_responder_ratio?: number | null;
+    caller_can_admin?: boolean;
     members: Array<UserUnlinked>;
     admin: UserUnlinked;
     default_questions: Array<QuestionUnlinked>;
@@ -344,6 +347,7 @@ export type GroupUnlinked = {
     created_at: string;
     cycle_length: number;
     min_responder_ratio?: number | null;
+    caller_can_admin?: boolean;
 };
 
 /**
@@ -481,6 +485,7 @@ export type LetterUnlinked = {
     created_at: string;
     title?: string | null;
     letter_type: LetterType;
+    caller_can_admin?: boolean;
 };
 
 /**
@@ -557,6 +562,7 @@ export type MinimalLetter = {
     created_at: string;
     title?: string | null;
     letter_type: LetterType;
+    caller_can_admin?: boolean;
     group: GroupUnlinked;
     responders: Array<UserUnlinked>;
     required_responders?: number;
@@ -597,6 +603,7 @@ export type PublicLetter = {
     created_at: string;
     title?: string | null;
     letter_type: LetterType;
+    caller_can_admin?: boolean;
     group: GroupUnlinked;
     questions: Array<PublicQuestion>;
     responders: Array<UserUnlinked>;

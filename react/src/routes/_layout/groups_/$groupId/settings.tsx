@@ -16,8 +16,7 @@ export const Route = createFileRoute("/_layout/groups/$groupId/settings")({
       // revalidateIfStale, ensureQueryData would keep serving the warm cache.
       revalidateIfStale: true,
     })
-    const currentUser = context.auth.user
-    if (currentUser?.api_identifier !== group.admin.api_identifier) {
+    if (!group.caller_can_admin) {
       throw new Error("You are not authorized to view this page")
     }
     return { group: group }
