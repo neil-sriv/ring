@@ -197,12 +197,12 @@ def create_letter_with_questions(
     """
     letter = create_letter(db, group_api_id, send_at, number, letter_status)
     group = api_identifier_crud.get_model(db, Group, api_id=group_api_id)
+    add_random_questions(db, letter)
     if not group.default_questions:
         add_default_questions(db, letter)
     else:
         for question in group.default_questions:
             add_question(db, letter, question.question_text)
-    add_random_questions(db, letter)
     return letter
 
 
@@ -220,7 +220,7 @@ def advance_cyclic_letter(
 
     If an upcoming cyclic letter already exists, it is returned unchanged.
     Otherwise a new letter is created with ``create_letter_with_questions``
-    (group defaults + 3 bank questions, ``MAX(number)+1``).
+    (3 bank questions, then group defaults, ``MAX(number)+1``).
 
     ``after`` is the letter that just left the cadence (promoted or sent).
     When omitted, the latest in-progress cyclic letter is used. Returns
@@ -455,6 +455,10 @@ def add_question(
 ) -> Question:
     """Add a question to a letter.
 
+    Member-authored questions are inserted before the unauthored seeded
+    block (bank + group defaults) so loop-specific questions stay first.
+    Seeded questions (no author) append.
+
     Args:
         db (Session): Database session
         letter (Letter): Letter to add question to
@@ -464,7 +468,21 @@ def add_question(
     Returns:
         Question: Created question
     """
-    return create_question(db, letter, question_text, author=author)
+    position = None
+    if author is not None:
+        seeded_positions = [
+            question.position
+            for question in letter.questions
+            if question.author is None
+        ]
+        if seeded_positions:
+            position = min(seeded_positions)
+            for question in letter.questions:
+                if question.position >= position:
+                    question.position += 1
+    return create_question(
+        db, letter, question_text, author=author, position=position
+    )
 
 
 def add_default_questions(db: Session, letter: Letter) -> Sequence[Question]:
