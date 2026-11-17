@@ -1,5 +1,5 @@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { createFileRoute } from "@tanstack/react-router"
+import { createFileRoute, redirect } from "@tanstack/react-router"
 import type { GroupLinked } from "../../../../client"
 import { readGroupPartiesGroupGroupApiIdGetOptions } from "../../../../client/@tanstack/react-query.gen"
 import GroupInformation from "../../../../components/Groups/GroupInformation"
@@ -17,8 +17,14 @@ export const Route = createFileRoute("/_layout/groups/$groupId/settings")({
       revalidateIfStale: true,
     })
     const currentUser = context.auth.user
+    // Match the API: only the group admin may change settings. Soft-nav and
+    // deep links from non-admins used to throw a raw Error (blank router
+    // error UI); send them back to the group's loops instead.
     if (currentUser?.api_identifier !== group.admin.api_identifier) {
-      throw new Error("You are not authorized to view this page")
+      throw redirect({
+        to: "/groups/$groupId/loops",
+        params: { groupId: params.groupId },
+      })
     }
     return { group: group }
   },
