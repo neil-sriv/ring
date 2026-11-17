@@ -180,7 +180,7 @@ def create_letter_with_questions(
     number: int | None = None,
     letter_status: LetterStatus = LetterStatus.UPCOMING,
 ) -> Letter:
-    """Create a new letter with default and random questions.
+    """Create a new letter with bank questions, then group defaults.
 
     Args:
         db (Session): Database session
@@ -454,10 +454,6 @@ def add_question(
     db: Session, letter: Letter, question_text: str, author: User | None = None
 ) -> Question:
     """Add a question to a letter.
-
-    Member-authored questions are inserted before the unauthored seeded
-    block (bank + group defaults) so loop-specific questions stay first.
-    Seeded questions (no author) append.
 
     Args:
         db (Session): Database session
