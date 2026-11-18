@@ -1,5 +1,5 @@
 import { useSuspenseQuery } from "@tanstack/react-query"
-import { createFileRoute } from "@tanstack/react-router"
+import { createFileRoute, redirect } from "@tanstack/react-router"
 
 import { Badge } from "@/components/ui/badge"
 import { Skeleton } from "@/components/ui/skeleton"
@@ -19,11 +19,17 @@ import Navbar from "../../components/Common/Navbar"
 
 export const Route = createFileRoute("/_layout/admin")({
   component: Admin,
-  loader: async ({ context }) => {
+  // Soft-nav and deep links from non-admins used to throw a raw Error
+  // (blank router error UI). Send them home instead, matching group
+  // settings' unauthorized redirect.
+  beforeLoad: ({ context }) => {
     if (!context.auth.user?.admin) {
-      throw new Error("User is not an admin")
+      throw redirect({ to: "/" })
     }
-    return context.auth.user
+  },
+  loader: ({ context }) => {
+    // beforeLoad already gated admin; auth.user is set by _layout.
+    return context.auth.user as UserLinked
   },
 })
 

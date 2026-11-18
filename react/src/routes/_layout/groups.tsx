@@ -1,5 +1,10 @@
 import { useSuspenseQuery } from "@tanstack/react-query"
-import { Link, createFileRoute, useNavigate } from "@tanstack/react-router"
+import {
+  Link,
+  createFileRoute,
+  redirect,
+  useNavigate,
+} from "@tanstack/react-router"
 
 import { Button } from "@/components/ui/button"
 import { Skeleton } from "@/components/ui/skeleton"
@@ -22,9 +27,11 @@ import AddGroup from "../../components/Groups/AddGroup"
 
 export const Route = createFileRoute("/_layout/groups")({
   component: Groups,
-  loader: async ({ context }) => {
+  // _layout already redirects unauthenticated callers; keep a soft
+  // redirect here instead of throwing a raw Error if auth.user is missing.
+  loader: ({ context }) => {
     if (!context.auth.user) {
-      throw new Error("User not authenticated")
+      throw redirect({ to: "/login" })
     }
     return context.auth.user
   },
