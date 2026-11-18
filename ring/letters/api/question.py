@@ -12,6 +12,8 @@ from loguru import logger
 from ring.api_identifier import (
     util as api_identifier_crud,
 )
+from ring.authz.grants import holds_permission
+from ring.authz.permission_grant import Permission
 from ring.fastapp.dependencies import (
     AuthenticatedRequestDependencies,
     get_request_dependencies,
@@ -155,8 +157,8 @@ async def delete_question(
 ) -> None:
     """Delete a question.
 
-    Only the question author or group admin can delete a question.
-    Questions with responses cannot be deleted.
+    Only the question author, or someone with admin permission on the
+    letter, can delete a question. Questions with responses cannot be deleted.
 
     Args:
         question_api_id (str): API identifier of the question to delete
@@ -170,13 +172,15 @@ async def delete_question(
     )
 
     # Check if user is authorized to delete the question
-    if (
-        req_dep.current_user != db_question.author
-        and req_dep.current_user != db_question.letter.group.admin
+    if req_dep.current_user != db_question.author and not holds_permission(
+        req_dep.db,
+        req_dep.current_user,
+        Permission.ADMIN,
+        db_question.letter,
     ):
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
-            detail="Only the question author or group admin can delete a question",
+            detail="Not authorized to delete this question",
         )
 
     # Check if the loop is in the UPCOMING status
