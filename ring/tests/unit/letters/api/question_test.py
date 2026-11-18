@@ -12,7 +12,10 @@ from sqlalchemy.orm import Session
 from ring.letters.models.question_model import Question
 from ring.letters.models.response_model import Response
 from ring.parties.models.user_model import User
-from ring.tests.factories.letters.letter_factory import UpcomingLetterFactory
+from ring.tests.factories.letters.letter_factory import (
+    LetterFactory,
+    UpcomingLetterFactory,
+)
 from ring.tests.factories.letters.question_factory import QuestionFactory
 from ring.tests.factories.letters.response_factory import ResponseFactory
 from ring.tests.factories.parties.group_factory import GroupFactory
@@ -39,9 +42,10 @@ class TestQuestionAPI:
             authenticated_client (TestClient): FastAPI test client
             db_session (Session): Database session
         """
-        question = QuestionFactory.create(
-            author=current_user, letter=UpcomingLetterFactory.create()
-        )
+        admin = UserFactory.create()
+        group = GroupFactory.create(admin=admin, members=[admin, current_user])
+        letter = UpcomingLetterFactory.create(group=group)
+        question = QuestionFactory.create(author=current_user, letter=letter)
         db_session.commit()
 
         response = authenticated_client.delete(
@@ -89,12 +93,15 @@ class TestQuestionAPI:
         )
 
     def test_delete_question_unauthorized(
-        self, authenticated_client: TestClient, db_session: Session
+        self,
+        authenticated_client: TestClient,
+        current_user: User,
+        db_session: Session,
     ) -> None:
         """Test attempting to delete a question without proper authorization.
 
         This test verifies that:
-        1. A non-author, non-admin user cannot delete a question
+        1. A non-author, non-admin group member cannot delete a question
         2. The appropriate error response is returned
         3. The question remains in the database
 
@@ -104,7 +111,9 @@ class TestQuestionAPI:
         """
         author = UserFactory.create()
         admin = UserFactory.create()
-        group = GroupFactory.create(admin=admin)
+        group = GroupFactory.create(
+            admin=admin, members=[admin, author, current_user]
+        )
         letter = UpcomingLetterFactory.create(group=group)
         question = QuestionFactory.create(author=author, letter=letter)
         db_session.commit()
@@ -119,6 +128,29 @@ class TestQuestionAPI:
         )
 
         # Verify question still exists
+        assert db_session.query(Question).filter_by(id=question.id).one()
+
+    def test_delete_question_non_member(
+        self, authenticated_client: TestClient, db_session: Session
+    ) -> None:
+        """Non-members get the Casbin membership denial, not the author/admin
+        message, so missing membership cannot be used to probe question ids.
+        """
+        author = UserFactory.create()
+        admin = UserFactory.create()
+        group = GroupFactory.create(admin=admin)
+        letter = UpcomingLetterFactory.create(group=group)
+        question = QuestionFactory.create(author=author, letter=letter)
+        db_session.commit()
+
+        response = authenticated_client.delete(
+            f"/questions/question/{question.api_identifier}"
+        )
+        assert response.status_code == 403
+        assert response.json()["detail"] == (
+            "Not authorized to access this resource"
+        )
+
         assert db_session.query(Question).filter_by(id=question.id).one()
 
     def test_delete_question_with_responses(
@@ -138,9 +170,12 @@ class TestQuestionAPI:
             authenticated_client (TestClient): FastAPI test client
             db_session (Session): Database session
         """
+        admin = UserFactory.create()
+        group = GroupFactory.create(admin=admin, members=[admin, current_user])
+        letter = UpcomingLetterFactory.create(group=group)
         question = QuestionFactory.create(
             author=current_user,
-            letter=UpcomingLetterFactory.create(),
+            letter=letter,
         )
         response = ResponseFactory.create(question=question)
         db_session.commit()
@@ -161,11 +196,7 @@ class TestQuestionAPI:
     def test_delete_nonexistent_question(
         self, authenticated_client: TestClient, db_session: Session
     ) -> None:
-        """Test attempting to delete a nonexistent question.
-
-        This test verifies that:
-        1. Attempting to delete a nonexistent question returns 404
-        2. The appropriate error response is returned
+        """Missing question ids map to 403 (anti-enumeration via load_and_check).
 
         Args:
             authenticated_client (TestClient): FastAPI test client
@@ -174,7 +205,10 @@ class TestQuestionAPI:
         response = authenticated_client.delete(
             "/questions/question/qstn_nonexistent"
         )
-        assert response.status_code == 404
+        assert response.status_code == 403
+        assert response.json()["detail"] == (
+            "Not authorized to access this resource"
+        )
 
     def test_delete_question_from_in_progress_loop(
         self,
@@ -194,7 +228,11 @@ class TestQuestionAPI:
             current_user (User): The authenticated user
             db_session (Session): Database session
         """
-        question = QuestionFactory.create(author=current_user)
+        # Default LetterFactory status is IN_PROGRESS; keep author as admin of
+        # that letter's group so membership passes before the status check.
+        group = GroupFactory.create(admin=current_user)
+        letter = LetterFactory.create(group=group)
+        question = QuestionFactory.create(author=current_user, letter=letter)
         db_session.commit()
 
         response = authenticated_client.delete(
