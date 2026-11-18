@@ -199,7 +199,11 @@ def generate_question(prompt: str, letter: Letter | None = None) -> str:
 
 
 def create_question(
-    db: Session, letter: Letter, question_text: str, author: User | None = None
+    db: Session,
+    letter: Letter,
+    question_text: str,
+    author: User | None = None,
+    position: int | None = None,
 ) -> Question:
     """Create a question.
 
@@ -208,11 +212,14 @@ def create_question(
         letter (Letter): Letter to add question to
         question_text (str): Text of the question
         author (User | None, optional): Author of the question. Defaults to None.
+        position (int | None, optional): Display order. Defaults to append.
 
     Returns:
         Question: Created question
     """
-    db_question = Question.create(letter, question_text, author=author)
+    db_question = Question.create(
+        letter, question_text, author=author, position=position
+    )
     db.add(db_question)
     if search_document := create_question_search_document(db, db_question):
         db.add(search_document)

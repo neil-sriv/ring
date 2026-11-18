@@ -18,7 +18,7 @@ from ring.tests.factories.parties.user_factory import UserFactory
 
 
 class TestQuestionPosition:
-    def test_create_letter_positions_defaults_then_bank(
+    def test_create_letter_positions_bank_then_defaults(
         self, db_session: Session, faker: Faker
     ) -> None:
         group = GroupFactory.create()
@@ -31,15 +31,17 @@ class TestQuestionPosition:
         ordered = sorted(letter.questions, key=lambda q: q.position)
         assert [q.position for q in ordered] == list(range(len(ordered)))
         default_count = len(DEFAULT_QUESTIONS)
-        assert [
-            q.question_text for q in ordered[:default_count]
-        ] == DEFAULT_QUESTIONS
         assert all(
-            q.question_text in QUESTION_BANK for q in ordered[default_count:]
+            q.question_text in QUESTION_BANK for q in ordered[:-default_count]
         )
+        assert [
+            q.question_text for q in ordered[-default_count:]
+        ] == DEFAULT_QUESTIONS
         assert len(ordered) == default_count + 3
 
-    def test_member_added_question_appends(self, db_session: Session) -> None:
+    def test_member_added_question_inserts_before_seeded(
+        self, db_session: Session
+    ) -> None:
         group = GroupFactory.create()
         letter = letter_crud.create_letter_with_questions(
             db_session,
@@ -53,10 +55,10 @@ class TestQuestionPosition:
         )
         db_session.commit()
 
-        assert added.position == len(letter.questions) - 1
+        assert added.position == 0
         assert added.author == author
 
-    def test_group_defaults_come_before_bank(
+    def test_group_bank_comes_before_defaults(
         self, db_session: Session, faker: Faker
     ) -> None:
         group = GroupFactory.create()
@@ -72,10 +74,10 @@ class TestQuestionPosition:
         db_session.commit()
 
         ordered = sorted(letter.questions, key=lambda q: q.position)
-        assert [q.question_text for q in ordered[:2]] == [
+        assert [q.question_text for q in ordered[-2:]] == [
             default.question_text for default in defaults
         ]
-        assert all(q.question_text in QUESTION_BANK for q in ordered[2:])
+        assert all(q.question_text in QUESTION_BANK for q in ordered[:-2])
 
     def test_compile_letter_dict_follows_position(
         self, db_session: Session
@@ -89,3 +91,36 @@ class TestQuestionPosition:
 
         compiled = letter_crud.compile_letter_dict(letter)
         assert list(compiled.keys()) == ["First", "Second"]
+
+    def test_loop_specific_questions_come_before_group_defaults(
+        self, db_session: Session, faker: Faker
+    ) -> None:
+        group = GroupFactory.create()
+        defaults = [
+            DefaultQuestionFactory.create(
+                group=group, question_text=f"Default {i}"
+            )
+            for i in range(2)
+        ]
+        letter = letter_crud.create_letter_with_questions(
+            db_session, group.api_identifier, faker.date_time(tzinfo=UTC)
+        )
+        db_session.commit()
+        author = UserFactory.create()
+        letter_crud.add_question(
+            db_session, letter, "Extra first", author=author
+        )
+        letter_crud.add_question(
+            db_session, letter, "Extra second", author=author
+        )
+        db_session.commit()
+
+        ordered = sorted(letter.questions, key=lambda q: q.position)
+        assert [q.question_text for q in ordered[:2]] == [
+            "Extra first",
+            "Extra second",
+        ]
+        assert [q.question_text for q in ordered[-2:]] == [
+            default.question_text for default in defaults
+        ]
+        assert [q.position for q in ordered] == list(range(len(ordered)))
