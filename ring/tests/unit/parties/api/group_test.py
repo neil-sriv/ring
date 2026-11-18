@@ -169,6 +169,32 @@ class TestGroupApi:
         assert all("letters" not in group for group in data)
         assert all("schedule" not in group for group in data)
 
+    def test_list_groups_rejects_other_user(
+        self,
+        authenticated_client: TestClient,
+        db_session: Session,
+        current_user: User,
+    ):
+        """Test listing groups cannot target a different user.
+
+        The API must not trust a client-supplied user_api_id that differs
+        from the authenticated caller (whether valid or invalid).
+        """
+        other_user = UserFactory.create()
+        GroupFactory.create(admin=other_user)
+        db_session.commit()
+        assert other_user.api_identifier != current_user.api_identifier
+
+        for user_api_id in (other_user.api_identifier, "invalid-user"):
+            response = authenticated_client.get(
+                f"/parties/groups/?user_api_id={user_api_id}"
+            )
+
+            assert response.status_code == 403
+            assert response.json() == {
+                "detail": "Cannot list groups for a different user"
+            }
+
     def test_read_group(
         self,
         authenticated_client: TestClient,

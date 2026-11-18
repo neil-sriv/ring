@@ -6,7 +6,7 @@ subscriptions, allowing users to receive notifications through their browsers.
 
 from __future__ import annotations
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException, status
 from loguru import logger
 
 from ring.fastapp.dependencies import (
@@ -33,8 +33,10 @@ async def post_subscription(
     """Create a new web push notification subscription.
 
     Creates a subscription for the authenticated user to receive web push
-    notifications. If a subscription with the same endpoint already exists,
-    returns a message indicating this instead of creating a duplicate.
+    notifications. Clients may still send ``user_api_identifier`` for
+    backwards compatibility, but it must match the current user — another
+    user's id is rejected. If a subscription with the same endpoint already
+    exists, returns a message indicating this instead of creating a duplicate.
 
     Args:
         subscription (SubscriptionCreate): Subscription details including endpoint and keys
@@ -44,8 +46,14 @@ async def post_subscription(
         ResponseMessage: Message indicating success or existing subscription
 
     Raises:
-        HTTPException: If user is not authenticated
+        HTTPException: If user is not authenticated, or ``user_api_identifier``
+            does not match the authenticated user
     """
+    if subscription.user_api_identifier != req_dep.current_user.api_identifier:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Cannot create a subscription for a different user",
+        )
     if get_subscription_by_endpoint(req_dep.db, subscription.endpoint):
         logger.warning(
             f"Subscription with endpoint {subscription.endpoint} already exists"

@@ -354,13 +354,14 @@ class TestUserAPI:
             "name": input["name"],
         }
 
+    @pytest.mark.admin(True)
     def test_read_users(
         self,
         authenticated_client: TestClient,
         db_session: Session,
         current_user: User,
     ) -> None:
-        """Test listing all users.
+        """Test listing all users as an admin.
 
         This test verifies that:
         1. All users are returned in the response
@@ -389,12 +390,22 @@ class TestUserAPI:
         )
         assert all("responses" not in user for user in data)
 
+    def test_read_users_requires_admin(
+        self,
+        authenticated_client: TestClient,
+    ) -> None:
+        """Non-admin callers cannot enumerate all users."""
+        resp = authenticated_client.get("/parties/users")
+        assert resp.status_code == 403
+        assert resp.json() == {"detail": "Unauthorized"}
+
+    @pytest.mark.admin(True)
     def test_read_user_by_id(
         self,
         authenticated_client: TestClient,
         db_session: Session,
     ) -> None:
-        """Test reading a user by their API identifier.
+        """Test reading a user by their API identifier as an admin.
 
         This test verifies that:
         1. A user can be retrieved by their API identifier
@@ -414,6 +425,20 @@ class TestUserAPI:
         data = resp.json()
         assert_pydantic_model_json_dump_equivalent_to_response_dict(user, data)
 
+    def test_read_user_by_id_requires_admin(
+        self,
+        authenticated_client: TestClient,
+        db_session: Session,
+    ) -> None:
+        """Non-admin callers cannot look up another user by API id."""
+        user = UserFactory.create()
+        db_session.commit()
+
+        resp = authenticated_client.get(f"/parties/user/{user.api_identifier}")
+        assert resp.status_code == 403
+        assert resp.json() == {"detail": "Unauthorized"}
+
+    @pytest.mark.admin(True)
     def test_read_user_by_id_not_found(
         self,
         authenticated_client: TestClient,
