@@ -1,13 +1,14 @@
-import { createFileRoute } from "@tanstack/react-router"
+import { createFileRoute, redirect } from "@tanstack/react-router"
 import MaintenanceMode from "../components/Common/MaintenanceMode"
 import { isMaintenanceMode } from "../util/env"
 
 export const Route = createFileRoute("/maintenance")({
   component: MaintenanceMode,
   beforeLoad: () => {
-    // If maintenance mode is disabled, redirect to home
+    // Maintenance is off in normal deploys; deep links used to throw a
+    // raw Error. Send visitors home instead.
     if (!isMaintenanceMode()) {
-      throw new Error("Maintenance mode is disabled")
+      throw redirect({ to: "/" })
     }
     return {}
   },
