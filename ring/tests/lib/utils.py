@@ -12,21 +12,34 @@ from ring.ring_pydantic.pydantic_model import PydanticModel
 from ring.sqlalchemy_base import Base
 
 
+def _without_caller_permission(data: dict[str, Any]) -> dict[str, Any]:
+    """Drop the request-scoped admin flag so dumps match stored models."""
+    return {
+        key: value for key, value in data.items() if key != "caller_can_admin"
+    }
+
+
 def assert_pydantic_models_json_dump_in_response_dict(
     models: Sequence[PydanticModel],
     data: dict[str, Any],
     override_pydantic_model: type[BaseModel] | None = None,
 ) -> None:
+    response_items = [
+        _without_caller_permission(item) if isinstance(item, dict) else item
+        for item in data
+    ]
     for model in models:
         print(model.to_pydantic().model_dump(mode="json"))
     assert all(
         [
-            (
-                override_pydantic_model.model_validate(model)
-                if override_pydantic_model
-                else model.to_pydantic()
-            ).model_dump(mode="json")
-            in data
+            _without_caller_permission(
+                (
+                    override_pydantic_model.model_validate(model)
+                    if override_pydantic_model
+                    else model.to_pydantic()
+                ).model_dump(mode="json")
+            )
+            in response_items
             for model in models
         ]
     )
@@ -42,13 +55,17 @@ def assert_pydantic_model_json_dump_equivalent_to_response_dict(
         if override_pydantic_model
         else model.to_pydantic()
     )
-    assert pydantic_model.model_dump(mode="json") == data
+    assert _without_caller_permission(
+        pydantic_model.model_dump(mode="json")
+    ) == _without_caller_permission(data)
 
 
 def assert_pydantic_schema_json_dump_equivalent_to_response_dict(
     schema: BaseModel, data: dict[str, Any]
 ) -> None:
-    assert schema.model_dump(mode="json") == data
+    assert _without_caller_permission(
+        schema.model_dump(mode="json")
+    ) == _without_caller_permission(data)
 
 
 def assert_api_model_not_found(
