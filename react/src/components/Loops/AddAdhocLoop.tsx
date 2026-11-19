@@ -1,4 +1,5 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query"
+import { useNavigate } from "@tanstack/react-router"
 import { useEffect } from "react"
 import { type SubmitHandler, useForm } from "react-hook-form"
 
@@ -28,9 +29,16 @@ import {
   toISOLocal,
 } from "../../util/misc"
 
+// Axios leaves timeout at 0, so a hung create never rejects and isSaving stays
+// true. This write is a small JSON body; uploads keep the longer proxy window.
+const ADD_ADHOC_LETTER_TIMEOUT_MS = 20_000
+
 type AdhocLetterFormProps = {
   title: string
-  sendAt: Date | string
+  // datetime-local values are always strings ("YYYY-MM-DDTHH:mm"). Do not use
+  // react-hook-form's valueAsDate here: it desyncs from string defaults and can
+  // falsely fail `required`, or submit a bare local string without a timezone.
+  sendAt: string
 }
 
 type AddAdhocLoopProps = {
@@ -46,6 +54,7 @@ const freshDefaults = (): AdhocLetterFormProps => ({
 
 const AddAdhocLoop = ({ isOpen, onClose, groupApiId }: AddAdhocLoopProps) => {
   const queryClient = useQueryClient()
+  const navigate = useNavigate()
   const showToast = useCustomToast()
 
   const {
@@ -68,10 +77,14 @@ const AddAdhocLoop = ({ isOpen, onClose, groupApiId }: AddAdhocLoopProps) => {
 
   const mutation = useMutation({
     ...addNextLetterLettersLetterLetterTypePostMutation(),
-    onSuccess: () => {
+    onSuccess: (letter) => {
       showToast("Success!", "Adhoc loop created successfully.", "success")
       reset(freshDefaults())
       onClose()
+      void navigate({
+        to: "/loops/$loopId",
+        params: { loopId: letter.api_identifier },
+      })
     },
     onError: (
       err: AxiosError<AddNextLetterLettersLetterLetterTypePostError>,
@@ -99,17 +112,21 @@ const AddAdhocLoop = ({ isOpen, onClose, groupApiId }: AddAdhocLoopProps) => {
   const submitOnce = useSubmitOnce()
 
   const onSubmit: SubmitHandler<AdhocLetterFormProps> = async (data) => {
-    await submitOnce.run(() =>
-      mutation.mutateAsync({
-        path: { letter_type: "ADHOC" },
-        body: {
-          group_api_identifier: groupApiId,
-          send_at:
-            data.sendAt instanceof Date ? toISOLocal(data.sendAt) : data.sendAt,
-          title: data.title || null,
-        },
-      }),
-    )
+    await submitOnce.run(async () => {
+      try {
+        await mutation.mutateAsync({
+          path: { letter_type: "ADHOC" },
+          body: {
+            group_api_identifier: groupApiId,
+            send_at: toISOLocal(new Date(data.sendAt)),
+            title: data.title || null,
+          },
+          timeout: ADD_ADHOC_LETTER_TIMEOUT_MS,
+        })
+      } catch {
+        // onError already toasts. Swallow so handleSubmit clears isSubmitting.
+      }
+    })
   }
 
   const onCancel = () => {
@@ -160,7 +177,6 @@ const AddAdhocLoop = ({ isOpen, onClose, groupApiId }: AddAdhocLoopProps) => {
                 id="sendAt"
                 {...register("sendAt", {
                   required: "Send at is required.",
-                  valueAsDate: true,
                 })}
                 type="datetime-local"
                 min={toISOLocal(new Date()).slice(0, 16)}

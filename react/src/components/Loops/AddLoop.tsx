@@ -1,4 +1,5 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query"
+import { useNavigate } from "@tanstack/react-router"
 import { useEffect } from "react"
 import { type SubmitHandler, useForm } from "react-hook-form"
 
@@ -28,8 +29,15 @@ import {
   toISOLocal,
 } from "../../util/misc"
 
+// Axios leaves timeout at 0, so a hung create never rejects and isSaving stays
+// true. This write is a small JSON body; uploads keep the longer proxy window.
+const ADD_LETTER_TIMEOUT_MS = 20_000
+
 type LetterFormProps = {
-  sendAt: Date | string
+  // datetime-local values are always strings ("YYYY-MM-DDTHH:mm"). Do not use
+  // react-hook-form's valueAsDate here: it desyncs from string defaults and can
+  // falsely fail `required`, or submit a bare local string without a timezone.
+  sendAt: string
 }
 
 interface AddLetterProps {
@@ -44,6 +52,7 @@ const freshDefaults = (): LetterFormProps => ({
 
 const AddLetter = ({ isOpen, onClose, groupApiId }: AddLetterProps) => {
   const queryClient = useQueryClient()
+  const navigate = useNavigate()
   const showToast = useCustomToast()
   const {
     register,
@@ -65,10 +74,14 @@ const AddLetter = ({ isOpen, onClose, groupApiId }: AddLetterProps) => {
 
   const mutation = useMutation({
     ...addNextLetterLettersLetterPostMutation(),
-    onSuccess: () => {
+    onSuccess: (letter) => {
       showToast("Success!", "Next letter created successfully.", "success")
       reset(freshDefaults())
       onClose()
+      void navigate({
+        to: "/loops/$loopId",
+        params: { loopId: letter.api_identifier },
+      })
     },
     onError: (err: AxiosError<AddNextLetterLettersLetterPostError>) => {
       showToast(
@@ -95,15 +108,19 @@ const AddLetter = ({ isOpen, onClose, groupApiId }: AddLetterProps) => {
   const isSaving = isSubmitting || mutation.isPending || submitOnce.pending
 
   const onSubmit: SubmitHandler<LetterFormProps> = async (data) => {
-    await submitOnce.run(() =>
-      mutation.mutateAsync({
-        body: {
-          group_api_identifier: groupApiId,
-          send_at:
-            data.sendAt instanceof Date ? toISOLocal(data.sendAt) : data.sendAt,
-        },
-      }),
-    )
+    await submitOnce.run(async () => {
+      try {
+        await mutation.mutateAsync({
+          body: {
+            group_api_identifier: groupApiId,
+            send_at: toISOLocal(new Date(data.sendAt)),
+          },
+          timeout: ADD_LETTER_TIMEOUT_MS,
+        })
+      } catch {
+        // onError already toasts. Swallow so handleSubmit clears isSubmitting.
+      }
+    })
   }
 
   const onCancel = () => {
@@ -132,7 +149,6 @@ const AddLetter = ({ isOpen, onClose, groupApiId }: AddLetterProps) => {
                 id="sendAt"
                 {...register("sendAt", {
                   required: "Send at is required.",
-                  valueAsDate: true,
                 })}
                 type="datetime-local"
                 min={toISOLocal(new Date()).slice(0, 16)}
