@@ -18,6 +18,7 @@ def init_app_modules() -> None:
 
 
 def init_offline_modules() -> None:
+    from ring.authz.grants import register_grant_sync
     from ring.fastapp._gen.all_jobs import initialize as initialize_all_jobs
     from ring.fastapp._gen.all_sqla_models import import_all_sqla_models
     from ring.search._gen.all_search_registration import (
@@ -27,3 +28,4 @@ def init_offline_modules() -> None:
     import_all_sqla_models()
     initialize_all_jobs()
     import_all_search_registrations()
+    register_grant_sync()

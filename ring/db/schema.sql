@@ -279,6 +279,17 @@ CREATE TABLE public.user_spotify_playlist (
 	INDEX ix_user_spotify_playlist_group_id (group_id ASC),
 	INDEX ix_user_spotify_playlist_created_at (created_at ASC)
 );
+CREATE SEQUENCE public.permission_grant_id_seq AS INT8 MINVALUE 1 MAXVALUE 9223372036854775807 INCREMENT 1 START 1;
+CREATE TABLE public.permission_grant (
+	id INT8 NOT NULL DEFAULT nextval('public.permission_grant_id_seq'::REGCLASS),
+	subject_api_id VARCHAR NOT NULL,
+	resource_api_id VARCHAR NOT NULL,
+	permission VARCHAR NOT NULL,
+	CONSTRAINT permission_grant_pkey PRIMARY KEY (id ASC),
+	INDEX ix_permission_grant_id (id ASC),
+	INDEX ix_permission_grant_resource_api_id (resource_api_id ASC),
+	UNIQUE INDEX uq_permission_grant_subject_resource_permission (subject_api_id ASC, resource_api_id ASC, permission ASC)
+);
 ALTER TABLE public."group" ADD CONSTRAINT group_admin_id_fkey FOREIGN KEY (admin_id) REFERENCES public."user"(id);
 ALTER TABLE public.default_question ADD CONSTRAINT default_question_group_id_fkey FOREIGN KEY (group_id) REFERENCES public."group"(id);
 ALTER TABLE public.group_key_value ADD CONSTRAINT group_key_value_group_id_fkey FOREIGN KEY (group_id) REFERENCES public."group"(id);
