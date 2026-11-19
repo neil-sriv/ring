@@ -44,12 +44,23 @@ router = APIRouter()
 
 _LIVE_LETTER_STATUSES = (LetterStatus.IN_PROGRESS, LetterStatus.UPCOMING)
 
+_CANNOT_DEMOTE_CYCLIC = (
+    "This loop is already in progress, so it can't be moved back to "
+    "Upcoming. Add a question to the loop instead."
+)
+
 
 def _assert_no_live_letter(
     letters: Sequence[Letter],
     statuses: Sequence[LetterStatus] = _LIVE_LETTER_STATUSES,
+    *,
+    exclude: Letter | None = None,
 ) -> None:
-    if any(letter.status in statuses for letter in letters):
+    excluded_api_id = exclude.api_identifier if exclude is not None else None
+    if any(
+        letter.status in statuses and letter.api_identifier != excluded_api_id
+        for letter in letters
+    ):
         raise ValueError(
             "There is already a letter in progress or upcoming for this group"
         )
@@ -282,8 +293,10 @@ async def edit_letter(
         Letter: Updated letter
 
     Raises:
-        AssertionError: If new send time violates timing constraints
-        HTTPException: If the caller is not the group admin
+        HTTPException: If the caller is not the group admin, the letter was
+            already sent, a cyclic in-progress loop is moved back to
+            upcoming, the send time is invalid, or another cyclic letter
+            already has the requested status
         PermissionError: If the letter is missing or the caller cannot read it
     """
     db_letter = cast(
@@ -305,23 +318,40 @@ async def edit_letter(
         )
     if letter.send_at:
         curr_time = datetime.now(tz=UTC)
-        if db_letter.status == LetterStatus.UPCOMING:
-            assert (
-                letter.send_at > db_letter.group.in_progress_letters[0].send_at
-                if db_letter.group.in_progress_letters
-                else letter.send_at > curr_time
+        in_progress = db_letter.group.in_progress_letters
+        if db_letter.status == LetterStatus.UPCOMING and in_progress:
+            if letter.send_at <= in_progress[0].send_at:
+                raise HTTPException(
+                    status_code=400,
+                    detail=(
+                        "Send time must be after the in-progress "
+                        "loop's send time"
+                    ),
+                )
+        elif letter.send_at <= curr_time:
+            raise HTTPException(
+                status_code=400,
+                detail="Send time must be in the future",
             )
-        else:
-            assert letter.send_at > curr_time
+    if (
+        db_letter.letter_type == LetterType.CYCLIC
+        and db_letter.status == LetterStatus.IN_PROGRESS
+        and letter.status == LetterStatus.UPCOMING
+    ):
+        raise HTTPException(status_code=400, detail=_CANNOT_DEMOTE_CYCLIC)
     if (
         letter.status in _LIVE_LETTER_STATUSES
         and db_letter.letter_type == LetterType.CYCLIC
         and letter.status != db_letter.status
     ):
-        _assert_no_live_letter(
-            db_letter.group.cyclic_letters,
-            statuses=(letter.status,),
-        )
+        try:
+            _assert_no_live_letter(
+                db_letter.group.cyclic_letters,
+                statuses=(letter.status,),
+                exclude=db_letter,
+            )
+        except ValueError as error:
+            raise HTTPException(status_code=400, detail=str(error)) from error
 
     letter_crud.edit_letter(
         req_dep.db,

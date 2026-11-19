@@ -25,6 +25,11 @@ from ring.tests.lib.utils import (
     assert_pydantic_models_json_dump_in_response_dict,
 )
 
+_CANNOT_DEMOTE_IN_PROGRESS = (
+    "This loop is already in progress, so it can't be moved back to "
+    "Upcoming. Add a question to the loop instead."
+)
+
 
 class TestLetterAPI:
     """Test suite for letter API endpoints.
@@ -583,11 +588,12 @@ class TestLetterAPI:
         db_session.commit()
         input = {"send_at": datetime.now(tz=UTC).isoformat()}
 
-        with pytest.raises(AssertionError):
-            authenticated_client.post(
-                f"/letters/letter/{letter.api_identifier}:edit_letter",
-                json=input,
-            )
+        response = authenticated_client.post(
+            f"/letters/letter/{letter.api_identifier}:edit_letter",
+            json=input,
+        )
+        assert response.status_code == 400
+        assert response.json()["detail"] == "Send time must be in the future"
 
     def test_edit_letter_in_progress_invalid_past_send_at(
         self,
@@ -614,11 +620,12 @@ class TestLetterAPI:
         db_session.commit()
         input = {"send_at": datetime.now(tz=UTC).isoformat()}
 
-        with pytest.raises(AssertionError):
-            authenticated_client.post(
-                f"/letters/letter/{letter.api_identifier}:edit_letter",
-                json=input,
-            )
+        response = authenticated_client.post(
+            f"/letters/letter/{letter.api_identifier}:edit_letter",
+            json=input,
+        )
+        assert response.status_code == 400
+        assert response.json()["detail"] == "Send time must be in the future"
 
     def test_edit_letter_upcoming_conflicting_in_progress_send_at(
         self,
@@ -640,11 +647,14 @@ class TestLetterAPI:
             ).isoformat()
         }
 
-        with pytest.raises(AssertionError):
-            authenticated_client.post(
-                f"/letters/letter/{letter.api_identifier}:edit_letter",
-                json=input,
-            )
+        response = authenticated_client.post(
+            f"/letters/letter/{letter.api_identifier}:edit_letter",
+            json=input,
+        )
+        assert response.status_code == 400
+        assert response.json()["detail"] == (
+            "Send time must be after the in-progress loop's send time"
+        )
 
     def test_edit_letter_rejects_second_cyclic_in_progress(
         self,
@@ -660,14 +670,15 @@ class TestLetterAPI:
             send_at=datetime.now(tz=UTC) + timedelta(days=20),
         )
         db_session.commit()
-        with pytest.raises(
-            ValueError,
-            match="There is already a letter in progress or upcoming for this group",
-        ):
-            authenticated_client.post(
-                f"/letters/letter/{upcoming.api_identifier}:edit_letter",
-                json={"status": LetterStatus.IN_PROGRESS},
-            )
+        response = authenticated_client.post(
+            f"/letters/letter/{upcoming.api_identifier}:edit_letter",
+            json={"status": LetterStatus.IN_PROGRESS},
+        )
+        assert response.status_code == 400
+        assert (
+            response.json()["detail"]
+            == "There is already a letter in progress or upcoming for this group"
+        )
         db_session.refresh(upcoming)
         assert upcoming.status == LetterStatus.UPCOMING
 
@@ -687,14 +698,12 @@ class TestLetterAPI:
             send_at=datetime.now(tz=UTC) + timedelta(days=20),
         )
         db_session.commit()
-        with pytest.raises(
-            ValueError,
-            match="There is already a letter in progress or upcoming for this group",
-        ):
-            authenticated_client.post(
-                f"/letters/letter/{in_progress.api_identifier}:edit_letter",
-                json={"status": LetterStatus.UPCOMING},
-            )
+        response = authenticated_client.post(
+            f"/letters/letter/{in_progress.api_identifier}:edit_letter",
+            json={"status": LetterStatus.UPCOMING},
+        )
+        assert response.status_code == 400
+        assert response.json()["detail"] == _CANNOT_DEMOTE_IN_PROGRESS
         db_session.refresh(in_progress)
         assert in_progress.status == LetterStatus.IN_PROGRESS
 
@@ -723,14 +732,15 @@ class TestLetterAPI:
             send_at=datetime.now(tz=UTC) + timedelta(days=20),
         )
         db_session.commit()
-        with pytest.raises(
-            ValueError,
-            match="There is already a letter in progress or upcoming for this group",
-        ):
-            authenticated_client.post(
-                f"/letters/letter/{upcoming.api_identifier}:edit_letter",
-                json={"status": LetterStatus.IN_PROGRESS},
-            )
+        response = authenticated_client.post(
+            f"/letters/letter/{upcoming.api_identifier}:edit_letter",
+            json={"status": LetterStatus.IN_PROGRESS},
+        )
+        assert response.status_code == 400
+        assert (
+            response.json()["detail"]
+            == "There is already a letter in progress or upcoming for this group"
+        )
         db_session.refresh(upcoming)
         assert upcoming.status == LetterStatus.UPCOMING
 
@@ -762,7 +772,7 @@ class TestLetterAPI:
         assert len(upcoming) == 1
         assert upcoming[0].id != letter.id
 
-    def test_edit_cyclic_to_upcoming_ignores_adhoc(
+    def test_edit_cyclic_in_progress_to_upcoming_rejected_without_sibling(
         self,
         authenticated_client: TestClient,
         db_session: Session,
@@ -782,8 +792,10 @@ class TestLetterAPI:
             f"/letters/letter/{cyclic.api_identifier}:edit_letter",
             json={"status": LetterStatus.UPCOMING},
         )
-        assert response.status_code == 200
-        assert response.json()["status"] == LetterStatus.UPCOMING
+        assert response.status_code == 400
+        assert response.json()["detail"] == _CANNOT_DEMOTE_IN_PROGRESS
+        db_session.refresh(cyclic)
+        assert cyclic.status == LetterStatus.IN_PROGRESS
 
     def test_edit_adhoc_status_ignores_cyclic_upcoming(
         self,
