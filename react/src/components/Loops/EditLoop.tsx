@@ -28,6 +28,10 @@ import useCustomToast from "../../hooks/useCustomToast"
 import { useSubmitOnce } from "../../hooks/useSubmitOnce"
 import { formatApiErrorDetail, toISOLocal } from "../../util/misc"
 
+// Axios leaves timeout at 0, so a hung edit never rejects and isSaving stays
+// true. This write is a small JSON body; uploads keep the longer proxy window.
+const EDIT_LETTER_TIMEOUT_MS = 20_000
+
 type LetterFormProps = {
   // datetime-local values are always strings ("YYYY-MM-DDTHH:mm"). Do not use
   // react-hook-form's valueAsDate here: it desyncs from the controlled `values`
@@ -144,10 +148,15 @@ const EditLetter = ({ isOpen, onClose, loop }: EditLetterProps) => {
 
       // Only submit if there are changes
       if (Object.keys(updateData).length > 0) {
-        await mutation.mutateAsync({
-          body: updateData,
-          path: { letter_api_id: loop.api_identifier },
-        })
+        try {
+          await mutation.mutateAsync({
+            body: updateData,
+            path: { letter_api_id: loop.api_identifier },
+            timeout: EDIT_LETTER_TIMEOUT_MS,
+          })
+        } catch {
+          // onError already toasts. Swallow so handleSubmit clears isSubmitting.
+        }
       } else {
         showToast(
           "No changes",
