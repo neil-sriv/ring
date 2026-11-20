@@ -6,7 +6,7 @@ creation and data transfer between the API and database.
 
 from __future__ import annotations
 
-from pydantic import AwareDatetime, BaseModel, ConfigDict
+from pydantic import AwareDatetime, BaseModel, ConfigDict, Field
 
 
 class QuestionBase(BaseModel):
@@ -22,12 +22,21 @@ class QuestionBase(BaseModel):
 class QuestionCreate(QuestionBase):
     """Schema for creating a new question.
 
+    The author is always the signed-in caller. ``author_api_id`` remains
+    only so older clients can keep sending it.
+
     Attributes:
         question_text (str): The text content of the question
-        author_api_id (str | None): API identifier of the question's author, optional
+        author_api_id (str | None): Deprecated. Omit it, send null, or send
+            the caller's id. Another user's id is rejected.
     """
 
-    author_api_id: str | None
+    # OpenAPI deprecation only. Field(deprecated=True) warns on every read,
+    # including when the client omits the field.
+    author_api_id: str | None = Field(
+        default=None,
+        json_schema_extra={"deprecated": True},
+    )
 
 
 class QuestionReorder(BaseModel):

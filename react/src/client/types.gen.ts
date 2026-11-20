@@ -637,13 +637,20 @@ export type PublicQuestion = {
 /**
  * Schema for creating a new question.
  *
+ * The author is always the signed-in caller. ``author_api_id`` remains
+ * only so older clients can keep sending it.
+ *
  * Attributes:
  * question_text (str): The text content of the question
- * author_api_id (str | None): API identifier of the question's author, optional
+ * author_api_id (str | None): Deprecated. Omit it, send null, or send
+ * the caller's id. Another user's id is rejected.
  */
 export type QuestionCreate = {
     question_text: string;
-    author_api_id: string | null;
+    /**
+     * @deprecated
+     */
+    author_api_id?: string | null;
 };
 
 /**

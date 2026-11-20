@@ -1904,7 +1904,7 @@
           "letters"
         ],
         "summary": "Add Question",
-        "description": "Add a new question to a letter.\n\nAny group member may add a question while the letter is upcoming or in\nprogress. A sent letter is refused. An in-progress letter is also\nrefused once ``send_at`` is within ``LATE_QUESTION_CUTOFF``, including\nfor the group admin. A null ``send_at`` has no cutoff.\n\n:param letter_api_id: API identifier of the letter\n:type letter_api_id: str\n:param question: Question creation parameters\n:type question: QuestionCreate\n:param req_dep: Request dependencies including database session and auth\n:type req_dep: AuthenticatedRequestDependencies\n:raises PermissionError: If the caller cannot read the letter\n:raises IDNotFoundException: If author with given API ID is not found\n:raises HTTPException: If the letter has been sent or is inside the\n    late-question cutoff\n:return: Updated letter with the new question\n:rtype: Letter",
+        "description": "Add a new question to a letter.\n\nAny group member may add a question while the letter is upcoming or in\nprogress. A sent letter is refused. An in-progress letter is also\nrefused once ``send_at`` is within ``LATE_QUESTION_CUTOFF``, including\nfor the group admin. A null ``send_at`` has no cutoff. An in-progress\nadd notifies participants who already have a response, except the\nquestion's author. Push failures are logged and do not fail the add.\n\nThe author is always the signed-in caller. ``author_api_id`` is\ndeprecated and is not looked up: omit it, send null, or send the\ncaller's id. Another user's id is rejected, including for the group\nadmin.\n\n:param letter_api_id: API identifier of the letter\n:type letter_api_id: str\n:param question: Question creation parameters\n:type question: QuestionCreate\n:param req_dep: Request dependencies including database session and auth\n:type req_dep: AuthenticatedRequestDependencies\n:raises PermissionError: If the caller cannot read the letter\n:raises HTTPException: If the letter has been sent, is inside the\n    late-question cutoff, or ``author_api_id`` is not the caller\n:return: Updated letter with the new question\n:rtype: Letter",
         "operationId": "add_question_letters_letter__letter_api_id__add_question_post",
         "security": [
           {
@@ -5321,16 +5321,16 @@
                 "type": "null"
               }
             ],
-            "title": "Author Api Id"
+            "title": "Author Api Id",
+            "deprecated": true
           }
         },
         "type": "object",
         "required": [
-          "question_text",
-          "author_api_id"
+          "question_text"
         ],
         "title": "QuestionCreate",
-        "description": "Schema for creating a new question.\n\nAttributes:\n    question_text (str): The text content of the question\n    author_api_id (str | None): API identifier of the question's author, optional"
+        "description": "Schema for creating a new question.\n\nThe author is always the signed-in caller. ``author_api_id`` remains\nonly so older clients can keep sending it.\n\nAttributes:\n    question_text (str): The text content of the question\n    author_api_id (str | None): Deprecated. Omit it, send null, or send\n        the caller's id. Another user's id is rejected."
       },
       "QuestionLinked": {
         "properties": {

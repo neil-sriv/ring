@@ -1096,7 +1096,14 @@ export const editLetterLettersLetterLetterApiIdEditLetterPost = <ThrowOnError ex
  * Any group member may add a question while the letter is upcoming or in
  * progress. A sent letter is refused. An in-progress letter is also
  * refused once ``send_at`` is within ``LATE_QUESTION_CUTOFF``, including
- * for the group admin. A null ``send_at`` has no cutoff.
+ * for the group admin. A null ``send_at`` has no cutoff. An in-progress
+ * add notifies participants who already have a response, except the
+ * question's author. Push failures are logged and do not fail the add.
+ *
+ * The author is always the signed-in caller. ``author_api_id`` is
+ * deprecated and is not looked up: omit it, send null, or send the
+ * caller's id. Another user's id is rejected, including for the group
+ * admin.
  *
  * :param letter_api_id: API identifier of the letter
  * :type letter_api_id: str
@@ -1105,9 +1112,8 @@ export const editLetterLettersLetterLetterApiIdEditLetterPost = <ThrowOnError ex
  * :param req_dep: Request dependencies including database session and auth
  * :type req_dep: AuthenticatedRequestDependencies
  * :raises PermissionError: If the caller cannot read the letter
- * :raises IDNotFoundException: If author with given API ID is not found
- * :raises HTTPException: If the letter has been sent or is inside the
- * late-question cutoff
+ * :raises HTTPException: If the letter has been sent, is inside the
+ * late-question cutoff, or ``author_api_id`` is not the caller
  * :return: Updated letter with the new question
  * :rtype: Letter
  */
