@@ -10,10 +10,17 @@ from __future__ import annotations
 from datetime import UTC, datetime, timedelta
 
 import pytest
+from fastapi.exceptions import ResponseValidationError
 from fastapi.testclient import TestClient
 from sqlalchemy.orm import Session
 
-from ring.letters.constants import LetterStatus, LetterType
+from ring.letters.api.letter import _late_question_cutoff_reached
+from ring.letters.constants import (
+    LATE_QUESTION_CUTOFF,
+    LetterStatus,
+    LetterType,
+)
+from ring.letters.send_threshold import letter_responder_count
 from ring.ring_pydantic.linked_schemas import DashboardLetter, MinimalLetter
 from ring.tests.factories.letters.letter_factory import LetterFactory
 from ring.tests.factories.letters.question_factory import QuestionFactory
@@ -29,6 +36,37 @@ _CANNOT_DEMOTE_IN_PROGRESS = (
     "This loop is already in progress, so it can't be moved back to "
     "Upcoming. Add a question to the loop instead."
 )
+_CANNOT_ADD_QUESTION_SENT = (
+    "This loop has already been sent, so questions can't be added."
+)
+_CANNOT_ADD_QUESTION_CUTOFF = (
+    "It's too close to the send time to add a question."
+)
+_NEW_QUESTION = "What should everyone answer?"
+
+
+def _post_add_question(
+    client: TestClient,
+    letter: LetterFactory,
+    question_text: str = _NEW_QUESTION,
+):
+    return client.post(
+        f"/letters/letter/{letter.api_identifier}:add_question",
+        json={
+            "question_text": question_text,
+            "author_api_id": None,
+        },
+    )
+
+
+def _question_named(
+    questions: list[dict[str, object]], question_text: str
+) -> dict[str, object]:
+    return next(
+        question
+        for question in questions
+        if question["question_text"] == question_text
+    )
 
 
 class TestLetterAPI:
@@ -842,3 +880,280 @@ class TestLetterAPI:
             q["question_text"] == "What is your favorite color?"
             for q in data["questions"]
         )
+
+    @pytest.mark.parametrize(
+        "letter_type",
+        [LetterType.CYCLIC, LetterType.ADHOC],
+    )
+    @pytest.mark.parametrize(
+        "status",
+        [LetterStatus.UPCOMING, LetterStatus.IN_PROGRESS],
+    )
+    def test_member_can_add_question_on_live_letter(
+        self,
+        authenticated_client: TestClient,
+        db_session: Session,
+        current_user: UserFactory,
+        letter_type: LetterType,
+        status: LetterStatus,
+    ):
+        admin = UserFactory.create()
+        group = GroupFactory.create(admin=admin, members=[admin, current_user])
+        letter = LetterFactory.create(
+            group=group,
+            status=status,
+            letter_type=letter_type,
+            send_at=datetime.now(tz=UTC) + timedelta(days=3),
+        )
+        db_session.commit()
+
+        response = _post_add_question(authenticated_client, letter)
+
+        assert response.status_code == 200
+        added = _question_named(response.json()["questions"], _NEW_QUESTION)
+        assert added["added_late"] is (status == LetterStatus.IN_PROGRESS)
+
+    @pytest.mark.parametrize(
+        "letter_type",
+        [LetterType.CYCLIC, LetterType.ADHOC],
+    )
+    def test_add_question_on_sent_letter_returns_400(
+        self,
+        authenticated_client: TestClient,
+        db_session: Session,
+        current_user: UserFactory,
+        letter_type: LetterType,
+    ):
+        admin = UserFactory.create()
+        group = GroupFactory.create(admin=admin, members=[admin, current_user])
+        letter = LetterFactory.create(
+            group=group,
+            status=LetterStatus.SENT,
+            letter_type=letter_type,
+            send_at=datetime.now(tz=UTC) + timedelta(days=3),
+        )
+        db_session.commit()
+
+        response = _post_add_question(authenticated_client, letter)
+
+        assert response.status_code == 400
+        assert response.json()["detail"] == _CANNOT_ADD_QUESTION_SENT
+        db_session.refresh(letter)
+        assert all(
+            question.question_text != _NEW_QUESTION
+            for question in letter.questions
+        )
+
+    @pytest.mark.parametrize(
+        "letter_type",
+        [LetterType.CYCLIC, LetterType.ADHOC],
+    )
+    def test_admin_cannot_add_question_within_cutoff(
+        self,
+        authenticated_client: TestClient,
+        db_session: Session,
+        current_user: UserFactory,
+        letter_type: LetterType,
+    ):
+        group = GroupFactory.create(admin=current_user)
+        letter = LetterFactory.create(
+            group=group,
+            status=LetterStatus.IN_PROGRESS,
+            letter_type=letter_type,
+            send_at=datetime.now(tz=UTC) + timedelta(hours=23),
+        )
+        db_session.commit()
+
+        response = _post_add_question(authenticated_client, letter)
+
+        assert response.status_code == 400
+        assert response.json()["detail"] == _CANNOT_ADD_QUESTION_CUTOFF
+
+    def test_add_question_at_cutoff_returns_400(
+        self,
+        authenticated_client: TestClient,
+        db_session: Session,
+        current_user: UserFactory,
+    ):
+        group = GroupFactory.create(admin=current_user)
+        letter = LetterFactory.create(
+            group=group,
+            status=LetterStatus.IN_PROGRESS,
+            send_at=datetime.now(tz=UTC) + LATE_QUESTION_CUTOFF,
+        )
+        db_session.commit()
+
+        response = _post_add_question(authenticated_client, letter)
+
+        assert response.status_code == 400
+        assert response.json()["detail"] == _CANNOT_ADD_QUESTION_CUTOFF
+
+    @pytest.mark.parametrize(
+        "letter_type",
+        [LetterType.CYCLIC, LetterType.ADHOC],
+    )
+    def test_add_question_just_outside_cutoff_succeeds(
+        self,
+        authenticated_client: TestClient,
+        db_session: Session,
+        current_user: UserFactory,
+        letter_type: LetterType,
+    ):
+        group = GroupFactory.create(admin=current_user)
+        letter = LetterFactory.create(
+            group=group,
+            status=LetterStatus.IN_PROGRESS,
+            letter_type=letter_type,
+            send_at=(
+                datetime.now(tz=UTC)
+                + LATE_QUESTION_CUTOFF
+                + timedelta(minutes=2)
+            ),
+        )
+        db_session.commit()
+
+        response = _post_add_question(authenticated_client, letter)
+
+        assert response.status_code == 200
+        added = _question_named(response.json()["questions"], _NEW_QUESTION)
+        assert added["added_late"] is True
+
+    def test_upcoming_add_has_no_cutoff(
+        self,
+        authenticated_client: TestClient,
+        db_session: Session,
+        current_user: UserFactory,
+    ):
+        group = GroupFactory.create(admin=current_user)
+        letter = LetterFactory.create(
+            group=group,
+            status=LetterStatus.UPCOMING,
+            send_at=datetime.now(tz=UTC) + timedelta(hours=1),
+        )
+        db_session.commit()
+
+        response = _post_add_question(authenticated_client, letter)
+
+        assert response.status_code == 200
+        added = _question_named(response.json()["questions"], _NEW_QUESTION)
+        assert added["added_late"] is False
+
+    def test_null_send_at_has_no_cutoff(
+        self,
+        authenticated_client: TestClient,
+        db_session: Session,
+        current_user: UserFactory,
+    ):
+        group = GroupFactory.create(admin=current_user)
+        letter = LetterFactory.create(
+            group=group,
+            status=LetterStatus.IN_PROGRESS,
+        )
+        letter.send_at = None
+        db_session.commit()
+        assert _late_question_cutoff_reached(letter) is False
+
+        # Letter.send_at is a required datetime on the response schema, so a
+        # letter with a null send_at cannot be serialized. The cutoff still
+        # does not apply: the question is saved.
+        try:
+            response = _post_add_question(authenticated_client, letter)
+        except ResponseValidationError as exc:
+            assert any(
+                error["loc"] == ("response", "send_at")
+                for error in exc.errors()
+            )
+        else:
+            assert response.status_code == 200
+            added = _question_named(
+                response.json()["questions"], _NEW_QUESTION
+            )
+            assert added["added_late"] is True
+            return
+
+        db_session.expire(letter, ["questions"])
+        added_row = next(
+            question
+            for question in letter.questions
+            if question.question_text == _NEW_QUESTION
+        )
+        assert added_row.added_late is True
+
+    def test_in_progress_add_places_late_questions_first(
+        self,
+        authenticated_client: TestClient,
+        db_session: Session,
+        current_user: UserFactory,
+    ):
+        admin = UserFactory.create()
+        group = GroupFactory.create(admin=admin, members=[admin, current_user])
+        letter = LetterFactory.create(
+            group=group,
+            status=LetterStatus.UPCOMING,
+            send_at=datetime.now(tz=UTC) + timedelta(days=3),
+        )
+        QuestionFactory.create(
+            letter=letter, question_text="Seeded", author=None
+        )
+        QuestionFactory.create(
+            letter=letter,
+            question_text="Earlier authored",
+            author=admin,
+        )
+        letter.status = LetterStatus.IN_PROGRESS
+        db_session.commit()
+
+        first = _post_add_question(authenticated_client, letter, "Late one")
+        assert first.status_code == 200
+        second = _post_add_question(authenticated_client, letter, "Late two")
+        assert second.status_code == 200
+
+        texts = [
+            question["question_text"]
+            for question in second.json()["questions"]
+        ]
+        assert texts == [
+            "Late one",
+            "Late two",
+            "Seeded",
+            "Earlier authored",
+        ]
+        by_text = {
+            question["question_text"]: question
+            for question in second.json()["questions"]
+        }
+        assert by_text["Late one"]["added_late"] is True
+        assert by_text["Late two"]["added_late"] is True
+        assert by_text["Late one"]["position"] == 0
+        assert by_text["Late two"]["position"] == 1
+        assert by_text["Seeded"]["added_late"] is False
+        assert by_text["Earlier authored"]["added_late"] is False
+
+    def test_add_question_leaves_send_state_unchanged(
+        self,
+        authenticated_client: TestClient,
+        db_session: Session,
+        current_user: UserFactory,
+    ):
+        admin = UserFactory.create()
+        group = GroupFactory.create(admin=admin, members=[admin, current_user])
+        letter = LetterFactory.create(
+            group=group,
+            status=LetterStatus.IN_PROGRESS,
+            send_at=datetime.now(tz=UTC) + timedelta(days=4),
+        )
+        letter.automatic_send_deferral_count = 2
+        question = QuestionFactory.create(letter=letter)
+        ResponseFactory.create(question=question, participant=current_user)
+        db_session.commit()
+        db_session.refresh(letter)
+        send_at = letter.send_at
+        assert letter_responder_count(letter) == 1
+
+        response = _post_add_question(authenticated_client, letter)
+
+        assert response.status_code == 200
+        db_session.refresh(letter)
+        assert letter_responder_count(letter) == 1
+        assert letter.automatic_send_deferral_count == 2
+        assert letter.send_at == send_at

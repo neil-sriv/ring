@@ -40,6 +40,9 @@ class Question(Base, APIIdentified, PydanticModel, CreatedAtMixin):
         question_text (Mapped[str]): The actual text content of the question
         author (Mapped[User | None]): User who authored the question, optional
         letter (Mapped[Letter]): Letter to which this question belongs
+        position (Mapped[int]): Display order within the letter
+        added_late (Mapped[bool]): True when added while the letter was
+            in progress
     """
 
     __tablename__ = "question"
@@ -63,6 +66,10 @@ class Question(Base, APIIdentified, PydanticModel, CreatedAtMixin):
     letter_id: Mapped[int] = mapped_column(ForeignKey("letter.id"))
     letter: Mapped["Letter"] = relationship(back_populates="questions")
     position: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
+    # Server default backfills existing rows as not late.
+    added_late: Mapped[bool] = mapped_column(
+        default=False, server_default="false", nullable=False
+    )
 
     def __init__(
         self,
@@ -70,6 +77,7 @@ class Question(Base, APIIdentified, PydanticModel, CreatedAtMixin):
         question_text: str,
         author: User | None,
         position: int | None = None,
+        added_late: bool = False,
     ) -> None:
         """Initialize a new Question instance.
 
@@ -79,6 +87,8 @@ class Question(Base, APIIdentified, PydanticModel, CreatedAtMixin):
             author (User | None): User who authored the question
             position (int | None): Display order within the letter. Defaults
                 to the next index after existing questions.
+            added_late (bool): True when added while the letter was in
+                progress. Defaults to False.
         """
         APIIdentified.__init__(self)
         if position is None:
@@ -88,6 +98,7 @@ class Question(Base, APIIdentified, PydanticModel, CreatedAtMixin):
         self.question_text = question_text
         self.author = author
         self.position = position
+        self.added_late = added_late
 
     @classmethod
     def create(
@@ -96,6 +107,7 @@ class Question(Base, APIIdentified, PydanticModel, CreatedAtMixin):
         question_text: str,
         author: User | None = None,
         position: int | None = None,
+        added_late: bool = False,
     ) -> Question:
         """Create a new Question instance.
 
@@ -106,11 +118,19 @@ class Question(Base, APIIdentified, PydanticModel, CreatedAtMixin):
             question_text (str): The actual text content of the question
             author (User | None, optional): User who authored the question. Defaults to None.
             position (int | None, optional): Display order. Defaults to append.
+            added_late (bool, optional): True when added while the letter
+                was in progress. Defaults to False.
 
         Returns:
             Question: New Question instance
         """
-        question = cls(letter, question_text, author, position=position)
+        question = cls(
+            letter,
+            question_text,
+            author,
+            position=position,
+            added_late=added_late,
+        )
         return question
 
     @hybrid_property

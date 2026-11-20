@@ -126,12 +126,15 @@ export type DashboardLetters = {
  * Attributes:
  * responded_participant_api_ids (list[str]): API identifiers of users
  * who have responded to this question
+ * added_late (bool): True when the question was added while its letter
+ * was in progress
  */
 export type DashboardQuestion = {
     question_text: string;
     api_identifier: string;
     created_at: string;
     position?: number | null;
+    added_late: boolean;
     responded_participant_api_ids: Array<string>;
 };
 
@@ -614,12 +617,15 @@ export type PublicLetter = {
  * Attributes:
  * responses (list[ResponseWithParticipant]): Public responses with participant info
  * author (Optional[UserUnlinked]): Question author, if available
+ * added_late (bool): True when the question was added while its letter
+ * was in progress
  */
 export type PublicQuestion = {
     question_text: string;
     api_identifier: string;
     created_at: string;
     position?: number | null;
+    added_late: boolean;
     responses: Array<ResponseWithParticipant>;
     author: UserUnlinked | null;
 };
@@ -644,12 +650,15 @@ export type QuestionCreate = {
  * Attributes:
  * letter (LetterUnlinked): Letter containing this question
  * responses (list[ResponseUnlinked]): Responses to this question
+ * added_late (bool): True when the question was added while its letter
+ * was in progress
  */
 export type QuestionLinked = {
     question_text: string;
     api_identifier: string;
     created_at: string;
     position?: number | null;
+    added_late: boolean;
     letter: LetterUnlinked;
     group: GroupUnlinked;
     responses: Array<ResponseUnlinked>;

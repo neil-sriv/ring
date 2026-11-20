@@ -203,8 +203,11 @@ class DashboardQuestion(Question):
     Attributes:
         responded_participant_api_ids (list[str]): API identifiers of users
             who have responded to this question
+        added_late (bool): True when the question was added while its letter
+            was in progress
     """
 
+    added_late: bool
     responded_participant_api_ids: list[str]
 
     @model_validator(mode="before")
@@ -268,8 +271,11 @@ class QuestionLinked(Question):
     Attributes:
         letter (LetterUnlinked): Letter containing this question
         responses (list[ResponseUnlinked]): Responses to this question
+        added_late (bool): True when the question was added while its letter
+            was in progress
     """
 
+    added_late: bool
     letter: "LetterUnlinked"
     group: "GroupUnlinked"
     responses: list["ResponseUnlinked"]
@@ -291,8 +297,11 @@ class PublicQuestion(Question):
     Attributes:
         responses (list[ResponseWithParticipant]): Public responses with participant info
         author (Optional[UserUnlinked]): Question author, if available
+        added_late (bool): True when the question was added while its letter
+            was in progress
     """
 
+    added_late: bool
     responses: list["ResponseWithParticipant"]
     author: Optional["UserUnlinked"]
 

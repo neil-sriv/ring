@@ -509,7 +509,7 @@
           "parties"
         ],
         "summary": "Read Users",
-        "description": "Get a list of users with pagination.\n\nArgs:\n    skip (int, optional): Number of records to skip. Defaults to 0.\n    limit (int, optional): Maximum number of records to return. Defaults to 100.\n    req_dep (AuthenticatedRequestDependencies): Request dependencies\n\nReturns:\n    Sequence[User]: List of users",
+        "description": "Get a list of users with pagination (admin only).\n\nArgs:\n    skip (int, optional): Number of records to skip. Defaults to 0.\n    limit (int, optional): Maximum number of records to return. Defaults to 100.\n    req_dep (AuthenticatedRequestDependencies): Request dependencies\n\nReturns:\n    Sequence[User]: List of users\n\nRaises:\n    HTTPException: If the caller is not an admin",
         "operationId": "read_users_parties_users_get",
         "security": [
           {
@@ -572,7 +572,7 @@
           "parties"
         ],
         "summary": "Read User By Id",
-        "description": "Get a user by their API identifier.\n\nArgs:\n    user_api_id (str): API identifier of the user\n    req_dep (AuthenticatedRequestDependencies): Request dependencies\n\nReturns:\n    User: User information\n\nRaises:\n    HTTPException: If user not found",
+        "description": "Get a user by their API identifier (admin only).\n\nArgs:\n    user_api_id (str): API identifier of the user\n    req_dep (AuthenticatedRequestDependencies): Request dependencies\n\nReturns:\n    User: User information\n\nRaises:\n    HTTPException: If the caller is not an admin, or the user is not found",
         "operationId": "read_user_by_id_parties_user__user_api_id__get",
         "security": [
           {
@@ -888,7 +888,7 @@
           "parties"
         ],
         "summary": "List Groups",
-        "description": "List all groups a user is a member of.\n\nArgs:\n    user_api_id (str): API identifier of the user\n    skip (int, optional): Number of records to skip. Defaults to 0.\n    limit (int, optional): Maximum number of records to return. Defaults to 100.\n    req_dep (AuthenticatedRequestDependencies): Request dependencies\n\nReturns:\n    Sequence[Group]: List of groups",
+        "description": "List all groups the authenticated user is a member of.\n\nClients may still send ``user_api_id`` for backwards compatibility, but it\nmust match the current user — another user's id is rejected.\n\nArgs:\n    user_api_id (str): API identifier of the user (must be the caller)\n    skip (int, optional): Number of records to skip. Defaults to 0.\n    limit (int, optional): Maximum number of records to return. Defaults to 100.\n    req_dep (AuthenticatedRequestDependencies): Request dependencies\n\nReturns:\n    Sequence[Group]: List of groups\n\nRaises:\n    HTTPException: If ``user_api_id`` does not match the authenticated user",
         "operationId": "list_groups_parties_groups__get",
         "security": [
           {
@@ -960,7 +960,7 @@
           "parties"
         ],
         "summary": "Read Group",
-        "description": "Get details of a specific group.\n\nArgs:\n    group_api_id (str): API identifier of the group\n    req_dep (AuthenticatedRequestDependencies): Request dependencies\n\nReturns:\n    Group: Group details\n\nRaises:\n    HTTPException: If group not found or user is not a member",
+        "description": "Get details of a specific group.\n\nCaller must be a member of the group. Missing groups look like forbidden\naccess so callers cannot probe for ids.\n\nArgs:\n    group_api_id (str): API identifier of the group\n    req_dep (AuthenticatedRequestDependencies): Request dependencies\n\nReturns:\n    Group: Group details\n\nRaises:\n    PermissionError: If the group is missing or the caller cannot read it",
         "operationId": "read_group_parties_group__group_api_id__get",
         "security": [
           {
@@ -1006,7 +1006,7 @@
           "parties"
         ],
         "summary": "Update Group",
-        "description": "Update group information.\n\nArgs:\n    group_api_id (str): API identifier of the group\n    group (GroupUpdate): Group update parameters\n    req_dep (AuthenticatedRequestDependencies): Request dependencies\n\nReturns:\n    Group: Updated group\n\nRaises:\n    HTTPException: If no updates provided, user not authorized, or invalid cycle length",
+        "description": "Update group information.\n\nArgs:\n    group_api_id (str): API identifier of the group\n    group (GroupUpdate): Group update parameters\n    req_dep (AuthenticatedRequestDependencies): Request dependencies\n\nReturns:\n    Group: Updated group\n\nRaises:\n    HTTPException: If no updates provided, user not authorized, or invalid cycle length\n    PermissionError: If the group is missing or the caller cannot read it",
         "operationId": "update_group_parties_group__group_api_id__patch",
         "security": [
           {
@@ -1121,7 +1121,7 @@
           "parties"
         ],
         "summary": "Remove User From Group",
-        "description": "Remove a user from a group.\n\nArgs:\n    group_api_id (str): API identifier of the group\n    user_api_id (str): API identifier of the user to remove\n    req_dep (AuthenticatedRequestDependencies): Request dependencies\n\nReturns:\n    Group: Updated group\n\nRaises:\n    HTTPException: If group not found, user not authorized, or invalid operation",
+        "description": "Remove a user from a group.\n\nArgs:\n    group_api_id (str): API identifier of the group\n    user_api_id (str): API identifier of the user to remove\n    req_dep (AuthenticatedRequestDependencies): Request dependencies\n\nReturns:\n    Group: Updated group\n\nRaises:\n    HTTPException: If user not authorized, or invalid operation\n    PermissionError: If the group is missing or the caller cannot read it",
         "operationId": "remove_user_from_group_parties_group__group_api_id__remove_member__user_api_id__post",
         "security": [
           {
@@ -1236,7 +1236,7 @@
           "parties"
         ],
         "summary": "Replace Group Default Questions",
-        "description": "Replace a group's default questions.\n\nArgs:\n    group_api_id (str): API identifier of the group\n    default_questions (ReplaceDefaultQuestions): New list of default questions\n    req_dep (AuthenticatedRequestDependencies): Request dependencies\n\nReturns:\n    Group: Updated group\n\nRaises:\n    HTTPException: If group not found or user not authorized",
+        "description": "Replace a group's default questions.\n\nArgs:\n    group_api_id (str): API identifier of the group\n    default_questions (ReplaceDefaultQuestions): New list of default questions\n    req_dep (AuthenticatedRequestDependencies): Request dependencies\n\nReturns:\n    Group: Updated group\n\nRaises:\n    HTTPException: If user not authorized\n    PermissionError: If the group is missing or the caller cannot read it",
         "operationId": "replace_group_default_questions_parties_group__group_api_id__replace_default_questions_post",
         "security": [
           {
@@ -1294,7 +1294,7 @@
           "parties"
         ],
         "summary": "Read Group Key Values",
-        "description": "Get all key-value pairs for a group.\n\nArgs:\n    group_api_id (str): API identifier of the group\n    req_dep (AuthenticatedRequestDependencies): Request dependencies\n\nReturns:\n    GroupKeyValue: Dictionary of all key-value pairs\n\nRaises:\n    HTTPException: If group not found or user is not a member",
+        "description": "Get all key-value pairs for a group.\n\nCaller must be a member of the group. Missing groups look like forbidden\naccess so callers cannot probe for ids.\n\nArgs:\n    group_api_id (str): API identifier of the group\n    req_dep (AuthenticatedRequestDependencies): Request dependencies\n\nReturns:\n    GroupKeyValue: Dictionary of all key-value pairs\n\nRaises:\n    PermissionError: If the group is missing or the caller cannot read it",
         "operationId": "read_group_key_values_parties_group__group_api_id__key_value_get",
         "security": [
           {
@@ -1340,7 +1340,7 @@
           "parties"
         ],
         "summary": "Full Replace Group Key Values",
-        "description": "Replace all key-value pairs for a group.\n\nArgs:\n    group_api_id (str): API identifier of the group\n    updates (GroupKeyValue): New key-value pairs\n    req_dep (AuthenticatedRequestDependencies): Request dependencies\n\nReturns:\n    GroupKeyValue: Updated key-value pairs\n\nRaises:\n    HTTPException: If group not found or user is not a member",
+        "description": "Replace all key-value pairs for a group.\n\nCaller must be a member of the group. Missing groups look like forbidden\naccess so callers cannot probe for ids.\n\nArgs:\n    group_api_id (str): API identifier of the group\n    updates (GroupKeyValue): New key-value pairs\n    req_dep (AuthenticatedRequestDependencies): Request dependencies\n\nReturns:\n    GroupKeyValue: Updated key-value pairs\n\nRaises:\n    PermissionError: If the group is missing or the caller cannot read it",
         "operationId": "full_replace_group_key_values_parties_group__group_api_id__key_value_put",
         "security": [
           {
@@ -1398,7 +1398,7 @@
           "parties"
         ],
         "summary": "Read Group Key Value",
-        "description": "Get a specific key-value pair for a group.\n\nArgs:\n    group_api_id (str): API identifier of the group\n    key (str): Key to retrieve\n    req_dep (AuthenticatedRequestDependencies): Request dependencies\n\nReturns:\n    GroupKeyValueBase: Key-value pair\n\nRaises:\n    HTTPException: If group not found or user is not a member",
+        "description": "Get a specific key-value pair for a group.\n\nCaller must be a member of the group. Missing groups look like forbidden\naccess so callers cannot probe for ids.\n\nArgs:\n    group_api_id (str): API identifier of the group\n    key (str): Key to retrieve\n    req_dep (AuthenticatedRequestDependencies): Request dependencies\n\nReturns:\n    GroupKeyValueBase: Key-value pair\n\nRaises:\n    PermissionError: If the group is missing or the caller cannot read it",
         "operationId": "read_group_key_value_parties_group__group_api_id__key_value__key__get",
         "security": [
           {
@@ -1455,7 +1455,7 @@
           "parties"
         ],
         "summary": "Upsert Group Key Value",
-        "description": "Update or delete a single key-value pair for a group.\n\nArgs:\n    group_api_id (str): API identifier of the group\n    update (SingleGroupKeyValueUpdate): Update operation details\n    req_dep (AuthenticatedRequestDependencies): Request dependencies\n\nReturns:\n    GroupKeyValueBase: Updated key-value pair\n\nRaises:\n    HTTPException: If group not found or user is not a member",
+        "description": "Update or delete a single key-value pair for a group.\n\nCaller must be a member of the group. Missing groups look like forbidden\naccess so callers cannot probe for ids.\n\nArgs:\n    group_api_id (str): API identifier of the group\n    update (SingleGroupKeyValueUpdate): Update operation details\n    req_dep (AuthenticatedRequestDependencies): Request dependencies\n\nReturns:\n    GroupKeyValueBase: Updated key-value pair\n\nRaises:\n    PermissionError: If the group is missing or the caller cannot read it",
         "operationId": "upsert_group_key_value_parties_group__group_api_id__key_value_update_post",
         "security": [
           {
@@ -1513,7 +1513,7 @@
           "parties"
         ],
         "summary": "Bulk Update Group Key Values",
-        "description": "Update or delete multiple key-value pairs for a group.\n\nArgs:\n    group_api_id (str): API identifier of the group\n    updates (BulkGroupKeyValueUpdate): List of update operations\n    req_dep (AuthenticatedRequestDependencies): Request dependencies\n\nReturns:\n    GroupKeyValue: All key-value pairs after updates\n\nRaises:\n    HTTPException: If group not found or user is not a member",
+        "description": "Update or delete multiple key-value pairs for a group.\n\nCaller must be a member of the group. Missing groups look like forbidden\naccess so callers cannot probe for ids.\n\nArgs:\n    group_api_id (str): API identifier of the group\n    updates (BulkGroupKeyValueUpdate): List of update operations\n    req_dep (AuthenticatedRequestDependencies): Request dependencies\n\nReturns:\n    GroupKeyValue: All key-value pairs after updates\n\nRaises:\n    PermissionError: If the group is missing or the caller cannot read it",
         "operationId": "bulk_update_group_key_values_parties_group__group_api_id__key_value_bulk_update_post",
         "security": [
           {
@@ -1571,7 +1571,7 @@
           "letters"
         ],
         "summary": "Add Next Letter",
-        "description": "Create a new letter for a group.\n\nCreates a new letter with default questions if there are no letters\ncurrently in progress or upcoming for the group.\n\nArgs:\n    letter (LetterCreate): Letter creation parameters\n    req_dep (AuthenticatedRequestDependencies): Request dependencies including database session and auth\n\nReturns:\n    Letter: Newly created letter\n\nRaises:\n    ValueError: If there is already a letter in progress or upcoming",
+        "description": "Create a new letter for a group.\n\nCreates a new letter with default questions if there are no letters\ncurrently in progress or upcoming for the group. Only the group admin\nmay create the next cyclic letter.\n\nArgs:\n    letter (LetterCreate): Letter creation parameters\n    req_dep (AuthenticatedRequestDependencies): Request dependencies including database session and auth\n\nReturns:\n    Letter: Newly created letter\n\nRaises:\n    ValueError: If there is already a letter in progress or upcoming\n    HTTPException: If the caller is not the group admin",
         "operationId": "add_next_letter_letters_letter_post",
         "requestBody": {
           "content": {
@@ -1674,7 +1674,7 @@
           "letters"
         ],
         "summary": "List Letters",
-        "description": "List letters for a specific group.\n\nRetrieves a paginated list of letters belonging to the specified group.\n\nArgs:\n    group_api_id (str): API identifier of the group\n    skip (int, optional): Number of records to skip for pagination. Defaults to 0.\n    limit (int, optional): Maximum number of records to return. Defaults to 100.\n    req_dep (AuthenticatedRequestDependencies): Request dependencies including database session and auth\n\nReturns:\n    Sequence[Letter]: List of letters",
+        "description": "List letters for a specific group.\n\nRetrieves a paginated list of letters belonging to the specified group.\nCaller must be a member of the group.\n\nArgs:\n    group_api_id (str): API identifier of the group\n    skip (int, optional): Number of records to skip for pagination. Defaults to 0.\n    limit (int, optional): Maximum number of records to return. Defaults to 100.\n    req_dep (AuthenticatedRequestDependencies): Request dependencies including database session and auth\n\nReturns:\n    Sequence[Letter]: List of letters",
         "operationId": "list_letters_letters_letters__get",
         "security": [
           {
@@ -1762,7 +1762,7 @@
           "letters"
         ],
         "summary": "Read Letter",
-        "description": "Retrieve a specific letter by its API identifier.\n\nArgs:\n    letter_api_id (str): API identifier of the letter\n    req_dep (AuthenticatedRequestDependencies): Request dependencies including database session and auth\n\nReturns:\n    Letter: The requested letter\n\nRaises:\n    IDNotFoundException: If letter with given API ID is not found",
+        "description": "Retrieve a specific letter by its API identifier.\n\nCaller must be a member of the letter's group. Missing letters look like\nforbidden access so callers cannot probe for ids.\n\nArgs:\n    letter_api_id (str): API identifier of the letter\n    req_dep (AuthenticatedRequestDependencies): Request dependencies including database session and auth\n\nReturns:\n    Letter: The requested letter",
         "operationId": "read_letter_letters_letter__letter_api_id__get",
         "security": [
           {
@@ -1837,7 +1837,7 @@
           "letters"
         ],
         "summary": "Edit Letter",
-        "description": "Update a letter's details.\n\nUpdates the send time of a letter. For upcoming letters, ensures the new\nsend time is after any in-progress letter's send time.\n\nArgs:\n    letter_api_id (str): API identifier of the letter to edit\n    letter (LetterUpdate): Updated letter details\n    req_dep (AuthenticatedRequestDependencies): Request dependencies including database session and auth\n\nReturns:\n    Letter: Updated letter\n\nRaises:\n    AssertionError: If new send time violates timing constraints\n    IDNotFoundException: If letter with given API ID is not found",
+        "description": "Update a letter's details.\n\nUpdates the send time of a letter. For upcoming letters, ensures the new\nsend time is after any in-progress letter's send time.\n\nArgs:\n    letter_api_id (str): API identifier of the letter to edit\n    letter (LetterUpdate): Updated letter details\n    req_dep (AuthenticatedRequestDependencies): Request dependencies including database session and auth\n\nReturns:\n    Letter: Updated letter\n\nRaises:\n    HTTPException: If the caller is not the group admin, the letter was\n        already sent, a cyclic in-progress loop is moved back to\n        upcoming, the send time is invalid, or another cyclic letter\n        already has the requested status\n    PermissionError: If the letter is missing or the caller cannot read it",
         "operationId": "edit_letter_letters_letter__letter_api_id__edit_letter_post",
         "security": [
           {
@@ -1895,7 +1895,7 @@
           "letters"
         ],
         "summary": "Add Question",
-        "description": "Add a new question to a letter.\n\nCreates and adds a new question to the specified letter. The question can\noptionally be associated with an author.\n\n:param letter_api_id: API identifier of the letter\n:type letter_api_id: str\n:param question: Question creation parameters\n:type question: QuestionCreate\n:param req_dep: Request dependencies including database session and auth\n:type req_dep: AuthenticatedRequestDependencies\n:raises IDNotFoundException: If letter or author with given API ID is not found\n:return: Updated letter with the new question\n:rtype: Letter",
+        "description": "Add a new question to a letter.\n\nAny group member may add a question while the letter is upcoming or in\nprogress. A sent letter is refused. An in-progress letter is also\nrefused once ``send_at`` is within ``LATE_QUESTION_CUTOFF``, including\nfor the group admin. A null ``send_at`` has no cutoff.\n\n:param letter_api_id: API identifier of the letter\n:type letter_api_id: str\n:param question: Question creation parameters\n:type question: QuestionCreate\n:param req_dep: Request dependencies including database session and auth\n:type req_dep: AuthenticatedRequestDependencies\n:raises PermissionError: If the caller cannot read the letter\n:raises IDNotFoundException: If author with given API ID is not found\n:raises HTTPException: If the letter has been sent or is inside the\n    late-question cutoff\n:return: Updated letter with the new question\n:rtype: Letter",
         "operationId": "add_question_letters_letter__letter_api_id__add_question_post",
         "security": [
           {
@@ -2069,7 +2069,7 @@
           "schedule"
         ],
         "summary": "Get Schedule For Group",
-        "description": "Get a group's schedule by its API identifier.\n\nArgs:\n    group_api_id: API identifier of the group\n    req_dep: Request dependencies including database session\n\nReturns:\n    Schedule: The group's schedule with its associated tasks\n\nRaises:\n    HTTPException: If the group is not found or user lacks permission",
+        "description": "Get a group's schedule by its API identifier.\n\nCaller must be a member of the group. Missing groups look like forbidden\naccess so callers cannot probe for ids.\n\nArgs:\n    group_api_id: API identifier of the group\n    req_dep: Request dependencies including database session\n\nReturns:\n    Schedule: The group's schedule with its associated tasks\n\nRaises:\n    HTTPException: If the group is not found or user lacks permission",
         "operationId": "get_schedule_for_group_schedule_schedule__group_api_id__get",
         "security": [
           {
@@ -2117,7 +2117,7 @@
           "questions"
         ],
         "summary": "Upsert Response",
-        "description": "Create or update a response to a question.\n\nIf a response already exists (identified by api_identifier or participant),\nupdates it. Otherwise, creates a new response.\n\nArgs:\n    question_api_id (str): API identifier of the question\n    response (ResponseUpsert): Response creation/update parameters\n    req_dep (AuthenticatedRequestDependencies): Request dependencies including database session and auth\n\nReturns:\n    Question: Updated question with the new/updated response\n\nRaises:\n    IDNotFoundException: If question or response with given API ID is not found",
+        "description": "Create or update a response to a question.\n\nIf a response already exists (identified by api_identifier or participant),\nupdates it. Otherwise, creates a new response for the current user.\n\nArgs:\n    question_api_id (str): API identifier of the question\n    response (ResponseUpsert): Response creation/update parameters\n    req_dep (AuthenticatedRequestDependencies): Request dependencies including database session and auth\n\nReturns:\n    Question: Updated question with the new/updated response\n\nRaises:\n    PermissionError: If the caller is not a member of the question's group\n    HTTPException: If the caller tries to write another member's response\n    IDNotFoundException: If question or response with given API ID is not found",
         "operationId": "upsert_response_questions_question__question_api_id__upsert_response_post",
         "security": [
           {
@@ -2175,7 +2175,7 @@
           "questions"
         ],
         "summary": "Upload Image",
-        "description": "Upload an image as part of a response to a question.\n\nCreates a new response if one doesn't exist for the current user,\nthen attaches the uploaded image to it.\n\nArgs:\n    question_api_id (str): API identifier of the question\n    response_image (UploadFile): Image file to upload\n    req_dep (AuthenticatedRequestDependencies): Request dependencies including database session and auth\n\nReturns:\n    Question: Updated question with the response containing the new image\n\nRaises:\n    IDNotFoundException: If question with given API ID is not found",
+        "description": "Upload an image as part of a response to a question.\n\nCreates a new response if one doesn't exist for the current user,\nthen attaches the uploaded image to it.\n\nArgs:\n    question_api_id (str): API identifier of the question\n    response_image (UploadFile): Image file to upload\n    req_dep (AuthenticatedRequestDependencies): Request dependencies including database session and auth\n\nReturns:\n    Question: Updated question with the response containing the new image\n\nRaises:\n    PermissionError: If the caller is not a member of the question's group\n    IDNotFoundException: If question with given API ID is not found",
         "operationId": "upload_image_questions_question__question_api_id__upload_image_post",
         "security": [
           {
@@ -2233,7 +2233,7 @@
           "questions"
         ],
         "summary": "Delete Question",
-        "description": "Delete a question.\n\nOnly the question author or group admin can delete a question.\nQuestions with responses cannot be deleted.\n\nArgs:\n    question_api_id (str): API identifier of the question to delete\n    req_dep (AuthenticatedRequestDependencies): Request dependencies including database session and auth\n\nRaises:\n    HTTPException: If question not found, user not authorized, or question has responses",
+        "description": "Delete a question.\n\nOnly the question author or group admin can delete a question.\nQuestions with responses cannot be deleted.\n\nArgs:\n    question_api_id (str): API identifier of the question to delete\n    req_dep (AuthenticatedRequestDependencies): Request dependencies including database session and auth\n\nRaises:\n    PermissionError: If the caller is not a member of the question's group\n    HTTPException: If user not authorized, or question has responses",
         "operationId": "delete_question_questions_question__question_api_id__delete",
         "security": [
           {
@@ -2274,7 +2274,7 @@
           "responses"
         ],
         "summary": "Edit Response",
-        "description": "Update the text content of a response.\n\nArgs:\n    response_api_id (str): API identifier of the response to edit\n    response (ResponseCreateBase): Updated response content\n    req_dep (AuthenticatedRequestDependencies): Request dependencies including database session and auth\n\nReturns:\n    Response: Updated response\n\nRaises:\n    IDNotFoundException: If response with given API ID is not found",
+        "description": "Update the text content of a response.\n\nArgs:\n    response_api_id (str): API identifier of the response to edit\n    response (ResponseCreateBase): Updated response content\n    req_dep (AuthenticatedRequestDependencies): Request dependencies including database session and auth\n\nReturns:\n    Response: Updated response\n\nRaises:\n    PermissionError: If the caller is not a member of the response's group\n    HTTPException: If the caller is not the author or group admin\n    IDNotFoundException: If response with given API ID is not found",
         "operationId": "edit_response_responses_response__response_api_id__edit_response_post",
         "security": [
           {
@@ -2332,7 +2332,7 @@
           "responses"
         ],
         "summary": "Upload Image",
-        "description": "Upload images to attach to a response.\n\nThis endpoint is deprecated. Use the question-level image upload endpoint instead.\n\nArgs:\n    response_api_id (str): API identifier of the response\n    response_images (list[UploadFile]): List of image files to upload\n    req_dep (AuthenticatedRequestDependencies): Request dependencies including database session and auth\n\nReturns:\n    Response: Updated response with attached images\n\nRaises:\n    IDNotFoundException: If response with given API ID is not found",
+        "description": "Upload images to attach to a response.\n\nThis endpoint is deprecated. Use the question-level image upload endpoint instead.\n\nArgs:\n    response_api_id (str): API identifier of the response\n    response_images (list[UploadFile]): List of image files to upload\n    req_dep (AuthenticatedRequestDependencies): Request dependencies including database session and auth\n\nReturns:\n    Response: Updated response with attached images\n\nRaises:\n    PermissionError: If the caller is not a member of the response's group\n    HTTPException: If the caller is not the author or group admin\n    IDNotFoundException: If response with given API ID is not found",
         "operationId": "upload_image_responses_response__response_api_id__upload_image_post",
         "deprecated": true,
         "security": [
@@ -2391,7 +2391,7 @@
           "responses"
         ],
         "summary": "Delete Image",
-        "description": "Delete an image from a response.\n\nRemoves the image association and deletes the Image model row.\nThe S3 file is not deleted to avoid data loss.\n\nArgs:\n    response_api_id (str): API identifier of the response\n    s3_url (str): S3 URL of the image to delete\n    req_dep (AuthenticatedRequestDependencies): Request dependencies including database session and auth\n\nReturns:\n    Response: Updated response without the deleted image\n\nRaises:\n    IDNotFoundException: If response with given API ID is not found\n    ValueError: If image is not found in the response",
+        "description": "Delete an image from a response.\n\nRemoves the image association and deletes the Image model row.\nThe S3 file is not deleted to avoid data loss.\n\nArgs:\n    response_api_id (str): API identifier of the response\n    s3_url (str): S3 URL of the image to delete\n    req_dep (AuthenticatedRequestDependencies): Request dependencies including database session and auth\n\nReturns:\n    Response: Updated response without the deleted image\n\nRaises:\n    PermissionError: If the caller is not a member of the response's group\n    HTTPException: If the caller is not the author or group admin\n    IDNotFoundException: If response with given API ID is not found\n    ValueError: If image is not found in the response",
         "operationId": "delete_image_responses_response__response_api_id__delete_image_delete",
         "security": [
           {
@@ -2538,7 +2538,7 @@
           "notifications"
         ],
         "summary": "Post Subscription",
-        "description": "Create a new web push notification subscription.\n\nCreates a subscription for the authenticated user to receive web push\nnotifications. If a subscription with the same endpoint already exists,\nreturns a message indicating this instead of creating a duplicate.\n\nArgs:\n    subscription (SubscriptionCreate): Subscription details including endpoint and keys\n    req_dep (AuthenticatedRequestDependencies): Request dependencies including database session\n\nReturns:\n    ResponseMessage: Message indicating success or existing subscription\n\nRaises:\n    HTTPException: If user is not authenticated",
+        "description": "Create a new web push notification subscription.\n\nCreates a subscription for the authenticated user to receive web push\nnotifications. Clients may still send ``user_api_identifier`` for\nbackwards compatibility, but it must match the current user — another\nuser's id is rejected. If a subscription with the same endpoint already\nexists, returns a message indicating this instead of creating a duplicate.\n\nArgs:\n    subscription (SubscriptionCreate): Subscription details including endpoint and keys\n    req_dep (AuthenticatedRequestDependencies): Request dependencies including database session\n\nReturns:\n    ResponseMessage: Message indicating success or existing subscription\n\nRaises:\n    HTTPException: If user is not authenticated, or ``user_api_identifier``\n        does not match the authenticated user",
         "operationId": "post_subscription_notifications_subscription_post",
         "requestBody": {
           "content": {
@@ -3979,6 +3979,10 @@
             ],
             "title": "Position"
           },
+          "added_late": {
+            "type": "boolean",
+            "title": "Added Late"
+          },
           "responded_participant_api_ids": {
             "items": {
               "type": "string"
@@ -3992,10 +3996,11 @@
           "question_text",
           "api_identifier",
           "created_at",
+          "added_late",
           "responded_participant_api_ids"
         ],
         "title": "DashboardQuestion",
-        "description": "Slim question model for the dashboard.\n\nCarries which participants have answered (by api identifier) instead of\nfull response bodies, so the home page can compute each user's unanswered\nquestions without downloading every response.\n\nAttributes:\n    responded_participant_api_ids (list[str]): API identifiers of users\n        who have responded to this question"
+        "description": "Slim question model for the dashboard.\n\nCarries which participants have answered (by api identifier) instead of\nfull response bodies, so the home page can compute each user's unanswered\nquestions without downloading every response.\n\nAttributes:\n    responded_participant_api_ids (list[str]): API identifiers of users\n        who have responded to this question\n    added_late (bool): True when the question was added while its letter\n        was in progress"
       },
       "DockerInfo": {
         "properties": {
@@ -5251,6 +5256,10 @@
             ],
             "title": "Position"
           },
+          "added_late": {
+            "type": "boolean",
+            "title": "Added Late"
+          },
           "responses": {
             "items": {
               "$ref": "#/components/schemas/ResponseWithParticipant"
@@ -5274,11 +5283,12 @@
           "question_text",
           "api_identifier",
           "created_at",
+          "added_late",
           "responses",
           "author"
         ],
         "title": "PublicQuestion",
-        "description": "Public question model with linked relationships.\n\nA version of the Question model that includes public response information.\n\nAttributes:\n    responses (list[ResponseWithParticipant]): Public responses with participant info\n    author (Optional[UserUnlinked]): Question author, if available"
+        "description": "Public question model with linked relationships.\n\nA version of the Question model that includes public response information.\n\nAttributes:\n    responses (list[ResponseWithParticipant]): Public responses with participant info\n    author (Optional[UserUnlinked]): Question author, if available\n    added_late (bool): True when the question was added while its letter\n        was in progress"
       },
       "QuestionCreate": {
         "properties": {
@@ -5332,6 +5342,10 @@
             ],
             "title": "Position"
           },
+          "added_late": {
+            "type": "boolean",
+            "title": "Added Late"
+          },
           "letter": {
             "$ref": "#/components/schemas/LetterUnlinked"
           },
@@ -5351,12 +5365,13 @@
           "question_text",
           "api_identifier",
           "created_at",
+          "added_late",
           "letter",
           "group",
           "responses"
         ],
         "title": "QuestionLinked",
-        "description": "Question model with linked relationships.\n\nExtends the base Question model to include the parent letter and responses.\n\nAttributes:\n    letter (LetterUnlinked): Letter containing this question\n    responses (list[ResponseUnlinked]): Responses to this question"
+        "description": "Question model with linked relationships.\n\nExtends the base Question model to include the parent letter and responses.\n\nAttributes:\n    letter (LetterUnlinked): Letter containing this question\n    responses (list[ResponseUnlinked]): Responses to this question\n    added_late (bool): True when the question was added while its letter\n        was in progress"
       },
       "QuestionReorder": {
         "properties": {

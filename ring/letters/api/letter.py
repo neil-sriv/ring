@@ -24,7 +24,11 @@ from ring.fastapp.dependencies import (
     AuthenticatedRequestDependencies,
     get_request_dependencies,
 )
-from ring.letters.constants import LetterStatus, LetterType
+from ring.letters.constants import (
+    LATE_QUESTION_CUTOFF,
+    LetterStatus,
+    LetterType,
+)
 from ring.letters.crud import letter as letter_crud
 from ring.letters.crud import question as question_crud
 from ring.letters.models.letter_model import Letter
@@ -47,6 +51,12 @@ _LIVE_LETTER_STATUSES = (LetterStatus.IN_PROGRESS, LetterStatus.UPCOMING)
 _CANNOT_DEMOTE_CYCLIC = (
     "This loop is already in progress, so it can't be moved back to "
     "Upcoming. Add a question to the loop instead."
+)
+_CANNOT_ADD_QUESTION_SENT = (
+    "This loop has already been sent, so questions can't be added."
+)
+_CANNOT_ADD_QUESTION_CUTOFF = (
+    "It's too close to the send time to add a question."
 )
 
 
@@ -73,6 +83,17 @@ def _require_group_admin(user: User, group: Group, action: str) -> None:
             status_code=403,
             detail=f"Only the group admin can {action}",
         )
+
+
+def _late_question_cutoff_reached(letter: Letter) -> bool:
+    """True when an in-progress letter is within 24h of its send time.
+
+    Upcoming letters are not cut off. A null ``send_at`` is not cut off.
+    The group admin is not exempt.
+    """
+    if letter.status != LetterStatus.IN_PROGRESS or letter.send_at is None:
+        return False
+    return letter.send_at <= datetime.now(tz=UTC) + LATE_QUESTION_CUTOFF
 
 
 @router.post("/letter", response_model=LetterSchema)
@@ -380,8 +401,10 @@ async def add_question(
 ) -> Letter:
     """Add a new question to a letter.
 
-    Creates and adds a new question to the specified letter. The question can
-    optionally be associated with an author.
+    Any group member may add a question while the letter is upcoming or in
+    progress. A sent letter is refused. An in-progress letter is also
+    refused once ``send_at`` is within ``LATE_QUESTION_CUTOFF``, including
+    for the group admin. A null ``send_at`` has no cutoff.
 
     :param letter_api_id: API identifier of the letter
     :type letter_api_id: str
@@ -391,6 +414,8 @@ async def add_question(
     :type req_dep: AuthenticatedRequestDependencies
     :raises PermissionError: If the caller cannot read the letter
     :raises IDNotFoundException: If author with given API ID is not found
+    :raises HTTPException: If the letter has been sent or is inside the
+        late-question cutoff
     :return: Updated letter with the new question
     :rtype: Letter
     """
@@ -403,6 +428,12 @@ async def add_question(
             letter_api_id,
         ),
     )
+    if db_letter.status == LetterStatus.SENT:
+        raise HTTPException(status_code=400, detail=_CANNOT_ADD_QUESTION_SENT)
+    if _late_question_cutoff_reached(db_letter):
+        raise HTTPException(
+            status_code=400, detail=_CANNOT_ADD_QUESTION_CUTOFF
+        )
     db_author = (
         api_identifier_crud.get_model(
             req_dep.db,
@@ -415,7 +446,10 @@ async def add_question(
     letter_crud.add_question(
         req_dep.db, db_letter, question.question_text, author=db_author
     )
-    req_dep.db.refresh(db_letter)
+    # The in-memory collection keeps load order. Reload so the response
+    # follows position, including a late question placed at the top.
+    req_dep.db.flush()
+    req_dep.db.expire(db_letter, ["questions"])
     req_dep.db.commit()
     return db_letter
 
