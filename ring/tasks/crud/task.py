@@ -331,13 +331,16 @@ def async_reminder_email_task(
 
 def execute_late_question_email_task(
     db: Session, task: LateQuestionEmailTask, **kwargs: Any
-) -> None:
+) -> bool:
     """Send or drop the batched late-question email for one letter.
 
     A missing letter, a sent letter, a letter inside the 24h cutoff, a
     letter whose late questions were deleted, and a letter with no
-    responder recipients are all successful no-ops. The task still
-    completes so it is not sent again.
+    responder recipients are finished with no retry. A provider rejection
+    returns True so the caller can reschedule this same task.
+
+    Returns:
+        bool: True when the send should be tried again.
     """
     from ring.tasks.crud.late_question_email_task import (
         deliver_late_question_email,
@@ -349,7 +352,7 @@ def execute_late_question_email_task(
             "Late-question email task {} has no letter_id".format(task.id)
         )
         db.commit()
-        return
+        return False
     letter = db.scalars(
         sqlalchemy.select(Letter).where(Letter.id == int(letter_id))
     ).one_or_none()
@@ -360,10 +363,46 @@ def execute_late_question_email_task(
             )
         )
         db.commit()
-        return
-    if deliver_late_question_email(db, letter):
+        return False
+    result = deliver_late_question_email(db, letter)
+    if result.sent_any:
         _note_email_dispatched()
     db.commit()
+    return result.retry
+
+
+def _defer_late_question_email_retry(task: LateQuestionEmailTask) -> None:
+    """Push this task forward, or fail it once the attempt cap is reached."""
+    from ring.letters.constants import (
+        LATE_QUESTION_EMAIL_MAX_ATTEMPTS,
+        LATE_QUESTION_EMAIL_RETRY_BACKOFF,
+    )
+
+    attempt = int(task.arguments.get("attempt") or 1)
+    if attempt >= LATE_QUESTION_EMAIL_MAX_ATTEMPTS:
+        task.status = TaskStatus.FAILED
+        task.message = (
+            "late-question email was not accepted after {} attempts".format(
+                attempt
+            )
+        )
+        logger.warning(
+            "Giving up on late-question email task {} after {} attempts".format(
+                task.id, attempt
+            )
+        )
+        return
+    arguments = dict(task.arguments)
+    arguments["attempt"] = attempt + 1
+    task.arguments = arguments
+    task.status = TaskStatus.PENDING
+    task.execute_at = datetime.now(tz=UTC) + LATE_QUESTION_EMAIL_RETRY_BACKOFF
+    task.message = "retrying after the email provider rejected the send"
+    logger.info(
+        "Rescheduling late-question email task {} for attempt {}".format(
+            task.id, attempt + 1
+        )
+    )
 
 
 @job_factory("send_late_question_email")
@@ -372,18 +411,68 @@ def async_late_question_email_task(
 ) -> None:
     """Job for the batched late-question email.
 
+    A rejected send leaves the task pending at a later ``execute_at``
+    until the attempt cap, the 24h cutoff, or a sent letter.
+
     Args:
         db: Database session
         task_id: ID of the task to execute
         **kwargs: Task arguments, including ``letter_id``
     """
-    _find_and_execute_task(
-        db,
-        task_id,
-        LateQuestionEmailTask,
-        execute_late_question_email_task,
-        **kwargs,
-    )
+    dispatched = _email_dispatched.set(False)
+    try:
+        task = (
+            db.query(LateQuestionEmailTask)
+            .filter(LateQuestionEmailTask.id == task_id)
+            .one()
+        )
+        try:
+            if _fail_stale_email_task(task):
+                db.commit()
+                return
+            retry = execute_late_question_email_task(db, task, **kwargs)
+        except OperationalError as error:
+            already_sent = _email_dispatched.get()
+            db.rollback()
+            if already_sent:
+                task.status = TaskStatus.FAILED
+                task.message = (
+                    "email already sent; not retrying after transient "
+                    "database error: {}".format(error)
+                )
+                logger.info(
+                    "Task {} already sent email and will not be retried "
+                    "after a transient database error: {}".format(
+                        task_id, error
+                    )
+                )
+            else:
+                task.status = TaskStatus.PENDING
+                task.message = (
+                    "retrying after transient database error: {}".format(error)
+                )
+                logger.info(
+                    "Task {} hit a transient database error and will be "
+                    "retried: {}".format(task_id, error)
+                )
+            db.commit()
+            raise error
+        except Exception as error:
+            db.rollback()
+            task.status = TaskStatus.FAILED
+            task.message = str(error)
+            db.commit()
+            logger.info("Failed to execute task {}: {}".format(task_id, error))
+            raise error
+        else:
+            if retry:
+                _defer_late_question_email_retry(task)
+            else:
+                task.message = ""
+                task.status = TaskStatus.COMPLETED
+            logger.info("Task {} executed successfully".format(task_id))
+    finally:
+        _email_dispatched.reset(dispatched)
     db.commit()
 
 

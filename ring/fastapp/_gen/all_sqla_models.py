@@ -7,6 +7,9 @@ def import_all_sqla_models() -> None:
     """Import all SQLAlchemy models."""
     from ring.key_value.models.model_key_value import ModelKeyValue
     from ring.letters.models.default_question_model import DefaultQuestion
+    from ring.letters.models.late_question_email_receipt import (
+        LateQuestionEmailReceipt,
+    )
     from ring.letters.models.letter_model import (
         Letter,
         letter_to_user_assocation,

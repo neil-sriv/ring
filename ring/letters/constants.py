@@ -39,6 +39,12 @@ LATE_QUESTION_EMAIL_DELAY = timedelta(hours=1)
 # from the last email that was actually sent.
 LATE_QUESTION_EMAIL_WINDOW = timedelta(hours=24)
 
+# A rejected send is tried again on its own, this many times in total,
+# waiting this long between attempts. The cutoff and a sent letter still
+# stop the retries.
+LATE_QUESTION_EMAIL_MAX_ATTEMPTS = 3
+LATE_QUESTION_EMAIL_RETRY_BACKOFF = timedelta(minutes=15)
+
 
 #  Default questions that are automatically added to new letters
 DEFAULT_QUESTIONS = [

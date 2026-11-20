@@ -625,7 +625,7 @@ def schedule_late_question_email(db: Session, letter: Letter) -> Task | None:
         letter.group.schedule,
         TaskType.LATE_QUESTION_EMAIL,
         execute_at,
-        {"letter_id": letter.id},
+        {"letter_id": letter.id, "attempt": 1},
     )
 
 

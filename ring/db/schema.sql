@@ -196,6 +196,16 @@ CREATE TABLE public.inbox_item (
 	INDEX ix_inbox_item_id (id ASC),
 	INDEX ix_inbox_item_user_id (user_id ASC)
 );
+CREATE SEQUENCE public.late_question_email_receipt_id_seq AS INT8 MINVALUE 1 MAXVALUE 9223372036854775807 INCREMENT 1 START 1;
+CREATE TABLE public.late_question_email_receipt (
+	id INT8 NOT NULL DEFAULT nextval('public.late_question_email_receipt_id_seq'::REGCLASS),
+	letter_id INT8 NOT NULL,
+	user_id INT8 NOT NULL,
+	question_id INT8 NOT NULL,
+	CONSTRAINT late_question_email_receipt_pkey PRIMARY KEY (id ASC),
+	UNIQUE INDEX uq_late_question_email_receipt (letter_id ASC, user_id ASC, question_id ASC),
+	INDEX ix_late_question_email_receipt_id (id ASC)
+);
 CREATE SEQUENCE public.task_id_seq AS INT8 MINVALUE 1 MAXVALUE 9223372036854775807 INCREMENT 1 START 1;
 CREATE TABLE public.task (
 	id INT8 NOT NULL DEFAULT nextval('public.task_id_seq'::REGCLASS),
@@ -300,6 +310,9 @@ ALTER TABLE public.letter_to_user_assocation ADD CONSTRAINT letter_to_user_assoc
 ALTER TABLE public.schedule ADD CONSTRAINT schedule_group_id_fkey FOREIGN KEY (group_id) REFERENCES public."group"(id);
 ALTER TABLE public.subscription ADD CONSTRAINT subscription_user_id_fkey FOREIGN KEY (user_id) REFERENCES public."user"(id) ON DELETE CASCADE;
 ALTER TABLE public.inbox_item ADD CONSTRAINT inbox_item_user_id_fkey FOREIGN KEY (user_id) REFERENCES public."user"(id) ON DELETE CASCADE;
+ALTER TABLE public.late_question_email_receipt ADD CONSTRAINT late_question_email_receipt_letter_id_fkey FOREIGN KEY (letter_id) REFERENCES public.letter(id) ON DELETE CASCADE;
+ALTER TABLE public.late_question_email_receipt ADD CONSTRAINT late_question_email_receipt_user_id_fkey FOREIGN KEY (user_id) REFERENCES public."user"(id) ON DELETE CASCADE;
+ALTER TABLE public.late_question_email_receipt ADD CONSTRAINT late_question_email_receipt_question_id_fkey FOREIGN KEY (question_id) REFERENCES public.question(id) ON DELETE CASCADE;
 ALTER TABLE public.task ADD CONSTRAINT task_schedule_id_fkey FOREIGN KEY (schedule_id) REFERENCES public.schedule(id);
 ALTER TABLE public.user_group_assocation ADD CONSTRAINT user_group_assocation_group_id_fkey FOREIGN KEY (group_id) REFERENCES public."group"(id);
 ALTER TABLE public.user_group_assocation ADD CONSTRAINT user_group_assocation_user_id_fkey FOREIGN KEY (user_id) REFERENCES public."user"(id);
@@ -329,6 +342,9 @@ ALTER TABLE public.letter_to_user_assocation VALIDATE CONSTRAINT letter_to_user_
 ALTER TABLE public.schedule VALIDATE CONSTRAINT schedule_group_id_fkey;
 ALTER TABLE public.subscription VALIDATE CONSTRAINT subscription_user_id_fkey;
 ALTER TABLE public.inbox_item VALIDATE CONSTRAINT inbox_item_user_id_fkey;
+ALTER TABLE public.late_question_email_receipt VALIDATE CONSTRAINT late_question_email_receipt_letter_id_fkey;
+ALTER TABLE public.late_question_email_receipt VALIDATE CONSTRAINT late_question_email_receipt_user_id_fkey;
+ALTER TABLE public.late_question_email_receipt VALIDATE CONSTRAINT late_question_email_receipt_question_id_fkey;
 ALTER TABLE public.task VALIDATE CONSTRAINT task_schedule_id_fkey;
 ALTER TABLE public.user_group_assocation VALIDATE CONSTRAINT user_group_assocation_group_id_fkey;
 ALTER TABLE public.user_group_assocation VALIDATE CONSTRAINT user_group_assocation_user_id_fkey;

@@ -7,9 +7,11 @@ The copy stays plain: question text and who asked, with no Late badge.
 from __future__ import annotations
 
 import html
+from dataclasses import dataclass
 from datetime import UTC, datetime
 
 from loguru import logger
+from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from ring.email_template import (
@@ -24,6 +26,9 @@ from ring.letters.constants import LetterStatus
 from ring.letters.crud.letter import (
     late_question_cutoff_reached,
     late_question_recipients,
+)
+from ring.letters.models.late_question_email_receipt import (
+    LateQuestionEmailReceipt,
 )
 from ring.letters.models.letter_model import Letter
 from ring.letters.models.question_model import Question
@@ -52,19 +57,77 @@ def unsent_late_questions(letter: Letter, as_of: datetime) -> list[Question]:
     return questions
 
 
+@dataclass(frozen=True)
+class LateQuestionEmailResult:
+    """What the sender should do with the task after this attempt.
+
+    ``retry`` is set only when the provider rejected a batch that still
+    has recipients. A drop, an empty batch, or a fully accepted send
+    leaves it false.
+    """
+
+    retry: bool
+    sent_any: bool
+
+
+def _already_sent(
+    db: Session, letter: Letter, questions: list[Question]
+) -> set[tuple[int, int]]:
+    """Return ``(user_id, question_id)`` pairs already emailed."""
+    if not questions:
+        return set()
+    rows = db.execute(
+        select(
+            LateQuestionEmailReceipt.user_id,
+            LateQuestionEmailReceipt.question_id,
+        ).where(
+            LateQuestionEmailReceipt.letter_id == letter.id,
+            LateQuestionEmailReceipt.question_id.in_(
+                [question.id for question in questions]
+            ),
+        )
+    ).all()
+    return {(row.user_id, row.question_id) for row in rows}
+
+
+def _record_receipts(
+    db: Session,
+    letter: Letter,
+    users: list[User],
+    questions: list[Question],
+) -> None:
+    """Remember a provider-accepted batch so a retry will not resend it."""
+    for user in users:
+        for question in questions:
+            db.add(
+                LateQuestionEmailReceipt(
+                    letter_id=letter.id,
+                    user_id=user.id,
+                    question_id=question.id,
+                )
+            )
+    db.commit()
+
+
 def late_question_email_batches(
-    letter: Letter, questions: list[Question]
+    letter: Letter,
+    questions: list[Question],
+    already_sent: set[tuple[int, int]] | None = None,
 ) -> list[tuple[list[User], list[Question]]]:
-    """Group responders by the questions they did not author.
+    """Group responders by the questions they still need to be emailed.
 
     Each batch is one email. Recipients are ``late_question_recipients``
     for the questions in the batch, so a person who has not responded is
-    left out and an author is left off the questions they asked.
+    left out and an author is left off the questions they asked. Pairs in
+    ``already_sent`` were accepted on an earlier attempt and are skipped.
     """
+    sent = already_sent or set()
     questions_for_user: dict[int, list[Question]] = {}
     users: dict[int, User] = {}
     for question in questions:
         for user in late_question_recipients(letter, question.author):
+            if (user.id, question.id) in sent:
+                continue
             users[user.id] = user
             questions_for_user.setdefault(user.id, []).append(question)
     batches: dict[tuple[int, ...], list[User]] = {}
@@ -150,18 +213,27 @@ def construct_late_question_email(
     return construct_email_draft(recipients, subject, body_html, body_text)
 
 
-def deliver_late_question_email(db: Session, letter: Letter) -> bool:
+def _advance_watermark(letter: Letter, as_of: datetime) -> None:
+    letter.last_late_question_email_at = as_of
+
+
+def deliver_late_question_email(
+    db: Session, letter: Letter
+) -> LateQuestionEmailResult:
     """Send the batched email, or drop it.
 
     Sends nothing once the letter is sent or inside the 24h cutoff, when
     no late questions remain, or when nobody who already replied is left
-    after excluding authors. The watermark moves only after every email
-    in the batch is accepted. The watermark is the time this send
-    started, so a question created while it runs stays eligible for
-    the next email.
+    after excluding authors. Each accepted batch is recorded per
+    recipient and question before the next batch is attempted. A rejected
+    batch asks the caller to retry; people already recorded are left out
+    of that retry. The watermark moves only when every remaining batch
+    has been accepted. It is the time this send started, so a question
+    created while it runs stays eligible for the next email.
 
     Returns:
-        bool: True when at least one email was accepted.
+        LateQuestionEmailResult: Whether to retry, and whether any email
+        was accepted on this attempt.
     """
     if letter.status != LetterStatus.IN_PROGRESS:
         logger.info(
@@ -169,30 +241,36 @@ def deliver_late_question_email(db: Session, letter: Letter) -> bool:
                 letter.id, letter.status
             )
         )
-        return False
+        return LateQuestionEmailResult(retry=False, sent_any=False)
     if late_question_cutoff_reached(letter):
         logger.info(
             "Skipping late-question email for letter {}: "
             "within 24h of send_at {}".format(letter.id, letter.send_at)
         )
-        return False
+        return LateQuestionEmailResult(retry=False, sent_any=False)
     as_of = datetime.now(tz=UTC)
     questions = unsent_late_questions(letter, as_of)
     if not questions:
         logger.info(
             "No late questions left to email for letter {}".format(letter.id)
         )
-        return False
-    batches = late_question_email_batches(letter, questions)
+        return LateQuestionEmailResult(retry=False, sent_any=False)
+    already_sent = _already_sent(db, letter, questions)
+    batches = late_question_email_batches(
+        letter, questions, already_sent=already_sent
+    )
     if not batches:
         logger.info(
-            "No responders to email for late questions on letter {}".format(
+            "Late-question email for letter {} was already delivered".format(
                 letter.id
             )
         )
-        return False
+        _advance_watermark(letter, as_of)
+        db.flush()
+        return LateQuestionEmailResult(retry=False, sent_any=False)
 
     letter_title = letter_display_title(letter)
+    sent_any = False
     for users, visible in batches:
         recipients = [user.email for user in users]
         message_id = send_email(
@@ -207,14 +285,18 @@ def deliver_late_question_email(db: Session, letter: Letter) -> bool:
         if not message_id:
             logger.warning(
                 "Late-question email for letter {} was not accepted; "
-                "leaving the batch unsent".format(letter.id)
+                "retrying the recipients who have not received it".format(
+                    letter.id
+                )
             )
-            return False
+            return LateQuestionEmailResult(retry=True, sent_any=sent_any)
+        _record_receipts(db, letter, users, visible)
+        sent_any = True
         logger.info(
             "Sent late-question email for letter {} to {}".format(
                 letter.id, recipients
             )
         )
-    letter.last_late_question_email_at = as_of
+    _advance_watermark(letter, as_of)
     db.flush()
-    return True
+    return LateQuestionEmailResult(retry=False, sent_any=sent_any)

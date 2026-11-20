@@ -12,6 +12,8 @@ from sqlalchemy.orm import Session
 from ring.async_scheduler.job_registry import JOB_REGISTRY
 from ring.letters.constants import (
     LATE_QUESTION_EMAIL_DELAY,
+    LATE_QUESTION_EMAIL_MAX_ATTEMPTS,
+    LATE_QUESTION_EMAIL_RETRY_BACKOFF,
     LATE_QUESTION_EMAIL_WINDOW,
     LetterStatus,
 )
@@ -550,6 +552,283 @@ class TestLateQuestionEmail:
         assert "From the other author?" not in bodies[(other_author.email,)]
         assert "From the admin?" in bodies[(bystander.email,)]
         assert "From the other author?" in bodies[(bystander.email,)]
+
+    def test_partial_failure_retries_only_the_recipients_who_missed_it(
+        self,
+        authenticated_client: TestClient,
+        db_session: Session,
+        current_user: UserFactory,
+    ) -> None:
+        other = UserFactory.create()
+        group = GroupFactory.create(
+            admin=current_user,
+            members=[current_user, other],
+        )
+        letter = LetterFactory.create(
+            group=group,
+            status=LetterStatus.IN_PROGRESS,
+            title="Spring",
+            send_at=datetime.now(tz=UTC) + timedelta(days=3),
+        )
+        question = QuestionFactory.create(letter=letter)
+        ResponseFactory.create(question=question, participant=current_user)
+        ResponseFactory.create(question=question, participant=other)
+        db_session.commit()
+        first = _add_question(
+            authenticated_client,
+            letter,
+            "From the admin?",
+            current_user.api_identifier,
+        )
+        second = _add_question(
+            authenticated_client,
+            letter,
+            "From the other author?",
+            other.api_identifier,
+        )
+        assert first.status_code == 200
+        assert second.status_code == 200
+
+        def reject_the_second_batch(draft):
+            if reject_the_second_batch.calls:
+                return None
+            reject_the_second_batch.calls.append(draft)
+            return "message-id"
+
+        reject_the_second_batch.calls = []
+        with patch(
+            "ring.tasks.crud.late_question_email_task.send_email",
+            side_effect=reject_the_second_batch,
+        ) as send_email:
+            task = _run_pending(db_session, letter)
+
+        assert task.status == TaskStatus.PENDING
+        assert int(task.arguments["attempt"]) == 2
+        assert letter.last_late_question_email_at is None
+        assert send_email.call_count == 2
+        delivered = set(
+            send_email.call_args_list[0].args[0].destination["ToAddresses"]
+        )
+        missed = set(
+            send_email.call_args_list[1].args[0].destination["ToAddresses"]
+        )
+        assert delivered.isdisjoint(missed)
+
+        with patch(
+            "ring.tasks.crud.late_question_email_task.send_email",
+            return_value="message-id",
+        ) as retry_send:
+            task = _run_pending(db_session, letter)
+
+        assert task.status == TaskStatus.COMPLETED
+        retry_send.assert_called_once()
+        retried = set(retry_send.call_args.args[0].destination["ToAddresses"])
+        assert retried == missed
+        assert retried.isdisjoint(delivered)
+        assert letter.last_late_question_email_at is not None
+
+    def test_rejected_send_is_retried_without_a_new_question(
+        self,
+        authenticated_client: TestClient,
+        db_session: Session,
+        current_user: UserFactory,
+    ) -> None:
+        responder = UserFactory.create()
+        group = GroupFactory.create(
+            admin=current_user,
+            members=[current_user, responder],
+        )
+        letter = LetterFactory.create(
+            group=group,
+            status=LetterStatus.IN_PROGRESS,
+            title="Spring",
+            send_at=datetime.now(tz=UTC) + timedelta(days=3),
+        )
+        question = QuestionFactory.create(letter=letter)
+        ResponseFactory.create(question=question, participant=responder)
+        db_session.commit()
+        added = _add_question(
+            authenticated_client,
+            letter,
+            "Only question?",
+            current_user.api_identifier,
+        )
+        assert added.status_code == 200
+        question_count = len(letter.questions)
+
+        with patch(
+            "ring.tasks.crud.late_question_email_task.send_email",
+            return_value=None,
+        ):
+            task = _run_pending(db_session, letter)
+
+        assert task.status == TaskStatus.PENDING
+        assert int(task.arguments["attempt"]) == 2
+        wait = task.execute_at - datetime.now(tz=UTC)
+        assert wait > LATE_QUESTION_EMAIL_RETRY_BACKOFF - timedelta(seconds=5)
+        assert wait < LATE_QUESTION_EMAIL_RETRY_BACKOFF + timedelta(minutes=1)
+        db_session.expire(letter, ["questions"])
+        assert len(letter.questions) == question_count
+
+        with patch(
+            "ring.tasks.crud.late_question_email_task.send_email",
+            return_value="message-id",
+        ) as send_email:
+            task = _run_pending(db_session, letter)
+
+        assert task.status == TaskStatus.COMPLETED
+        send_email.assert_called_once()
+        assert send_email.call_args.args[0].destination["ToAddresses"] == [
+            responder.email
+        ]
+        assert (
+            "Only question?"
+            in (send_email.call_args.args[0].message["Body"]["Text"]["Data"])
+        )
+        assert letter.last_late_question_email_at is not None
+
+    def test_retry_stops_inside_the_cutoff(
+        self,
+        authenticated_client: TestClient,
+        db_session: Session,
+        current_user: UserFactory,
+    ) -> None:
+        responder = UserFactory.create()
+        group = GroupFactory.create(
+            admin=current_user,
+            members=[current_user, responder],
+        )
+        letter = LetterFactory.create(
+            group=group,
+            status=LetterStatus.IN_PROGRESS,
+            title="Spring",
+            send_at=datetime.now(tz=UTC) + timedelta(days=3),
+        )
+        question = QuestionFactory.create(letter=letter)
+        ResponseFactory.create(question=question, participant=responder)
+        db_session.commit()
+        added = _add_question(
+            authenticated_client,
+            letter,
+            "Too close?",
+            current_user.api_identifier,
+        )
+        assert added.status_code == 200
+        with patch(
+            "ring.tasks.crud.late_question_email_task.send_email",
+            return_value=None,
+        ):
+            _run_pending(db_session, letter)
+        letter.send_at = datetime.now(tz=UTC) + timedelta(hours=12)
+        db_session.commit()
+
+        with patch(
+            "ring.tasks.crud.late_question_email_task.send_email",
+            return_value="message-id",
+        ) as send_email:
+            task = _run_pending(db_session, letter)
+
+        send_email.assert_not_called()
+        assert task.status == TaskStatus.COMPLETED
+        assert _pending_count(db_session, letter) == 0
+
+    def test_retry_stops_after_the_letter_is_sent(
+        self,
+        authenticated_client: TestClient,
+        db_session: Session,
+        current_user: UserFactory,
+    ) -> None:
+        responder = UserFactory.create()
+        group = GroupFactory.create(
+            admin=current_user,
+            members=[current_user, responder],
+        )
+        letter = LetterFactory.create(
+            group=group,
+            status=LetterStatus.IN_PROGRESS,
+            title="Spring",
+            send_at=datetime.now(tz=UTC) + timedelta(days=3),
+        )
+        question = QuestionFactory.create(letter=letter)
+        ResponseFactory.create(question=question, participant=responder)
+        db_session.commit()
+        added = _add_question(
+            authenticated_client,
+            letter,
+            "Already sent?",
+            current_user.api_identifier,
+        )
+        assert added.status_code == 200
+        with patch(
+            "ring.tasks.crud.late_question_email_task.send_email",
+            return_value=None,
+        ):
+            _run_pending(db_session, letter)
+        letter.status = LetterStatus.SENT
+        db_session.commit()
+
+        with patch(
+            "ring.tasks.crud.late_question_email_task.send_email",
+            return_value="message-id",
+        ) as send_email:
+            task = _run_pending(db_session, letter)
+
+        send_email.assert_not_called()
+        assert task.status == TaskStatus.COMPLETED
+        assert _pending_count(db_session, letter) == 0
+
+    def test_retry_stops_when_the_attempt_cap_is_reached(
+        self,
+        authenticated_client: TestClient,
+        db_session: Session,
+        current_user: UserFactory,
+    ) -> None:
+        responder = UserFactory.create()
+        group = GroupFactory.create(
+            admin=current_user,
+            members=[current_user, responder],
+        )
+        letter = LetterFactory.create(
+            group=group,
+            status=LetterStatus.IN_PROGRESS,
+            title="Spring",
+            send_at=datetime.now(tz=UTC) + timedelta(days=3),
+        )
+        question = QuestionFactory.create(letter=letter)
+        ResponseFactory.create(question=question, participant=responder)
+        db_session.commit()
+        added = _add_question(
+            authenticated_client,
+            letter,
+            "Never accepted?",
+            current_user.api_identifier,
+        )
+        assert added.status_code == 200
+
+        with patch(
+            "ring.tasks.crud.late_question_email_task.send_email",
+            return_value=None,
+        ) as send_email:
+            task = None
+            for _ in range(LATE_QUESTION_EMAIL_MAX_ATTEMPTS):
+                task = _run_pending(db_session, letter)
+
+        assert send_email.call_count == LATE_QUESTION_EMAIL_MAX_ATTEMPTS
+        assert task is not None
+        assert task.status == TaskStatus.FAILED
+        assert "3 attempts" in task.message
+        assert _pending_count(db_session, letter) == 0
+        assert letter.last_late_question_email_at is None
+
+
+def _pending_count(db: Session, letter: Letter) -> int:
+    return len(
+        [
+            task
+            for task in _late_question_tasks(db, letter)
+            if task.status == TaskStatus.PENDING
+        ]
+    )
 
 
 class TestConstructLateQuestionEmail:

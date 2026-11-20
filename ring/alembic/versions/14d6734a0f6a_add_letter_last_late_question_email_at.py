@@ -21,7 +21,7 @@ depends_on: Union[str, Sequence[str], None] = None
 
 
 def upgrade() -> None:
-    """Record when a letter last sent its batched late-question email."""
+    """Record late-question email sends and who already received each one."""
     op.add_column(
         "letter",
         sa.Column(
@@ -30,8 +30,41 @@ def upgrade() -> None:
             nullable=True,
         ),
     )
+    op.create_table(
+        "late_question_email_receipt",
+        sa.Column("id", sa.Integer(), nullable=False),
+        sa.Column("letter_id", sa.Integer(), nullable=False),
+        sa.Column("user_id", sa.Integer(), nullable=False),
+        sa.Column("question_id", sa.Integer(), nullable=False),
+        sa.ForeignKeyConstraint(
+            ["letter_id"],
+            ["letter.id"],
+            name="late_question_email_receipt_letter_id_fkey",
+            ondelete="CASCADE",
+        ),
+        sa.ForeignKeyConstraint(
+            ["user_id"],
+            ["user.id"],
+            name="late_question_email_receipt_user_id_fkey",
+            ondelete="CASCADE",
+        ),
+        sa.ForeignKeyConstraint(
+            ["question_id"],
+            ["question.id"],
+            name="late_question_email_receipt_question_id_fkey",
+            ondelete="CASCADE",
+        ),
+        sa.PrimaryKeyConstraint("id"),
+        sa.UniqueConstraint(
+            "letter_id",
+            "user_id",
+            "question_id",
+            name="uq_late_question_email_receipt",
+        ),
+    )
 
 
 def downgrade() -> None:
-    """Remove letter.last_late_question_email_at."""
+    """Remove late-question email receipts and the letter watermark."""
+    op.drop_table("late_question_email_receipt")
     op.drop_column("letter", "last_late_question_email_at")
