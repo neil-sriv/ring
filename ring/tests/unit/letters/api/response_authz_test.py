@@ -7,10 +7,11 @@ member's content — or touch resources in a group they do not belong to.
 
 from __future__ import annotations
 
+import pytest
 from fastapi.testclient import TestClient
 from sqlalchemy.orm import Session
 
-from ring.letters.constants import LetterStatus
+from ring.letters.constants import LetterStatus, LetterType
 from ring.parties.models.user_model import User
 from ring.tests.factories.letters.letter_factory import LetterFactory
 from ring.tests.factories.letters.question_factory import QuestionFactory
@@ -229,6 +230,43 @@ class TestQuestionResponseAuthz:
         assert rv.status_code == 403
         assert rv.json()["detail"] == (
             "Not authorized to access this resource"
+        )
+        db_session.refresh(question)
+        assert question.id is not None
+
+    @pytest.mark.parametrize(
+        "letter_type", [LetterType.CYCLIC, LetterType.ADHOC]
+    )
+    def test_other_member_cannot_delete_in_progress_question(
+        self,
+        authenticated_client: TestClient,
+        current_user: User,
+        db_session: Session,
+        letter_type: LetterType,
+    ) -> None:
+        """Membership is not enough: only the author or admin may delete."""
+        author = UserFactory.create()
+        admin = UserFactory.create()
+        group = GroupFactory.create(
+            admin=admin, members=[admin, author, current_user]
+        )
+        question = QuestionFactory.create(
+            author=author,
+            letter=LetterFactory.create(
+                group=group,
+                status=LetterStatus.IN_PROGRESS,
+                letter_type=letter_type,
+            ),
+        )
+        db_session.commit()
+
+        rv = authenticated_client.delete(
+            f"/questions/question/{question.api_identifier}"
+        )
+
+        assert rv.status_code == 403
+        assert rv.json()["detail"] == (
+            "Only the question author or group admin can delete a question"
         )
         db_session.refresh(question)
         assert question.id is not None

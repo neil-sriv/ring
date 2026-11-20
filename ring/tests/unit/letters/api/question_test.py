@@ -6,9 +6,11 @@ including deletion and authorization checks.
 
 from __future__ import annotations
 
+import pytest
 from fastapi.testclient import TestClient
 from sqlalchemy.orm import Session
 
+from ring.letters.constants import LetterStatus, LetterType
 from ring.letters.models.question_model import Question
 from ring.letters.models.response_model import Response
 from ring.parties.models.user_model import User
@@ -210,28 +212,152 @@ class TestQuestionAPI:
             "Not authorized to access this resource"
         )
 
-    def test_delete_question_from_in_progress_loop(
+    @pytest.mark.parametrize(
+        "letter_type", [LetterType.CYCLIC, LetterType.ADHOC]
+    )
+    def test_author_deletes_unanswered_question_on_in_progress(
         self,
         authenticated_client: TestClient,
         current_user: User,
         db_session: Session,
+        letter_type: LetterType,
     ) -> None:
-        """Test deleting a question from a loop that is in progress.
+        """The author can delete an unanswered question on an in-progress loop."""
+        admin = UserFactory.create()
+        group = GroupFactory.create(admin=admin, members=[admin, current_user])
+        letter = LetterFactory.create(
+            group=group,
+            status=LetterStatus.IN_PROGRESS,
+            letter_type=letter_type,
+        )
+        question = QuestionFactory.create(author=current_user, letter=letter)
+        db_session.commit()
 
-        This test verifies that:
-        1. A question cannot be deleted if its loop is not UPCOMING
-        2. The appropriate error response (400) is returned
-        3. The question remains in the database
+        response = authenticated_client.delete(
+            f"/questions/question/{question.api_identifier}"
+        )
+        assert response.status_code == 204
+        assert (
+            db_session.query(Question).filter_by(id=question.id).one_or_none()
+            is None
+        )
 
-        Args:
-            authenticated_client (TestClient): FastAPI test client
-            current_user (User): The authenticated user
-            db_session (Session): Database session
-        """
-        # Default LetterFactory status is IN_PROGRESS; keep author as admin of
-        # that letter's group so membership passes before the status check.
+    @pytest.mark.parametrize(
+        "letter_type", [LetterType.CYCLIC, LetterType.ADHOC]
+    )
+    def test_admin_deletes_unanswered_question_on_in_progress(
+        self,
+        authenticated_client: TestClient,
+        current_user: User,
+        db_session: Session,
+        letter_type: LetterType,
+    ) -> None:
+        """A group admin can delete another member's unanswered in-progress question."""
+        author = UserFactory.create()
+        group = GroupFactory.create(
+            admin=current_user, members=[current_user, author]
+        )
+        letter = LetterFactory.create(
+            group=group,
+            status=LetterStatus.IN_PROGRESS,
+            letter_type=letter_type,
+        )
+        question = QuestionFactory.create(author=author, letter=letter)
+        db_session.commit()
+
+        response = authenticated_client.delete(
+            f"/questions/question/{question.api_identifier}"
+        )
+        assert response.status_code == 204
+        assert (
+            db_session.query(Question).filter_by(id=question.id).one_or_none()
+            is None
+        )
+
+    @pytest.mark.parametrize(
+        "letter_type", [LetterType.CYCLIC, LetterType.ADHOC]
+    )
+    def test_other_member_cannot_delete_in_progress_question(
+        self,
+        authenticated_client: TestClient,
+        current_user: User,
+        db_session: Session,
+        letter_type: LetterType,
+    ) -> None:
+        """Another member cannot delete an in-progress question."""
+        author = UserFactory.create()
+        admin = UserFactory.create()
+        group = GroupFactory.create(
+            admin=admin, members=[admin, author, current_user]
+        )
+        letter = LetterFactory.create(
+            group=group,
+            status=LetterStatus.IN_PROGRESS,
+            letter_type=letter_type,
+        )
+        question = QuestionFactory.create(author=author, letter=letter)
+        db_session.commit()
+
+        response = authenticated_client.delete(
+            f"/questions/question/{question.api_identifier}"
+        )
+        assert response.status_code == 403
+        assert (
+            response.json()["detail"]
+            == "Only the question author or group admin can delete a question"
+        )
+        assert db_session.query(Question).filter_by(id=question.id).one()
+
+    @pytest.mark.parametrize(
+        "letter_type", [LetterType.CYCLIC, LetterType.ADHOC]
+    )
+    def test_cannot_delete_answered_question_on_in_progress(
+        self,
+        authenticated_client: TestClient,
+        current_user: User,
+        db_session: Session,
+        letter_type: LetterType,
+    ) -> None:
+        """An in-progress question that already has an answer cannot be deleted."""
+        admin = UserFactory.create()
+        group = GroupFactory.create(admin=admin, members=[admin, current_user])
+        letter = LetterFactory.create(
+            group=group,
+            status=LetterStatus.IN_PROGRESS,
+            letter_type=letter_type,
+        )
+        question = QuestionFactory.create(author=current_user, letter=letter)
+        answer = ResponseFactory.create(question=question)
+        db_session.commit()
+
+        response = authenticated_client.delete(
+            f"/questions/question/{question.api_identifier}"
+        )
+        assert response.status_code == 400
+        assert (
+            response.json()["detail"]
+            == "Cannot delete a question that has responses"
+        )
+        assert db_session.query(Question).filter_by(id=question.id).one()
+        assert db_session.query(Response).filter_by(id=answer.id).one()
+
+    @pytest.mark.parametrize(
+        "letter_type", [LetterType.CYCLIC, LetterType.ADHOC]
+    )
+    def test_cannot_delete_question_from_sent_loop(
+        self,
+        authenticated_client: TestClient,
+        current_user: User,
+        db_session: Session,
+        letter_type: LetterType,
+    ) -> None:
+        """A sent loop rejects deletion even when the question has no answers."""
         group = GroupFactory.create(admin=current_user)
-        letter = LetterFactory.create(group=group)
+        letter = LetterFactory.create(
+            group=group,
+            status=LetterStatus.SENT,
+            letter_type=letter_type,
+        )
         question = QuestionFactory.create(author=current_user, letter=letter)
         db_session.commit()
 
@@ -241,8 +367,6 @@ class TestQuestionAPI:
         assert response.status_code == 400
         assert (
             response.json()["detail"]
-            == "Cannot delete a question from a loop that is in progress"
+            == "Cannot delete a question from a loop that has been sent"
         )
-
-        # Verify question still exists
         assert db_session.query(Question).filter_by(id=question.id).one()
