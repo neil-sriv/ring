@@ -1,4 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
+import { useNavigate } from "@tanstack/react-router"
 import { Loader2 } from "lucide-react"
 import { useEffect } from "react"
 import { type SubmitHandler, useForm } from "react-hook-form"
@@ -30,6 +31,10 @@ import {
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 
+// Axios leaves timeout at 0, so a hung create never rejects and isSaving stays
+// true. This write is a small JSON body; uploads keep the longer proxy window.
+const CREATE_GROUP_TIMEOUT_MS = 20_000
+
 interface AddGroupProps {
   isOpen: boolean
   onClose: () => void
@@ -37,6 +42,7 @@ interface AddGroupProps {
 
 const AddGroup = ({ isOpen, onClose }: AddGroupProps) => {
   const queryClient = useQueryClient()
+  const navigate = useNavigate()
   // Subscribe so create uses the live /me identity (admin_api_identifier +
   // listGroups invalidation key). getQueryData alone never re-renders when
   // /me is rewritten in cache (e.g. after impersonation while this dialog
@@ -70,10 +76,16 @@ const AddGroup = ({ isOpen, onClose }: AddGroupProps) => {
 
   const mutation = useMutation({
     ...createGroupPartiesGroupPostMutation(),
-    onSuccess: () => {
+    onSuccess: (group) => {
       showToast("Success!", "Group created successfully.", "success")
       reset({ name: "" })
       onClose()
+      // Same post-create handoff as Add Loop / New Document: land on the new
+      // resource instead of leaving the user on a stale Groups/Home list.
+      void navigate({
+        to: "/groups/$groupId/loops",
+        params: { groupId: group.api_identifier },
+      })
     },
     onError: (err: AxiosError<CreateGroupPartiesGroupPostError>) => {
       showToast(
@@ -106,14 +118,20 @@ const AddGroup = ({ isOpen, onClose }: AddGroupProps) => {
     if (!currentUser) {
       return
     }
-    await submitOnce.run(() =>
-      mutation.mutateAsync({
-        body: {
-          admin_api_identifier: currentUser.api_identifier,
-          name: data.name,
-        },
-      }),
-    )
+    await submitOnce.run(async () => {
+      try {
+        await mutation.mutateAsync({
+          body: {
+            admin_api_identifier: currentUser.api_identifier,
+            name: data.name,
+          },
+          timeout: CREATE_GROUP_TIMEOUT_MS,
+        })
+      } catch {
+        // onError already toasts. Swallow so handleSubmit clears isSubmitting
+        // and the dialog stays open for retry / Cancel.
+      }
+    })
   }
 
   const onCancel = () => {
