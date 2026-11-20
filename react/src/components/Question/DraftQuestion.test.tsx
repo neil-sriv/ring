@@ -35,13 +35,14 @@ const currentUser = {
 function question(
   author: UserUnlinked | null,
   withResponse = false,
+  addedLate = true,
 ): PublicQuestion {
   return {
     question_text: "One good thing?",
     api_identifier: "q_1",
     created_at: "2026-11-01T00:00:00.000Z",
     position: 0,
-    added_late: true,
+    added_late: addedLate,
     author,
     responses: withResponse
       ? [
@@ -63,12 +64,14 @@ function renderQuestion({
   isGroupAdmin = false,
   letterStatus = "IN_PROGRESS",
   readOnly = false,
+  addedLate = true,
 }: {
   author?: UserUnlinked | null
   withResponse?: boolean
   isGroupAdmin?: boolean
   letterStatus?: LetterStatus
   readOnly?: boolean
+  addedLate?: boolean
 } = {}) {
   const queryClient = new QueryClient({
     defaultOptions: {
@@ -85,7 +88,7 @@ function renderQuestion({
   return render(
     <QueryClientProvider client={queryClient}>
       <DraftQuestion
-        question={question(author, withResponse)}
+        question={question(author, withResponse, addedLate)}
         loopApiId="lttr_test"
         readOnly={readOnly}
         isGroupAdmin={isGroupAdmin}
@@ -175,5 +178,23 @@ describe("DraftQuestion delete", () => {
       isGroupAdmin: true,
     })
     expect(deleteButton()).toBeNull()
+  })
+})
+
+describe("DraftQuestion late badge", () => {
+  it("shows a Late badge on a question added while the loop was in progress", () => {
+    renderQuestion()
+
+    const badge = screen.getByText("Late")
+    expect(badge.className).toContain("text-warning")
+    expect(badge.className).toContain("bg-warning/10")
+    expect(badge.className).not.toContain("text-info")
+    expect(badge.className).not.toContain("bg-info/10")
+    expect(screen.queryByText("Late Answer")).toBeNull()
+  })
+
+  it("hides the Late badge when the question was not added late", () => {
+    renderQuestion({ addedLate: false })
+    expect(screen.queryByText("Late")).toBeNull()
   })
 })

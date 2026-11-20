@@ -49,6 +49,24 @@ export function getParticipantReplyStatuses(
     .sort((a, b) => a.participant.name.localeCompare(b.participant.name))
 }
 
+function hasUnansweredQuestions(
+  status: ParticipantReplyStatus,
+  questionCount: number,
+): boolean {
+  return (
+    status.hasReplied &&
+    questionCount > 0 &&
+    status.answeredCount < questionCount
+  )
+}
+
+function unansweredQuestionsHeader(count: number): string {
+  if (count === 1) {
+    return "1 has unanswered questions"
+  }
+  return `${count} have unanswered questions`
+}
+
 function ReplyStatusChip({
   status,
   questionCount,
@@ -57,6 +75,7 @@ function ReplyStatusChip({
   questionCount: number
 }) {
   const showAnsweredCount = status.hasReplied && questionCount > 0
+  const isPartial = hasUnansweredQuestions(status, questionCount)
   const chipTitle = showAnsweredCount
     ? `${status.participant.name} answered ${
         status.answeredCount
@@ -68,10 +87,15 @@ function ReplyStatusChip({
   return (
     <li
       title={chipTitle}
+      data-completion={
+        !status.hasReplied ? "none" : isPartial ? "partial" : "full"
+      }
       className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs font-medium ${
-        status.hasReplied
-          ? "border-success/25 bg-success/10 text-success"
-          : "border-border bg-muted text-muted-foreground"
+        isPartial
+          ? "border-border bg-transparent text-muted-foreground"
+          : status.hasReplied
+            ? "border-success/25 bg-success/10 text-success"
+            : "border-border bg-muted text-muted-foreground"
       }`}
     >
       {status.hasReplied ? (
@@ -104,6 +128,9 @@ export function LoopReplyTracker({ loop }: { loop: PublicLetter }) {
   const questionCount = loop.questions.length
   const repliedRatio =
     statuses.length > 0 ? replied.length / statuses.length : 0
+  const unansweredCount = replied.filter((status) =>
+    hasUnansweredQuestions(status, questionCount),
+  ).length
 
   return (
     <div className="w-full rounded-lg border bg-card p-5 shadow-xs">
@@ -114,6 +141,11 @@ export function LoopReplyTracker({ loop }: { loop: PublicLetter }) {
           {statuses.length !== 1 ? "s" : ""} replied
         </p>
       </div>
+      {unansweredCount > 0 && (
+        <p className="mt-1 text-sm text-muted-foreground">
+          {unansweredQuestionsHeader(unansweredCount)}
+        </p>
+      )}
 
       <div
         className="mt-3 h-1.5 w-full overflow-hidden rounded-full bg-muted"
