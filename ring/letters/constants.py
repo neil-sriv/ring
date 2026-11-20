@@ -26,6 +26,10 @@ class LetterType(StrEnum):
 
 LETTER_PROMOTION_LOOKAHEAD = timedelta(days=7)
 
+# In-progress letters refuse new questions once send_at is this close.
+# Upcoming letters and a null send_at are not cut off.
+LATE_QUESTION_CUTOFF = timedelta(hours=24)
+
 
 #  Default questions that are automatically added to new letters
 DEFAULT_QUESTIONS = [

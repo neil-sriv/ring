@@ -95,6 +95,7 @@ CREATE TABLE public.question (
 	author_id INT8 NULL,
 	position INT8 NOT NULL DEFAULT 0:::INT8,
 	created_at TIMESTAMPTZ NOT NULL DEFAULT now():::TIMESTAMPTZ,
+	added_late BOOL NOT NULL DEFAULT false,
 	CONSTRAINT question_pkey PRIMARY KEY (id ASC),
 	UNIQUE INDEX ix_question_api_identifier (api_identifier ASC),
 	INDEX ix_question_created_at (created_at ASC),

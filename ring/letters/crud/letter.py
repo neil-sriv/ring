@@ -450,10 +450,23 @@ def reorder_questions(
     return letter
 
 
+def _shift_questions_from(letter: Letter, position: int) -> None:
+    """Move every question at or after ``position`` down by one."""
+    for question in letter.questions:
+        if question.position >= position:
+            question.position += 1
+
+
 def add_question(
     db: Session, letter: Letter, question_text: str, author: User | None = None
 ) -> Question:
     """Add a question to a letter.
+
+    An in-progress letter marks the question late and places it after any
+    earlier late questions, at the top when it is the first. Upcoming
+    letters keep the previous rule: an authored question is inserted above
+    the first seeded question, and an unauthored question is appended.
+    Both of those save ``added_late`` as false.
 
     Args:
         db (Session): Database session
@@ -464,8 +477,17 @@ def add_question(
     Returns:
         Question: Created question
     """
+    added_late = letter.status == LetterStatus.IN_PROGRESS
     position = None
-    if author is not None:
+    if added_late:
+        late_positions = [
+            question.position
+            for question in letter.questions
+            if question.added_late
+        ]
+        position = max(late_positions) + 1 if late_positions else 0
+        _shift_questions_from(letter, position)
+    elif author is not None:
         seeded_positions = [
             question.position
             for question in letter.questions
@@ -473,11 +495,14 @@ def add_question(
         ]
         if seeded_positions:
             position = min(seeded_positions)
-            for question in letter.questions:
-                if question.position >= position:
-                    question.position += 1
+            _shift_questions_from(letter, position)
     return create_question(
-        db, letter, question_text, author=author, position=position
+        db,
+        letter,
+        question_text,
+        author=author,
+        position=position,
+        added_late=added_late,
     )
 
 

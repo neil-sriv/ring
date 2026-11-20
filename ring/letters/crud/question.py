@@ -204,6 +204,7 @@ def create_question(
     question_text: str,
     author: User | None = None,
     position: int | None = None,
+    added_late: bool = False,
 ) -> Question:
     """Create a question.
 
@@ -213,12 +214,18 @@ def create_question(
         question_text (str): Text of the question
         author (User | None, optional): Author of the question. Defaults to None.
         position (int | None, optional): Display order. Defaults to append.
+        added_late (bool, optional): True when added while the letter was
+            in progress. Defaults to False.
 
     Returns:
         Question: Created question
     """
     db_question = Question.create(
-        letter, question_text, author=author, position=position
+        letter,
+        question_text,
+        author=author,
+        position=position,
+        added_late=added_late,
     )
     db.add(db_question)
     if search_document := create_question_search_document(db, db_question):

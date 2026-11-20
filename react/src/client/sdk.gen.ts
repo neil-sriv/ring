@@ -301,7 +301,7 @@ export const registerUserPartiesRegisterTokenPost = <ThrowOnError extends boolea
 
 /**
  * Read Users
- * Get a list of users with pagination.
+ * Get a list of users with pagination (admin only).
  *
  * Args:
  * skip (int, optional): Number of records to skip. Defaults to 0.
@@ -310,6 +310,9 @@ export const registerUserPartiesRegisterTokenPost = <ThrowOnError extends boolea
  *
  * Returns:
  * Sequence[User]: List of users
+ *
+ * Raises:
+ * HTTPException: If the caller is not an admin
  */
 export const readUsersPartiesUsersGet = <ThrowOnError extends boolean = false>(options?: Options<ReadUsersPartiesUsersGetData, ThrowOnError>) => {
     return (options?.client ?? _heyApiClient).get<ReadUsersPartiesUsersGetResponse, ReadUsersPartiesUsersGetError, ThrowOnError>({
@@ -326,7 +329,7 @@ export const readUsersPartiesUsersGet = <ThrowOnError extends boolean = false>(o
 
 /**
  * Read User By Id
- * Get a user by their API identifier.
+ * Get a user by their API identifier (admin only).
  *
  * Args:
  * user_api_id (str): API identifier of the user
@@ -336,7 +339,7 @@ export const readUsersPartiesUsersGet = <ThrowOnError extends boolean = false>(o
  * User: User information
  *
  * Raises:
- * HTTPException: If user not found
+ * HTTPException: If the caller is not an admin, or the user is not found
  */
 export const readUserByIdPartiesUserUserApiIdGet = <ThrowOnError extends boolean = false>(options: Options<ReadUserByIdPartiesUserUserApiIdGetData, ThrowOnError>) => {
     return (options.client ?? _heyApiClient).get<ReadUserByIdPartiesUserUserApiIdGetResponse, ReadUserByIdPartiesUserUserApiIdGetError, ThrowOnError>({
@@ -525,16 +528,22 @@ export const createGroupPartiesGroupPost = <ThrowOnError extends boolean = false
 
 /**
  * List Groups
- * List all groups a user is a member of.
+ * List all groups the authenticated user is a member of.
+ *
+ * Clients may still send ``user_api_id`` for backwards compatibility, but it
+ * must match the current user — another user's id is rejected.
  *
  * Args:
- * user_api_id (str): API identifier of the user
+ * user_api_id (str): API identifier of the user (must be the caller)
  * skip (int, optional): Number of records to skip. Defaults to 0.
  * limit (int, optional): Maximum number of records to return. Defaults to 100.
  * req_dep (AuthenticatedRequestDependencies): Request dependencies
  *
  * Returns:
  * Sequence[Group]: List of groups
+ *
+ * Raises:
+ * HTTPException: If ``user_api_id`` does not match the authenticated user
  */
 export const listGroupsPartiesGroupsGet = <ThrowOnError extends boolean = false>(options: Options<ListGroupsPartiesGroupsGetData, ThrowOnError>) => {
     return (options.client ?? _heyApiClient).get<ListGroupsPartiesGroupsGetResponse, ListGroupsPartiesGroupsGetError, ThrowOnError>({
@@ -553,6 +562,9 @@ export const listGroupsPartiesGroupsGet = <ThrowOnError extends boolean = false>
  * Read Group
  * Get details of a specific group.
  *
+ * Caller must be a member of the group. Missing groups look like forbidden
+ * access so callers cannot probe for ids.
+ *
  * Args:
  * group_api_id (str): API identifier of the group
  * req_dep (AuthenticatedRequestDependencies): Request dependencies
@@ -561,7 +573,7 @@ export const listGroupsPartiesGroupsGet = <ThrowOnError extends boolean = false>
  * Group: Group details
  *
  * Raises:
- * HTTPException: If group not found or user is not a member
+ * PermissionError: If the group is missing or the caller cannot read it
  */
 export const readGroupPartiesGroupGroupApiIdGet = <ThrowOnError extends boolean = false>(options: Options<ReadGroupPartiesGroupGroupApiIdGetData, ThrowOnError>) => {
     return (options.client ?? _heyApiClient).get<ReadGroupPartiesGroupGroupApiIdGetResponse, ReadGroupPartiesGroupGroupApiIdGetError, ThrowOnError>({
@@ -590,6 +602,7 @@ export const readGroupPartiesGroupGroupApiIdGet = <ThrowOnError extends boolean 
  *
  * Raises:
  * HTTPException: If no updates provided, user not authorized, or invalid cycle length
+ * PermissionError: If the group is missing or the caller cannot read it
  */
 export const updateGroupPartiesGroupGroupApiIdPatch = <ThrowOnError extends boolean = false>(options: Options<UpdateGroupPartiesGroupGroupApiIdPatchData, ThrowOnError>) => {
     return (options.client ?? _heyApiClient).patch<UpdateGroupPartiesGroupGroupApiIdPatchResponse, UpdateGroupPartiesGroupGroupApiIdPatchError, ThrowOnError>({
@@ -649,7 +662,8 @@ export const addUserToGroupPartiesGroupGroupApiIdAddMemberUserApiIdPost = <Throw
  * Group: Updated group
  *
  * Raises:
- * HTTPException: If group not found, user not authorized, or invalid operation
+ * HTTPException: If user not authorized, or invalid operation
+ * PermissionError: If the group is missing or the caller cannot read it
  */
 export const removeUserFromGroupPartiesGroupGroupApiIdRemoveMemberUserApiIdPost = <ThrowOnError extends boolean = false>(options: Options<RemoveUserFromGroupPartiesGroupGroupApiIdRemoveMemberUserApiIdPostData, ThrowOnError>) => {
     return (options.client ?? _heyApiClient).post<RemoveUserFromGroupPartiesGroupGroupApiIdRemoveMemberUserApiIdPostResponse, RemoveUserFromGroupPartiesGroupGroupApiIdRemoveMemberUserApiIdPostError, ThrowOnError>({
@@ -711,7 +725,8 @@ export const addMembersPartiesGroupGroupApiIdAddMembersPost = <ThrowOnError exte
  * Group: Updated group
  *
  * Raises:
- * HTTPException: If group not found or user not authorized
+ * HTTPException: If user not authorized
+ * PermissionError: If the group is missing or the caller cannot read it
  */
 export const replaceGroupDefaultQuestionsPartiesGroupGroupApiIdReplaceDefaultQuestionsPost = <ThrowOnError extends boolean = false>(options: Options<ReplaceGroupDefaultQuestionsPartiesGroupGroupApiIdReplaceDefaultQuestionsPostData, ThrowOnError>) => {
     return (options.client ?? _heyApiClient).post<ReplaceGroupDefaultQuestionsPartiesGroupGroupApiIdReplaceDefaultQuestionsPostResponse, ReplaceGroupDefaultQuestionsPartiesGroupGroupApiIdReplaceDefaultQuestionsPostError, ThrowOnError>({
@@ -734,6 +749,9 @@ export const replaceGroupDefaultQuestionsPartiesGroupGroupApiIdReplaceDefaultQue
  * Read Group Key Values
  * Get all key-value pairs for a group.
  *
+ * Caller must be a member of the group. Missing groups look like forbidden
+ * access so callers cannot probe for ids.
+ *
  * Args:
  * group_api_id (str): API identifier of the group
  * req_dep (AuthenticatedRequestDependencies): Request dependencies
@@ -742,7 +760,7 @@ export const replaceGroupDefaultQuestionsPartiesGroupGroupApiIdReplaceDefaultQue
  * GroupKeyValue: Dictionary of all key-value pairs
  *
  * Raises:
- * HTTPException: If group not found or user is not a member
+ * PermissionError: If the group is missing or the caller cannot read it
  */
 export const readGroupKeyValuesPartiesGroupGroupApiIdKeyValueGet = <ThrowOnError extends boolean = false>(options: Options<ReadGroupKeyValuesPartiesGroupGroupApiIdKeyValueGetData, ThrowOnError>) => {
     return (options.client ?? _heyApiClient).get<ReadGroupKeyValuesPartiesGroupGroupApiIdKeyValueGetResponse, ReadGroupKeyValuesPartiesGroupGroupApiIdKeyValueGetError, ThrowOnError>({
@@ -761,6 +779,9 @@ export const readGroupKeyValuesPartiesGroupGroupApiIdKeyValueGet = <ThrowOnError
  * Full Replace Group Key Values
  * Replace all key-value pairs for a group.
  *
+ * Caller must be a member of the group. Missing groups look like forbidden
+ * access so callers cannot probe for ids.
+ *
  * Args:
  * group_api_id (str): API identifier of the group
  * updates (GroupKeyValue): New key-value pairs
@@ -770,7 +791,7 @@ export const readGroupKeyValuesPartiesGroupGroupApiIdKeyValueGet = <ThrowOnError
  * GroupKeyValue: Updated key-value pairs
  *
  * Raises:
- * HTTPException: If group not found or user is not a member
+ * PermissionError: If the group is missing or the caller cannot read it
  */
 export const fullReplaceGroupKeyValuesPartiesGroupGroupApiIdKeyValuePut = <ThrowOnError extends boolean = false>(options: Options<FullReplaceGroupKeyValuesPartiesGroupGroupApiIdKeyValuePutData, ThrowOnError>) => {
     return (options.client ?? _heyApiClient).put<FullReplaceGroupKeyValuesPartiesGroupGroupApiIdKeyValuePutResponse, FullReplaceGroupKeyValuesPartiesGroupGroupApiIdKeyValuePutError, ThrowOnError>({
@@ -793,6 +814,9 @@ export const fullReplaceGroupKeyValuesPartiesGroupGroupApiIdKeyValuePut = <Throw
  * Read Group Key Value
  * Get a specific key-value pair for a group.
  *
+ * Caller must be a member of the group. Missing groups look like forbidden
+ * access so callers cannot probe for ids.
+ *
  * Args:
  * group_api_id (str): API identifier of the group
  * key (str): Key to retrieve
@@ -802,7 +826,7 @@ export const fullReplaceGroupKeyValuesPartiesGroupGroupApiIdKeyValuePut = <Throw
  * GroupKeyValueBase: Key-value pair
  *
  * Raises:
- * HTTPException: If group not found or user is not a member
+ * PermissionError: If the group is missing or the caller cannot read it
  */
 export const readGroupKeyValuePartiesGroupGroupApiIdKeyValueKeyGet = <ThrowOnError extends boolean = false>(options: Options<ReadGroupKeyValuePartiesGroupGroupApiIdKeyValueKeyGetData, ThrowOnError>) => {
     return (options.client ?? _heyApiClient).get<ReadGroupKeyValuePartiesGroupGroupApiIdKeyValueKeyGetResponse, ReadGroupKeyValuePartiesGroupGroupApiIdKeyValueKeyGetError, ThrowOnError>({
@@ -821,6 +845,9 @@ export const readGroupKeyValuePartiesGroupGroupApiIdKeyValueKeyGet = <ThrowOnErr
  * Upsert Group Key Value
  * Update or delete a single key-value pair for a group.
  *
+ * Caller must be a member of the group. Missing groups look like forbidden
+ * access so callers cannot probe for ids.
+ *
  * Args:
  * group_api_id (str): API identifier of the group
  * update (SingleGroupKeyValueUpdate): Update operation details
@@ -830,7 +857,7 @@ export const readGroupKeyValuePartiesGroupGroupApiIdKeyValueKeyGet = <ThrowOnErr
  * GroupKeyValueBase: Updated key-value pair
  *
  * Raises:
- * HTTPException: If group not found or user is not a member
+ * PermissionError: If the group is missing or the caller cannot read it
  */
 export const upsertGroupKeyValuePartiesGroupGroupApiIdKeyValueUpdatePost = <ThrowOnError extends boolean = false>(options: Options<UpsertGroupKeyValuePartiesGroupGroupApiIdKeyValueUpdatePostData, ThrowOnError>) => {
     return (options.client ?? _heyApiClient).post<UpsertGroupKeyValuePartiesGroupGroupApiIdKeyValueUpdatePostResponse, UpsertGroupKeyValuePartiesGroupGroupApiIdKeyValueUpdatePostError, ThrowOnError>({
@@ -853,6 +880,9 @@ export const upsertGroupKeyValuePartiesGroupGroupApiIdKeyValueUpdatePost = <Thro
  * Bulk Update Group Key Values
  * Update or delete multiple key-value pairs for a group.
  *
+ * Caller must be a member of the group. Missing groups look like forbidden
+ * access so callers cannot probe for ids.
+ *
  * Args:
  * group_api_id (str): API identifier of the group
  * updates (BulkGroupKeyValueUpdate): List of update operations
@@ -862,7 +892,7 @@ export const upsertGroupKeyValuePartiesGroupGroupApiIdKeyValueUpdatePost = <Thro
  * GroupKeyValue: All key-value pairs after updates
  *
  * Raises:
- * HTTPException: If group not found or user is not a member
+ * PermissionError: If the group is missing or the caller cannot read it
  */
 export const bulkUpdateGroupKeyValuesPartiesGroupGroupApiIdKeyValueBulkUpdatePost = <ThrowOnError extends boolean = false>(options: Options<BulkUpdateGroupKeyValuesPartiesGroupGroupApiIdKeyValueBulkUpdatePostData, ThrowOnError>) => {
     return (options.client ?? _heyApiClient).post<BulkUpdateGroupKeyValuesPartiesGroupGroupApiIdKeyValueBulkUpdatePostResponse, BulkUpdateGroupKeyValuesPartiesGroupGroupApiIdKeyValueBulkUpdatePostError, ThrowOnError>({
@@ -886,7 +916,8 @@ export const bulkUpdateGroupKeyValuesPartiesGroupGroupApiIdKeyValueBulkUpdatePos
  * Create a new letter for a group.
  *
  * Creates a new letter with default questions if there are no letters
- * currently in progress or upcoming for the group.
+ * currently in progress or upcoming for the group. Only the group admin
+ * may create the next cyclic letter.
  *
  * Args:
  * letter (LetterCreate): Letter creation parameters
@@ -897,6 +928,7 @@ export const bulkUpdateGroupKeyValuesPartiesGroupGroupApiIdKeyValueBulkUpdatePos
  *
  * Raises:
  * ValueError: If there is already a letter in progress or upcoming
+ * HTTPException: If the caller is not the group admin
  */
 export const addNextLetterLettersLetterPost = <ThrowOnError extends boolean = false>(options: Options<AddNextLetterLettersLetterPostData, ThrowOnError>) => {
     return (options.client ?? _heyApiClient).post<AddNextLetterLettersLetterPostResponse, AddNextLetterLettersLetterPostError, ThrowOnError>({
@@ -940,6 +972,7 @@ export const addNextLetterLettersLetterLetterTypePost = <ThrowOnError extends bo
  * List letters for a specific group.
  *
  * Retrieves a paginated list of letters belonging to the specified group.
+ * Caller must be a member of the group.
  *
  * Args:
  * group_api_id (str): API identifier of the group
@@ -967,15 +1000,15 @@ export const listLettersLettersLettersGet = <ThrowOnError extends boolean = fals
  * Read Letter
  * Retrieve a specific letter by its API identifier.
  *
+ * Caller must be a member of the letter's group. Missing letters look like
+ * forbidden access so callers cannot probe for ids.
+ *
  * Args:
  * letter_api_id (str): API identifier of the letter
  * req_dep (AuthenticatedRequestDependencies): Request dependencies including database session and auth
  *
  * Returns:
  * Letter: The requested letter
- *
- * Raises:
- * IDNotFoundException: If letter with given API ID is not found
  */
 export const readLetterLettersLetterLetterApiIdGet = <ThrowOnError extends boolean = false>(options: Options<ReadLetterLettersLetterLetterApiIdGetData, ThrowOnError>) => {
     return (options.client ?? _heyApiClient).get<ReadLetterLettersLetterLetterApiIdGetResponse, ReadLetterLettersLetterLetterApiIdGetError, ThrowOnError>({
@@ -1032,8 +1065,11 @@ export const listDashboardLettersLettersLettersDashboardGet = <ThrowOnError exte
  * Letter: Updated letter
  *
  * Raises:
- * AssertionError: If new send time violates timing constraints
- * IDNotFoundException: If letter with given API ID is not found
+ * HTTPException: If the caller is not the group admin, the letter was
+ * already sent, a cyclic in-progress loop is moved back to
+ * upcoming, the send time is invalid, or another cyclic letter
+ * already has the requested status
+ * PermissionError: If the letter is missing or the caller cannot read it
  */
 export const editLetterLettersLetterLetterApiIdEditLetterPost = <ThrowOnError extends boolean = false>(options: Options<EditLetterLettersLetterLetterApiIdEditLetterPostData, ThrowOnError>) => {
     return (options.client ?? _heyApiClient).post<EditLetterLettersLetterLetterApiIdEditLetterPostResponse, EditLetterLettersLetterLetterApiIdEditLetterPostError, ThrowOnError>({
@@ -1056,8 +1092,10 @@ export const editLetterLettersLetterLetterApiIdEditLetterPost = <ThrowOnError ex
  * Add Question
  * Add a new question to a letter.
  *
- * Creates and adds a new question to the specified letter. The question can
- * optionally be associated with an author.
+ * Any group member may add a question while the letter is upcoming or in
+ * progress. A sent letter is refused. An in-progress letter is also
+ * refused once ``send_at`` is within ``LATE_QUESTION_CUTOFF``, including
+ * for the group admin. A null ``send_at`` has no cutoff.
  *
  * :param letter_api_id: API identifier of the letter
  * :type letter_api_id: str
@@ -1065,7 +1103,10 @@ export const editLetterLettersLetterLetterApiIdEditLetterPost = <ThrowOnError ex
  * :type question: QuestionCreate
  * :param req_dep: Request dependencies including database session and auth
  * :type req_dep: AuthenticatedRequestDependencies
- * :raises IDNotFoundException: If letter or author with given API ID is not found
+ * :raises PermissionError: If the caller cannot read the letter
+ * :raises IDNotFoundException: If author with given API ID is not found
+ * :raises HTTPException: If the letter has been sent or is inside the
+ * late-question cutoff
  * :return: Updated letter with the new question
  * :rtype: Letter
  */
@@ -1132,6 +1173,9 @@ export const generateQuestionLettersLetterLetterApiIdGenerateQuestionPost = <Thr
  * Get Schedule For Group
  * Get a group's schedule by its API identifier.
  *
+ * Caller must be a member of the group. Missing groups look like forbidden
+ * access so callers cannot probe for ids.
+ *
  * Args:
  * group_api_id: API identifier of the group
  * req_dep: Request dependencies including database session
@@ -1160,7 +1204,7 @@ export const getScheduleForGroupScheduleScheduleGroupApiIdGet = <ThrowOnError ex
  * Create or update a response to a question.
  *
  * If a response already exists (identified by api_identifier or participant),
- * updates it. Otherwise, creates a new response.
+ * updates it. Otherwise, creates a new response for the current user.
  *
  * Args:
  * question_api_id (str): API identifier of the question
@@ -1171,6 +1215,8 @@ export const getScheduleForGroupScheduleScheduleGroupApiIdGet = <ThrowOnError ex
  * Question: Updated question with the new/updated response
  *
  * Raises:
+ * PermissionError: If the caller is not a member of the question's group
+ * HTTPException: If the caller tries to write another member's response
  * IDNotFoundException: If question or response with given API ID is not found
  */
 export const upsertResponseQuestionsQuestionQuestionApiIdUpsertResponsePost = <ThrowOnError extends boolean = false>(options: Options<UpsertResponseQuestionsQuestionQuestionApiIdUpsertResponsePostData, ThrowOnError>) => {
@@ -1206,6 +1252,7 @@ export const upsertResponseQuestionsQuestionQuestionApiIdUpsertResponsePost = <T
  * Question: Updated question with the response containing the new image
  *
  * Raises:
+ * PermissionError: If the caller is not a member of the question's group
  * IDNotFoundException: If question with given API ID is not found
  */
 export const uploadImageQuestionsQuestionQuestionApiIdUploadImagePost = <ThrowOnError extends boolean = false>(options: Options<UploadImageQuestionsQuestionQuestionApiIdUploadImagePostData, ThrowOnError>) => {
@@ -1238,7 +1285,8 @@ export const uploadImageQuestionsQuestionQuestionApiIdUploadImagePost = <ThrowOn
  * req_dep (AuthenticatedRequestDependencies): Request dependencies including database session and auth
  *
  * Raises:
- * HTTPException: If question not found, user not authorized, or question has responses
+ * PermissionError: If the caller is not a member of the question's group
+ * HTTPException: If user not authorized, or question has responses
  */
 export const deleteQuestionQuestionsQuestionQuestionApiIdDelete = <ThrowOnError extends boolean = false>(options: Options<DeleteQuestionQuestionsQuestionQuestionApiIdDeleteData, ThrowOnError>) => {
     return (options.client ?? _heyApiClient).delete<DeleteQuestionQuestionsQuestionQuestionApiIdDeleteResponse, DeleteQuestionQuestionsQuestionQuestionApiIdDeleteError, ThrowOnError>({
@@ -1266,6 +1314,8 @@ export const deleteQuestionQuestionsQuestionQuestionApiIdDelete = <ThrowOnError 
  * Response: Updated response
  *
  * Raises:
+ * PermissionError: If the caller is not a member of the response's group
+ * HTTPException: If the caller is not the author or group admin
  * IDNotFoundException: If response with given API ID is not found
  */
 export const editResponseResponsesResponseResponseApiIdEditResponsePost = <ThrowOnError extends boolean = false>(options: Options<EditResponseResponsesResponseResponseApiIdEditResponsePostData, ThrowOnError>) => {
@@ -1301,6 +1351,8 @@ export const editResponseResponsesResponseResponseApiIdEditResponsePost = <Throw
  * Response: Updated response with attached images
  *
  * Raises:
+ * PermissionError: If the caller is not a member of the response's group
+ * HTTPException: If the caller is not the author or group admin
  * IDNotFoundException: If response with given API ID is not found
  */
 export const uploadImageResponsesResponseResponseApiIdUploadImagePost = <ThrowOnError extends boolean = false>(options: Options<UploadImageResponsesResponseResponseApiIdUploadImagePostData, ThrowOnError>) => {
@@ -1337,6 +1389,8 @@ export const uploadImageResponsesResponseResponseApiIdUploadImagePost = <ThrowOn
  * Response: Updated response without the deleted image
  *
  * Raises:
+ * PermissionError: If the caller is not a member of the response's group
+ * HTTPException: If the caller is not the author or group admin
  * IDNotFoundException: If response with given API ID is not found
  * ValueError: If image is not found in the response
  */
@@ -1410,8 +1464,10 @@ export const validateTokenInvitesTokenTokenGet = <ThrowOnError extends boolean =
  * Create a new web push notification subscription.
  *
  * Creates a subscription for the authenticated user to receive web push
- * notifications. If a subscription with the same endpoint already exists,
- * returns a message indicating this instead of creating a duplicate.
+ * notifications. Clients may still send ``user_api_identifier`` for
+ * backwards compatibility, but it must match the current user — another
+ * user's id is rejected. If a subscription with the same endpoint already
+ * exists, returns a message indicating this instead of creating a duplicate.
  *
  * Args:
  * subscription (SubscriptionCreate): Subscription details including endpoint and keys
@@ -1421,7 +1477,8 @@ export const validateTokenInvitesTokenTokenGet = <ThrowOnError extends boolean =
  * ResponseMessage: Message indicating success or existing subscription
  *
  * Raises:
- * HTTPException: If user is not authenticated
+ * HTTPException: If user is not authenticated, or ``user_api_identifier``
+ * does not match the authenticated user
  */
 export const postSubscriptionNotificationsSubscriptionPost = <ThrowOnError extends boolean = false>(options: Options<PostSubscriptionNotificationsSubscriptionPostData, ThrowOnError>) => {
     return (options.client ?? _heyApiClient).post<PostSubscriptionNotificationsSubscriptionPostResponse, PostSubscriptionNotificationsSubscriptionPostError, ThrowOnError>({

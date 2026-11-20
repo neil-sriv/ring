@@ -9,6 +9,7 @@ questions, responses, and scheduled tasks.
 from __future__ import annotations
 
 from datetime import UTC, datetime, timedelta
+from unittest.mock import patch
 
 import sqlalchemy
 from faker import Faker
@@ -347,6 +348,7 @@ class TestLetterCrud:
         assert db_question.author == author
         assert question.letter == letter
         assert question.question_text == question_text
+        assert question.added_late is True
 
     def test_add_default_questions(self, db_session: Session) -> None:
         """Test adding default questions to a letter.
@@ -474,6 +476,48 @@ class TestLetterCrud:
                     f"{r.participant.name}: {r.response_text}"
                     for r in db_responses
                 ]
+
+    def test_sent_email_lists_late_question_first(
+        self, db_session: Session
+    ) -> None:
+        """The send email walks questions in position order.
+
+        ``compile_letter_dict`` sorts by position, and both the HTML and
+        plain-text bodies iterate that dict. A top-placed late question
+        is therefore the first question in the email.
+        """
+        user = UserFactory.create(name="Ada Lovelace")
+        group = GroupFactory.create(admin=user, members=[user])
+        letter = LetterFactory.create(
+            group=group,
+            status=LetterStatus.UPCOMING,
+            send_at=datetime.now(tz=UTC) + timedelta(days=3),
+        )
+        author = UserFactory.create(name="Grace Hopper")
+        letter_crud.add_question(db_session, letter, "Seeded prompt")
+        letter_crud.add_question(
+            db_session, letter, "Earlier authored", author=author
+        )
+        letter.status = LetterStatus.IN_PROGRESS
+        letter_crud.add_question(
+            db_session, letter, "Late question", author=author
+        )
+        db_session.commit()
+
+        with patch(
+            "ring.letters.crud.letter.send_email", return_value="ses-id"
+        ) as send_email:
+            assert letter_crud.send_letter_email(db_session, letter) is True
+
+        draft = send_email.call_args.args[0]
+        html_body = draft.message["Body"]["Html"]["Data"]
+        text_body = draft.message["Body"]["Text"]["Data"]
+        late_label = "Grace Hopper: Late question"
+        earlier_label = "Grace Hopper: Earlier authored"
+        for body in (html_body, text_body):
+            assert body.index(late_label) < body.index(earlier_label)
+            assert body.index(late_label) < body.index("Seeded prompt")
+        assert letter.status == LetterStatus.SENT
 
     def test_collect_future_letters(self, db_session: Session) -> None:
         """Test collecting future letters.
