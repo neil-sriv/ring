@@ -60,6 +60,7 @@ metadata:
     neilsriv.tech/repo-verification: verified 2026-10-07
     neilsriv.tech/migrations: ring/alembic
     neilsriv.tech/package-manager: uv
+    neilsriv.tech/default-branch: dev
 spec:
   type: service
   lifecycle: production
@@ -78,6 +79,60 @@ spec:
       target: deploy_api.yml
       verification: verified
       note: Workflow Deploy ring-api, environment production-api. Public repo, tokenless Actions read. The GitHub deployment row is the EC2 status.
+  scripts:
+    - id: create-next-letter
+      path: ring/scripts/create_next_letter.py
+      invoke: python
+      summary: Create the next upcoming cyclic letter for a group.
+      dangerous: true
+    - id: list-users
+      path: ring/scripts/list_users.py
+      invoke: script-runner
+      summary: Script to list all users in the Ring database.
+    - id: migration-create-users
+      path: ring/scripts/migration/create_users.py
+      invoke: script-runner
+      summary: Script to create users and groups from a JSON configuration file.
+      dangerous: true
+    - id: migration-migrate-html-letterloop
+      path: ring/scripts/migration/migrate_html_letterloop.py
+      invoke: script-runner
+      summary: Migration script to import legacy Letterloop HTML files into the Ring database.
+      dangerous: true
+    - id: migration-migrate-letterloop
+      path: ring/scripts/migration/migrate_letterloop.py
+      invoke: script-runner
+      summary: Migration script to import legacy Letterloop text files into the Ring database.
+      dangerous: true
+    - id: migration-upsert-users
+      path: ring/scripts/migration/upsert_users.py
+      invoke: script-runner
+      summary: Migration script to upsert users and groups from a JSON configuration file.
+      dangerous: true
+    - id: parties-backfill-authn-identities
+      path: ring/scripts/parties/backfill_authn_identities.py
+      invoke: script-runner
+      summary: "Idempotent backfill: upsert every Ring user into the identity service."
+      dangerous: true
+    - id: parties-backfill-user-admins
+      path: ring/scripts/parties/backfill_user_admins.py
+      invoke: script-runner
+      summary: Script to backfill admin status for specified users.
+      dangerous: true
+    - id: run-sql
+      path: ring/scripts/run_sql.py
+      invoke: script-runner
+      summary: Script to execute arbitrary SQL queries against the Ring database.
+      dangerous: true
+    - id: search-backfill
+      path: ring/scripts/search/backfill.py
+      invoke: script-runner
+      summary: Script to backfill search documents for all users, groups, letters, questions, and responses.
+      dangerous: true
+    - id: search-integrity-check
+      path: ring/scripts/search/integrity_check.py
+      invoke: script-runner
+      summary: Script to run an adhoc search integrity check.
 ---
 apiVersion: backstage.io/v1alpha1
 kind: API
