@@ -40,12 +40,14 @@ const createdGroup = {
       email: me.email,
       name: me.name,
       api_identifier: me.api_identifier,
+      admin: me.admin,
     },
   ],
   admin: {
     email: me.email,
     name: me.name,
     api_identifier: me.api_identifier,
+    admin: me.admin,
   },
   default_questions: [],
 } satisfies GroupLinked
