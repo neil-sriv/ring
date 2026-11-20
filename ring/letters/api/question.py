@@ -68,75 +68,71 @@ async def upsert_response(
             does not own the response, or the response is on another question
     """
     logger.info(response)
-    caller = req_dep.current_user
-    # Field is deprecated; reading the attribute warns on every call.
-    payload = response.model_dump(warnings=False)
-    participant_api_identifier = payload["participant_api_identifier"]
-    api_identifier = payload["api_identifier"]
     db_question = cast(
         Question,
         load_and_check(
             req_dep.db,
-            caller,
+            req_dep.current_user,
             Action.READ,
             question_api_id,
         ),
     )
+    # Deprecated field warns on attribute access.
+    stated_participant = response.model_dump(warnings=False)[
+        "participant_api_identifier"
+    ]
     if (
-        participant_api_identifier is not None
-        and participant_api_identifier != caller.api_identifier
+        stated_participant is not None
+        and stated_participant != req_dep.current_user.api_identifier
     ):
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail=_DIFFERENT_PARTICIPANT,
         )
-    if api_identifier:
+    if response.api_identifier:
         db_response = cast(
             Response,
             load_and_check(
                 req_dep.db,
-                caller,
+                req_dep.current_user,
                 Action.READ,
-                api_identifier,
+                response.api_identifier,
             ),
         )
-        if db_response.participant.api_identifier != caller.api_identifier:
+        if (
+            db_response.participant.api_identifier
+            != req_dep.current_user.api_identifier
+        ):
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
                 detail=_DIFFERENT_PARTICIPANT,
             )
-        if db_response.question.api_identifier != db_question.api_identifier:
+        if db_response.question_id != db_question.id:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail=_WRONG_QUESTION,
             )
+    else:
+        db_responses = [
+            resp
+            for resp in db_question.responses
+            if resp.participant.api_identifier
+            == req_dep.current_user.api_identifier
+        ]
+        db_response = db_responses[0] if db_responses else None
+    if db_response is None:
+        question_crud.add_response(
+            req_dep.db,
+            db_question,
+            req_dep.current_user,
+            response.response_text,
+        )
+    else:
         question_crud.edit_response(
             req_dep.db,
             db_response,
             response.response_text,
         )
-    else:
-        existing = next(
-            (
-                resp
-                for resp in db_question.responses
-                if resp.participant.api_identifier == caller.api_identifier
-            ),
-            None,
-        )
-        if existing is not None:
-            question_crud.edit_response(
-                req_dep.db,
-                existing,
-                response.response_text,
-            )
-        else:
-            question_crud.add_response(
-                req_dep.db,
-                db_question,
-                caller,
-                response.response_text,
-            )
     req_dep.db.commit()
     return db_question
 

@@ -324,51 +324,31 @@ class TestQuestionResponseAuthz:
         assert response.response_text == "updated"
         assert response.participant_id == current_user.id
 
-    def test_admin_cannot_upsert_as_another_participant(
+    @pytest.mark.parametrize(
+        "case",
+        [
+            "admin_other_participant",
+            "member_other_response",
+            "admin_other_response",
+        ],
+    )
+    def test_upsert_rejects_writing_as_someone_else(
         self,
         authenticated_client: TestClient,
         current_user: User,
         db_session: Session,
+        case: str,
     ) -> None:
-        member = UserFactory.create()
-        group = GroupFactory.create(
-            admin=current_user, members=[current_user, member]
-        )
-        letter = LetterFactory.create(
-            group=group, status=LetterStatus.IN_PROGRESS
-        )
-        question = QuestionFactory.create(letter=letter)
-        response = ResponseFactory.create(
-            question=question, participant=member, response_text="member text"
-        )
-        db_session.commit()
-
-        rv = authenticated_client.post(
-            f"/questions/question/{question.api_identifier}:upsert_response",
-            json={
-                "response_text": "hijacked",
-                "participant_api_identifier": member.api_identifier,
-            },
-        )
-
-        assert rv.status_code == 403
-        assert rv.json()["detail"] == (
-            "Cannot write a response as a different participant"
-        )
-        db_session.refresh(response)
-        assert response.response_text == "member text"
-
-    def test_non_owner_cannot_upsert_by_response_id(
-        self,
-        authenticated_client: TestClient,
-        current_user: User,
-        db_session: Session,
-    ) -> None:
-        admin = UserFactory.create()
         owner = UserFactory.create()
-        group = GroupFactory.create(
-            admin=admin, members=[admin, owner, current_user]
-        )
+        if case == "member_other_response":
+            admin = UserFactory.create()
+            group = GroupFactory.create(
+                admin=admin, members=[admin, owner, current_user]
+            )
+        else:
+            group = GroupFactory.create(
+                admin=current_user, members=[current_user, owner]
+            )
         letter = LetterFactory.create(
             group=group, status=LetterStatus.IN_PROGRESS
         )
@@ -378,12 +358,15 @@ class TestQuestionResponseAuthz:
         )
         db_session.commit()
 
+        body = {"response_text": "hijacked"}
+        if case == "admin_other_participant":
+            body["participant_api_identifier"] = owner.api_identifier
+        else:
+            body["api_identifier"] = response.api_identifier
+
         rv = authenticated_client.post(
             f"/questions/question/{question.api_identifier}:upsert_response",
-            json={
-                "response_text": "hijacked",
-                "api_identifier": response.api_identifier,
-            },
+            json=body,
         )
 
         assert rv.status_code == 403
@@ -392,40 +375,6 @@ class TestQuestionResponseAuthz:
         )
         db_session.refresh(response)
         assert response.response_text == "owner text"
-
-    def test_admin_cannot_upsert_another_members_response_by_id(
-        self,
-        authenticated_client: TestClient,
-        current_user: User,
-        db_session: Session,
-    ) -> None:
-        member = UserFactory.create()
-        group = GroupFactory.create(
-            admin=current_user, members=[current_user, member]
-        )
-        letter = LetterFactory.create(
-            group=group, status=LetterStatus.IN_PROGRESS
-        )
-        question = QuestionFactory.create(letter=letter)
-        response = ResponseFactory.create(
-            question=question, participant=member, response_text="member text"
-        )
-        db_session.commit()
-
-        rv = authenticated_client.post(
-            f"/questions/question/{question.api_identifier}:upsert_response",
-            json={
-                "response_text": "hijacked",
-                "api_identifier": response.api_identifier,
-            },
-        )
-
-        assert rv.status_code == 403
-        assert rv.json()["detail"] == (
-            "Cannot write a response as a different participant"
-        )
-        db_session.refresh(response)
-        assert response.response_text == "member text"
 
     def test_upsert_rejects_response_from_another_question(
         self,
