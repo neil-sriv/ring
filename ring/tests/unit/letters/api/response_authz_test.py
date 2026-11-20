@@ -103,6 +103,36 @@ class TestResponseAuthz:
         db_session.refresh(response)
         assert response.response_text == "updated"
 
+    def test_admin_can_edit_another_members_response(
+        self,
+        authenticated_client: TestClient,
+        current_user: User,
+        db_session: Session,
+    ) -> None:
+        member = UserFactory.create()
+        group = GroupFactory.create(
+            admin=current_user, members=[current_user, member]
+        )
+        letter = LetterFactory.create(
+            group=group, status=LetterStatus.IN_PROGRESS
+        )
+        question = QuestionFactory.create(letter=letter)
+        response = ResponseFactory.create(
+            question=question, participant=member, response_text="member text"
+        )
+        db_session.commit()
+
+        rv = authenticated_client.post(
+            f"/responses/response/{response.api_identifier}:edit_response",
+            json={"response_text": "admin fix"},
+        )
+
+        assert rv.status_code == 200
+        assert rv.json()["response_text"] == "admin fix"
+        db_session.refresh(response)
+        assert response.response_text == "admin fix"
+        assert response.participant == member
+
     def test_non_member_cannot_delete_image(
         self,
         authenticated_client: TestClient,
@@ -179,7 +209,7 @@ class TestQuestionResponseAuthz:
 
         assert rv.status_code == 403
         assert rv.json()["detail"] == (
-            "Only the response author or group admin can modify this response"
+            "Cannot write a response as a different participant"
         )
         db_session.refresh(response)
         assert response.response_text == "owner text"
@@ -212,6 +242,215 @@ class TestQuestionResponseAuthz:
             r.participant == current_user and r.response_text == "my answer"
             for r in question.responses
         )
+
+    @pytest.mark.parametrize("participant_id", ["self", "omit", "null"])
+    def test_upsert_creates_then_updates_caller_response(
+        self,
+        authenticated_client: TestClient,
+        current_user: User,
+        db_session: Session,
+        participant_id: str,
+    ) -> None:
+        admin = UserFactory.create()
+        group = GroupFactory.create(admin=admin, members=[admin, current_user])
+        letter = LetterFactory.create(
+            group=group, status=LetterStatus.IN_PROGRESS
+        )
+        question = QuestionFactory.create(letter=letter)
+        db_session.commit()
+
+        def body(text: str) -> dict[str, str | None]:
+            payload: dict[str, str | None] = {"response_text": text}
+            if participant_id == "self":
+                payload["participant_api_identifier"] = (
+                    current_user.api_identifier
+                )
+            elif participant_id == "null":
+                payload["participant_api_identifier"] = None
+            return payload
+
+        created = authenticated_client.post(
+            f"/questions/question/{question.api_identifier}:upsert_response",
+            json=body("first"),
+        )
+        assert created.status_code == 200
+        db_session.refresh(question)
+        mine = [
+            resp
+            for resp in question.responses
+            if resp.participant_id == current_user.id
+        ]
+        assert len(mine) == 1
+        assert mine[0].response_text == "first"
+
+        updated = authenticated_client.post(
+            f"/questions/question/{question.api_identifier}:upsert_response",
+            json=body("second"),
+        )
+        assert updated.status_code == 200
+        db_session.refresh(mine[0])
+        db_session.refresh(question)
+        assert mine[0].response_text == "second"
+        assert mine[0].participant_id == current_user.id
+        assert len(question.responses) == 1
+
+    def test_upsert_by_own_response_id_updates(
+        self,
+        authenticated_client: TestClient,
+        current_user: User,
+        db_session: Session,
+    ) -> None:
+        admin = UserFactory.create()
+        group = GroupFactory.create(admin=admin, members=[admin, current_user])
+        letter = LetterFactory.create(
+            group=group, status=LetterStatus.IN_PROGRESS
+        )
+        question = QuestionFactory.create(letter=letter)
+        response = ResponseFactory.create(
+            question=question, participant=current_user, response_text="draft"
+        )
+        db_session.commit()
+
+        rv = authenticated_client.post(
+            f"/questions/question/{question.api_identifier}:upsert_response",
+            json={
+                "response_text": "updated",
+                "api_identifier": response.api_identifier,
+            },
+        )
+
+        assert rv.status_code == 200
+        db_session.refresh(response)
+        assert response.response_text == "updated"
+        assert response.participant_id == current_user.id
+
+    @pytest.mark.parametrize(
+        "case",
+        [
+            "admin_other_participant",
+            "member_other_response",
+            "admin_other_response",
+        ],
+    )
+    def test_upsert_rejects_writing_as_someone_else(
+        self,
+        authenticated_client: TestClient,
+        current_user: User,
+        db_session: Session,
+        case: str,
+    ) -> None:
+        owner = UserFactory.create()
+        if case == "member_other_response":
+            admin = UserFactory.create()
+            group = GroupFactory.create(
+                admin=admin, members=[admin, owner, current_user]
+            )
+        else:
+            group = GroupFactory.create(
+                admin=current_user, members=[current_user, owner]
+            )
+        letter = LetterFactory.create(
+            group=group, status=LetterStatus.IN_PROGRESS
+        )
+        question = QuestionFactory.create(letter=letter)
+        response = ResponseFactory.create(
+            question=question, participant=owner, response_text="owner text"
+        )
+        db_session.commit()
+
+        body = {"response_text": "hijacked"}
+        if case == "admin_other_participant":
+            body["participant_api_identifier"] = owner.api_identifier
+        else:
+            body["api_identifier"] = response.api_identifier
+
+        rv = authenticated_client.post(
+            f"/questions/question/{question.api_identifier}:upsert_response",
+            json=body,
+        )
+
+        assert rv.status_code == 403
+        assert rv.json()["detail"] == (
+            "Cannot write a response as a different participant"
+        )
+        db_session.refresh(response)
+        assert response.response_text == "owner text"
+
+    def test_upsert_rejects_response_from_another_question(
+        self,
+        authenticated_client: TestClient,
+        current_user: User,
+        db_session: Session,
+    ) -> None:
+        admin = UserFactory.create()
+        group = GroupFactory.create(admin=admin, members=[admin, current_user])
+        letter = LetterFactory.create(
+            group=group, status=LetterStatus.IN_PROGRESS
+        )
+        question = QuestionFactory.create(letter=letter)
+        other_question = QuestionFactory.create(letter=letter)
+        other_response = ResponseFactory.create(
+            question=other_question,
+            participant=current_user,
+            response_text="elsewhere",
+        )
+        db_session.commit()
+
+        rv = authenticated_client.post(
+            f"/questions/question/{question.api_identifier}:upsert_response",
+            json={
+                "response_text": "moved",
+                "api_identifier": other_response.api_identifier,
+            },
+        )
+
+        assert rv.status_code == 400
+        assert rv.json()["detail"] == (
+            "Response does not belong to this question"
+        )
+        db_session.refresh(other_response)
+        db_session.refresh(question)
+        assert other_response.response_text == "elsewhere"
+        assert other_response.question_id == other_question.id
+        assert question.responses == []
+
+    def test_non_owner_response_on_another_question_is_forbidden(
+        self,
+        authenticated_client: TestClient,
+        current_user: User,
+        db_session: Session,
+    ) -> None:
+        admin = UserFactory.create()
+        owner = UserFactory.create()
+        group = GroupFactory.create(
+            admin=admin, members=[admin, owner, current_user]
+        )
+        letter = LetterFactory.create(
+            group=group, status=LetterStatus.IN_PROGRESS
+        )
+        question = QuestionFactory.create(letter=letter)
+        other_question = QuestionFactory.create(letter=letter)
+        other_response = ResponseFactory.create(
+            question=other_question,
+            participant=owner,
+            response_text="owner text",
+        )
+        db_session.commit()
+
+        rv = authenticated_client.post(
+            f"/questions/question/{question.api_identifier}:upsert_response",
+            json={
+                "response_text": "hijacked",
+                "api_identifier": other_response.api_identifier,
+            },
+        )
+
+        assert rv.status_code == 403
+        assert rv.json()["detail"] == (
+            "Cannot write a response as a different participant"
+        )
+        db_session.refresh(other_response)
+        assert other_response.response_text == "owner text"
 
     def test_non_member_cannot_delete_question(
         self,

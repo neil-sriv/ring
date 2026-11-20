@@ -1201,10 +1201,17 @@ export const getScheduleForGroupScheduleScheduleGroupApiIdGet = <ThrowOnError ex
 
 /**
  * Upsert Response
- * Create or update a response to a question.
+ * Create or update the caller's response to a question.
  *
- * If a response already exists (identified by api_identifier or participant),
- * updates it. Otherwise, creates a new response for the current user.
+ * The participant is always the signed-in caller. A
+ * ``participant_api_identifier`` that names someone else is rejected,
+ * including for a group admin. An ``api_identifier`` edits that response
+ * only when the caller owns it and it belongs to this question. With no
+ * ``api_identifier``, the caller's response on this question is updated,
+ * or created.
+ *
+ * Admins change another member's answer through
+ * ``POST /responses/response/{response_api_id}:edit_response``.
  *
  * Args:
  * question_api_id (str): API identifier of the question
@@ -1215,9 +1222,9 @@ export const getScheduleForGroupScheduleScheduleGroupApiIdGet = <ThrowOnError ex
  * Question: Updated question with the new/updated response
  *
  * Raises:
- * PermissionError: If the caller is not a member of the question's group
- * HTTPException: If the caller tries to write another member's response
- * IDNotFoundException: If question or response with given API ID is not found
+ * PermissionError: If the caller cannot read the question or response
+ * HTTPException: If the body names another participant, the caller
+ * does not own the response, or the response is on another question
  */
 export const upsertResponseQuestionsQuestionQuestionApiIdUpsertResponsePost = <ThrowOnError extends boolean = false>(options: Options<UpsertResponseQuestionsQuestionQuestionApiIdUpsertResponsePostData, ThrowOnError>) => {
     return (options.client ?? _heyApiClient).post<UpsertResponseQuestionsQuestionQuestionApiIdUpsertResponsePostResponse, UpsertResponseQuestionsQuestionQuestionApiIdUpsertResponsePostError, ThrowOnError>({

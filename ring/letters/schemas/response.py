@@ -8,7 +8,7 @@ from __future__ import annotations
 
 from typing import Optional
 
-from pydantic import AwareDatetime, BaseModel, ConfigDict
+from pydantic import AwareDatetime, BaseModel, ConfigDict, Field
 
 
 class ResponseBase(BaseModel):
@@ -33,13 +33,20 @@ class ResponseCreateBase(ResponseBase):
 class ResponseUpsert(ResponseCreateBase):
     """Schema for creating or updating a response.
 
+    The participant is the signed-in caller. ``participant_api_identifier``
+    is deprecated and removed in a later change: a matching id is accepted,
+    any other id is rejected.
+
     Attributes:
         response_text (str): The text content of the response
-        participant_api_identifier (Optional[str]): API identifier of the participant, optional
+        participant_api_identifier (Optional[str]): Deprecated caller id
         api_identifier (Optional[str]): API identifier of an existing response, optional
     """
 
-    participant_api_identifier: Optional[str] = None
+    participant_api_identifier: Optional[str] = Field(
+        default=None,
+        deprecated=True,
+    )
     api_identifier: Optional[str] = None
 
 
