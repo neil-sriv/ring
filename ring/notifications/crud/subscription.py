@@ -16,25 +16,24 @@ from ring.parties.models.user_model import User
 
 
 def create_subscription(
-    db: Session, subscription: SubscriptionCreate
+    db: Session,
+    subscription: SubscriptionCreate,
+    user: User,
 ) -> Subscription:
     """Create a new web push notification subscription.
 
     Args:
         db (Session): Database session
         subscription (SubscriptionCreate): Subscription creation data
+        user (User): Caller who owns the subscription
 
     Returns:
         Subscription: Newly created subscription
-
-    Raises:
-        IDNotFoundException: If user with given API ID is not found
     """
-    db_user = get_model(db, User, subscription.user_api_identifier)
     db_subscription = Subscription.create(
         endpoint=subscription.endpoint,
         keys=subscription.keys,
-        user=db_user,
+        user=user,
     )
     db.add(db_subscription)
     return db_subscription

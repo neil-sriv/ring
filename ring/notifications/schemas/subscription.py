@@ -6,7 +6,7 @@ notification subscription data.
 
 from __future__ import annotations
 
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict, Field
 
 
 class SubscriptionBase(BaseModel):
@@ -24,15 +24,21 @@ class SubscriptionBase(BaseModel):
 class SubscriptionCreate(SubscriptionBase):
     """Schema for creating a new subscription.
 
-    Inherits endpoint and keys from SubscriptionBase and adds user identification.
+    Inherits endpoint and keys from SubscriptionBase. The subscribed user is
+    the authenticated caller. ``user_api_identifier`` is deprecated.
 
     Attributes:
         endpoint (str): Push notification endpoint URL
         keys (dict[str, str | float | bool]): Dictionary containing encryption keys and auth info
-        user_api_identifier (str): API identifier of the user to subscribe
+        user_api_identifier (str | None): Deprecated. Omit it, or send the
+            caller's id. Another user's id is rejected.
     """
 
-    user_api_identifier: str
+    # Field(deprecated=True) warns on every read.
+    user_api_identifier: str | None = Field(
+        default=None,
+        json_schema_extra={"deprecated": True},
+    )
 
 
 class Subscription(SubscriptionBase):

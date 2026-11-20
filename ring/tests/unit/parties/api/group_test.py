@@ -7,6 +7,7 @@ successful operations and error cases.
 
 from __future__ import annotations
 
+import pytest
 import sqlalchemy
 from fastapi.testclient import TestClient
 from sqlalchemy.orm import Session
@@ -127,6 +128,57 @@ class TestGroupApi:
             is None
         )
 
+    def test_create_group_omits_admin_api_identifier(
+        self,
+        authenticated_client: TestClient,
+        db_session: Session,
+        current_user: User,
+    ):
+        """Omitting the deprecated admin id still creates the caller's group."""
+        response = authenticated_client.post(
+            "/parties/group",
+            json={"name": "Omitted Admin"},
+        )
+
+        assert response.status_code == 201
+        data = response.json()
+        assert data["admin"]["api_identifier"] == current_user.api_identifier
+        db_group = db_session.scalar(
+            sqlalchemy.select(Group).filter(Group.name == "Omitted Admin")
+        )
+        assert db_group is not None
+        assert db_group.admin.api_identifier == current_user.api_identifier
+
+    @pytest.mark.admin
+    def test_create_group_rejects_other_admin_when_caller_is_admin(
+        self,
+        authenticated_client: TestClient,
+        db_session: Session,
+        current_user: User,
+    ):
+        """A platform admin cannot create a group as someone else."""
+        other_user = UserFactory.create()
+        db_session.commit()
+
+        response = authenticated_client.post(
+            "/parties/group",
+            json={
+                "name": "Admin As Other",
+                "admin_api_identifier": other_user.api_identifier,
+            },
+        )
+
+        assert response.status_code == 403
+        assert response.json() == {
+            "detail": "Cannot create a group with a different user as admin"
+        }
+        assert (
+            db_session.scalar(
+                sqlalchemy.select(Group).filter(Group.name == "Admin As Other")
+            )
+            is None
+        )
+
     def test_list_groups(
         self,
         authenticated_client: TestClient,
@@ -194,6 +246,43 @@ class TestGroupApi:
             assert response.json() == {
                 "detail": "Cannot list groups for a different user"
             }
+
+    def test_list_groups_omits_user_api_id(
+        self,
+        authenticated_client: TestClient,
+        db_session: Session,
+        current_user: User,
+    ):
+        """Omitting the deprecated user id lists the caller's groups."""
+        group = GroupFactory.create(admin=current_user)
+        db_session.commit()
+
+        response = authenticated_client.get("/parties/groups/")
+
+        assert response.status_code == 200
+        ids = {item["api_identifier"] for item in response.json()}
+        assert group.api_identifier in ids
+
+    @pytest.mark.admin
+    def test_list_groups_rejects_other_user_when_caller_is_admin(
+        self,
+        authenticated_client: TestClient,
+        db_session: Session,
+        current_user: User,
+    ):
+        """A platform admin cannot list another user's groups."""
+        other_user = UserFactory.create()
+        GroupFactory.create(admin=other_user)
+        db_session.commit()
+
+        response = authenticated_client.get(
+            f"/parties/groups/?user_api_id={other_user.api_identifier}"
+        )
+
+        assert response.status_code == 403
+        assert response.json() == {
+            "detail": "Cannot list groups for a different user"
+        }
 
     def test_read_group(
         self,

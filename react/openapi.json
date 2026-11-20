@@ -841,7 +841,7 @@
           "parties"
         ],
         "summary": "Create Group",
-        "description": "Create a new group.\n\nThe authenticated caller is always the group admin. Clients may still\nsend ``admin_api_identifier`` for backwards compatibility, but it must\nmatch the current user — another user's id is rejected.\n\nArgs:\n    group (GroupCreate): Group creation parameters\n    req_dep (AuthenticatedRequestDependencies): Request dependencies\n\nReturns:\n    Group: Created group\n\nRaises:\n    HTTPException: If admin_api_identifier is not the current user, or\n        group creation fails",
+        "description": "Create a new group.\n\nThe authenticated caller is always the group admin.\n``admin_api_identifier`` is optional and deprecated. If it is sent, it\nmust match the current user — another user's id is rejected.\n\nArgs:\n    group (GroupCreate): Group creation parameters\n    req_dep (AuthenticatedRequestDependencies): Request dependencies\n\nReturns:\n    Group: Created group\n\nRaises:\n    HTTPException: If admin_api_identifier is not the current user, or\n        group creation fails",
         "operationId": "create_group_parties_group_post",
         "requestBody": {
           "content": {
@@ -888,7 +888,7 @@
           "parties"
         ],
         "summary": "List Groups",
-        "description": "List all groups the authenticated user is a member of.\n\nClients may still send ``user_api_id`` for backwards compatibility, but it\nmust match the current user — another user's id is rejected.\n\nArgs:\n    user_api_id (str): API identifier of the user (must be the caller)\n    skip (int, optional): Number of records to skip. Defaults to 0.\n    limit (int, optional): Maximum number of records to return. Defaults to 100.\n    req_dep (AuthenticatedRequestDependencies): Request dependencies\n\nReturns:\n    Sequence[Group]: List of groups\n\nRaises:\n    HTTPException: If ``user_api_id`` does not match the authenticated user",
+        "description": "List all groups the authenticated user is a member of.\n\n``user_api_id`` is optional and deprecated. If it is sent, it must match\nthe current user — another user's id is rejected.\n\nArgs:\n    user_api_id (str | None): Deprecated caller id. Omit it, or send the\n        caller's id.\n    skip (int, optional): Number of records to skip. Defaults to 0.\n    limit (int, optional): Maximum number of records to return. Defaults to 100.\n    req_dep (AuthenticatedRequestDependencies): Request dependencies\n\nReturns:\n    Sequence[Group]: List of groups\n\nRaises:\n    HTTPException: If ``user_api_id`` does not match the authenticated user",
         "operationId": "list_groups_parties_groups__get",
         "security": [
           {
@@ -899,11 +899,20 @@
           {
             "name": "user_api_id",
             "in": "query",
-            "required": true,
+            "required": false,
             "schema": {
-              "type": "string",
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "deprecated": true,
               "title": "User Api Id"
-            }
+            },
+            "deprecated": true
           },
           {
             "name": "skip",
@@ -2233,7 +2242,7 @@
           "questions"
         ],
         "summary": "Delete Question",
-        "description": "Delete a question.\n\nOnly the question author or group admin can delete a question.\nQuestions with responses cannot be deleted.\n\nArgs:\n    question_api_id (str): API identifier of the question to delete\n    req_dep (AuthenticatedRequestDependencies): Request dependencies including database session and auth\n\nRaises:\n    PermissionError: If the caller is not a member of the question's group\n    HTTPException: If user not authorized, or question has responses",
+        "description": "Delete a question.\n\nOnly the question author or group admin can delete a question.\nQuestions with responses cannot be deleted. A sent loop is frozen;\nupcoming and in-progress loops still allow deletion when the\nquestion has no responses.\n\nArgs:\n    question_api_id (str): API identifier of the question to delete\n    req_dep (AuthenticatedRequestDependencies): Request dependencies including database session and auth\n\nRaises:\n    PermissionError: If the caller is not a member of the question's group\n    HTTPException: If user not authorized, question has responses, or\n        the loop has been sent",
         "operationId": "delete_question_questions_question__question_api_id__delete",
         "security": [
           {
@@ -2538,7 +2547,7 @@
           "notifications"
         ],
         "summary": "Post Subscription",
-        "description": "Create a new web push notification subscription.\n\nCreates a subscription for the authenticated user to receive web push\nnotifications. Clients may still send ``user_api_identifier`` for\nbackwards compatibility, but it must match the current user — another\nuser's id is rejected. If a subscription with the same endpoint already\nexists, returns a message indicating this instead of creating a duplicate.\n\nArgs:\n    subscription (SubscriptionCreate): Subscription details including endpoint and keys\n    req_dep (AuthenticatedRequestDependencies): Request dependencies including database session\n\nReturns:\n    ResponseMessage: Message indicating success or existing subscription\n\nRaises:\n    HTTPException: If user is not authenticated, or ``user_api_identifier``\n        does not match the authenticated user",
+        "description": "Create a new web push notification subscription.\n\nCreates a subscription for the authenticated user to receive web push\nnotifications. ``user_api_identifier`` is optional and deprecated. If it\nis sent, it must match the current user — another user's id is rejected.\nThe stored user is always the caller. If a subscription with the same\nendpoint already exists, returns a message indicating this instead of\ncreating a duplicate.\n\nArgs:\n    subscription (SubscriptionCreate): Subscription details including endpoint and keys\n    req_dep (AuthenticatedRequestDependencies): Request dependencies including database session\n\nReturns:\n    ResponseMessage: Message indicating success or existing subscription\n\nRaises:\n    HTTPException: If user is not authenticated, or ``user_api_identifier``\n        does not match the authenticated user",
         "operationId": "post_subscription_notifications_subscription_post",
         "requestBody": {
           "content": {
@@ -4413,17 +4422,24 @@
             "title": "Name"
           },
           "admin_api_identifier": {
-            "type": "string",
-            "title": "Admin Api Identifier"
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Admin Api Identifier",
+            "deprecated": true
           }
         },
         "type": "object",
         "required": [
-          "name",
-          "admin_api_identifier"
+          "name"
         ],
         "title": "GroupCreate",
-        "description": "Schema for creating a new group.\n\nAttributes:\n    name (str): Name of the group (inherited from GroupBase)\n    admin_api_identifier (str): API identifier of the user who will be admin"
+        "description": "Schema for creating a new group.\n\nAttributes:\n    name (str): Name of the group (inherited from GroupBase)\n    admin_api_identifier (str | None): Deprecated. Omit it, or send the\n        caller's id. Another user's id is rejected."
       },
       "GroupKeyValue": {
         "properties": {
@@ -6068,18 +6084,25 @@
             "title": "Keys"
           },
           "user_api_identifier": {
-            "type": "string",
-            "title": "User Api Identifier"
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "User Api Identifier",
+            "deprecated": true
           }
         },
         "type": "object",
         "required": [
           "endpoint",
-          "keys",
-          "user_api_identifier"
+          "keys"
         ],
         "title": "SubscriptionCreate",
-        "description": "Schema for creating a new subscription.\n\nInherits endpoint and keys from SubscriptionBase and adds user identification.\n\nAttributes:\n    endpoint (str): Push notification endpoint URL\n    keys (dict[str, str | float | bool]): Dictionary containing encryption keys and auth info\n    user_api_identifier (str): API identifier of the user to subscribe"
+        "description": "Schema for creating a new subscription.\n\nInherits endpoint and keys from SubscriptionBase. The subscribed user is\nthe authenticated caller. ``user_api_identifier`` is deprecated.\n\nAttributes:\n    endpoint (str): Push notification endpoint URL\n    keys (dict[str, str | float | bool]): Dictionary containing encryption keys and auth info\n    user_api_identifier (str | None): Deprecated. Omit it, or send the\n        caller's id. Another user's id is rejected."
       },
       "TaskUnlinked": {
         "properties": {

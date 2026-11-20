@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from pydantic import AwareDatetime, BaseModel, ConfigDict
+from pydantic import AwareDatetime, BaseModel, ConfigDict, Field
 
 
 class GroupBase(BaseModel):
@@ -18,10 +18,15 @@ class GroupCreate(GroupBase):
 
     Attributes:
         name (str): Name of the group (inherited from GroupBase)
-        admin_api_identifier (str): API identifier of the user who will be admin
+        admin_api_identifier (str | None): Deprecated. Omit it, or send the
+            caller's id. Another user's id is rejected.
     """
 
-    admin_api_identifier: str
+    # Field(deprecated=True) warns on every read.
+    admin_api_identifier: str | None = Field(
+        default=None,
+        json_schema_extra={"deprecated": True},
+    )
 
 
 class GroupUpdate(BaseModel):

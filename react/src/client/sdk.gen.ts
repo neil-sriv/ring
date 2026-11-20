@@ -494,9 +494,9 @@ export const updateUserPartiesUserIdPatch = <ThrowOnError extends boolean = fals
  * Create Group
  * Create a new group.
  *
- * The authenticated caller is always the group admin. Clients may still
- * send ``admin_api_identifier`` for backwards compatibility, but it must
- * match the current user — another user's id is rejected.
+ * The authenticated caller is always the group admin.
+ * ``admin_api_identifier`` is optional and deprecated. If it is sent, it
+ * must match the current user — another user's id is rejected.
  *
  * Args:
  * group (GroupCreate): Group creation parameters
@@ -530,11 +530,12 @@ export const createGroupPartiesGroupPost = <ThrowOnError extends boolean = false
  * List Groups
  * List all groups the authenticated user is a member of.
  *
- * Clients may still send ``user_api_id`` for backwards compatibility, but it
- * must match the current user — another user's id is rejected.
+ * ``user_api_id`` is optional and deprecated. If it is sent, it must match
+ * the current user — another user's id is rejected.
  *
  * Args:
- * user_api_id (str): API identifier of the user (must be the caller)
+ * user_api_id (str | None): Deprecated caller id. Omit it, or send the
+ * caller's id.
  * skip (int, optional): Number of records to skip. Defaults to 0.
  * limit (int, optional): Maximum number of records to return. Defaults to 100.
  * req_dep (AuthenticatedRequestDependencies): Request dependencies
@@ -545,8 +546,8 @@ export const createGroupPartiesGroupPost = <ThrowOnError extends boolean = false
  * Raises:
  * HTTPException: If ``user_api_id`` does not match the authenticated user
  */
-export const listGroupsPartiesGroupsGet = <ThrowOnError extends boolean = false>(options: Options<ListGroupsPartiesGroupsGetData, ThrowOnError>) => {
-    return (options.client ?? _heyApiClient).get<ListGroupsPartiesGroupsGetResponse, ListGroupsPartiesGroupsGetError, ThrowOnError>({
+export const listGroupsPartiesGroupsGet = <ThrowOnError extends boolean = false>(options?: Options<ListGroupsPartiesGroupsGetData, ThrowOnError>) => {
+    return (options?.client ?? _heyApiClient).get<ListGroupsPartiesGroupsGetResponse, ListGroupsPartiesGroupsGetError, ThrowOnError>({
         security: [
             {
                 scheme: 'bearer',
@@ -1285,7 +1286,9 @@ export const uploadImageQuestionsQuestionQuestionApiIdUploadImagePost = <ThrowOn
  * Delete a question.
  *
  * Only the question author or group admin can delete a question.
- * Questions with responses cannot be deleted.
+ * Questions with responses cannot be deleted. A sent loop is frozen;
+ * upcoming and in-progress loops still allow deletion when the
+ * question has no responses.
  *
  * Args:
  * question_api_id (str): API identifier of the question to delete
@@ -1293,7 +1296,8 @@ export const uploadImageQuestionsQuestionQuestionApiIdUploadImagePost = <ThrowOn
  *
  * Raises:
  * PermissionError: If the caller is not a member of the question's group
- * HTTPException: If user not authorized, or question has responses
+ * HTTPException: If user not authorized, question has responses, or
+ * the loop has been sent
  */
 export const deleteQuestionQuestionsQuestionQuestionApiIdDelete = <ThrowOnError extends boolean = false>(options: Options<DeleteQuestionQuestionsQuestionQuestionApiIdDeleteData, ThrowOnError>) => {
     return (options.client ?? _heyApiClient).delete<DeleteQuestionQuestionsQuestionQuestionApiIdDeleteResponse, DeleteQuestionQuestionsQuestionQuestionApiIdDeleteError, ThrowOnError>({
@@ -1471,10 +1475,11 @@ export const validateTokenInvitesTokenTokenGet = <ThrowOnError extends boolean =
  * Create a new web push notification subscription.
  *
  * Creates a subscription for the authenticated user to receive web push
- * notifications. Clients may still send ``user_api_identifier`` for
- * backwards compatibility, but it must match the current user — another
- * user's id is rejected. If a subscription with the same endpoint already
- * exists, returns a message indicating this instead of creating a duplicate.
+ * notifications. ``user_api_identifier`` is optional and deprecated. If it
+ * is sent, it must match the current user — another user's id is rejected.
+ * The stored user is always the caller. If a subscription with the same
+ * endpoint already exists, returns a message indicating this instead of
+ * creating a duplicate.
  *
  * Args:
  * subscription (SubscriptionCreate): Subscription details including endpoint and keys
