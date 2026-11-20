@@ -23,25 +23,12 @@ from ring.letters.crud.response import upload_image as upload_image_crud
 from ring.letters.models.question_model import Question
 from ring.letters.models.response_model import Response
 from ring.letters.schemas.response import ResponseUpsert
-from ring.parties.models.user_model import User
 from ring.ring_pydantic.linked_schemas import QuestionLinked
 
 router = APIRouter()
 
-
-def _require_response_owner_or_admin(user: User, response: Response) -> None:
-    """Match the UI: only the author (or group admin) may mutate a response."""
-    if (
-        user == response.participant
-        or user == response.question.letter.group.admin
-    ):
-        return
-    raise HTTPException(
-        status_code=status.HTTP_403_FORBIDDEN,
-        detail=(
-            "Only the response author or group admin can modify this response"
-        ),
-    )
+_DIFFERENT_PARTICIPANT = "Cannot write a response as a different participant"
+_WRONG_QUESTION = "Response does not belong to this question"
 
 
 @router.post(
@@ -55,10 +42,17 @@ async def upsert_response(
         get_request_dependencies,
     ),
 ) -> Question:
-    """Create or update a response to a question.
+    """Create or update the caller's response to a question.
 
-    If a response already exists (identified by api_identifier or participant),
-    updates it. Otherwise, creates a new response for the current user.
+    The participant is always the signed-in caller. A
+    ``participant_api_identifier`` that names someone else is rejected,
+    including for a group admin. An ``api_identifier`` edits that response
+    only when the caller owns it and it belongs to this question. With no
+    ``api_identifier``, the caller's response on this question is updated,
+    or created.
+
+    Admins change another member's answer through
+    ``POST /responses/response/{response_api_id}:edit_response``.
 
     Args:
         question_api_id (str): API identifier of the question
@@ -69,76 +63,78 @@ async def upsert_response(
         Question: Updated question with the new/updated response
 
     Raises:
-        PermissionError: If the caller is not a member of the question's group
-        HTTPException: If the caller tries to write another member's response
-        IDNotFoundException: If question or response with given API ID is not found
+        PermissionError: If the caller cannot read the question or response
+        HTTPException: If the body names another participant, the caller
+            does not own the response, or the response is on another question
     """
     logger.info(response)
+    caller = req_dep.current_user
+    # Field is deprecated; reading the attribute warns on every call.
+    payload = response.model_dump(warnings=False)
+    participant_api_identifier = payload["participant_api_identifier"]
+    api_identifier = payload["api_identifier"]
     db_question = cast(
         Question,
         load_and_check(
             req_dep.db,
-            req_dep.current_user,
+            caller,
             Action.READ,
             question_api_id,
         ),
     )
-    if response.api_identifier:
+    if (
+        participant_api_identifier is not None
+        and participant_api_identifier != caller.api_identifier
+    ):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail=_DIFFERENT_PARTICIPANT,
+        )
+    if api_identifier:
         db_response = cast(
             Response,
             load_and_check(
                 req_dep.db,
-                req_dep.current_user,
+                caller,
                 Action.READ,
-                response.api_identifier,
+                api_identifier,
             ),
         )
-        _require_response_owner_or_admin(req_dep.current_user, db_response)
+        if db_response.participant.api_identifier != caller.api_identifier:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail=_DIFFERENT_PARTICIPANT,
+            )
+        if db_response.question.api_identifier != db_question.api_identifier:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=_WRONG_QUESTION,
+            )
         question_crud.edit_response(
             req_dep.db,
             db_response,
             response.response_text,
         )
-    elif response.participant_api_identifier:
-        if (
-            response.participant_api_identifier
-            != req_dep.current_user.api_identifier
-            and req_dep.current_user != db_question.letter.group.admin
-        ):
-            raise HTTPException(
-                status_code=status.HTTP_403_FORBIDDEN,
-                detail=(
-                    "Only the response author or group admin can modify "
-                    "this response"
-                ),
-            )
-        db_responses = [
-            resp
-            for resp in db_question.responses
-            if resp.participant.api_identifier
-            == response.participant_api_identifier
-        ]
-        if db_responses:
-            db_response = db_responses[0]
-            _require_response_owner_or_admin(req_dep.current_user, db_response)
+    else:
+        existing = next(
+            (
+                resp
+                for resp in db_question.responses
+                if resp.participant.api_identifier == caller.api_identifier
+            ),
+            None,
+        )
+        if existing is not None:
             question_crud.edit_response(
                 req_dep.db,
-                db_response,
+                existing,
                 response.response_text,
             )
         else:
-            if (
-                response.participant_api_identifier
-                != req_dep.current_user.api_identifier
-            ):
-                raise HTTPException(
-                    status_code=status.HTTP_403_FORBIDDEN,
-                    detail="Cannot create a response for another participant",
-                )
             question_crud.add_response(
                 req_dep.db,
                 db_question,
-                req_dep.current_user,
+                caller,
                 response.response_text,
             )
     req_dep.db.commit()

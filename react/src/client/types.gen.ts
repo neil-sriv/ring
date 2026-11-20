@@ -761,13 +761,20 @@ export type ResponseUnlinked = {
 /**
  * Schema for creating or updating a response.
  *
+ * The participant is the signed-in caller. ``participant_api_identifier``
+ * is deprecated and removed in a later change: a matching id is accepted,
+ * any other id is rejected.
+ *
  * Attributes:
  * response_text (str): The text content of the response
- * participant_api_identifier (Optional[str]): API identifier of the participant, optional
+ * participant_api_identifier (Optional[str]): Deprecated caller id
  * api_identifier (Optional[str]): API identifier of an existing response, optional
  */
 export type ResponseUpsert = {
     response_text: string;
+    /**
+     * @deprecated
+     */
     participant_api_identifier?: string | null;
     api_identifier?: string | null;
 };
