@@ -17,6 +17,7 @@ from ring.fastapp.dependencies import (
     AuthenticatedRequestDependencies,
     get_request_dependencies,
 )
+from ring.letters.constants import LetterStatus
 from ring.letters.crud import question as question_crud
 from ring.letters.crud.response import upload_image as upload_image_crud
 from ring.letters.models.question_model import Question
@@ -216,7 +217,9 @@ async def delete_question(
     """Delete a question.
 
     Only the question author or group admin can delete a question.
-    Questions with responses cannot be deleted.
+    Questions with responses cannot be deleted. A sent loop is frozen;
+    upcoming and in-progress loops still allow deletion when the
+    question has no responses.
 
     Args:
         question_api_id (str): API identifier of the question to delete
@@ -224,7 +227,8 @@ async def delete_question(
 
     Raises:
         PermissionError: If the caller is not a member of the question's group
-        HTTPException: If user not authorized, or question has responses
+        HTTPException: If user not authorized, question has responses, or
+            the loop has been sent
     """
     db_question = cast(
         Question,
@@ -246,11 +250,12 @@ async def delete_question(
             detail="Only the question author or group admin can delete a question",
         )
 
-    # Check if the loop is in the UPCOMING status
-    if db_question.letter.status != "UPCOMING":
+    # Sent loops are frozen. Upcoming and in-progress loops can still
+    # drop a question that nobody has answered.
+    if db_question.letter.status == LetterStatus.SENT:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Cannot delete a question from a loop that is in progress",
+            detail="Cannot delete a question from a loop that has been sent",
         )
 
     try:
