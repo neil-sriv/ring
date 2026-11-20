@@ -25,7 +25,6 @@ from ring.fastapp.dependencies import (
     get_request_dependencies,
 )
 from ring.letters.constants import (
-    LATE_QUESTION_CUTOFF,
     LetterStatus,
     LetterType,
 )
@@ -86,14 +85,8 @@ def _require_group_admin(user: User, group: Group, action: str) -> None:
 
 
 def _late_question_cutoff_reached(letter: Letter) -> bool:
-    """True when an in-progress letter is within 24h of its send time.
-
-    Upcoming letters are not cut off. A null ``send_at`` is not cut off.
-    The group admin is not exempt.
-    """
-    if letter.status != LetterStatus.IN_PROGRESS or letter.send_at is None:
-        return False
-    return letter.send_at <= datetime.now(tz=UTC) + LATE_QUESTION_CUTOFF
+    """True when an in-progress letter is within 24h of its send time."""
+    return letter_crud.late_question_cutoff_reached(letter)
 
 
 @router.post("/letter", response_model=LetterSchema)
@@ -406,7 +399,8 @@ async def add_question(
     refused once ``send_at`` is within ``LATE_QUESTION_CUTOFF``, including
     for the group admin. A null ``send_at`` has no cutoff. An in-progress
     add notifies participants who already have a response, except the
-    question's author. Push failures are logged and do not fail the add.
+    question's author, and schedules at most one late-question email for
+    the letter. Push failures are logged and do not fail the add.
 
     :param letter_api_id: API identifier of the letter
     :type letter_api_id: str

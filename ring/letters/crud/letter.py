@@ -19,6 +19,9 @@ from ring.async_scheduler.scheduler import job_factory
 from ring.email_util import send_email
 from ring.letters.constants import (
     DEFAULT_QUESTIONS,
+    LATE_QUESTION_CUTOFF,
+    LATE_QUESTION_EMAIL_DELAY,
+    LATE_QUESTION_EMAIL_WINDOW,
     LETTER_PROMOTION_LOOKAHEAD,
     QUESTION_BANK,
     LetterStatus,
@@ -506,16 +509,44 @@ def add_question(
     )
 
 
+def late_question_cutoff_reached(letter: Letter) -> bool:
+    """True when an in-progress letter is within 24h of its send time.
+
+    Upcoming letters are not cut off. A null ``send_at`` is not cut off.
+    The group admin is not exempt.
+    """
+    if letter.status != LetterStatus.IN_PROGRESS or letter.send_at is None:
+        return False
+    return letter.send_at <= datetime.now(tz=UTC) + LATE_QUESTION_CUTOFF
+
+
+def late_question_recipients(
+    letter: Letter, author: User | None
+) -> list[User]:
+    """Participants who already responded, excluding the question author.
+
+    People with no responses on this letter are left out. The same list
+    is used for the inbox item, the push, and the batched email.
+    """
+    responder_ids = {user.id for user in letter.responders}
+    author_id = author.id if author is not None else None
+    return [
+        participant
+        for participant in letter.participants
+        if participant.id in responder_ids and participant.id != author_id
+    ]
+
+
 def notify_late_question(
     db: Session, letter: Letter, author: User | None
 ) -> None:
     """Inbox and push for a question added to an in-progress letter.
 
-    Recipients are participants who already have a response on this letter,
-    excluding the question's author. People with no responses are not
-    notified, and upcoming letters send nothing. ``notify_users`` writes
-    the inbox rows in this transaction and logs push failures without
-    raising, so a failed push does not fail the add.
+    Recipients come from ``late_question_recipients``. Upcoming letters
+    send nothing. ``notify_users`` writes the inbox rows in this
+    transaction and logs push failures without raising, so a failed push
+    does not fail the add. A successful in-progress add also schedules
+    the batched late-question email.
 
     Args:
         db (Session): Database session
@@ -524,13 +555,7 @@ def notify_late_question(
     """
     if letter.status != LetterStatus.IN_PROGRESS:
         return
-    responder_ids = {user.id for user in letter.responders}
-    author_id = author.id if author is not None else None
-    recipients = [
-        participant
-        for participant in letter.participants
-        if participant.id in responder_ids and participant.id != author_id
-    ]
+    recipients = late_question_recipients(letter, author)
     loop_label = letter.title if letter.title else f"#{letter.number}"
     author_name = author.name if author is not None else "Someone"
     notify_users(
@@ -542,6 +567,65 @@ def notify_late_question(
             f"in {letter.group.name}"
         ),
         target_api_id=letter.api_identifier,
+    )
+    schedule_late_question_email(db, letter)
+
+
+def _pending_late_question_email_task(
+    db: Session, letter: Letter
+) -> Task | None:
+    """Return this letter's pending late-question email task, if any."""
+    tasks = db.scalars(
+        select(Task).where(
+            Task.schedule_id == letter.group.schedule.id,
+            Task.type == TaskType.LATE_QUESTION_EMAIL,
+            Task.status == TaskStatus.PENDING,
+        )
+    ).all()
+    for task in tasks:
+        raw_letter_id = task.arguments.get("letter_id")
+        if raw_letter_id is not None and int(raw_letter_id) == letter.id:
+            return task
+    return None
+
+
+def schedule_late_question_email(db: Session, letter: Letter) -> Task | None:
+    """Queue one late-question email task, or fold into the pending one.
+
+    The first late question in a window schedules a one-shot task
+    ``LATE_QUESTION_EMAIL_DELAY`` later. Later questions while that task
+    is still pending join it and do not schedule a second email. After
+    an email has gone out, the next batch waits until
+    ``LATE_QUESTION_EMAIL_WINDOW`` has passed. Nothing is queued once
+    the letter is inside the late-question cutoff, or when it is not in
+    progress.
+
+    Args:
+        db (Session): Database session
+        letter (Letter): Letter that just gained a late question
+
+    Returns:
+        Task | None: The pending task, or None when nothing was queued.
+    """
+    if letter.status != LetterStatus.IN_PROGRESS:
+        return None
+    if late_question_cutoff_reached(letter):
+        return None
+    pending = _pending_late_question_email_task(db, letter)
+    if pending is not None:
+        return pending
+    now = datetime.now(tz=UTC)
+    last_sent = letter.last_late_question_email_at
+    if last_sent is not None and now < last_sent + LATE_QUESTION_EMAIL_WINDOW:
+        execute_at = last_sent + LATE_QUESTION_EMAIL_WINDOW
+    else:
+        execute_at = now + LATE_QUESTION_EMAIL_DELAY
+    return schedule_crud.register_task(
+        db,
+        letter.group.schedule,
+        TaskType.LATE_QUESTION_EMAIL,
+        execute_at,
+        {"letter_id": letter.id, "attempt": 1},
     )
 
 

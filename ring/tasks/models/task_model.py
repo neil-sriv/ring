@@ -49,6 +49,7 @@ class TaskType(StrEnum):
     GENERIC = "generic"
     SEND_EMAIL = "send_email"
     REMINDER_EMAIL = "reminder_email"
+    LATE_QUESTION_EMAIL = "late_question_email"
 
 
 class Task(Base):
@@ -151,6 +152,18 @@ class ReminderEmailTask(Task):
 
     __mapper_args__ = {
         "polymorphic_identity": TaskType.REMINDER_EMAIL,
+    }
+
+
+class LateQuestionEmailTask(Task):
+    """One-shot task that sends a batched late-question email.
+
+    The task carries the letter id in ``arguments``. Questions added while
+    it is still pending join that same send instead of scheduling another.
+    """
+
+    __mapper_args__ = {
+        "polymorphic_identity": TaskType.LATE_QUESTION_EMAIL,
     }
 
 
