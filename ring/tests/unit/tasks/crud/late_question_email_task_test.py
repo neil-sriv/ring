@@ -483,6 +483,7 @@ class TestLateQuestionEmail:
     def test_authors_are_left_off_their_own_questions(
         self,
         authenticated_client: TestClient,
+        get_client_for_user,
         db_session: Session,
         current_user: UserFactory,
     ) -> None:
@@ -510,8 +511,9 @@ class TestLateQuestionEmail:
             "From the admin?",
             current_user.api_identifier,
         )
+        # The server records the signed-in caller as the author.
         second = _add_question(
-            authenticated_client,
+            get_client_for_user(other_author),
             letter,
             "From the other author?",
             other_author.api_identifier,
@@ -556,6 +558,7 @@ class TestLateQuestionEmail:
     def test_partial_failure_retries_only_the_recipients_who_missed_it(
         self,
         authenticated_client: TestClient,
+        get_client_for_user,
         db_session: Session,
         current_user: UserFactory,
     ) -> None:
@@ -580,8 +583,9 @@ class TestLateQuestionEmail:
             "From the admin?",
             current_user.api_identifier,
         )
+        # The server records the signed-in caller as the author.
         second = _add_question(
-            authenticated_client,
+            get_client_for_user(other),
             letter,
             "From the other author?",
             other.api_identifier,
