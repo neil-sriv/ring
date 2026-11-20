@@ -22,9 +22,11 @@ export function NeedsReplyCard({
   const teaserQuestion = unansweredQuestions[0]
   const teaser = teaserQuestion?.question_text
   const teaserIsLate = teaserQuestion?.added_late === true
-  const laterQuestionIsLate = unansweredQuestions
-    .slice(1)
-    .some((question) => question.added_late)
+  const laterQuestionIsLate =
+    !teaserIsLate &&
+    unansweredQuestions
+      .slice(1)
+      .some((question) => question.added_late === true)
   const unansweredCount = unansweredQuestions.length
 
   return (

@@ -150,6 +150,26 @@ describe("Home waiting list late badge", () => {
     expect(screen.getByText("1 of 2 replied")).toBeTruthy()
   })
 
+  it("shows one Late badge when the quote and a later question were both added late", async () => {
+    renderHome([
+      dashboardQuestion("q_late", "What did you forget?", 0, true, []),
+      dashboardQuestion("q_also", "And this?", 1, true, []),
+    ])
+
+    expect(
+      await screen.findByRole("heading", { name: "Waiting on you" }),
+    ).toBeTruthy()
+    const badges = screen.getAllByText("Late")
+    expect(badges).toHaveLength(1)
+    expectWarningBadge(badges[0])
+    const quote = screen.getByText("What did you forget?")
+    expect(quote.closest("blockquote")?.parentElement?.textContent).toContain(
+      "Late",
+    )
+    const answer = screen.getByText(/Answer 2 questions/)
+    expect(answer.parentElement?.textContent).not.toContain("Late")
+  })
+
   it("shows the Late badge when a later unanswered question was added late", async () => {
     renderHome([
       dashboardQuestion("q_first", "Earlier question", 0, false, []),
