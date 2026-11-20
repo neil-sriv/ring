@@ -41,10 +41,17 @@ function formatNameList(names: string[]): string {
 }
 
 /**
- * Who has already replied, from the letter payload.
+ * Who has already replied, and who the server will notify.
  * `responders` is the users who have responded; `participants` is the roster.
+ * Inbox and push go to participants who already replied, except the
+ * question's author. This composer posts as `authorApiId`, so that person
+ * stays in the replied count and is left out of the "will be told" list.
+ * Until the author is known, the notice does not claim anyone will be told.
  */
-export function lateQuestionReplyNotice(loop: PublicLetter): string {
+export function lateQuestionReplyNotice(
+  loop: PublicLetter,
+  authorApiId?: string,
+): string {
   const participantIds = new Set(
     loop.participants.map((person) => person.api_identifier),
   )
@@ -53,10 +60,14 @@ export function lateQuestionReplyNotice(loop: PublicLetter): string {
     .sort((a, b) => displayName(a).localeCompare(displayName(b)))
   const count = `${replied.length} of ${loop.participants.length} people have already replied`
   const placement = "It will appear at the top of the letter."
-  if (replied.length === 0) {
+  const told =
+    authorApiId === undefined
+      ? []
+      : replied.filter((person) => person.api_identifier !== authorApiId)
+  if (told.length === 0) {
     return `${count}. ${placement}`
   }
-  return `${count}: ${formatNameList(
-    replied.map(displayName),
-  )}. They'll be told about this question. ${placement}`
+  return `${count}. ${formatNameList(
+    told.map(displayName),
+  )} will be told about this question. ${placement}`
 }

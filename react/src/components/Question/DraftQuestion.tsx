@@ -45,6 +45,7 @@ import {
   S3Video,
   SingleUploadImage,
 } from "../Common/SingleUploadImage"
+import { LateQuestionBadge } from "./LateQuestionBadge"
 
 type ResponseBlockProps = {
   uploadFunction: (file: File) => Promise<void>
@@ -676,8 +677,11 @@ function DraftQuestion({
               {question.author.name} asked:
             </p>
           )}
-          <h3 className="font-display text-lg font-medium leading-relaxed">
-            {question.question_text}
+          <h3 className="flex flex-wrap items-center gap-x-2 gap-y-1 font-display text-lg font-medium leading-relaxed">
+            <span className="min-w-0 break-words">
+              {question.question_text}
+            </span>
+            {question.added_late && <LateQuestionBadge />}
           </h3>
         </div>
         {canDelete && (

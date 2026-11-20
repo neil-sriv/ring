@@ -129,11 +129,45 @@ describe("LoopQuestionActions", () => {
     expect(
       screen.getByRole("textbox", { name: "What should everyone answer?" }),
     ).toBeTruthy()
+    const notice = screen.getByText(/will be told about this question/)
+    expect(notice.textContent).toBe(
+      "2 of 3 people have already replied. Bo will be told about this question. It will appear at the top of the letter.",
+    )
+    expect(notice.textContent).not.toContain("Ada")
+    expect(notice.textContent).not.toContain("Former")
+  })
+
+  it("leaves the current user out of who will be told", () => {
+    renderActions(
+      letter({
+        responders: [ada, bo, cy],
+        participants: [ada, bo, cy],
+      }),
+    )
+    openComposer()
+
+    const notice = screen.getByText(/will be told about this question/)
+    expect(notice.textContent).toBe(
+      "3 of 3 people have already replied. Bo and Cy will be told about this question. It will appear at the top of the letter.",
+    )
+    expect(notice.textContent).not.toContain("Ada")
+  })
+
+  it("does not promise a notice when only the current user has replied", () => {
+    renderActions(
+      letter({
+        responders: [ada],
+        participants: [ada, bo],
+      }),
+    )
+    openComposer()
+
     expect(
       screen.getByText(
-        "2 of 3 people have already replied: Ada and Bo. They'll be told about this question. It will appear at the top of the letter.",
+        "1 of 2 people have already replied. It will appear at the top of the letter.",
       ),
     ).toBeTruthy()
+    expect(screen.queryByText(/will be told/)).toBeNull()
   })
 
   it("says when nobody has replied yet", () => {
@@ -145,7 +179,7 @@ describe("LoopQuestionActions", () => {
         "0 of 2 people have already replied. It will appear at the top of the letter.",
       ),
     ).toBeTruthy()
-    expect(screen.queryByText(/They'll be told/)).toBeNull()
+    expect(screen.queryByText(/will be told/)).toBeNull()
   })
 
   it("keeps the normal add buttons on an upcoming loop", async () => {

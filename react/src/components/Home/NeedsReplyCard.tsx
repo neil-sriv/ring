@@ -6,6 +6,7 @@ import type { DashboardLetter, DashboardQuestion } from "../../client"
 import { getLoopDisplayTitle } from "../../util/loopDisplay"
 import { getReplyProgress } from "../../util/loopReply"
 import { formatDueLabel } from "../../util/loopTime"
+import { LateQuestionBadge } from "../Question/LateQuestionBadge"
 
 export function NeedsReplyCard({
   loop,
@@ -18,7 +19,12 @@ export function NeedsReplyCard({
   const progress = getReplyProgress(loop)
   const repliedRatio =
     progress.total > 0 ? progress.replied / progress.total : 0
-  const teaser = unansweredQuestions[0]?.question_text
+  const teaserQuestion = unansweredQuestions[0]
+  const teaser = teaserQuestion?.question_text
+  const teaserIsLate = teaserQuestion?.added_late === true
+  const laterQuestionIsLate = unansweredQuestions
+    .slice(1)
+    .some((question) => question.added_late)
   const unansweredCount = unansweredQuestions.length
 
   return (
@@ -48,9 +54,12 @@ export function NeedsReplyCard({
         </h3>
 
         {teaser && (
-          <blockquote className="line-clamp-2 border-l-2 pl-3 font-display text-sm italic leading-relaxed text-muted-foreground">
-            {teaser}
-          </blockquote>
+          <div className="flex flex-col items-start gap-2">
+            {teaserIsLate && <LateQuestionBadge />}
+            <blockquote className="line-clamp-2 border-l-2 pl-3 font-display text-sm italic leading-relaxed text-muted-foreground">
+              {teaser}
+            </blockquote>
+          </div>
         )}
 
         <div className="mt-auto flex flex-col gap-3 pt-2">
@@ -71,10 +80,13 @@ export function NeedsReplyCard({
             <span className="text-xs text-muted-foreground">
               {progress.replied} of {progress.total} replied
             </span>
-            <span className="inline-flex items-center gap-1.5 text-sm font-medium text-primary group-hover:underline">
-              <PenLine className="h-4 w-4" aria-hidden="true" />
-              Answer {unansweredCount} question
-              {unansweredCount !== 1 ? "s" : ""}
+            <span className="inline-flex items-center gap-2">
+              {laterQuestionIsLate && <LateQuestionBadge />}
+              <span className="inline-flex items-center gap-1.5 text-sm font-medium text-primary group-hover:underline">
+                <PenLine className="h-4 w-4" aria-hidden="true" />
+                Answer {unansweredCount} question
+                {unansweredCount !== 1 ? "s" : ""}
+              </span>
             </span>
           </div>
         </div>

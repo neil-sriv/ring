@@ -14,6 +14,7 @@ import { URLMatch, splitText } from "../../util/URLParse"
 import LinkPreviewCard from "../Common/LinkPreviewCard"
 import { MediaCarousel } from "../Common/MediaCarousel"
 import { S3Video } from "../Common/SingleUploadImage"
+import { LateQuestionBadge } from "./LateQuestionBadge"
 
 function TextBlockWithUrls({
   texts,
@@ -291,8 +292,9 @@ function PublishedQuestion({
             {question.author.name} asked:
           </p>
         )}
-        <h2 className="break-words font-display text-lg font-medium leading-relaxed">
-          {question.question_text}
+        <h2 className="flex flex-wrap items-center gap-x-2 gap-y-1 break-words font-display text-lg font-medium leading-relaxed">
+          <span className="min-w-0">{question.question_text}</span>
+          {question.added_late && <LateQuestionBadge />}
         </h2>
       </div>
       <div className="mt-5 space-y-5">

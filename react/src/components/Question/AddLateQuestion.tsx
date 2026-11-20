@@ -83,7 +83,7 @@ function AddLateQuestion({
 
   const isSaving = mutation.isPending || submitOnce.pending
   const fieldsDisabled = disabled || isSaving
-  const notice = lateQuestionReplyNotice(loop)
+  const notice = lateQuestionReplyNotice(loop, currentUser?.api_identifier)
 
   const handleSubmit = async () => {
     if (disabled || !currentUser || !questionText.trim()) {
