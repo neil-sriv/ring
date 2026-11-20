@@ -75,6 +75,8 @@ class Letter(Base, APIIdentified, PydanticModel, CreatedAtMixin):
         send_at (Mapped[datetime]): Scheduled send time of the letter
         automatic_send_deferral_count (Mapped[int]): Automatic threshold
             pushbacks already applied to this letter
+        last_late_question_email_at (Mapped[datetime | None]): When the
+            last batched late-question email was accepted, or null
         participants (Mapped[list[User]]): List of users participating in the letter
         group (Mapped[Group]): Group to which the letter belongs
         questions (Mapped[list[Question]]): List of questions in the letter
@@ -102,6 +104,12 @@ class Letter(Base, APIIdentified, PydanticModel, CreatedAtMixin):
         nullable=False,
         default=0,
         server_default=text("0"),
+    )
+    # When the last batched late-question email was accepted. Null until
+    # the first one. The next email lists late questions created after it.
+    last_late_question_email_at: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True),
+        nullable=True,
     )
 
     participants: Mapped[list["User"]] = relationship(

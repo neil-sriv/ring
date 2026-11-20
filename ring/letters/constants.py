@@ -30,6 +30,15 @@ LETTER_PROMOTION_LOOKAHEAD = timedelta(days=7)
 # Upcoming letters and a null send_at are not cut off.
 LATE_QUESTION_CUTOFF = timedelta(hours=24)
 
+# The first late question in a batch waits this long so later adds can
+# join the same email. Further adds while that task is pending do not
+# schedule another one.
+LATE_QUESTION_EMAIL_DELAY = timedelta(hours=1)
+
+# At most one late-question email per letter per this window, measured
+# from the last email that was actually sent.
+LATE_QUESTION_EMAIL_WINDOW = timedelta(hours=24)
+
 
 #  Default questions that are automatically added to new letters
 DEFAULT_QUESTIONS = [

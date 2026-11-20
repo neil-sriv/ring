@@ -40,6 +40,7 @@ from ring.tasks.crud.waiting_response_email_task import (
     letter_non_responder_emails,
 )
 from ring.tasks.models.task_model import (
+    LateQuestionEmailTask,
     ReminderEmailTask,
     SendEmailTask,
     Task,
@@ -328,11 +329,70 @@ def async_reminder_email_task(
     db.commit()
 
 
+def execute_late_question_email_task(
+    db: Session, task: LateQuestionEmailTask, **kwargs: Any
+) -> None:
+    """Send or drop the batched late-question email for one letter.
+
+    A missing letter, a sent letter, a letter inside the 24h cutoff, a
+    letter whose late questions were deleted, and a letter with no
+    responder recipients are all successful no-ops. The task still
+    completes so it is not sent again.
+    """
+    from ring.tasks.crud.late_question_email_task import (
+        deliver_late_question_email,
+    )
+
+    letter_id = kwargs.get("letter_id")
+    if letter_id is None:
+        logger.info(
+            "Late-question email task {} has no letter_id".format(task.id)
+        )
+        db.commit()
+        return
+    letter = db.scalars(
+        sqlalchemy.select(Letter).where(Letter.id == int(letter_id))
+    ).one_or_none()
+    if letter is None:
+        logger.info(
+            "Late-question email task {} has no letter {}".format(
+                task.id, letter_id
+            )
+        )
+        db.commit()
+        return
+    if deliver_late_question_email(db, letter):
+        _note_email_dispatched()
+    db.commit()
+
+
+@job_factory("send_late_question_email")
+def async_late_question_email_task(
+    db: Session, task_id: int, **kwargs: Any
+) -> None:
+    """Job for the batched late-question email.
+
+    Args:
+        db: Database session
+        task_id: ID of the task to execute
+        **kwargs: Task arguments, including ``letter_id``
+    """
+    _find_and_execute_task(
+        db,
+        task_id,
+        LateQuestionEmailTask,
+        execute_late_question_email_task,
+        **kwargs,
+    )
+    db.commit()
+
+
 ASYNC_TASK_TO_EXECUTE_MAPPING: dict[
     TaskType, Callable[[Session, int], None]
 ] = {
     TaskType.SEND_EMAIL: async_send_email_task,
     TaskType.REMINDER_EMAIL: async_reminder_email_task,
+    TaskType.LATE_QUESTION_EMAIL: async_late_question_email_task,
 }
 
 

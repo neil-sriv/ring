@@ -35,6 +35,7 @@ def import_all_sqla_models() -> None:
     from ring.spotify.models.user_spotify_playlist import UserSpotifyPlaylist
     from ring.tasks.models.schedule_model import Schedule
     from ring.tasks.models.task_model import (
+        LateQuestionEmailTask,
         ReminderEmailTask,
         SendEmailTask,
         Task,
