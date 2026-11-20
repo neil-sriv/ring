@@ -404,7 +404,9 @@ async def add_question(
     Any group member may add a question while the letter is upcoming or in
     progress. A sent letter is refused. An in-progress letter is also
     refused once ``send_at`` is within ``LATE_QUESTION_CUTOFF``, including
-    for the group admin. A null ``send_at`` has no cutoff.
+    for the group admin. A null ``send_at`` has no cutoff. An in-progress
+    add notifies participants who already have a response, except the
+    question's author. Push failures are logged and do not fail the add.
 
     :param letter_api_id: API identifier of the letter
     :type letter_api_id: str
@@ -443,9 +445,11 @@ async def add_question(
         if question.author_api_id
         else None
     )
-    letter_crud.add_question(
+    added = letter_crud.add_question(
         req_dep.db, db_letter, question.question_text, author=db_author
     )
+    if db_letter.status == LetterStatus.IN_PROGRESS:
+        letter_crud.notify_late_question(req_dep.db, db_letter, added.author)
     # The in-memory collection keeps load order. Reload so the response
     # follows position, including a late question placed at the top.
     req_dep.db.flush()
