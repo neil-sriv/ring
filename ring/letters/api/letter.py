@@ -15,9 +15,6 @@ from typing import Sequence, cast
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy import ColumnElement, and_, or_
 
-from ring.api_identifier import (
-    util as api_identifier_crud,
-)
 from ring.authz.authz import load_and_check
 from ring.authz.enforcer import Action
 from ring.fastapp.dependencies import (
@@ -402,6 +399,11 @@ async def add_question(
     question's author, and schedules at most one late-question email for
     the letter. Push failures are logged and do not fail the add.
 
+    The author is always the signed-in caller. ``author_api_id`` is
+    deprecated and is not looked up: omit it, send null, or send the
+    caller's id. Another user's id is rejected, including for the group
+    admin.
+
     :param letter_api_id: API identifier of the letter
     :type letter_api_id: str
     :param question: Question creation parameters
@@ -409,9 +411,8 @@ async def add_question(
     :param req_dep: Request dependencies including database session and auth
     :type req_dep: AuthenticatedRequestDependencies
     :raises PermissionError: If the caller cannot read the letter
-    :raises IDNotFoundException: If author with given API ID is not found
-    :raises HTTPException: If the letter has been sent or is inside the
-        late-question cutoff
+    :raises HTTPException: If the letter has been sent, is inside the
+        late-question cutoff, or ``author_api_id`` is not the caller
     :return: Updated letter with the new question
     :rtype: Letter
     """
@@ -424,23 +425,25 @@ async def add_question(
             letter_api_id,
         ),
     )
+    if (
+        question.author_api_id is not None
+        and question.author_api_id != req_dep.current_user.api_identifier
+    ):
+        raise HTTPException(
+            status_code=403,
+            detail="Cannot add a question as a different user",
+        )
     if db_letter.status == LetterStatus.SENT:
         raise HTTPException(status_code=400, detail=_CANNOT_ADD_QUESTION_SENT)
     if _late_question_cutoff_reached(db_letter):
         raise HTTPException(
             status_code=400, detail=_CANNOT_ADD_QUESTION_CUTOFF
         )
-    db_author = (
-        api_identifier_crud.get_model(
-            req_dep.db,
-            User,
-            api_id=question.author_api_id,
-        )
-        if question.author_api_id
-        else None
-    )
     added = letter_crud.add_question(
-        req_dep.db, db_letter, question.question_text, author=db_author
+        req_dep.db,
+        db_letter,
+        question.question_text,
+        author=req_dep.current_user,
     )
     if db_letter.status == LetterStatus.IN_PROGRESS:
         letter_crud.notify_late_question(req_dep.db, db_letter, added.author)

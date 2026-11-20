@@ -118,12 +118,13 @@ ALLOWLIST: dict[ActorFieldKey, str] = {
     **_NOT_THE_ACTOR,
 }
 
-# A3 to A5 only. A1 and A2 are changed by their own PRs.
+# A1 and A3 to A5. A2 is left to the upsert change.
 _OPTIONAL_DEPRECATED: frozenset[ActorFieldKey] = frozenset(
     key
     for key in _DEPRECATED
     if key[3]
     in {
+        "author_api_id",
         "admin_api_identifier",
         "user_api_id",
         "user_api_identifier",

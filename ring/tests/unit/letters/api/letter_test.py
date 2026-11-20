@@ -875,21 +875,22 @@ class TestLetterAPI:
         letter = LetterFactory.create(
             group=GroupFactory.create(admin=current_user)
         )
-        user = UserFactory.create()
         db_session.commit()
         input = {
             "question_text": "What is your favorite color?",
-            "author_api_id": user.api_identifier,
+            "author_api_id": current_user.api_identifier,
         }
         response = authenticated_client.post(
             f"/letters/letter/{letter.api_identifier}:add_question", json=input
         )
         assert response.status_code == 200
         data = response.json()
-        assert any(
-            q["question_text"] == "What is your favorite color?"
-            for q in data["questions"]
+        added = next(
+            question
+            for question in data["questions"]
+            if question["question_text"] == "What is your favorite color?"
         )
+        assert added["author"]["api_identifier"] == current_user.api_identifier
 
     @pytest.mark.parametrize(
         "letter_type",
