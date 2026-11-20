@@ -52,7 +52,7 @@ export function lateQuestionReplyNotice(loop: PublicLetter): string {
     .filter((person) => participantIds.has(person.api_identifier))
     .sort((a, b) => displayName(a).localeCompare(displayName(b)))
   const count = `${replied.length} of ${loop.participants.length} people have already replied`
-  const placement = "It will appear at the top of the letter with a Late badge."
+  const placement = "It will appear at the top of the letter."
   if (replied.length === 0) {
     return `${count}. ${placement}`
   }

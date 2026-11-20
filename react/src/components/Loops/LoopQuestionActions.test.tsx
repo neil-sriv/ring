@@ -131,7 +131,7 @@ describe("LoopQuestionActions", () => {
     ).toBeTruthy()
     expect(
       screen.getByText(
-        "2 of 3 people have already replied: Ada and Bo. They'll be told about this question. It will appear at the top of the letter with a Late badge.",
+        "2 of 3 people have already replied: Ada and Bo. They'll be told about this question. It will appear at the top of the letter.",
       ),
     ).toBeTruthy()
   })
@@ -142,7 +142,7 @@ describe("LoopQuestionActions", () => {
 
     expect(
       screen.getByText(
-        "0 of 2 people have already replied. It will appear at the top of the letter with a Late badge.",
+        "0 of 2 people have already replied. It will appear at the top of the letter.",
       ),
     ).toBeTruthy()
     expect(screen.queryByText(/They'll be told/)).toBeNull()
