@@ -506,6 +506,45 @@ def add_question(
     )
 
 
+def notify_late_question(
+    db: Session, letter: Letter, author: User | None
+) -> None:
+    """Inbox and push for a question added to an in-progress letter.
+
+    Recipients are participants who already have a response on this letter,
+    excluding the question's author. People with no responses are not
+    notified, and upcoming letters send nothing. ``notify_users`` writes
+    the inbox rows in this transaction and logs push failures without
+    raising, so a failed push does not fail the add.
+
+    Args:
+        db (Session): Database session
+        letter (Letter): Letter the question was added to
+        author (User | None): Author of the new question
+    """
+    if letter.status != LetterStatus.IN_PROGRESS:
+        return
+    responder_ids = {user.id for user in letter.responders}
+    author_id = author.id if author is not None else None
+    recipients = [
+        participant
+        for participant in letter.participants
+        if participant.id in responder_ids and participant.id != author_id
+    ]
+    loop_label = letter.title if letter.title else f"#{letter.number}"
+    author_name = author.name if author is not None else "Someone"
+    notify_users(
+        db,
+        recipients,
+        title="New question",
+        body=(
+            f"{author_name} added a question to {loop_label} "
+            f"in {letter.group.name}"
+        ),
+        target_api_id=letter.api_identifier,
+    )
+
+
 def add_default_questions(db: Session, letter: Letter) -> Sequence[Question]:
     """Add default questions to a letter.
 

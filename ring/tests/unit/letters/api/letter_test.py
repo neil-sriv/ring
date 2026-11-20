@@ -8,6 +8,7 @@ It verifies both successful operations and error cases.
 from __future__ import annotations
 
 from datetime import UTC, datetime, timedelta
+from unittest.mock import patch
 
 import pytest
 from fastapi.exceptions import ResponseValidationError
@@ -21,6 +22,8 @@ from ring.letters.constants import (
     LetterType,
 )
 from ring.letters.send_threshold import letter_responder_count
+from ring.notifications.crud.inbox import list_inbox_items
+from ring.notifications.models.subscription import Subscription
 from ring.ring_pydantic.linked_schemas import DashboardLetter, MinimalLetter
 from ring.tests.factories.letters.letter_factory import LetterFactory
 from ring.tests.factories.letters.question_factory import QuestionFactory
@@ -49,14 +52,21 @@ def _post_add_question(
     client: TestClient,
     letter: LetterFactory,
     question_text: str = _NEW_QUESTION,
+    author_api_id: str | None = None,
 ):
     return client.post(
         f"/letters/letter/{letter.api_identifier}:add_question",
         json={
             "question_text": question_text,
-            "author_api_id": None,
+            "author_api_id": author_api_id,
         },
     )
+
+
+def _late_question_body(
+    author_name: str, loop_label: str, group_name: str
+) -> str:
+    return f"{author_name} added a question to {loop_label} in {group_name}"
 
 
 def _question_named(
@@ -1157,3 +1167,218 @@ class TestLetterAPI:
         assert letter_responder_count(letter) == 1
         assert letter.automatic_send_deferral_count == 2
         assert letter.send_at == send_at
+
+    def test_late_question_notifies_responders_except_author(
+        self,
+        authenticated_client: TestClient,
+        db_session: Session,
+        current_user: UserFactory,
+    ):
+        responder = UserFactory.create()
+        other = UserFactory.create()
+        silent = UserFactory.create()
+        group = GroupFactory.create(
+            admin=current_user,
+            members=[current_user, responder, other, silent],
+        )
+        letter = LetterFactory.create(
+            group=group,
+            status=LetterStatus.IN_PROGRESS,
+            title="Spring",
+            send_at=datetime.now(tz=UTC) + timedelta(days=3),
+        )
+        question = QuestionFactory.create(letter=letter)
+        ResponseFactory.create(question=question, participant=current_user)
+        ResponseFactory.create(question=question, participant=responder)
+        ResponseFactory.create(question=question, participant=other)
+        db_session.add(
+            Subscription.create(
+                endpoint="https://push.example/late-question",
+                keys={"p256dh": "key", "auth": "auth"},
+                user=responder,
+            )
+        )
+        db_session.commit()
+
+        with patch(
+            "ring.notifications.crud.dispatch.send_push_notification"
+        ) as send_push:
+            response = _post_add_question(
+                authenticated_client,
+                letter,
+                author_api_id=current_user.api_identifier,
+            )
+
+        assert response.status_code == 200
+        added = _question_named(response.json()["questions"], _NEW_QUESTION)
+        assert added["added_late"] is True
+        body = _late_question_body(current_user.name, "Spring", group.name)
+        send_push.assert_called_once()
+        payload = send_push.call_args.args[1]
+        assert payload["title"] == "New question"
+        assert payload["body"] == body
+        assert payload["url"].endswith(f"/loops/{letter.api_identifier}")
+
+        for recipient in (responder, other):
+            items = list_inbox_items(db_session, recipient)
+            assert len(items) == 1
+            assert items[0].title == "New question"
+            assert items[0].body == body
+            assert items[0].target_api_id == letter.api_identifier
+            assert items[0].href == f"/loops/{letter.api_identifier}"
+            assert items[0].unread is True
+        assert list_inbox_items(db_session, current_user) == []
+        assert list_inbox_items(db_session, silent) == []
+
+    def test_upcoming_add_sends_no_notification(
+        self,
+        authenticated_client: TestClient,
+        db_session: Session,
+        current_user: UserFactory,
+    ):
+        responder = UserFactory.create()
+        group = GroupFactory.create(
+            admin=current_user,
+            members=[current_user, responder],
+        )
+        letter = LetterFactory.create(
+            group=group,
+            status=LetterStatus.UPCOMING,
+            title="Spring",
+            send_at=datetime.now(tz=UTC) + timedelta(days=3),
+        )
+        question = QuestionFactory.create(letter=letter)
+        ResponseFactory.create(question=question, participant=responder)
+        db_session.commit()
+
+        with patch(
+            "ring.notifications.crud.dispatch.send_push_notification"
+        ) as send_push:
+            response = _post_add_question(
+                authenticated_client,
+                letter,
+                author_api_id=current_user.api_identifier,
+            )
+
+        assert response.status_code == 200
+        added = _question_named(response.json()["questions"], _NEW_QUESTION)
+        assert added["added_late"] is False
+        send_push.assert_not_called()
+        assert list_inbox_items(db_session, responder) == []
+        assert list_inbox_items(db_session, current_user) == []
+
+    def test_late_question_skips_participants_with_no_responses(
+        self,
+        authenticated_client: TestClient,
+        db_session: Session,
+        current_user: UserFactory,
+    ):
+        silent = UserFactory.create()
+        group = GroupFactory.create(
+            admin=current_user,
+            members=[current_user, silent],
+        )
+        letter = LetterFactory.create(
+            group=group,
+            status=LetterStatus.IN_PROGRESS,
+            title="Spring",
+            send_at=datetime.now(tz=UTC) + timedelta(days=3),
+        )
+        db_session.commit()
+
+        response = _post_add_question(
+            authenticated_client,
+            letter,
+            author_api_id=current_user.api_identifier,
+        )
+
+        assert response.status_code == 200
+        added = _question_named(response.json()["questions"], _NEW_QUESTION)
+        assert added["added_late"] is True
+        assert list_inbox_items(db_session, silent) == []
+        assert list_inbox_items(db_session, current_user) == []
+
+    def test_late_question_body_uses_number_when_untitled(
+        self,
+        authenticated_client: TestClient,
+        db_session: Session,
+        current_user: UserFactory,
+    ):
+        responder = UserFactory.create()
+        group = GroupFactory.create(
+            admin=current_user,
+            members=[current_user, responder],
+        )
+        letter = LetterFactory.create(
+            group=group,
+            status=LetterStatus.IN_PROGRESS,
+            title=None,
+            send_at=datetime.now(tz=UTC) + timedelta(days=3),
+        )
+        question = QuestionFactory.create(letter=letter)
+        ResponseFactory.create(question=question, participant=responder)
+        db_session.commit()
+
+        response = _post_add_question(
+            authenticated_client,
+            letter,
+            author_api_id=current_user.api_identifier,
+        )
+
+        assert response.status_code == 200
+        items = list_inbox_items(db_session, responder)
+        assert len(items) == 1
+        assert items[0].body == _late_question_body(
+            current_user.name, f"#{letter.number}", group.name
+        )
+
+    def test_late_question_add_succeeds_when_push_fails(
+        self,
+        authenticated_client: TestClient,
+        db_session: Session,
+        current_user: UserFactory,
+    ):
+        responder = UserFactory.create()
+        group = GroupFactory.create(
+            admin=current_user,
+            members=[current_user, responder],
+        )
+        letter = LetterFactory.create(
+            group=group,
+            status=LetterStatus.IN_PROGRESS,
+            title="Spring",
+            send_at=datetime.now(tz=UTC) + timedelta(days=3),
+        )
+        question = QuestionFactory.create(letter=letter)
+        ResponseFactory.create(question=question, participant=responder)
+        db_session.add(
+            Subscription.create(
+                endpoint="https://push.example/late-question-down",
+                keys={"p256dh": "key", "auth": "auth"},
+                user=responder,
+            )
+        )
+        db_session.commit()
+
+        with patch(
+            "ring.notifications.crud.dispatch.send_push_notification",
+            side_effect=RuntimeError("push down"),
+        ):
+            response = _post_add_question(
+                authenticated_client,
+                letter,
+                author_api_id=current_user.api_identifier,
+            )
+
+        assert response.status_code == 200
+        added = _question_named(response.json()["questions"], _NEW_QUESTION)
+        assert added["added_late"] is True
+        db_session.refresh(letter)
+        assert any(
+            question.question_text == _NEW_QUESTION
+            for question in letter.questions
+        )
+        items = list_inbox_items(db_session, responder)
+        assert len(items) == 1
+        assert items[0].title == "New question"
+        assert items[0].target_api_id == letter.api_identifier
