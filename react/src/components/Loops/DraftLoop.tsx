@@ -37,6 +37,7 @@ function DraftLoop({
               readOnly={loop.status === "UPCOMING"}
               loopApiId={loop.api_identifier}
               isGroupAdmin={isGroupAdmin}
+              letterStatus={loop.status}
             />
           </div>
         </div>

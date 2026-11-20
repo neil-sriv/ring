@@ -21,6 +21,7 @@ import { Check, Loader2, Trash2 } from "lucide-react"
 import { useEffect, useRef, useState } from "react"
 import {
   type DeleteQuestionQuestionsQuestionQuestionApiIdDeleteError,
+  type LetterStatus,
   type PublicLetter,
   type PublicQuestion,
   type ResponseWithParticipant,
@@ -358,11 +359,13 @@ function DraftQuestion({
   loopApiId,
   readOnly = false,
   isGroupAdmin = false,
+  letterStatus,
 }: {
   question: PublicQuestion
   loopApiId: string
   readOnly?: boolean
   isGroupAdmin?: boolean
+  letterStatus: LetterStatus
 }): JSX.Element {
   const queryClient = useQueryClient()
   // Subscribe so response matching, author checks, and optimistic participant
@@ -422,7 +425,10 @@ function DraftQuestion({
 
   const isAuthor =
     question.author?.api_identifier === currentUser.api_identifier
-  const canDelete = isAuthor || isGroupAdmin
+  const canDelete =
+    (isAuthor || isGroupAdmin) &&
+    question.responses.length === 0 &&
+    letterStatus !== "SENT"
 
   const isDeleting = deleteMutation.isPending || deleteOnce.pending
 
@@ -674,7 +680,7 @@ function DraftQuestion({
             {question.question_text}
           </h3>
         </div>
-        {canDelete && readOnly && (
+        {canDelete && (
           <Button
             variant="ghost"
             size="sm"

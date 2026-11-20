@@ -32,6 +32,9 @@ import { formatApiErrorDetail, toISOLocal } from "../../util/misc"
 // true. This write is a small JSON body; uploads keep the longer proxy window.
 const EDIT_LETTER_TIMEOUT_MS = 20_000
 
+const CANNOT_MOVE_BACK_TO_UPCOMING =
+  "This loop is already in progress, so it can't be moved back to Upcoming. Add a late question to the loop instead."
+
 type LetterFormProps = {
   // datetime-local values are always strings ("YYYY-MM-DDTHH:mm"). Do not use
   // react-hook-form's valueAsDate here: it desyncs from the controlled `values`
@@ -119,6 +122,10 @@ const EditLetter = ({ isOpen, onClose, loop }: EditLetterProps) => {
   })
 
   const submitOnce = useSubmitOnce()
+  // Cyclic in-progress loops cannot move back to Upcoming (#536). Adhoc
+  // loops still can, so the toggle stays enabled for them.
+  const cannotMoveBackToUpcoming =
+    loop.letter_type === "CYCLIC" && loop.status === "IN_PROGRESS"
 
   const onSubmit: SubmitHandler<LetterFormProps> = async (data) => {
     await submitOnce.run(async () => {
@@ -141,7 +148,12 @@ const EditLetter = ({ isOpen, onClose, loop }: EditLetterProps) => {
         updateData.title = data.title || undefined
       }
 
-      const newStatus = data.isInProgress ? "IN_PROGRESS" : "UPCOMING"
+      // A disabled checkbox is omitted from the submit payload. Keep the
+      // saved in-progress status instead of treating that omission as Upcoming.
+      const nextIsInProgress = cannotMoveBackToUpcoming
+        ? true
+        : Boolean(data.isInProgress)
+      const newStatus = nextIsInProgress ? "IN_PROGRESS" : "UPCOMING"
       if (newStatus !== loop.status) {
         updateData.status = newStatus
       }
@@ -205,13 +217,22 @@ const EditLetter = ({ isOpen, onClose, loop }: EditLetterProps) => {
                 >
                   Upcoming
                 </span>
-                <label className="relative inline-flex cursor-pointer items-center">
+                <label
+                  className={`relative inline-flex items-center ${
+                    cannotMoveBackToUpcoming || isSaving
+                      ? "cursor-not-allowed"
+                      : "cursor-pointer"
+                  }`}
+                >
                   <input
                     type="checkbox"
                     id="isInProgress"
                     {...register("isInProgress")}
                     className="peer sr-only"
-                    disabled={isSaving}
+                    disabled={isSaving || cannotMoveBackToUpcoming}
+                    aria-describedby={
+                      cannotMoveBackToUpcoming ? "loop-status-lock" : undefined
+                    }
                   />
                   <div className="peer h-6 w-11 rounded-full bg-muted after:absolute after:left-[2px] after:top-[2px] after:h-5 after:w-5 after:rounded-full after:border after:border-border after:bg-background after:transition-all after:content-[''] peer-checked:bg-primary peer-checked:after:translate-x-full peer-focus:ring-2 peer-focus:ring-ring peer-disabled:cursor-not-allowed peer-disabled:opacity-50" />
                 </label>
@@ -225,6 +246,14 @@ const EditLetter = ({ isOpen, onClose, loop }: EditLetterProps) => {
                   In Progress
                 </span>
               </div>
+              {cannotMoveBackToUpcoming && (
+                <p
+                  id="loop-status-lock"
+                  className="text-sm text-muted-foreground"
+                >
+                  {CANNOT_MOVE_BACK_TO_UPCOMING}
+                </p>
+              )}
             </div>
 
             <div className="flex flex-col gap-1.5">

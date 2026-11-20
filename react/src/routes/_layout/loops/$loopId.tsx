@@ -1,7 +1,6 @@
 import { Button } from "@/components/ui/button"
 import { useQuery, useSuspenseQuery } from "@tanstack/react-query"
 import { Link, createFileRoute } from "@tanstack/react-router"
-import { Plus } from "lucide-react"
 import { Suspense, useState } from "react"
 import { ErrorBoundary } from "react-error-boundary"
 import type { PublicLetter } from "../../../client"
@@ -12,10 +11,9 @@ import {
 } from "../../../client/@tanstack/react-query.gen"
 import DraftLoop from "../../../components/Loops/DraftLoop"
 import EditLetter from "../../../components/Loops/EditLoop"
+import { LoopQuestionActions } from "../../../components/Loops/LoopQuestionActions"
 import { LoopReplyTracker } from "../../../components/Loops/LoopReplyTracker"
 import PublishedLoop from "../../../components/Loops/PublishedLoop"
-import AddQuestion from "../../../components/Question/AddQuestion"
-import GenerateQuestion from "../../../components/Question/GenerateQuestion"
 import { AddSongsToSpotify } from "../../../components/Spotify/AddSongsToSpotify"
 
 type IssueLoaderProps = {
@@ -77,8 +75,6 @@ function IssueContent() {
   const isGroupAdmin =
     group.admin.api_identifier === currentUser?.api_identifier
   const [editLoopOpen, setEditLoopOpen] = useState(false)
-  const [addQuestionOpen, setAddQuestionOpen] = useState(false)
-  const [generateQuestionOpen, setGenerateQuestionOpen] = useState(false)
 
   return (
     <div className="mx-auto w-full max-w-3xl px-4 py-8 md:px-8">
@@ -124,19 +120,7 @@ function IssueContent() {
         </div>
       )}
 
-      {loop.status === "UPCOMING" && (
-        <div className="mt-6 flex flex-wrap gap-3">
-          <Button onClick={() => setAddQuestionOpen(true)}>
-            <Plus className="h-4 w-4" /> Add new question
-          </Button>
-          <Button
-            variant="outline"
-            onClick={() => setGenerateQuestionOpen(true)}
-          >
-            <Plus className="h-4 w-4" /> Ask ChatGPT to generate a question.
-          </Button>
-        </div>
-      )}
+      <LoopQuestionActions loop={loop} />
 
       <div className="mt-8">
         {loop.status === "SENT" ? (
@@ -157,16 +141,6 @@ function IssueContent() {
         isOpen={editLoopOpen}
         onClose={() => setEditLoopOpen(false)}
         loop={loop}
-      />
-      <AddQuestion
-        isOpen={addQuestionOpen}
-        onClose={() => setAddQuestionOpen(false)}
-        loopApiId={loop.api_identifier}
-      />
-      <GenerateQuestion
-        isOpen={generateQuestionOpen}
-        onClose={() => setGenerateQuestionOpen(false)}
-        loopApiId={loop.api_identifier}
       />
     </div>
   )

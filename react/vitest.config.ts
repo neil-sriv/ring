@@ -15,6 +15,8 @@ export default defineConfig({
       "src/components/Loops/EditLoop.test.tsx",
       "src/components/Loops/AddLoop.test.tsx",
       "src/components/Loops/AddAdhocLoop.test.tsx",
+      "src/components/Loops/LoopQuestionActions.test.tsx",
+      "src/components/Question/DraftQuestion.test.tsx",
     ],
     setupFiles: ["./src/test-setup.ts"],
   },

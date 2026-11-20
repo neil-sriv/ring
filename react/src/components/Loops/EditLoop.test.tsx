@@ -49,7 +49,7 @@ function serverError(detail: string) {
   return error
 }
 
-function EditHarness() {
+function EditHarness({ letter = loop }: { letter?: PublicLetter }) {
   const [open, setOpen] = useState(true)
   const [queryClient] = useState(
     () =>
@@ -62,7 +62,7 @@ function EditHarness() {
   )
   return (
     <QueryClientProvider client={queryClient}>
-      <EditLetter isOpen={open} onClose={() => setOpen(false)} loop={loop} />
+      <EditLetter isOpen={open} onClose={() => setOpen(false)} loop={letter} />
       <Toaster />
     </QueryClientProvider>
   )
@@ -128,6 +128,64 @@ describe("EditLetter save failures", () => {
     await waitFor(() => {
       expect(screen.queryByRole("dialog")).toBeNull()
     })
+  })
+
+  it("leaves the status toggle enabled on an upcoming loop", () => {
+    render(<EditHarness />)
+
+    const toggle = screen.getByRole("checkbox") as HTMLInputElement
+    expect(toggle.disabled).toBe(false)
+    expect(toggle.checked).toBe(false)
+    expect(screen.queryByText(/can't be moved back to Upcoming/)).toBeNull()
+  })
+
+  it("disables moving a cyclic in-progress loop back to Upcoming", async () => {
+    const post = vi.spyOn(client, "post").mockResolvedValue({
+      data: { ...loop, status: "IN_PROGRESS", title: "Renamed" },
+      status: 200,
+      statusText: "OK",
+      headers: {},
+      config: {},
+    } as Awaited<ReturnType<typeof client.post>>)
+
+    render(
+      <EditHarness
+        letter={{ ...loop, status: "IN_PROGRESS", title: "Weekly" }}
+      />,
+    )
+
+    const toggle = screen.getByRole("checkbox") as HTMLInputElement
+    expect(toggle.disabled).toBe(true)
+    expect(toggle.checked).toBe(true)
+    expect(
+      screen.getByText(
+        "This loop is already in progress, so it can't be moved back to Upcoming. Add a late question to the loop instead.",
+      ),
+    ).toBeTruthy()
+
+    await saveTitle("Renamed")
+
+    await waitFor(() => {
+      expect(post).toHaveBeenCalled()
+    })
+    const body = (
+      post.mock.calls[0]?.[0] as { body?: { title?: string; status?: string } }
+    ).body
+    expect(body?.title).toBe("Renamed")
+    expect(body?.status).toBeUndefined()
+  })
+
+  it("leaves the status toggle enabled on an adhoc in-progress loop", () => {
+    render(
+      <EditHarness
+        letter={{ ...loop, status: "IN_PROGRESS", letter_type: "ADHOC" }}
+      />,
+    )
+
+    const toggle = screen.getByRole("checkbox") as HTMLInputElement
+    expect(toggle.disabled).toBe(false)
+    expect(toggle.checked).toBe(true)
+    expect(screen.queryByText(/can't be moved back to Upcoming/)).toBeNull()
   })
 
   it("still closes after a successful save", async () => {
