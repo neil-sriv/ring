@@ -267,11 +267,15 @@ export type GitCommitInfo = {
  *
  * Attributes:
  * name (str): Name of the group (inherited from GroupBase)
- * admin_api_identifier (str): API identifier of the user who will be admin
+ * admin_api_identifier (str | None): Deprecated. Omit it, or send the
+ * caller's id. Another user's id is rejected.
  */
 export type GroupCreate = {
     name: string;
-    admin_api_identifier: string;
+    /**
+     * @deprecated
+     */
+    admin_api_identifier?: string | null;
 };
 
 /**
@@ -934,19 +938,24 @@ export type SpotifyStatus = {
 /**
  * Schema for creating a new subscription.
  *
- * Inherits endpoint and keys from SubscriptionBase and adds user identification.
+ * Inherits endpoint and keys from SubscriptionBase. The subscribed user is
+ * the authenticated caller. ``user_api_identifier`` is deprecated.
  *
  * Attributes:
  * endpoint (str): Push notification endpoint URL
  * keys (dict[str, str | float | bool]): Dictionary containing encryption keys and auth info
- * user_api_identifier (str): API identifier of the user to subscribe
+ * user_api_identifier (str | None): Deprecated. Omit it, or send the
+ * caller's id. Another user's id is rejected.
  */
 export type SubscriptionCreate = {
     endpoint: string;
     keys: {
         [key: string]: string | number | boolean;
     };
-    user_api_identifier: string;
+    /**
+     * @deprecated
+     */
+    user_api_identifier?: string | null;
 };
 
 /**
@@ -1563,8 +1572,11 @@ export type CreateGroupPartiesGroupPostResponse = CreateGroupPartiesGroupPostRes
 export type ListGroupsPartiesGroupsGetData = {
     body?: never;
     path?: never;
-    query: {
-        user_api_id: string;
+    query?: {
+        /**
+         * @deprecated
+         */
+        user_api_id?: string | null;
         skip?: number;
         limit?: number;
     };

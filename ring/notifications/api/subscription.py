@@ -33,10 +33,11 @@ async def post_subscription(
     """Create a new web push notification subscription.
 
     Creates a subscription for the authenticated user to receive web push
-    notifications. Clients may still send ``user_api_identifier`` for
-    backwards compatibility, but it must match the current user — another
-    user's id is rejected. If a subscription with the same endpoint already
-    exists, returns a message indicating this instead of creating a duplicate.
+    notifications. ``user_api_identifier`` is optional and deprecated. If it
+    is sent, it must match the current user — another user's id is rejected.
+    The stored user is always the caller. If a subscription with the same
+    endpoint already exists, returns a message indicating this instead of
+    creating a duplicate.
 
     Args:
         subscription (SubscriptionCreate): Subscription details including endpoint and keys
@@ -49,7 +50,11 @@ async def post_subscription(
         HTTPException: If user is not authenticated, or ``user_api_identifier``
             does not match the authenticated user
     """
-    if subscription.user_api_identifier != req_dep.current_user.api_identifier:
+    if (
+        subscription.user_api_identifier is not None
+        and subscription.user_api_identifier
+        != req_dep.current_user.api_identifier
+    ):
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Cannot create a subscription for a different user",
@@ -59,7 +64,7 @@ async def post_subscription(
             f"Subscription with endpoint {subscription.endpoint} already exists"
         )
         return ResponseMessage(message="Subscription already exists")
-    create_subscription(req_dep.db, subscription)
+    create_subscription(req_dep.db, subscription, req_dep.current_user)
     req_dep.db.commit()
 
     return ResponseMessage(message="Subscription created")

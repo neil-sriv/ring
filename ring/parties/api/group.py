@@ -1,9 +1,9 @@
 from __future__ import annotations
 
 from datetime import timezone
-from typing import Sequence, cast
+from typing import Annotated, Sequence, cast
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Query, status
 
 from ring.api_identifier import (
     util as api_identifier_crud,
@@ -43,9 +43,9 @@ async def create_group(
 ) -> Group:
     """Create a new group.
 
-    The authenticated caller is always the group admin. Clients may still
-    send ``admin_api_identifier`` for backwards compatibility, but it must
-    match the current user — another user's id is rejected.
+    The authenticated caller is always the group admin.
+    ``admin_api_identifier`` is optional and deprecated. If it is sent, it
+    must match the current user — another user's id is rejected.
 
     Args:
         group (GroupCreate): Group creation parameters
@@ -58,7 +58,10 @@ async def create_group(
         HTTPException: If admin_api_identifier is not the current user, or
             group creation fails
     """
-    if group.admin_api_identifier != req_dep.current_user.api_identifier:
+    if (
+        group.admin_api_identifier is not None
+        and group.admin_api_identifier != req_dep.current_user.api_identifier
+    ):
         raise HTTPException(
             status.HTTP_403_FORBIDDEN,
             "Cannot create a group with a different user as admin",
@@ -74,7 +77,7 @@ async def create_group(
 
 @router.get("/groups/", response_model=Sequence[GroupSchema])
 async def list_groups(
-    user_api_id: str,
+    user_api_id: Annotated[str | None, Query(deprecated=True)] = None,
     skip: int = 0,
     limit: int = 100,
     req_dep: AuthenticatedRequestDependencies = Depends(
@@ -83,11 +86,12 @@ async def list_groups(
 ) -> Sequence[Group]:
     """List all groups the authenticated user is a member of.
 
-    Clients may still send ``user_api_id`` for backwards compatibility, but it
-    must match the current user — another user's id is rejected.
+    ``user_api_id`` is optional and deprecated. If it is sent, it must match
+    the current user — another user's id is rejected.
 
     Args:
-        user_api_id (str): API identifier of the user (must be the caller)
+        user_api_id (str | None): Deprecated caller id. Omit it, or send the
+            caller's id.
         skip (int, optional): Number of records to skip. Defaults to 0.
         limit (int, optional): Maximum number of records to return. Defaults to 100.
         req_dep (AuthenticatedRequestDependencies): Request dependencies
@@ -98,7 +102,10 @@ async def list_groups(
     Raises:
         HTTPException: If ``user_api_id`` does not match the authenticated user
     """
-    if user_api_id != req_dep.current_user.api_identifier:
+    if (
+        user_api_id is not None
+        and user_api_id != req_dep.current_user.api_identifier
+    ):
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Cannot list groups for a different user",

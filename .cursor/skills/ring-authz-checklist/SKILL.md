@@ -35,7 +35,20 @@ from `ring.authz.enforcer`, and the resource(s).
 - [ ] Update ring/authz/policy.csv if a new role/action combo is needed
 - [ ] Add tests for: happy path, permission denied, not-found
 - [ ] Use the `admin` pytest marker if the test needs an admin client
+- [ ] The actor is `req_dep.current_user`, not a client-supplied id
 ```
+
+## Actor is the caller
+
+The signed-in user is the actor of a write. Do not add a request body, query,
+or path field that names that actor. A field whose name matches `author_*`,
+`actor_*`, `participant_*`, `sender_*`, `inviter_*`, `admin_api_identifier`,
+`user_api_id`, or `user_api_identifier` fails
+[ring/tests/unit/authz/actor_ids_test.py](../../../ring/tests/unit/authz/actor_ids_test.py)
+unless it is on that test's allowlist with a reason.
+
+Where an admin acts on another person, put that person's id in the URL and
+check the admin role.
 
 ## Typical pattern
 

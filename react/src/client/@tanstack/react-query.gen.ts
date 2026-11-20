@@ -556,11 +556,11 @@ export const createGroupPartiesGroupPostMutation = (options?: Partial<Options<Cr
     return mutationOptions;
 };
 
-export const listGroupsPartiesGroupsGetQueryKey = (options: Options<ListGroupsPartiesGroupsGetData>) => [
+export const listGroupsPartiesGroupsGetQueryKey = (options?: Options<ListGroupsPartiesGroupsGetData>) => [
     createQueryKey('listGroupsPartiesGroupsGet', options)
 ];
 
-export const listGroupsPartiesGroupsGetOptions = (options: Options<ListGroupsPartiesGroupsGetData>) => {
+export const listGroupsPartiesGroupsGetOptions = (options?: Options<ListGroupsPartiesGroupsGetData>) => {
     return queryOptions({
         queryFn: async ({ queryKey, signal }) => {
             const { data } = await listGroupsPartiesGroupsGet({
