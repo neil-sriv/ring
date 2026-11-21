@@ -26,6 +26,7 @@ export default defineConfig({
       "src/components/Document/Editor.test.tsx",
       "src/route-tests/GroupStoreTab.test.tsx",
       "src/route-tests/groupLoopsRoute.remount.test.tsx",
+      "src/route-tests/groupSettingsRoute.remount.test.tsx",
       "src/route-tests/loopId.remount.test.tsx",
     ],
     setupFiles: ["./src/test-setup.ts"],
