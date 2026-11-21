@@ -9,7 +9,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from loguru import logger
-from sqlalchemy import ForeignKey
+from sqlalchemy import Float, ForeignKey, Integer
 from sqlalchemy.ext.hybrid import hybrid_property
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
@@ -19,7 +19,6 @@ from ring.created_at import CreatedAtMixin
 from ring.letters.constants import LetterStatus, LetterType
 from ring.letters.models.default_question_model import DefaultQuestion
 from ring.letters.models.letter_model import Letter
-from ring.letters.send_threshold import get_group_min_responder_ratio
 from ring.parties.models.group_key_value import GroupKeyValue
 from ring.parties.models.user_group_assocation import user_group_association
 from ring.ring_pydantic.linked_schemas import GroupLinked
@@ -43,6 +42,8 @@ class Group(Base, PydanticModel, APIIdentified, CreatedAtMixin):
         name (str): Unique group name
         api_identifier (str): Unique API identifier with 'grp' prefix
         cycle_length (int): Number of days between letters, defaults to 30
+        min_responder_ratio (float | None): Send gate ratio, or None for 0.5
+        min_responders (int | None): Absolute send gate, or None to use the ratio
         admin_id (int): Foreign key to the admin user
         admin (User): Admin user relationship
         members (list[User]): Group members
@@ -62,6 +63,12 @@ class Group(Base, PydanticModel, APIIdentified, CreatedAtMixin):
     name: Mapped[str] = mapped_column(unique=True, index=True)
     api_identifier: Mapped[str] = mapped_column(unique=True, index=True)
     cycle_length: Mapped[int] = mapped_column(default=30)
+    # Former store keys letter_send_min_responder_ratio and
+    # letter_send_min_responders. Null ratio means the 0.5 default.
+    min_responder_ratio: Mapped[float | None] = mapped_column(
+        Float, nullable=True
+    )
+    min_responders: Mapped[int | None] = mapped_column(Integer, nullable=True)
 
     admin_id: Mapped[int] = mapped_column(ForeignKey("user.id"))
     _admin = relationship("User", foreign_keys=[admin_id])
@@ -131,11 +138,6 @@ class Group(Base, PydanticModel, APIIdentified, CreatedAtMixin):
             self._admin = admin
         else:
             raise ValueError("Admin must be a member of the group")
-
-    @hybrid_property
-    def min_responder_ratio(self) -> float | None:
-        """Configured minimum responder ratio before send, or None for default."""
-        return get_group_min_responder_ratio(self)
 
     @hybrid_property
     def cyclic_letters(self) -> list[Letter]:

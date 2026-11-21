@@ -10,8 +10,6 @@ from sqlalchemy.orm import Session
 from ring.letters.constants import LetterStatus
 from ring.letters.send_threshold import (
     DEFAULT_MIN_RESPONDER_RATIO_TO_SEND,
-    GROUP_SETTING_MIN_RESPONDER_RATIO_KEY,
-    GROUP_SETTING_MIN_RESPONDERS_KEY,
     effective_send_threshold_ratio,
     get_group_min_responder_ratio,
     is_below_send_threshold,
@@ -97,11 +95,19 @@ class TestSendThresholdPolicy:
         db_session.commit()
         assert get_group_min_responder_ratio(group) is None
 
+    def test_store_key_does_not_configure_ratio(
+        self, db_session: Session
+    ) -> None:
+        group = GroupFactory.create()
+        group.key_values.set_value("letter_send_min_responder_ratio", 0.9)
+        db_session.commit()
+        assert get_group_min_responder_ratio(group) is None
+
     def test_get_group_min_responder_ratio_configured(
         self, db_session: Session
     ) -> None:
         group = GroupFactory.create()
-        group.key_values.set_value(GROUP_SETTING_MIN_RESPONDER_RATIO_KEY, 0.75)
+        group.min_responder_ratio = 0.75
         db_session.commit()
         assert get_group_min_responder_ratio(group) == 0.75
 
@@ -118,7 +124,7 @@ class TestSendThresholdPolicy:
         self, db_session: Session
     ) -> None:
         group = GroupFactory.create()
-        group.key_values.set_value(GROUP_SETTING_MIN_RESPONDER_RATIO_KEY, 0)
+        group.min_responder_ratio = 0
         db_session.commit()
         assert effective_send_threshold_ratio(group) is None
 
@@ -126,7 +132,7 @@ class TestSendThresholdPolicy:
         self, db_session: Session
     ) -> None:
         group = GroupFactory.create()
-        group.key_values.set_value(GROUP_SETTING_MIN_RESPONDERS_KEY, 2)
+        group.min_responders = 2
         db_session.commit()
         assert effective_send_threshold_ratio(group) is None
 
@@ -150,7 +156,7 @@ class TestSendThresholdPolicy:
         admin = UserFactory.create()
         members = [admin] + [UserFactory.create() for _ in range(3)]
         group = GroupFactory.create(admin=admin, members=members)
-        group.key_values.set_value(GROUP_SETTING_MIN_RESPONDER_RATIO_KEY, 0.75)
+        group.min_responder_ratio = 0.75
         letter = LetterFactory.create(
             group=group,
             status=LetterStatus.IN_PROGRESS,
@@ -165,7 +171,7 @@ class TestSendThresholdPolicy:
         admin = UserFactory.create()
         members = [admin] + [UserFactory.create() for _ in range(3)]
         group = GroupFactory.create(admin=admin, members=members)
-        group.key_values.set_value(GROUP_SETTING_MIN_RESPONDER_RATIO_KEY, 0)
+        group.min_responder_ratio = 0
         letter = LetterFactory.create(
             group=group,
             status=LetterStatus.IN_PROGRESS,
@@ -180,8 +186,8 @@ class TestSendThresholdPolicy:
         admin = UserFactory.create()
         members = [admin] + [UserFactory.create() for _ in range(3)]
         group = GroupFactory.create(admin=admin, members=members)
-        group.key_values.set_value(GROUP_SETTING_MIN_RESPONDERS_KEY, 3)
-        group.key_values.set_value(GROUP_SETTING_MIN_RESPONDER_RATIO_KEY, 0.5)
+        group.min_responders = 3
+        group.min_responder_ratio = 0.5
         letter = LetterFactory.create(
             group=group,
             status=LetterStatus.IN_PROGRESS,
@@ -313,7 +319,7 @@ class TestLetterSchemaThresholdFields:
         admin = UserFactory.create()
         members = [admin] + [UserFactory.create() for _ in range(3)]
         group = GroupFactory.create(admin=admin, members=members)
-        group.key_values.set_value(GROUP_SETTING_MIN_RESPONDER_RATIO_KEY, 0)
+        group.min_responder_ratio = 0
         letter = LetterFactory.create(
             group=group,
             status=LetterStatus.IN_PROGRESS,

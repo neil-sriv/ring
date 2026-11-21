@@ -10,6 +10,7 @@ from __future__ import annotations
 from fastapi.testclient import TestClient
 from sqlalchemy.orm import Session
 
+from ring.letters.send_threshold import APP_CONTROLLED_GROUP_KEYS
 from ring.parties.crud.group_key_value import (
     get_all_values,
     get_value,
@@ -17,6 +18,7 @@ from ring.parties.crud.group_key_value import (
 )
 from ring.parties.models.user_model import User
 from ring.tests.factories.parties.group_factory import GroupFactory
+from ring.tests.factories.parties.user_factory import UserFactory
 
 
 class TestGroupKeyValueApi:
@@ -283,3 +285,162 @@ class TestGroupKeyValueApi:
         assert get_all_values(db_session, group) == {
             "new_key": "test_value",
         }
+
+    def test_put_keeps_keys_absent_from_the_body(
+        self,
+        authenticated_client: TestClient,
+        current_user: User,
+        db_session: Session,
+    ):
+        """A full-replace body must not delete keys the caller did not send."""
+        group = GroupFactory.create(admin=current_user)
+        db_session.add(group)
+        db_session.flush()
+        set_value(db_session, group, "theme", "dark")
+        set_value(db_session, group, "note", "keep")
+        db_session.commit()
+
+        response = authenticated_client.put(
+            f"/parties/group/{group.api_identifier}/key-value",
+            json={"key_values": {"theme": "light"}},
+        )
+
+        assert response.status_code == 200
+        assert response.json()["key_values"] == {
+            "theme": "light",
+            "note": "keep",
+        }
+        assert get_all_values(db_session, group) == {
+            "theme": "light",
+            "note": "keep",
+        }
+
+        empty = authenticated_client.put(
+            f"/parties/group/{group.api_identifier}/key-value",
+            json={"key_values": {}},
+        )
+        assert empty.status_code == 200
+        assert get_all_values(db_session, group) == {
+            "theme": "light",
+            "note": "keep",
+        }
+
+    def test_store_reads_hide_app_settings(
+        self,
+        authenticated_client: TestClient,
+        current_user: User,
+        db_session: Session,
+    ):
+        """Leftover letter-send keys are not part of the store response."""
+        group = GroupFactory.create(admin=current_user)
+        group.key_values.set_value("letter_send_min_responders", 9)
+        group.key_values.set_value("letter_send_min_responder_ratio", 0.1)
+        group.key_values.set_value("theme", "dark")
+        group.min_responders = 4
+        group.min_responder_ratio = 0.5
+        db_session.commit()
+
+        listed = authenticated_client.get(
+            f"/parties/group/{group.api_identifier}/key-value"
+        )
+        assert listed.status_code == 200
+        assert listed.json() == {"key_values": {"theme": "dark"}}
+
+        one = authenticated_client.get(
+            f"/parties/group/{group.api_identifier}/key-value/"
+            "letter_send_min_responders"
+        )
+        assert one.status_code == 200
+        assert one.json() == {
+            "key": "letter_send_min_responders",
+            "value": None,
+        }
+
+        group_response = authenticated_client.get(
+            f"/parties/group/{group.api_identifier}"
+        )
+        assert group_response.status_code == 200
+        assert group_response.json()["min_responders"] == 4
+        assert group_response.json()["min_responder_ratio"] == 0.5
+
+    def test_member_cannot_write_app_settings_through_the_store(
+        self,
+        authenticated_client: TestClient,
+        current_user: User,
+        db_session: Session,
+    ):
+        """Non-admins cannot change letter-send settings from any store route."""
+        admin = UserFactory.create()
+        group = GroupFactory.create(admin=admin, members=[admin, current_user])
+        group.min_responders = 2
+        group.min_responder_ratio = 0.5
+        db_session.commit()
+
+        for key in APP_CONTROLLED_GROUP_KEYS:
+            single = authenticated_client.post(
+                f"/parties/group/{group.api_identifier}/key-value:update",
+                json={"key": key, "value": 1, "operation": "set"},
+            )
+            assert single.status_code == 400
+
+            deleted = authenticated_client.post(
+                f"/parties/group/{group.api_identifier}/key-value:update",
+                json={"key": key, "operation": "delete"},
+            )
+            assert deleted.status_code == 400
+
+            bulk = authenticated_client.post(
+                f"/parties/group/{group.api_identifier}/key-value:bulk-update",
+                json={
+                    "updates": [
+                        {
+                            "key": "theme",
+                            "value": "dark",
+                            "operation": "set",
+                        },
+                        {"key": key, "value": 1, "operation": "set"},
+                    ]
+                },
+            )
+            assert bulk.status_code == 400
+
+            replaced = authenticated_client.put(
+                f"/parties/group/{group.api_identifier}/key-value",
+                json={"key_values": {key: 1, "theme": "dark"}},
+            )
+            assert replaced.status_code == 400
+
+        db_session.refresh(group)
+        assert group.min_responders == 2
+        assert group.min_responder_ratio == 0.5
+        assert get_all_values(db_session, group) == {}
+
+        allowed = authenticated_client.post(
+            f"/parties/group/{group.api_identifier}/key-value:update",
+            json={"key": "theme", "value": "dark", "operation": "set"},
+        )
+        assert allowed.status_code == 200
+        assert get_value(db_session, group, "theme") == "dark"
+
+    def test_admin_cannot_write_app_settings_through_the_store(
+        self,
+        authenticated_client: TestClient,
+        current_user: User,
+        db_session: Session,
+    ):
+        """The group admin changes letter-send settings on the group route."""
+        group = GroupFactory.create(admin=current_user)
+        group.min_responders = 2
+        db_session.commit()
+
+        response = authenticated_client.post(
+            f"/parties/group/{group.api_identifier}/key-value:update",
+            json={
+                "key": "letter_send_min_responders",
+                "value": 9,
+                "operation": "set",
+            },
+        )
+        assert response.status_code == 400
+        db_session.refresh(group)
+        assert group.min_responders == 2

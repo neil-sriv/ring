@@ -2,14 +2,12 @@ import { useMutation, useQueryClient } from "@tanstack/react-query"
 import type { AxiosError } from "axios"
 import { Loader2 } from "lucide-react"
 import { Suspense, lazy, useCallback, useRef, useState } from "react"
-import type {
-  FullReplaceGroupKeyValuesPartiesGroupGroupApiIdKeyValuePutError,
-  GroupKeyValue,
-} from "../../client"
+import type { GroupKeyValue } from "../../client"
+import { readGroupKeyValuesPartiesGroupGroupApiIdKeyValueGetQueryKey } from "../../client/@tanstack/react-query.gen"
 import {
-  fullReplaceGroupKeyValuesPartiesGroupGroupApiIdKeyValuePutMutation,
-  readGroupKeyValuesPartiesGroupGroupApiIdKeyValueGetQueryKey,
-} from "../../client/@tanstack/react-query.gen"
+  bulkUpdateGroupKeyValuesPartiesGroupGroupApiIdKeyValueBulkUpdatePost,
+  fullReplaceGroupKeyValuesPartiesGroupGroupApiIdKeyValuePut,
+} from "../../client/sdk.gen"
 import useCustomToast from "../../hooks/useCustomToast"
 import { useDebouncedFlush } from "../../hooks/useDebouncedFlush"
 import { formatApiErrorDetail } from "../../util/misc"
@@ -29,6 +27,30 @@ function sameKeyValues(
   right: Record<string, unknown>,
 ) {
   return JSON.stringify(left) === JSON.stringify(right)
+}
+
+// App settings live on the group row. The store autosave must not write them
+// or delete keys this editor never loaded.
+const APP_SETTING_KEYS = new Set([
+  "letter_send_min_responders",
+  "letter_send_min_responder_ratio",
+])
+
+function withoutAppSettings(value: Record<string, unknown>) {
+  const visible: Record<string, unknown> = {}
+  for (const [key, entry] of Object.entries(value)) {
+    if (!APP_SETTING_KEYS.has(key)) {
+      visible[key] = entry
+    }
+  }
+  return visible
+}
+
+function removedKeys(
+  previous: Record<string, unknown>,
+  next: Record<string, unknown>,
+) {
+  return Object.keys(previous).filter((key) => !(key in next))
 }
 
 function GroupStoreSaveStatus({ status }: { status: SaveStatus }) {
@@ -85,14 +107,14 @@ export function GroupKeyValuesTable({
   )
   const [saveStatus, setSaveStatus] = useState<SaveStatus>("idle")
   // Last successfully persisted snapshot — used to roll back optimistic edits
-  // when a full-replace PUT fails (otherwise the editor stays out of sync).
+  // when a save fails (otherwise the editor stays out of sync).
   const lastSavedRef = useRef(cloneKeyValues(keyValues.key_values))
-  // Full-replace PUTs must not overlap: an older in-flight response can
-  // overwrite a newer edit. Keep the latest payload and flush once free.
+  // Saves must not overlap: an older in-flight response can overwrite a newer
+  // edit. Keep the latest payload and flush once free.
   const latestPayloadRef = useRef(cloneKeyValues(keyValues.key_values))
   const saveInFlightRef = useRef(false)
   const pendingFlushRef = useRef(false)
-  // Payload currently being PUTted — becomes lastSaved on success.
+  // Payload currently being saved — becomes lastSaved on success.
   const inFlightPayloadRef = useRef(cloneKeyValues(keyValues.key_values))
   // react-json-view ignores later `src` changes; bump key on rollback to remount.
   const [editorKey, setEditorKey] = useState(0)
@@ -100,18 +122,43 @@ export function GroupKeyValuesTable({
   const queryClient = useQueryClient()
 
   const addKey = useMutation({
-    ...fullReplaceGroupKeyValuesPartiesGroupGroupApiIdKeyValuePutMutation(),
+    mutationFn: async (body: {
+      groupApiId: string
+      next: Record<string, unknown>
+      removed: string[]
+    }) => {
+      // Merge-write the editor snapshot (nulls included). Then delete only
+      // keys this editor had and removed, so keys it never loaded stay.
+      await fullReplaceGroupKeyValuesPartiesGroupGroupApiIdKeyValuePut({
+        path: { group_api_id: body.groupApiId },
+        body: { key_values: body.next },
+        throwOnError: true,
+      })
+      if (body.removed.length === 0) {
+        return
+      }
+      await bulkUpdateGroupKeyValuesPartiesGroupGroupApiIdKeyValueBulkUpdatePost(
+        {
+          path: { group_api_id: body.groupApiId },
+          body: {
+            updates: body.removed.map((key) => ({
+              key,
+              operation: "delete",
+            })),
+          },
+          throwOnError: true,
+        },
+      )
+    },
     onSuccess: () => {
       lastSavedRef.current = cloneKeyValues(inFlightPayloadRef.current)
       if (!pendingFlushRef.current) {
         setSaveStatus("saved")
       }
     },
-    onError: (
-      err: AxiosError<FullReplaceGroupKeyValuesPartiesGroupGroupApiIdKeyValuePutError>,
-    ) => {
-      // The pending payload is a newer full-replace, not a retry of the
-      // failed body. Leave it queued so onSettled can flush it.
+    onError: (err: AxiosError<{ detail?: unknown }>) => {
+      // The pending payload is a newer edit, not a retry of the failed body.
+      // Leave it queued so onSettled can flush it.
       if (pendingFlushRef.current) {
         return
       }
@@ -140,15 +187,14 @@ export function GroupKeyValuesTable({
   })
 
   const flushLatest = useCallback(() => {
-    if (
-      sameKeyValues(latestPayloadRef.current, lastSavedRef.current) &&
-      !saveInFlightRef.current
-    ) {
-      pendingFlushRef.current = false
-      return
-    }
     if (saveInFlightRef.current) {
       pendingFlushRef.current = true
+      return
+    }
+    const previous = withoutAppSettings(lastSavedRef.current)
+    const next = withoutAppSettings(latestPayloadRef.current)
+    if (sameKeyValues(previous, next)) {
+      pendingFlushRef.current = false
       return
     }
     saveInFlightRef.current = true
@@ -156,14 +202,13 @@ export function GroupKeyValuesTable({
     inFlightPayloadRef.current = payload
     setSaveStatus("saving")
     addKey.mutate({
-      path: { group_api_id: groupApiId },
-      body: {
-        key_values: payload,
-      },
+      groupApiId,
+      next,
+      removed: removedKeys(previous, next),
     })
   }, [addKey, groupApiId])
 
-  // Coalesce keystrokes / rapid field edits into one PUT, same window as
+  // Coalesce keystrokes / rapid field edits into one save, same window as
   // draft response autosave. Unmount / pagehide flush covers Store tab switches.
   const { schedule: scheduleSave } = useDebouncedFlush(
     flushLatest,

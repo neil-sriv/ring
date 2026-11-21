@@ -38,11 +38,14 @@ class GroupUpdate(BaseModel):
         min_responder_ratio (float | None): Minimum share of participants who
             must respond before send (0-1). Use 0 to disable deferral. Omit or
             set null to use the default (0.5).
+        min_responders (int | None): Absolute responder count that takes
+            precedence over the ratio. Omit to leave unchanged. Null clears it.
     """
 
     name: str | None = None
     cycle_length: int | None = None
     min_responder_ratio: float | None = None
+    min_responders: int | None = None
 
 
 class AddMembers(BaseModel):
@@ -75,6 +78,8 @@ class Group(GroupBase):
         cycle_length (int): Number of days between letters
         min_responder_ratio (float | None): Configured minimum responder ratio
             (0-1), or null when using the default (0.5)
+        min_responders (int | None): Absolute responder count, or null when
+            the ratio gate is in effect
     """
 
     model_config = ConfigDict(from_attributes=True)
@@ -83,6 +88,7 @@ class Group(GroupBase):
     created_at: AwareDatetime
     cycle_length: int
     min_responder_ratio: float | None = None
+    min_responders: int | None = None
 
 
 class GroupUnlinked(Group):

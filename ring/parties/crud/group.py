@@ -15,7 +15,10 @@ from ring.api_identifier import util as api_identifier_crud
 from ring.letters.constants import DEFAULT_QUESTIONS, LetterStatus
 from ring.letters.crud.default_question import replace_default_questions
 from ring.letters.models.letter_model import Letter
-from ring.letters.send_threshold import set_group_min_responder_ratio
+from ring.letters.send_threshold import (
+    set_group_min_responder_ratio,
+    set_group_min_responders,
+)
 from ring.notifications.crud.dispatch import notify_users
 from ring.parties.models.group_model import Group
 from ring.parties.models.user_model import User
@@ -110,6 +113,23 @@ def update_min_responder_ratio(
         Group: Updated group
     """
     set_group_min_responder_ratio(group, min_responder_ratio)
+    return group
+
+
+def update_min_responders(
+    db: Session, group: Group, min_responders: int | None
+) -> Group:
+    """Update the absolute minimum responder count for letter sends.
+
+    Args:
+        db (Session): Database session
+        group (Group): Group to update
+        min_responders (int | None): Positive count, or None to use the ratio
+
+    Returns:
+        Group: Updated group
+    """
+    set_group_min_responders(group, min_responders)
     return group
 
 
