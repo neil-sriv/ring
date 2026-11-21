@@ -44,6 +44,7 @@ class TestSearchAPI:
         self,
         mock_generate_embedding: MagicMock,
         authenticated_client: TestClient,
+        current_user: User,
         db_session: Session,
     ) -> None:
         """Test performing a dual raw search.
@@ -52,16 +53,24 @@ class TestSearchAPI:
         1. A dual search can be performed
         2. The response contains results from both semantic and keyword search
         3. The results are ordered by relevance
-        4. The response matches the database state
+        4. Only documents linked to models the caller can READ are returned
 
         Args:
             mock_generate_embedding (MagicMock): Mock for embedding generation
             authenticated_client (TestClient): Authenticated test client
+            current_user (User): Authenticated user performing the search
             db_session (Session): Database session
         """
+        users = [UserFactory.create() for _ in range(3)]
+        group = GroupFactory.create()
+        for user in users:
+            group.members.append(user)
+        group.members.append(current_user)
+        db_session.commit()
+
         # Create test documents with different content
         base_embedding = [0.1] * 768
-        for i in range(3):
+        for i, user in enumerate(users):
             doc_embedding = [x + (i * 0.01) for x in base_embedding]
             mock_generate_embedding.return_value = doc_embedding
             document = HybridSearchDocument.create(
@@ -69,7 +78,7 @@ class TestSearchAPI:
                 text_embedding_768=doc_embedding,
             )
             association = HybridSearchDocumentAssociation.create(
-                model_api_identifier=f"test_id_{i}",
+                model_api_identifier=user.api_identifier,
                 model_type=SearchableType.USER.value,
                 hybrid_search_document=document,
             )
@@ -92,6 +101,45 @@ class TestSearchAPI:
             "test" in result["raw_text"] or "keyword" in result["raw_text"]
             for result in data["results"]
         )
+
+    def test_raw_search_filters_unauthorized(
+        self,
+        authenticated_client: TestClient,
+        current_user: User,
+        db_session: Session,
+    ) -> None:
+        """Raw search omits documents linked to groups the caller cannot read."""
+        member_group = GroupFactory.create(
+            admin=current_user, members=[current_user]
+        )
+        hidden_group = GroupFactory.create()
+        create_hybrid_search_document(
+            db_session,
+            raw_text="aardvark shared group notes",
+            model_api_identifier=member_group.api_identifier,
+            model_type=SearchableType.GROUP,
+        )
+        create_hybrid_search_document(
+            db_session,
+            raw_text="aardvark secret group notes",
+            model_api_identifier=hidden_group.api_identifier,
+            model_type=SearchableType.GROUP,
+        )
+        db_session.commit()
+
+        response = authenticated_client.get(
+            "/search/raw-search",
+            params={
+                "query": "aardvark",
+                "search_type": "keyword",
+                "limit": 10,
+            },
+        )
+
+        assert response.status_code == 200
+        texts = [result["raw_text"] for result in response.json()["results"]]
+        assert texts == ["aardvark shared group notes"]
+        assert response.json()["total"] == 1
 
     def test_raw_search_empty_query(
         self,

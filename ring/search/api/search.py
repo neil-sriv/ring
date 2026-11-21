@@ -9,10 +9,8 @@ from ring.fastapp.dependencies import (
     get_request_dependencies,
 )
 from ring.search.crud.hybrid_search import (
-    dual_search_hybrid_search_document,
-    keyword_search_hybrid_search_document,
+    raw_search_documents,
     search,
-    semantic_search_hybrid_search_document,
 )
 from ring.search.models.hybrid_search import SearchableType
 from ring.search.schemas.search import (
@@ -39,8 +37,11 @@ async def raw_search(
         get_request_dependencies,
     ),
 ) -> RawSearchResponse:
-    """
-    Search the search table for a given query.
+    """Search the search table for a given query.
+
+    Hits the caller cannot read are omitted (same authz as ``/search``).
+    ``limit`` is applied after that filter; the SQL window overfetches so a
+    page is not under-filled when unauthorized rows are dropped.
 
     Args:
         query: The search query string
@@ -60,31 +61,35 @@ async def raw_search(
             status_code=400, detail="Search query cannot be empty"
         )
 
-    search_functions = {
-        SearchType.SEMANTIC: semantic_search_hybrid_search_document,
-        SearchType.KEYWORD: keyword_search_hybrid_search_document,
-        SearchType.DUAL: dual_search_hybrid_search_document,
-    }
-
-    if search_type not in search_functions:
+    if search_type not in (
+        SearchType.SEMANTIC,
+        SearchType.KEYWORD,
+        SearchType.DUAL,
+    ):
         raise HTTPException(
             status_code=400,
-            detail=f"Invalid search type. Must be one of: {', '.join(search_functions.keys())}",
+            detail=(
+                "Invalid search type. Must be one of: "
+                f"{', '.join(t.value for t in SearchType)}"
+            ),
         )
 
-    search_func = search_functions[search_type]
-    results = search_func(
+    authorized = raw_search_documents(
         db=req_dep.db,
         query=query,
+        user=req_dep.current_user,
         limit=limit,
+        search_type=search_type,
         group_api_id=group_api_id,
         participant_api_id=participant_api_id,
         sort=sort,
     )
 
     return RawSearchResponse(
-        results=[RawSearchResult.model_validate(result) for result in results],
-        total=len(results),
+        results=[
+            RawSearchResult.model_validate(result) for result in authorized
+        ],
+        total=len(authorized),
     )
 
 

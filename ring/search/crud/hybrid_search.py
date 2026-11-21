@@ -590,6 +590,71 @@ def get_model_ids_from_hybrid_search_documents(
     return ordered_model_ids
 
 
+def filter_hybrid_search_documents_to_authorized(
+    db: Session,
+    user: User,
+    documents: Sequence[HybridSearchDocument],
+) -> list[HybridSearchDocument]:
+    """Drop raw search documents the caller cannot READ via any linked model.
+
+    A document is kept when at least one of its associations hydrates to a
+    model the user may ``READ``. Documents with no associations, or only
+    missing/unauthorized associations, are omitted — same visibility rule as
+    the hydrated ``search`` path.
+    """
+    if not documents:
+        return []
+
+    document_ids = [document.id for document in documents]
+    associations = db.execute(
+        select(
+            HybridSearchDocumentAssociation.hybrid_search_document_id,
+            HybridSearchDocumentAssociation.model_api_identifier,
+            HybridSearchDocumentAssociation.model_type,
+        ).filter(
+            HybridSearchDocumentAssociation.hybrid_search_document_id.in_(
+                document_ids
+            )
+        )
+    ).all()
+
+    model_ids_by_document: dict[int, list[SearchModelReference]] = defaultdict(
+        list
+    )
+    model_ids_by_type: dict[SearchableType, list[str]] = defaultdict(list)
+    seen_by_document: dict[int, set[SearchModelReference]] = defaultdict(set)
+    for document_id, model_api_identifier, model_type in associations:
+        model_reference = (
+            SearchableType(model_type),
+            model_api_identifier,
+        )
+        if model_reference in seen_by_document[document_id]:
+            continue
+        seen_by_document[document_id].add(model_reference)
+        model_ids_by_document[document_id].append(model_reference)
+        model_ids_by_type[model_reference[0]].append(model_api_identifier)
+
+    hydrated_by_api_identifier: dict[str, APIIdentified] = {}
+    for model_type, model_api_identifiers in model_ids_by_type.items():
+        for result in hydrate_results(db, model_type, model_api_identifiers):
+            hydrated_by_api_identifier[result.api_identifier] = result
+
+    ranked_models = list(hydrated_by_api_identifier.values())
+    authorized_ids = {
+        model.api_identifier
+        for model in filter_to_authorized(db, user, Action.READ, ranked_models)
+    }
+
+    return [
+        document
+        for document in documents
+        if any(
+            model_api_identifier in authorized_ids
+            for _, model_api_identifier in model_ids_by_document[document.id]
+        )
+    ]
+
+
 def hydrate_results(
     db: Session,
     model_type: SearchableType,
@@ -613,6 +678,43 @@ def hydrate_results(
         for api_identifier in model_api_identifiers
         if api_identifier in models_by_api_identifier
     ]
+
+
+def raw_search_documents(
+    db: Session,
+    query: str,
+    user: User,
+    limit: int = 10,
+    search_type: SearchType = SearchType.KEYWORD,
+    group_api_id: str | None = None,
+    participant_api_id: str | None = None,
+    sort: SearchSort = SearchSort.RELEVANCE,
+) -> list[HybridSearchDocument]:
+    """Keyword/semantic/dual search with the same READ authz as ``search``.
+
+    Overfetches the SQL window, drops documents the caller cannot read, then
+    returns at most ``limit`` remaining documents in rank order.
+    """
+    # Resolve at call time so the names stay patchable in tests.
+    search_dispatch = {
+        SearchType.SEMANTIC: semantic_search_hybrid_search_document,
+        SearchType.KEYWORD: keyword_search_hybrid_search_document,
+        SearchType.DUAL: dual_search_hybrid_search_document,
+    }
+    if limit <= 0:
+        return []
+
+    search_results = search_dispatch[search_type](
+        db,
+        query,
+        _search_overfetch_limit(limit),
+        group_api_id=group_api_id,
+        participant_api_id=participant_api_id,
+        sort=sort,
+    )
+    return filter_hybrid_search_documents_to_authorized(
+        db, user, search_results
+    )[:limit]
 
 
 def search(
