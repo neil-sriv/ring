@@ -16,6 +16,7 @@ from sqlalchemy.orm import Session
 from ring.letters.constants import LetterStatus
 from ring.parties.models.user_model import User
 from ring.search.crud.hybrid_search import (
+    SEARCH_AUTHZ_OVERFETCH_CAP,
     HybridSearchDocument,
     HybridSearchDocumentAssociation,
     SearchableType,
@@ -44,6 +45,7 @@ class TestSearchAPI:
         self,
         mock_generate_embedding: MagicMock,
         authenticated_client: TestClient,
+        current_user: User,
         db_session: Session,
     ) -> None:
         """Test performing a dual raw search.
@@ -57,11 +59,18 @@ class TestSearchAPI:
         Args:
             mock_generate_embedding (MagicMock): Mock for embedding generation
             authenticated_client (TestClient): Authenticated test client
+            current_user (User): Authenticated user performing the search
             db_session (Session): Database session
         """
+        users = [UserFactory.create() for _ in range(3)]
+        group = GroupFactory.create(admin=current_user, members=[current_user])
+        for user in users:
+            group.members.append(user)
+        db_session.commit()
+
         # Create test documents with different content
         base_embedding = [0.1] * 768
-        for i in range(3):
+        for i, user in enumerate(users):
             doc_embedding = [x + (i * 0.01) for x in base_embedding]
             mock_generate_embedding.return_value = doc_embedding
             document = HybridSearchDocument.create(
@@ -69,7 +78,7 @@ class TestSearchAPI:
                 text_embedding_768=doc_embedding,
             )
             association = HybridSearchDocumentAssociation.create(
-                model_api_identifier=f"test_id_{i}",
+                model_api_identifier=user.api_identifier,
                 model_type=SearchableType.USER.value,
                 hybrid_search_document=document,
             )
@@ -558,3 +567,164 @@ class TestSearchAPI:
         )
         assert denied.status_code == 200
         assert denied.json()["results"] == []
+
+    def test_search_scopes_caller_groups_before_limit(
+        self,
+        authenticated_client: TestClient,
+        current_user: User,
+        db_session: Session,
+    ) -> None:
+        """A caller's page stays full when other groups rank higher.
+
+        User rows have no single group: a member of the caller's group and
+        another group is included, and someone only in the other group is not.
+        """
+        mine = GroupFactory.create(admin=current_user, members=[current_user])
+        foreign = GroupFactory.create()
+        solo = UserFactory.create(name="Solo Member")
+        shared = UserFactory.create(name="Shared Member")
+        foreign_only = UserFactory.create(name="Foreign Only")
+        mine.members.extend([solo, shared])
+        foreign.members.extend([shared, foreign_only])
+        letter = LetterFactory.create(group=mine)
+        responses = []
+        for index in range(5):
+            question = QuestionFactory.create(
+                letter=letter, question_text=f"qxangolin prompt {index}"
+            )
+            responses.append(
+                ResponseFactory.create(
+                    question=question,
+                    participant=current_user,
+                    response_text=f"qxangolin response {index}",
+                )
+            )
+        foreign_letter = LetterFactory.create(group=foreign)
+        foreign_question = QuestionFactory.create(
+            letter=foreign_letter,
+            question_text="qxangolin foreign prompt",
+        )
+        foreign_response = ResponseFactory.create(
+            question=foreign_question,
+            participant=foreign_only,
+            response_text="qxangolin foreign response",
+        )
+
+        def index_model(
+            model, model_type: SearchableType, raw_text: str
+        ) -> None:
+            create_hybrid_search_document(
+                db_session,
+                raw_text=raw_text,
+                model_api_identifier=model.api_identifier,
+                model_type=model_type,
+            )
+
+        mine_question = QuestionFactory.create(
+            letter=letter, question_text="qxangolin mine question"
+        )
+        ranked = [
+            (solo, SearchableType.USER, datetime(2020, 1, 7, tzinfo=UTC)),
+            (shared, SearchableType.USER, datetime(2020, 1, 6, tzinfo=UTC)),
+        ]
+        for response_index, response in enumerate(responses):
+            ranked.append(
+                (
+                    response,
+                    SearchableType.RESPONSE,
+                    datetime(2020, 1, 5 - response_index, tzinfo=UTC),
+                )
+            )
+        ranked.extend(
+            [
+                (
+                    letter,
+                    SearchableType.LETTER,
+                    datetime(2019, 12, 31, tzinfo=UTC),
+                ),
+                (
+                    mine_question,
+                    SearchableType.QUESTION,
+                    datetime(2019, 12, 30, tzinfo=UTC),
+                ),
+            ]
+        )
+        for model, model_type, created_at in ranked:
+            model.created_at = created_at
+            index_model(
+                model,
+                model_type,
+                f"qxangolin {model.api_identifier}",
+            )
+
+        later = datetime(2030, 1, 1, tzinfo=UTC)
+        hidden = (
+            (foreign, SearchableType.GROUP),
+            (foreign_letter, SearchableType.LETTER),
+            (foreign_question, SearchableType.QUESTION),
+            (foreign_response, SearchableType.RESPONSE),
+            (foreign_only, SearchableType.USER),
+        )
+        for model, model_type in hidden:
+            model.created_at = later
+            index_model(
+                model,
+                model_type,
+                f"qxangolin hidden {model.api_identifier}",
+            )
+        for _ in range(SEARCH_AUTHZ_OVERFETCH_CAP + 1):
+            outsider = UserFactory.create()
+            outsider.created_at = later
+            index_model(outsider, SearchableType.USER, "qxangolin outsider")
+        db_session.commit()
+
+        ranked_ids = [model.api_identifier for model, _, _ in ranked]
+        page_size = 5
+
+        def page(offset: int) -> list[str]:
+            response = authenticated_client.get(
+                "/search/search",
+                params={
+                    "query": "qxangolin",
+                    "search_type": "keyword",
+                    "sort": SearchSort.CREATED_AT_DESC.value,
+                    "limit": page_size,
+                    "offset": offset,
+                },
+            )
+            assert response.status_code == 200
+            body = response.json()
+            assert body["total"] == len(body["results"])
+            return [hit["api_identifier"] for hit in body["results"]]
+
+        assert page(0) == ranked_ids[:page_size]
+        assert page(page_size) == ranked_ids[page_size:]
+
+        raw_page = authenticated_client.get(
+            "/search/raw-search",
+            params={
+                "query": "qxangolin",
+                "search_type": "keyword",
+                "sort": SearchSort.CREATED_AT_DESC.value,
+                "limit": page_size,
+            },
+        )
+        assert raw_page.status_code == 200
+        assert raw_page.json()["total"] == page_size
+        assert [row["raw_text"] for row in raw_page.json()["results"]] == [
+            f"qxangolin {api_id}" for api_id in ranked_ids[:page_size]
+        ]
+
+        raw_all = authenticated_client.get(
+            "/search/raw-search",
+            params={
+                "query": "qxangolin",
+                "search_type": "keyword",
+                "sort": SearchSort.CREATED_AT_DESC.value,
+                "limit": len(ranked_ids) + 5,
+            },
+        )
+        assert raw_all.status_code == 200
+        assert [row["raw_text"] for row in raw_all.json()["results"]] == [
+            f"qxangolin {api_id}" for api_id in ranked_ids
+        ]

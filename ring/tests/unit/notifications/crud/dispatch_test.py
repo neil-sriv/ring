@@ -5,7 +5,8 @@ from __future__ import annotations
 from datetime import UTC, datetime, timedelta
 from unittest.mock import patch
 
-import pytest
+import requests
+from loguru import logger
 from sqlalchemy.orm import Session
 
 from ring.letters.constants import LetterStatus
@@ -13,6 +14,7 @@ from ring.letters.crud import letter as letter_crud
 from ring.notifications.crud.dispatch import notify_users
 from ring.notifications.crud.inbox import list_inbox_items
 from ring.notifications.crud.links import inbox_href
+from ring.notifications.crud.vapid import PUSH_REQUEST_TIMEOUT_SECONDS
 from ring.notifications.models.subscription import Subscription
 from ring.parties.crud import group as group_crud
 from ring.tasks.crud import task as task_crud
@@ -84,6 +86,8 @@ class TestNotifyUsers:
                 body="You were added to Family",
                 target_api_id="grp_abc",
             )
+            send_push.assert_not_called()
+            db_session.commit()
 
         send_push.assert_called_once()
         payload = send_push.call_args.args[1]
@@ -112,7 +116,112 @@ class TestNotifyUsers:
                 body="Ready",
                 target_api_id="lttr_abc",
             )
+            db_session.commit()
 
+        assert len(list_inbox_items(db_session, user)) == 1
+
+    def test_rollback_sends_no_push(self, db_session: Session) -> None:
+        user = UserFactory.create()
+        db_session.add(
+            Subscription.create(
+                endpoint="https://push.example/rollback",
+                keys={"p256dh": "key", "auth": "auth"},
+                user=user,
+            )
+        )
+        db_session.flush()
+
+        with patch(
+            "ring.notifications.crud.dispatch.send_push_notification"
+        ) as send_push:
+            notify_users(
+                db_session,
+                [user],
+                title="New letter",
+                body="Ready",
+                target_api_id="lttr_abc",
+            )
+            assert len(list_inbox_items(db_session, user)) == 1
+            send_push.assert_not_called()
+            db_session.rollback()
+            db_session.commit()
+
+        send_push.assert_not_called()
+
+    def test_push_timeout_does_not_fail_commit(
+        self, db_session: Session
+    ) -> None:
+        user = UserFactory.create()
+        db_session.add(
+            Subscription.create(
+                endpoint="https://push.example/timeout",
+                keys={"p256dh": "key", "auth": "auth"},
+                user=user,
+            )
+        )
+        db_session.flush()
+        seen: dict[str, object] = {}
+
+        def _timeout(*args: object, **kwargs: object) -> None:
+            seen["timeout"] = kwargs.get("timeout")
+            raise requests.exceptions.Timeout("timed out")
+
+        with patch(
+            "ring.notifications.crud.vapid.webpush", side_effect=_timeout
+        ):
+            notify_users(
+                db_session,
+                [user],
+                title="New letter",
+                body="Ready",
+                target_api_id="lttr_abc",
+            )
+            db_session.commit()
+
+        assert seen["timeout"] == PUSH_REQUEST_TIMEOUT_SECONDS
+        assert len(list_inbox_items(db_session, user)) == 1
+
+    def test_push_failure_logs_user_id(self, db_session: Session) -> None:
+        endpoint = "https://push.example/fail-endpoint"
+        p256dh = "p256dh-secret-value"
+        auth = "auth-secret-value"
+        user = UserFactory.create()
+        db_session.add(
+            Subscription.create(
+                endpoint=endpoint,
+                keys={"p256dh": p256dh, "auth": auth},
+                user=user,
+            )
+        )
+        db_session.flush()
+
+        def _fail(*args: object, **kwargs: object) -> None:
+            raise requests.exceptions.Timeout(
+                f"timed out {endpoint} {p256dh} {auth}"
+            )
+
+        captured: list[str] = []
+        handler_id = logger.add(lambda message: captured.append(str(message)))
+        try:
+            with patch(
+                "ring.notifications.crud.vapid.webpush", side_effect=_fail
+            ):
+                notify_users(
+                    db_session,
+                    [user],
+                    title="New letter",
+                    body="Ready",
+                    target_api_id="lttr_abc",
+                )
+                db_session.commit()
+        finally:
+            logger.remove(handler_id)
+
+        logged = "\n".join(captured)
+        assert user.api_identifier in logged
+        assert endpoint not in logged
+        assert p256dh not in logged
+        assert auth not in logged
         assert len(list_inbox_items(db_session, user)) == 1
 
 
