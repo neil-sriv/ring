@@ -13,33 +13,37 @@ from pywebpush import WebPushException, webpush  # type: ignore
 
 from ring.fastapp.config import get_config
 from ring.notifications.crud.subscription import serialize_subscription_info
-from ring.notifications.models.subscription import Subscription
 from ring.parties.models.user_model import User
+
+# Push services normally answer in well under a second. Cap the request so
+# a hung endpoint cannot block the caller indefinitely.
+PUSH_REQUEST_TIMEOUT_SECONDS = 10.0
 
 
 def send_push_notification(
-    subscription_info: Subscription, payload: dict[str, str]
+    subscription_info: dict[str, str], payload: dict[str, str]
 ) -> None:
-    """Send a web push notification to a specific subscription.
+    """Send a web push notification to one subscription.
+
+    Failures, including timeouts, are logged and not raised.
 
     Args:
-        subscription_info (Subscription): Subscription to send notification to
+        subscription_info (dict[str, str]): pywebpush subscription dict
         payload (dict[str, str]): Data to send in the notification
-
-    Raises:
-        WebPushException: If sending the notification fails
     """
     try:
-        # Perform web push
         response = webpush(
-            subscription_info=serialize_subscription_info(subscription_info),  # type: ignore
+            subscription_info=subscription_info,  # type: ignore
             data=json.dumps(payload),
             vapid_private_key=get_config().VAPID_PRIVATE_KEY,
             vapid_claims={"sub": "mailto:neilsriv.cs+vapid@gmail.com"},
+            timeout=PUSH_REQUEST_TIMEOUT_SECONDS,
         )
         logger.info(f"Push notification sent successfully: {response}")
-    except WebPushException as e:
-        logger.error(f"Error sending push notification: {e}")
+    except WebPushException as exc:
+        logger.error(f"Error sending push notification: {exc}")
+    except Exception:
+        logger.exception("Error sending push notification")
 
 
 def send_push_notification_to_user(
@@ -55,4 +59,7 @@ def send_push_notification_to_user(
         IndexError: If user has no subscriptions
     """
     newest_subscription = user.notification_subscriptions[-1]
-    send_push_notification(newest_subscription, payload)
+    send_push_notification(
+        serialize_subscription_info(newest_subscription),
+        payload,
+    )
