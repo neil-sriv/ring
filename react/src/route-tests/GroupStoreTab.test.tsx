@@ -3,9 +3,9 @@ import { act, cleanup, fireEvent, render, screen } from "@testing-library/react"
 import { Suspense, useState } from "react"
 import { afterEach, describe, expect, it, vi } from "vitest"
 
-import { readGroupKeyValuesPartiesGroupGroupApiIdKeyValueGetQueryKey } from "../../../../client/@tanstack/react-query.gen"
-import { client } from "../../../../client/client.gen"
-import { GroupStoreTab } from "./loops"
+import { readGroupKeyValuesPartiesGroupGroupApiIdKeyValueGetQueryKey } from "../client/@tanstack/react-query.gen"
+import { client } from "../client/client.gen"
+import { GroupStoreTab } from "../routes/_layout/groups_/$groupId/loops"
 
 const GROUP_A = "grp_a"
 const GROUP_B = "grp_b"

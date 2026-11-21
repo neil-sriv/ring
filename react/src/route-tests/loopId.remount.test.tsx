@@ -7,7 +7,7 @@ import {
 import { act, cleanup, fireEvent, render, screen } from "@testing-library/react"
 import { afterEach, describe, expect, it, vi } from "vitest"
 
-import type { GroupLinked, PublicLetter, UserLinked } from "../../../client"
+import type { GroupLinked, PublicLetter, UserLinked } from "../client"
 import {
   getUnreadCountNotificationsInboxUnreadCountGetQueryKey,
   listDashboardLettersLettersLettersDashboardGetQueryKey,
@@ -15,9 +15,9 @@ import {
   readLetterLettersLetterLetterApiIdGetQueryKey,
   readSpotifyStatusSpotifyStatusGetQueryKey,
   readUserMePartiesMeGetQueryKey,
-} from "../../../client/@tanstack/react-query.gen"
-import { client } from "../../../client/client.gen"
-import { routeTree } from "../../../routeTree.gen"
+} from "../client/@tanstack/react-query.gen"
+import { client } from "../client/client.gen"
+import { routeTree } from "../routeTree.gen"
 
 const LOOP_A = "lttr_a"
 const LOOP_B = "lttr_b"

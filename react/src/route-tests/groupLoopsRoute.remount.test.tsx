@@ -7,7 +7,7 @@ import {
 import { act, cleanup, fireEvent, render, screen } from "@testing-library/react"
 import { afterEach, describe, expect, it, vi } from "vitest"
 
-import type { GroupLinked, UserLinked } from "../../../../client"
+import type { GroupLinked, UserLinked } from "../client"
 import {
   getUnreadCountNotificationsInboxUnreadCountGetQueryKey,
   listDashboardLettersLettersLettersDashboardGetQueryKey,
@@ -15,9 +15,9 @@ import {
   readGroupPartiesGroupGroupApiIdGetQueryKey,
   readSpotifyStatusSpotifyStatusGetQueryKey,
   readUserMePartiesMeGetQueryKey,
-} from "../../../../client/@tanstack/react-query.gen"
-import { client } from "../../../../client/client.gen"
-import { routeTree } from "../../../../routeTree.gen"
+} from "../client/@tanstack/react-query.gen"
+import { client } from "../client/client.gen"
+import { routeTree } from "../routeTree.gen"
 
 const GROUP_A = "grp_a"
 const GROUP_B = "grp_b"
