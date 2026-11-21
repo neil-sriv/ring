@@ -721,9 +721,10 @@ def letter_email_title(letter: Letter) -> str:
 def lock_letter_for_update(db: Session, letter_id: int) -> Letter:
     """Lock a letter row and return the current database state.
 
-    Sending paths take this lock before they decide to email. The lock
-    is held until the caller commits, so a scheduled send and an admin
-    send-now cannot both pass the in-progress check.
+    ``send_letter_now``, ``execute_send_email_task``, and postpend all
+    take this lock before emailing and hold it until they commit,
+    including across the provider call. Dropping it on one of those
+    paths lets that path email a letter another path already sent.
     """
     return db.scalars(
         select(Letter)
@@ -967,8 +968,10 @@ def postpend_upcoming_letters_with_session(
     sending, deferring, and marking the letter SENT, and touching the letter
     here would race it. Letters below the responder send threshold are left
     in progress and have their send date deferred. What remains are overdue
-    letters whose send task failed or never delivered: those are emailed and
-    marked SENT here, and the group's next letter is created when missing.
+    letters whose send task failed or never delivered: those are locked,
+    emailed, and marked SENT here, and the group's next letter is created
+    when missing. A letter already sent by an admin or the scheduled task
+    is left alone.
     """
     letters = db.scalars(select(Letter).where(Letter.id.in_(letter_ids))).all()
     for letter in letters:
@@ -992,9 +995,17 @@ def postpend_upcoming_letters_with_session(
             continue
         if hold_letter_for_send_threshold(db, letter):
             continue
-        if not send_letter_email(db, letter):
+        locked = lock_letter_for_update(db, letter.id)
+        if locked.status != LetterStatus.IN_PROGRESS:
+            logger.info(
+                "Not postpending letter {}: status is {}".format(
+                    locked.id, locked.status
+                )
+            )
             continue
-        advance_cyclic_letter(db, letter.group, after=letter)
+        if not send_letter_email(db, locked):
+            continue
+        advance_cyclic_letter(db, locked.group, after=locked)
     db.commit()
 
 
