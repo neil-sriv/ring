@@ -324,6 +324,63 @@ def _group_scope_clause(group_api_id: str):
     )
 
 
+def _caller_groups_scope_clause(group_api_ids: Sequence[str]):
+    """Keep entities reachable through the caller's groups.
+
+    Letters, questions, and responses each belong to one group. A user
+    does not: g2 links that row to every group they belong to, so a user
+    document matches when they share any of these groups.
+    """
+    if not group_api_ids:
+        return false()
+
+    def group_pk_ids():
+        return select(Group.id).where(Group.api_identifier.in_(group_api_ids))
+
+    letter_ids = select(Letter.api_identifier).where(
+        Letter.group_id.in_(group_pk_ids())
+    )
+    question_ids = (
+        select(Question.api_identifier)
+        .join(Question.letter)
+        .where(Letter.group_id.in_(group_pk_ids()))
+    )
+    response_ids = (
+        select(Response.api_identifier)
+        .join(Response.question)
+        .join(Question.letter)
+        .where(Letter.group_id.in_(group_pk_ids()))
+    )
+    member_ids = (
+        select(User.api_identifier)
+        .join(User.groups)
+        .where(Group.api_identifier.in_(group_api_ids))
+    )
+    association = HybridSearchDocumentAssociation
+    return or_(
+        and_(
+            association.model_type == SearchableType.GROUP.value,
+            association.model_api_identifier.in_(group_api_ids),
+        ),
+        and_(
+            association.model_type == SearchableType.LETTER.value,
+            association.model_api_identifier.in_(letter_ids),
+        ),
+        and_(
+            association.model_type == SearchableType.QUESTION.value,
+            association.model_api_identifier.in_(question_ids),
+        ),
+        and_(
+            association.model_type == SearchableType.RESPONSE.value,
+            association.model_api_identifier.in_(response_ids),
+        ),
+        and_(
+            association.model_type == SearchableType.USER.value,
+            association.model_api_identifier.in_(member_ids),
+        ),
+    )
+
+
 def _participant_scope_clause(participant_api_id: str):
     """Match responses written by this participant.
 
@@ -348,6 +405,7 @@ def _apply_parsed_search_filters(
     model_types: Sequence[SearchableType] | None,
     group_api_id: str | None = None,
     participant_api_id: str | None = None,
+    caller_group_api_ids: Sequence[str] | None = None,
 ) -> Query[HybridSearchDocument]:
     db_query = _filter_to_model_types(db_query, model_types)
     if parsed.match_nothing:
@@ -360,6 +418,8 @@ def _apply_parsed_search_filters(
         clauses.append(_group_scope_clause(group_api_id))
     if participant_api_id:
         clauses.append(_participant_scope_clause(participant_api_id))
+    if caller_group_api_ids is not None:
+        clauses.append(_caller_groups_scope_clause(caller_group_api_ids))
     if not clauses:
         return db_query
     return db_query.filter(
@@ -427,6 +487,7 @@ def semantic_search_hybrid_search_document(
     group_api_id: str | None = None,
     participant_api_id: str | None = None,
     sort: SearchSort = SearchSort.RELEVANCE,
+    caller_group_api_ids: Sequence[str] | None = None,
 ) -> list[HybridSearchDocument]:
     parsed = parse_search_query(query)
     text = _tsquery_safe_text(parsed.text)
@@ -439,6 +500,7 @@ def semantic_search_hybrid_search_document(
         model_types,
         group_api_id=group_api_id,
         participant_api_id=participant_api_id,
+        caller_group_api_ids=caller_group_api_ids,
     )
     if not text:
         return _ordered_search_results(
@@ -466,6 +528,7 @@ def keyword_search_hybrid_search_document(
     group_api_id: str | None = None,
     participant_api_id: str | None = None,
     sort: SearchSort = SearchSort.RELEVANCE,
+    caller_group_api_ids: Sequence[str] | None = None,
 ) -> list[HybridSearchDocument]:
     parsed = parse_search_query(query)
     text = _tsquery_safe_text(parsed.text)
@@ -480,6 +543,7 @@ def keyword_search_hybrid_search_document(
         model_types,
         group_api_id=group_api_id,
         participant_api_id=participant_api_id,
+        caller_group_api_ids=caller_group_api_ids,
     )
     if not text:
         return _ordered_search_results(
@@ -510,6 +574,7 @@ def dual_search_hybrid_search_document(
     group_api_id: str | None = None,
     participant_api_id: str | None = None,
     sort: SearchSort = SearchSort.RELEVANCE,
+    caller_group_api_ids: Sequence[str] | None = None,
 ) -> list[HybridSearchDocument]:
     parsed = parse_search_query(query)
     text = _tsquery_safe_text(parsed.text)
@@ -522,6 +587,7 @@ def dual_search_hybrid_search_document(
         model_types,
         group_api_id=group_api_id,
         participant_api_id=participant_api_id,
+        caller_group_api_ids=caller_group_api_ids,
     )
     if not text:
         return _ordered_search_results(
@@ -615,6 +681,105 @@ def hydrate_results(
     ]
 
 
+def _member_group_api_ids(db: Session, user: User) -> list[str]:
+    return list(
+        db.execute(
+            select(Group.api_identifier)
+            .join(Group.members)
+            .where(User.api_identifier == user.api_identifier)
+        )
+        .scalars()
+        .all()
+    )
+
+
+def _filter_documents_to_authorized(
+    db: Session,
+    user: User,
+    documents: Sequence[HybridSearchDocument],
+) -> list[HybridSearchDocument]:
+    """Drop documents with no linked model the caller can read."""
+    if not documents:
+        return []
+
+    document_ids = [document.id for document in documents]
+    associations = db.execute(
+        select(
+            HybridSearchDocumentAssociation.hybrid_search_document_id,
+            HybridSearchDocumentAssociation.model_api_identifier,
+            HybridSearchDocumentAssociation.model_type,
+        ).where(
+            HybridSearchDocumentAssociation.hybrid_search_document_id.in_(
+                document_ids
+            )
+        )
+    ).all()
+
+    api_ids_by_document: dict[int, list[str]] = defaultdict(list)
+    api_ids_by_type: dict[SearchableType, list[str]] = defaultdict(list)
+    for document_id, model_api_identifier, model_type in associations:
+        api_ids_by_document[document_id].append(model_api_identifier)
+        api_ids_by_type[SearchableType(model_type)].append(
+            model_api_identifier
+        )
+
+    hydrated: dict[str, APIIdentified] = {}
+    for model_type, model_api_identifiers in api_ids_by_type.items():
+        for result in hydrate_results(db, model_type, model_api_identifiers):
+            hydrated[result.api_identifier] = result
+
+    authorized_ids = {
+        model.api_identifier
+        for model in filter_to_authorized(
+            db, user, Action.READ, list(hydrated.values())
+        )
+    }
+    return [
+        document
+        for document in documents
+        if any(
+            api_identifier in authorized_ids
+            for api_identifier in api_ids_by_document[document.id]
+        )
+    ]
+
+
+def raw_search_documents(
+    db: Session,
+    query: str,
+    user: User,
+    limit: int = 10,
+    search_type: SearchType = SearchType.KEYWORD,
+    group_api_id: str | None = None,
+    participant_api_id: str | None = None,
+    sort: SearchSort = SearchSort.RELEVANCE,
+) -> list[HybridSearchDocument]:
+    """Search scoped to the caller's groups, then the read backstop.
+
+    Rank and limit run on that SQL scope. ``filter_to_authorized`` still
+    drops a document whose linked models the caller cannot read.
+    """
+    # Resolve at call time so the names stay patchable in tests.
+    search_dispatch = {
+        SearchType.SEMANTIC: semantic_search_hybrid_search_document,
+        SearchType.KEYWORD: keyword_search_hybrid_search_document,
+        SearchType.DUAL: dual_search_hybrid_search_document,
+    }
+    if limit <= 0:
+        return []
+
+    documents = search_dispatch[search_type](
+        db,
+        query,
+        _search_overfetch_limit(limit),
+        group_api_id=group_api_id,
+        participant_api_id=participant_api_id,
+        sort=sort,
+        caller_group_api_ids=_member_group_api_ids(db, user),
+    )
+    return _filter_documents_to_authorized(db, user, documents)[:limit]
+
+
 def search(
     db: Session,
     query: str,
@@ -639,10 +804,9 @@ def search(
 
     query = expand_author_me(query, user.email)
 
-    # Offset pagination is applied after authz filtering, so every page must
-    # re-fetch the raw window covering [0, offset + limit) and slice.
-    # Group, responder, and time sort are applied in that SQL window so a
-    # later page is not filled with rows the filters would have dropped.
+    # Rank and limit only the caller's groups. filter_to_authorized is the
+    # backstop; the overfetch window covers rows it still drops. Offset
+    # pages re-fetch [0, offset + limit) and slice after that filter.
     search_results = search_dispatch[search_type](
         db,
         query,
@@ -651,6 +815,7 @@ def search(
         group_api_id=group_api_id,
         participant_api_id=participant_api_id,
         sort=sort,
+        caller_group_api_ids=_member_group_api_ids(db, user),
     )
     model_references = get_model_ids_from_hybrid_search_documents(
         db, search_results
