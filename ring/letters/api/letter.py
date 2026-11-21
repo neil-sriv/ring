@@ -54,6 +54,8 @@ _CANNOT_ADD_QUESTION_SENT = (
 _CANNOT_ADD_QUESTION_CUTOFF = (
     "It's too close to the send time to add a question."
 )
+_CANNOT_MARK_SENT_VIA_EDIT = "Cannot mark a letter sent by editing it"
+_LETTER_EMAIL_NOT_ACCEPTED = "Letter email was not accepted"
 
 
 def _assert_no_live_letter(
@@ -305,9 +307,10 @@ async def edit_letter(
 
     Raises:
         HTTPException: If the caller is not the group admin, the letter was
-            already sent, a cyclic in-progress loop is moved back to
-            upcoming, the send time is invalid, or another cyclic letter
-            already has the requested status
+            already sent, the update sets status to SENT, a cyclic
+            in-progress loop is moved back to upcoming, the send time is
+            invalid, or another cyclic letter already has the requested
+            status
         PermissionError: If the letter is missing or the caller cannot read it
     """
     db_letter = cast(
@@ -326,6 +329,11 @@ async def edit_letter(
         raise HTTPException(
             status_code=400,
             detail="Cannot edit a sent letter",
+        )
+    if letter.status == LetterStatus.SENT:
+        raise HTTPException(
+            status_code=400,
+            detail=_CANNOT_MARK_SENT_VIA_EDIT,
         )
     if letter.send_at:
         curr_time = datetime.now(tz=UTC)
@@ -376,6 +384,62 @@ async def edit_letter(
     )
     req_dep.db.commit()
     return db_letter
+
+
+@router.post(
+    "/letter/{letter_api_id}:send_now",
+    response_model=LetterSchema,
+)
+async def send_letter_now(
+    letter_api_id: str,
+    req_dep: AuthenticatedRequestDependencies = Depends(
+        get_request_dependencies,
+    ),
+) -> Letter:
+    """Send an in-progress letter immediately.
+
+    Group admin only. Skips the responder threshold and the automatic
+    deferral gate, then emails the letter and advances the cyclic loop.
+    A letter that is already SENT is returned unchanged.
+
+    Args:
+        letter_api_id (str): API identifier of the letter to send
+        req_dep (AuthenticatedRequestDependencies): Request dependencies
+
+    Returns:
+        Letter: The sent letter
+
+    Raises:
+        HTTPException: If the caller is not the group admin, the letter
+            is not in progress, or the email provider rejects the send
+        PermissionError: If the letter is missing or the caller cannot
+            read it
+    """
+    db_letter = cast(
+        Letter,
+        load_and_check(
+            req_dep.db,
+            req_dep.current_user,
+            Action.READ,
+            letter_api_id,
+        ),
+    )
+    _require_group_admin(
+        req_dep.current_user,
+        db_letter.group,
+        "send this letter now",
+    )
+    try:
+        sent = letter_crud.send_letter_now(req_dep.db, db_letter)
+    except ValueError as error:
+        raise HTTPException(status_code=400, detail=str(error)) from error
+    if sent.status != LetterStatus.SENT:
+        raise HTTPException(
+            status_code=400,
+            detail=_LETTER_EMAIL_NOT_ACCEPTED,
+        )
+    req_dep.db.commit()
+    return sent
 
 
 @router.post(

@@ -2067,6 +2067,33 @@ export type EditLetterLettersLetterLetterApiIdEditLetterPostResponses = {
 
 export type EditLetterLettersLetterLetterApiIdEditLetterPostResponse = EditLetterLettersLetterLetterApiIdEditLetterPostResponses[keyof EditLetterLettersLetterLetterApiIdEditLetterPostResponses];
 
+export type SendLetterNowLettersLetterLetterApiIdSendNowPostData = {
+    body?: never;
+    path: {
+        letter_api_id: string;
+    };
+    query?: never;
+    url: '/letters/letter/{letter_api_id}:send_now';
+};
+
+export type SendLetterNowLettersLetterLetterApiIdSendNowPostErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type SendLetterNowLettersLetterLetterApiIdSendNowPostError = SendLetterNowLettersLetterLetterApiIdSendNowPostErrors[keyof SendLetterNowLettersLetterLetterApiIdSendNowPostErrors];
+
+export type SendLetterNowLettersLetterLetterApiIdSendNowPostResponses = {
+    /**
+     * Successful Response
+     */
+    200: PublicLetter;
+};
+
+export type SendLetterNowLettersLetterLetterApiIdSendNowPostResponse = SendLetterNowLettersLetterLetterApiIdSendNowPostResponses[keyof SendLetterNowLettersLetterLetterApiIdSendNowPostResponses];
+
 export type AddQuestionLettersLetterLetterApiIdAddQuestionPostData = {
     body: QuestionCreate;
     path: {

@@ -14,6 +14,7 @@ import EditLetter from "../../../components/Loops/EditLoop"
 import { LoopQuestionActions } from "../../../components/Loops/LoopQuestionActions"
 import { LoopReplyTracker } from "../../../components/Loops/LoopReplyTracker"
 import PublishedLoop from "../../../components/Loops/PublishedLoop"
+import { SendLetterNow } from "../../../components/Loops/SendLetterNow"
 import { AddSongsToSpotify } from "../../../components/Spotify/AddSongsToSpotify"
 
 type IssueLoaderProps = {
@@ -105,9 +106,12 @@ function IssueContent() {
             )}
           </div>
           {isGroupAdmin && loop.status !== "SENT" && (
-            <Button variant="outline" onClick={() => setEditLoopOpen(true)}>
-              Edit Loop
-            </Button>
+            <div className="flex shrink-0 flex-wrap items-center justify-end gap-2">
+              <SendLetterNow loop={loop} isGroupAdmin={isGroupAdmin} />
+              <Button variant="outline" onClick={() => setEditLoopOpen(true)}>
+                Edit Loop
+              </Button>
+            </div>
           )}
         </div>
       </header>

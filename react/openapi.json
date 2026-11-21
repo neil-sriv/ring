@@ -1898,6 +1898,54 @@
         }
       }
     },
+    "/letters/letter/{letter_api_id}:send_now": {
+      "post": {
+        "tags": [
+          "letters"
+        ],
+        "summary": "Send Letter Now",
+        "description": "Send an in-progress letter immediately.\n\nGroup admin only. Skips the responder threshold and the automatic\ndeferral gate, then emails the letter and advances the cyclic loop.\nA letter that is already SENT is returned unchanged.\n\nArgs:\n    letter_api_id (str): API identifier of the letter to send\n    req_dep (AuthenticatedRequestDependencies): Request dependencies\n\nReturns:\n    Letter: The sent letter\n\nRaises:\n    HTTPException: If the caller is not the group admin, the letter\n        is not in progress, or the email provider rejects the send\n    PermissionError: If the letter is missing or the caller cannot\n        read it",
+        "operationId": "send_letter_now_letters_letter__letter_api_id__send_now_post",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "letter_api_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Letter Api Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PublicLetter"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/letters/letter/{letter_api_id}:add_question": {
       "post": {
         "tags": [

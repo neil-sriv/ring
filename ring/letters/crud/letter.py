@@ -269,7 +269,8 @@ def edit_letter(
 
     ``reset_automatic_send_deferrals`` is for a person choosing a new
     ``send_at``. Automatic deferrals call this without the flag so they
-    keep the counter, then increment it themselves.
+    keep the counter, then increment it themselves. ``status`` of SENT is
+    rejected; sending a letter is not an edit.
 
     Args:
         db (Session): Database session
@@ -284,6 +285,8 @@ def edit_letter(
         letter.send_at = send_at
         if reset_automatic_send_deferrals:
             letter.automatic_send_deferral_count = 0
+    if status == LetterStatus.SENT:
+        raise ValueError("Cannot mark a letter sent by editing it")
     if status:
         previous_status = letter.status
         letter.status = status
@@ -715,6 +718,42 @@ def letter_email_title(letter: Letter) -> str:
     return f"Ring Newsletter {display} for {letter.group.name}"
 
 
+def lock_letter_for_update(db: Session, letter_id: int) -> Letter:
+    """Lock a letter row and return the current database state.
+
+    ``send_letter_now``, ``execute_send_email_task``, and postpend all
+    take this lock before emailing and hold it until they commit,
+    including across the provider call. Dropping it on one of those
+    paths lets that path email a letter another path already sent.
+    """
+    return db.scalars(
+        select(Letter)
+        .where(Letter.id == letter_id)
+        .with_for_update()
+        .execution_options(populate_existing=True)
+    ).one()
+
+
+def send_letter_now(db: Session, letter: Letter) -> Letter:
+    """Send an in-progress letter, skipping the responder gate.
+
+    Locks the letter. A letter that is already SENT is returned
+    unchanged, so a second call does not email again. Any other status
+    raises ValueError. When the email provider rejects the send, the
+    letter stays IN_PROGRESS. On success the cyclic loop advances the
+    same way the scheduled send does after its gate.
+    """
+    locked = lock_letter_for_update(db, letter.id)
+    if locked.status == LetterStatus.SENT:
+        return locked
+    if locked.status != LetterStatus.IN_PROGRESS:
+        raise ValueError("Only an in-progress letter can be sent now")
+    if not send_letter_email(db, locked):
+        return locked
+    advance_cyclic_letter(db, locked.group, after=locked)
+    return locked
+
+
 def send_letter_email(db: Session, letter: Letter) -> bool:
     """Email a letter to its participants and mark it SENT on success.
 
@@ -929,8 +968,10 @@ def postpend_upcoming_letters_with_session(
     sending, deferring, and marking the letter SENT, and touching the letter
     here would race it. Letters below the responder send threshold are left
     in progress and have their send date deferred. What remains are overdue
-    letters whose send task failed or never delivered: those are emailed and
-    marked SENT here, and the group's next letter is created when missing.
+    letters whose send task failed or never delivered: those are locked,
+    emailed, and marked SENT here, and the group's next letter is created
+    when missing. A letter already sent by an admin or the scheduled task
+    is left alone.
     """
     letters = db.scalars(select(Letter).where(Letter.id.in_(letter_ids))).all()
     for letter in letters:
@@ -954,9 +995,17 @@ def postpend_upcoming_letters_with_session(
             continue
         if hold_letter_for_send_threshold(db, letter):
             continue
-        if not send_letter_email(db, letter):
+        locked = lock_letter_for_update(db, letter.id)
+        if locked.status != LetterStatus.IN_PROGRESS:
+            logger.info(
+                "Not postpending letter {}: status is {}".format(
+                    locked.id, locked.status
+                )
+            )
             continue
-        advance_cyclic_letter(db, letter.group, after=letter)
+        if not send_letter_email(db, locked):
+            continue
+        advance_cyclic_letter(db, locked.group, after=locked)
     db.commit()
 
 
