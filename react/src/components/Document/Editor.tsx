@@ -377,11 +377,17 @@ function MenuBar({ editor }: { editor: Editor }) {
 }
 
 type CollabSession = {
+  docId: string
   ydoc: Y.Doc
   provider: WebsocketProvider
 }
 
-/** Create one Y.Doc + WebSocket provider per document (StrictMode-safe). */
+/**
+ * Create one Y.Doc + WebSocket provider per document (StrictMode-safe).
+ * A new docId keeps returning null until that document's session exists.
+ * The effect cleanup that drops the previous session runs after render, so
+ * without this check the next editor would mount on the previous Y.Doc.
+ */
 function useCollabSession(
   docId: string,
   onConnectionChange?: (status: NotebookWsStatus) => void,
@@ -413,7 +419,7 @@ function useCollabSession(
       }
     })
 
-    setSession({ ydoc, provider })
+    setSession({ docId, ydoc, provider })
     return () => {
       setSession(null)
       provider.destroy()
@@ -421,7 +427,7 @@ function useCollabSession(
     }
   }, [docId])
 
-  return session
+  return session?.docId === docId ? session : null
 }
 
 export const CollabEditor: React.FC<{
@@ -442,7 +448,7 @@ export const CollabEditor: React.FC<{
 }) => {
   const session = useCollabSession(docId, onConnectionChange)
 
-  if (!session) {
+  if (!session || session.docId !== docId) {
     return (
       <div className="py-8 text-center text-sm text-muted-foreground">
         Initializing editor...
@@ -482,6 +488,8 @@ const CollabEditorInner: React.FC<{
   const { data: me } = useQuery({ ...readUserMePartiesMeGetOptions({}) })
   const editingTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const saveTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const pendingProjectionSaveRef = useRef<(() => void) | null>(null)
+  const flushPendingProjectionSaveRef = useRef<() => void>(() => {})
   const hasSeededRef = useRef(false)
   const syncGenerationRef = useRef(0)
   // TipTap caches onUpdate from the initial useEditor call; keep callbacks
@@ -494,6 +502,15 @@ const CollabEditorInner: React.FC<{
   onEditingChangeRef.current = onEditingChange
   onSyncErrorRef.current = onSyncError
   queryClientRef.current = queryClient
+  flushPendingProjectionSaveRef.current = () => {
+    if (saveTimeoutRef.current) {
+      clearTimeout(saveTimeoutRef.current)
+      saveTimeoutRef.current = null
+    }
+    const pending = pendingProjectionSaveRef.current
+    pendingProjectionSaveRef.current = null
+    pending?.()
+  }
 
   const editor = useEditor(
     {
@@ -537,54 +554,59 @@ const CollabEditorInner: React.FC<{
           clearTimeout(saveTimeoutRef.current)
         }
         const content = editor.getHTML()
-        saveTimeoutRef.current = setTimeout(async () => {
+        pendingProjectionSaveRef.current = () => {
           const syncGeneration = ++syncGenerationRef.current
           onSavingChangeRef.current?.(true)
-          try {
-            const accessToken = localStorage.getItem("access_token") ?? ""
-            const response = await fetch(
-              apiUrl(`/api/v1/notebook/documents/${docId}`),
-              {
-                method: "PUT",
-                headers: {
-                  "Content-Type": "application/json",
-                  Authorization: `Bearer ${accessToken}`,
+          void (async () => {
+            try {
+              const accessToken = localStorage.getItem("access_token") ?? ""
+              const response = await fetch(
+                apiUrl(`/api/v1/notebook/documents/${docId}`),
+                {
+                  method: "PUT",
+                  headers: {
+                    "Content-Type": "application/json",
+                    Authorization: `Bearer ${accessToken}`,
+                  },
+                  body: JSON.stringify({ content }),
                 },
-                body: JSON.stringify({ content }),
-              },
-            )
-            if (!response.ok) {
-              throw new Error(`Sync failed with status ${response.status}`)
-            }
-            // Title renames go through the TanStack mutation in $documentId and
-            // invalidate listDocuments there. Content projection uses a raw
-            // fetch, so without this the Documents tab cards keep a stale
-            // preview / updated_at for up to the 30s list staleTime.
-            // Debounced PUTs can overlap; only the latest generation may
-            // write the detail cache. Check after json() so a newer sync
-            // that finishes during parse still wins.
-            const updated = (await response.json()) as DocumentResponse
-            if (syncGeneration === syncGenerationRef.current) {
-              queryClientRef.current.setQueryData(
-                getDocumentEndpointNotebookDocumentsDocumentApiIdGetQueryKey({
-                  path: { document_api_id: docId },
-                }),
-                updated,
               )
-              queryClientRef.current.invalidateQueries({
-                predicate: (query) => isListDocumentsQueryKey(query.queryKey),
-              })
+              if (!response.ok) {
+                throw new Error(`Sync failed with status ${response.status}`)
+              }
+              // Title renames go through the TanStack mutation in $documentId and
+              // invalidate listDocuments there. Content projection uses a raw
+              // fetch, so without this the Documents tab cards keep a stale
+              // preview / updated_at for up to the 30s list staleTime.
+              // Debounced PUTs can overlap; only the latest generation may
+              // write the detail cache. Check after json() so a newer sync
+              // that finishes during parse still wins.
+              const updated = (await response.json()) as DocumentResponse
+              if (syncGeneration === syncGenerationRef.current) {
+                queryClientRef.current.setQueryData(
+                  getDocumentEndpointNotebookDocumentsDocumentApiIdGetQueryKey({
+                    path: { document_api_id: docId },
+                  }),
+                  updated,
+                )
+                queryClientRef.current.invalidateQueries({
+                  predicate: (query) => isListDocumentsQueryKey(query.queryKey),
+                })
+              }
+            } catch (error) {
+              console.error("Failed to sync content projection:", error)
+              if (syncGeneration === syncGenerationRef.current) {
+                onSyncErrorRef.current?.()
+              }
+            } finally {
+              if (syncGeneration === syncGenerationRef.current) {
+                onSavingChangeRef.current?.(false)
+              }
             }
-          } catch (error) {
-            console.error("Failed to sync content projection:", error)
-            if (syncGeneration === syncGenerationRef.current) {
-              onSyncErrorRef.current?.()
-            }
-          } finally {
-            if (syncGeneration === syncGenerationRef.current) {
-              onSavingChangeRef.current?.(false)
-            }
-          }
+          })()
+        }
+        saveTimeoutRef.current = setTimeout(() => {
+          flushPendingProjectionSaveRef.current()
         }, 1000)
       },
     },
@@ -649,9 +671,10 @@ const CollabEditorInner: React.FC<{
       if (editingTimeoutRef.current) {
         clearTimeout(editingTimeoutRef.current)
       }
-      if (saveTimeoutRef.current) {
-        clearTimeout(saveTimeoutRef.current)
-      }
+      // Leaving the document (route change or unmount) must keep the last
+      // edit. Clearing the debounce timer dropped anything typed in the
+      // last second.
+      flushPendingProjectionSaveRef.current()
     }
   }, [])
 
