@@ -611,6 +611,29 @@ class TestLetterAPI:
         assert letter.send_at == original_send_at
         assert letter.automatic_send_deferral_count == 2
 
+    def test_edit_letter_cannot_set_status_sent(
+        self,
+        authenticated_client: TestClient,
+        db_session: Session,
+        current_user: UserFactory,
+    ) -> None:
+        """LetterUpdate cannot mark a letter sent."""
+        letter = LetterFactory.create(
+            group=GroupFactory.create(admin=current_user),
+            status=LetterStatus.IN_PROGRESS,
+        )
+        db_session.commit()
+        response = authenticated_client.post(
+            f"/letters/letter/{letter.api_identifier}:edit_letter",
+            json={"status": LetterStatus.SENT},
+        )
+        assert response.status_code == 400
+        assert response.json()["detail"] == (
+            "Cannot mark a letter sent by editing it"
+        )
+        db_session.refresh(letter)
+        assert letter.status == LetterStatus.IN_PROGRESS
+
     def test_edit_letter_upcoming_invalid_past_send_at(
         self,
         authenticated_client: TestClient,
