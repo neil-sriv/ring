@@ -37,6 +37,8 @@ interface AddQuestionProps {
   loopApiId: string
 }
 
+const ADD_QUESTION_TIMEOUT_MS = 20_000
+
 const freshDefaults = (): QuestionFormProps => ({
   questionText: "",
 })
@@ -113,15 +115,21 @@ const AddQuestion = ({ isOpen, onClose, loopApiId }: AddQuestionProps) => {
 
   const onSubmit: SubmitHandler<QuestionFormProps> = async (data) => {
     if (!currentUser) return
-    await submitOnce.run(() =>
-      mutation.mutateAsync({
-        body: {
-          question_text: data.questionText,
-          author_api_id: currentUser.api_identifier,
-        },
-        path: { letter_api_id: loopApiId },
-      }),
-    )
+    await submitOnce.run(async () => {
+      try {
+        await mutation.mutateAsync({
+          body: {
+            question_text: data.questionText,
+            author_api_id: currentUser.api_identifier,
+          },
+          path: { letter_api_id: loopApiId },
+          timeout: ADD_QUESTION_TIMEOUT_MS,
+        })
+      } catch {
+        // onError already toasts. Swallow so handleSubmit clears isSubmitting
+        // and Cancel unlocks after a hang/timeout.
+      }
+    })
   }
 
   const onCancel = () => {

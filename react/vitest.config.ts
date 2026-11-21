@@ -20,6 +20,8 @@ export default defineConfig({
       "src/components/Groups/AddGroup.test.tsx",
       "src/components/Question/DraftQuestion.test.tsx",
       "src/components/Question/PublishedQuestion.test.tsx",
+      "src/components/Question/AddQuestion.test.tsx",
+      "src/components/Question/GenerateQuestion.test.tsx",
       "src/components/Home/HomeDashboard.test.tsx",
     ],
     setupFiles: ["./src/test-setup.ts"],

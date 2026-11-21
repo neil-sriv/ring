@@ -31,6 +31,8 @@ interface AddLateQuestionProps {
   onAdded?: () => void
 }
 
+const ADD_LATE_QUESTION_TIMEOUT_MS = 20_000
+
 function AddLateQuestion({
   loop,
   disabled = false,
@@ -100,9 +102,11 @@ function AddLateQuestion({
             author_api_id: currentUser.api_identifier,
           },
           path: { letter_api_id: loop.api_identifier },
+          timeout: ADD_LATE_QUESTION_TIMEOUT_MS,
         })
       } catch {
         // onError already toasts the server message, including a cutoff 400.
+        // Swallow so the composer recovers after a hang/timeout.
       }
     })
   }
