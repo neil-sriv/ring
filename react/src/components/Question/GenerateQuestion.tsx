@@ -38,6 +38,10 @@ interface GenerateQuestionProps {
   loopApiId: string
 }
 
+// LLM generate can be slow; keep below nginx's ~300s proxy_read_timeout.
+const GENERATE_QUESTION_TIMEOUT_MS = 60_000
+const SAVE_GENERATED_QUESTION_TIMEOUT_MS = 20_000
+
 const freshDefaults = (): QuestionFormProps => ({
   questionPrompt: "",
 })
@@ -148,9 +152,11 @@ const GenerateQuestion = ({
             prompt: data.questionPrompt,
           },
           path: { letter_api_id: loopApiId },
+          timeout: GENERATE_QUESTION_TIMEOUT_MS,
         })
       } catch {
-        // onError already toasts
+        // onError already toasts. Swallow so handleSubmit clears isSubmitting
+        // and Cancel/close unlock after a hang/timeout.
       }
     })
   }
@@ -172,9 +178,10 @@ const GenerateQuestion = ({
             author_api_id: currentUser?.api_identifier || null,
           },
           path: { letter_api_id: loopApiId },
+          timeout: SAVE_GENERATED_QUESTION_TIMEOUT_MS,
         })
       } catch {
-        // onError already toasts
+        // onError already toasts. Swallow so the dialog can recover.
       }
     })
   }
