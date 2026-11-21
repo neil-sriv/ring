@@ -17,6 +17,7 @@ export default defineConfig({
       "src/components/Loops/AddAdhocLoop.test.tsx",
       "src/components/Loops/LoopQuestionActions.test.tsx",
       "src/components/Loops/LoopReplyTracker.test.tsx",
+      "src/components/Loops/SendLetterNow.test.tsx",
       "src/components/Groups/AddGroup.test.tsx",
       "src/components/Question/DraftQuestion.test.tsx",
       "src/components/Question/PublishedQuestion.test.tsx",
