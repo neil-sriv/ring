@@ -79,6 +79,7 @@ export function GroupKeyValuesTable({
   keyValues: GroupKeyValue
   groupApiId: string
 }) {
+  // State is per group (draft plus save queue). The parent must key this by groupApiId.
   const [editableData, setEditableData] = useState(() =>
     cloneKeyValues(keyValues.key_values),
   )

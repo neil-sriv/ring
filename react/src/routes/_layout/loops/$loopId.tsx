@@ -147,8 +147,9 @@ function IssueContent() {
 }
 
 function Issue() {
+  const { loopId } = Route.useParams()
   return (
-    <div className="w-full">
+    <div key={loopId} className="w-full">
       <ErrorBoundary
         fallbackRender={({ error }) => (
           <div className="mx-auto w-full max-w-3xl px-4 py-8 md:px-8">

@@ -48,6 +48,20 @@ export const Route = createFileRoute("/_layout/groups/$groupId/loops")({
   component: LoopsContent,
 })
 
+export function GroupStoreTab({ groupId }: { groupId: string }) {
+  const { data } = useGroupKeyValues(groupId)
+
+  return (
+    <GroupKeyValuesTable
+      key={groupId}
+      keyValues={{
+        key_values: data?.key_values ?? {},
+      }}
+      groupApiId={groupId}
+    />
+  )
+}
+
 function LoopsContentLoader() {
   const groupId = Route.useParams().groupId
   const { offset, limit, spotify, spotify_action, spotify_error } =
@@ -68,8 +82,6 @@ function LoopsContentLoader() {
       path: { group_api_id: groupId },
     }),
   })
-
-  const { data: keyValues } = useGroupKeyValues(groupId)
 
   const tabsConfig = [
     {
@@ -95,14 +107,7 @@ function LoopsContentLoader() {
     {
       title: "Store",
       hash: "store",
-      component: () => (
-        <GroupKeyValuesTable
-          keyValues={{
-            key_values: keyValues?.key_values || {},
-          }}
-          groupApiId={groupId}
-        />
-      ),
+      component: () => <GroupStoreTab groupId={groupId} />,
     },
     {
       title: "Documents",
@@ -179,6 +184,7 @@ function LoopsContentLoader() {
 }
 
 function LoopsContent() {
+  const groupId = Route.useParams().groupId
   return (
     <Suspense
       fallback={
@@ -187,7 +193,7 @@ function LoopsContent() {
         </div>
       }
     >
-      <LoopsContentLoader />
+      <LoopsContentLoader key={groupId} />
     </Suspense>
   )
 }
