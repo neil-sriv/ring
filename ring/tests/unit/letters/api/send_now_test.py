@@ -521,9 +521,7 @@ class TestSendNowRace:
     ) -> None:
         """One email when send-now holds the row lock across the send."""
 
-        def run_task(
-            session: Session, letter_id: int, task_id: int
-        ) -> None:
+        def run_task(session: Session, letter_id: int, task_id: int) -> None:
             send_task = session.get(Task, task_id)
             assert send_task is not None
             task_crud.execute_send_email_task(
