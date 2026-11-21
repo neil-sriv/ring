@@ -23,6 +23,7 @@ export default defineConfig({
       "src/components/Question/AddQuestion.test.tsx",
       "src/components/Question/GenerateQuestion.test.tsx",
       "src/components/Home/HomeDashboard.test.tsx",
+      "src/components/Document/Editor.test.tsx",
     ],
     setupFiles: ["./src/test-setup.ts"],
   },

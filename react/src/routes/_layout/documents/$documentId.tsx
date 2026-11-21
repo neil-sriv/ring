@@ -226,5 +226,8 @@ function DocumentContentLoader() {
 }
 
 function DocumentContent() {
-  return <DocumentContentLoader />
+  const { documentId } = Route.useParams()
+  // Route param changes reuse this route component. Reset saving / sync /
+  // connection state, and remount the editor, for the document now on screen.
+  return <DocumentContentLoader key={documentId} />
 }
