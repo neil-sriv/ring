@@ -9,7 +9,7 @@ from __future__ import annotations
 import json
 
 from loguru import logger
-from pywebpush import WebPushException, webpush  # type: ignore
+from pywebpush import webpush  # type: ignore
 
 from ring.fastapp.config import get_config
 from ring.notifications.crud.subscription import serialize_subscription_info
@@ -25,25 +25,20 @@ def send_push_notification(
 ) -> None:
     """Send a web push notification to one subscription.
 
-    Failures, including timeouts, are logged and not raised.
+    Failures, including timeouts, propagate. The caller logs them.
 
     Args:
         subscription_info (dict[str, str]): pywebpush subscription dict
         payload (dict[str, str]): Data to send in the notification
     """
-    try:
-        response = webpush(
-            subscription_info=subscription_info,  # type: ignore
-            data=json.dumps(payload),
-            vapid_private_key=get_config().VAPID_PRIVATE_KEY,
-            vapid_claims={"sub": "mailto:neilsriv.cs+vapid@gmail.com"},
-            timeout=PUSH_REQUEST_TIMEOUT_SECONDS,
-        )
-        logger.info(f"Push notification sent successfully: {response}")
-    except WebPushException as exc:
-        logger.error(f"Error sending push notification: {exc}")
-    except Exception:
-        logger.exception("Error sending push notification")
+    response = webpush(
+        subscription_info=subscription_info,  # type: ignore
+        data=json.dumps(payload),
+        vapid_private_key=get_config().VAPID_PRIVATE_KEY,
+        vapid_claims={"sub": "mailto:neilsriv.cs+vapid@gmail.com"},
+        timeout=PUSH_REQUEST_TIMEOUT_SECONDS,
+    )
+    logger.info(f"Push notification sent successfully: {response}")
 
 
 def send_push_notification_to_user(

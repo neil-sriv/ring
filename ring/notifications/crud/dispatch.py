@@ -97,14 +97,17 @@ def _deliver_pending_pushes(session: Session) -> None:
     for push in pending:
         try:
             send_push_notification(push.subscription_info, push.payload)
-        except Exception:
-            logger.exception(
-                "Web push failed for user {}",
+        except Exception as exc:
+            # Exception text can include the endpoint or keys.
+            logger.error(
+                "Web push failed for user {}: {}",
                 push.user_api_identifier,
+                type(exc).__name__,
             )
 
 
 def _discard_pending_pushes(session: Session) -> None:
+    # Nested savepoint rollback keeps queued pushes; Ring has no begin_nested.
     if session.in_nested_transaction():
         return
     session.info.pop(_PENDING_PUSHES, None)

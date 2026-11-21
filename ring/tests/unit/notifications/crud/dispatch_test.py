@@ -6,6 +6,7 @@ from datetime import UTC, datetime, timedelta
 from unittest.mock import patch
 
 import requests
+from loguru import logger
 from sqlalchemy.orm import Session
 
 from ring.letters.constants import LetterStatus
@@ -178,6 +179,49 @@ class TestNotifyUsers:
             db_session.commit()
 
         assert seen["timeout"] == PUSH_REQUEST_TIMEOUT_SECONDS
+        assert len(list_inbox_items(db_session, user)) == 1
+
+    def test_push_failure_logs_user_id(self, db_session: Session) -> None:
+        endpoint = "https://push.example/fail-endpoint"
+        p256dh = "p256dh-secret-value"
+        auth = "auth-secret-value"
+        user = UserFactory.create()
+        db_session.add(
+            Subscription.create(
+                endpoint=endpoint,
+                keys={"p256dh": p256dh, "auth": auth},
+                user=user,
+            )
+        )
+        db_session.flush()
+
+        def _fail(*args: object, **kwargs: object) -> None:
+            raise requests.exceptions.Timeout(
+                f"timed out {endpoint} {p256dh} {auth}"
+            )
+
+        captured: list[str] = []
+        handler_id = logger.add(lambda message: captured.append(str(message)))
+        try:
+            with patch(
+                "ring.notifications.crud.vapid.webpush", side_effect=_fail
+            ):
+                notify_users(
+                    db_session,
+                    [user],
+                    title="New letter",
+                    body="Ready",
+                    target_api_id="lttr_abc",
+                )
+                db_session.commit()
+        finally:
+            logger.remove(handler_id)
+
+        logged = "\n".join(captured)
+        assert user.api_identifier in logged
+        assert endpoint not in logged
+        assert p256dh not in logged
+        assert auth not in logged
         assert len(list_inbox_items(db_session, user)) == 1
 
 
