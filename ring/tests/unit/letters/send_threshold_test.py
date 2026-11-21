@@ -63,6 +63,12 @@ class TestParseHelpers:
             (1.1, None),
             (True, None),
             ("bad", None),
+            (float("nan"), None),
+            (float("inf"), None),
+            (float("-inf"), None),
+            ("NaN", None),
+            ("Infinity", None),
+            ("-Infinity", None),
         ],
     )
     def test_parse_ratio(self, value: object, expected: float | None) -> None:

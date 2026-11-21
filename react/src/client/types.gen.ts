@@ -335,6 +335,7 @@ export type GroupLinked = {
     created_at: string;
     cycle_length: number;
     min_responder_ratio?: number | null;
+    min_responders?: number | null;
     members: Array<UserUnlinked>;
     admin: UserUnlinked;
     default_questions: Array<QuestionUnlinked>;
@@ -351,6 +352,7 @@ export type GroupUnlinked = {
     created_at: string;
     cycle_length: number;
     min_responder_ratio?: number | null;
+    min_responders?: number | null;
 };
 
 /**
@@ -362,11 +364,14 @@ export type GroupUnlinked = {
  * min_responder_ratio (float | None): Minimum share of participants who
  * must respond before send (0-1). Use 0 to disable deferral. Omit or
  * set null to use the default (0.5).
+ * min_responders (int | None): Absolute responder count that takes
+ * precedence over the ratio. Omit to leave unchanged. Null clears it.
  */
 export type GroupUpdate = {
     name?: string | null;
     cycle_length?: number | null;
     min_responder_ratio?: number | null;
+    min_responders?: number | null;
 };
 
 export type HttpValidationError = {

@@ -44,7 +44,12 @@ class GroupUpdate(BaseModel):
 
     name: str | None = None
     cycle_length: int | None = None
-    min_responder_ratio: float | None = None
+    min_responder_ratio: float | None = Field(
+        default=None,
+        ge=0,
+        le=1,
+        allow_inf_nan=False,
+    )
     min_responders: int | None = None
 
 

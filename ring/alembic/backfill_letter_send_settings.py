@@ -2,27 +2,62 @@
 
 The Alembic revision calls these functions. Tests call the same functions
 so the upgrade path is what gets exercised.
+
+Parsers are copied here on purpose. A later change to the app helpers must
+not change how this revision reads rows that already exist.
 """
 
 from __future__ import annotations
 
 import json
+import math
+from numbers import Real
 from typing import Any
 
 import sqlalchemy as sa
 from sqlalchemy.engine import Connection
 
-from ring.letters.send_threshold import (
-    GROUP_SETTING_MIN_RESPONDER_RATIO_KEY,
-    GROUP_SETTING_MIN_RESPONDERS_KEY,
-    parse_positive_int,
-    parse_ratio,
+_MIN_RESPONDERS_KEY = "letter_send_min_responders"
+_MIN_RESPONDER_RATIO_KEY = "letter_send_min_responder_ratio"
+_SETTING_KEYS = (
+    _MIN_RESPONDERS_KEY,
+    _MIN_RESPONDER_RATIO_KEY,
 )
 
-_SETTING_KEYS = (
-    GROUP_SETTING_MIN_RESPONDERS_KEY,
-    GROUP_SETTING_MIN_RESPONDER_RATIO_KEY,
-)
+
+def _parse_positive_int(value: Any) -> int | None:
+    if isinstance(value, bool):
+        return None
+    if isinstance(value, int):
+        return value if value > 0 else None
+    if isinstance(value, float):
+        if math.isfinite(value) and value.is_integer() and value > 0:
+            return int(value)
+        return None
+    if isinstance(value, str):
+        try:
+            parsed = float(value)
+        except ValueError:
+            return None
+        if math.isfinite(parsed) and parsed.is_integer() and parsed > 0:
+            return int(parsed)
+    return None
+
+
+def _parse_ratio(value: Any) -> float | None:
+    if isinstance(value, bool):
+        return None
+    if isinstance(value, str):
+        try:
+            value = float(value)
+        except ValueError:
+            return None
+    elif not isinstance(value, Real):
+        return None
+    ratio = float(value)
+    if not math.isfinite(ratio) or ratio < 0 or ratio > 1:
+        return None
+    return ratio
 
 
 def _as_dict(raw: Any) -> dict[str, Any]:
@@ -58,12 +93,8 @@ def copy_letter_send_settings(connection: Connection) -> None:
         values = _as_dict(row["key_values"])
         if not any(key in values for key in _SETTING_KEYS):
             continue
-        responders = parse_positive_int(
-            values.pop(GROUP_SETTING_MIN_RESPONDERS_KEY, None)
-        )
-        ratio = parse_ratio(
-            values.pop(GROUP_SETTING_MIN_RESPONDER_RATIO_KEY, None)
-        )
+        responders = _parse_positive_int(values.pop(_MIN_RESPONDERS_KEY, None))
+        ratio = _parse_ratio(values.pop(_MIN_RESPONDER_RATIO_KEY, None))
         connection.execute(
             sa.text(
                 'UPDATE "group" SET min_responders = :responders, '
@@ -106,11 +137,9 @@ def restore_letter_send_settings(connection: Connection) -> None:
             continue
         values = _as_dict(stored["key_values"])
         if row["min_responders"] is not None:
-            values[GROUP_SETTING_MIN_RESPONDERS_KEY] = int(
-                row["min_responders"]
-            )
+            values[_MIN_RESPONDERS_KEY] = int(row["min_responders"])
         if row["min_responder_ratio"] is not None:
-            values[GROUP_SETTING_MIN_RESPONDER_RATIO_KEY] = float(
+            values[_MIN_RESPONDER_RATIO_KEY] = float(
                 row["min_responder_ratio"]
             )
         _write_store(connection, stored["id"], values)

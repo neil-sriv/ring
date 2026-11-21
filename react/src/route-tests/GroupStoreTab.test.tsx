@@ -14,9 +14,11 @@ vi.mock("react-json-view", () => ({
   default: function MockReactJson({
     src,
     onEdit,
+    onDelete,
   }: {
     src: Record<string, unknown>
     onEdit?: (edit: { updated_src: Record<string, unknown> }) => void
+    onDelete?: (edit: { updated_src: Record<string, unknown> }) => void
   }) {
     return (
       <div>
@@ -28,6 +30,15 @@ vi.mock("react-json-view", () => ({
           }}
         >
           onEdit
+        </button>
+        <button
+          type="button"
+          onClick={() => {
+            const { a: _removed, ...rest } = src
+            onDelete?.({ updated_src: rest })
+          }}
+        >
+          onDelete
         </button>
       </div>
     )
@@ -90,6 +101,31 @@ function putTargets() {
     }
   })
 }
+
+function postTargets() {
+  return vi.mocked(client.post).mock.calls.map((call) => {
+    const options = call[0] as {
+      url?: string
+      path?: { group_api_id?: string }
+      body?: {
+        updates?: Array<{ key: string; operation: string }>
+      }
+    }
+    return {
+      url: options.url,
+      groupApiId: options.path?.group_api_id,
+      updates: options.body?.updates,
+    }
+  })
+}
+
+const okResponse = {
+  data: { key_values: {} },
+  status: 200,
+  statusText: "OK",
+  headers: {},
+  config: {},
+} as Awaited<ReturnType<typeof client.put>>
 
 async function settleEditor() {
   await act(async () => {
@@ -179,5 +215,32 @@ describe("GroupStoreTab", () => {
     expect(putTargets()).toEqual([
       { groupApiId: GROUP_B, keyValues: { b: 2, edited: true } },
     ])
+  })
+
+  it("merges the remaining snapshot, then bulk-deletes the removed key", async () => {
+    vi.useFakeTimers()
+    vi.spyOn(client, "put").mockResolvedValue(okResponse)
+    vi.spyOn(client, "post").mockResolvedValue(okResponse)
+
+    render(<StoreHarness initialGroupId={GROUP_A} />)
+    await settleEditor()
+
+    fireEvent.click(screen.getByRole("button", { name: "onDelete" }))
+
+    await act(async () => {
+      vi.advanceTimersByTime(1000)
+    })
+
+    expect(putTargets()).toEqual([{ groupApiId: GROUP_A, keyValues: {} }])
+    expect(postTargets()).toEqual([
+      {
+        url: "/parties/group/{group_api_id}/key-value:bulk-update",
+        groupApiId: GROUP_A,
+        updates: [{ key: "a", operation: "delete" }],
+      },
+    ])
+    const putOrder = vi.mocked(client.put).mock.invocationCallOrder[0]
+    const postOrder = vi.mocked(client.post).mock.invocationCallOrder[0]
+    expect(putOrder).toBeLessThan(postOrder)
   })
 })

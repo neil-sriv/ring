@@ -65,7 +65,7 @@ def parse_ratio(value: Any) -> float | None:
     elif not isinstance(value, Real):
         return None
     ratio = float(value)
-    if ratio < 0 or ratio > 1:
+    if not math.isfinite(ratio) or ratio < 0 or ratio > 1:
         return None
     return ratio
 

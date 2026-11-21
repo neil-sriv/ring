@@ -801,10 +801,36 @@ class TestGroupApi:
             f"/parties/group/{group.api_identifier}",
             json={"min_responder_ratio": 1.5},
         )
-        assert ratio.status_code == 400
+        assert ratio.status_code == 422
         db_session.refresh(group)
         assert group.min_responders is None
         assert group.min_responder_ratio is None
+
+    def test_admin_rejects_non_finite_min_responder_ratio(
+        self,
+        authenticated_client: TestClient,
+        db_session: Session,
+        current_user: User,
+    ):
+        """NaN and inf never land in the ratio column."""
+        group = GroupFactory.create(admin=current_user)
+        db_session.commit()
+
+        for body in (
+            b'{"min_responder_ratio": NaN}',
+            b'{"min_responder_ratio": Infinity}',
+            b'{"min_responder_ratio": -Infinity}',
+            b'{"min_responder_ratio": 1e309}',
+            b'{"min_responder_ratio": -1e309}',
+        ):
+            response = authenticated_client.patch(
+                f"/parties/group/{group.api_identifier}",
+                content=body,
+                headers={"Content-Type": "application/json"},
+            )
+            assert response.status_code == 422
+            db_session.refresh(group)
+            assert group.min_responder_ratio is None
 
     def test_non_admin_cannot_update_letter_send_settings(
         self,
