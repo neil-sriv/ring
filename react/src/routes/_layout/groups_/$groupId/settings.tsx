@@ -58,7 +58,10 @@ function GroupSettings() {
   }
 
   return (
-    <div className="mx-auto w-full max-w-5xl px-4 py-8 md:px-8">
+    <div
+      key={loadedGroup.api_identifier}
+      className="mx-auto w-full max-w-5xl px-4 py-8 md:px-8"
+    >
       <h1 className="font-display text-2xl font-semibold tracking-tight md:text-3xl">
         Group Settings
       </h1>
