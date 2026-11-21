@@ -331,6 +331,7 @@ class TestHybridSearchCRUD:
             group_api_id=None,
             participant_api_id=None,
             sort=SearchSort.RELEVANCE,
+            caller_group_api_ids=[],
         )
         mock_get_model_ids.assert_called_once_with(db_session, mock_documents)
         assert mock_hydrate.call_args_list[0].args == (
@@ -407,6 +408,7 @@ class TestHybridSearchCRUD:
             group_api_id=None,
             participant_api_id=None,
             sort=SearchSort.RELEVANCE,
+            caller_group_api_ids=[],
         )
 
         results_past_end = search(
@@ -480,6 +482,7 @@ class TestHybridSearchCRUD:
             group_api_id=None,
             participant_api_id=None,
             sort=SearchSort.RELEVANCE,
+            caller_group_api_ids=[],
         )
         assert len(mock_hydrate.call_args_list) == 1
         assert mock_hydrate.call_args_list[0].args == (

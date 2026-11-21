@@ -8,12 +8,7 @@ from ring.fastapp.dependencies import (
     AuthenticatedRequestDependencies,
     get_request_dependencies,
 )
-from ring.search.crud.hybrid_search import (
-    dual_search_hybrid_search_document,
-    keyword_search_hybrid_search_document,
-    search,
-    semantic_search_hybrid_search_document,
-)
+from ring.search.crud.hybrid_search import raw_search_documents, search
 from ring.search.models.hybrid_search import SearchableType
 from ring.search.schemas.search import (
     RawSearchResponse,
@@ -39,8 +34,10 @@ async def raw_search(
         get_request_dependencies,
     ),
 ) -> RawSearchResponse:
-    """
-    Search the search table for a given query.
+    """Search the search table for a given query.
+
+    Candidates are limited to the caller's groups before ranking, same as
+    ``/search``. Documents the caller cannot read are omitted.
 
     Args:
         query: The search query string
@@ -60,23 +57,12 @@ async def raw_search(
             status_code=400, detail="Search query cannot be empty"
         )
 
-    search_functions = {
-        SearchType.SEMANTIC: semantic_search_hybrid_search_document,
-        SearchType.KEYWORD: keyword_search_hybrid_search_document,
-        SearchType.DUAL: dual_search_hybrid_search_document,
-    }
-
-    if search_type not in search_functions:
-        raise HTTPException(
-            status_code=400,
-            detail=f"Invalid search type. Must be one of: {', '.join(search_functions.keys())}",
-        )
-
-    search_func = search_functions[search_type]
-    results = search_func(
+    results = raw_search_documents(
         db=req_dep.db,
         query=query,
+        user=req_dep.current_user,
         limit=limit,
+        search_type=search_type,
         group_api_id=group_api_id,
         participant_api_id=participant_api_id,
         sort=sort,
