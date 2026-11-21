@@ -157,7 +157,8 @@ def execute_send_email_task(
     Sends a letter email to all participants and marks the letter as sent
     upon successful delivery. After a successful send, the next cyclic
     letter is created via ``advance_cyclic_letter`` when the group is
-    missing an upcoming successor.
+    missing an upcoming successor. The letter row is locked before the
+    status check, so a letter an admin already sent is a no-op.
 
     Args:
         db: Database session
@@ -167,9 +168,7 @@ def execute_send_email_task(
     logger.debug(f"Executing send email task with kwargs: {kwargs}")
     letter_id = kwargs.get("letter_id")
     if letter_id:
-        letter_to_send = db.scalars(
-            sqlalchemy.select(Letter).where(Letter.id == letter_id)
-        ).one()
+        letter_to_send = letter_crud.lock_letter_for_update(db, letter_id)
     else:
         # Legacy tasks were registered before the letter was flushed, so
         # their arguments hold "letter_id": None and the letter has to be
@@ -182,7 +181,9 @@ def execute_send_email_task(
             )
             db.commit()
             return
-        letter_to_send = group.in_progress_letters[0]
+        letter_to_send = letter_crud.lock_letter_for_update(
+            db, group.in_progress_letters[0].id
+        )
 
     if letter_to_send.status == LetterStatus.SENT:
         logger.info(
