@@ -34,6 +34,10 @@ import {
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 
+// Axios leaves timeout at 0, so a hung rename never rejects and isSaving stays
+// true. This write is a small JSON body; uploads keep the longer proxy window.
+const EDIT_GROUP_TIMEOUT_MS = 20_000
+
 interface EditGroupProps {
   group: GroupLinked
   isOpen: boolean
@@ -143,12 +147,18 @@ const EditGroup = ({ group, isOpen, onClose }: EditGroupProps) => {
   const submitOnce = useSubmitOnce()
 
   const onSubmit: SubmitHandler<GroupUpdate> = async (data) => {
-    await submitOnce.run(() =>
-      mutation.mutateAsync({
-        path: { group_api_id: group.api_identifier },
-        body: data,
-      }),
-    )
+    await submitOnce.run(async () => {
+      try {
+        await mutation.mutateAsync({
+          path: { group_api_id: group.api_identifier },
+          body: data,
+          timeout: EDIT_GROUP_TIMEOUT_MS,
+        })
+      } catch {
+        // onError already toasts. Swallow so handleSubmit clears isSubmitting
+        // and Cancel unlocks after a hang/timeout.
+      }
+    })
   }
 
   const isSaving = isSubmitting || mutation.isPending || submitOnce.pending

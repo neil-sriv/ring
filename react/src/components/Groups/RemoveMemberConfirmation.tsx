@@ -30,6 +30,10 @@ import { useSubmitOnce } from "../../hooks/useSubmitOnce"
 import { isGroupLetterDetailQuery } from "../../util/letterQueryCache"
 import { formatApiErrorDetail } from "../../util/misc"
 
+// Axios leaves timeout at 0, so a hung remove never rejects and isSaving stays
+// true. This write is a small JSON body; uploads keep the longer proxy window.
+const REMOVE_MEMBER_TIMEOUT_MS = 20_000
+
 interface RemoveMemberConfirmationProps {
   groupId: string
   member: UserUnlinked
@@ -119,14 +123,20 @@ function RemoveMemberConfirmation({
   const submitOnce = useSubmitOnce()
 
   const onSubmit = async () => {
-    await submitOnce.run(() =>
-      mutation.mutateAsync({
-        path: {
-          group_api_id: groupId,
-          user_api_id: member.api_identifier,
-        },
-      }),
-    )
+    await submitOnce.run(async () => {
+      try {
+        await mutation.mutateAsync({
+          path: {
+            group_api_id: groupId,
+            user_api_id: member.api_identifier,
+          },
+          timeout: REMOVE_MEMBER_TIMEOUT_MS,
+        })
+      } catch {
+        // onError already toasts. Swallow so handleSubmit clears isSubmitting
+        // and Cancel unlocks after a hang/timeout.
+      }
+    })
   }
 
   const isSaving = isSubmitting || mutation.isPending || submitOnce.pending

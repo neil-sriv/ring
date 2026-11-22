@@ -32,6 +32,10 @@ import {
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 
+// Axios leaves timeout at 0, so a hung add never rejects and isSaving stays
+// true. This write is a small JSON body; uploads keep the longer proxy window.
+const ADD_MEMBERS_TIMEOUT_MS = 20_000
+
 interface AddMembersProps {
   group: GroupLinked
   isOpen: boolean
@@ -136,12 +140,18 @@ const AddMembers = ({ group, isOpen, onClose }: AddMembersProps) => {
     const memberEmails = data.member_emails
       .split(",")
       .map((email) => email.trim())
-    await submitOnce.run(() =>
-      mutation.mutateAsync({
-        body: { member_emails: memberEmails },
-        path: { group_api_id: group.api_identifier },
-      }),
-    )
+    await submitOnce.run(async () => {
+      try {
+        await mutation.mutateAsync({
+          body: { member_emails: memberEmails },
+          path: { group_api_id: group.api_identifier },
+          timeout: ADD_MEMBERS_TIMEOUT_MS,
+        })
+      } catch {
+        // onError already toasts. Swallow so handleSubmit clears isSubmitting
+        // and Cancel unlocks after a hang/timeout.
+      }
+    })
   }
 
   const onCancel = () => {
