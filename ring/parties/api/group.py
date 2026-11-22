@@ -272,6 +272,8 @@ async def update_group(
         and group.cycle_length is None
         and group.min_responder_ratio is None
         and "min_responder_ratio" not in group.model_fields_set
+        and group.min_responders is None
+        and "min_responders" not in group.model_fields_set
     ):
         raise HTTPException(status.HTTP_400_BAD_REQUEST, "No updates provided")
     db_group = cast(
@@ -303,6 +305,16 @@ async def update_group(
         try:
             group_crud.update_min_responder_ratio(
                 req_dep.db, db_group, group.min_responder_ratio
+            )
+        except ValueError as exc:
+            raise HTTPException(
+                status.HTTP_400_BAD_REQUEST,
+                str(exc),
+            ) from exc
+    if "min_responders" in group.model_fields_set:
+        try:
+            group_crud.update_min_responders(
+                req_dep.db, db_group, group.min_responders
             )
         except ValueError as exc:
             raise HTTPException(

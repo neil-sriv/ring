@@ -18,7 +18,6 @@ from ring.fastapp.fast import app
 from ring.letters.constants import LetterStatus
 from ring.letters.crud import letter as letter_crud
 from ring.letters.send_threshold import (
-    GROUP_SETTING_MIN_RESPONDER_RATIO_KEY,
     GROUP_SETTING_MIN_RESPONDERS_KEY,
     LETTER_SEND_DEFERRAL_DAYS,
     defer_letter_send,
@@ -272,7 +271,7 @@ class TestTaskCrud:
         admin = UserFactory.create()
         members = [admin] + [UserFactory.create() for _ in range(3)]
         group = GroupFactory.create(admin=admin, members=members)
-        group.key_values.set_value(GROUP_SETTING_MIN_RESPONDERS_KEY, 3)
+        group.min_responders = 3
         send_at = datetime.now(tz=UTC) - timedelta(minutes=1)
         letter = LetterFactory.create(
             group=group,
@@ -314,7 +313,7 @@ class TestTaskCrud:
     def test_execute_send_email_task_ignores_invalid_threshold_config(
         self, db_session: Session
     ) -> None:
-        """Fallback to default threshold when config value is invalid."""
+        """A leftover store key does not change the send threshold."""
         admin = UserFactory.create()
         members = [admin] + [UserFactory.create() for _ in range(3)]
         group = GroupFactory.create(admin=admin, members=members)
@@ -361,7 +360,7 @@ class TestTaskCrud:
         admin = UserFactory.create()
         members = [admin] + [UserFactory.create() for _ in range(3)]
         group = GroupFactory.create(admin=admin, members=members)
-        group.key_values.set_value(GROUP_SETTING_MIN_RESPONDER_RATIO_KEY, 0.75)
+        group.min_responder_ratio = 0.75
         send_at = datetime.now(tz=UTC) - timedelta(minutes=1)
         letter = LetterFactory.create(
             group=group,
@@ -403,7 +402,7 @@ class TestTaskCrud:
         admin = UserFactory.create()
         members = [admin] + [UserFactory.create() for _ in range(3)]
         group = GroupFactory.create(admin=admin, members=members)
-        group.key_values.set_value(GROUP_SETTING_MIN_RESPONDER_RATIO_KEY, 0)
+        group.min_responder_ratio = 0
         send_at = datetime.now(tz=UTC) + timedelta(days=1)
         letter = LetterFactory.create(
             group=group,

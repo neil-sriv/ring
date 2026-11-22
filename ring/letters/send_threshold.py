@@ -19,6 +19,14 @@ if TYPE_CHECKING:
 
 GROUP_SETTING_MIN_RESPONDERS_KEY = "letter_send_min_responders"
 GROUP_SETTING_MIN_RESPONDER_RATIO_KEY = "letter_send_min_responder_ratio"
+# Keys the app used to read from the group store. They now live on Group
+# columns and must not be written or returned through the store API.
+APP_CONTROLLED_GROUP_KEYS = frozenset(
+    {
+        GROUP_SETTING_MIN_RESPONDERS_KEY,
+        GROUP_SETTING_MIN_RESPONDER_RATIO_KEY,
+    }
+)
 DEFAULT_MIN_RESPONDER_RATIO_TO_SEND = 0.5
 LETTER_SEND_DEFERRAL_DAYS = 1
 MAX_AUTOMATIC_SEND_DEFERRALS = 3
@@ -57,43 +65,33 @@ def parse_ratio(value: Any) -> float | None:
     elif not isinstance(value, Real):
         return None
     ratio = float(value)
-    if ratio < 0 or ratio > 1:
+    if not math.isfinite(ratio) or ratio < 0 or ratio > 1:
         return None
     return ratio
 
 
 def is_send_threshold_disabled(group: Group) -> bool:
     """Return True when the group has explicitly disabled the send threshold."""
-    ratio_setting = group.key_values.get_value(
-        GROUP_SETTING_MIN_RESPONDER_RATIO_KEY
-    )
-    if ratio_setting is None:
-        return False
-    configured_ratio = parse_ratio(ratio_setting)
-    return configured_ratio == 0.0
+    return get_group_min_responder_ratio(group) == 0.0
 
 
 def get_group_min_responder_ratio(group: Group) -> float | None:
     """Return the configured responder ratio, or None when using the default."""
-    ratio_setting = group.key_values.get_value(
-        GROUP_SETTING_MIN_RESPONDER_RATIO_KEY
-    )
-    if ratio_setting is None:
+    if group.min_responder_ratio is None:
         return None
-    configured_ratio = parse_ratio(ratio_setting)
-    if configured_ratio is None:
+    return float(group.min_responder_ratio)
+
+
+def get_group_min_responders(group: Group) -> int | None:
+    """Return the configured absolute responder count, or None."""
+    if group.min_responders is None:
         return None
-    return configured_ratio
+    return int(group.min_responders)
 
 
 def effective_send_threshold_ratio(group: Group) -> float | None:
     """Return the effective ratio used for send gating, or None when disabled."""
-    if (
-        parse_positive_int(
-            group.key_values.get_value(GROUP_SETTING_MIN_RESPONDERS_KEY)
-        )
-        is not None
-    ):
+    if get_group_min_responders(group) is not None:
         return None
     configured_ratio = get_group_min_responder_ratio(group)
     if configured_ratio is not None:
@@ -104,31 +102,39 @@ def effective_send_threshold_ratio(group: Group) -> float | None:
 
 
 def set_group_min_responder_ratio(group: Group, ratio: float | None) -> None:
-    """Persist the group's minimum responder ratio in key-values."""
+    """Persist the group's minimum responder ratio."""
     if ratio is None:
-        group.key_values.delete_value(GROUP_SETTING_MIN_RESPONDER_RATIO_KEY)
+        group.min_responder_ratio = None
         return
     parsed = parse_ratio(ratio)
     if parsed is None:
         raise ValueError("min_responder_ratio must be between 0 and 1")
-    group.key_values.set_value(GROUP_SETTING_MIN_RESPONDER_RATIO_KEY, parsed)
+    group.min_responder_ratio = parsed
+
+
+def set_group_min_responders(group: Group, count: int | None) -> None:
+    """Persist the group's absolute minimum responder count."""
+    if count is None:
+        group.min_responders = None
+        return
+    parsed = parse_positive_int(count)
+    if parsed is None:
+        raise ValueError("min_responders must be a positive integer")
+    group.min_responders = parsed
 
 
 def minimum_responders_required(letter: Letter) -> int:
     """Return the minimum unique responder count required to send.
 
-    Group-level configuration (stored in group key-values):
-    - `letter_send_min_responders`: positive integer responder count
-    - `letter_send_min_responder_ratio`: ratio in [0, 1]; 0 disables the gate
+    Group columns:
+    - `min_responders`: positive integer responder count
+    - `min_responder_ratio`: ratio in [0, 1]; 0 disables the gate
     """
     participant_count = len(letter.participants)
     if participant_count <= 0:
         return 0
 
-    min_responders_setting = letter.group.key_values.get_value(
-        GROUP_SETTING_MIN_RESPONDERS_KEY
-    )
-    configured_min_responders = parse_positive_int(min_responders_setting)
+    configured_min_responders = get_group_min_responders(letter.group)
     if configured_min_responders is not None:
         return min(participant_count, configured_min_responders)
 

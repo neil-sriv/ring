@@ -26,6 +26,8 @@ CREATE TABLE public."group" (
 	admin_id INT8 NOT NULL,
 	created_at TIMESTAMPTZ NOT NULL DEFAULT now():::TIMESTAMPTZ,
 	cycle_length INT8 NOT NULL DEFAULT 30:::INT8,
+	min_responder_ratio FLOAT8 NULL,
+	min_responders INT8 NULL,
 	CONSTRAINT group_pkey PRIMARY KEY (id ASC),
 	UNIQUE INDEX ix_group_api_identifier (api_identifier ASC),
 	INDEX ix_group_created_at (created_at ASC),

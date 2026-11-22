@@ -750,3 +750,115 @@ class TestGroupApi:
             "detail": "Only the group admin can update the group information"
         }
         assert group.cycle_length == original_cycle_length
+
+    def test_admin_updates_letter_send_settings(
+        self,
+        authenticated_client: TestClient,
+        db_session: Session,
+        current_user: User,
+    ):
+        """Letter-send settings are written on the admin group update."""
+        group = GroupFactory.create(admin=current_user)
+        db_session.commit()
+
+        response = authenticated_client.patch(
+            f"/parties/group/{group.api_identifier}",
+            json={"min_responders": 3, "min_responder_ratio": 0.25},
+        )
+
+        assert response.status_code == 200
+        data = response.json()
+        assert data["min_responders"] == 3
+        assert data["min_responder_ratio"] == 0.25
+        db_session.refresh(group)
+        assert group.min_responders == 3
+        assert group.min_responder_ratio == 0.25
+
+        cleared = authenticated_client.patch(
+            f"/parties/group/{group.api_identifier}",
+            json={"min_responders": None},
+        )
+        assert cleared.status_code == 200
+        db_session.refresh(group)
+        assert group.min_responders is None
+        assert group.min_responder_ratio == 0.25
+
+    def test_admin_rejects_invalid_letter_send_settings(
+        self,
+        authenticated_client: TestClient,
+        db_session: Session,
+        current_user: User,
+    ):
+        group = GroupFactory.create(admin=current_user)
+        db_session.commit()
+
+        count = authenticated_client.patch(
+            f"/parties/group/{group.api_identifier}",
+            json={"min_responders": 0},
+        )
+        assert count.status_code == 400
+        ratio = authenticated_client.patch(
+            f"/parties/group/{group.api_identifier}",
+            json={"min_responder_ratio": 1.5},
+        )
+        assert ratio.status_code == 422
+        db_session.refresh(group)
+        assert group.min_responders is None
+        assert group.min_responder_ratio is None
+
+    def test_admin_rejects_non_finite_min_responder_ratio(
+        self,
+        authenticated_client: TestClient,
+        db_session: Session,
+        current_user: User,
+    ):
+        """NaN and inf never land in the ratio column."""
+        group = GroupFactory.create(admin=current_user)
+        db_session.commit()
+
+        for body in (
+            b'{"min_responder_ratio": NaN}',
+            b'{"min_responder_ratio": Infinity}',
+            b'{"min_responder_ratio": -Infinity}',
+            b'{"min_responder_ratio": 1e309}',
+            b'{"min_responder_ratio": -1e309}',
+        ):
+            response = authenticated_client.patch(
+                f"/parties/group/{group.api_identifier}",
+                content=body,
+                headers={"Content-Type": "application/json"},
+            )
+            assert response.status_code == 422
+            db_session.refresh(group)
+            assert group.min_responder_ratio is None
+
+    def test_non_admin_cannot_update_letter_send_settings(
+        self,
+        authenticated_client: TestClient,
+        db_session: Session,
+        current_user: User,
+    ):
+        admin = UserFactory.create()
+        group = GroupFactory.create(admin=admin, members=[admin, current_user])
+        group.min_responders = 2
+        group.min_responder_ratio = 0.5
+        db_session.commit()
+
+        for payload in (
+            {"min_responders": 9},
+            {"min_responder_ratio": 0},
+        ):
+            response = authenticated_client.patch(
+                f"/parties/group/{group.api_identifier}",
+                json=payload,
+            )
+            assert response.status_code == 403
+            assert response.json() == {
+                "detail": (
+                    "Only the group admin can update the group information"
+                )
+            }
+
+        db_session.refresh(group)
+        assert group.min_responders == 2
+        assert group.min_responder_ratio == 0.5

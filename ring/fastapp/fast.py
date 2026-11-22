@@ -6,10 +6,13 @@ and request logging. It serves as the main entry point for the Ring API service.
 
 from __future__ import annotations
 
+import math
 from contextlib import asynccontextmanager
-from typing import Awaitable, Callable
+from typing import Any, Awaitable, Callable
 
 from fastapi import FastAPI, Request, Response
+from fastapi.encoders import jsonable_encoder
+from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 from loguru import logger
 from starlette.middleware.cors import CORSMiddleware
@@ -80,6 +83,32 @@ app = create_app()
 # @app.on_event("startup")
 # async def startup_event():
 #     scheduler.start()
+
+
+def _json_safe(value: Any) -> Any:
+    """Replace non-finite floats so a 422 body can be encoded."""
+    if isinstance(value, float) and not math.isfinite(value):
+        if math.isnan(value):
+            return "NaN"
+        return "Infinity" if value > 0 else "-Infinity"
+    if isinstance(value, dict):
+        return {key: _json_safe(item) for key, item in value.items()}
+    if isinstance(value, list | tuple):
+        return [_json_safe(item) for item in value]
+    return value
+
+
+@app.exception_handler(RequestValidationError)
+async def request_validation_exception_handler(
+    request: Request, exc: RequestValidationError
+) -> JSONResponse:
+    """Return 422 even when the rejected value is NaN or infinity."""
+    return JSONResponse(
+        status_code=422,
+        content={
+            "detail": jsonable_encoder(_json_safe(exc.errors())),
+        },
+    )
 
 
 @app.exception_handler(PermissionError)

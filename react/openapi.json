@@ -1349,7 +1349,7 @@
           "parties"
         ],
         "summary": "Full Replace Group Key Values",
-        "description": "Replace all key-value pairs for a group.\n\nCaller must be a member of the group. Missing groups look like forbidden\naccess so callers cannot probe for ids.\n\nArgs:\n    group_api_id (str): API identifier of the group\n    updates (GroupKeyValue): New key-value pairs\n    req_dep (AuthenticatedRequestDependencies): Request dependencies\n\nReturns:\n    GroupKeyValue: Updated key-value pairs\n\nRaises:\n    PermissionError: If the group is missing or the caller cannot read it",
+        "description": "Merge key-value pairs into a group's store.\n\nKeys in the body are written. Keys absent from the body stay, so a\ncaller cannot delete a key they never loaded. Caller must be a member\nof the group. Missing groups look like forbidden access so callers\ncannot probe for ids.\n\nArgs:\n    group_api_id (str): API identifier of the group\n    updates (GroupKeyValue): Keys to insert or overwrite\n    req_dep (AuthenticatedRequestDependencies): Request dependencies\n\nReturns:\n    GroupKeyValue: Updated key-value pairs\n\nRaises:\n    PermissionError: If the group is missing or the caller cannot read it",
         "operationId": "full_replace_group_key_values_parties_group__group_api_id__key_value_put",
         "security": [
           {
@@ -1846,7 +1846,7 @@
           "letters"
         ],
         "summary": "Edit Letter",
-        "description": "Update a letter's details.\n\nUpdates the send time of a letter. For upcoming letters, ensures the new\nsend time is after any in-progress letter's send time.\n\nArgs:\n    letter_api_id (str): API identifier of the letter to edit\n    letter (LetterUpdate): Updated letter details\n    req_dep (AuthenticatedRequestDependencies): Request dependencies including database session and auth\n\nReturns:\n    Letter: Updated letter\n\nRaises:\n    HTTPException: If the caller is not the group admin, the letter was\n        already sent, a cyclic in-progress loop is moved back to\n        upcoming, the send time is invalid, or another cyclic letter\n        already has the requested status\n    PermissionError: If the letter is missing or the caller cannot read it",
+        "description": "Update a letter's details.\n\nUpdates the send time of a letter. For upcoming letters, ensures the new\nsend time is after any in-progress letter's send time.\n\nArgs:\n    letter_api_id (str): API identifier of the letter to edit\n    letter (LetterUpdate): Updated letter details\n    req_dep (AuthenticatedRequestDependencies): Request dependencies including database session and auth\n\nReturns:\n    Letter: Updated letter\n\nRaises:\n    HTTPException: If the caller is not the group admin, the letter was\n        already sent, the update sets status to SENT, a cyclic\n        in-progress loop is moved back to upcoming, the send time is\n        invalid, or another cyclic letter already has the requested\n        status\n    PermissionError: If the letter is missing or the caller cannot read it",
         "operationId": "edit_letter_letters_letter__letter_api_id__edit_letter_post",
         "security": [
           {
@@ -1952,7 +1952,7 @@
           "letters"
         ],
         "summary": "Add Question",
-        "description": "Add a new question to a letter.\n\nAny group member may add a question while the letter is upcoming or in\nprogress. A sent letter is refused. An in-progress letter is also\nrefused once ``send_at`` is within ``LATE_QUESTION_CUTOFF``, including\nfor the group admin. A null ``send_at`` has no cutoff. An in-progress\nadd notifies participants who already have a response, except the\nquestion's author. Push failures are logged and do not fail the add.\n\nThe author is always the signed-in caller. ``author_api_id`` is\ndeprecated and is not looked up: omit it, send null, or send the\ncaller's id. Another user's id is rejected, including for the group\nadmin.\n\n:param letter_api_id: API identifier of the letter\n:type letter_api_id: str\n:param question: Question creation parameters\n:type question: QuestionCreate\n:param req_dep: Request dependencies including database session and auth\n:type req_dep: AuthenticatedRequestDependencies\n:raises PermissionError: If the caller cannot read the letter\n:raises HTTPException: If the letter has been sent, is inside the\n    late-question cutoff, or ``author_api_id`` is not the caller\n:return: Updated letter with the new question\n:rtype: Letter",
+        "description": "Add a new question to a letter.\n\nAny group member may add a question while the letter is upcoming or in\nprogress. A sent letter is refused. An in-progress letter is also\nrefused once ``send_at`` is within ``LATE_QUESTION_CUTOFF``, including\nfor the group admin. A null ``send_at`` has no cutoff. An in-progress\nadd notifies participants who already have a response, except the\nquestion's author, and schedules at most one late-question email for\nthe letter. Push failures are logged and do not fail the add.\n\nThe author is always the signed-in caller. ``author_api_id`` is\ndeprecated and is not looked up: omit it, send null, or send the\ncaller's id. Another user's id is rejected, including for the group\nadmin.\n\n:param letter_api_id: API identifier of the letter\n:type letter_api_id: str\n:param question: Question creation parameters\n:type question: QuestionCreate\n:param req_dep: Request dependencies including database session and auth\n:type req_dep: AuthenticatedRequestDependencies\n:raises PermissionError: If the caller cannot read the letter\n:raises HTTPException: If the letter has been sent, is inside the\n    late-question cutoff, or ``author_api_id`` is not the caller\n:return: Updated letter with the new question\n:rtype: Letter",
         "operationId": "add_question_letters_letter__letter_api_id__add_question_post",
         "security": [
           {
@@ -2820,7 +2820,7 @@
           "search"
         ],
         "summary": "Raw Search",
-        "description": "Search the search table for a given query.\n\nArgs:\n    query: The search query string\n    search_type: Type of search to perform (semantic, keyword, or dual)\n    limit: Maximum number of results to return\n    group_api_id: Optional group. Keeps that group and its letters,\n        questions, and responses.\n    participant_api_id: Optional responder. Keeps that person's responses.\n    sort: Relevance (the search type's existing ranking) or entity time.\n    req_dep: Authenticated request dependencies\n\nReturns:\n    RawSearchResponse containing matching results and total count",
+        "description": "Search the search table for a given query.\n\nCandidates are limited to the caller's groups before ranking, same as\n``/search``. Documents the caller cannot read are omitted.\n\nArgs:\n    query: The search query string\n    search_type: Type of search to perform (semantic, keyword, or dual)\n    limit: Maximum number of results to return\n    group_api_id: Optional group. Keeps that group and its letters,\n        questions, and responses.\n    participant_api_id: Optional responder. Keeps that person's responses.\n    sort: Relevance (the search type's existing ranking) or entity time.\n    req_dep: Authenticated request dependencies\n\nReturns:\n    RawSearchResponse containing matching results and total count",
         "operationId": "raw_search_search_raw_search_get",
         "security": [
           {
@@ -4555,6 +4555,17 @@
             ],
             "title": "Min Responder Ratio"
           },
+          "min_responders": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Min Responders"
+          },
           "members": {
             "items": {
               "$ref": "#/components/schemas/UserUnlinked"
@@ -4615,6 +4626,17 @@
               }
             ],
             "title": "Min Responder Ratio"
+          },
+          "min_responders": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Min Responders"
           }
         },
         "type": "object",
@@ -4654,18 +4676,31 @@
           "min_responder_ratio": {
             "anyOf": [
               {
-                "type": "number"
+                "type": "number",
+                "maximum": 1,
+                "minimum": 0
               },
               {
                 "type": "null"
               }
             ],
             "title": "Min Responder Ratio"
+          },
+          "min_responders": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Min Responders"
           }
         },
         "type": "object",
         "title": "GroupUpdate",
-        "description": "Schema for updating an existing group.\n\nAttributes:\n    name (str | None): New name for the group, optional\n    cycle_length (int | None): New cycle length in days, optional\n    min_responder_ratio (float | None): Minimum share of participants who\n        must respond before send (0-1). Use 0 to disable deferral. Omit or\n        set null to use the default (0.5)."
+        "description": "Schema for updating an existing group.\n\nAttributes:\n    name (str | None): New name for the group, optional\n    cycle_length (int | None): New cycle length in days, optional\n    min_responder_ratio (float | None): Minimum share of participants who\n        must respond before send (0-1). Use 0 to disable deferral. Omit or\n        set null to use the default (0.5).\n    min_responders (int | None): Absolute responder count that takes\n        precedence over the ratio. Omit to leave unchanged. Null clears it."
       },
       "HTTPValidationError": {
         "properties": {

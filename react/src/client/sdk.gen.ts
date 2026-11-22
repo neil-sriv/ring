@@ -778,14 +778,16 @@ export const readGroupKeyValuesPartiesGroupGroupApiIdKeyValueGet = <ThrowOnError
 
 /**
  * Full Replace Group Key Values
- * Replace all key-value pairs for a group.
+ * Merge key-value pairs into a group's store.
  *
- * Caller must be a member of the group. Missing groups look like forbidden
- * access so callers cannot probe for ids.
+ * Keys in the body are written. Keys absent from the body stay, so a
+ * caller cannot delete a key they never loaded. Caller must be a member
+ * of the group. Missing groups look like forbidden access so callers
+ * cannot probe for ids.
  *
  * Args:
  * group_api_id (str): API identifier of the group
- * updates (GroupKeyValue): New key-value pairs
+ * updates (GroupKeyValue): Keys to insert or overwrite
  * req_dep (AuthenticatedRequestDependencies): Request dependencies
  *
  * Returns:
@@ -1067,9 +1069,10 @@ export const listDashboardLettersLettersLettersDashboardGet = <ThrowOnError exte
  *
  * Raises:
  * HTTPException: If the caller is not the group admin, the letter was
- * already sent, a cyclic in-progress loop is moved back to
- * upcoming, the send time is invalid, or another cyclic letter
- * already has the requested status
+ * already sent, the update sets status to SENT, a cyclic
+ * in-progress loop is moved back to upcoming, the send time is
+ * invalid, or another cyclic letter already has the requested
+ * status
  * PermissionError: If the letter is missing or the caller cannot read it
  */
 export const editLetterLettersLetterLetterApiIdEditLetterPost = <ThrowOnError extends boolean = false>(options: Options<EditLetterLettersLetterLetterApiIdEditLetterPostData, ThrowOnError>) => {
@@ -1132,7 +1135,8 @@ export const sendLetterNowLettersLetterLetterApiIdSendNowPost = <ThrowOnError ex
  * refused once ``send_at`` is within ``LATE_QUESTION_CUTOFF``, including
  * for the group admin. A null ``send_at`` has no cutoff. An in-progress
  * add notifies participants who already have a response, except the
- * question's author. Push failures are logged and do not fail the add.
+ * question's author, and schedules at most one late-question email for
+ * the letter. Push failures are logged and do not fail the add.
  *
  * The author is always the signed-in caller. ``author_api_id`` is
  * deprecated and is not looked up: omit it, send null, or send the
@@ -1625,6 +1629,9 @@ export const readInboxItemNotificationsInboxInboxApiIdReadPost = <ThrowOnError e
 /**
  * Raw Search
  * Search the search table for a given query.
+ *
+ * Candidates are limited to the caller's groups before ranking, same as
+ * ``/search``. Documents the caller cannot read are omitted.
  *
  * Args:
  * query: The search query string
