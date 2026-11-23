@@ -12,12 +12,15 @@ import {
 } from "@/client/@tanstack/react-query.gen"
 import useCustomToast from "@/hooks/useCustomToast"
 import { useSubmitOnce } from "@/hooks/useSubmitOnce"
-import { formatApiErrorDetail } from "@/util/misc"
 import {
   axiosDetail,
   axiosStatus,
+  spotifyErrorMessage,
   useSpotifyAccount,
 } from "./useSpotifyAccount"
+
+// Playlist ensure talks to Spotify; bound below nginx's ~300s proxy_read_timeout.
+const ENSURE_SPOTIFY_PLAYLIST_TIMEOUT_MS = 60_000
 
 interface GroupSpotifyPlaylistProps {
   groupId: string
@@ -84,7 +87,7 @@ export function GroupSpotifyPlaylist({
         void startLink(returnTo(groupId))
         return
       }
-      showToast("Spotify", formatApiErrorDetail(axiosDetail(err)), "error")
+      showToast("Spotify", spotifyErrorMessage(err), "error")
     },
   })
 
@@ -112,7 +115,10 @@ export function GroupSpotifyPlaylist({
     if (spotify === "linked" && spotifyAction === "playlist") {
       void submitOnce.run(async () => {
         try {
-          await ensure.mutateAsync({ path: { group_api_id: groupId } })
+          await ensure.mutateAsync({
+            path: { group_api_id: groupId },
+            timeout: ENSURE_SPOTIFY_PLAYLIST_TIMEOUT_MS,
+          })
         } catch {
           // onError already toasts or starts linking
         }
@@ -152,7 +158,10 @@ export function GroupSpotifyPlaylist({
     }
     void submitOnce.run(async () => {
       try {
-        await ensure.mutateAsync({ path: { group_api_id: groupId } })
+        await ensure.mutateAsync({
+          path: { group_api_id: groupId },
+          timeout: ENSURE_SPOTIFY_PLAYLIST_TIMEOUT_MS,
+        })
       } catch {
         // onError already toasts or starts linking
       }
