@@ -6,12 +6,15 @@ import { useEffect, useRef } from "react"
 import { saveLetterTracksToSpotifyLibrarySpotifyLettersLetterApiIdLibraryPostMutation } from "@/client/@tanstack/react-query.gen"
 import useCustomToast from "@/hooks/useCustomToast"
 import { useSubmitOnce } from "@/hooks/useSubmitOnce"
-import { formatApiErrorDetail } from "@/util/misc"
 import {
   axiosDetail,
   axiosStatus,
+  spotifyErrorMessage,
   useSpotifyAccount,
 } from "./useSpotifyAccount"
+
+// Library save talks to Spotify; bound below nginx's ~300s proxy_read_timeout.
+const SAVE_SPOTIFY_LIBRARY_TIMEOUT_MS = 60_000
 
 interface AddSongsToSpotifyProps {
   loopApiId: string
@@ -61,7 +64,7 @@ export function AddSongsToSpotify({
         void startLink(`/loops/${loopApiId}?spotify_action=save`)
         return
       }
-      showToast("Spotify", formatApiErrorDetail(axiosDetail(err)), "error")
+      showToast("Spotify", spotifyErrorMessage(err), "error")
     },
   })
 
@@ -89,7 +92,10 @@ export function AddSongsToSpotify({
     if (spotify === "linked" && spotifyAction === "save") {
       void submitOnce.run(async () => {
         try {
-          await save.mutateAsync({ path: { letter_api_id: loopApiId } })
+          await save.mutateAsync({
+            path: { letter_api_id: loopApiId },
+            timeout: SAVE_SPOTIFY_LIBRARY_TIMEOUT_MS,
+          })
         } catch {
           // onError already toasts or starts linking
         }
@@ -128,7 +134,10 @@ export function AddSongsToSpotify({
           }
           void submitOnce.run(async () => {
             try {
-              await save.mutateAsync({ path: { letter_api_id: loopApiId } })
+              await save.mutateAsync({
+                path: { letter_api_id: loopApiId },
+                timeout: SAVE_SPOTIFY_LIBRARY_TIMEOUT_MS,
+              })
             } catch {
               // onError already toasts or starts linking
             }
