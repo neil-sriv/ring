@@ -9,7 +9,6 @@ from __future__ import annotations
 
 from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordRequestForm
-from starlette.concurrency import run_in_threadpool
 
 from ring.api_identifier.util import get_model
 from ring.async_scheduler.scheduler import scheduler
@@ -42,7 +41,7 @@ router = APIRouter()
 
 
 @router.post("/login/access-token")
-async def login_access_token(
+def login_access_token(
     background_tasks: BackgroundTasks,
     form_data: OAuth2PasswordRequestForm = Depends(),
     req_dep: RequestDependenciesBase = Depends(
@@ -63,11 +62,10 @@ async def login_access_token(
     Raises:
         HTTPException: 400 if credentials are invalid
     """
-    # bcrypt is ~200ms of sync CPU. Keep it off the event loop so /version
-    # and other routes are not queued behind login.
+    # Sync def so FastAPI runs the DB lookup and ~200ms bcrypt check off
+    # the event loop in the threadpool.
     user = user_crud.get_user_by_email(req_dep.db, form_data.username)
-    if not user or not await run_in_threadpool(
-        verify_password,
+    if not user or not verify_password(
         form_data.password,
         user.hashed_password,
     ):
@@ -83,7 +81,7 @@ async def login_access_token(
 
 
 @router.post("/impersonate-user-token")
-async def impersonate_user_token(
+def impersonate_user_token(
     user_api_id: str,
     req_dep: RequestDependenciesBase = Depends(get_request_dependencies),
 ) -> Token:
@@ -110,7 +108,7 @@ def _deprecated_not_implemented() -> None:
 
 
 @router.post("/login/test-token", deprecated=True)
-async def test_token() -> None:
+def test_token() -> None:
     """Test endpoint for validating access tokens.
 
     This endpoint is deprecated and will be removed in future versions.
@@ -119,7 +117,7 @@ async def test_token() -> None:
 
 
 @router.post("/reset-password:request/{email}", response_model=ResponseMessage)
-async def reset_password_request(
+def reset_password_request(
     email: str,
     req_dep: RequestDependenciesBase = Depends(
         get_unauthenticated_request_dependencies
@@ -160,7 +158,7 @@ async def reset_password_request(
 
 
 @router.post("/reset-password/{token}", response_model=ResponseMessage)
-async def reset_password(
+def reset_password(
     token: str,
     new_password_data: NewPassword,
     background_tasks: BackgroundTasks,
@@ -204,7 +202,7 @@ async def reset_password(
 
 
 @router.post("/password-recovery-html-content/{email}", deprecated=True)
-async def recover_password_html_content(email: str) -> None:
+def recover_password_html_content(email: str) -> None:
     """Generate HTML content for password recovery email.
 
     This endpoint is deprecated and will be removed in future versions.

@@ -55,7 +55,7 @@ def _load_group_for_member(
 
 
 @router.get("/group/{group_api_id}/key-value")
-async def read_group_key_values(
+def read_group_key_values(
     group_api_id: str,
     req_dep: AuthenticatedRequestDependencies = Depends(
         get_request_dependencies,
@@ -85,7 +85,7 @@ async def read_group_key_values(
 @router.get(
     "/group/{group_api_id}/key-value/{key}",
 )
-async def read_group_key_value(
+def read_group_key_value(
     group_api_id: str,
     key: str,
     req_dep: AuthenticatedRequestDependencies = Depends(
@@ -116,7 +116,7 @@ async def read_group_key_value(
 @router.post(
     "/group/{group_api_id}/key-value:update",
 )
-async def upsert_group_key_value(
+def upsert_group_key_value(
     group_api_id: str,
     update: SingleGroupKeyValueUpdate,
     req_dep: AuthenticatedRequestDependencies = Depends(
@@ -157,7 +157,7 @@ async def upsert_group_key_value(
 @router.post(
     "/group/{group_api_id}/key-value:bulk-update",
 )
-async def bulk_update_group_key_values(
+def bulk_update_group_key_values(
     group_api_id: str,
     updates: BulkGroupKeyValueUpdate,
     req_dep: AuthenticatedRequestDependencies = Depends(
@@ -203,7 +203,7 @@ async def bulk_update_group_key_values(
 @router.put(
     "/group/{group_api_id}/key-value",
 )
-async def full_replace_group_key_values(
+def full_replace_group_key_values(
     group_api_id: str,
     updates: GroupKeyValue,
     req_dep: AuthenticatedRequestDependencies = Depends(

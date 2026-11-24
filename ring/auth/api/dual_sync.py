@@ -21,7 +21,7 @@ router = APIRouter()
     response_model=DualSyncStats,
     operation_id="readAuthDualSyncStats",
 )
-async def read_dual_sync_stats(
+def read_dual_sync_stats(
     req_dep: AuthenticatedRequestDependencies = Depends(
         get_request_dependencies,
     ),

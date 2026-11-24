@@ -18,6 +18,7 @@ import time
 from urllib.parse import urljoin, urlparse
 
 import httpx
+from anyio import to_thread
 from bs4 import BeautifulSoup
 
 from ring.fastapp.config import get_config
@@ -151,8 +152,9 @@ async def _fetch_document(url: str) -> tuple[str, bytes]:
         ) as client:
             for _ in range(config.LINK_UNFURL_MAX_REDIRECTS + 1):
                 # Re-validate before every request so a redirect cannot
-                # point the fetcher at an internal address.
-                assert_url_is_safe(current_url)
+                # point the fetcher at an internal address. Run DNS off
+                # the event loop.
+                await to_thread.run_sync(assert_url_is_safe, current_url)
                 async with client.stream("GET", current_url) as response:
                     if response.is_redirect:
                         location = response.headers.get("location")

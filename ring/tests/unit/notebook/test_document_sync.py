@@ -170,6 +170,9 @@ class TestDocumentSyncWebsocket:
             f"/api/v1/ws/notebook/{document.api_identifier}"
         ) as websocket:
             message = websocket.receive_bytes()
+            # Authz closed the request-scoped session before entering the
+            # long-lived WS loop so the pooled DB connection isn't pinned.
+            assert not db_session.in_transaction()
         assert message[0] == YMessageType.SYNC
         assert message[1] == YSyncMessageType.SYNC_STEP1
 

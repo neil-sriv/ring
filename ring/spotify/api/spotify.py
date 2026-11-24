@@ -66,7 +66,7 @@ def _playlist_response(sync: service.PlaylistSync) -> SpotifyPlaylistResponse:
 
 
 @router.get("/status", response_model=SpotifyStatus)
-async def read_spotify_status(
+def read_spotify_status(
     req_dep: AuthenticatedRequestDependencies = Depends(
         get_request_dependencies
     ),
@@ -80,7 +80,7 @@ async def read_spotify_status(
 
 
 @router.post("/authorize", response_model=SpotifyAuthorizeResponse)
-async def start_spotify_authorization(
+def start_spotify_authorization(
     body: SpotifyAuthorizeRequest,
     req_dep: AuthenticatedRequestDependencies = Depends(
         get_request_dependencies
@@ -100,7 +100,7 @@ async def start_spotify_authorization(
 
 
 @router.get("/callback")
-async def spotify_oauth_callback(
+def spotify_oauth_callback(
     code: str | None = None,
     state: str | None = None,
     error: str | None = None,
@@ -154,7 +154,7 @@ def _callback_redirect(return_to: str, spotify_error: str) -> RedirectResponse:
     "/letters/{letter_api_id}/library",
     response_model=SpotifyLibrarySaveResponse,
 )
-async def save_letter_tracks_to_spotify_library(
+def save_letter_tracks_to_spotify_library(
     letter_api_id: str,
     req_dep: AuthenticatedRequestDependencies = Depends(
         get_request_dependencies
@@ -184,7 +184,7 @@ async def save_letter_tracks_to_spotify_library(
     "/groups/{group_api_id}/playlist",
     response_model=SpotifyPlaylistResponse,
 )
-async def read_group_spotify_playlist(
+def read_group_spotify_playlist(
     group_api_id: str,
     req_dep: AuthenticatedRequestDependencies = Depends(
         get_request_dependencies
@@ -217,7 +217,7 @@ async def read_group_spotify_playlist(
     "/groups/{group_api_id}/playlist",
     response_model=SpotifyPlaylistResponse,
 )
-async def ensure_group_spotify_playlist(
+def ensure_group_spotify_playlist(
     group_api_id: str,
     req_dep: AuthenticatedRequestDependencies = Depends(
         get_request_dependencies

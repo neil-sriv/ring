@@ -35,7 +35,7 @@ _WRONG_QUESTION = "Response does not belong to this question"
     "/question/{question_api_id}:upsert_response",
     response_model=QuestionLinked,
 )
-async def upsert_response(
+def upsert_response(
     question_api_id: str,
     response: ResponseUpsert,
     req_dep: AuthenticatedRequestDependencies = Depends(
@@ -141,7 +141,7 @@ async def upsert_response(
     "/question/{question_api_id}:upload_image",
     response_model=QuestionLinked,
 )
-async def upload_image(
+def upload_image(
     question_api_id: str,
     response_image: UploadFile,
     req_dep: AuthenticatedRequestDependencies = Depends(
@@ -186,7 +186,7 @@ async def upload_image(
         db_response = question_crud.add_response(
             req_dep.db, db_question, req_dep.current_user, ""
         )
-    await upload_image_crud(
+    upload_image_crud(
         req_dep.db,
         db_response,
         [response_image],
@@ -200,7 +200,7 @@ async def upload_image(
     status_code=status.HTTP_204_NO_CONTENT,
     response_model=None,
 )
-async def delete_question(
+def delete_question(
     question_api_id: str,
     req_dep: AuthenticatedRequestDependencies = Depends(
         get_request_dependencies,

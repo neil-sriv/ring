@@ -28,7 +28,7 @@ router = APIRouter()
 
 
 @router.post("/", response_model=InviteSchema)
-async def create_invite(
+def create_invite(
     invite: InviteCreate,
     req_dep: AuthenticatedRequestDependencies = Depends(
         get_request_dependencies,
@@ -72,7 +72,7 @@ async def create_invite(
 
 
 @router.get("/token/{token}", response_model=InviteLinked)
-async def validate_token(
+def validate_token(
     token: str,
     req_dep: RequestDependenciesBase = Depends(
         get_unauthenticated_request_dependencies,

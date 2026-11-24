@@ -51,7 +51,7 @@ def _require_response_owner_or_admin(user: User, response: Response) -> None:
     "/response/{response_api_id}:edit_response",
     response_model=ResponseLinked,
 )
-async def edit_response(
+def edit_response(
     response_api_id: str,
     response: ResponseCreateBase,
     req_dep: AuthenticatedRequestDependencies = Depends(
@@ -97,7 +97,7 @@ async def edit_response(
     response_model=ResponseLinked,
     deprecated=True,
 )
-async def upload_image(
+def upload_image(
     response_api_id: str,
     response_images: list[UploadFile],
     req_dep: AuthenticatedRequestDependencies = Depends(
@@ -131,7 +131,7 @@ async def upload_image(
         ),
     )
     _require_response_owner_or_admin(req_dep.current_user, update_response)
-    await response_crud.a_upload_image(
+    response_crud.upload_image(
         req_dep.db,
         update_response,
         response_images,
@@ -144,7 +144,7 @@ async def upload_image(
     "/response/{response_api_id}:delete_image",
     response_model=ResponseLinked,
 )
-async def delete_image(
+def delete_image(
     response_api_id: str,
     s3_url: str,
     req_dep: AuthenticatedRequestDependencies = Depends(

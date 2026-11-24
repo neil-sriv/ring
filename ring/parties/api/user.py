@@ -41,7 +41,7 @@ router = APIRouter()
 
 
 @router.get("/me", response_model=UserSchema)
-async def read_user_me(
+def read_user_me(
     background_tasks: BackgroundTasks,
     req_dep: AuthenticatedRequestDependencies = Depends(
         get_request_dependencies,
@@ -63,7 +63,7 @@ async def read_user_me(
 @router.post(
     "/user", response_model=UserSchema, deprecated=True, status_code=201
 )
-async def create_user(
+def create_user(
     user: UserCreate,
     background_tasks: BackgroundTasks,
     req_dep: RequestDependenciesBase = Depends(
@@ -100,7 +100,7 @@ async def create_user(
 
 
 @router.post("/register/{token}", response_model=UserSchema)
-async def register_user(
+def register_user(
     token: str,
     user: UserCreate,
     background_tasks: BackgroundTasks,
@@ -149,7 +149,7 @@ async def register_user(
 
 
 @router.get("/users", response_model=Sequence[UserSchema])
-async def read_users(
+def read_users(
     skip: int = 0,
     limit: int = 100,
     req_dep: AuthenticatedRequestDependencies = Depends(
@@ -177,7 +177,7 @@ async def read_users(
 
 
 @router.get("/user/{user_api_id}", response_model=UserSchema)
-async def read_user_by_id(
+def read_user_by_id(
     user_api_id: str,
     req_dep: AuthenticatedRequestDependencies = Depends(
         get_request_dependencies,
@@ -207,7 +207,7 @@ async def read_user_by_id(
 
 
 @router.patch("/user/{user_api_id}", response_model=UserSchema)
-async def update_user_by_id(
+def update_user_by_id(
     user_api_id: str,
     user_update: UserUpdate,
     background_tasks: BackgroundTasks,
@@ -257,7 +257,7 @@ async def update_user_by_id(
     "/me",
     response_model=UserSchema,
 )
-async def update_user_me(
+def update_user_me(
     current_user_update_data: UserUpdate,
     background_tasks: BackgroundTasks,
     req_dep: AuthenticatedRequestDependencies = Depends(
@@ -295,7 +295,7 @@ async def update_user_me(
 
 
 @router.patch("/me/password", response_model=ResponseMessage)
-async def update_password_me(
+def update_password_me(
     update_password_data: UserUpdatePassword,
     background_tasks: BackgroundTasks,
     req_dep: AuthenticatedRequestDependencies = Depends(
@@ -338,7 +338,7 @@ async def update_password_me(
 
 
 @router.patch("/{user_api_id}/admin", response_model=ResponseMessage)
-async def update_user_admin(
+def update_user_admin(
     user_api_id: str,
     background_tasks: BackgroundTasks,
     req_dep: AuthenticatedRequestDependencies = Depends(
@@ -382,7 +382,7 @@ def _deprecated_not_implemented() -> None:
 
 
 @router.delete("/me", deprecated=True)
-async def delete_user_me() -> None:
+def delete_user_me() -> None:
     """Delete current user (deprecated).
 
     Note:
@@ -392,7 +392,7 @@ async def delete_user_me() -> None:
 
 
 @router.post("/signup", deprecated=True)
-async def signup() -> None:
+def signup() -> None:
     """Sign up a new user without invitation (deprecated).
 
     Note:
@@ -402,7 +402,7 @@ async def signup() -> None:
 
 
 @router.patch("/{user_id}", deprecated=True)
-async def update_user() -> None:
+def update_user() -> None:
     """Update any user (deprecated).
 
     Note:
@@ -412,7 +412,7 @@ async def update_user() -> None:
 
 
 @router.delete("/{user_id}", deprecated=True)
-async def delete_user() -> None:
+def delete_user() -> None:
     """Delete any user (deprecated).
 
     Note:
