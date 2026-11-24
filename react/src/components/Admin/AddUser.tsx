@@ -24,6 +24,10 @@ import {
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 
+// Axios leaves timeout at 0, so a hung create never rejects and isSaving stays
+// true. This write is a small JSON body; uploads keep the longer proxy window.
+const ADD_USER_TIMEOUT_MS = 20_000
+
 interface AddUserProps {
   isOpen: boolean
   onClose: () => void
@@ -92,11 +96,17 @@ const AddUser = ({ isOpen, onClose }: AddUserProps) => {
   const submitOnce = useSubmitOnce()
 
   const onSubmit: SubmitHandler<UserCreateForm> = async (data) => {
-    await submitOnce.run(() =>
-      mutation.mutateAsync({
-        body: data,
-      }),
-    )
+    await submitOnce.run(async () => {
+      try {
+        await mutation.mutateAsync({
+          body: data,
+          timeout: ADD_USER_TIMEOUT_MS,
+        })
+      } catch {
+        // onError already toasts. Swallow so handleSubmit clears isSubmitting
+        // and Cancel unlocks after a hang/timeout.
+      }
+    })
   }
 
   const onCancel = () => {

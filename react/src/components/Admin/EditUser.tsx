@@ -31,6 +31,10 @@ import {
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 
+// Axios leaves timeout at 0, so a hung update never rejects and isSaving stays
+// true. This write is a small JSON body; uploads keep the longer proxy window.
+const EDIT_USER_TIMEOUT_MS = 20_000
+
 interface EditUserProps {
   user: UserLinked
   isOpen: boolean
@@ -118,15 +122,21 @@ const EditUser = ({ user, isOpen, onClose }: EditUserProps) => {
   const submitOnce = useSubmitOnce()
 
   const onSubmit: SubmitHandler<UserUpdate> = async (data) => {
-    await submitOnce.run(() =>
-      mutation.mutateAsync({
-        path: { user_api_id: user.api_identifier },
-        body: {
-          email: data.email,
-          name: data.name,
-        },
-      }),
-    )
+    await submitOnce.run(async () => {
+      try {
+        await mutation.mutateAsync({
+          path: { user_api_id: user.api_identifier },
+          body: {
+            email: data.email,
+            name: data.name,
+          },
+          timeout: EDIT_USER_TIMEOUT_MS,
+        })
+      } catch {
+        // onError already toasts. Swallow so handleSubmit clears isSubmitting
+        // and Cancel unlocks after a hang/timeout.
+      }
+    })
   }
 
   const onCancel = () => {
