@@ -89,7 +89,7 @@ def _late_question_cutoff_reached(letter: Letter) -> bool:
 
 
 @router.post("/letter", response_model=LetterSchema)
-async def add_next_letter(
+def add_next_letter(
     letter: LetterCreate,
     req_dep: AuthenticatedRequestDependencies = Depends(
         get_request_dependencies,
@@ -136,7 +136,7 @@ async def add_next_letter(
 
 
 @router.post("/letter:{letter_type}", response_model=LetterSchema)
-async def add_next_letter(
+def add_next_letter(
     letter_type: LetterType,
     letter: LetterCreate,
     req_dep: AuthenticatedRequestDependencies = Depends(
@@ -170,7 +170,7 @@ async def add_next_letter(
 
 
 @router.get("/letters/", response_model=Sequence[MinimalLetter])
-async def list_letters(
+def list_letters(
     group_api_id: str,
     letter_type: LetterType | None = None,
     skip: int = 0,
@@ -210,7 +210,7 @@ async def list_letters(
 
 
 @router.get("/letter/{letter_api_id}", response_model=LetterSchema)
-async def read_letter(
+def read_letter(
     letter_api_id: str,
     req_dep: AuthenticatedRequestDependencies = Depends(
         get_request_dependencies,
@@ -240,7 +240,7 @@ async def read_letter(
 
 
 @router.get("/letters:dashboard", response_model=DashboardLetters)
-async def list_dashboard_letters(
+def list_dashboard_letters(
     req_dep: AuthenticatedRequestDependencies = Depends(
         get_request_dependencies,
     ),
@@ -285,7 +285,7 @@ async def list_dashboard_letters(
     "/letter/{letter_api_id}:edit_letter",
     response_model=LetterSchema,
 )
-async def edit_letter(
+def edit_letter(
     letter_api_id: str,
     letter: LetterUpdate,
     req_dep: AuthenticatedRequestDependencies = Depends(
@@ -390,7 +390,7 @@ async def edit_letter(
     "/letter/{letter_api_id}:send_now",
     response_model=LetterSchema,
 )
-async def send_letter_now(
+def send_letter_now(
     letter_api_id: str,
     req_dep: AuthenticatedRequestDependencies = Depends(
         get_request_dependencies,
@@ -446,7 +446,7 @@ async def send_letter_now(
     "/letter/{letter_api_id}:add_question",
     response_model=LetterSchema,
 )
-async def add_question(
+def add_question(
     letter_api_id: str,
     question: QuestionCreate,
     req_dep: AuthenticatedRequestDependencies = Depends(
@@ -523,7 +523,7 @@ async def add_question(
     "/letter/{letter_api_id}:reorder_questions",
     response_model=LetterSchema,
 )
-async def reorder_questions(
+def reorder_questions(
     letter_api_id: str,
     question_order: QuestionReorder,
     req_dep: AuthenticatedRequestDependencies = Depends(
@@ -570,7 +570,7 @@ async def reorder_questions(
     "/letter/{letter_api_id}:generate_question",
     response_model=GenerateQuestionResponse,
 )
-async def generate_question(
+def generate_question(
     letter_api_id: str,
     request: GenerateQuestionRequest,
     req_dep: AuthenticatedRequestDependencies = Depends(

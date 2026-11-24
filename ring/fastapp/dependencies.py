@@ -53,7 +53,7 @@ class AuthenticatedRequestDependencies(RequestDependenciesBase):
     current_user: User
 
 
-async def get_current_user(
+def get_current_user(
     token: str = Depends(oauth2_scheme), db: Session = Depends(get_db)
 ) -> User:
     """Get the current authenticated user from a JWT token.
@@ -79,7 +79,7 @@ async def get_current_user(
     return user
 
 
-async def get_request_dependencies(
+def get_request_dependencies(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ) -> AuthenticatedRequestDependencies:
@@ -97,7 +97,7 @@ async def get_request_dependencies(
     return AuthenticatedRequestDependencies(db=db, current_user=current_user)
 
 
-async def get_unauthenticated_request_dependencies(
+def get_unauthenticated_request_dependencies(
     db: Session = Depends(get_db),
 ) -> RequestDependenciesBase:
     """Get dependencies for unauthenticated requests.
@@ -113,7 +113,7 @@ async def get_unauthenticated_request_dependencies(
     return RequestDependenciesBase(db=db)
 
 
-async def get_websocket_request_dependencies(
+def get_websocket_request_dependencies(
     websocket: WebSocket, db: Session = Depends(get_db)
 ) -> AuthenticatedRequestDependencies:
     """Get dependencies for authenticated WebSocket connections.
@@ -165,7 +165,7 @@ async def get_websocket_request_dependencies(
         )
 
 
-async def get_s3_client_dependencies() -> S3Client:
+def get_s3_client_dependencies() -> S3Client:
     """Get an AWS S3 client with timeout configuration.
 
     Returns:

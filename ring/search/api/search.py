@@ -23,7 +23,7 @@ router = APIRouter()
 
 
 @router.get("/raw-search", response_model=RawSearchResponse)
-async def raw_search(
+def raw_search(
     query: str,
     search_type: SearchType = SearchType.KEYWORD,
     limit: int = 10,
@@ -75,7 +75,7 @@ async def raw_search(
 
 
 @router.get("/search", response_model=SearchResponse)
-async def perform_search(
+def perform_search(
     query: str,
     search_type: SearchType = SearchType.KEYWORD,
     limit: int = 10,

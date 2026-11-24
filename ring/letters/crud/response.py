@@ -121,7 +121,7 @@ def add_image_to_response(
     return response
 
 
-async def upload_image(
+def upload_image(
     db: Session,
     response: Response,
     response_images: list[UploadFile],
@@ -138,7 +138,7 @@ async def upload_image(
     """
     s3_file_prefix = f"{response.question.letter.group.api_identifier}/{response.question.letter.api_identifier}/{response.api_identifier}/"
     # upload image to S3
-    client = await get_s3_client_dependencies()
+    client = get_s3_client_dependencies()
     for image_file in response_images:
         random_string = "".join(random.choices(string_lib.ascii_letters, k=12))
         s3_file_path = (

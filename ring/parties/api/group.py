@@ -35,7 +35,7 @@ router = APIRouter()
 @router.post(
     "/group", response_model=GroupSchema, status_code=status.HTTP_201_CREATED
 )
-async def create_group(
+def create_group(
     group: GroupCreate,
     req_dep: AuthenticatedRequestDependencies = Depends(
         get_request_dependencies,
@@ -76,7 +76,7 @@ async def create_group(
 
 
 @router.get("/groups/", response_model=Sequence[GroupSchema])
-async def list_groups(
+def list_groups(
     user_api_id: Annotated[str | None, Query(deprecated=True)] = None,
     skip: int = 0,
     limit: int = 100,
@@ -120,7 +120,7 @@ async def list_groups(
 
 
 @router.get("/group/{group_api_id}", response_model=GroupSchema)
-async def read_group(
+def read_group(
     group_api_id: str,
     req_dep: AuthenticatedRequestDependencies = Depends(
         get_request_dependencies,
@@ -156,7 +156,7 @@ async def read_group(
     "/group/{group_api_id}:add_member/{user_api_id}",
     response_model=GroupSchema,
 )
-async def add_user_to_group(
+def add_user_to_group(
     group_api_id: str,
     user_api_id: str,
     req_dep: AuthenticatedRequestDependencies = Depends(
@@ -187,7 +187,7 @@ async def add_user_to_group(
     "/group/{group_api_id}:remove_member/{user_api_id}",
     response_model=GroupSchema,
 )
-async def remove_user_from_group(
+def remove_user_from_group(
     group_api_id: str,
     user_api_id: str,
     req_dep: AuthenticatedRequestDependencies = Depends(
@@ -246,7 +246,7 @@ async def remove_user_from_group(
     "/group/{group_api_id}",
     response_model=GroupSchema,
 )
-async def update_group(
+def update_group(
     group_api_id: str,
     group: GroupUpdate,
     req_dep: AuthenticatedRequestDependencies = Depends(
@@ -329,7 +329,7 @@ async def update_group(
     "/group/{group_api_id}:add_members",
     response_model=GroupSchema,
 )
-async def add_members(
+def add_members(
     group_api_id: str,
     add_members: AddMembers,
     req_dep: AuthenticatedRequestDependencies = Depends(
@@ -384,7 +384,7 @@ async def add_members(
     "/group/{group_api_id}:replace_default_questions",
     response_model=GroupSchema,
 )
-async def replace_group_default_questions(
+def replace_group_default_questions(
     group_api_id: str,
     default_questions: ReplaceDefaultQuestions,
     req_dep: AuthenticatedRequestDependencies = Depends(

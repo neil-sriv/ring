@@ -32,7 +32,7 @@ router = APIRouter()
     "/schedule/{group_api_id}",
     response_model=ScheduleSchema,
 )
-async def get_schedule_for_group(
+def get_schedule_for_group(
     group_api_id: str,
     req_dep: AuthenticatedRequestDependencies = Depends(
         get_request_dependencies,
