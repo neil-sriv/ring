@@ -29,6 +29,10 @@ import {
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 
+// Axios leaves timeout at 0, so a hung impersonate never rejects and isSaving
+// stays true. Token exchange is a small JSON body; keep the short write window.
+const IMPERSONATE_USER_TIMEOUT_MS = 20_000
+
 interface ImpersonateUserProps {
   user: UserLinked
   isOpen: boolean
@@ -99,13 +103,19 @@ const ImpersonateUser = ({ user, isOpen, onClose }: ImpersonateUserProps) => {
   const submitOnce = useSubmitOnce()
 
   const onSubmit: SubmitHandler<UserImpersonateForm> = async () => {
-    await submitOnce.run(() =>
-      mutation.mutateAsync({
-        query: {
-          user_api_id: user.api_identifier,
-        },
-      }),
-    )
+    await submitOnce.run(async () => {
+      try {
+        await mutation.mutateAsync({
+          query: {
+            user_api_id: user.api_identifier,
+          },
+          timeout: IMPERSONATE_USER_TIMEOUT_MS,
+        })
+      } catch {
+        // onError already toasts. Swallow so handleSubmit clears isSubmitting
+        // and Cancel unlocks after a hang/timeout.
+      }
+    })
   }
 
   const onCancel = () => {
