@@ -26,6 +26,11 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 
+// Axios leaves timeout at 0, so a hung profile update never rejects and
+// isSaving stays true. This write is a small JSON body; uploads keep the
+// longer proxy window.
+const UPDATE_USER_ME_TIMEOUT_MS = 20_000
+
 const UserInformation = () => {
   const queryClient = useQueryClient()
   const showToast = useCustomToast()
@@ -99,7 +104,17 @@ const UserInformation = () => {
   const submitOnce = useSubmitOnce()
 
   const onSubmit: SubmitHandler<UserUpdate> = async (data) => {
-    await submitOnce.run(() => mutation.mutateAsync({ body: data }))
+    await submitOnce.run(async () => {
+      try {
+        await mutation.mutateAsync({
+          body: data,
+          timeout: UPDATE_USER_ME_TIMEOUT_MS,
+        })
+      } catch {
+        // onError already toasts. Swallow so handleSubmit clears isSubmitting
+        // and Cancel unlocks after a hang/timeout.
+      }
+    })
   }
 
   const syncFormFromCurrentUser = () => {

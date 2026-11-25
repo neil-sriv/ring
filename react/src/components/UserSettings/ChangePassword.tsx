@@ -20,6 +20,11 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 
+// Axios leaves timeout at 0, so a hung password update never rejects and
+// isSaving stays true. This write is a small JSON body; uploads keep the
+// longer proxy window.
+const CHANGE_PASSWORD_TIMEOUT_MS = 20_000
+
 interface UpdatePasswordForm extends UserUpdatePassword {
   confirm_password: string
 }
@@ -56,11 +61,17 @@ const ChangePassword = () => {
   const isSaving = isSubmitting || mutation.isPending || submitOnce.pending
 
   const onSubmit: SubmitHandler<UpdatePasswordForm> = async (data) => {
-    await submitOnce.run(() =>
-      mutation.mutateAsync({
-        body: data,
-      }),
-    )
+    await submitOnce.run(async () => {
+      try {
+        await mutation.mutateAsync({
+          body: data,
+          timeout: CHANGE_PASSWORD_TIMEOUT_MS,
+        })
+      } catch {
+        // onError already toasts. Swallow so handleSubmit clears isSubmitting
+        // and Save unlocks after a hang/timeout.
+      }
+    })
   }
 
   return (

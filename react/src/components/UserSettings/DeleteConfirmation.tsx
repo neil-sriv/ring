@@ -19,6 +19,11 @@ import useCustomToast from "../../hooks/useCustomToast"
 import { useSubmitOnce } from "../../hooks/useSubmitOnce"
 import { formatApiErrorDetail } from "../../util/misc"
 
+// Axios leaves timeout at 0, so a hung delete never rejects and isSaving
+// stays true. This write is a small JSON body; uploads keep the longer
+// proxy window.
+const DELETE_ACCOUNT_TIMEOUT_MS = 20_000
+
 interface DeleteProps {
   isOpen: boolean
   onClose: () => void
@@ -40,6 +45,7 @@ const DeleteConfirmation = ({ isOpen, onClose }: DeleteProps) => {
     mutationFn: async () => {
       const { data } = await deleteUserMePartiesMeDelete({
         throwOnError: true,
+        timeout: DELETE_ACCOUNT_TIMEOUT_MS,
       })
       return data
     },
@@ -70,7 +76,14 @@ const DeleteConfirmation = ({ isOpen, onClose }: DeleteProps) => {
   const submitOnce = useSubmitOnce()
 
   const onSubmit = async () => {
-    await submitOnce.run(() => mutation.mutateAsync())
+    await submitOnce.run(async () => {
+      try {
+        await mutation.mutateAsync()
+      } catch {
+        // onError already toasts. Swallow so handleSubmit clears isSubmitting
+        // and Cancel unlocks after a hang/timeout.
+      }
+    })
   }
 
   const isSaving = isSubmitting || mutation.isPending || submitOnce.pending
