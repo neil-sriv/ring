@@ -28,19 +28,14 @@ const ActionsMenu = ({ type, value, disabled }: ActionsMenuProps) => {
   const [isAddMembersOpen, setIsAddMembersOpen] = useState(false)
   const [isImpersonateOpen, setIsImpersonateOpen] = useState(false)
   const navigate = useNavigate()
-  // Subscribe so admin-only group chrome (Edit / Add Members / Settings)
-  // updates when /me is refetched or overwritten. getQueryData alone never
-  // re-renders.
+  // Subscribe so admin-only group chrome (Edit / Settings) updates when /me
+  // is refetched or overwritten. getQueryData alone never re-renders.
   const { data: currentUser } = useQuery({
     ...readUserMePartiesMeGetOptions(),
   })
   const isGroupAdmin =
     type === "Group" &&
     (value as GroupLinked).admin.api_identifier === currentUser?.api_identifier
-  // Group actions are all admin-only; hide the empty kebab for members.
-  if (type === "Group" && !isGroupAdmin) {
-    return null
-  }
 
   return (
     <>
@@ -56,36 +51,46 @@ const ActionsMenu = ({ type, value, disabled }: ActionsMenuProps) => {
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end">
-          <DropdownMenuItem onClick={() => setIsEditOpen(true)}>
-            <Edit className="h-4 w-4" />
-            Edit {type}
-          </DropdownMenuItem>
           {type === "User" && (
-            <DropdownMenuItem
-              onClick={() => setIsImpersonateOpen(true)}
-              className="text-destructive focus:text-destructive [&>svg]:text-destructive"
-            >
-              <User className="h-4 w-4" />
-              Impersonate User
-            </DropdownMenuItem>
+            <>
+              <DropdownMenuItem onClick={() => setIsEditOpen(true)}>
+                <Edit className="h-4 w-4" />
+                Edit {type}
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                onClick={() => setIsImpersonateOpen(true)}
+                className="text-destructive focus:text-destructive [&>svg]:text-destructive"
+              >
+                <User className="h-4 w-4" />
+                Impersonate User
+              </DropdownMenuItem>
+            </>
           )}
           {type === "Group" && (
             <>
+              {isGroupAdmin && (
+                <DropdownMenuItem onClick={() => setIsEditOpen(true)}>
+                  <Edit className="h-4 w-4" />
+                  Edit Group
+                </DropdownMenuItem>
+              )}
               <DropdownMenuItem onClick={() => setIsAddMembersOpen(true)}>
                 <UserPlus className="h-4 w-4" />
                 Add Members
               </DropdownMenuItem>
-              <DropdownMenuItem
-                onClick={() =>
-                  navigate({
-                    to: "/groups/$groupId/settings",
-                    params: { groupId: value.api_identifier },
-                  })
-                }
-              >
-                <Settings className="h-4 w-4" />
-                Settings
-              </DropdownMenuItem>
+              {isGroupAdmin && (
+                <DropdownMenuItem
+                  onClick={() =>
+                    navigate({
+                      to: "/groups/$groupId/settings",
+                      params: { groupId: value.api_identifier },
+                    })
+                  }
+                >
+                  <Settings className="h-4 w-4" />
+                  Settings
+                </DropdownMenuItem>
+              )}
             </>
           )}
         </DropdownMenuContent>
