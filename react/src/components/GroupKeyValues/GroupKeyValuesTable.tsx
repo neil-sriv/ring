@@ -12,7 +12,7 @@ import useCustomToast from "../../hooks/useCustomToast"
 import { useDebouncedFlush } from "../../hooks/useDebouncedFlush"
 import { formatApiErrorDetail } from "../../util/misc"
 
-const ReactJson = lazy(() => import("react-json-view"))
+const ReactJson = lazy(() => import("@microlink/react-json-view"))
 
 type SaveStatus = "idle" | "saving" | "saved" | "error"
 
@@ -116,7 +116,8 @@ export function GroupKeyValuesTable({
   const pendingFlushRef = useRef(false)
   // Payload currently being saved — becomes lastSaved on success.
   const inFlightPayloadRef = useRef(cloneKeyValues(keyValues.key_values))
-  // react-json-view ignores later `src` changes; bump key on rollback to remount.
+  // @microlink/react-json-view (like upstream) ignores later `src` changes;
+  // bump key on rollback to remount.
   const [editorKey, setEditorKey] = useState(0)
   const showToast = useCustomToast()
   const queryClient = useQueryClient()
