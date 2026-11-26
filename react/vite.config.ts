@@ -146,7 +146,7 @@ export default defineConfig({
           ) {
             return "editor-vendor"
           }
-          if (id.includes("node_modules/react-json-view/")) {
+          if (id.includes("node_modules/@microlink/react-json-view/")) {
             return "json-view"
           }
           if (

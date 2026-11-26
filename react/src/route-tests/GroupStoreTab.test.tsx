@@ -10,7 +10,7 @@ import { GroupStoreTab } from "../routes/_layout/groups_/$groupId/loops"
 const GROUP_A = "grp_a"
 const GROUP_B = "grp_b"
 
-vi.mock("react-json-view", () => ({
+vi.mock("@microlink/react-json-view", () => ({
   default: function MockReactJson({
     src,
     onEdit,
