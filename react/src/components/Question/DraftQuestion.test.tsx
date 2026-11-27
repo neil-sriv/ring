@@ -1,5 +1,13 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query"
-import { cleanup, fireEvent, render, screen } from "@testing-library/react"
+import {
+  cleanup,
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+} from "@testing-library/react"
+import { AxiosError, type AxiosResponse } from "axios"
+import { Toaster } from "sonner"
 import { afterEach, describe, expect, it, vi } from "vitest"
 
 import type {
@@ -9,6 +17,7 @@ import type {
   UserUnlinked,
 } from "../../client"
 import { readUserMePartiesMeGetQueryKey } from "../../client/@tanstack/react-query.gen"
+import { client } from "../../client/client.gen"
 import DraftQuestion from "./DraftQuestion"
 
 vi.mock("@tanstack/react-router", () => ({
@@ -94,8 +103,37 @@ function renderQuestion({
         isGroupAdmin={isGroupAdmin}
         letterStatus={letterStatus}
       />
+      <Toaster />
     </QueryClientProvider>,
   )
+}
+
+function networkError() {
+  return new AxiosError("Network Error", AxiosError.ERR_NETWORK)
+}
+
+function serverError(detail: string) {
+  const error = new AxiosError("Request failed with status code 500")
+  error.response = {
+    data: { detail },
+    status: 500,
+    statusText: "Internal Server Error",
+    headers: {},
+    config: {},
+  } as AxiosResponse
+  return error
+}
+
+async function openDeleteConfirm() {
+  const button = deleteButton()
+  expect(button).toBeTruthy()
+  fireEvent.click(button as HTMLButtonElement)
+  expect(
+    await screen.findByRole("heading", { name: "Delete Question" }),
+  ).toBeTruthy()
+  // Alert dialog has its own Delete action; the card trigger is also named Delete.
+  const actions = screen.getAllByRole("button", { name: "Delete" })
+  return actions[actions.length - 1] as HTMLButtonElement
 }
 
 function deleteButton(): HTMLButtonElement | null {
@@ -178,6 +216,80 @@ describe("DraftQuestion delete", () => {
       isGroupAdmin: true,
     })
     expect(deleteButton()).toBeNull()
+  })
+
+  it("submits delete with a finite request timeout", async () => {
+    const del = vi.spyOn(client, "delete").mockResolvedValue({
+      data: undefined,
+      status: 200,
+      statusText: "OK",
+      headers: {},
+      config: {},
+    } as Awaited<ReturnType<typeof client.delete>>)
+
+    renderQuestion()
+    const confirm = await openDeleteConfirm()
+    fireEvent.click(confirm)
+
+    await waitFor(() => {
+      expect(del).toHaveBeenCalled()
+    })
+
+    const call = del.mock.calls[0]?.[0] as {
+      timeout?: number
+      url?: string
+    }
+    expect(call.timeout).toBe(20_000)
+    expect(call.url).toBe("/questions/question/{question_api_id}")
+
+    expect(
+      await screen.findByText("Question deleted successfully."),
+    ).toBeTruthy()
+    await waitFor(() => {
+      expect(screen.queryByRole("alertdialog")).toBeNull()
+    })
+  })
+
+  it("recovers from a 500 and lets the delete dialog close", async () => {
+    vi.spyOn(client, "delete").mockRejectedValue(serverError("delete exploded"))
+
+    renderQuestion()
+    const confirm = await openDeleteConfirm()
+    fireEvent.click(confirm)
+
+    expect(await screen.findByText("Something went wrong.")).toBeTruthy()
+    expect(screen.getByText("delete exploded")).toBeTruthy()
+
+    await waitFor(() => {
+      expect(
+        (screen.getByRole("button", { name: "Cancel" }) as HTMLButtonElement)
+          .disabled,
+      ).toBe(false)
+    })
+    fireEvent.click(screen.getByRole("button", { name: "Cancel" }))
+    await waitFor(() => {
+      expect(screen.queryByRole("alertdialog")).toBeNull()
+    })
+  })
+
+  it("recovers from a network error with no response body", async () => {
+    vi.spyOn(client, "delete").mockRejectedValue(networkError())
+
+    renderQuestion()
+    const confirm = await openDeleteConfirm()
+    fireEvent.click(confirm)
+
+    expect(await screen.findByText("Something went wrong.")).toBeTruthy()
+    expect(
+      screen.getByText("Something went wrong. Please try again."),
+    ).toBeTruthy()
+
+    await waitFor(() => {
+      expect(
+        (screen.getByRole("button", { name: "Cancel" }) as HTMLButtonElement)
+          .disabled,
+      ).toBe(false)
+    })
   })
 })
 

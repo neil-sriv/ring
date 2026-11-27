@@ -21,6 +21,11 @@ import useCustomToast from "../../hooks/useCustomToast"
 import { useSubmitOnce } from "../../hooks/useSubmitOnce"
 import { formatApiErrorDetail } from "../../util/misc"
 
+// Axios leaves timeout at 0, so a hung late-answer submit never rejects and
+// isSaving stays true. This write is a small JSON body; uploads keep the
+// longer proxy window.
+const LATE_ANSWER_TIMEOUT_MS = 20_000
+
 interface LateAnswerQuestionProps {
   question: PublicQuestion
   loopApiId: string
@@ -46,10 +51,12 @@ function LateAnswerQuestion({
       text,
       questionApiId,
       participantApiId,
+      timeout,
     }: {
       text: string
       questionApiId: string
       participantApiId: string
+      timeout: number
     }) => {
       await upsertResponseQuestionsQuestionQuestionApiIdUpsertResponsePost({
         path: { question_api_id: questionApiId },
@@ -57,6 +64,7 @@ function LateAnswerQuestion({
           response_text: text,
           participant_api_identifier: participantApiId,
         },
+        timeout,
         throwOnError: true,
       })
     },
@@ -128,9 +136,11 @@ function LateAnswerQuestion({
           text: responseText,
           questionApiId: question.api_identifier,
           participantApiId: currentUser.api_identifier,
+          timeout: LATE_ANSWER_TIMEOUT_MS,
         })
       } catch {
-        // onError already toasts
+        // onError already toasts. Swallow so Submit unlocks after a
+        // hang/timeout.
       }
     })
   }

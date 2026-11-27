@@ -27,6 +27,11 @@ import useCustomToast from "../../hooks/useCustomToast"
 import { useSubmitOnce } from "../../hooks/useSubmitOnce"
 import { formatApiErrorDetail } from "../../util/misc"
 
+// Axios leaves timeout at 0, so a hung group rename never rejects and
+// isSaving stays true. This write is a small JSON body; uploads keep the
+// longer proxy window.
+const UPDATE_GROUP_INFO_TIMEOUT_MS = 20_000
+
 function GroupInformation({ groupId }: { groupId: string }) {
   const queryClient = useQueryClient()
   const showToast = useCustomToast()
@@ -133,6 +138,7 @@ function GroupInformation({ groupId }: { groupId: string }) {
         const updated = await mutation.mutateAsync({
           path: { group_api_id: groupId },
           body: { name: nextName },
+          timeout: UPDATE_GROUP_INFO_TIMEOUT_MS,
         })
         showToast(
           "Success!",
@@ -150,6 +156,8 @@ function GroupInformation({ groupId }: { groupId: string }) {
           formatApiErrorDetail(axiosErr.response?.data?.detail),
           "error",
         )
+        // Swallow so handleSubmit clears isSubmitting and Save unlocks
+        // after a hang/timeout.
       }
     })
   }

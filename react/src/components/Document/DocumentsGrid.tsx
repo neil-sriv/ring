@@ -21,6 +21,11 @@ import { useSubmitOnce } from "../../hooks/useSubmitOnce"
 import { formatApiErrorDetail } from "../../util/misc"
 import { DocumentCard } from "./DocumentCard"
 
+// Axios leaves timeout at 0, so a hung create never rejects and isCreating
+// stays true. This write is a small JSON body; uploads keep the longer
+// proxy window.
+const CREATE_DOCUMENT_TIMEOUT_MS = 20_000
+
 export function DocumentsGrid(props: {
   groupApiId: string
 }): JSX.Element {
@@ -73,9 +78,11 @@ export function DocumentsGrid(props: {
             name,
             content: "",
           },
+          timeout: CREATE_DOCUMENT_TIMEOUT_MS,
         })
       } catch {
-        // onError already toasts
+        // onError already toasts. Swallow so New Document unlocks after a
+        // hang/timeout.
       }
     })
 
