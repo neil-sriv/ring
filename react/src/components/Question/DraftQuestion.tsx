@@ -47,6 +47,11 @@ import {
 } from "../Common/SingleUploadImage"
 import { LateQuestionBadge } from "./LateQuestionBadge"
 
+// Axios leaves timeout at 0, so a hung delete never rejects and isDeleting
+// stays true. This write is a small JSON body; uploads keep the longer
+// proxy window.
+const DELETE_QUESTION_TIMEOUT_MS = 20_000
+
 type ResponseBlockProps = {
   uploadFunction: (file: File) => Promise<void>
   onUploadsComplete?: (successCount: number) => void
@@ -438,10 +443,12 @@ function DraftQuestion({
       try {
         await deleteMutation.mutateAsync({
           path: { question_api_id: question.api_identifier },
+          timeout: DELETE_QUESTION_TIMEOUT_MS,
         })
         setDeleteOpen(false)
       } catch {
-        // onError already toasts
+        // onError already toasts. Swallow so Delete unlocks after a
+        // hang/timeout.
       }
     })
 

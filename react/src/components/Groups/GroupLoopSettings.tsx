@@ -30,6 +30,11 @@ import useCustomToast from "../../hooks/useCustomToast"
 import { useSubmitOnce } from "../../hooks/useSubmitOnce"
 import { formatApiErrorDetail } from "../../util/misc"
 
+// Axios leaves timeout at 0, so a hung loop-settings save never rejects and
+// isSaving stays true. These writes are small JSON bodies; uploads keep the
+// longer proxy window.
+const LOOP_SETTINGS_TIMEOUT_MS = 20_000
+
 type QuestionField = {
   question_text: string
 }
@@ -192,6 +197,7 @@ function GroupLoopSettings({ groupId }: { groupId: string }) {
             questions: data.questions.map((question) => question.question_text),
           },
           path: { group_api_id: groupId },
+          timeout: LOOP_SETTINGS_TIMEOUT_MS,
         })
 
         if (Object.keys(groupPatch).length > 0) {
@@ -199,6 +205,7 @@ function GroupLoopSettings({ groupId }: { groupId: string }) {
             await cycleUpdateMutation.mutateAsync({
               body: groupPatch,
               path: { group_api_id: groupId },
+              timeout: LOOP_SETTINGS_TIMEOUT_MS,
             })
           } catch (cycleErr) {
             const axiosErr =
@@ -253,6 +260,8 @@ function GroupLoopSettings({ groupId }: { groupId: string }) {
           "error",
         )
         await refreshGroup()
+        // Swallow so handleSubmit clears isSubmitting and Save unlocks
+        // after a hang/timeout.
       }
     })
   }
