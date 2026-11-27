@@ -39,6 +39,7 @@ const group = {
     {
       question_text: "What made you smile?",
       api_identifier: "dq_1",
+      created_at: "2026-11-22T00:00:00.000Z",
     },
   ],
 } satisfies GroupLinked

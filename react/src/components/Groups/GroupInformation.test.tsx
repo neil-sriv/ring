@@ -34,6 +34,8 @@ const me = {
     {
       name: "Cloud Seed Group",
       api_identifier: "grp_seed",
+      created_at: "2026-11-22T00:00:00.000Z",
+      cycle_length: 30,
     },
   ],
 } satisfies UserLinked
